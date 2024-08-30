@@ -8,6 +8,7 @@ use OCA\OpenCatalogi\Service\SearchService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCA\OpenCatalogi\Service\MetaDataService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -80,30 +81,15 @@ class MetaDataController extends Controller
 
 	/**
 	 * @PublicPage
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 */
-	public function show(string|int $id, ObjectService $objectService): JSONResponse
-	{
-		if($this->config->hasKey($this->appName, 'mongoStorage') === false
-			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
-		) {
-			try {
-				return new JSONResponse($this->metaDataMapper->find(id: (int) $id));
-			} catch (DoesNotExistException $exception) {
-				return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
-			}
-		}
-		$dbConfig['base_uri'] = $this->config->getValueString(app: $this->appName, key: 'mongodbLocation');
-		$dbConfig['headers']['api-key'] = $this->config->getValueString(app: $this->appName, key: 'mongodbKey');
-		$dbConfig['mongodbCluster'] = $this->config->getValueString(app: $this->appName, key: 'mongodbCluster');
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function show(string|int $id, MetaDataService $metaDataService): JSONResponse
+    {
+		$result = $metaDataService->getOne(id: $id, config: $this->config);
 
-		$filters['_id'] = (string) $id;
-
-		$result = $objectService->findObject(filters: $filters, config: $dbConfig);
-
-		return new JSONResponse($result);
-	}
+        return new JSONResponse($result);
+    }
 
 
 	/**

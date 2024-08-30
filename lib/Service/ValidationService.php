@@ -2,10 +2,15 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\ObjectService;
+use OCA\OpenCatalogi\Service\MetaDataService;
 use OCA\OpenCatalogi\Db\CatalogMapper;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\IAppConfig;
+use OCP\AppFramework\Http\JSONResponse;
+use JsonSchema\Validator;
+use JsonSchema\Constraints\Constraint;
 
 class ValidationService
 {
@@ -28,6 +33,7 @@ class ValidationService
 		private readonly IAppConfig    $config,
 		private readonly CatalogMapper $catalogMapper,
 		private readonly ObjectService $objectService,
+		private readonly MetaDataService $metaDataService,
 	){
 		$this->appName = 'opencatalogi';
 
@@ -104,6 +110,41 @@ class ValidationService
 		}
 
 //		var_dump($publication);
+
+		return $publication;
+	}
+
+	/**
+	 * Validates a publication against the linked metadata.
+	 *
+	 * @param  array $publication The publication to be validated.
+     * 
+     * @return array|JSONResponse
+	 */
+	public function validateDataAgainstMetaData(array $publication): array
+	{
+        if (isset($publication['schema']) === false) {
+            return new JSONResponse(['message' => 'Missing required field: schema'], 404);
+        }
+
+        // Fetch metadata
+        $metaData = json_decode(file_get_contents($publication['schema']));
+
+        // Validate
+        $validator = new Validator;
+        $validator->validate($publication['data'], $metaData, Constraint::CHECK_MODE_APPLY_DEFAULTS);
+
+        // Always reset errors and set valid as true
+        $publication['errors'] = [];
+        $publication['valid'] = true;
+
+        // If invalid set invalid and add errors
+        if (!$validator->isValid()) {
+            $publication['valid'] = false;
+            foreach ($validator->getErrors() as $error) {
+                $publication['errors'][] = sprintf("[%s] %s\n", $error['property'], $error['message']);
+            }
+        }
 
 		return $publication;
 	}

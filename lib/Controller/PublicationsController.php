@@ -11,6 +11,7 @@ use OCA\opencatalogi\lib\Db\Publication;
 use OCA\OpenCatalogi\Db\PublicationMapper;
 use OCA\OpenCatalogi\Service\ElasticSearchService;
 use OCA\OpenCatalogi\Service\FileService;
+use OCA\OpenCatalogi\Service\MetaDataService;
 use OCA\OpenCatalogi\Service\ObjectService;
 use OCA\OpenCatalogi\Service\SearchService;
 use OCA\OpenCatalogi\Service\ValidationService;
@@ -523,7 +524,7 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function update(string|int $id, ObjectService $objectService, ElasticSearchService $elasticSearchService): JSONResponse
+    public function update(string|int $id, ObjectService $objectService, ElasticSearchService $elasticSearchService, ValidationService $validationService): JSONResponse
     {
 
 		$data = $this->request->getParams();
@@ -535,6 +536,10 @@ class PublicationsController extends Controller
 				unset($data[$key]);
 			}
 		}
+
+        if (isset($data['data']) === true && empty($data['data']) !== false) {
+            $data = $validationService->validateDataAgainstMetaData($data);
+        }
 
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false
 			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
