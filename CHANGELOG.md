@@ -1,3 +1,13 @@
+# Version: 0.1.1-master.119.4546d8e
+
+
+#### Other Changes
+
+* [#46](https://github.com/ConductionNL/opencatalogi/pull/46): Omdraaien van de compose files
+* [#54](https://github.com/ConductionNL/opencatalogi/pull/54): feature/DIMOC-186/publication-theme
+* [#57](https://github.com/ConductionNL/opencatalogi/pull/57): Development update
+
+
 # Version: 0.0.1-featuredimoc279workflowforrele.1134.97c61c3
 
 
