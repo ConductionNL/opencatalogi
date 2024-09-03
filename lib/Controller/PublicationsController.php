@@ -544,7 +544,12 @@ class PublicationsController extends Controller
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false
 			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
 		) {
-			$returnData = $this->publicationMapper->updateFromArray(id: (int) $id, object: $data);
+
+			try {
+				$returnData = $this->publicationMapper->updateFromArray(id: (int) $id, object: $data);
+			} catch (DoesNotExistException $exception) {
+				return new JSONResponse(data: ['error' => 'Not found'], statusCode: 404);
+			}
 			$returnData = $returnData->jsonSerialize();
 
 			$dbConfig = [];
