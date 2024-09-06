@@ -20,6 +20,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCS\OCSBadRequestException;
+use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -476,7 +477,7 @@ class PublicationsController extends Controller
 
 		try {
 			$data = $validationService->validatePublication($data);
-		} catch (OCSBadRequestException|OCSNotFoundException $exception) {
+		} catch (OCSBadRequestException|OCSNotFoundException|NotNullConstraintViolationException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
 		}
 
@@ -537,8 +538,12 @@ class PublicationsController extends Controller
 			}
 		}
 
-        if (isset($data['data']) === true && empty($data['data']) !== false) {
+        if (isset($data['data']) === true) {
+			$data['data']['naam']= 'k';
             $data = $validationService->validateDataAgainstMetaData($data);
+			if ($data instanceof JSONResponse === true) {
+				return $data;
+			}
         }
 
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false

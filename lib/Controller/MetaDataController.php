@@ -88,6 +88,10 @@ class MetaDataController extends Controller
     {
 		$result = $metaDataService->getOne(id: $id, config: $this->config);
 
+		if ($result instanceof JSONResponse === true) {
+			return $result;
+		}
+
         return new JSONResponse($result);
     }
 

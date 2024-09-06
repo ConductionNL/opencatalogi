@@ -22,6 +22,7 @@ class Publication extends Entity implements JsonSerializable
 	protected ?DateTime $modified        = null;
 	protected ?string $featured          = null;
 	protected ?array $organization       = [];
+	protected ?array $validation         = [];
 	protected ?array $data               = [];
 	protected ?array $attachments        = [];
 	protected int $attachmentCount       = 0;
@@ -46,6 +47,7 @@ class Publication extends Entity implements JsonSerializable
 		$this->addType(fieldName: 'modified', type: 'datetime');
 		$this->addType(fieldName: 'featured', type: 'boolean');
 		$this->addType(fieldName: 'organization', type: 'json');
+		$this->addType(fieldName: 'validation', type: 'json');
 		$this->addType(fieldName: 'data', type: 'json');
 		$this->addType(fieldName: 'attachments', type: 'json');
 		$this->addType(fieldName: 'attachmentCount', type: 'integer');
@@ -137,6 +139,7 @@ class Publication extends Entity implements JsonSerializable
 			'themes' => $this->themes,
 			'anonymization' => $this->anonymization,
 			'languageObject' => $this->languageObject,
+			'validation' => $this->validation,
 		];
 
 		$jsonFields = $this->getJsonFields();

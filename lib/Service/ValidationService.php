@@ -11,6 +11,7 @@ use OCP\IAppConfig;
 use OCP\AppFramework\Http\JSONResponse;
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
+use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
 
 class ValidationService
 {
@@ -102,7 +103,9 @@ class ValidationService
 		    $catalog = $this->getCatalog($catalogId);
         } catch (OCSNotFoundException $exception) {
             throw new OCSNotFoundException(message: $exception->getMessage());
-        }
+        } catch (NotNullConstraintViolationException $exception) {
+            throw new NotNullConstraintViolationException(message: $exception->getMessage());
+		}
 //		var_dump($catalog['metadata'], $metadata, in_array(needle: $metadata, haystack: $catalog['metadata']));
 
 		if(in_array(needle: $metadata, haystack: $catalog['metadata']) === false) {
@@ -118,31 +121,37 @@ class ValidationService
 	 * Validates a publication against the linked metadata.
 	 *
 	 * @param  array $publication The publication to be validated.
-     * 
+     *
      * @return array|JSONResponse
 	 */
-	public function validateDataAgainstMetaData(array $publication): array
+	public function validateDataAgainstMetaData(array $publication)
 	{
         if (isset($publication['schema']) === false) {
             return new JSONResponse(['message' => 'Missing required field: schema'], 404);
         }
 
         // Fetch metadata
-        $metaData = json_decode(file_get_contents($publication['schema']));
+        $metaData = json_decode(file_get_contents($publication['schema']), true);
+        if (isset($metaData) === false) {
+            return new JSONResponse(['message' => 'Could not fetch schema of this publication to validate against.'], 400);
+        }
+        if (empty($metaData) === true) {
+            return new JSONResponse(['message' => 'The metadata of this publication is empty and thus invalid, the publication cannot be validated.'], 400);
+        }
 
         // Validate
         $validator = new Validator;
         $validator->validate($publication['data'], $metaData, Constraint::CHECK_MODE_APPLY_DEFAULTS);
 
         // Always reset errors and set valid as true
-        $publication['errors'] = [];
-        $publication['valid'] = true;
+		$publication['validation']['valid'] = true;
+		$publication['validation']['errors'] = [];
 
         // If invalid set invalid and add errors
-        if (!$validator->isValid()) {
-            $publication['valid'] = false;
+        if ($validator->isValid() === false) {
+            $publication['validation']['valid'] = false;
             foreach ($validator->getErrors() as $error) {
-                $publication['errors'][] = sprintf("[%s] %s\n", $error['property'], $error['message']);
+                $publication['validation']['errors'][] = sprintf("[%s] %s\n", $error['property'], $error['message']);
             }
         }
 

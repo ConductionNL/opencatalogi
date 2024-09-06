@@ -17,7 +17,7 @@ class MetaDataService
 	{
 	}
 
-	public function getOne(string $id, $config): array
+	public function getOne(string $id, $config)
 	{
 		if($config->hasKey($this->appName, 'mongoStorage') === false
 			|| $config->getValueString($this->appName, 'mongoStorage') !== '1'
