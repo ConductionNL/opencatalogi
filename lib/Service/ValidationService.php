@@ -103,9 +103,7 @@ class ValidationService
 		    $catalog = $this->getCatalog($catalogId);
         } catch (OCSNotFoundException $exception) {
             throw new OCSNotFoundException(message: $exception->getMessage());
-        } catch (NotNullConstraintViolationException $exception) {
-            throw new NotNullConstraintViolationException(message: $exception->getMessage());
-		}
+        }
 //		var_dump($catalog['metadata'], $metadata, in_array(needle: $metadata, haystack: $catalog['metadata']));
 
 		if(in_array(needle: $metadata, haystack: $catalog['metadata']) === false) {
@@ -118,7 +116,7 @@ class ValidationService
 	}
 
 	/**
-	 * Validates a publication against the linked metadata.
+	 * Validates a publication against the linked metadata. also sets default values
 	 *
 	 * @param  array $publication The publication to be validated.
      *
@@ -126,12 +124,11 @@ class ValidationService
 	 */
 	public function validateDataAgainstMetaData(array $publication)
 	{
-        if (isset($publication['schema']) === false) {
-            return new JSONResponse(['message' => 'Missing required field: schema'], 404);
+        if (isset($publication['schema']) === false && isset($publication['metaData']) === false) {
+            return new JSONResponse(['message' => 'Missing required field: schema and/or metaData'], 404);
         }
 
-        // Fetch metadata
-        $metaData = json_decode(file_get_contents($publication['schema']), true);
+        $metaData = json_decode(file_get_contents($publication['schema'] ?? $publication['metaData']), true);
         if (isset($metaData) === false) {
             return new JSONResponse(['message' => 'Could not fetch schema of this publication to validate against.'], 400);
         }
@@ -139,9 +136,23 @@ class ValidationService
             return new JSONResponse(['message' => 'The metadata of this publication is empty and thus invalid, the publication cannot be validated.'], 400);
         }
 
+        // Set default values first
+        foreach ($metaData['properties'] as $key => $property ) {
+            if (isset($property['default']) === true && empty($property['default']) === false && isset($property['format']) === true && isset($publication['data'][$property['name']]) === false) {
+                $publication['data'][$property['name']] = $property['default'];
+            }
+        }
+
+        // Set empty array so required fields can be spotted
+        if (isset($publication['data']) === false) {
+            $publication['data'] = [];
+        }
+
+        // Set maxLenght otherwise it falls over it
+
         // Validate
         $validator = new Validator;
-        $validator->validate($publication['data'], $metaData, Constraint::CHECK_MODE_APPLY_DEFAULTS);
+        $validator->validate($publication['data'], $metaData);
 
         // Always reset errors and set valid as true
 		$publication['validation']['valid'] = true;

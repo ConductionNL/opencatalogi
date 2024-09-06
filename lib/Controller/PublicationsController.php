@@ -477,9 +477,15 @@ class PublicationsController extends Controller
 
 		try {
 			$data = $validationService->validatePublication($data);
-		} catch (OCSBadRequestException|OCSNotFoundException|NotNullConstraintViolationException $exception) {
+		} catch (OCSBadRequestException|OCSNotFoundException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
 		}
+
+    
+        $data = $validationService->validateDataAgainstMetaData($data);
+        if ($data instanceof JSONResponse === true) {
+            return $data;
+        }
 
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false
 			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
@@ -538,12 +544,9 @@ class PublicationsController extends Controller
 			}
 		}
 
-        if (isset($data['data']) === true) {
-			$data['data']['naam']= 'k';
-            $data = $validationService->validateDataAgainstMetaData($data);
-			if ($data instanceof JSONResponse === true) {
-				return $data;
-			}
+        $data = $validationService->validateDataAgainstMetaData($data);
+        if ($data instanceof JSONResponse === true) {
+            return $data;
         }
 
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false
