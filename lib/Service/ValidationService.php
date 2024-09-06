@@ -148,8 +148,6 @@ class ValidationService
             $publication['data'] = [];
         }
 
-        // Set maxLenght otherwise it falls over it
-
         // Validate
         $validator = new Validator;
         $validator->validate($publication['data'], $metaData);
