@@ -11,6 +11,7 @@ use OCA\opencatalogi\lib\Db\Publication;
 use OCA\OpenCatalogi\Db\PublicationMapper;
 use OCA\OpenCatalogi\Service\ElasticSearchService;
 use OCA\OpenCatalogi\Service\FileService;
+use OCA\OpenCatalogi\Service\MetaDataService;
 use OCA\OpenCatalogi\Service\ObjectService;
 use OCA\OpenCatalogi\Service\SearchService;
 use OCA\OpenCatalogi\Service\ValidationService;
@@ -19,6 +20,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCS\OCSBadRequestException;
+use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -481,6 +483,12 @@ class PublicationsController extends Controller
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
 		}
 
+    
+        $data = $validationService->validateDataAgainstMetaData($data);
+        if ($data instanceof JSONResponse === true) {
+            return $data;
+        }
+
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false
 			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
 		) {
@@ -525,7 +533,7 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function update(string|int $id, ObjectService $objectService, ElasticSearchService $elasticSearchService): JSONResponse
+    public function update(string|int $id, ObjectService $objectService, ElasticSearchService $elasticSearchService, ValidationService $validationService): JSONResponse
     {
 
 		$data = $this->request->getParams();
@@ -538,10 +546,20 @@ class PublicationsController extends Controller
 			}
 		}
 
+        $data = $validationService->validateDataAgainstMetaData($data);
+        if ($data instanceof JSONResponse === true) {
+            return $data;
+        }
+
 		if($this->config->hasKey($this->appName, 'mongoStorage') === false
 			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
 		) {
-			$returnData = $this->publicationMapper->updateFromArray(id: (int) $id, object: $data);
+
+			try {
+				$returnData = $this->publicationMapper->updateFromArray(id: (int) $id, object: $data);
+			} catch (DoesNotExistException $exception) {
+				return new JSONResponse(data: ['error' => 'Not found'], statusCode: 404);
+			}
 			$returnData = $returnData->jsonSerialize();
 
 			$dbConfig = [];

@@ -2,10 +2,16 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\ObjectService;
+use OCA\OpenCatalogi\Service\MetaDataService;
 use OCA\OpenCatalogi\Db\CatalogMapper;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\IAppConfig;
+use OCP\AppFramework\Http\JSONResponse;
+use JsonSchema\Validator;
+use JsonSchema\Constraints\Constraint;
+use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
 
 class ValidationService
 {
@@ -28,6 +34,7 @@ class ValidationService
 		private readonly IAppConfig    $config,
 		private readonly CatalogMapper $catalogMapper,
 		private readonly ObjectService $objectService,
+		private readonly MetaDataService $metaDataService,
 	){
 		$this->appName = 'opencatalogi';
 
@@ -104,6 +111,58 @@ class ValidationService
 		}
 
 //		var_dump($publication);
+
+		return $publication;
+	}
+
+	/**
+	 * Validates a publication against the linked metadata. also sets default values
+	 *
+	 * @param  array $publication The publication to be validated.
+     *
+     * @return array|JSONResponse
+	 */
+	public function validateDataAgainstMetaData(array $publication)
+	{
+        if (isset($publication['schema']) === false && isset($publication['metaData']) === false) {
+            return new JSONResponse(['message' => 'Missing required field: schema and/or metaData'], 404);
+        }
+
+        $metaData = json_decode(file_get_contents($publication['schema'] ?? $publication['metaData']), true);
+        if (isset($metaData) === false) {
+            return new JSONResponse(['message' => 'Could not fetch schema of this publication to validate against.'], 400);
+        }
+        if (empty($metaData) === true) {
+            return new JSONResponse(['message' => 'The metadata of this publication is empty and thus invalid, the publication cannot be validated.'], 400);
+        }
+
+        // Set default values first
+        foreach ($metaData['properties'] as $key => $property ) {
+            if (isset($property['default']) === true && empty($property['default']) === false && isset($property['format']) === true && isset($publication['data'][$property['name']]) === false) {
+                $publication['data'][$property['name']] = $property['default'];
+            }
+        }
+
+        // Set empty array so required fields can be spotted
+        if (isset($publication['data']) === false) {
+            $publication['data'] = [];
+        }
+
+        // Validate
+        $validator = new Validator;
+        $validator->validate($publication['data'], $metaData);
+
+        // Always reset errors and set valid as true
+		$publication['validation']['valid'] = true;
+		$publication['validation']['errors'] = [];
+
+        // If invalid set invalid and add errors
+        if ($validator->isValid() === false) {
+            $publication['validation']['valid'] = false;
+            foreach ($validator->getErrors() as $error) {
+                $publication['validation']['errors'][] = sprintf("[%s] %s\n", $error['property'], $error['message']);
+            }
+        }
 
 		return $publication;
 	}
