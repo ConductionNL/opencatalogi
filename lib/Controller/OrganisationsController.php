@@ -39,7 +39,7 @@ class OrganisationsController extends Controller
 	}
 
 	/**
-	 * Return (and serach) all objects
+	 * Return (and search) all objects
 	 *
 	 * @NoAdminRequired
 	 * @NoCSRFRequired

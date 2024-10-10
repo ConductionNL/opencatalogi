@@ -48,7 +48,7 @@ class MetaDataController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-	public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
+	public function index(ObjectService $objectService, SearchService $searchService, IURLGenerator $urlGenerator): JSONResponse
 	{
         $filters = $this->request->getParams();
 		unset($filters['_route']);
@@ -76,6 +76,11 @@ class MetaDataController extends Controller
 		$result = $objectService->findObjects(filters: $filters, config: $dbConfig);
 
 		$results = ["results" => $result['documents']];
+		foreach ($results['results'] as &$result) {
+			if (empty($result['source']) === true) {
+				$result['source'] = $urlGenerator->getAbsoluteURL($urlGenerator->linkToRoute(routeName:"opencatalogi.metadata.show", arguments: ['id' => $result['_id']]));
+			}
+		}
 		return new JSONResponse($results);
 	}
 
@@ -84,7 +89,7 @@ class MetaDataController extends Controller
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 */
-	public function show(string|int $id, ObjectService $objectService): JSONResponse
+	public function show(string|int $id, ObjectService $objectService, IURLGenerator $urlGenerator): JSONResponse
 	{
 		if ($this->config->hasKey($this->appName, 'mongoStorage') === false
 			|| $this->config->getValueString($this->appName, 'mongoStorage') !== '1'
@@ -103,6 +108,10 @@ class MetaDataController extends Controller
 
 		$result = $objectService->findObject(filters: $filters, config: $dbConfig);
 
+		if (empty($result['source']) === true) {
+			$result['source'] = $urlGenerator->getAbsoluteURL($urlGenerator->linkToRoute(routeName:"opencatalogi.metadata.show", arguments: ['id' => $id]));
+		}
+
 		return new JSONResponse($result);
 	}
 
@@ -113,12 +122,10 @@ class MetaDataController extends Controller
 	 */
 	public function create(ObjectService $objectService, IURLGenerator $urlGenerator): JSONResponse
 	{
-
 		$data = $this->request->getParams();
 
 		// Remove fields we should never post
 		unset($data['id']);
-
 
 		foreach ($data as $key => $value) {
 			if (str_starts_with($key, '_')) {
@@ -139,7 +146,6 @@ class MetaDataController extends Controller
 				$this->metaDataMapper->update($object);
 			}
 
-
 			return new JSONResponse($object);
 		}
 		$dbConfig['base_uri'] = $this->config->getValueString(app: $this->appName, key: 'mongodbLocation');
@@ -154,9 +160,9 @@ class MetaDataController extends Controller
 		);
 
 		if (isset($data['source']) === false || $data['source'] === null) {
-			$returnData['source'] = $urlGenerator->getAbsoluteURL($urlGenerator->linkToRoute(routeName:"opencatalogi.metadata.show", arguments: ['id' => $returnData['id']]));
+			$data['source'] = $urlGenerator->getAbsoluteURL($urlGenerator->linkToRoute(routeName:"opencatalogi.metadata.show", arguments: ['id' => $returnData['id']]));
 			$returnData = $objectService->saveObject(
-				data: $returnData,
+				data: $data,
 				config: $dbConfig
 			);
 		}

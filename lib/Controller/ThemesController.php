@@ -86,7 +86,7 @@ class ThemesController extends Controller
 	}
 
 	/**
-	 * Return (and serach) all objects
+	 * Return (and search) all objects
 	 *
 	 * @CORS
 	 * @PublicPage
@@ -105,7 +105,7 @@ class ThemesController extends Controller
 	}
 
 	/**
-	 * Return (and serach) all objects
+	 * Return (and search) all objects
 	 *
 	 * @PublicPage
 	 * @NoAdminRequired

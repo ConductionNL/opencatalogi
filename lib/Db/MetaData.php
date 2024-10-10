@@ -27,6 +27,57 @@ class MetaData extends Entity implements JsonSerializable
 		$this->addType(fieldName: 'required', type: 'json');
 		$this->addType(fieldName: 'properties', type: 'json');
 		$this->addType(fieldName: 'source', type: 'string');
+
+		// Set the source URL using the id if available
+		$this->setSourceUrl();
+	}
+
+	// Override setId method to update the source URL when id is set
+	public function setId(int $id): void {
+		parent::setId($id);
+		$this->setSourceUrl();
+	}
+
+	// Method to set the source URL dynamically based on the entity id and Nextcloud's domain
+	public function setSourceUrl(): void {
+		// Get the current URL of the Nextcloud installation
+		$baseUrl = $this->getBaseUrl();
+
+		// Set the source dynamically if the id is available
+		if ($this->id !== null) {
+			$this->setSource($baseUrl . '/index.php/apps/opencatalogi/api/metadata/' . $this->id);
+		}
+	}
+
+	// Method to get the base URL of the Nextcloud installation
+	private function getBaseUrl(): string {
+		// Determine the scheme (http or https)
+		$scheme = $this->isHttps() ? 'https' : 'http';
+		// Get the server host and port using $_SERVER
+		$host = $_SERVER['SERVER_NAME'] ?? 'localhost';
+		$port = $_SERVER['SERVER_PORT'] ?? 80;
+
+		// Construct the base URL (including port if it's not default HTTP/HTTPS ports)
+		$baseUrl = $scheme . '://' . $host;
+		if (($scheme === 'http' && $port !== 80) || ($scheme === 'https' && $port !== 443)) {
+			$baseUrl .= ':' . $port;
+		}
+
+		return $baseUrl;
+	}
+
+	// Check if the current connection is HTTPS
+	private function isHttps(): bool {
+		return (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off');
+	}
+
+	public function setSource(?string $source): self {
+		if ($source === null) {
+			$this->setSourceUrl();
+		}
+		$this->source = $source;
+
+		return $this;
 	}
 
 	public function getJsonFields(): array
@@ -47,7 +98,7 @@ class MetaData extends Entity implements JsonSerializable
 				$value = null;
 			}
 
-			$method = 'set'.ucfirst($key);
+			$method = 'set' . ucfirst($key);
 
 			try {
 				$this->$method($value);
@@ -84,6 +135,10 @@ class MetaData extends Entity implements JsonSerializable
 
             }
         }
+
+		if (empty($this->source) === true) {
+			$this->setSourceUrl();
+		}
 
 		$array = [
 			'id'          => $this->id,

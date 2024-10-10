@@ -148,11 +148,16 @@ class PublicationsController extends Controller
     }
 
 	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @PublicPage
+	 * Return all attachments for given publication.
+	 *
+	 * @param string|int $id The id.
+	 * @param ObjectService $objectService The Object Service.
+	 * @param array|null $publication A publication array.
+	 *
+	 * @return JSONResponse The Response.
+	 * @throws GuzzleException
 	 */
-	public function attachments(string|int $id, ObjectService $objectService, ?array $publication = null): JSONResponse
+	private function publicationsAttachments(string|int $id, ObjectService $objectService, ?array $publication = null): JSONResponse
 	{
 		if ($publication === null) {
 			$publication = $this->getPublicationData(id: $id, objectService: $objectService);
@@ -181,6 +186,45 @@ class PublicationsController extends Controller
 		$result = $objectService->findObjects(filters: $filters, config: $dbConfig);
 
 		return new JSONResponse(['results' => $result['documents']]);
+	}
+
+	/**
+	 * Return all attachments for given publication.
+	 *
+	 * @CORS
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @param string|int $id The id.
+	 * @param ObjectService $objectService The Object Service.
+	 * @param array|null $publication A publication array.
+	 *
+	 * @return JSONResponse The Response.
+	 * @throws GuzzleException
+	 */
+	public function attachments(string|int $id, ObjectService $objectService, ?array $publication = null): JSONResponse
+	{
+		return $this->publicationsAttachments($id, $objectService, $publication);
+	}
+
+	/**
+	 * Return all attachments for given publication.
+	 *
+	 * @PublicPage
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @param string|int $id The id.
+	 * @param ObjectService $objectService The Object Service.
+	 * @param array|null $publication A publication array.
+	 *
+	 * @return JSONResponse The Response.
+	 * @throws GuzzleException
+	 */
+	public function attachmentsInternal(string|int $id, ObjectService $objectService, ?array $publication = null): JSONResponse
+	{
+		return $this->publicationsAttachments($id, $objectService, $publication);
 	}
 
 

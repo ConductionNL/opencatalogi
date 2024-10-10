@@ -25,7 +25,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 	<version>0.6.5</version>
 	<licence>agpl</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
-	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>	
+	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
 	<namespace>OpenCatalogi</namespace>
     <documentation>
         <user>https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers</user>
@@ -40,13 +40,13 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/assets/logo.png</screenshot>
 	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/1.png</screenshot>
     <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/2.png</screenshot>
-    
+
    	<dependencies>
         <php min-version="8.0" min-int-size="64"/>
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
-		
+
         <lib>curl</lib>
         <lib>zip</lib>
 
