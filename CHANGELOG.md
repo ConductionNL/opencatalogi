@@ -1,3 +1,16 @@
+# Version: 0.1.1-master.99.b488889
+
+
+#### Other Changes
+
+* [#47](https://github.com/ConductionNL/opencatalogi/pull/47): feature/DIMOC-288/publication-type-default-value
+* [#48](https://github.com/ConductionNL/opencatalogi/pull/48): feature/DIMOC-111/metadata-summary
+* [#49](https://github.com/ConductionNL/opencatalogi/pull/49): input verification
+* [#50](https://github.com/ConductionNL/opencatalogi/pull/50): feature/DIMOC-186/publication-theme
+* [#51](https://github.com/ConductionNL/opencatalogi/pull/51): changed entity
+* [#52](https://github.com/ConductionNL/opencatalogi/pull/52): feature/add-metadata
+
+
 # Version: 0.0.1-featuredimoc279workflowforrele.1134.97c61c3
 
 
