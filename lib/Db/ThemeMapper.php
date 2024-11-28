@@ -141,7 +141,7 @@ class ThemeMapper extends QBMapper
 	 * @throws DoesNotExistException If the entity is not found
 	 * @throws MultipleObjectsReturnedException|\OCP\DB\Exception If multiple entities are found
 	 */
-	public function updateFromArray(int $id, array $object, bool $updateVersion = true): Theme
+	public function updateFromArray(int $id, array $object, bool $updateVersion = true, bool $patch = false): Theme
 	{
 		$theme = $this->find($id);
 		// Fallback to create if the theme does not exist

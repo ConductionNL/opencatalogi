@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Db\ListingMapper;
 use OCA\OpenCatalogi\Service\ObjectService;
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Exception\DirectoryUrlException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -186,13 +187,16 @@ class ListingsController extends Controller
         // Get the URL parameter from the request
         $url = $this->request->getParam('url');
 
-		// Check if the URL parameter is provided
-		if (empty($url) === true) {
-			return new JSONResponse(['error' => 'URL parameter is required'], 400);
-		}
-
         // Add the new listing using the provided URL
-        $result = $this->directoryService->syncExternalDirectory($url);
+		try {
+			$result = $this->directoryService->syncExternalDirectory($url);
+		} catch (DirectoryUrlException $exception) {
+			if($exception->getMessage() === 'URL is required') {
+				$exception->setMessage('Property "url" is required');
+			}
+
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
+		}
 
         // Return the result as a JSON response
         return new JSONResponse(['success' => $result]);

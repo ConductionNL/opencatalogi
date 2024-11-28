@@ -126,7 +126,7 @@ class AttachmentMapper extends QBMapper
 	 * @throws DoesNotExistException If the entity is not found
 	 * @throws MultipleObjectsReturnedException|\OCP\DB\Exception If multiple entities are found
 	 */
-	public function updateFromArray(int $id, array $object, bool $updateVersion = true): Attachment
+	public function updateFromArray(int $id, array $object, bool $updateVersion = true, bool $patch = false): Attachment
 	{
 		$attachment = $this->find($id);
 		// Fallback to create if the attachment does not exist

@@ -135,7 +135,7 @@ class OrganizationMapper extends QBMapper
 	 *
 	 * @return Organization The updated Organization entity
 	 */
-	public function updateFromArray(int $id, array $object, bool $updateVersion = true): Organization
+	public function updateFromArray(int $id, array $object, bool $updateVersion = true, bool $patch = false): Organization
 	{
 		$organization = $this->find($id);
 		// Fallback to create if the organization does not exist

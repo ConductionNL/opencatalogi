@@ -234,7 +234,7 @@ class ListingMapper extends QBMapper
 	 * @return Listing The updated Listing entity
 	 * @throws Exception
 	 */
-	public function updateFromArray(int|string $id, array $object, bool $updateVersion = true): Listing
+	public function updateFromArray(int|string $id, array $object, bool $updateVersion = true, bool $patch = false): Listing
 	{
 		$listing = $this->find($id);
 		// Fallback to create if the listing does not exist

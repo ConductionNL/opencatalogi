@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Db\ListingMapper;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\ObjectService;
+use OCA\OpenCatalogi\Exception\DirectoryUrlException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -75,25 +76,17 @@ class DirectoryController extends Controller
 	{
 		// Get the URL from the request parameters
 		$url = $this->request->getParam('directory');
-  
-		// http://directory.opencatalogi.nl
-		// Check if the URL parameter is provided
-		if (empty($url) === true) {
-			return new JSONResponse(['error' => 'directory parameter is required'], 400);
-		}
-
-		// Check if URL contains 'local' and throw exception if it does
-		if (str_contains(strtolower($url), 'local')) {
-			return new JSONResponse(['error' => 'Local URLs are not allowed'], 400);
-		}
-		
-		// Validate the URL
-		if (!filter_var($url, FILTER_VALIDATE_URL)) {
-			return new JSONResponse(['error' => 'Invalid URL provided'], 400);
-		}	
 
 		// Sync the external directory with the provided URL
-		$data = $this->directoryService->syncExternalDirectory($url);
+		try {
+			$data = $this->directoryService->syncExternalDirectory($url);
+		} catch (DirectoryUrlException $exception) {
+			if($exception->getMessage() === 'URL is required') {
+				$exception->setMessage('Property "directory" is required');
+			}
+
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
+		}
 
 		// Return JSON response with the sync result
 		return new JSONResponse($data);

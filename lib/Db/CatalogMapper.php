@@ -140,9 +140,9 @@ class CatalogMapper extends QBMapper
 	 *
 	 * @return Catalog The updated Catalog entity
 	 */
-	public function updateFromArray(int $id, array $object, bool $updateVersion = true): Catalog
+	public function updateFromArray(int $id, array $object, bool $updateVersion = true, bool $patch = false): Catalog
 	{
-		$catalog = $this->find($id);		
+		$catalog = $this->find($id);
 		// Fallback to create if the catalog does not exist
 		if ($catalog === null) {
 			$object['uuid'] = $id;

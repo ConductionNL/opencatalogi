@@ -224,7 +224,7 @@ class PublicationMapper extends QBMapper
 	 *
 	 * @return Publication The updated Publication entity
 	 */
-	public function updateFromArray(int $id, array $object, bool $updateVersion = true): Publication
+	public function updateFromArray(int $id, array $object, bool $updateVersion = true, bool $patch = false): Publication
 	{
 		$publication = $this->find(id: $id);
 		// Fallback to create if the publication does not exist
