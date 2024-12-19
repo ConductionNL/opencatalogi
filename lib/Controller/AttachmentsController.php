@@ -2,6 +2,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+ini_set('memory_limit', '2048M');
+
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Db\AttachmentMapper;

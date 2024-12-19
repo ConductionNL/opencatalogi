@@ -1,6 +1,7 @@
 <?php
 
 namespace OCA\OpenCatalogi\Service;
+ini_set('memory_limit', '2048M');
 
 use DateTime;
 use Exception;
