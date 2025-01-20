@@ -117,6 +117,18 @@ De commando's om deze linter in de CLI te gebruiken zijn [hier te vinden](https:
 
 De ontwikkeling van de API wordt bijgehouden met de documentatietool [Stoplight.io](https://stoplight.io/), die automatisch een [OpenAPI Specificatie (OAS)](https://www.noraonline.nl/wiki/FS:Openapi-specification) genereert uit de documentatie. De Stoplight voor OpenCatalogi is [hier](https://conduction.stoplight.io/docs/open-catalogi/6yuj08rgf7w44-open-catalogi-api) te vinden.
 
+### Authenticatie
+
+Een applicatie kan op twee manieren authenticeren bij de OpenCatalogi API (voor het bewerken van gegevens).
+
+#### Basic Auth
+
+Hiervoor worden de username en wachtwoord van de gebruiker in Nextcloud meegegeven in een Basic Auth structuur (waarin de volgende header volgt: `Authorization: Basic {{base64(username:password)}}`).
+
+#### OAuth
+
+OAuth is een veiliger en uitgebreider authenticatiemethode die wij aanraden voor productieomgevingen. Lees hiervoor de [documentatie](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/oauth2.html) voor het inregelen van OAuth van Nextcloud
+
 ## Frontend Development
 
 ### Storage en Typing

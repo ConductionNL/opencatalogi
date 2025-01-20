@@ -62,6 +62,11 @@ import { navigationStore, catalogiStore, publicationStore } from '../store/store
 					<Web :size="20" />
 				</template>
 			</NcAppNavigationItem>
+			<NcAppNavigationItem :active="navigationStore.selected === 'menus'" name="Menu's" @click="navigationStore.setSelected('menus')">
+				<template #icon>
+					<MenuClose :size="20" />
+				</template>
+			</NcAppNavigationItem>
 			<NcAppNavigationItem :active="navigationStore.selected === 'directory'" name="Directory" @click="navigationStore.setSelected('directory')">
 				<template #icon>
 					<LayersOutline :size="20" />
@@ -98,6 +103,7 @@ import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOut
 import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
 import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
+import MenuClose from 'vue-material-design-icons/MenuClose.vue'
 
 export default {
 	name: 'MainMenu',
@@ -121,6 +127,7 @@ export default {
 		OfficeBuildingOutline,
 		ShapeOutline,
 		Web,
+		MenuClose,
 	},
 	data() {
 		return {

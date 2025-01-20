@@ -15,6 +15,7 @@ import { usePublicationStore } from './modules/publication'
 import { useSearchStore } from './modules/search'
 import { useThemeStore } from './modules/theme'
 import { usePageStore } from './modules/page'
+import { useMenuStore } from './modules/menu'
 
 const navigationStore = useNavigationStore(pinia)
 const searchStore = useSearchStore(pinia)
@@ -26,6 +27,7 @@ const organizationStore = useOrganizationStore(pinia)
 const themeStore = useThemeStore(pinia)
 const configurationStore = useConfigurationStore(pinia)
 const pageStore = usePageStore(pinia)
+const menuStore = useMenuStore(pinia)
 
 export {
 	// generic
@@ -40,4 +42,5 @@ export {
 	themeStore,
 	configurationStore,
 	pageStore,
+	menuStore,
 }

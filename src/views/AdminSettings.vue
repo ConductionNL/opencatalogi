@@ -19,7 +19,7 @@
 					</NcButton>
 				</div>
 
-				<div v-if="!openRegisterInstalled && (settingsData.publication_source === 'openregister' || settingsData.publicationtype_source === 'openregister' || settingsData.catalog_source === 'openregister' || settingsData.listing_source === 'openregister' || settingsData.attachment_source === 'openregister' || settingsData.organization_source === 'openregister' || settingsData.theme_source === 'openregister' || settingsData.page_source === 'openregister')">
+				<div v-if="!openRegisterInstalled && (settingsData.publication_source === 'openregister' || settingsData.publicationtype_source === 'openregister' || settingsData.catalog_source === 'openregister' || settingsData.listing_source === 'openregister' || settingsData.attachment_source === 'openregister' || settingsData.organization_source === 'openregister' || settingsData.theme_source === 'openregister' || settingsData.page_source === 'openregister' || settingsData.menu_source === 'openregister')">
 					<NcNoteCard type="warning">
 						Het lijkt erop dat je een open register hebt geselecteerd maar dat deze nog niet geïnstalleerd is. Dit kan problemen geven. Wil je de instelling resetten?
 					</NcNoteCard>
@@ -279,6 +279,41 @@
 					</NcButton>
 				</div>
 
+				<h3>Menu</h3>
+				<div class="selectionContainer">
+					<NcSelect v-bind="labelOptions"
+						v-model="menu.selectedSource"
+						required
+						input-label="Source"
+						:loading="menu.loading"
+						:disabled="loading || menu.loading" />
+
+					<NcSelect v-if="menu.selectedSource?.value === 'openregister' "
+						v-bind="availableRegistersOptions"
+						v-model="menu.selectedRegister"
+						input-label="Register"
+						:loading="menu.loading"
+						:disabled="loading || menu.loading" />
+
+					<NcSelect v-if="menu.selectedSource?.value === 'openregister' && menu.selectedRegister?.value"
+						v-bind="menu.availableSchemas"
+						v-model="menu.selectedSchema"
+						input-label="Schema"
+						:loading="menu.loading"
+						:disabled="loading || menu.loading" />
+
+					<NcButton
+						type="primary"
+						:disabled="loading || saving || menu.loading || !menu.selectedSource?.value || menu.selectedSource?.value === 'openregister' && (!menu.selectedRegister?.value || !menu.selectedSchema?.value)"
+						@click="saveConfig('menu')">
+						<template #icon>
+							<NcLoadingIcon v-if="loading || menu.loading" :size="20" />
+							<Plus v-if="!loading && !menu.loading" :size="20" />
+						</template>
+						Opslaan
+					</NcButton>
+				</div>
+
 				<h3>Publicatie Type</h3>
 				<div class="selectionContainer">
 					<NcSelect v-bind="labelOptions"
@@ -411,6 +446,13 @@ export default {
 				loading: false,
 			},
 			page: {
+				selectedSource: '',
+				selectedRegister: '',
+				selectedSchema: '',
+				availableSchemas: [],
+				loading: false,
+			},
+			menu: {
 				selectedSource: '',
 				selectedRegister: '',
 				selectedSchema: '',
@@ -552,6 +594,30 @@ export default {
 					this.setRegisterSchemaOptions(newValue?.value, 'page')
 					// Reset schema if register changed
 					oldValue !== '' && newValue?.value !== oldValue.value && (this.page.selectedSchema = '')
+				}
+			},
+			deep: true,
+		},
+		'menu.selectedSource': {
+			handler(newValue) {
+				if (newValue?.value === 'internal') {
+					// Reset register and schema when source is internal
+					this.menu.selectedRegister = ''
+					this.menu.selectedSchema = ''
+				}
+			},
+			deep: true,
+		},
+		'menu.selectedRegister': {
+			handler(newValue, oldValue) {
+				// Skip initialization
+				if (this.initialization === true && oldValue === '') return
+
+				if (newValue) {
+					// Set schema options for selected register
+					this.setRegisterSchemaOptions(newValue?.value, 'menu')
+					// Reset schema if register changed
+					oldValue !== '' && newValue?.value !== oldValue.value && (this.menu.selectedSchema = '')
 				}
 			},
 			deep: true,
