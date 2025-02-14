@@ -1,6 +1,38 @@
 <template>
 	<div>
 		<NcSettingsSection :name="'Open Catalogi'" description="Eén centrale plek voor hergebruik van informatietechnologie binnen de overheid" doc-url="https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers" />
+		<NcSettingsSection :name="'Publications'" description="">
+			<h3>Publicatie</h3>
+			<div class="selectionContainer">
+				<NcSelect v-bind="attachmentSettings.file_types"
+					v-model="attachmentSettings.file_types.value"
+					required
+					multiple
+					:close-on-select="false"
+					input-label="Bestandstype"
+					:loading="attachmentSettings.loading"
+					:disabled="loading || attachmentSettings.loading" />
+
+				<NcCheckboxRadioSwitch :checked.sync="attachmentSettings.automatic_publish" type="switch">
+					Automatisch publiceren
+				</NcCheckboxRadioSwitch>
+
+				<NcCheckboxRadioSwitch :checked.sync="attachmentSettings.automatic_publish_attachment" type="switch">
+					Bijlagen automatisch mee publiceren
+				</NcCheckboxRadioSwitch>
+
+				<NcButton
+					type="primary"
+					:disabled="attachmentSettings.loading"
+					@click="saveAttachmentConfig()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading || attachmentSettings.loading" :size="20" />
+						<Plus v-if="!loading && !attachmentSettings.loading" :size="20" />
+					</template>
+					Opslaan
+				</NcButton>
+			</div>
+		</NcSettingsSection>
 		<NcSettingsSection :name="'Data storage'" description="Korte uitleg over dat je kan opslaan in de nextcloud database of open registers en via open registers ook in externe opslag zo al mongo db">
 			<div v-if="!loading">
 				<div v-if="!openRegisterInstalled">
@@ -371,7 +403,7 @@
 
 <script>
 // Components
-import { NcSettingsSection, NcNoteCard, NcSelect, NcButton, NcLoadingIcon } from '@nextcloud/vue'
+import { NcSettingsSection, NcNoteCard, NcSelect, NcButton, NcCheckboxRadioSwitch, NcLoadingIcon } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Restart from 'vue-material-design-icons/Restart.vue'
 
@@ -382,6 +414,7 @@ export default {
 		NcNoteCard,
 		NcSelect,
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcLoadingIcon,
 		Plus,
 		Restart,
@@ -465,10 +498,46 @@ export default {
 					{ label: 'OpenRegister', value: 'openregister' },
 				],
 			},
+			attachmentSettings: {
+				automatic_publish_attachment: false,
+				automatic_publish: false,
+				file_types: {
+					options: [
+						{ label: 'PNG', value: 'png' },
+						{ label: 'JPG', value: 'jpg' },
+						{ label: 'PDF', value: 'pdf' },
+						{ label: 'DOCX', value: 'docx' },
+						{ label: 'XLSX', value: 'xlsx' },
+						{ label: 'TXT', value: 'txt' },
+						{ label: 'CSV', value: 'csv' },
+						{ label: 'ZIP', value: 'zip' },
+						{ label: 'RAR', value: 'rar' },
+					],
+					value: null,
+				},
+				loading: false,
+			},
 		}
 	},
+	computed: {
+		filteredAvailableSchemas() {
+			console.log('filteredAvailableSchemas')
 
+			const usedSchemas = this.objectTypes.map((objectType) => this[objectType].selectedSchema?.value)
+
+			console.log(this.objectTypes)
+			console.log(usedSchemas)
+
+			return this.availableSchemas?.filter((schema) => !usedSchemas.includes(schema.id.toString())) ?? []
+		},
+	},
 	watch: {
+		filteredAvailableSchemas: {
+			handler(newValue) {
+				console.log(newValue)
+			},
+			deep: true,
+		},
 		'publication.selectedSource': {
 			handler(newValue) {
 				if (newValue?.value === 'internal') {
@@ -691,6 +760,12 @@ export default {
 				.then((response) => {
 					this.initialization = true
 					response.json().then((data) => {
+						// Attachment Settings
+						this.attachmentSettings.automatic_publish = (typeof data?.automatic_publish === 'boolean') ? data.automatic_publish : false
+						this.attachmentSettings.automatic_publish_attachment = (typeof data?.automatic_publish_attachment === 'boolean') ? data.automatic_publish_attachment : false
+						this.attachmentSettings.file_types.value = this.attachmentSettings.file_types.options.filter((type) => data?.file_types?.includes(type.id))
+
+						// Other settings
 						this.openRegisterInstalled = data.openRegisters
 						this.settingsData = data
 						this.availableRegisters = data.availableRegisters
@@ -771,6 +846,49 @@ export default {
 					this[configId].loading = false
 					this.saving = false
 					return err
+				})
+		},
+		saveAttachmentConfig() {
+			this.attachmentSettings.loading = true
+			console.info('Saving attachment config')
+
+			const settingsDataCopy = this.settingsData
+
+			delete settingsDataCopy.objectTypes
+			delete settingsDataCopy.openRegisters
+			delete settingsDataCopy.availableRegisters
+
+			fetch('/index.php/apps/opencatalogi/settings',
+				{
+					method: 'POST',
+					body: JSON.stringify({
+						...settingsDataCopy,
+						file_types: this.attachmentSettings.file_types.value?.map((type) => type.value) || [],
+						automatic_publish_attachment: this.attachmentSettings.automatic_publish_attachment,
+						automatic_publish: this.attachmentSettings.automatic_publish,
+					}),
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				},
+			)
+				.then((response) => {
+					response.json().then((data) => {
+						this.settingsData = {
+							...this.settingsData,
+							file_types: this.attachmentSettings.file_types.options.filter((type) => data.file_types.includes(type.id)),
+							automatic_publish_attachment: data.automatic_publish_attachment,
+							automatic_publish: data.automatic_publish,
+						}
+
+					})
+				})
+				.catch((err) => {
+					console.error(err)
+					return err
+				})
+				.finally(() => {
+					this.attachmentSettings.loading = false
 				})
 		},
 
