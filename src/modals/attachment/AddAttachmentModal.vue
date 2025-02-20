@@ -76,6 +76,23 @@ import { navigationStore, publicationStore } from '../../store/store.js'
 							<p>Please select or create labels or select "Geen label" to add files</p>
 						</NcNoteCard>
 					</div>
+					<div v-if="checkForTooBigFiles(files)">
+						<NcNoteCard type="warning">
+							<p class="folderLink">
+								Als je bestanden groter of gelijk aan 512MB wilt toevoegen, ga dan naar de
+								<NcButton type="secondary"
+									class="folderLinkButton"
+									aria-label="Open map"
+									@click="openFolder(publicationStore.publicationItem?.['@self']?.folder)">
+									<template #icon>
+										<FolderOutline :size="20" />
+									</template>
+									map
+								</NcButton>
+								en voeg de bestanden daar toe.
+							</p>
+						</NcNoteCard>
+					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
 							<p>Successfully imported files</p>
@@ -122,7 +139,7 @@ import { navigationStore, publicationStore } from '../../store/store.js'
 				</div>
 				<div v-if="files" class="importButtonContainer">
 					<NcButton
-						:disabled="loading || checkForTooBigFiles(files)"
+						:disabled="loading || checkForTooBigFiles(files) || editingTags !== null"
 						type="primary"
 						@click="addAttachments()">
 						<template #icon>
@@ -173,18 +190,19 @@ import { navigationStore, publicationStore } from '../../store/store.js'
 								</span>
 								<NcSelect
 									v-if="editingTags === file.name"
-									v-model="file.tags"
+									v-model="editedTags"
 									:taggable="false"
 									:multiple="true"
+									:aria-label-combobox="labelOptionsEdit.inputLabel"
 									:options="labelOptionsEdit.options" />
 
 								<NcButton
 									v-if="editingTags !== file.name"
-									:disabled="true || editingTags && editingTags !== file.name"
+									:disabled="editingTags && editingTags !== file.name || loading"
 									:aria-label="`edit tags for ${file.name}`"
 									type="secondary"
 									class="editTagsButton"
-									@click="editingTags = file.name">
+									@click="editingTags = file.name, editedTags = file.tags">
 									<template #icon>
 										<TagEditIcon :size="20" />
 									</template>
@@ -194,7 +212,7 @@ import { navigationStore, publicationStore } from '../../store/store.js'
 									type="primary"
 									:aria-label="`save tags for ${file.name}`"
 									class="editTagsButton"
-									@click="saveTags(files)">
+									@click="saveTags(file, editedTags)">
 									<template #icon>
 										<ContentSaveOutline :size="20" />
 									</template>
@@ -204,7 +222,7 @@ import { navigationStore, publicationStore } from '../../store/store.js'
 								<NcButton
 									:disabled="loading"
 									type="primary"
-									@click="reset(file.name)">
+									@click="removeFile(file.name)">
 									<template #icon>
 										<Minus :size="20" />
 									</template>
@@ -231,6 +249,7 @@ import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import TagEditIcon from 'vue-material-design-icons/TagEdit.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 
 import { Attachment } from '../../entities/index.js'
 
@@ -260,6 +279,7 @@ export default {
 			success: null,
 			error: false,
 			editingTags: null,
+			editedTags: [],
 			labelOptions: {
 				inputLabel: 'Labels',
 				multiple: true,
@@ -325,7 +345,7 @@ export default {
 		},
 
 		getTooBigFiles(size) {
-			return size > 100000000 // 100MB
+			return size > 536870912 // 512MB
 		},
 
 		isSelectable(option) {
@@ -346,8 +366,37 @@ export default {
 			}
 		},
 
-		saveTags() {
+		/**
+		 * Opens the folder URL in a new tab after parsing the encoded URL and converting to Nextcloud format
+		 * @param {string} url - The encoded folder URL to open (e.g. "Open Registers\/Publicatie Register\/Publicatie\/123")
+		 */
+		 openFolder(url) {
+			// Parse the encoded URL by replacing escaped characters
+			const decodedUrl = url.replace(/\\\//g, '/')
+
+			// Ensure URL starts with forward slash
+			const normalizedUrl = decodedUrl.startsWith('/') ? decodedUrl : '/' + decodedUrl
+
+			// Construct the proper Nextcloud Files app URL with the normalized path
+			// Use window.location.origin to get the current domain instead of hardcoding
+			const nextcloudUrl = `${window.location.origin}/index.php/apps/files/files?dir=${encodeURIComponent(normalizedUrl)}`
+
+			// Open URL in new tab
+			window.open(nextcloudUrl, '_blank')
+		},
+
+		saveTags(file, editedTags) {
+			file.tags = editedTags
 			this.editingTags = null
+			this.editedTags = []
+
+		},
+
+		removeFile(fileName) {
+			reset(fileName)
+			if (this.editingTags === fileName) {
+				this.editingTags = null
+			}
 		},
 
 		closeModal() {
@@ -406,6 +455,16 @@ div[class='modal-container']:has(.TestMappingMainModal) {
 
 .success {
     color: green;
+}
+
+.folderLink {
+	display: flex;
+	align-items: center;
+}
+
+.folderLinkButton {
+	margin-inline-start: 1ch;
+	margin-inline-end: 1ch;
 }
 
 .importButtonContainer {

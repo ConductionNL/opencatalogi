@@ -10,7 +10,6 @@
 					<h5>Term</h5>
 					<div class="content">
 						23
-						<TagEdit />
 					</div>
 				</div>
 				<div>
@@ -72,9 +71,6 @@
 
 import { NcAppContent } from '@nextcloud/vue'
 import VueApexCharts from 'vue-apexcharts'
-
-import TagEdit from 'vue-material-design-icons/TagEdit.vue'
-
 import { getTheme } from '../../services/getTheme.js'
 
 export default {
@@ -82,7 +78,6 @@ export default {
 	components: {
 		NcAppContent,
 		apexchart: VueApexCharts,
-		TagEdit,
 	},
 	data() {
 		return {

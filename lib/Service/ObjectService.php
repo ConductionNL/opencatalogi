@@ -591,7 +591,7 @@ class ObjectService
 		$object = $mapper->find($id);
         // Create the file and get the raw file data // @TODO: This auto shares files but do we want that
 		$openRegisters = $this->getOpenRegisters();
-        $file = $openRegisters->addFile($object, $filePath, $content, true, $tags);
+        $file = $openRegisters->addFile($object, $filePath, base64_encode($content), true, $tags);
         // Format the file addFile before returning
         return $openRegisters->formatFile($file);
     }
