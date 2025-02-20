@@ -464,6 +464,7 @@ import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 
 import { Publication } from '../../entities/index.js'
+import { getTheme } from '../../services/getTheme.js'
 
 export default {
 	name: 'PublicationDetail',
@@ -508,6 +509,15 @@ export default {
 			],
 			chart: {
 				options: {
+					theme: {
+						mode: getTheme(),
+						monochrome: {
+							enabled: true,
+							color: getComputedStyle(document.documentElement).getPropertyValue('--color-primary-element').trim() || '#079cff',
+							shadeTo: 'light',
+							shadeIntensity: 0,
+						},
+					},
 					chart: {
 						id: 'Aantal bekeken publicaties',
 					},
