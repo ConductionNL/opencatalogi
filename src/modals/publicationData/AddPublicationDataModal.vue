@@ -226,6 +226,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
 
 import { Publication } from '../../entities/index.js'
+import _ from 'lodash'
 
 export default {
 	name: 'AddPublicationDataModal',
@@ -257,12 +258,12 @@ export default {
 
 		/**
 		 * Takes the properties from the publication type in the store and loops through them, returning only the items not in the publication data
-		 * @return {Array<object> | []} list of publication type properties NOT in the publication data
+		 * @return {[string, object][]} list of publication type properties NOT in the publication data alongside their key
 		 */
 		getFilteredPublicationTypeProperties() {
 			if (!publicationStore.publicationPublicationType?.properties) return []
-			return Object.values(publicationStore.publicationPublicationType?.properties)
-				.filter((prop) => !Object.keys(publicationStore.publicationItem?.data ?? {}).includes(prop.title))
+			return Object.entries(publicationStore.publicationPublicationType?.properties)
+				.filter(([key]) => !Object.keys(publicationStore.publicationItem?.data ?? {}).includes(key))
 		},
 		/**
 		 * based on the result `getFilteredPublicationTypeProperties` gives AND the selected value in the eigenschappen dropdown,
@@ -273,7 +274,7 @@ export default {
 		 * @return {object | null} A single publication type properties object or null
 		 */
 		getSelectedPublicationTypeProperty() {
-			return this.getFilteredPublicationTypeProperties.find((prop) => prop?.title ? prop?.title === this.eigenschappen.value?.label : null) || null
+			return this.getFilteredPublicationTypeProperties.find(([key]) => key === this.eigenschappen.value?.id)?.[1] || null
 		},
 		mapPublicationTypeEigenschappen() {
 			if (publicationStore.publicationPublicationType) {
@@ -281,11 +282,11 @@ export default {
 				if (incomingUrl?.host !== window.location.host) {
 					return {
 						inputLabel: 'Publicatietype eigenschap',
-						options: Object.keys(publicationStore.publicationPublicationType?.properties)
-							.filter((prop) => !Object.keys(publicationStore.publicationItem?.data).includes(prop))
-							.map((prop) => ({
-								id: prop,
-								label: prop,
+						options: Object.entries(publicationStore.publicationPublicationType?.properties)
+							.filter(([key]) => !Object.keys(publicationStore.publicationItem?.data).includes(key))
+							.map(([key]) => ({
+								id: key,
+								label: key,
 							})),
 					}
 				}
@@ -294,9 +295,9 @@ export default {
 			return {
 				inputLabel: 'Publicatietype eigenschap',
 				options: this.getFilteredPublicationTypeProperties
-					.map((prop) => ({
-						id: prop.title,
-						label: prop.title,
+					.map(([key]) => ({
+						id: key,
+						label: key,
 					})),
 			}
 		},
@@ -332,9 +333,9 @@ export default {
 		AddPublicatieEigenschap() {
 			this.loading = true
 
-			const publicationClone = { ...publicationStore.publicationItem }
+			const publicationClone = _.cloneDeep(publicationStore.publicationItem)
 
-			publicationClone.data[this.eigenschappen.value?.label] = this.value
+			publicationClone.data[this.eigenschappen.value?.id] = this.value
 			delete publicationClone.publicationDate
 
 			const newPublicationItem = new Publication({
