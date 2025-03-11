@@ -1,3 +1,13 @@
+# Version: 0.1.1-headsmaster.121.1fd0767
+
+
+#### Other Changes
+
+* [#61](https://github.com/ConductionNL/opencatalogi/pull/61): Fixed or filter for publication.catalogi
+* [#62](https://github.com/ConductionNL/opencatalogi/pull/62): added a metadata counter to listing
+* [#63](https://github.com/ConductionNL/opencatalogi/pull/63): cast property default
+
+
 # Version: 0.0.1-featuredimoc279workflowforrele.1134.97c61c3
 
 
