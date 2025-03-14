@@ -37,6 +37,16 @@ class Page extends Entity implements JsonSerializable
 	}
 
 	/**
+	 * Get the contents
+	 *
+	 * @return array The contents or empty array if null
+	 */
+	public function getContents(): array
+	{
+		return $this->contents ?? [];
+	}
+
+	/**
 	 * Get array of JSON field names
 	 * 
 	 * @return array List of field names that are JSON type

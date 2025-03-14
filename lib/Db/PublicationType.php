@@ -37,6 +37,36 @@ class PublicationType extends Entity implements JsonSerializable
 		$this->addType(fieldName: 'created', type: 'datetime');
 	}
 
+	/**
+	 * Get the required fields
+	 *
+	 * @return array The required fields or empty array if null
+	 */
+	public function getRequired(): array
+	{
+		return $this->required ?? [];
+	}
+
+	/**
+	 * Get the properties
+	 *
+	 * @return array The properties or empty array if null
+	 */
+	public function getProperties(): array
+	{
+		return $this->properties ?? [];
+	}
+
+	/**
+	 * Get the archive data
+	 *
+	 * @return array The archive data or empty array if null
+	 */
+	public function getArchive(): array
+	{
+		return $this->archive ?? [];
+	}
+
 	public function getJsonFields(): array
 	{
 		return array_keys(

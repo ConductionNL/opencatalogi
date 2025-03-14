@@ -48,6 +48,26 @@ class Listing extends Entity implements JsonSerializable
 		$this->addType(fieldName: 'created', type: 'datetime');
 	}
 
+	/**
+	 * Get the organization data
+	 *
+	 * @return array The organization data or empty array if null
+	 */
+	public function getOrganization(): array
+	{
+		return $this->organization ?? [];
+	}
+
+	/**
+	 * Get the publication types
+	 *
+	 * @return array The publication types or empty array if null
+	 */
+	public function getPublicationTypes(): array
+	{
+		return $this->publicationTypes ?? [];
+	}
+
 	public function getJsonFields(): array
 	{
 		return array_keys(

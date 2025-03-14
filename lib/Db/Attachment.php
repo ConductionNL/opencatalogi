@@ -56,6 +56,36 @@ class Attachment extends Entity implements JsonSerializable
 		$this->addType(fieldName: 'created', type: 'datetime');
 	}
 
+	/**
+	 * Get the labels
+	 *
+	 * @return array The labels or empty array if null
+	 */
+	public function getLabels(): array
+	{
+		return $this->labels ?? [];
+	}
+
+	/**
+	 * Get the anonymization data
+	 *
+	 * @return array The anonymization data or empty array if null
+	 */
+	public function getAnonymization(): array
+	{
+		return $this->anonymization ?? [];
+	}
+
+	/**
+	 * Get the language data
+	 *
+	 * @return array The language data or empty array if null
+	 */
+	public function getLanguage(): array
+	{
+		return $this->language ?? [];
+	}
+
 	public function getJsonFields(): array
 	{
 		return array_keys(

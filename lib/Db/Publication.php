@@ -70,6 +70,96 @@ class Publication extends Entity implements JsonSerializable
 		$this->addType(fieldName: 'created', type: 'datetime');
 	}
 
+	/**
+	 * Get the organization data
+	 *
+	 * @return array The organization data or empty array if null
+	 */
+	public function getOrganization(): array
+	{
+		return $this->organization ?? [];
+	}
+
+	/**
+	 * Get the data
+	 *
+	 * @return array The data or empty array if null
+	 */
+	public function getData(): array
+	{
+		return $this->data ?? [];
+	}
+
+	/**
+	 * Get the attachments
+	 *
+	 * @return array The attachments or empty array if null
+	 */
+	public function getAttachments(): array
+	{
+		return $this->attachments ?? [];
+	}
+
+	/**
+	 * Get the themes
+	 *
+	 * @return array The themes or empty array if null
+	 */
+	public function getThemes(): array
+	{
+		return $this->themes ?? [];
+	}
+
+	/**
+	 * Get the anonymization data
+	 *
+	 * @return array The anonymization data or empty array if null
+	 */
+	public function getAnonymization(): array
+	{
+		return $this->anonymization ?? [];
+	}
+
+	/**
+	 * Get the language object
+	 *
+	 * @return array The language object or empty array if null
+	 */
+	public function getLanguageObject(): array
+	{
+		return $this->languageObject ?? [];
+	}
+
+	/**
+	 * Get the archive data
+	 *
+	 * @return array The archive data or empty array if null
+	 */
+	public function getArchive(): array
+	{
+		return $this->archive ?? [];
+	}
+
+	/**
+	 * Get the geo data
+	 *
+	 * @return array The geo data or empty array if null
+	 */
+	public function getGeo(): array
+	{
+		return $this->geo ?? [];
+	}
+
+	/**
+	 * Get the validation data
+	 *
+	 * @return array The validation data or empty array if null
+	 */
+	public function getValidation(): array
+	{
+		return $this->validation ?? [];
+	}
+
 	public function getJsonFields(): array
 	{
 		return array_keys(
