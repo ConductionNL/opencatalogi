@@ -123,11 +123,15 @@ import { catalogiStore, publicationTypeStore, navigationStore, organizationStore
 						</NcListItem>
 					</div>
 					<div v-if="catalogiStore.catalogiItem?.publicationTypes.length === 0">
-						Geen publicatietypes gevonden
+						<h5 class="notFoundText">
+							Geen publicatietypes gevonden
+						</h5>
 					</div>
 				</BTab>
 				<BTab title="Toegang">
-					Publiek of alleen bepaalde rollen
+					<h5 class="notFoundText">
+						Publiek of alleen bepaalde rollen
+					</h5>
 				</BTab>
 			</BTabs>
 		</div>
@@ -309,5 +313,10 @@ h4 {
 
 .catalogDetailGridOrganizationTitle {
 	margin-inline-end: 1ch;
+}
+
+.notFoundText {
+	width: 100%;
+	text-align: center;
 }
 </style>

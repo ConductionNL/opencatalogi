@@ -23,12 +23,15 @@ import { navigationStore } from '../../store/store.js'
 			<tr>
 				<td><b>Wijzigingen</b></td>
 				<td>
-					{
-					"title": {
-					"old":Null
-					"new":"KOPIE: Voorlopige energielabels met BAG-kenmerken"
-					}
-					}
+					<div class="changes-container">
+						<span class="changes-text">
+							{
+							"title": {
+							"old":Null
+							"new":"KOPIE: Voorlopige energielabels met BAG-kenmerken"
+							}
+							}</span>
+					</div>
 				</td>
 			</tr>
 		</table>
@@ -79,5 +82,17 @@ export default {
 
 .success {
     color: green;
+}
+.changes-container {
+  display: flex;
+  align-items: center;
+}
+
+.changes-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 300px;
 }
 </style>

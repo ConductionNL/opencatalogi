@@ -79,7 +79,13 @@ import { publicationTypeStore, navigationStore, publicationStore, catalogiStore,
 			<div v-if="success === null" class="form-group">
 				<!-- STAGE 1 -->
 				<div v-if="!catalogi?.value?.id">
-					<p>Publicaties horen in een <a @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/catalogi', '_blank')">catalogus</a>, aan welke catlogus wilt u deze publicatie toevoegen?</p>
+					<p>
+						Publicaties horen in een
+						<a
+							class="definitionLink"
+							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/catalogi', '_blank')">
+							catalogus</a>, aan welke catlogus wilt u deze publicatie toevoegen?
+					</p>
 					<NcSelect v-bind="catalogi"
 						v-model="catalogi.value"
 						input-label="Catalogus*"
@@ -89,7 +95,13 @@ import { publicationTypeStore, navigationStore, publicationStore, catalogiStore,
 				</div>
 				<!-- STAGE 2 -->
 				<div v-if="catalogi?.value?.id && !publicationType?.value?.id">
-					<p>Publicaties worden gedefineerd door <a @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/publication-types', '_blank')">publicatietypes</a>, van welk publicatietype wit u een publicatie aanmaken?</p>
+					<p>
+						Publicaties worden gedefineerd door
+						<a
+							class="definitionLink"
+							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/publication-types', '_blank')">
+							publicatietypes</a>, van welk publicatietype wit u een publicatie aanmaken?
+					</p>
 					<div v-if="!filteredPublicationTypeOptions.options?.length">
 						<p>
 							<strong>Er zijn nog geen publicatietypes toegevoegd aan deze Catalogus.</strong>
@@ -108,7 +120,7 @@ import { publicationTypeStore, navigationStore, publicationStore, catalogiStore,
 					</div>
 				</div>
 				<!-- STAGE 3 -->
-				<div v-if="catalogi.value?.id && publicationType.value?.id">
+				<div v-if="catalogi.value?.id && publicationType.value?.id" class="editPublicationSpacing">
 					<NcTextField :disabled="loading"
 						label="Titel*"
 						:value.sync="publication.title"
@@ -124,7 +136,8 @@ import { publicationTypeStore, navigationStore, publicationStore, catalogiStore,
 						label="Beschrijving"
 						:value.sync="publication.description"
 						:error="!!inputValidation.fieldErrors?.['description']"
-						:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+						:helper-text="inputValidation.fieldErrors?.['description']?.[0]"
+						resize="none" />
 					<NcTextField :disabled="loading"
 						label="Reference"
 						:value.sync="publication.reference"
@@ -158,7 +171,7 @@ import { publicationTypeStore, navigationStore, publicationStore, catalogiStore,
 						:value.sync="publication.image"
 						:error="!!inputValidation.fieldErrors?.['image']"
 						:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
-					<b>Juridisch</b>
+					<b class="modalSectionName">Juridisch</b>
 					<NcTextField :disabled="loading"
 						label="Licentie"
 						:value.sync="publication.license"
@@ -480,5 +493,20 @@ export default {
 
 .apm-submit-button {
     margin-block-start: 1rem
+}
+.definitionLink {
+	transition: .2s;
+	text-decoration: underline;
+}
+.definitionLink:hover {
+	color: var(--color-primary-element);
+}
+.editPublicationSpacing {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.modalSectionName {
+	margin-bottom: 0;
 }
 </style>

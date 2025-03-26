@@ -134,8 +134,9 @@ export default {
 
 .downloadButtonGroup{
 	display: flex;
-	gap: 5px;
+	gap: 10px;
 	justify-content: center;
+	margin-top: 10px;
 }
 
 .success {

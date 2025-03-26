@@ -15,7 +15,7 @@ import { EventBus } from '../../eventBus.js'
 			<p>{{ error }}</p>
 		</NcNoteCard>
 
-		<div v-if="!success" class="formContainer">
+		<div v-if="!success" class="formContainer menuItemSpacing">
 			<NcTextField
 				:disabled="loading"
 				label="Naam"
@@ -278,3 +278,11 @@ export default {
 	},
 }
 </script>
+
+<style>
+.menuItemSpacing {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+</style>

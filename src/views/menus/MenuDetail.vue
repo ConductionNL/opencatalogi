@@ -74,7 +74,7 @@ import { EventBus } from '../../eventBus.js'
 				</div>
 				<div>
 					<b>Laatst bijgewerkt:</b>
-					<span>{{ menuStore.menuItem.updatedAt }}</span>
+					<span>{{ menuStore.menuItem.updatedAt || "-" }}</span>
 				</div>
 			</div>
 		</div>
@@ -136,7 +136,9 @@ import { EventBus } from '../../eventBus.js'
 						</NcButton>
 					</div>
 					<div v-else>
-						Geen menu items gevonden
+						<h5 class="notFoundText">
+							Geen menu items gevonden
+						</h5>
 					</div>
 				</BTab>
 			</BTabs>

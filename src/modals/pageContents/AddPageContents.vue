@@ -43,7 +43,8 @@ import { EventBus } from '../../eventBus.js'
 				<NcTextArea v-if="contentsItem.type === 'RichText'"
 					:value.sync="contentsItem.richTextData"
 					label="RichText"
-					required />
+					required
+					resize="none" />
 
 				<!-- Faq -->
 				<div v-if="contentsItem.type === 'Faq'">
@@ -58,17 +59,18 @@ import { EventBus } from '../../eventBus.js'
 					</VueDraggable>
 				</div>
 			</div>
-
-			<NcButton v-if="success === null"
-				:disabled="!contentsItem.type || loading"
-				type="primary"
-				@click="addPageContent">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<Plus v-if="!loading" :size="20" />
-				</template>
-				{{ IS_EDIT ? 'Bewerken' : 'Toevoegen' }}
-			</NcButton>
+			<div class="buttonContainerModal">
+				<NcButton v-if="success === null"
+					:disabled="!contentsItem.type || loading"
+					type="primary"
+					@click="addPageContent">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<Plus v-if="!loading" :size="20" />
+					</template>
+					{{ IS_EDIT ? 'Bewerken' : 'Toevoegen' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>

@@ -20,7 +20,7 @@ import { navigationStore, organizationStore } from '../../store/store.js'
 				</NcNoteCard>
 			</div>
 			<div class="formContainer">
-				<div v-if="success === null" class="form-group">
+				<div v-if="success === null" class="form-group editOrganizationSpacing">
 					<NcTextField
 						:disabled="loading"
 						label="Titel"
@@ -38,7 +38,8 @@ import { navigationStore, organizationStore } from '../../store/store.js'
 						label="Beschrijving"
 						:value.sync="organization.description"
 						:error="!!inputValidation.fieldErrors?.['description']"
-						:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+						:helper-text="inputValidation.fieldErrors?.['description']?.[0]"
+						resize="none" />
 					<NcTextField
 						:disabled="loading"
 						label="OIN (organisatie-identificatienummer)"
@@ -222,5 +223,10 @@ export default {
   gap: 4px;
   flex-direction: row;
   align-items: center;
+}
+.editOrganizationSpacing {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
 }
 </style>

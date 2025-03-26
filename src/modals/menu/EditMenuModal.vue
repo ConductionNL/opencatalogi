@@ -3,7 +3,7 @@ import { navigationStore, menuStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="menuStore.menuItem?.id ? 'Edit Menu' : 'Add Menu'"
+	<NcDialog :name="menuStore.menuItem?.id ? 'Menu bewerken' : 'Menu toevoegen'"
 		size="normal"
 		:can-close="false">
 		<NcNoteCard v-if="success" type="success">

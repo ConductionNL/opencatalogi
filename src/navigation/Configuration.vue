@@ -136,6 +136,7 @@
 				<NcButton aria-label="Opslaan"
 					type="primary"
 					wide
+					class="buttonSpacing"
 					@click="saveConfig(); feedbackPosition = 'top'">
 					<template #icon>
 						<ContentSave :size="20" />
@@ -164,11 +165,12 @@
 
 				<NcTextField id="organizationName" :value.sync="configuration.organizationName" />
 				<NcTextField id="organizationOin" :value.sync="configuration.organizationOin" />
-				<NcTextArea id="organizationPki" :value.sync="configuration.organizationPki" />
+				<NcTextArea id="organizationPki" :value.sync="configuration.organizationPki" resize="none" />
 
 				<NcButton aria-label="Opslaan"
 					type="primary"
 					wide
+					class="buttonSpacing"
 					@click="saveConfig(); feedbackPosition = 'bottom'">
 					<template #icon>
 						<ContentSave :size="20" />
@@ -350,5 +352,8 @@ td.row-size {
 
 .row-size .sort-icon {
 	inset-inline: 10px;
+}
+.buttonSpacing {
+	margin-top: 15px;
 }
 </style>

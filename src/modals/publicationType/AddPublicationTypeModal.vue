@@ -20,7 +20,7 @@ import { navigationStore, publicationTypeStore } from '../../store/store.js'
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
-			<div v-if="success === null" class="form-group">
+			<div v-if="success === null" class="form-group modalSpacing">
 				<NcTextField
 					label="Titel"
 					:value.sync="publicationType.title"
@@ -36,7 +36,8 @@ import { navigationStore, publicationTypeStore } from '../../store/store.js'
 					:disabled="loading"
 					:value.sync="publicationType.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
-					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+					:helper-text="inputValidation.fieldErrors?.['description']?.[0]"
+					resize="none" />
 			</div>
 			<NcButton v-if="success === null"
 				v-tooltip="inputValidation.errorMessages?.[0]"

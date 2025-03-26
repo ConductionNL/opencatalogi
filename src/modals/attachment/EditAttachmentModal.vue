@@ -39,7 +39,8 @@ import { navigationStore, publicationStore } from '../../store/store.js'
 					maxlength="255"
 					:value.sync="publicationStore.attachmentItem.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
-					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+					:helper-text="inputValidation.fieldErrors?.['description']?.[0]"
+					resize="none" />
 				<NcSelect v-bind="labelOptions"
 					v-model="publicationStore.attachmentItem.labels" />
 				<NcTextField :disabled="loading"

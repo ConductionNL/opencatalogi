@@ -20,7 +20,7 @@ import { navigationStore, pageStore } from '../../store/store.js'
 				</NcNoteCard>
 			</div>
 			<div class="formContainer">
-				<div v-if="success === null" class="form-group">
+				<div v-if="success === null" class="form-group pageSpacing">
 					<NcTextField
 						:disabled="loading"
 						label="Naam"
@@ -162,5 +162,11 @@ export default {
 
 .success {
   color: green;
+}
+
+.pageSpacing {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 }
 </style>

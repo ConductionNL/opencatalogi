@@ -175,7 +175,11 @@ import { getTheme } from '../../services/getTheme.js'
 				</div>
 			</div>
 
-			<span class="flex-horizontal">
+			<span class="buttonContainerModal">
+				<NcButton
+					@click="navigationStore.setModal(false)">
+					{{ success ? 'Sluiten' : 'Annuleer' }}
+				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading
 						|| !eigenschappen.value?.id
@@ -190,11 +194,6 @@ import { getTheme } from '../../services/getTheme.js'
 						</span>
 					</template>
 					Toevoegen
-				</NcButton>
-
-				<NcButton
-					@click="navigationStore.setModal(false)">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
 				</NcButton>
 			</span>
 		</div>
@@ -425,5 +424,17 @@ export default {
 }
 .addPublicationPropertyModal .mx-datepicker:has(.mx-datepicker-popup) {
     margin-top: 12rem;
+}
+
+.buttonContainerModal {
+	margin-top: 40px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+.buttonContainerModalLeft {
+	margin-top: 40px;
+	display: flex;
+	gap: 10px;
 }
 </style>

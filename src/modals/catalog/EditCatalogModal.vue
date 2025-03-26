@@ -20,7 +20,7 @@ import { catalogiStore, navigationStore, organizationStore } from '../../store/s
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
-			<div v-if="success === null" class="form-group">
+			<div v-if="success === null" class="form-group modalSpacing">
 				<NcTextField :disabled="loading"
 					label="Titel"
 					maxlength="255"
@@ -227,5 +227,11 @@ export default {
 
 .ecm-submit-button {
     margin-block-start: 1rem;
+}
+
+.modalSpacing {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 }
 </style>

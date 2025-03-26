@@ -17,7 +17,7 @@ import { navigationStore, publicationStore, organizationStore } from '../../stor
 				<p>{{ error }}</p>
 			</NcNoteCard>
 		</div>
-		<div v-if="success === null" class="wrapper">
+		<div v-if="success === null" class="wrapper editPublicationSpacing">
 			<NcTextField :disabled="loading"
 				label="Titel*"
 				required
@@ -34,7 +34,8 @@ import { navigationStore, publicationStore, organizationStore } from '../../stor
 				label="Beschrijving"
 				:value.sync="publicationItem.description"
 				:error="!!inputValidation.fieldErrors?.['description']"
-				:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+				:helper-text="inputValidation.fieldErrors?.['description']?.[0]"
+				resize="none" />
 			<NcTextField :disabled="loading"
 				label="Kenmerk"
 				:value.sync="publicationItem.reference"
@@ -64,7 +65,7 @@ import { navigationStore, publicationStore, organizationStore } from '../../stor
 				:value.sync="publicationItem.image"
 				:error="!!inputValidation.fieldErrors?.['image']"
 				:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
-			<b>Juridisch</b>
+			<b class="modalSectionName">Juridisch</b>
 			<NcTextField :disabled="loading"
 				label="Licentie"
 				:value.sync="publicationItem.license"
@@ -309,5 +310,12 @@ export default {
   padding-top: 12px;
   padding-bottom: 12px;
 }
-
+.editPublicationSpacing {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.modalSectionName {
+	margin-bottom: 0;
+}
 </style>
