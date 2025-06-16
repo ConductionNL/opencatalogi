@@ -2,193 +2,149 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use GuzzleHttp\Exception\GuzzleException;
-use OCA\OpenCatalogi\Service\ElasticSearchService;
-use OCA\OpenCatalogi\Db\PublicationMapper;
-use OCA\OpenCatalogi\Service\SearchService;
-use OCP\AppFramework\ApiController;
+use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
-use OCP\AppFramework\Http\Attribute\PublicPage;
-use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IRequest;
-use OCP\IUserManager;
-use OCP\IUserSession;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-
 
 /**
  * Class SearchController
  *
- * Controller for handling search-related operations in the OpenCatalogi app.
+ * Controller for handling internal search-related operations in the OpenCatalogi app.
+ * This controller is designed for internal/admin use and testing purposes.
+ *
+ * @category  Controller
+ * @package   opencatalogi
+ * @author    Ruben van der Linde
+ * @copyright 2024
+ * @license   AGPL-3.0-or-later
+ * @version   1.0.0
+ * @link      https://github.com/opencatalogi/opencatalogi
  */
 class SearchController extends Controller
 {
-
 
     /**
      * SearchController constructor.
      *
      * @param string             $appName            The name of the app
      * @param IRequest           $request            The request object
-     * @param PublicationMapper  $publicationMapper  The publication mapper
-     * @param IAppConfig         $config             The app configuration
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param PublicationService $publicationService The publication service
      */
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly PublicationMapper $publicationMapper,
-        private readonly IAppConfig $config,
-        private readonly IUserManager $userManager,
-        private readonly IUserSession $userSession,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
-        $corsMethods='PUT, POST, GET, DELETE, PATCH',
-        $corsAllowedHeaders='Authorization, Content-Type, Accept',
-        $corsMaxAge=1728000
+        private readonly PublicationService $publicationService
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods        = $corsMethods;
-        $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge         = $corsMaxAge;
-
-    }//end __construct()
-
+    }
 
     /**
-     * Attempts to retrieve the OpenRegister ObjectService from the container.
+     * Retrieve a list of publications based on all available catalogs.
      *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
+     * This is an internal endpoint for testing and administrative purposes.
+     * Unlike the public publications endpoint, this may include additional data
+     * and is not subject to the same security restrictions.
+     *
+     * @param string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @return JSONResponse JSON response containing the list of publications and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     */
-    private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        }
-
-        throw new \RuntimeException('OpenRegister service is not available.');
-
-    }//end getObjectService()
-
-
-    /*
-     * Implements a preflighted CORS response for OPTIONS requests.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     * @PublicPage
-     * @since           7.0.0
-     *
-     * @return Response The CORS response
      */
-    #[NoCSRFRequired]
-    #[PublicPage]
-
-
-    public function preflightedCors(): Response
+    public function index(?string $catalogId = null): JSONResponse
     {
-        // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
-
-        // Create and configure the response
-        $response = new Response();
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
-        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
-        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-        $response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-        return $response;
-
-    }//end preflightedCors()
-
+        return $this->publicationService->index($catalogId);
+    }
 
     /**
-     * Return all published publications.
+     * Retrieve a specific publication by its ID.
      *
-     * @CORS
-     * @PublicPage
+     * This is an internal endpoint for testing and administrative purposes.
+     *
+     * @param string $id The ID of the publication to retrieve
+     * @return JSONResponse JSON response containing the requested publication
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @return JSONResponse The Response containing published publications.
-     * @throws GuzzleException
      */
-    public function index(): JSONResponse
+    public function show(string $id): JSONResponse
     {
-        // Retrieve all request parameters
-        $requestParams = $this->request->getParams();
+        return $this->publicationService->show(id: $id);
+    }
 
-        // Get publication schema and register from configuration  
-        $publicationSchema   = $this->config->getValueString('opencatalogi', 'publication_schema', '');
-        $publicationRegister = $this->config->getValueString('opencatalogi', 'publication_register', '');
+    /**
+     * Retrieve attachments/files of a publication.
+     *
+     * This is an internal endpoint for testing and administrative purposes.
+     *
+     * @param string $id Id of publication
+     * @return JSONResponse JSON response containing the requested attachments/files.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function attachments(string $id): JSONResponse
+    {
+        return $this->publicationService->attachments(id: $id);
+    }
 
-        // Build config for findAll to get publications
-        $config = [
-            'filters' => []
-        ];
+    /**
+     * Download files of a publication.
+     *
+     * This is an internal endpoint for testing and administrative purposes.
+     *
+     * @param string $id Id of publication
+     * @return JSONResponse JSON response containing the download information.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function download(string $id): JSONResponse
+    {
+        return $this->publicationService->download(id: $id);
+    }
 
-        // Add schema filter if configured
-        if (!empty($publicationSchema)) {
-            $config['filters']['schema'] = $publicationSchema;
-        }
+    /**
+     * Retrieves all objects that this publication references
+     *
+     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
+     * This is an internal endpoint for testing and administrative purposes.
+     *
+     * @param string $id The ID of the publication to retrieve relations for
+     * @return JSONResponse A JSON response containing the related objects
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function uses(string $id): JSONResponse
+    {
+        return $this->publicationService->uses(id: $id);
+    }
 
-        // Add register filter if configured
-        if (!empty($publicationRegister)) {
-            $config['filters']['register'] = $publicationRegister;
-        }
-        
-        // Add any additional filters from request params
-        if (isset($requestParams['filters'])) {
-            $config['filters'] = array_merge($config['filters'], $requestParams['filters']);
-        }
-        
-        // Add pagination and other params
-        if (isset($requestParams['limit'])) {
-            $config['limit'] = (int) $requestParams['limit'];
-        }
-        if (isset($requestParams['offset'])) {
-            $config['offset'] = (int) $requestParams['offset'];
-        }
-
-        // Get publication objects
-        $result = $this->getObjectService()->findAll($config);
-        
-        // Convert objects to arrays and filter to only include published publications
-        $publications = array_map(function ($object) {
-            return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-        }, $result ?? []);
-        
-        $filteredObjects = array_filter(
-            $publications,
-            function ($object) {
-                  return isset($object['status']) && $object['status'] === 'Published' && isset($object['published']) && $object['published'] !== null;
-              }
-        );
-
-        // Prepare the response data
-        $data = [
-            'results' => array_values($filteredObjects),
-// Reset array keys
-            'total'   => count($filteredObjects),
-        ];
-
-        return new JSONResponse($data);
-
-    }//end index()
-
+    /**
+     * Retrieves all objects that use this publication
+     *
+     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
+     * This is an internal endpoint for testing and administrative purposes.
+     *
+     * @param string $id The ID of the publication to retrieve uses for
+     * @return JSONResponse A JSON response containing the referenced objects
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function used(string $id): JSONResponse
+    {
+        return $this->publicationService->used(id: $id);
+    }
 
 }//end class

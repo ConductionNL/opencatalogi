@@ -191,172 +191,18 @@ class PublicationService
 
     }//end getAvailableSchemas()
 
-
     /**
-     * Private helper method to handle pagination of results.
+     * Generic method to search publications with catalog filtering and security
      *
-     * This method paginates the given results array based on the provided total, limit, offset, and page parameters.
-     * It calculates the number of pages, sets the appropriate offset and page values, and returns the paginated results
-     * along with metadata such as total items, current page, total pages, limit, and offset.
-     *
-     * @param array    $results The array of objects to paginate.
-     * @param int|null $total   The total number of items (before pagination). Defaults to 0.
-     * @param int|null $limit   The number of items per page. Defaults to 20.
-     * @param int|null $offset  The offset of items. Defaults to 0.
-     * @param int|null $page    The current page number. Defaults to 1.
-     * @param array|null $facets    The already fetched facets. Defaults to empty array.
-     *
-     * @return array The paginated results with metadata.
-     *
-     * @phpstan-param  array<int, mixed> $results
-     * @phpstan-return array<string, mixed>
-     * @psalm-param    array<int, mixed> $results
-     * @psalm-return   array<string, mixed>
-     */
-    private function paginate(array $results, ?int $total=0, ?int $limit=20, ?int $offset=0, ?int $page=1, ?array $facets = []): array
-    {
-        // Ensure we have valid values (never null)
-        $total = max(0, ($total ?? 0));
-        $limit = max(1, ($limit ?? 20));
-        // Minimum limit of 1
-        $offset = max(0, ($offset ?? 0));
-        $page   = max(1, ($page ?? 1));
-        // Minimum page of 1        // Calculate the number of pages (minimum 1 page)
-        $pages = max(1, ceil($total / $limit));
-
-        // If we have a page but no offset, calculate the offset
-        if ($offset === 0) {
-            $offset = (($page - 1) * $limit);
-        }
-
-        // If we have an offset but page is 1, calculate the page
-        if ($page === 1 && $offset > 0) {
-            $page = (floor($offset / $limit) + 1);
-        }
-
-        // If total is smaller than the number of results, set total to the number of results
-        // @todo: this is a hack to ensure the pagination is correct when the total is not known. That sugjest that the underlaying count service has a problem that needs to be fixed instead
-        if ($total < count($results)) {
-            $total = count($results);
-            $pages = max(1, ceil($total / $limit));
-        }
-
-        // Initialize the results array with pagination information
-        $paginatedResults = [
-            'results' => $results,
-            'total'   => $total,
-            'page'    => $page,
-            'pages'   => $pages,
-            'limit'   => $limit,
-            'offset'  => $offset,
-            'facets'  => $facets,
-        ];
-
-        // Add next/prev page URLs if applicable
-        $currentUrl = $_SERVER['REQUEST_URI'];
-
-        // Add next page link if there are more pages
-        if ($page < $pages) {
-            $nextPage = ($page + 1);
-            $nextUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$nextPage, $currentUrl);
-            if (strpos($nextUrl, 'page=') === false) {
-                $nextUrl .= (strpos($nextUrl, '?') === false ? '?' : '&').'page='.$nextPage;
-            }
-
-            $paginatedResults['next'] = $nextUrl;
-        }
-
-        // Add previous page link if not on first page
-        if ($page > 1) {
-            $prevPage = ($page - 1);
-            $prevUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$prevPage, $currentUrl);
-            if (strpos($prevUrl, 'page=') === false) {
-                $prevUrl .= (strpos($prevUrl, '?') === false ? '?' : '&').'page='.$prevPage;
-            }
-
-            $paginatedResults['prev'] = $prevUrl;
-        }
-
-        return $paginatedResults;
-
-    }//end paginate()
-
-
-    /**
-     * Helper method to get configuration array from the current request
-     *
-     * @param string|null $register Optional register identifier
-     * @param string|null $schema   Optional schema identifier
-     * @param array|null  $ids      Optional array of specific IDs to filter
-     *
-     * @return array Configuration array containing:
-     *               - limit: (int) Maximum number of items per page
-     *               - offset: (int|null) Number of items to skip
-     *               - page: (int|null) Current page number
-     *               - filters: (array) Filter parameters
-     *               - sort: (array) Sort parameters
-     *               - search: (string|null) Search term
-     *               - extend: (array|null) Properties to extend
-     *               - fields: (array|null) Fields to include
-     *               - unset: (array|null) Fields to exclude
-     *               - register: (string|null) Register identifier
-     *               - schema: (string|null) Schema identifier
-     *               - ids: (array|null) Specific IDs to filter
-     */
-    private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
-    {
-        $params = $this->request->getParams();
-
-        unset($params['id']);
-        unset($params['_route']);
-
-        // Extract and normalize parameters
-        $limit  = (int) ($params['limit'] ?? $params['_limit'] ?? 20);
-        $offset = isset($params['offset']) ? (int) $params['offset'] : (isset($params['_offset']) ? (int) $params['_offset'] : null);
-        $page   = isset($params['page']) ? (int) $params['page'] : (isset($params['_page']) ? (int) $params['_page'] : null);
-
-        // If we have a page but no offset, calculate the offset
-        if ($page !== null && $offset === null) {
-            $offset = (($page - 1) * $limit);
-        }
-
-        $queries = ($params['queries'] ?? $params['_queries'] ?? []);
-        if (is_string($queries) === true) {
-            $queries = [$queries];
-        }
-
-        return [
-            'limit'   => $limit,
-            'offset'  => $offset,
-            'page'    => $page,
-            'filters' => $params,
-            'sort'    => ($params['order'] ?? $params['_order'] ?? []),
-            'search'  => ($params['_search'] ?? null),
-            'extend'  => ($params['extend'] ?? $params['_extend'] ?? null),
-            'fields'  => ($params['fields'] ?? $params['_fields'] ?? null),
-            'unset'   => ($params['unset'] ?? $params['_unset'] ?? null),
-            'queries' => $queries,
-            'ids'     => $ids,
-        ];
-
-    }//end getConfig()
-
-
-    /**
-     * Retrieves a list of all objects for a specific register and schema
-     *
-     * This method returns a paginated list of objects that match the specified register and schema.
-     * It supports filtering, sorting, and pagination through query parameters using the new search structure.
+     * This method provides a common interface for searching publications across all endpoints.
+     * It handles catalog context validation, security parameters, and consistent filtering.
      *
      * @param null|string|int $catalogId Optional catalog ID to filter objects by
-     *
-     * @return JSONResponse A JSON response containing the list of objects
-     *
-     * @NoAdminRequired
-     *
-     * @NoCSRFRequired
+     * @param array|null $ids Optional array of IDs to filter by (for uses/used functionality)
+     * @return array The search results with pagination and facets
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
-    public function index(null|string|int $catalogId = null): JSONResponse
+    private function searchPublications(null|string|int $catalogId = null, ?array $ids = null): array
     {
         $searchQuery = $this->request->getParams();
 
@@ -376,7 +222,7 @@ class PublicationService
             // Normalize to array if a single value is provided
             $requestedRegisters = is_array($requestedRegisters) ? $requestedRegisters : [$requestedRegisters];
             if (array_diff($requestedRegisters, $context['registers'])) {
-                return new JSONResponse(['error' => 'Invalid register(s) requested'], 400);
+                throw new \InvalidArgumentException('Invalid register(s) requested');
             }
         }
 
@@ -385,7 +231,7 @@ class PublicationService
             // Normalize to array if a single value is provided
             $requestedSchemas = is_array($requestedSchemas) ? $requestedSchemas : [$requestedSchemas];
             if (array_diff($requestedSchemas, $context['schemas'])) {
-                return new JSONResponse(['error' => 'Invalid schema(s) requested'], 400);
+                throw new \InvalidArgumentException('Invalid schema(s) requested');
             }
         }
 
@@ -398,31 +244,43 @@ class PublicationService
         $searchQuery['_published'] = true;
         $searchQuery['_includeDeleted'] = false;
 
+        // Add IDs filter if provided (for uses/used functionality)
+        if ($ids !== null && !empty($ids)) {
+            $searchQuery['_ids'] = $ids;
+        }
+
         // Search objects using the new structure
-        $objects = $objectService->searchObjects($searchQuery);
+        $result = $objectService->searchObjectsPaginated($searchQuery);
 
         // Filter unwanted properties from results
-        $filteredObjects = $this->filterUnwantedProperties($objects);
+        $result['results'] = $this->filterUnwantedProperties($result['results']);
 
-        // Get total count for pagination
-        $total = $objectService->countSearchObjects($searchQuery);
+        return $result;
+    }
 
-        // Get facets
-        //$facets = $objectService->getFacetsForObjects($searchQuery);
-
-        // Return paginated results
-        return new JSONResponse(
-            $this->paginate(
-                results: $filteredObjects,
-                total: $total,
-                limit: $config['limit'],
-                offset: $config['offset'],
-                page: $config['page'],
-                facets: $facets
-            )
-        );
-    }//end index()
-
+    /**
+     * Retrieves a list of all objects for a specific register and schema
+     *
+     * This method returns a paginated list of objects that match the specified register and schema.
+     * It supports filtering, sorting, and pagination through query parameters using the new search structure.
+     *
+     * @param null|string|int $catalogId Optional catalog ID to filter objects by
+     *
+     * @return JSONResponse A JSON response containing the list of objects
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     */
+    public function index(null|string|int $catalogId = null): JSONResponse
+    {
+        try {
+            $result = $this->searchPublications($catalogId);
+            return new JSONResponse($result);
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 400);
+        }
+    }
 
     /**
      * Shows a specific object from a register and schema
@@ -638,94 +496,34 @@ class PublicationService
      */
     public function uses(string $id): JSONResponse
     {
-        // Get the object service
-        $objectService = $this->getObjectService();
+        try {
+            // Get the object service
+            $objectService = $this->getObjectService();
 
-        // Get the relations for the object
-        $relationsArray = $objectService->find(id: $id)->getRelations();
-        $relations = array_values($relationsArray);
+            // Get the relations for the object
+            $relationsArray = $objectService->find(id: $id)->getRelations();
+            $relations = array_values($relationsArray);
 
-        // Check if relations array is empty
-        if (empty($relations)) {
-            // If relations is empty, return empty paginated response
-            return new JSONResponse([
-                'results' => [],
-                'total' => 0,
-                'page' => 1,
-                'pages' => 1,
-                'facets' => []
-            ]);
+            // Check if relations array is empty
+            if (empty($relations)) {
+                // If relations is empty, return empty paginated response
+                return new JSONResponse([
+                    'results' => [],
+                    'total' => 0,
+                    'page' => 1,
+                    'pages' => 1,
+                    'facets' => []
+                ]);
+            }
+
+            // Use the generic search function with the relation IDs
+            $result = $this->searchPublications(catalogId: null, ids: $relations);
+
+            return new JSONResponse($result);
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 400);
         }
-
-        // Get config and fetch objects
-        $config = $this->getConfig(ids: $relations);
-
-        // Get the context for the catalog
-        $context = $this->getCatalogFilters(catalogId: null);
-
-        // Build the new search query structure
-        $searchQuery = [
-            // Metadata filters go under @self
-            '@self' => [
-                'register' => $context['registers'],
-                'schema'   => $context['schemas'],
-                'uuid'     => $relations, // Filter by the relation UUIDs
-            ],
-            // Search options with underscore prefix
-            '_limit'         => $config['limit'],
-            '_offset'        => $config['offset'],
-            '_order'         => $config['sort'],
-            '_search'        => $config['search'],
-            '_published'     => true,
-            '_extend'        => $config['extend'],
-            '_fields'        => $config['fields'],
-            '_unset'         => $config['unset'],
-            '_queries'       => $config['queries'],
-        ];
-
-        // Add object field filters (anything not in @self or prefixed with _)
-        foreach ($config['filters'] as $key => $value) {
-            // Skip metadata fields that go under @self
-            if (in_array($key, ['register', 'schema', 'uuid'], true)) {
-                continue;
-            }
-            // Skip underscore-prefixed options
-            if (str_starts_with($key, '_')) {
-                continue;
-            }
-            // Skip system parameters
-            if (in_array($key, ['limit', 'offset', 'page', 'order', 'extend', 'fields', 'unset', 'queries', 'search'], true)) {
-                continue;
-            }
-            // Add as object field filter
-            $searchQuery[$key] = $value;
-        }
-
-        // Search objects using the new structure
-        $results = $objectService->searchObjects($searchQuery);
-
-        // Filter unwanted properties from results
-        $results = $this->filterUnwantedProperties($results);
-
-        // Get total count for pagination
-        $total = $objectService->countSearchObjects($searchQuery);
-
-        // Get facets
-        $facets = $objectService->getFacetsForObjects($searchQuery);
-        
-        // Return paginated results
-        return new JSONResponse(
-            $this->paginate(
-                results: $results,
-                total: $total,
-                limit: $config['limit'],
-                offset: $config['offset'],
-                page: $config['page'],
-                facets: $facets
-            )
-        );
-
-    }//end uses()
+    }
 
     /**
      * Retrieves all objects that use this publication
@@ -742,93 +540,33 @@ class PublicationService
      */
     public function used(string $id): JSONResponse
     {
-        // Get the object service
-        $objectService = $this->getObjectService();
+        try {
+            // Get the object service
+            $objectService = $this->getObjectService();
 
-        // Get the relations for the object
-        $relationsArray = $objectService->findByRelations($id);
-        $relations = array_map(static fn($relation) => $relation->getUuid(), $relationsArray);
+            // Get the relations for the object
+            $relationsArray = $objectService->findByRelations($id);
+            $relations = array_map(static fn($relation) => $relation->getUuid(), $relationsArray);
 
-        // Check if relations array is empty
-        if (empty($relations)) {
-            // If relations is empty, return empty paginated response
-            return new JSONResponse([
-                'results' => [],
-                'total' => 0,
-                'page' => 1,
-                'pages' => 1,
-                'facets' => []
-            ]);
+            // Check if relations array is empty
+            if (empty($relations)) {
+                // If relations is empty, return empty paginated response
+                return new JSONResponse([
+                    'results' => [],
+                    'total' => 0,
+                    'page' => 1,
+                    'pages' => 1,
+                    'facets' => []
+                ]);
+            }
+
+            // Use the generic search function with the relation IDs
+            $result = $this->searchPublications(catalogId: null, ids: $relations);
+
+            return new JSONResponse($result);
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 400);
         }
-
-        // Get config and fetch objects
-        $config = $this->getConfig(ids: $relations);
-
-        // Get the context for the catalog
-        $context = $this->getCatalogFilters(catalogId: null);
-
-        // Build the new search query structure
-        $searchQuery = [
-            // Metadata filters go under @self
-            '@self' => [
-                'register' => $context['registers'],
-                'schema'   => $context['schemas'],
-                'uuid'     => $relations, // Filter by the relation UUIDs
-            ],
-            // Search options with underscore prefix
-            '_limit'         => $config['limit'],
-            '_offset'        => $config['offset'],
-            '_order'         => $config['sort'],
-            '_search'        => $config['search'],
-            '_published'     => true,
-            '_extend'        => $config['extend'],
-            '_fields'        => $config['fields'],
-            '_unset'         => $config['unset'],
-            '_queries'       => $config['queries'],
-        ];
-
-        // Add object field filters (anything not in @self or prefixed with _)
-        foreach ($config['filters'] as $key => $value) {
-            // Skip metadata fields that go under @self
-            if (in_array($key, ['register', 'schema', 'uuid'], true)) {
-                continue;
-            }
-            // Skip underscore-prefixed options
-            if (str_starts_with($key, '_')) {
-                continue;
-            }
-            // Skip system parameters
-            if (in_array($key, ['limit', 'offset', 'page', 'order', 'extend', 'fields', 'unset', 'queries', 'search'], true)) {
-                continue;
-            }
-            // Add as object field filter
-            $searchQuery[$key] = $value;
-        }
-
-        // Search objects using the new structure
-        $results = $objectService->searchObjects($searchQuery);
-
-        // Filter unwanted properties from results
-        $results = $this->filterUnwantedProperties($results);
-
-        // Get total count for pagination
-        $total = $objectService->countSearchObjects($searchQuery);
-
-        // Get facets
-        $facets = $objectService->getFacetsForObjects($searchQuery);
-
-        // Return paginated results
-        return new JSONResponse(
-            $this->paginate(
-                results: $results,
-                total: $total,
-                limit: $config['limit'],
-                offset: $config['offset'],
-                page: $config['page'],
-                facets: $facets
-            )
-        );
-
-    }//end used()
+    }
 
 }//end class

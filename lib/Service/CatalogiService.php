@@ -352,8 +352,7 @@ class CatalogiService
      *
      * @return JSONResponse A JSON response containing the list of objects
      *
-     * @NoAdminRequired
-     *
+     * @NoAdminRequired     *
      * @NoCSRFRequired
      */
     public function index(null|string|int $catalogId = null): JSONResponse

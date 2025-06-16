@@ -11,12 +11,26 @@
  */
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { objectStore, navigationStore } from '../store/store.js'
+import SearchSideBar from './search/SearchSideBar.vue'
+
+// Reactive state for sidebar visibility
+const isSidebarOpen = ref(true)
 </script>
 
 <template>
 	<div class="sidebars">
+		<!-- Search Sidebar -->
+		<NcAppSidebar 
+			v-if="isSearchPage" 
+			:name="t('opencatalogi', 'Search Publications')"
+			:open="isSidebarOpen"
+			@update:open="(e) => isSidebarOpen = e">
+			<SearchSideBar />
+		</NcAppSidebar>
+
+		<!-- Directory Sidebar -->
 		<NcAppSidebar v-if="directory" :title="directory.title">
 			<template #description>
 				{{ directory.description }}
@@ -31,6 +45,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 			</template>
 		</NcAppSidebar>
 
+		<!-- Listing Sidebar -->
 		<NcAppSidebar v-if="listing" :title="listing.title">
 			<template #description>
 				{{ listing.description }}
@@ -63,11 +78,18 @@ const directory = computed(() => objectStore.getActiveObject('directory'))
  */
 const listing = computed(() => objectStore.getActiveObject('listing'))
 
+/**
+ * Check if we're on the search page
+ * @return {boolean}
+ */
+const isSearchPage = computed(() => navigationStore.selected === 'search')
+
 export default {
 	name: 'SideBars',
 	components: {
 		NcAppSidebar,
 		NcButton,
+		SearchSideBar,
 		Pencil,
 	},
 }
