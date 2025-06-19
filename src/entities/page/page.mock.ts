@@ -9,7 +9,7 @@ export const mockPageData = (): TPage[] => [
 	{ // full data
 		id: '1',
 		uuid: '123e4567-e89b-12d3-a456-426614174000',
-		name: 'Test Page',
+		title: 'Test Page',
 		slug: 'test-page',
 		contents: [
 			{ type: 'text', id: '1', data: { text: 'Test content' } },
@@ -22,7 +22,7 @@ export const mockPageData = (): TPage[] => [
 	{ // partial data
 		id: '2',
 		uuid: '123e4567-e89b-12d3-a456-426614174001',
-		name: 'Another Page',
+		title: 'Another Page',
 		slug: 'another-page',
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
@@ -30,7 +30,7 @@ export const mockPageData = (): TPage[] => [
 	{ // invalid data
 		id: '3',
 		uuid: '123e4567-e89b-12d3-a456-426614174002',
-		name: '',
+		title: '',
 		slug: '',
 		contents: [],
 		createdAt: new Date().toISOString(),

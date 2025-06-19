@@ -3,9 +3,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
-use OCA\OpenCatalogi\Db\ListingMapper;
 use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Service\ObjectService;
 use OCA\OpenCatalogi\Exception\DirectoryUrlException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -14,6 +12,8 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
+use OCP\App\IAppManager;
+use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -28,17 +28,17 @@ class DirectoryController extends Controller
      * @param string $appName The name of the app
      * @param IRequest $request The request object
      * @param IAppConfig $config The app configuration
-     * @param ListingMapper $listingMapper The listing mapper
+     * @param ContainerInterface $container Server container for dependency injection
+     * @param IAppManager $appManager App manager for checking installed apps
      * @param DirectoryService $directoryService The directory service
-     * @param ObjectService $objectService The object service
      */
     public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ListingMapper $listingMapper,
-		private readonly DirectoryService $directoryService,
-		private readonly ObjectService $objectService
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
+		private readonly DirectoryService $directoryService
 	)
     {
         parent::__construct($appName, $request);
@@ -119,7 +119,7 @@ class DirectoryController extends Controller
 	public function publicationType(string|int $id): JSONResponse
 	{
 		try {
-			$publicationType = $this->objectService->getObject('publicationType', $id);
+			$publicationType = $this->getObjectService()->getObject('publicationType', $id);
 			return new JSONResponse($publicationType);
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(['error' => 'Publication type not found'], 404);
@@ -127,5 +127,21 @@ class DirectoryController extends Controller
 			return new JSONResponse(['error' => 'An error occurred while retrieving the publication type'], 500);
 		}
 	}
+
+    /**
+     * Attempts to retrieve the OpenRegister ObjectService from the container.
+     *
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+
+    }//end getObjectService()
 
 }

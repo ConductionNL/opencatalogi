@@ -15,21 +15,25 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
  */
 class DashboardController extends Controller
 {
+
+
     /**
      * DashboardController constructor.
      *
-     * @param string $appName The name of the app
+     * @param string   $appName The name of the app
      * @param IRequest $request The request object
      */
     public function __construct($appName, IRequest $request)
     {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
 
     /**
      * Render the dashboard page.
      *
-     * @param string|null $getParameter Optional GET parameter
+     * @param  string|null $getParameter Optional GET parameter
      * @return TemplateResponse The rendered template response
      *
      * @NoAdminRequired
@@ -44,7 +48,7 @@ class DashboardController extends Controller
                 'index',
                 []
             );
-            
+
             // Set up Content Security Policy
             $csp = new ContentSecurityPolicy();
             $csp->addAllowedConnectDomain('*');
@@ -59,8 +63,10 @@ class DashboardController extends Controller
                 ['error' => $e->getMessage()],
                 '500'
             );
-        }
-    }
+        }//end try
+
+    }//end page()
+
 
     /**
      * Retrieve dashboard data.
@@ -80,5 +86,8 @@ class DashboardController extends Controller
             // Return an error JSON response if an exception occurs
             return new JSONResponse(['error' => $e->getMessage()], 500);
         }
-    }
-}
+
+    }//end index()
+
+
+}//end class

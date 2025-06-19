@@ -1,11 +1,19 @@
 /* eslint-disable no-console */
 import { defineStore } from 'pinia'
 
+interface DialogProperties {
+    objectType?: string;
+    dialogName?: string;
+    displayName?: string;
+    isMultiple?: boolean;
+}
+
 interface NavigationStoreState {
-    selected: 'dashboard' | 'publication' | 'catalogi' | 'publicationType' | 'organizations' | 'themes' | 'search' | 'directory' | 'pages' | 'menus';
+    selected: 'dashboard' | 'publication' | 'catalogi' | 'publicationType' | 'organizations' | 'themes' | 'search' | 'directory' | 'pages' | 'menus' | 'glossary';
     selectedCatalogus: string;
     modal: string;
     dialog: string;
+    dialogProperties: DialogProperties | null;
     transferData: string;
 }
 
@@ -19,6 +27,8 @@ export const useNavigationStore = defineStore('ui', {
 		modal: null,
 		// The currently active dialog
 		dialog: null,
+		// Properties for the active dialog
+		dialogProperties: null,
 		// Any data needed in various models, dialogs, views which cannot be transferred through normal means or without writing crappy/excessive code
 		transferData: null,
 	} as NavigationStoreState),
@@ -35,9 +45,10 @@ export const useNavigationStore = defineStore('ui', {
 			this.modal = modal
 			console.log('Active modal set to ' + modal)
 		},
-		setDialog(dialog: NavigationStoreState['dialog']) {
+		setDialog(dialog: NavigationStoreState['dialog'], properties?: DialogProperties) {
 			this.dialog = dialog
-			console.log('Active dialog set to ' + dialog)
+			this.dialogProperties = properties || null
+			console.log('Active dialog set to ' + dialog, properties ? 'with properties' : '')
 		},
 		setTransferData(transferData: NavigationStoreState['transferData']) {
 			this.transferData = transferData

@@ -1,5 +1,17 @@
+/**
+ * UnpublishedPublicationsWidget.vue
+ * Widget component for displaying unpublished publications
+ * @category Components
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { navigationStore, publicationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -51,29 +63,38 @@ export default {
 	},
 	computed: {
 		items() {
-			return publicationStore.publicationList.filter((publication) => publication.status === 'Concept').map((publication) => ({
-				id: publication.id,
-				mainText: publication.title,
-				subText: publication.summary,
-				avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/database-eye-outline.svg' : '/apps-extra/opencatalogi/img/database-eye-outline_light.svg',
-			}))
+			return objectStore.getCollection('publication').results
+				.filter((publication) => publication.status === 'Concept')
+				.map((publication) => ({
+					id: publication.id,
+					mainText: publication.title,
+					subText: publication.summary,
+					avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/database-eye-outline.svg' : '/apps-extra/opencatalogi/img/database-eye-outline_light.svg',
+				}))
 		},
 	},
 	mounted() {
 		this.fetchData()
 	},
-
 	methods: {
+		/**
+		 * Handle showing a publication
+		 * @param {object} item - The publication item to show
+		 * @return {void}
+		 */
 		onShow(item) {
-			navigationStore.setSelected('publication'); navigationStore.setSelectedCatalogus(item.id)
+			navigationStore.setSelected('publication')
+			navigationStore.setSelectedCatalogus(item.id)
 			window.open('/index.php/apps/opencatalogi', '_self')
 		},
-		fetchData() {
+		/**
+		 * Fetch the publication data
+		 * @return {Promise<void>}
+		 */
+		async fetchData() {
 			this.loading = true
-			publicationStore.refreshPublicationList()
-				.then(() => {
-					this.loading = false
-				})
+			await objectStore.fetchCollection('publication')
+			this.loading = false
 		},
 	},
 }

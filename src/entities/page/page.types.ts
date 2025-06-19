@@ -6,7 +6,7 @@
 export type TPage = {
 	id: string
 	uuid: string
-	name: string
+	title: string
 	contents: { type: string; id: string; data: Record<string, any> }[]
 	slug: string
 	createdAt: string

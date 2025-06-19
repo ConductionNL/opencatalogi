@@ -10,7 +10,7 @@ export class Page implements TPage {
 
 	public id: string
 	public uuid: string
-	public name: string
+	public title: string
 	public slug: string
 	public contents: { type: string; id: string; data: Record<string, any> }[]
 	public createdAt: string
@@ -32,7 +32,7 @@ export class Page implements TPage {
 	private hydrate(data: TPage) {
 		this.id = data?.id?.toString() || ''
 		this.uuid = data?.uuid || ''
-		this.name = data?.name || ''
+		this.title = data?.title || ''
 		this.slug = data?.slug || ''
 		this.contents = data?.contents || []
 		this.createdAt = data?.createdAt || ''
@@ -47,7 +47,7 @@ export class Page implements TPage {
 	public validate(): SafeParseReturnType<TPage, unknown> {
 		// Schema validation for page data
 		const schema = z.object({
-			name: z.string().min(1, 'naam is verplicht'),
+			title: z.string().min(1, 'title is verplicht'),
 			slug: z.string()
 				.min(1, 'slug is verplicht')
 				.regex(/^[a-z0-9-]+$/g, 'een slug mag alleen kleine letters, cijfers en streepjes bevatten'),

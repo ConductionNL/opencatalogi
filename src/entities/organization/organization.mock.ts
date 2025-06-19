@@ -1,40 +1,50 @@
+/**
+ * Organization mock data for testing
+ * @module Entities
+ * @package
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
+ */
+
 import { Organization } from './organization'
 import { TOrganization } from './organization.types'
 
+/**
+ * Mock organization data for testing
+ * @return {TOrganization[]} Array of mock organization data
+ */
 export const mockOrganizationData = (): TOrganization[] => [
-	{ // full data
+	{
 		id: '1',
-		title: 'Decat',
-		summary: 'a short form summary',
-		description: 'a really really long description about this organization',
-		oin: '00000001836472635000',
-		tooi: '7843432',
-		rsin: '827342654',
-		pki: '543573424',
-		image: '',
+		name: 'Test Organization',
+		summary: 'A test organization',
+		description: 'This is a test organization for development purposes',
+		oin: '00001234567890123456',
+		tooi: '00001234567890123456',
+		rsin: '00001234567890123456',
+		pki: '00001234567890123456',
+		image: 'https://example.com/image.jpg',
 	},
 	{
 		id: '2',
-		title: 'Woo',
-		summary: 'a short form summary',
-		description: 'a really really long description about this organization',
+		name: 'Minimal Organization',
+		summary: '',
+		description: '',
 		oin: '',
 		tooi: '',
 		rsin: '',
 		pki: '',
 		image: '',
 	},
-	{ // invalid data
-		id: '3',
-		title: '',
-		summary: 'a short form summary',
-		description: 'a really really long description about this organization',
-		oin: '5435',
-		tooi: '5435',
-		rsin: '54',
-		pki: '6565',
-		image: '',
-	},
 ]
 
-export const mockOrganization = (data: TOrganization[] = mockOrganizationData()): TOrganization[] => data.map(item => new Organization(item))
+/**
+ * Creates Organization instances from mock data
+ * @param {TOrganization[]} data Optional mock data to use instead of default
+ * @return {Organization[]} Array of Organization instances
+ */
+export const mockOrganizations = (data: TOrganization[] = mockOrganizationData()): Organization[] =>
+	data.map(item => new Organization(item))

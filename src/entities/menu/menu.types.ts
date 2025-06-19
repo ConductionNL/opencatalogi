@@ -1,5 +1,5 @@
 export type TMenuSubItem = {
-    name: string
+    title: string
     slug: string
     link: string
     description?: string
@@ -7,7 +7,7 @@ export type TMenuSubItem = {
 }
 
 export type TMenuItem = {
-    name: string
+    title: string
     slug: string
     link: string
     description?: string
@@ -22,7 +22,7 @@ export type TMenuItem = {
 export type TMenu = {
     id: string // Unique identifier for the menu
     uuid: string // UUID for the menu
-    name: string // Display name of the menu
+    title: string // Display title of the menu
     position: number // Order/position of the menu in navigation
     items: TMenuItem[] // Array of menu items
     createdAt: string // Creation timestamp

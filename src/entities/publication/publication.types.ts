@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: double check this type for correct properties and optionals when stoplight updates - https://conduction.stoplight.io/docs/open-catalogi/fee989a9c8e3f-publication
 
-import { TCatalogi, TPublicationType } from '../'
+import { TCatalogi } from '../'
 
 export type TPublication = {
     id: string
@@ -13,7 +13,6 @@ export type TPublication = {
 	category: string
 	portal: string
 	featured: boolean
-    schema: string
     source: string
     status: 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
     organization: string
@@ -39,5 +38,6 @@ export type TPublication = {
     }
     '@self'?: object
     catalog: TCatalogi | any
-    publicationType: string | TPublicationType
+    register: number | null
+    schema: number | null
 }
