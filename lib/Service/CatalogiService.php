@@ -352,8 +352,7 @@ class CatalogiService
      *
      * @return JSONResponse A JSON response containing the list of objects
      *
-     * @NoAdminRequired
-     *
+     * @NoAdminRequired     *
      * @NoCSRFRequired
      */
     public function index(null|string|int $catalogId = null): JSONResponse
@@ -370,7 +369,7 @@ class CatalogiService
         $objectService = $this->getObjectService();
 
         $objects = $objectService->findAll($config);
-
+        
         // Filter out unwanted properties from the '@self' array in each object
         $filteredObjects = array_map(function ($object) {
             // Use jsonSerialize to get an array representation of the object

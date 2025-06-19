@@ -191,212 +191,96 @@ class PublicationService
 
     }//end getAvailableSchemas()
 
-
     /**
-     * Private helper method to handle pagination of results.
+     * Generic method to search publications with catalog filtering and security
      *
-     * This method paginates the given results array based on the provided total, limit, offset, and page parameters.
-     * It calculates the number of pages, sets the appropriate offset and page values, and returns the paginated results
-     * along with metadata such as total items, current page, total pages, limit, and offset.
+     * This method provides a common interface for searching publications across all endpoints.
+     * It handles catalog context validation, security parameters, and consistent filtering.
      *
-     * @param array    $results The array of objects to paginate.
-     * @param int|null $total   The total number of items (before pagination). Defaults to 0.
-     * @param int|null $limit   The number of items per page. Defaults to 20.
-     * @param int|null $offset  The offset of items. Defaults to 0.
-     * @param int|null $page    The current page number. Defaults to 1.
-     * @param array|null $facets    The already fetched facets. Defaults to empty array.
-     *
-     * @return array The paginated results with metadata.
-     *
-     * @phpstan-param  array<int, mixed> $results
-     * @phpstan-return array<string, mixed>
-     * @psalm-param    array<int, mixed> $results
-     * @psalm-return   array<string, mixed>
+     * @param null|string|int $catalogId Optional catalog ID to filter objects by
+     * @param array|null $ids Optional array of IDs to filter by (for uses/used functionality)
+     * @return array The search results with pagination and facets
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
-    private function paginate(array $results, ?int $total=0, ?int $limit=20, ?int $offset=0, ?int $page=1, ?array $facets = []): array
+    private function searchPublications(null|string|int $catalogId = null, ?array $ids = null): array
     {
-        // Ensure we have valid values (never null)
-        $total = max(0, ($total ?? 0));
-        $limit = max(1, ($limit ?? 20));
-        // Minimum limit of 1
-        $offset = max(0, ($offset ?? 0));
-        $page   = max(1, ($page ?? 1));
-        // Minimum page of 1        // Calculate the number of pages (minimum 1 page)
-        $pages = max(1, ceil($total / $limit));
+        $searchQuery = $this->request->getParams();
 
-        // If we have a page but no offset, calculate the offset
-        if ($offset === 0) {
-            $offset = (($page - 1) * $limit);
-        }
+        // Bit of route cleanup
+        unset($searchQuery['id']);
+        unset($searchQuery['_route']);
 
-        // If we have an offset but page is 1, calculate the page
-        if ($page === 1 && $offset > 0) {
-            $page = (floor($offset / $limit) + 1);
-        }
+        // Get the context for the catalog
+        $context = $this->getCatalogFilters($catalogId);
 
-        // If total is smaller than the number of results, set total to the number of results
-        // @todo: this is a hack to ensure the pagination is correct when the total is not known. That sugjest that the underlaying count service has a problem that needs to be fixed instead
-        if ($total < count($results)) {
-            $total = count($results);
-            $pages = max(1, ceil($total / $limit));
-        }
+        // Validate requested registers and schemas against the context
+        $requestedRegisters = $searchQuery['@self']['register'] ?? [];
+        $requestedSchemas = $searchQuery['@self']['schema'] ?? [];
 
-        // Initialize the results array with pagination information
-        $paginatedResults = [
-            'results' => $results,
-            'total'   => $total,
-            'page'    => $page,
-            'pages'   => $pages,
-            'limit'   => $limit,
-            'offset'  => $offset,
-            'facets'  => $facets,
-        ];
-
-        // Add next/prev page URLs if applicable
-        $currentUrl = $_SERVER['REQUEST_URI'];
-
-        // Add next page link if there are more pages
-        if ($page < $pages) {
-            $nextPage = ($page + 1);
-            $nextUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$nextPage, $currentUrl);
-            if (strpos($nextUrl, 'page=') === false) {
-                $nextUrl .= (strpos($nextUrl, '?') === false ? '?' : '&').'page='.$nextPage;
+        // Ensure requested registers are part of the context
+        if (!empty($requestedRegisters)) {
+            // Normalize to array if a single value is provided
+            $requestedRegisters = is_array($requestedRegisters) ? $requestedRegisters : [$requestedRegisters];
+            if (array_diff($requestedRegisters, $context['registers'])) {
+                throw new \InvalidArgumentException('Invalid register(s) requested');
             }
-
-            $paginatedResults['next'] = $nextUrl;
         }
 
-        // Add previous page link if not on first page
-        if ($page > 1) {
-            $prevPage = ($page - 1);
-            $prevUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$prevPage, $currentUrl);
-            if (strpos($prevUrl, 'page=') === false) {
-                $prevUrl .= (strpos($prevUrl, '?') === false ? '?' : '&').'page='.$prevPage;
+        // Ensure requested schemas are part of the context
+        if (!empty($requestedSchemas)) {
+            // Normalize to array if a single value is provided
+            $requestedSchemas = is_array($requestedSchemas) ? $requestedSchemas : [$requestedSchemas];
+            if (array_diff($requestedSchemas, $context['schemas'])) {
+                throw new \InvalidArgumentException('Invalid schema(s) requested');
             }
-
-            $paginatedResults['prev'] = $prevUrl;
         }
 
-        return $paginatedResults;
+        // Get the object service
+        $objectService = $this->getObjectService();
 
-    }//end paginate()
+        // Overwrite certain values in the existing search query
+        $searchQuery['@self']['register'] = $requestedRegisters ?: $context['registers'];
+        $searchQuery['@self']['schema'] = $requestedSchemas ?: $context['schemas'];
+        $searchQuery['_published'] = true;
+        $searchQuery['_includeDeleted'] = false;
 
-
-    /**
-     * Helper method to get configuration array from the current request
-     *
-     * @param string|null $register Optional register identifier
-     * @param string|null $schema   Optional schema identifier
-     * @param array|null  $ids      Optional array of specific IDs to filter
-     *
-     * @return array Configuration array containing:
-     *               - limit: (int) Maximum number of items per page
-     *               - offset: (int|null) Number of items to skip
-     *               - page: (int|null) Current page number
-     *               - filters: (array) Filter parameters
-     *               - sort: (array) Sort parameters
-     *               - search: (string|null) Search term
-     *               - extend: (array|null) Properties to extend
-     *               - fields: (array|null) Fields to include
-     *               - unset: (array|null) Fields to exclude
-     *               - register: (string|null) Register identifier
-     *               - schema: (string|null) Schema identifier
-     *               - ids: (array|null) Specific IDs to filter
-     */
-    private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
-    {
-        $params = $this->request->getParams();
-
-        unset($params['id']);
-        unset($params['_route']);
-
-        // Extract and normalize parameters
-        $limit  = (int) ($params['limit'] ?? $params['_limit'] ?? 20);
-        $offset = isset($params['offset']) ? (int) $params['offset'] : (isset($params['_offset']) ? (int) $params['_offset'] : null);
-        $page   = isset($params['page']) ? (int) $params['page'] : (isset($params['_page']) ? (int) $params['_page'] : null);
-
-        // If we have a page but no offset, calculate the offset
-        if ($page !== null && $offset === null) {
-            $offset = (($page - 1) * $limit);
+        // Add IDs filter if provided (for uses/used functionality)
+        if ($ids !== null && !empty($ids)) {
+            $searchQuery['_ids'] = $ids;
         }
 
-        $queries = ($params['queries'] ?? $params['_queries'] ?? []);
-        if (is_string($queries) === true) {
-            $queries = [$queries];
-        }
+        // Search objects using the new structure
+        $result = $objectService->searchObjectsPaginated($searchQuery);
 
-        return [
-            'limit'   => $limit,
-            'offset'  => $offset,
-            'page'    => $page,
-            'filters' => $params,
-            'sort'    => ($params['order'] ?? $params['_order'] ?? []),
-            'search'  => ($params['_search'] ?? null),
-            'extend'  => ($params['extend'] ?? $params['_extend'] ?? null),
-            'fields'  => ($params['fields'] ?? $params['_fields'] ?? null),
-            'unset'   => ($params['unset'] ?? $params['_unset'] ?? null),
-            'queries' => $queries,
-            'ids'     => $ids,
-        ];
+        // Filter unwanted properties from results
+        $result['results'] = $this->filterUnwantedProperties($result['results']);
 
-    }//end getConfig()
-
+        return $result;
+    }
 
     /**
      * Retrieves a list of all objects for a specific register and schema
      *
      * This method returns a paginated list of objects that match the specified register and schema.
-     * It supports filtering, sorting, and pagination through query parameters.
+     * It supports filtering, sorting, and pagination through query parameters using the new search structure.
      *
-     * @param ObjectService $objectService The object service
+     * @param null|string|int $catalogId Optional catalog ID to filter objects by
      *
      * @return JSONResponse A JSON response containing the list of objects
      *
      * @NoAdminRequired
-     *
      * @NoCSRFRequired
+     * @PublicPage
      */
     public function index(null|string|int $catalogId = null): JSONResponse
     {
-        // Get config and fetch objects
-        $config = $this->getConfig();
-
-        // Get the context for the catalog
-        $context                       = $this->getCatalogFilters($catalogId);
-        
-        //Vardump the context
-        $config['filters']['register'] = $context['registers'];
-        $config['filters']['schema']   = $context['schemas'];
-        $config['published']           = true;
-
-        $objectService = $this->getObjectService();
-
-        $objects = $objectService->findAll($config);        
-
-        // Filter unwanted properties from results
-        $filteredObjects = $this->filterUnwantedProperties($objects);        
-
-        // Get total count for pagination
-        $total = $objectService->count($config);
-
-        $facets = $objectService->getFacets(
-            filters: $config['filters'],
-            search: $config['search']
-        );
-
-        // Return paginated results
-        return new JSONResponse(
-            $this->paginate(
-                results: $filteredObjects,
-                total: $total,
-                limit: $config['limit'],
-                offset: $config['offset'],
-                page: $config['page'],
-                facets: $facets
-            )
-        );
-    }//end index()
-
+        try {
+            $result = $this->searchPublications($catalogId);
+            return new JSONResponse($result);
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 400);
+        }
+    }
 
     /**
      * Shows a specific object from a register and schema
@@ -495,7 +379,7 @@ class PublicationService
         }//end try
     }
 
-    /**
+     /**
      * Download all files of an object as a ZIP archive
      *
      * This method creates a ZIP file containing all files associated with a specific object
@@ -519,6 +403,7 @@ class PublicationService
         string $id
     ): DataDownloadResponse | JSONResponse {
         try {
+
             // Create the ZIP archive
             $fileService = $this->getFileService();
             $zipInfo = $fileService->createObjectFilesZip($id);
@@ -559,7 +444,9 @@ class PublicationService
      * Filter out unwanted properties from objects
      *
      * This method removes unwanted properties from the '@self' array in each object.
-     * It ensures consistent object structure across all endpoints.
+     * It ensures consistent object structure across all endpoints. Additionally, it checks
+     * for a 'files' property within '@self' and ensures each file has a 'published' property.
+     * Files without a 'published' property are removed.
      *
      * @param array $objects Array of objects to filter
      * @return array Filtered array of objects
@@ -581,6 +468,13 @@ class PublicationService
             // Remove unwanted properties from the '@self' array
             if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
                 $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+
+                // Check for 'files' property and filter files without 'published'
+                if (isset($objectArray['@self']['files']) && is_array($objectArray['@self']['files'])) {
+                    $objectArray['@self']['files'] = array_filter($objectArray['@self']['files'], function ($file) {
+                        return isset($file['published']);
+                    });
+                }
             }
 
             return $objectArray;
@@ -602,58 +496,33 @@ class PublicationService
      */
     public function uses(string $id): JSONResponse
     {
-        // Get the object service
-        $objectService = $this->getObjectService();
+        try {
+            // Get the object service
+            $objectService = $this->getObjectService();
 
-        // Get the relations for the object
-        $relationsArray = $objectService->find(id: $id)->getRelations();
-        $relations = array_values($relationsArray);
+            // Get the relations for the object
+            $relationsArray = $objectService->find(id: $id)->getRelations();
+            $relations = array_values($relationsArray);
 
-        // Check if relations array is empty
-        if (empty($relations)) {
-            // If relations is empty, return empty paginated response
-            return new JSONResponse([
-                'results' => [],
-                'total' => 0,
-                'page' => 1,
-                'pages' => 1,
-                'facets' => []
-            ]);
+            // Check if relations array is empty
+            if (empty($relations)) {
+                // If relations is empty, return empty paginated response
+                return new JSONResponse([
+                    'results' => [],
+                    'total' => 0,
+                    'page' => 1,
+                    'pages' => 1,
+                    'facets' => []
+                ]);
+            }
+
+            // Use the generic search function with the relation IDs
+            $result = $this->searchPublications(catalogId: null, ids: $relations);
+
+            return new JSONResponse($result);
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 400);
         }
-
-        // Get config and fetch objects
-        $config = $this->getConfig(ids: $relations);
-
-        // Get the context for the catalog
-        $context = $this->getCatalogFilters(catalogId: null);
-        
-        //Vardump the context
-        $config['filters']['register'] = $context['registers'];
-        $config['filters']['schema']   = $context['schemas'];
-        $config['published'] = true;
-
-        // Get paginated results using findAllPaginated
-        $results = $objectService->findAll($config);
-
-        // Filter unwanted properties from results
-        $results  = $this->filterUnwantedProperties($results);
-
-        $facets = $objectService->getFacets(
-            filters: $config['filters'],
-            search: $config['search']
-        );
-        
-        // Return paginated results
-        return new JSONResponse(
-            $this->paginate(
-                results: $results,
-                total: $total,
-                limit: $config['limit'],
-                offset: $config['offset'],
-                page: $config['page'],
-                facets: $facets
-            )
-        );
     }
 
     /**
@@ -671,58 +540,33 @@ class PublicationService
      */
     public function used(string $id): JSONResponse
     {
-        // Get the object service
-        $objectService = $this->getObjectService();
+        try {
+            // Get the object service
+            $objectService = $this->getObjectService();
 
-        // Get the relations for the object
-        $relationsArray = $objectService->findByRelations($id);
-        $relations = array_map(static fn($relation) => $relation->getUuid(), $relationsArray);
+            // Get the relations for the object
+            $relationsArray = $objectService->findByRelations($id);
+            $relations = array_map(static fn($relation) => $relation->getUuid(), $relationsArray);
 
-        // Check if relations array is empty
-        if (empty($relations)) {
-            // If relations is empty, return empty paginated response
-            return new JSONResponse([
-                'results' => [],
-                'total' => 0,
-                'page' => 1,
-                'pages' => 1,
-                'facets' => []
-            ]);
+            // Check if relations array is empty
+            if (empty($relations)) {
+                // If relations is empty, return empty paginated response
+                return new JSONResponse([
+                    'results' => [],
+                    'total' => 0,
+                    'page' => 1,
+                    'pages' => 1,
+                    'facets' => []
+                ]);
+            }
+
+            // Use the generic search function with the relation IDs
+            $result = $this->searchPublications(catalogId: null, ids: $relations);
+
+            return new JSONResponse($result);
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 400);
         }
-
-        // Get config and fetch objects
-        $config = $this->getConfig(ids: $relations);
-
-        // Get the context for the catalog
-        $context = $this->getCatalogFilters(catalogId: null);
-        
-        //Vardump the context
-        $config['filters']['register'] = $context['registers'];
-        $config['filters']['schema']   = $context['schemas'];
-        $config['published'] = true;
-
-        // Get paginated results using findAllPaginated
-        $results = $objectService->findAll($config);
-
-        // Filter unwanted properties from results
-        $results  = $this->filterUnwantedProperties( $results );
-
-        $facets = $objectService->getFacets(
-            filters: $config['filters'],
-            search: $config['search']
-        );
-
-        // Return paginated results
-        return new JSONResponse(
-            $this->paginate(
-                results: $results,
-                total: $total,
-                limit: $config['limit'],
-                offset: $config['offset'],
-                page: $config['page'],
-                facets: $facets
-            )
-        );
     }
 
 }//end class

@@ -16,6 +16,7 @@ import { TOrganization } from './organization.types'
  * Organization class representing an organization in the system
  */
 export class Organization implements TOrganization {
+
 	/**
 	 * Unique identifier of the organization
 	 */
@@ -110,4 +111,5 @@ export class Organization implements TOrganization {
 
 		return result
 	}
+
 }

@@ -13,6 +13,12 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<PageModal v-if="navigationStore.modal === 'page'" />
 		<GlossaryModal />
 		<MenuModal v-if="navigationStore.modal === 'menu'" />
+		<!--View Modals-->
+		<ViewDirectoryModal />
+		<ViewGlossaryModal />
+		<ViewMenuModal />
+		<ViewPageModal />
+		<ViewThemeModal />
 		<!--Specific-->
 		<AddAttachmentModal :drop-files="objectStore.getActiveObject('attachment')" />
 		<EditAttachmentModal />
@@ -36,6 +42,12 @@ import ThemeModal from './theme/ThemeModal.vue'
 import PageModal from './page/PageModal.vue'
 import GlossaryModal from './glossary/GlossaryModal.vue'
 import UploadFilesModal from './generic/UploadFiles.vue'
+// View Modals
+import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
+import ViewGlossaryModal from './glossary/ViewGlossaryModal.vue'
+import ViewMenuModal from './menu/ViewMenuModal.vue'
+import ViewPageModal from './page/ViewPageModal.vue'
+import ViewThemeModal from './theme/ViewThemeModal.vue'
 // Specific
 import AddAttachmentModal from './attachment/AddAttachmentModal.vue'
 import EditAttachmentModal from './attachment/EditAttachmentModal.vue'
@@ -66,12 +78,19 @@ export default {
 		PageModal,
 		MenuModal,
 		GlossaryModal,
+		// View Modals
+		ViewDirectoryModal,
+		ViewGlossaryModal,
+		ViewMenuModal,
+		ViewPageModal,
+		ViewThemeModal,
 		PageContentForm,
 		// menu
 		MenuItemForm,
 		DeleteMenuItemModal,
 		UploadFilesModal,
 		ObjectModal,
+		AddPublicationThemeModal,
 	},
 }
 </script>

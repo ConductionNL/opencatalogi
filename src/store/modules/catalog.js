@@ -38,9 +38,37 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/** @type {boolean} */
 		loading: false,
+
+		/** @type {string} */
+		viewMode: 'cards',
+
+		/** @type {object} */
+		pagination: {
+			page: 1,
+			limit: 20,
+		},
 	}),
 
 	actions: {
+		/**
+		 * Set the view mode.
+		 * @param {string} mode - The view mode to set ('cards' or 'table')
+		 */
+		setViewMode(mode) {
+			this.viewMode = mode
+			console.info('Catalog view mode set to:', mode)
+		},
+
+		/**
+		 * Set pagination details.
+		 * @param {number} page - The current page number for pagination
+		 * @param {number} limit - The number of items to display per page
+		 */
+		setPagination(page, limit = 20) {
+			this.pagination = { page, limit }
+			console.info('Catalog pagination set to', { page, limit })
+		},
+
 		/**
 		 * Set the active catalog and fetch its publications
 		 * @param {CatalogEntity} catalog The catalog to set as active
@@ -206,8 +234,8 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get loading state for specific type
-		 * @param {ObjectState} state - Store state
-		 * @return {(type: string) => boolean}
+		 * @param {object} state - Store state
+		 * @return {boolean}
 		 */
 		isLoading: (state) => state.loading || false,
 

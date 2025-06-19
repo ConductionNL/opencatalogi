@@ -42,7 +42,7 @@ export class Glossary implements TGlossary {
 			summary: z.string().max(255, 'kan niet langer dan 255 zijn'),
 			description: z.string().max(2555, 'kan niet langer dan 2555 zijn'),
 			externalLink: z.string().url('moet een geldige URL zijn').max(255, 'kan niet langer dan 255 zijn'),
-			keywords: z.string().array()
+			keywords: z.string().array(),
 		})
 
 		return schema.safeParse({

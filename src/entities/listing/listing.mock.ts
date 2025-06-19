@@ -14,7 +14,7 @@ import { TListing } from './listing.types'
 
 /**
  * Mock listing data for testing purposes
- * @returns {TListing[]} Array of mock listing data
+ * @return {TListing[]} Array of mock listing data
  */
 export const mockListingData = (): TListing[] => [
 	{
@@ -56,7 +56,7 @@ export const mockListingData = (): TListing[] => [
 /**
  * Creates Listing instances from mock data
  * @param {TListing[]} data Optional mock data to use instead of default
- * @returns {Listing[]} Array of Listing instances
+ * @return {Listing[]} Array of Listing instances
  */
-export const mockListings = (data: TListing[] = mockListingData()): Listing[] => 
+export const mockListings = (data: TListing[] = mockListingData()): Listing[] =>
 	data.map(item => new Listing(item))

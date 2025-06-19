@@ -541,17 +541,57 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								<template #actions>
 									<NcActionButton close-after-click :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
 										<template #icon>
-											<Delete :size="20" />
+											<ShapeOutline
+												:class="themeStore.themeItem?.id === value.id && 'selectedZaakIcon'"
+												disable-menu
+												:size="44" />
 										</template>
-										Verwijderen
-									</NcActionButton>
-								</template>
-							</NcListItem>
-						</div>
-						<div v-if="!filteredThemes?.length && !missingThemes?.length" class="tabPanel">
-							<b class="emptyStateMessage">
-								Geen thema's gevonden
-							</b>
+										<template #subname>
+											{{ value.summary }}
+										</template>
+										<template #actions>
+											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setSelected('themes')">
+												<template #icon>
+													<OpenInApp :size="20" />
+												</template>
+												Bekijken
+											</NcActionButton>
+											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setDialog('deletePublicationThemeDialog')">
+												<template #icon>
+													<Delete :size="20" />
+												</template>
+												Verwijderen
+											</NcActionButton>
+										</template>
+									</NcListItem>
+								</div>
+								<NcListItem v-for="(value, key, i) in missingThemes"
+									:key="`${value}${i}`"
+									:name="'Thema ' + value"
+									:bold="false"
+									:force-display-actions="true">
+									<template #icon>
+										<Alert disable-menu
+											:size="44" />
+									</template>
+									<template #subname>
+										Thema {{ value }} bestaat niet, het is aan te raden om het te verwijderen van deze publicatie.
+									</template>
+									<template #actions>
+										<NcActionButton :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
+											<template #icon>
+												<Delete :size="20" />
+											</template>
+											Verwijderen
+										</NcActionButton>
+									</template>
+								</NcListItem>
+							</div>
+							<div v-if="!filteredThemes?.length && !missingThemes?.length" class="tabPanel">
+								<b class="emptyStateMessage">
+									Geen thema's gevonden
+								</b>
+							</div>
 						</div>
 					</div>
 				</BTab>
@@ -615,6 +655,21 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</BTab>
 			</BTabs>
 		</div>
+		<DeleteMultipleAttachmentsDialog
+			v-if="navigationStore.dialog === 'deleteMultipleAttachments'"
+			:attachments-to-delete="selectedAttachmentsEntities"
+			@done="onBulkDeleteAttachmentsDone"
+			@cancel="onBulkDeleteAttachmentsCancel" />
+		<DeleteMultiplePublicationDataDialog
+			v-if="navigationStore.dialog === 'deleteMultiplePublicationData'"
+			:keys-to-delete="selectedPublicationData"
+			@done="onBulkDeletePublicationDataDone"
+			@cancel="onBulkDeletePublicationDataCancel" />
+		<DeleteMultipleThemesDialog
+			v-if="navigationStore.dialog === 'deleteMultipleThemes'"
+			:themes-to-delete="selectedThemesEntities"
+			@done="onBulkDeleteThemesDone"
+			@cancel="onBulkDeleteThemesCancel" />
 	</div>
 </template>
 
@@ -622,6 +677,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcNoteCard, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTab, BTabs, BPagination } from 'bootstrap-vue'
 import VueApexCharts from 'vue-apexcharts'
+import DeleteMultipleAttachmentsDialog from '../../dialogs/attachment/DeleteMultipleAttachmentsDialog.vue'
+import DeleteMultiplePublicationDataDialog from '../../dialogs/publicationData/DeleteMultiplePublicationDataDialog.vue'
+import DeleteMultipleThemesDialog from '../../dialogs/publicationTheme/DeleteMultiplePublicationThemeDialog.vue'
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -663,7 +721,6 @@ export default {
 		BTab,
 		BTabs,
 		apexchart: VueApexCharts,
-
 	},
 	data() {
 		return {
@@ -1001,7 +1058,6 @@ export default {
 				this.selectedThemes.push(theme.id)
 			}
 		},
-
 	},
 }
 </script>
