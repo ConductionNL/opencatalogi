@@ -622,7 +622,6 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcNoteCard, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTab, BTabs, BPagination } from 'bootstrap-vue'
 import VueApexCharts from 'vue-apexcharts'
-import axios from 'axios'
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -818,31 +817,28 @@ export default {
 				formData.append('tags[]', tag)
 			})
 
-			await axios.post(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.title}`,
-				formData,
-				{
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
+			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.title}`, {
+				method: 'PUT',
+				body: JSON.stringify({
+					tags: this.editedTags,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			}).then((response) => {
+				this.editingTags = null
+				this.editedTags = []
+			}).catch((err) => {
+				console.error(err)
+			}).finally(() => {
+				this.getTags().then(({ response, data }) => {
+					this.labelOptionsEdit.options = data
 				})
-
-				.then((response) => {
-					this.editingTags = null
-					this.editedTags = []
+				catalogStore.getPublicationAttachments({ page: this.currentPage, limit: this.limit }).finally(() => {
+					this.saveTagsLoading.splice(this.saveTagsLoading.indexOf(attachment.id), 1)
+					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
 				})
-				.catch((err) => {
-					console.error(err)
-				})
-				.finally(() => {
-					this.getTags().then(({ response, data }) => {
-						this.labelOptionsEdit.options = data
-					})
-					catalogStore.getPublicationAttachments({ page: this.currentPage, limit: this.limit }).finally(() => {
-						this.saveTagsLoading.splice(this.saveTagsLoading.indexOf(attachment.id), 1)
-						this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
-					})
-
-				})
+			})
 		},
 
 		toggleSelection(attachment) {

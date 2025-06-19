@@ -6,6 +6,7 @@ export const useSearchStore = defineStore('search', {
 		// Search parameters
 		searchTerm: '',
 		filters: {},
+		ordering: {}, // New: ordering criteria { field: 'ASC'|'DESC' }
 		
 		// Results and pagination
 		searchResults: [],
@@ -37,6 +38,7 @@ export const useSearchStore = defineStore('search', {
 		getError: (state) => state.error,
 		getSearchTerm: (state) => state.searchTerm,
 		getFilters: (state) => state.filters,
+		getOrdering: (state) => state.ordering,
 		getViewMode: (state) => state.viewMode,
 		getSelectedPublications: (state) => state.selectedPublications,
 	},
@@ -79,6 +81,36 @@ export const useSearchStore = defineStore('search', {
 		clearAllFilters() {
 			this.filters = {}
 			console.log('All filters cleared')
+		},
+		
+		/**
+		 * Set ordering for a field
+		 * 
+		 * @param field The field to order by
+		 * @param direction ASC or DESC
+		 */
+		setOrdering(field: string, direction: 'ASC' | 'DESC') {
+			this.ordering = { ...this.ordering, [field]: direction }
+			console.log('Ordering updated:', this.ordering)
+		},
+		
+		/**
+		 * Remove ordering for a field
+		 * 
+		 * @param field The field to remove ordering from
+		 */
+		removeOrdering(field: string) {
+			const { [field]: removed, ...remainingOrdering } = this.ordering
+			this.ordering = remainingOrdering
+			console.log('Ordering removed for field:', field, 'Remaining ordering:', this.ordering)
+		},
+		
+		/**
+		 * Clear all ordering
+		 */
+		clearOrdering() {
+			this.ordering = {}
+			console.log('All ordering cleared')
 		},
 		
 		/**
@@ -158,6 +190,11 @@ export const useSearchStore = defineStore('search', {
 					...params,
 				})
 				
+				// Add ordering parameters
+				Object.entries(this.ordering).forEach(([field, direction]) => {
+					searchParams.append(`_order[${field}]`, direction as string)
+				})
+				
 				console.log('Searching publications with params:', searchParams.toString())
 				
 				// Make API call to SearchController
@@ -191,6 +228,7 @@ export const useSearchStore = defineStore('search', {
 					pagination: this.pagination,
 					facets: Object.keys(this.facets).length,
 					facetable: Object.keys(this.facetable).length,
+					ordering: this.ordering,
 				})
 				
 			} catch (error) {
@@ -305,6 +343,7 @@ export const useSearchStore = defineStore('search', {
 		clearSearch() {
 			this.searchTerm = ''
 			this.filters = {}
+			this.ordering = {}
 			this.searchResults = []
 			this.pagination = {
 				page: 1,

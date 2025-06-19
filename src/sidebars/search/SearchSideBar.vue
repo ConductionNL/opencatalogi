@@ -48,6 +48,72 @@ import { useSearchStore } from '../../store/modules/search.ts'
 				</div>
 			</div>
 
+			<!-- Ordering Section -->
+			<div class="searchSideBar-content-item">
+				<h3>{{ t('opencatalogi', 'Sort Results') }}</h3>
+				
+				<!-- Current ordering display -->
+				<div v-if="Object.keys(searchStore.getOrdering).length > 0" class="currentOrdering">
+					<h4>{{ t('opencatalogi', 'Current Sorting') }}</h4>
+					<div v-for="(direction, field) in searchStore.getOrdering" :key="field" class="orderingItem">
+						<span class="orderingField">{{ formatOrderingLabel(field) }}</span>
+						<span class="orderingDirection">{{ direction }}</span>
+						<NcButton
+							type="tertiary-no-background"
+							:aria-label="t('opencatalogi', 'Remove sorting')"
+							@click="removeOrdering(field)">
+							<template #icon>
+								<Close :size="16" />
+							</template>
+						</NcButton>
+					</div>
+					<NcButton
+						type="secondary"
+						size="small"
+						@click="clearAllOrdering">
+						{{ t('opencatalogi', 'Clear all sorting') }}
+					</NcButton>
+				</div>
+
+				<!-- Add new ordering -->
+				<div class="addOrdering">
+					<h4>{{ t('opencatalogi', 'Add Sorting') }}</h4>
+					<div class="orderingControls">
+						<NcSelect
+							v-model="selectedOrderField"
+							:options="orderingOptions"
+							:placeholder="t('opencatalogi', 'Select field to sort by')"
+							label="title"
+							track-by="value"
+							:allow-empty="false"
+							:searchable="true">
+						</NcSelect>
+						<div class="orderingDirectionButtons">
+							<NcButton
+								:type="'secondary'"
+								size="small"
+								:disabled="!selectedOrderField"
+								@click="addOrdering('ASC')">
+								<template #icon>
+									<ArrowUp :size="16" />
+								</template>
+								{{ t('opencatalogi', 'ASC') }}
+							</NcButton>
+							<NcButton
+								:type="'secondary'"
+								size="small"
+								:disabled="!selectedOrderField"
+								@click="addOrdering('DESC')">
+								<template #icon>
+									<ArrowDown :size="16" />
+								</template>
+								{{ t('opencatalogi', 'DESC') }}
+							</NcButton>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Dynamic Filters from Facetable Data -->
 			<div v-if="availableFilters.length > 0" class="searchSideBar-content-item">
 				<h3>{{ t('opencatalogi', 'Filters') }}</h3>
@@ -119,6 +185,9 @@ import { useSearchStore } from '../../store/modules/search.ts'
 					<p v-if="searchStore.getPagination.total > 0">
 						<strong>{{ t('opencatalogi', 'Results:') }}</strong> {{ searchStore.getPagination.total }} {{ t('opencatalogi', 'publications found') }}
 					</p>
+					<p v-if="Object.keys(searchStore.getOrdering).length > 0">
+						<strong>{{ t('opencatalogi', 'Sorted by:') }}</strong> {{ Object.keys(searchStore.getOrdering).length }} {{ t('opencatalogi', 'field(s)') }}
+					</p>
 					<p v-if="searchStore.isLoading">
 						<em>{{ t('opencatalogi', 'Searching...') }}</em>
 					</p>
@@ -129,9 +198,11 @@ import { useSearchStore } from '../../store/modules/search.ts'
 </template>
 
 <script>
-import { NcTextField, NcButton, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { NcTextField, NcButton, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
+import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
 
 export default {
 	name: 'SearchSideBar',
@@ -139,13 +210,17 @@ export default {
 		NcTextField,
 		NcButton,
 		NcCheckboxRadioSwitch,
+		NcSelect,
 		Magnify,
 		Close,
+		ArrowUp,
+		ArrowDown,
 	},
 	data() {
 		return {
 			searchStore: useSearchStore(),
 			searchTimeout: null,
+			selectedOrderField: null,
 		}
 	},
 	computed: {
@@ -165,7 +240,7 @@ export default {
 				Object.entries(facetable['@self']).forEach(([key, config]) => {
 					if (config.sample_values && config.sample_values.length > 0) {
 						filters.push({
-							key: key,
+							key: key, // Use the key directly without @self. prefix to avoid URL encoding issues
 							label: this.formatFilterLabel(key),
 							type: config.type,
 							options: config.sample_values,
@@ -205,6 +280,46 @@ export default {
 		 */
 		objectFieldFilters() {
 			return this.availableFilters.filter(f => f.category === 'object')
+		},
+		
+		/**
+		 * Get available fields for ordering
+		 */
+		orderingOptions() {
+			const options = []
+			const facetable = this.searchStore.getFacetable
+			
+			// Add system metadata fields (with @self. prefix for ordering)
+			if (facetable['@self']) {
+				Object.entries(facetable['@self']).forEach(([key, config]) => {
+					options.push({
+						value: `@self.${key}`,
+						title: `${this.formatFilterLabel(key)} (System)`,
+						category: 'system'
+					})
+				})
+			}
+			
+			// Add object fields that are suitable for ordering
+			if (facetable.object_fields) {
+				Object.entries(facetable.object_fields).forEach(([key, config]) => {
+					if (this.shouldShowForOrdering(key, config)) {
+						options.push({
+							value: key,
+							title: `${this.formatFilterLabel(key)} (Object)`,
+							category: 'object'
+						})
+					}
+				})
+			}
+			
+			// Sort options by category and title
+			return options.sort((a, b) => {
+				if (a.category !== b.category) {
+					return a.category === 'system' ? -1 : 1
+				}
+				return a.title.localeCompare(b.title)
+			})
 		},
 	},
 	mounted() {
@@ -251,6 +366,33 @@ export default {
 		},
 		
 		/**
+		 * Add ordering for the selected field
+		 */
+		addOrdering(direction) {
+			if (this.selectedOrderField) {
+				this.searchStore.setOrdering(this.selectedOrderField.value, direction)
+				this.selectedOrderField = null // Reset selection
+				this.performSearch()
+			}
+		},
+		
+		/**
+		 * Remove ordering for a field
+		 */
+		removeOrdering(field) {
+			this.searchStore.removeOrdering(field)
+			this.performSearch()
+		},
+		
+		/**
+		 * Clear all ordering
+		 */
+		clearAllOrdering() {
+			this.searchStore.clearOrdering()
+			this.performSearch()
+		},
+		
+		/**
 		 * Format filter label for display
 		 */
 		formatFilterLabel(key) {
@@ -260,6 +402,15 @@ export default {
 				.replace(/_/g, ' ')
 				.replace(/\b\w/g, l => l.toUpperCase())
 				.trim()
+		},
+		
+		/**
+		 * Format ordering label for display
+		 */
+		formatOrderingLabel(field) {
+			// Remove @self. prefix for display
+			const cleanField = field.replace('@self.', '')
+			return this.formatFilterLabel(cleanField)
 		},
 		
 		/**
@@ -289,6 +440,24 @@ export default {
 			
 			// Show string fields with low cardinality
 			if (config.type === 'string' && config.cardinality === 'low') {
+				return true
+			}
+			
+			return false
+		},
+		
+		/**
+		 * Determine if a field should be available for ordering
+		 */
+		shouldShowForOrdering(key, config) {
+			// Skip fields that are not useful for ordering
+			const skipFields = ['id', 'extend', 'attachments.endpoint', 'attachments.filename']
+			if (skipFields.includes(key)) {
+				return false
+			}
+			
+			// Show date, numeric, and string fields
+			if (['date', 'numeric', 'numeric_string', 'string', 'integer'].includes(config.type)) {
 				return true
 			}
 			
@@ -330,6 +499,53 @@ export default {
 .filterOptions {
 	max-height: 200px;
 	overflow-y: auto;
+}
+
+/* Ordering Styles */
+.currentOrdering {
+	margin-bottom: 1rem;
+	padding: 0.75rem;
+	background-color: var(--color-background-hover);
+	border-radius: var(--border-radius);
+}
+
+.orderingItem {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+	padding: 0.25rem;
+	background-color: var(--color-main-background);
+	border-radius: var(--border-radius);
+}
+
+.orderingField {
+	flex: 1;
+	font-weight: 500;
+}
+
+.orderingDirection {
+	padding: 0.125rem 0.5rem;
+	background-color: var(--color-primary-element);
+	color: var(--color-primary-element-text);
+	border-radius: var(--border-radius);
+	font-size: 0.8em;
+	font-weight: bold;
+}
+
+.addOrdering {
+	margin-top: 1rem;
+}
+
+.orderingControls {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.orderingDirectionButtons {
+	display: flex;
+	gap: 0.5rem;
 }
 
 .searchStats {
