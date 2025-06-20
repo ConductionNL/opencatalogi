@@ -1,5 +1,17 @@
+/**
+ * UnpublishedAttachmentsWidget.vue
+ * Widget component for displaying unpublished attachments
+ * @category Components
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { publicationStore } from '../../store/store.js'
+import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -48,24 +60,28 @@ export default {
 	},
 	computed: {
 		items() {
-			return publicationStore.conceptAttachments.map((attachment) => ({
-				id: attachment.id,
-				mainText: attachment.title,
-				subText: attachment.summary,
-				avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/file-outline.svg' : '/apps-extra/opencatalogi/img/file-outline_light.svg',
-			}))
+			return objectStore.getCollection('attachment').results
+				.filter((attachment) => attachment.status === 'Concept')
+				.map((attachment) => ({
+					id: attachment.id,
+					mainText: attachment.title,
+					subText: attachment.summary,
+					avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/file-outline.svg' : '/apps-extra/opencatalogi/img/file-outline_light.svg',
+				}))
 		},
 	},
 	mounted() {
 		this.fetchData()
 	},
 	methods: {
-		fetchData() {
+		/**
+		 * Fetch the attachment data
+		 * @return {Promise<void>}
+		 */
+		async fetchData() {
 			this.loading = true
-			publicationStore.getConceptAttachments()
-				.then(() => {
-					this.loading = false
-				})
+			await objectStore.fetchCollection('attachment')
+			this.loading = false
 		},
 	},
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, searchStore, publicationStore, catalogiStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -13,10 +13,10 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 			</template>
 			Zoek snel in het voor uw beschikbare federatieve netwerk
 			<NcTextField class="searchField"
-				:value.sync="searchStore.search"
+				:value="objectStore.getSearchTerm('search')"
 				label="Zoeken" />
-			<NcNoteCard v-if="searchStore.searchError" type="error">
-				<p>{{ searchStore.searchError }}</p>
+			<NcNoteCard v-if="objectStore.getError('search')" type="error">
+				<p>{{ objectStore.getError('search') }}</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 
@@ -28,28 +28,30 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 				Snel Publicatie aanmaken
 			</h3>
 
-			<NcSelect v-bind="catalogi"
-				v-model="catalogi.value"
-				style="min-width: unset; width: 100%;"
-				input-label="Catalogus*"
-				:loading="catalogiLoading"
-				:disabled="catalogiLoading || loading" />
-			<NcSelect v-bind="filteredPublicationTypeOptions"
-				v-model="publicationType.value"
-				style="min-width: unset; width: 100%;"
-				input-label="Publicatietype*"
-				:loading="publicationTypeLoading"
-				:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
-			<NcTextField :disabled="loading"
-				label="Titel*"
-				:value.sync="publicationItem.title" />
-			<NcTextField :disabled="loading"
-				label="Samenvatting*"
-				:value.sync="publicationItem.summary" />
-
+			<div class="formContainer">
+				<NcSelect v-bind="catalogi"
+					v-model="catalogi.value"
+					style="min-width: unset; width: 100%;"
+					input-label="Catalogus*"
+					:loading="catalogiLoading"
+					:disabled="catalogiLoading || loading" />
+				<NcSelect v-bind="filteredPublicationTypeOptions"
+					v-model="publicationType.value"
+					style="min-width: unset; width: 100%;"
+					input-label="Publicatietype*"
+					:loading="publicationTypeLoading"
+					:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
+				<NcTextField :disabled="loading"
+					label="Titel*"
+					:value.sync="publicationItem.title" />
+				<NcTextField :disabled="loading"
+					label="Samenvatting*"
+					:value.sync="publicationItem.summary" />
+			</div>
 			<NcButton :disabled="!publicationItem.title || !publicationItem.summary || !catalogi.value?.id || !publicationType.value?.id || loading"
 				style="margin-top: 0.5rem;"
 				type="primary"
+				class="addButton"
 				@click="addPublication()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
@@ -76,15 +78,15 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 				<ListBoxOutline :size="20" />
 			</template>
 			Welke publicaties vereisen uw aandacht?
-			<NcListItem v-for="(publication, i) in publicationStore.conceptPublications"
+			<NcListItem v-for="(publication, i) in objectStore.getCollection('publication').results"
 				:key="`${publication}${i}`"
 				:name="publication.title"
 				:bold="false"
 				:force-display-actions="true"
-				:active="publicationStore.publicationItem?.id === publication?.id"
+				:active="objectStore.getActiveObject('publication')?.id === publication?.id"
 				:details="publication?.status">
 				<template #icon>
-					<ListBoxOutline :class="publicationStore.publicationItem?.id === publication?.id && 'selectedZaakIcon'"
+					<ListBoxOutline :class="objectStore.getActiveObject('publication')?.id === publication?.id && 'selectedZaakIcon'"
 						disable-menu
 						:size="44" />
 				</template>
@@ -92,25 +94,25 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 					{{ publication?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton @click="publicationStore.setPublicationItem(publication); navigationStore.setSelected('publication');">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setSelected('publication');">
 						<template #icon>
 							<ListBoxOutline :size="20" />
 						</template>
 						Bekijken
 					</NcActionButton>
-					<NcActionButton @click="publicationStore.setPublicationItem(publication); navigationStore.setModal('editPublication')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('editPublication')">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
 						Bewerken
 					</NcActionButton>
-					<NcActionButton @click="publicationStore.setPublicationItem(publication); navigationStore.setDialog('publishPublication')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('publishPublication')">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
 						Publiceren
 					</NcActionButton>
-					<NcActionButton @click="publicationStore.setPublicationItem(publication); navigationStore.setDialog('deletePublication')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deletePublication')">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
@@ -118,7 +120,7 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 					</NcActionButton>
 				</template>
 			</NcListItem>
-			<NcNoteCard v-if="!publicationStore.conceptPublications?.length > 0" type="success">
+			<NcNoteCard v-if="!objectStore.getCollection('publication').results?.length > 0" type="success">
 				<p>Er zijn op dit moment geen publicaties die uw aandacht vereisen</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
@@ -128,15 +130,15 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 				<FileOutline :size="20" />
 			</template>
 			Welke bijlagen vereisen uw aandacht?
-			<NcListItem v-for="(attachment, i) in publicationStore.conceptAttachments"
+			<NcListItem v-for="(attachment, i) in objectStore.getCollection('attachment').results"
 				:key="`${attachment}${i}`"
 				:name="attachment.title"
 				:bold="false"
 				:force-display-actions="true"
-				:active="publicationStore.attachmentItem?.id === attachment?.id"
+				:active="objectStore.getActiveObject('attachment')?.id === attachment?.id"
 				:details="attachment?.status">
 				<template #icon>
-					<ListBoxOutline :class="publicationStore.publicationItem?.id === attachment.id && 'selectedZaakIcon'"
+					<ListBoxOutline :class="objectStore.getActiveObject('attachment')?.id === attachment.id && 'selectedZaakIcon'"
 						disable-menu
 						:size="44" />
 				</template>
@@ -144,19 +146,19 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 					{{ attachment?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton @click="publicationStore.setAttachmentItem(attachment); navigationStore.setModal('editAttachment')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setModal('editAttachment')">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
 						Bewerken
 					</NcActionButton>
-					<NcActionButton @click="publicationStore.setAttachmentItem(attachment); navigationStore.setDialog('publishAttachment')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('publishAttachment')">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
 						Publiceren
 					</NcActionButton>
-					<NcActionButton @click="publicationStore.setAttachmentItem(attachment); navigationStore.setDialog('deleteAttachment')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('deleteAttachment')">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
@@ -164,7 +166,7 @@ import { navigationStore, searchStore, publicationStore, catalogiStore } from '.
 					</NcActionButton>
 				</template>
 			</NcListItem>
-			<NcNoteCard v-if="!publicationStore.conceptAttachments?.length > 0" type="success">
+			<NcNoteCard v-if="!objectStore.getCollection('attachment').results?.length > 0" type="success">
 				<p>Er zijn op dit moment geen bijlagen die uw aandacht vereisen</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
@@ -253,7 +255,7 @@ export default {
 			if (!this.publicationTypeList?.length) return {}
 
 			// step 1: get the selected catalogus from the catalogi dropdown
-			const selectedCatalogus = catalogiStore.catalogiList
+			const selectedCatalogus = objectStore.getCollection('catalogus').results
 				.find((catalogus) =>
 					(catalogus.id?.toString() || Symbol('catalogusId')) === (this.catalogi?.value.id?.toString() || Symbol('catalogiId')),
 				)
@@ -272,8 +274,8 @@ export default {
 		},
 	},
 	mounted() {
-		publicationStore.getConceptPublications()
-		publicationStore.getConceptAttachments()
+		objectStore.fetchCollection('publication')
+		objectStore.fetchCollection('attachment')
 		this.fetchCatalogi()
 		this.fetchPublicationType()
 	},
@@ -296,7 +298,7 @@ export default {
 		fetchCatalogi() {
 			this.catalogiLoading = true
 
-			catalogiStore.getAllCatalogi()
+			objectStore.fetchCollection('catalogus')
 				.then(({ response, data }) => {
 					this.catalogiList = data
 					this.catalogi.options = this.catalogiList.map((catalog) => ({
@@ -314,13 +316,9 @@ export default {
 		fetchPublicationType() {
 			this.publicationTypeLoading = true
 
-			fetch('/index.php/apps/opencatalogi/api/publication_types', {
-				method: 'GET',
-			})
-				.then((response) => {
-					response.json().then((data) => {
-						this.publicationTypeList = data.results
-					})
+			objectStore.fetchCollection('publication_type')
+				.then(({ response, data }) => {
+					this.publicationTypeList = data.results
 					this.publicationTypeLoading = false
 				})
 				.catch((err) => {
@@ -333,20 +331,11 @@ export default {
 			this.error = false
 
 			// create the publication
-			fetch(
-				'/index.php/apps/opencatalogi/api/publications',
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						...this.publicationItem,
-						catalog: this.catalogi.value.id,
-						publicationType: this.publicationType.value.id,
-					}),
-				},
-			)
+			objectStore.createObject('publication', {
+				...this.publicationItem,
+				catalog: this.catalogi.value.id,
+				publicationType: this.publicationType.value.id,
+			})
 				.then(async (response) => {
 					this.loading = false
 					this.success = response.ok
@@ -356,7 +345,7 @@ export default {
 					if (response.ok && files.value) this.addAttachment(publicationItem)
 
 					// Let's refresh the publicationList
-					publicationStore.refreshPublicationList()
+					objectStore.fetchCollection('publication')
 					// Wait for the user to read the feedback then close the model
 					setTimeout(this.cleanup, 2000)
 					if (!files.value && files.value?.length === 0) {
@@ -391,29 +380,20 @@ export default {
 				reset()
 				// Let's refresh the attachment list
 
-				publicationStore.getPublicationAttachments(publicationItem?.id)
+				objectStore.fetchCollection('attachment')
 
-				fetch(
-					`/index.php/apps/opencatalogi/api/publications/${publicationItem.id}`,
-					{
-						method: 'PUT',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							...publicationItem,
-							attachments: [...publicationItem.attachments, response.data.id],
-						}),
-					},
-				)
+				objectStore.updateObject('publication', publicationItem.id, {
+					...publicationItem,
+					attachments: [...publicationItem.attachments, response.data.id],
+				})
 					.then((response) => {
 						this.success = response.ok
 						this.loading = false
 
 						// Let's refresh the publicationList
-						publicationStore.refreshPublicationList()
+						objectStore.fetchCollection('publication')
 						response.json().then((data) => {
-							publicationStore.setPublicationItem(data)
+							objectStore.setActiveObject('publication', data)
 						})
 
 					})
@@ -421,9 +401,8 @@ export default {
 						this.error = err
 						this.loading = false
 					})
-				// store.refreshCatalogiList()
 
-				publicationStore.setAttachmentItem(response)
+				objectStore.setActiveObject('attachment', response)
 
 				// Wait for the user to read the feedback then close the model
 				const self = this
@@ -446,5 +425,17 @@ export default {
 }
 .dashboardSidebar .filesListDragDropNoticeWrapper{
 	padding-block: 2rem;
+}
+</style>
+<style scoped>
+.addButton {
+	margin-block-start: 10px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+.formContainer {
+	display: flex;
+	flex-direction: column;
 }
 </style>

@@ -1,12 +1,12 @@
 <script setup>
-import { publicationStore, navigationStore } from '../../store/store.js'
+import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog name="Bijlage verwijderen"
 		:can-close="false">
 		<p v-if="!succes">
-			Wil je <b>{{ publicationStore.attachmentItem?.title }}</b> definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+			Wil je <b>{{ objectStore.getActiveObject('publicationAttachment')?.title }}</b> definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
 		</p>
 		<NcNoteCard v-if="succes" type="success">
 			<p>Bijlage succesvol verwijderd</p>
@@ -68,12 +68,14 @@ export default {
 		DeleteAttachment() {
 			this.loading = true
 
-			publicationStore.deleteFile(publicationStore.publicationItem.id, publicationStore.attachmentItem.title)
+			fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${objectStore.getActiveObject('publicationAttachment').title}`, {
+				method: 'DELETE',
+			})
 				.then((response) => {
 					this.loading = false
 					this.succes = response.status === 200
 
-					publicationStore.getPublicationAttachments(publicationStore.publicationItem.id, { page: publicationStore.currentPage, limit: publicationStore.limit })
+					catalogStore.getPublicationAttachments(objectStore.getActiveObject('publication').id, { page: objectStore.currentPage, limit: objectStore.limit })
 
 					setTimeout(() => {
 						navigationStore.setDialog(false)

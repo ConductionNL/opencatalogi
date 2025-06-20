@@ -1,14 +1,14 @@
 <script setup>
-import { navigationStore, organizationStore, searchStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcAppContent>
 		<template #list>
-			<OrganizationList :search="searchStore.search" />
+			<OrganizationList />
 		</template>
 		<template #default>
-			<NcEmptyContent v-if="!organizationStore.organizationItem?.id || navigationStore.selected != 'organizations'"
+			<NcEmptyContent v-if="showEmptyContent"
 				class="detailContainer"
 				name="Geen organisatie"
 				description="Nog geen organisatie geselecteerd">
@@ -16,37 +16,43 @@ import { navigationStore, organizationStore, searchStore } from '../../store/sto
 					<OfficeBuildingOutline />
 				</template>
 				<template #action>
-					<NcButton type="primary" @click="navigationStore.setModal('organizationForm')">
+					<NcButton type="primary" @click="navigationStore.setModal('organization')">
 						Organisatie toevoegen
 					</NcButton>
 				</template>
 			</NcEmptyContent>
-			<OrganizationDetails v-if="organizationStore.organizationItem?.id && navigationStore.selected === 'organizations'" :organization-item="organizationStore.organizationItem" />
+			<OrganizationDetails v-if="!showEmptyContent" />
 		</template>
 	</NcAppContent>
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
-import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
-import OrganizationDetails from './OrganizationDetail.vue'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
 import OrganizationList from './OrganizationList.vue'
+import OrganizationDetails from './OrganizationDetail.vue'
+import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
+
+// Make the stores reactive
+const { selected } = storeToRefs(navigationStore)
+const activeOrganization = computed(() => objectStore.getActiveObject('organization'))
+
+const showEmptyContent = computed(() => {
+	const hasActiveOrganization = activeOrganization.value
+	const isOrganizationSelected = selected.value === 'organizations'
+	return !hasActiveOrganization || !isOrganizationSelected
+})
 
 export default {
 	name: 'OrganizationIndex',
 	components: {
 		NcAppContent,
 		NcEmptyContent,
+		NcButton,
 		OrganizationList,
 		OrganizationDetails,
-		NcButton,
-		// Icons
 		OfficeBuildingOutline,
-	},
-	data() {
-		return {
-
-		}
 	},
 }
 </script>

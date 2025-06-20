@@ -1,55 +1,122 @@
+/**
+ * CopyMenuDialog.vue
+ * Dialog for copying menus
+ * @category Components
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { navigationStore, menuStore } from '../../store/store.js'
+import { ref, computed } from 'vue'
+import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog name="Menu kopieren"
-		:can-close="false">
-		<div v-if="success !== null || error">
-			<NcNoteCard v-if="success" type="success">
-				<p>Menu succesvol gekopieerd</p>
-			</NcNoteCard>
-			<NcNoteCard v-if="!success" type="error">
-				<p>Er is iets fout gegaan bij het kopiëren van Menu</p>
-			</NcNoteCard>
-			<NcNoteCard v-if="error" type="error">
-				<p>{{ error }}</p>
-			</NcNoteCard>
+	<NcDialog v-if="navigationStore.dialog === 'copyMenu'"
+		ref="dialogRef"
+		class="copyMenuDialog"
+		label-id="copyMenuDialog"
+		@close="closeDialog">
+		<div class="dialog__content">
+			<h2>Menu kopiëren</h2>
+			<div v-if="success !== null || error">
+				<NcNoteCard v-if="success" type="success">
+					<p>Menu succesvol gekopieerd</p>
+				</NcNoteCard>
+				<NcNoteCard v-if="!success" type="error">
+					<p>Er is iets fout gegaan bij het kopiëren van menu</p>
+				</NcNoteCard>
+				<NcNoteCard v-if="error" type="error">
+					<p>{{ error }}</p>
+				</NcNoteCard>
+			</div>
+			<div v-if="success === null" class="form-group">
+				<p>Weet je zeker dat je het menu '{{ menu.title }}' wilt kopiëren?</p>
+			</div>
+
+			<span class="buttonContainer">
+				<NcButton
+					@click="navigationStore.setDialog(false)">
+					{{ success ? 'Sluiten' : 'Annuleer' }}
+				</NcButton>
+				<NcButton v-if="success === null"
+					:disabled="loading"
+					type="primary"
+					@click="handleCopy">
+					<template #icon>
+						<span>
+							<NcLoadingIcon v-if="loading" :size="20" />
+							<ContentCopy v-if="!loading" :size="20" />
+						</span>
+					</template>
+					Kopiëren
+				</NcButton>
+			</span>
 		</div>
-
-		<p v-if="success === null">
-			Wil je <b>{{ menuStore.menuItem?.name }}</b> kopiëren?
-		</p>
-
-		<template #actions>
-			<NcButton :disabled="loading" icon="" @click="navigationStore.setDialog(false)">
-				<template #icon>
-					<Cancel :size="20" />
-				</template>
-				{{ success !== null ? 'Sluiten' : 'Annuleer' }}
-			</NcButton>
-			<NcButton v-if="success === null"
-				:disabled="loading"
-				type="primary"
-				@click="copyMenu()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentCopy v-if="!loading" :size="20" />
-				</template>
-				Kopiëren
-			</NcButton>
-		</template>
 	</NcDialog>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import _ from 'lodash'
+import {
+	NcButton,
+	NcDialog,
+	NcNoteCard,
+	NcLoadingIcon,
+} from '@nextcloud/vue'
 
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+// icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
-import { Menu } from '../../entities/index.js'
+/**
+ * Loading state for the component
+ * @type {import('vue').Ref<boolean>}
+ */
+const loading = ref(false)
+
+/**
+ * Success state for the component
+ * @type {import('vue').Ref<boolean|null>}
+ */
+const success = ref(null)
+
+/**
+ * Error state for the component
+ * @type {import('vue').Ref<string|null>}
+ */
+const error = ref(null)
+
+/**
+ * Get the active menu from the store
+ * @return {object | null}
+ */
+const menu = computed(() => objectStore.getActiveObject('menu'))
+
+/**
+ * Handle copy action
+ * @return {Promise<void>}
+ */
+const handleCopy = async () => {
+	loading.value = true
+	try {
+		const newMenu = {
+			...menu.value,
+			id: null,
+			title: `${menu.value.title} (kopie)`,
+		}
+		await objectStore.createObject('menu', newMenu)
+		success.value = true
+	} catch (error) {
+		console.error('Error copying menu:', error)
+		success.value = false
+		error.value = error.message
+	} finally {
+		loading.value = false
+	}
+}
 
 export default {
 	name: 'CopyMenuDialog',
@@ -58,62 +125,38 @@ export default {
 		NcButton,
 		NcNoteCard,
 		NcLoadingIcon,
-		// Icons
-		Cancel,
-		ContentCopy,
 	},
 	data() {
 		return {
 			loading: false,
 			success: null,
-			error: false,
+			error: null,
 		}
 	},
 	methods: {
-		copyMenu() {
-			this.loading = true
-
-			const menuClone = _.cloneDeep(menuStore.menuItem)
-
-			menuClone.name = 'KOPIE: ' + menuClone.name
-			delete menuClone.id
-			delete menuClone.uuid
-
-			const menuItem = new Menu(menuClone)
-
-			menuStore.saveMenu(menuItem)
-				.then(({ response }) => {
-					this.loading = false
-					this.success = response.ok
-
-					navigationStore.setSelected('menus')
-					// Wait for the user to read the feedback then close the model
-					setTimeout(() => {
-						navigationStore.setDialog(false)
-					}, 2000)
-				})
-				.catch((err) => {
-					this.error = err
-					this.loading = false
-				})
+		closeDialog() {
+			this.navigationStore.setDialog(false)
 		},
 	},
 }
 </script>
 
-<style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
+<style scoped>
+.dialog__content {
+	padding: 20px;
 }
 
-.zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+.buttonContainer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
 }
 
-.success {
-    color: green;
+.form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-top: 20px;
 }
 </style>

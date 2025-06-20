@@ -2,191 +2,154 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use GuzzleHttp\Exception\GuzzleException;
-use OCA\OpenCatalogi\Db\CatalogMapper;
-use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Service\ObjectService;
-use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IRequest;
-use OCP\IURLGenerator;
+use OCP\IAppConfig;
+use OCP\App\IAppManager;
+use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Class CatalogiController
- *
  * Controller for handling catalog-related operations in the OpenCatalogi app.
+ *
+ * @category  Controller
+ * @package   opencatalogi
+ * @author    Ruben Linde
+ * @copyright 2024
+ * @license   AGPL-3.0-or-later
+ * @version   1.0.0
+ * @link      https://github.com/opencatalogi/opencatalogi
  */
 class CatalogiController extends Controller
 {
+
     /**
      * CatalogiController constructor.
      *
-     * @param string $appName The name of the app
-     * @param IRequest $request The request object
-     * @param IAppConfig $config The app configuration
-     * @param CatalogMapper $catalogMapper The catalog mapper
-     * @param ObjectService $objectService The object service
-	 * @param DirectoryService $directoryService The directory service
-	 * @param BroadcastService $broadcastService The broadcast service
-     * @param IURLGenerator $urlGenerator The URL generator
+     * @param string             $appName            The name of the app
+     * @param IRequest           $request            The request object
+     * @param CatalogiService    $catalogiService    The catalogi service
+     * @param IAppConfig         $config             App configuration interface
+     * @param ContainerInterface $container          Server container for dependency injection
+     * @param IAppManager        $appManager         App manager for checking installed apps
      */
     public function __construct(
         $appName,
         IRequest $request,
+        private readonly CatalogiService $catalogiService,
         private readonly IAppConfig $config,
-        private readonly CatalogMapper $catalogMapper,
-        private readonly ObjectService $objectService,
-		private readonly DirectoryService $directoryService,
-		private readonly BroadcastService $broadcastService,
-        private readonly IURLGenerator $urlGenerator
-    )
-    {
+        private readonly ContainerInterface $container,
+        private readonly IAppManager $appManager
+    ) {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
+
+    /**
+     * Attempts to retrieve the OpenRegister ObjectService from the container.
+     *
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+
+    }//end getObjectService()
+
+
+    /**
+     * Get the schema and register configuration for catalogs.
+     *
+     * @return array<string, string> Array containing schema and register configuration
+     */
+    private function getCatalogConfiguration(): array
+    {
+        // Get the catalog schema and register from configuration
+        $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
+        $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+        return [
+            'schema'   => $schema,
+            'register' => $register,
+        ];
+
+    }//end getCatalogConfiguration()
+
+
+    /**
+     * Retrieve a list of publications based on all available catalogs.
+     *
+     * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @return JSONResponse JSON response containing the list of publications and total count
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     */
+    public function index(): JSONResponse
+    {
+        // Get catalog configuration from settings
+        $catalogConfig = $this->getCatalogConfiguration();
+
+        // Get all catalogs using configuration
+        $config = [
+            'filters' => []
+        ];
+
+        // Add schema filter if configured
+        if (!empty($catalogConfig['schema'])) {
+            $config['filters']['schema'] = $catalogConfig['schema'];
+        }
+
+        // Add register filter if configured
+        if (!empty($catalogConfig['register'])) {
+            $config['filters']['register'] = $catalogConfig['register'];
+        }
+        
+        $result = $this->getObjectService()->findAll($config);
+        
+        // Convert objects to arrays
+        $data = [
+            'results' => array_map(function ($object) {
+                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+            }, $result ?? []),
+            'total' => count($result ?? [])
+        ];
+
+        return new JSONResponse($data);
+
+    }//end index()
+
 
     /**
      * Retrieve a list of catalogs based on provided filters and parameters.
      *
-     * @param ObjectService $objectService Service to handle object operations
-	 *
+     * @param  string|int $id The ID of the catalog to use as a filter
      * @return JSONResponse JSON response containing the list of catalogs and total count
-	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function index(ObjectService $objectService): JSONResponse
+    public function show(string | int $id): JSONResponse
     {
-        // Retrieve all request parameters
-        $requestParams = $this->request->getParams();
+        // Get all objects using the catalog's registers and schemas as filters
+        $objects = $this->catalogiService->index($id);
 
-        // Fetch catalog objects based on filters and order
-        $data = $this->objectService->getResultArrayForRequest('catalog', $requestParams);
+        return $objects;
 
-        // Return JSON response
-        return new JSONResponse($data);
-    }
+    }//end show()
 
-    /**
-     * Retrieve a specific catalog by its ID.
-     *
-     * @param string|int $id The ID of the catalog to retrieve
-     * @param ObjectService $objectService Service to handle object operations
-	 *
-     * @return JSONResponse JSON response containing the requested catalog
-	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
-    public function show(string|int $id, ObjectService $objectService): JSONResponse
-    {
-        // Fetch the catalog object by its ID
-        $object = $this->objectService->getObject('catalog', $id);
 
-        // Return the catalog as a JSON response
-        return new JSONResponse($object);
-    }
-
-	/**
-	 * Create a new catalog.
-	 *
-	 * @param ObjectService $objectService The service to handle object operations.
-	 *
-	 * @return JSONResponse The response containing the created catalog object.
-	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
-	 * @throws GuzzleException
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 */
-    public function create(ObjectService $objectService): JSONResponse
-    {
-        // Get all parameters from the request
-        $data = $this->request->getParams();
-
-        // Remove the 'id' field if it exists, as we're creating a new object
-        unset($data['id']);
-
-        // Save the new catalog object
-        $object = $this->objectService->saveObject('catalog', $data);
-
-        // If object is a class change it to array
-        if (is_object($object) === true) {
-            $object = $object->jsonSerialize();
-        }
-
-        // If we do not have an uri, we need to generate one
-        if (isset($object['uri']) === false) {
-            $object['uri'] = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('openCatalogi.catalogs.show', ['id' => $object['id']]));
-            $object = $this->objectService->saveObject('catalog', $object);
-        }
-
-		// Update all external directories
-		$this->broadcastService->broadcast();
-
-        // Return the created object as a JSON response
-        return new JSONResponse($object);
-    }
-
-	/**
-	 * Update an existing catalog.
-	 *
-	 * @param string|int $id The ID of the catalog to update.
-	 * @param ObjectService $objectService The service to handle object operations.
-	 *
-	 * @return JSONResponse The response containing the updated catalog object.
-	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
-	 * @throws GuzzleException
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 */
-    public function update(string|int $id, ObjectService $objectService): JSONResponse
-    {
-        // Get all parameters from the request
-        $data = $this->request->getParams();
-
-        // Ensure the ID in the data matches the ID in the URL
-        $data['id'] = $id;
-
-        // If we do not have an uri, we need to generate one
-        $data['uri'] = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute('openCatalogi.catalogs.show', ['id' => $data['id']]));
-
-        // Save the updated catalog object
-        $object = $this->objectService->saveObject('catalog', $data);
-
-		// Update all external directories
-		$this->broadcastService->broadcast();
-
-        // Return the updated object as a JSON response
-        return new JSONResponse($object);
-    }
-
-    /**
-     * Delete a catalog.
-     *
-     * @param string|int $id The ID of the catalog to delete.
-     * @param ObjectService $objectService The service to handle object operations.
-	 *
-     * @return JSONResponse The response indicating the result of the deletion.
-	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
-	 *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
-    public function destroy(string|int $id, ObjectService $objectService): JSONResponse
-    {
-        // Delete the catalog object
-        $result = $this->objectService->deleteObject('catalog', $id);
-
-        // Return the result as a JSON response
-		return new JSONResponse(['success' => $result], $result === true ? '200' : '404');
-    }
-}
+}//end class

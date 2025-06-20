@@ -1,4 +1,22 @@
 <?php
+/**
+ * Service for managing search operations and related functionalities.
+ *
+ * Provides methods for performing search queries, merging search results and aggregations,
+ * and creating database-specific filters and sort parameters. Handles both local and
+ * distributed search queries across multiple directories.
+ *
+ * @category Service
+ * @package  OCA\OpenCatalogi\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
 
 namespace OCA\OpenCatalogi\Service;
 
@@ -29,14 +47,14 @@ class SearchService
     /**
      * SearchService constructor.
      *
-     * @param ElasticSearchService $elasticService
-     * @param DirectoryService $directoryService
-     * @param IURLGenerator $urlGenerator
+     * @param ElasticSearchService $elasticService   The service responsible for handling interactions with the Elasticsearch database.
+     * @param DirectoryService     $directoryService The service used for managing directory-related operations.
+     * @param IURLGenerator        $urlGenerator     The service for generating URLs within the application.
      */
 	public function __construct(
 		private readonly ElasticSearchService $elasticService,
 		private readonly DirectoryService $directoryService,
-		private readonly IURLGenerator $urlGenerator,
+		private readonly IURLGenerator $urlGenerator
 	) {
 		$this->client = new Client();
 	}

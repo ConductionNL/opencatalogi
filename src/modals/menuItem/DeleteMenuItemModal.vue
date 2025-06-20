@@ -1,116 +1,168 @@
+/**
+ * DeleteMenuItemModal.vue
+ * Modal for deleting menu items
+ * @category Components
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { menuStore, navigationStore } from '../../store/store.js'
+import { ref, computed } from 'vue'
+import { objectStore, navigationStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
-	<NcDialog name="Delete Menu Item"
-		size="normal"
-		:can-close="false">
-		<p v-if="success === null">
-			Weet je zeker dat je het menu item <b>{{ menuStore.menuItem?.items[menuStore.menuItemItemsIndex]?.name }}</b> wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
-		</p>
+	<NcModal v-if="navigationStore.modal === 'deleteMenuItem'"
+		ref="modalRef"
+		class="deleteMenuItemModal"
+		label-id="deleteMenuItemModal"
+		@close="handleCancel">
+		<div class="modal__content">
+			<h2>Menu item verwijderen</h2>
+			<div v-if="success !== null || error">
+				<NcNoteCard v-if="success" type="success">
+					<p>Menu item succesvol verwijderd</p>
+				</NcNoteCard>
+				<NcNoteCard v-if="!success" type="error">
+					<p>Er is iets fout gegaan bij het verwijderen van menu item</p>
+				</NcNoteCard>
+				<NcNoteCard v-if="error" type="error">
+					<p>{{ error }}</p>
+				</NcNoteCard>
+			</div>
+			<div v-if="success === null" class="form-group">
+				<p>Weet je zeker dat je het menu item '{{ menuItem.title }}' wilt verwijderen?</p>
+			</div>
 
-		<NcNoteCard v-if="success" type="success">
-			<p>Menu item succesvol verwijderd</p>
-		</NcNoteCard>
-		<NcNoteCard v-if="error" type="error">
-			<p>{{ error }}</p>
-		</NcNoteCard>
-
-		<template #actions>
-			<NcButton @click="closeModal">
-				<template #icon>
-					<Cancel :size="20" />
-				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
-			</NcButton>
-			<NcButton
-				v-if="success === null"
-				:disabled="loading"
-				type="error"
-				@click="deleteMenu()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<TrashCanOutline v-if="!loading" :size="20" />
-				</template>
-				Delete
-			</NcButton>
-		</template>
-	</NcDialog>
+			<span class="buttonContainer">
+				<NcButton
+					@click="handleCancel">
+					{{ success ? 'Sluiten' : 'Annuleer' }}
+				</NcButton>
+				<NcButton v-if="success === null"
+					:disabled="loading"
+					type="error"
+					@click="handleDelete">
+					<template #icon>
+						<span>
+							<NcLoadingIcon v-if="loading" :size="20" />
+							<Delete v-if="!loading" :size="20" />
+						</span>
+					</template>
+					Verwijderen
+				</NcButton>
+			</span>
+		</div>
+	</NcModal>
 </template>
 
 <script>
 import {
 	NcButton,
-	NcDialog,
-	NcLoadingIcon,
+	NcModal,
 	NcNoteCard,
+	NcLoadingIcon,
 } from '@nextcloud/vue'
-import _ from 'lodash'
 
-import Cancel from 'vue-material-design-icons/Cancel.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
-import { Menu } from '../../entities/index.js'
+// icons
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 /**
- * Component for deleting menu items
+ * Loading state for the component
+ * @type {import('vue').Ref<boolean>}
  */
+const loading = ref(false)
+
+/**
+ * Success state for the component
+ * @type {import('vue').Ref<boolean|null>}
+ */
+const success = ref(null)
+
+/**
+ * Error state for the component
+ * @type {import('vue').Ref<string|null>}
+ */
+const error = ref(null)
+
+/**
+ * Get the active menu item from the store
+ * @return {object | null}
+ */
+const menuItem = computed(() => objectStore.getActiveObject('menuItem'))
+
+/**
+ * Handle delete action
+ * @return {Promise<void>}
+ */
+const handleDelete = async () => {
+	loading.value = true
+	try {
+		await objectStore.deleteObject('menuItem', menuItem.value.id)
+		success.value = true
+		success.value = true
+		EventBus.$emit('delete-menu-item-item-success')
+	} catch (error) {
+		console.error('Error deleting menu item:', error)
+		success.value = false
+		error.value = error.message
+	} finally {
+		loading.value = false
+	}
+}
+
+/**
+ * Handle cancel action
+ * @return {void}
+ */
+const handleCancel = () => {
+	navigationStore.setModal(false)
+}
+
 export default {
 	name: 'DeleteMenuItemModal',
 	components: {
-		NcDialog,
+		NcModal,
 		NcButton,
-		NcLoadingIcon,
 		NcNoteCard,
-		// Icons
-		TrashCanOutline,
-		Cancel,
+		NcLoadingIcon,
 	},
 	data() {
 		return {
-			success: null,
 			loading: false,
-			error: false,
-			closeModalTimeout: null,
+			success: null,
+			error: null,
 		}
 	},
 	methods: {
-		/**
-		 * Closes the delete dialog and resets state
-		 */
 		closeModal() {
-			navigationStore.setModal(false)
-			clearTimeout(this.closeModalTimeout)
-			menuStore.menuItemItemsIndex = null
-		},
-		/**
-		 * Deletes the selected menu item
-		 */
-		async deleteMenu() {
-			this.loading = true
-
-			const menuItemClone = _.cloneDeep(menuStore.menuItem)
-			menuItemClone.items.splice(menuStore.menuItemItemsIndex, 1)
-
-			const newMenuItem = new Menu(menuItemClone)
-
-			menuStore.saveMenu(newMenuItem)
-				.then(({ response }) => {
-					this.success = response.ok
-					this.error = false
-					response.ok && (this.closeModalTimeout = setTimeout(this.closeModal, 2000))
-
-					// Emit a specific event through the eventBus
-					// which gets picked up by the details page
-					EventBus.$emit('delete-menu-item-item-success')
-				}).catch((error) => {
-					this.success = false
-					this.error = error.message || 'An error occurred while deleting the menu'
-				}).finally(() => {
-					this.loading = false
-				})
+			this.navigationStore.setModal(false)
 		},
 	},
 }
 </script>
+
+<style scoped>
+.modal__content {
+	padding: 20px;
+}
+
+.buttonContainer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
+}
+
+.form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-top: 20px;
+}
+</style>

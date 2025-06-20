@@ -9,7 +9,7 @@ export class Menu implements TMenu {
 
 	public id: string
 	public uuid: string
-	public name: string
+	public title: string
 	public position: number
 	public items: TMenuItem[] // Array of menu items
 	public createdAt: string
@@ -37,7 +37,7 @@ export class Menu implements TMenu {
 
 		this.id = data?.id?.toString() || ''
 		this.uuid = data?.uuid || ''
-		this.name = data?.name || ''
+		this.title = data?.title || ''
 		this.position = data?.position || 0
 		this.items = items
 		this.createdAt = data?.createdAt || ''
@@ -52,16 +52,16 @@ export class Menu implements TMenu {
 	public validate(): SafeParseReturnType<TMenu, unknown> {
 		// Schema validation for menu data
 		const schema = z.object({
-			name: z.string().min(1, 'naam is verplicht'),
+			title: z.string().min(1, 'title is verplicht'),
 			position: z.number().min(0, 'positie moet 0 of hoger zijn'),
 			items: z.array(z.object({
-				name: z.string().min(1, 'naam is verplicht'),
+				title: z.string().min(1, 'title is verplicht'),
 				slug: z.string().min(1, 'slug is verplicht'),
 				link: z.string(),
 				description: z.string(),
 				icon: z.string(),
 				items: z.array(z.object({
-					name: z.string().min(1, 'naam is verplicht'),
+					title: z.string().min(1, 'title is verplicht'),
 					slug: z.string().min(1, 'slug is verplicht'),
 					link: z.string(),
 					description: z.string(),

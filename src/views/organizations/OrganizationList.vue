@@ -1,5 +1,17 @@
+/**
+ * OrganizationList.vue
+ * Component for displaying a list of organizations
+ * @category Views
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { navigationStore, organizationStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -7,29 +19,32 @@ import { navigationStore, organizationStore } from '../../store/store.js'
 		<ul>
 			<div class="listHeader">
 				<NcTextField class="searchField"
-					:value.sync="search"
+					:value="objectStore.getSearchTerm('organization')"
 					label="Zoeken"
 					trailing-button-icon="close"
-					:show-trailing-button="search !== ''"
-					@trailing-button-click="search = ''">
+					:show-trailing-button="objectStore.getSearchTerm('organization') !== ''"
+					@update:value="(value) => objectStore.setSearchTerm('organization', value)"
+					@trailing-button-click="objectStore.clearSearchTerm('organization')">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
 					<NcActionButton
 						title="Bekijk de documentatie over organisaties"
-						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/organisaties')">
+						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/organisaties', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
 						</template>
 						Help
 					</NcActionButton>
-					<NcActionButton :disabled="loading" @click="refresh">
+					<NcActionButton close-after-click
+						:disabled="objectStore.isLoading('organization')"
+						@click="objectStore.fetchCollection('organization')">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Ververs
 					</NcActionButton>
-					<NcActionButton @click="organizationStore.setOrganizationItem(null); navigationStore.setModal('organizationForm')">
+					<NcActionButton close-after-click @click="openAddOrganizationModal">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
@@ -37,35 +52,34 @@ import { navigationStore, organizationStore } from '../../store/store.js'
 					</NcActionButton>
 				</NcActions>
 			</div>
-			<div v-if="!loading">
-				<NcListItem v-for="(organization, i) in filteredOrganizations"
+
+			<div v-if="!objectStore.isLoading('organization')">
+				<NcListItem v-for="(organization, i) in objectStore.getCollection('organization').results"
 					:key="`${organization}${i}`"
-					:name="organization.title"
-					:bold="false"
+					:name="organization.name"
+					:details="organization.summary"
+					:active="objectStore.getActiveObject('organization')?.id === organization?.id"
 					:force-display-actions="true"
-					:active="organizationStore.organizationItem?.id === organization.id"
-					:details="organization?.status"
-					@click="setActive(organization)">
+					@click="toggleActive(organization)">
 					<template #icon>
-						<OfficeBuildingOutline :size="44" />
-					</template>
-					<template #subname>
-						{{ organization?.summary }}
+						<OfficeBuilding :class="objectStore.getActiveObject('organization')?.id === organization.id && 'selectedZaakIcon'"
+							disable-menu
+							:size="44" />
 					</template>
 					<template #actions>
-						<NcActionButton @click="organizationStore.setOrganizationItem(organization); navigationStore.setModal('organizationForm')">
+						<NcActionButton close-after-click @click="onActionButtonClick(organization, 'edit')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Bewerken
 						</NcActionButton>
-						<NcActionButton @click="organizationStore.setOrganizationItem(organization); navigationStore.setDialog('copyOrganization')">
+						<NcActionButton close-after-click @click="onActionButtonClick(organization, 'copyObject')">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
 							Kopiëren
 						</NcActionButton>
-						<NcActionButton class="organizationsList-actionsDelete" @click="organizationStore.setOrganizationItem(organization); navigationStore.setDialog('deleteOrganization')">
+						<NcActionButton close-after-click @click="onActionButtonClick(organization, 'deleteObject')">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
@@ -75,31 +89,29 @@ import { navigationStore, organizationStore } from '../../store/store.js'
 				</NcListItem>
 			</div>
 
-			<NcLoadingIcon v-if="loading"
+			<NcLoadingIcon v-if="objectStore.isLoading('organization')"
 				:size="64"
 				class="loadingIcon"
 				appearance="dark"
-				name="Publicaties aan het laden" />
+				name="Organisaties aan het laden" />
 
-			<div v-if="!filteredOrganizations.length" class="emptyListHeader">
+			<div v-if="!objectStore.getCollection('organization').results.length" class="emptyListHeader">
 				Er zijn nog geen organisaties gedefinieerd.
 			</div>
 		</ul>
 	</NcAppContentList>
 </template>
-<script>
-import { NcActionButton, NcActions, NcAppContentList, NcListItem, NcLoadingIcon, NcTextField } from '@nextcloud/vue'
-import { debounce } from 'lodash'
 
-// Icons
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+<script>
+import { NcListItem, NcActionButton, NcAppContentList, NcTextField, NcLoadingIcon, NcActions } from '@nextcloud/vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
-import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
+import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
+import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 export default {
 	name: 'OrganizationList',
@@ -108,92 +120,62 @@ export default {
 		NcActionButton,
 		NcAppContentList,
 		NcTextField,
-		Magnify,
 		NcLoadingIcon,
 		NcActions,
 		// Icons
-		Refresh,
+		Magnify,
+		OfficeBuilding,
 		Plus,
-		ContentCopy,
-		OfficeBuildingOutline,
 		Pencil,
+		Delete,
+		Refresh,
 		HelpCircleOutline,
-	},
-	beforeRouteLeave(to, from, next) {
-		search = ''
-		next()
-	},
-	props: {
-		search: {
-			type: String,
-			required: true,
-		},
-	},
-	data() {
-		return {
-			loading: false,
-		}
-	},
-	computed: {
-		filteredOrganizations() {
-			if (!organizationStore?.organizationList) return []
-			return organizationStore.organizationList.filter((organization) => {
-				return organization
-			})
-		},
-	},
-	watch: {
-		search: {
-			handler(search) {
-				this.debouncedFetchData(search)
-			},
-		},
-	},
-	mounted() {
-		this.fetchData()
+		ContentCopy,
 	},
 	methods: {
-		refresh(e) {
-			e.preventDefault()
-			this.fetchData()
-		},
-		fetchData(search = null) {
-			this.loading = true
-			organizationStore.refreshOrganizationList(search)
-				.then(() => {
-					this.loading = false
-				})
-		},
-		debouncedFetchData: debounce(function(search) {
-			this.fetchData(search)
-		}, 500),
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
-		setActive(organization) {
-			if (JSON.stringify(organizationStore.organizationItem) === JSON.stringify(organization)) {
-				organizationStore.setOrganizationItem(false)
-			} else { organizationStore.setOrganizationItem(organization) }
+		toggleActive(organization) {
+			objectStore.getActiveObject('organization')?.id === organization?.id ? objectStore.clearActiveObject('organization') : objectStore.setActiveObject('organization', organization)
+		},
+		openAddOrganizationModal() {
+			navigationStore.setModal('organization')
+			objectStore.clearActiveObject('organization')
+		},
+		onActionButtonClick(organization, action) {
+			objectStore.setActiveObject('organization', organization)
+			switch (action) {
+			case 'edit':
+				navigationStore.setModal('organization')
+				break
+			case 'copyObject':
+			case 'deleteObject':
+				navigationStore.setDialog(action, { objectType: 'organization', dialogTitle: 'Organisatie' })
+				break
+			}
 		},
 	},
 }
 </script>
+
 <style>
-.listHeader{
-	display: flex;
+.listHeader {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--color-main-background);
+    border-bottom: 1px solid var(--color-border);
 }
 
-.refresh{
-	margin-block-start: 11px !important;
-    margin-block-end: 11px !important;
-    margin-inline-end: 10px;
+.searchField {
+    padding-inline-start: 65px;
+    padding-inline-end: 20px;
+    margin-block-end: 6px;
 }
 
-.active.organizationDetails-actionsDelete {
-    background-color: var(--color-error) !important;
-}
-.active.organizationDetails-actionsDelete button {
-    color: #EBEBEB !important;
+.selectedZaakIcon>svg {
+    fill: white;
 }
 
 .loadingIcon {

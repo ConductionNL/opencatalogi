@@ -1,28 +1,36 @@
+/**
+ * PageDetail.vue
+ * Component for displaying page details
+ * @category Components
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { navigationStore, pageStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 import { getTheme } from '../../services/getTheme.js'
-import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
 	<div class="detailContainer">
 		<div class="head">
 			<h1 class="h1">
-				{{ pageStore.pageItem.name }}
+				{{ page?.title }}
 			</h1>
-
 			<NcActions
-				:disabled="loading"
+				:disabled="objectStore.isLoading('page')"
 				:primary="true"
-				:menu-name="loading ? 'Laden...' : 'Acties'"
+				:menu-name="objectStore.isLoading('page') ? 'Laden...' : 'Acties'"
 				:inline="1"
 				title="Acties die je kan uitvoeren op deze pagina">
 				<template #icon>
 					<span>
-						<NcLoadingIcon v-if="loading"
-							:size="20"
-							appearance="dark" />
-						<DotsHorizontal v-if="!loading" :size="20" />
+						<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" appearance="dark" />
+						<DotsHorizontal v-if="!objectStore.isLoading('page')" :size="20" />
 					</span>
 				</template>
 				<NcActionButton
@@ -33,25 +41,25 @@ import { EventBus } from '../../eventBus.js'
 					</template>
 					Help
 				</NcActionButton>
-				<NcActionButton @click="navigationStore.setModal('pageForm')">
+				<NcActionButton close-after-click @click="onActionButtonClick(page, 'edit')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					Bewerken
 				</NcActionButton>
-				<NcActionButton @click="navigationStore.setDialog('copyPage')">
-					<template #icon>
-						<ContentCopy :size="20" />
-					</template>
-					Kopiëren
-				</NcActionButton>
-				<NcActionButton @click="navigationStore.setModal('addPageContents')">
+				<NcActionButton close-after-click @click="onActionButtonClick(page, 'addContent')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
 					Content toevoegen
 				</NcActionButton>
-				<NcActionButton @click="navigationStore.setModal('deletePage')">
+				<NcActionButton close-after-click @click="onActionButtonClick(page, 'copyObject')">
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
+					Kopiëren
+				</NcActionButton>
+				<NcActionButton close-after-click @click="onActionButtonClick(page, 'deleteObject')">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
@@ -59,19 +67,19 @@ import { EventBus } from '../../eventBus.js'
 				</NcActionButton>
 			</NcActions>
 		</div>
-		<div class="container">
-			<div class="detailGrid">
+		<div class="pageDetailContent">
+			<div class="pageDetailGrid">
 				<div>
-					<b>Name:</b>
-					<span>{{ pageStore.pageItem.name }}</span>
+					<b>Titel:</b>
+					<span>{{ page?.title }}</span>
 				</div>
 				<div>
 					<b>Slug:</b>
-					<span>{{ pageStore.pageItem.slug }}</span>
+					<span>{{ page?.slug }}</span>
 				</div>
 				<div>
 					<b>Laatst bijgewerkt:</b>
-					<span>{{ pageStore.pageItem.updatedAt }}</span>
+					<span>{{ page?.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : '-' }}</span>
 				</div>
 			</div>
 		</div>
@@ -79,21 +87,18 @@ import { EventBus } from '../../eventBus.js'
 			<BTabs content-class="mt-3" justified>
 				<BTab active>
 					<template #title>
-						<div class="tabTitleLoadingContainer">
+						<div class="pageDetailTabTitle">
 							<p>Data</p>
-							<NcLoadingIcon v-if="saveContentsLoading" class="tabTitleIcon" :size="24" />
-							<CheckCircleOutline v-if="saveContentsSuccess" class="tabTitleIcon" :size="24" />
+							<NcLoadingIcon v-if="saveContentsLoading" class="pageDetailTabIcon" :size="24" />
+							<CheckCircleOutline v-if="saveContentsSuccess" class="pageDetailTabIcon" :size="24" />
 						</div>
 					</template>
-
-					<!-- if menu has items -->
 					<div v-if="pageContents.length > 0">
-						<!-- show draggable list -->
 						<VueDraggable v-model="pageContents" easing="ease-in-out">
-							<!-- show a div which is draggable for each item -->
-							<div v-for="(pageContent, i) in pageContents" :key="i" :class="`draggable-list-item ${getTheme()}`">
-								<!-- show a drag handle and NcListItem -->
-								<Drag class="drag-handle" :size="40" />
+							<div v-for="(pageContent, i) in pageContents"
+								:key="i"
+								:class="`pageDetailDraggableItem ${getTheme()}`">
+								<Drag class="pageDetailDragHandle" :size="40" />
 								<NcListItem :name="pageContent.type"
 									:bold="false"
 									:force-display-actions="true">
@@ -101,15 +106,17 @@ import { EventBus } from '../../eventBus.js'
 										{{ JSON.stringify(pageContent.data) }}
 									</template>
 									<template #actions>
-										<NcActionButton :disabled="saveContentsLoading"
-											@click="pageStore.contentId = pageContent.id; navigationStore.setModal('addPageContents')">
+										<NcActionButton close-after-click
+											:disabled="saveContentsLoading"
+											@click="onContentActionButtonClick(pageContent, 'edit')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Bewerken
 										</NcActionButton>
-										<NcActionButton :disabled="saveContentsLoading"
-											@click="deleteContent(pageContent.id)">
+										<NcActionButton close-after-click
+											:disabled="saveContentsLoading"
+											@click="onContentActionButtonClick(pageContent, 'delete')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -119,8 +126,7 @@ import { EventBus } from '../../eventBus.js'
 								</NcListItem>
 							</div>
 						</VueDraggable>
-
-						<NcButton :disabled="(JSON.stringify(pageStore.pageItem.contents) === JSON.stringify(pageContents)) || saveContentsLoading"
+						<NcButton :disabled="(JSON.stringify(page?.contents) === JSON.stringify(pageContents)) || saveContentsLoading"
 							@click="savePageContents">
 							Opslaan
 						</NcButton>
@@ -140,6 +146,7 @@ import { NcActionButton, NcActions, NcLoadingIcon, NcListItem, NcButton } from '
 import { VueDraggable } from 'vue-draggable-plus'
 import { BTabs, BTab } from 'bootstrap-vue'
 import { Page } from '../../entities/index.js'
+
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -151,196 +158,187 @@ import Drag from 'vue-material-design-icons/Drag.vue'
 import CheckCircleOutline from 'vue-material-design-icons/CheckCircleOutline.vue'
 import _ from 'lodash'
 
-/**
- * Component for displaying and managing page details
- */
 export default {
 	name: 'PageDetail',
 	components: {
-		// Components
 		NcLoadingIcon,
 		NcActionButton,
 		NcActions,
 		NcButton,
 		VueDraggable,
-		// Bootstrap
 		BTabs,
 		BTab,
-		// Icons
 		DotsHorizontal,
 		Pencil,
 		Delete,
 		ContentCopy,
 		HelpCircleOutline,
 		Drag,
+		CheckCircleOutline,
+		Plus,
+		NcListItem,
 	},
 	data() {
 		return {
-			pageContents: [],
 			saveContentsLoading: false,
 			saveContentsSuccess: false,
-			loading: false,
-			upToDate: false,
+			pageContents: [],
 		}
 	},
 	computed: {
-		pageItemId() {
-			return pageStore.pageItem?.id
+		/**
+		 * Get the current page from the store
+		 * @return {object | null}
+		 */
+		page() {
+			return objectStore.getActiveObject('page')
 		},
+
 	},
 	watch: {
-		pageItemId: {
-			handler() {
-				// fetch up-to-date data on id change
-				this.fetchData()
+		page: {
+			handler(newVal, oldVal) {
+				if (!oldVal || !_.isEqual(newVal?.contents, oldVal?.contents)) {
+					this.pageContents = newVal?.contents || []
+				}
 			},
+			deep: true,
 			immediate: true,
 		},
 	},
-	created() {
-		// Listen for the event that gets emitted when the page content is saved or deleted
-		EventBus.$on(['edit-page-content-success', 'delete-page-content-success'], () => {
-			this.fetchData()
-		})
-	},
-	beforeDestroy() {
-		// Clean up the event listener
-		EventBus.$off(['edit-page-content-success', 'delete-page-content-success'])
-	},
-	mounted() {
-		this.pageContents = pageStore.pageItem.contents
-		// fetch up-to-date data on mount
-		this.fetchData()
-	},
 	methods: {
-		fetchData() {
-			pageStore.getOnePage(pageStore.pageItem.id)
-				.then(({ data }) => {
-					this.pageContents = data.contents
-				})
-		},
-		deleteContent(contentId) {
-			const newContents = pageStore.pageItem.contents.filter((content) => content.id !== contentId)
+		/**
+		 * Delete a content item
+		 * @param {string} contentId - The ID of the content to delete
+		 * @return {Promise<void>}
+		 */
+		async deleteContent(contentId) {
+			if (!this.page) return
 
+			const newContents = this.page.contents.filter((content) => content.id !== contentId)
 			const newPageItem = new Page({
-				...pageStore.pageItem,
+				...this.page,
 				contents: newContents,
 			})
-
-			pageStore.savePage(newPageItem)
-				.then(({ response }) => {
-					this.fetchData()
-				})
-				.catch((err) => {
-					this.error = err
-					this.loading = false
-					this.hasUpdated = false
-				})
-				.finally(() => {
-					this.loading = false
-				})
+			await objectStore.updateObject('page', newPageItem.id, newPageItem).then(() => {
+				this.pageContents = newContents
+			}).catch((err) => {
+				objectStore.setState('page', { error: err })
+			}).finally(() => {
+				objectStore.setState('page', { success: null, error: null, loading: false })
+			})
+			objectStore.clearActiveObject('pageContent')
 		},
-		savePageContents() {
+		/**
+		 * Save the page contents
+		 * @return {Promise<void>}
+		 */
+		async savePageContents() {
+			if (!this.page) return
 			this.saveContentsLoading = true
 			this.saveContentsSuccess = false
 
-			const pageItemClone = _.cloneDeep(pageStore.pageItem)
-
-			pageItemClone.contents = this.pageContents
-
-			const newPageItem = new Page(pageItemClone)
-
-			pageStore.savePage(newPageItem)
-				.then(() => {
-					this.saveContentsSuccess = true
-					setTimeout(() => {
-						this.saveContentsSuccess = false
-					}, 1500)
-				})
-				.finally(() => {
-					this.saveContentsLoading = false
-				})
+			try {
+				const pageItemClone = _.cloneDeep(this.page)
+				pageItemClone.contents = this.pageContents
+				const newPageItem = new Page(pageItemClone)
+				await objectStore.updateObject('page', newPageItem.id, newPageItem)
+				this.saveContentsSuccess = true
+				setTimeout(() => {
+					this.saveContentsSuccess = false
+				}, 1500)
+			} finally {
+				this.saveContentsLoading = false
+			}
 		},
+		/**
+		 * Open a link in a new window
+		 * @param {string} url - The URL to open
+		 * @param {string} [type] - The window type
+		 * @return {void}
+		 */
 		openLink(url, type = '') {
 			window.open(url, type)
+		},
+		onActionButtonClick(page, action) {
+			objectStore.setActiveObject('page', page)
+			switch (action) {
+			case 'edit':
+				navigationStore.setModal('page')
+				break
+			case 'addContent':
+				navigationStore.setModal('pageContentForm')
+				break
+			case 'copyObject':
+			case 'deleteObject':
+				navigationStore.setDialog(action, { objectType: 'page', dialogTitle: 'Pagina' })
+				break
+			}
+		},
+		onContentActionButtonClick(pageContent, action) {
+			objectStore.setActiveObject('pageContent', pageContent)
+			switch (action) {
+			case 'edit':
+				navigationStore.setModal('pageContentForm')
+				break
+			case 'delete':
+				this.deleteContent(pageContent.id)
+				break
+			}
 		},
 	},
 }
 </script>
 
-<style>
-h4 {
-  font-weight: bold;
+<style scoped>
+.pageDetail {
+	padding: 20px;
 }
 
-.head{
+.pageDetailHeader {
 	display: flex;
 	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
 }
 
-.button{
-	max-height: 10px;
+.pageDetailContent {
+	margin-bottom: 20px;
 }
 
-.h1 {
-  display: block !important;
-  font-size: 2em !important;
-  margin-block-start: 0.67em !important;
-  margin-block-end: 0.67em !important;
-  margin-inline-start: 0px !important;
-  margin-inline-end: 0px !important;
-  font-weight: bold !important;
-  unicode-bidi: isolate !important;
+.pageDetailGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 20px;
 }
 
-.dataContent {
-  display: flex;
-  flex-direction: column;
-}
-
-.active.pageDetails-actionsDelete {
-    background-color: var(--color-error) !important;
-}
-.active.pageDetails-actionsDelete button {
-    color: #EBEBEB !important;
-}
-
-.PageDetail-clickable {
-    cursor: pointer !important;
-}
-
-.buttonLinkContainer{
+.pageDetailTabTitle {
 	display: flex;
-    align-items: center;
+	justify-content: center;
+	align-items: center;
+	position: relative;
 }
 
-.float-right {
-    float: right;
+.pageDetailTabIcon {
+	position: absolute;
+	right: 0;
 }
-</style>
 
-<style scoped>
-.tabTitleLoadingContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
+.pageDetailDraggableItem {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	background-color: rgba(255, 255, 255, 0.05);
+	padding: 4px;
+	border-radius: 8px;
+	margin-block: 8px;
 }
-.tabTitleLoadingContainer .tabTitleIcon {
-    position: absolute;
-    right: 0;
+
+.pageDetailDraggableItem.light {
+	background-color: rgba(0, 0, 0, 0.05);
 }
-/* draggable list item */
-.draggable-list-item {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 4px;
-    border-radius: 8px;
-    margin-block: 8px;
-}
-.draggable-list-item.light {
-    background-color: rgba(0, 0, 0, 0.05);
+
+.pageDetailDragHandle {
+	cursor: move;
 }
 </style>

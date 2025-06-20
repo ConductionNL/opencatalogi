@@ -1,28 +1,39 @@
+/**
+ * MenuDetail.vue
+ * Component for displaying and managing menu details
+ * @category Views
+ * @package opencatalogi
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @link https://github.com/opencatalogi/opencatalogi
+ */
+
 <script setup>
-import { navigationStore, menuStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 import { getTheme } from '../../services/getTheme.js'
-import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
 	<div class="detailContainer">
 		<div class="head">
 			<h1 class="h1">
-				{{ menuStore.menuItem.name }}
+				{{ menu.title }}
 			</h1>
 
 			<NcActions
-				:disabled="loading"
+				:disabled="objectStore.isLoading('menu')"
 				:primary="true"
-				:menu-name="loading ? 'Laden...' : 'Acties'"
+				:menu-name="objectStore.isLoading('menu') ? 'Laden...' : 'Acties'"
 				:inline="1"
 				title="Acties die je kan uitvoeren op deze pagina">
 				<template #icon>
 					<span>
-						<NcLoadingIcon v-if="loading"
+						<NcLoadingIcon v-if="objectStore.isLoading('menu')"
 							:size="20"
 							appearance="dark" />
-						<DotsHorizontal v-if="!loading" :size="20" />
+						<DotsHorizontal v-if="!objectStore.isLoading('menu')" :size="20" />
 					</span>
 				</template>
 				<NcActionButton
@@ -33,25 +44,25 @@ import { EventBus } from '../../eventBus.js'
 					</template>
 					Help
 				</NcActionButton>
-				<NcActionButton @click="navigationStore.setModal('editMenu')">
+				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'edit')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					Bewerken
 				</NcActionButton>
-				<NcActionButton @click="menuStore.menuItemItemsIndex = null; navigationStore.setModal('editMenuItem')">
+				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'addContent')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
 					Menu item toevoegen
 				</NcActionButton>
-				<NcActionButton @click="navigationStore.setDialog('copyMenu')">
+				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'copyObject')">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					Kopiëren
 				</NcActionButton>
-				<NcActionButton @click="navigationStore.setModal('deleteMenu')">
+				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'deleteObject')">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
@@ -62,19 +73,35 @@ import { EventBus } from '../../eventBus.js'
 		<div class="container">
 			<div class="detailGrid">
 				<div>
-					<b>Naam:</b>
-					<span>{{ menuStore.menuItem.name }}</span>
+					<b>Titel:</b>
+					<span>{{ menu.title }}</span>
+				</div>
+				<div>
+					<b>Slug:</b>
+					<span>{{ menu.slug }}</span>
+				</div>
+				<div>
+					<b>Link:</b>
+					<span>{{ menu.link }}</span>
+				</div>
+				<div>
+					<b>Beschrijving:</b>
+					<span>{{ menu.description }}</span>
+				</div>
+				<div>
+					<b>Icoon:</b>
+					<span>{{ menu.icon }}</span>
 				</div>
 				<div>
 					<b>Positie:</b>
-					<span v-if="menuStore.menuItem.position === 1">{{ menuStore.menuItem.position }} - rechts boven</span>
-					<span v-else-if="menuStore.menuItem.position === 2">{{ menuStore.menuItem.position }} - navigatiebalk</span>
-					<span v-else-if="menuStore.menuItem.position >= 3">{{ menuStore.menuItem.position }} - footer</span>
-					<span v-else>{{ menuStore.menuItem.position }} - niet gedefinieerd</span>
+					<span v-if="menu.position === 0">{{ menu.position }} - rechts boven</span>
+					<span v-else-if="menu.position === 1">{{ menu.position }} - navigatiebalk</span>
+					<span v-else-if="menu.position === 2">{{ menu.position }} - footer</span>
+					<span v-else>{{ menu.position }} - niet gedefinieerd</span>
 				</div>
 				<div>
 					<b>Laatst bijgewerkt:</b>
-					<span>{{ menuStore.menuItem.updatedAt }}</span>
+					<span>{{ menu.updatedAt }}</span>
 				</div>
 			</div>
 		</div>
@@ -84,7 +111,7 @@ import { EventBus } from '../../eventBus.js'
 				<BTab active>
 					<template #title>
 						<div class="tabTitleLoadingContainer">
-							<p>Data</p>
+							<p>Menu items</p>
 							<NcLoadingIcon v-if="safeItemsLoading" class="tabTitleIcon" :size="24" />
 							<CheckCircleOutline v-if="safeItemsLoadingSuccess" class="tabTitleIcon" :size="24" />
 						</div>
@@ -98,28 +125,24 @@ import { EventBus } from '../../eventBus.js'
 							<div v-for="(menuItem, i) in menuItems" :key="i" :class="`draggable-list-item ${getTheme()}`">
 								<!-- show a drag handle and NcListItem -->
 								<Drag class="drag-handle" :size="40" />
-								<NcListItem :name="menuItem.name"
+								<NcListItem :name="menuItem.title"
 									:bold="false"
 									:force-display-actions="true">
 									<template #subname>
 										{{ menuItem.description }}
 									</template>
 									<template #actions>
-										<NcActionButton :disabled="safeItemsLoading"
-											@click="() => {
-												menuStore.menuItemsItemId = menuItem.id
-												navigationStore.setModal('editMenuItem')
-											}">
+										<NcActionButton close-after-click
+											:disabled="safeItemsLoading"
+											@click="onMenuItemActionButtonClick(menuItem, 'edit')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Bewerk menu item
 										</NcActionButton>
-										<NcActionButton :disabled="safeItemsLoading"
-											@click="() => {
-												menuStore.menuItemsItemId = menuItem.id
-												navigationStore.setModal('deleteMenuItem')
-											}">
+										<NcActionButton close-after-click
+											:disabled="safeItemsLoading"
+											@click="onMenuItemActionButtonClick(menuItem, 'delete')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -130,7 +153,7 @@ import { EventBus } from '../../eventBus.js'
 							</div>
 						</VueDraggable>
 
-						<NcButton :disabled="(JSON.stringify(menuStore.menuItem.items) === JSON.stringify(menuItems)) || safeItemsLoading"
+						<NcButton :disabled="(JSON.stringify(menu.items) === JSON.stringify(menuItems)) || safeItemsLoading"
 							@click="saveMenuItems">
 							Opslaan
 						</NcButton>
@@ -162,9 +185,6 @@ import CheckCircleOutline from 'vue-material-design-icons/CheckCircleOutline.vue
 import _ from 'lodash'
 import { Menu } from '../../entities/index.js'
 
-/**
- * Component for displaying and managing page details
- */
 export default {
 	name: 'MenuDetail',
 	components: {
@@ -183,62 +203,37 @@ export default {
 		Delete,
 		ContentCopy,
 		HelpCircleOutline,
+		Plus,
+		Drag,
+		CheckCircleOutline,
 	},
 	data() {
 		return {
 			menuItems: [],
 			safeItemsLoading: false,
 			safeItemsLoadingSuccess: false,
-			loading: false,
-			upToDate: false,
 		}
 	},
 	computed: {
-		menuId() {
-			return menuStore.menuItem?.id
+		menu() {
+			return objectStore.getActiveObject('menu')
 		},
 	},
 	watch: {
-		menuId: {
-			handler(id, oldId) {
-				// fetch up-to-date data on id change
-				this.fetchItems()
+		menu: {
+			handler(newMenu) {
+				if (newMenu) {
+					this.menuItems = newMenu.items.map((item, index) => ({
+						...item,
+						id: index,
+					}))
+				}
 			},
 			immediate: true,
 		},
 	},
-	created() {
-		// Listen for the event that gets emitted when the menuItem item is saved or deleted
-		EventBus.$on(['edit-menu-item-item-success', 'delete-menu-item-item-success'], () => {
-			this.fetchItems()
-		})
-	},
-	beforeDestroy() {
-		// Clean up the event listener
-		EventBus.$off(['edit-menu-item-item-success', 'delete-menu-item-item-success'])
-	},
-	mounted() {
-		this.menuItems = menuStore.menuItem.items
-
-		// fetch up-to-date data on mount
-		this.fetchItems()
-	},
 	methods: {
-		fetchItems() {
-			menuStore.getOneMenu(menuStore.menuItem.id)
-				.then(({ data }) => {
-					this.menuItems = data.items.map((item, index) => ({
-						...item,
-						id: index,
-					}))
-				})
-		},
 		resetItemsIndexes() {
-			// When the item order is saved, a new Menu entity is created.
-			// upon creation, the Menu entity gives each item an ID based on the index of the order of items. (0, 1, 2...)
-			// However the items list in this component still holds the original indexes before saving, which depending on how you changed it can be 0, 2, 1..
-			// This function resets the ID of each item to the index again, so both the new Menu entity and the items list in this component are in sync.
-			// Which is important for the save button to recognize the changes properly, and the edit button to find the correct item to edit.
 			this.menuItems = this.menuItems.map((item, index) => ({
 				...item,
 				id: index,
@@ -251,12 +246,12 @@ export default {
 			this.safeItemsLoading = true
 			this.safeItemsLoadingSuccess = false
 
-			const menuItemClone = _.cloneDeep(menuStore.menuItem)
-			menuItemClone.items = this.menuItems
+			const menuClone = _.cloneDeep(this.menu)
+			menuClone.items = this.menuItems
 
-			const newMenuItem = new Menu(menuItemClone)
+			const newMenu = new Menu(menuClone)
 
-			menuStore.saveMenu(newMenuItem)
+			objectStore.updateObject('menu', newMenu.id, newMenu)
 				.then(() => {
 					this.resetItemsIndexes()
 					this.safeItemsLoadingSuccess = true
@@ -267,6 +262,57 @@ export default {
 				.finally(() => {
 					this.safeItemsLoading = false
 				})
+		},
+
+		/**
+		 * Delete a menu item
+		 * @param {string} menuItemId - The ID of the menu item to delete
+		 * @return {Promise<void>}
+		 */
+		async deleteMenuItem(menuItemId) {
+			if (!this.menu) return
+
+			const newMenuItems = this.menu.items.filter((item) => item.id !== menuItemId)
+			const newMenu = new Menu({
+				...this.menu,
+				items: newMenuItems,
+			})
+			await objectStore.updateObject('menu', newMenu.id, newMenu).then(() => {
+				this.menuItems = newMenuItems
+			}).catch((err) => {
+				objectStore.setState('menu', { error: err })
+			}).finally(() => {
+				objectStore.setState('menu', { success: null, error: null, loading: false })
+			})
+			objectStore.clearActiveObject('menuItem')
+		},
+
+		onActionButtonClick(menu, action) {
+			objectStore.setActiveObject('menu', menu)
+			switch (action) {
+			case 'edit':
+				navigationStore.setModal('menu')
+				break
+			case 'addContent':
+				navigationStore.setModal('menuItemForm')
+				break
+			case 'copyObject':
+			case 'deleteObject':
+				navigationStore.setDialog(action, { objectType: 'menu', dialogTitle: 'Menu' })
+				break
+			}
+		},
+
+		onMenuItemActionButtonClick(menuItem, action) {
+			objectStore.setActiveObject('menuItem', menuItem)
+			switch (action) {
+			case 'edit':
+				navigationStore.setModal('menuItemForm')
+				break
+			case 'delete':
+				this.deleteMenuItem(menuItem.id)
+				break
+			}
 		},
 	},
 }
@@ -302,14 +348,14 @@ h4 {
   flex-direction: column;
 }
 
-.active.pageDetails-actionsDelete {
+.active.menuDetails-actionsDelete {
     background-color: var(--color-error) !important;
 }
-.active.pageDetails-actionsDelete button {
+.active.menuDetails-actionsDelete button {
     color: #EBEBEB !important;
 }
 
-.PageDetail-clickable {
+.MenuDetail-clickable {
     cursor: pointer !important;
 }
 

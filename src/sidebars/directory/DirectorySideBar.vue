@@ -1,12 +1,12 @@
 <script setup>
-import { navigationStore, directoryStore, publicationTypeStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcAppSidebar
-		:name="directoryStore.listingItem?.title || 'Geen listing' "
-		:subname="directoryStore.listingItem?.organization?.title">
-		<NcEmptyContent v-if="!directoryStore.listingItem?.id || navigationStore.selected != 'directory'"
+		:name="objectStore.getActiveObject('listing')?.title || 'Geen listing' "
+		:subname="objectStore.getActiveObject('listing')?.organization?.title">
+		<NcEmptyContent v-if="!objectStore.getActiveObject('listing')?.id || navigationStore.selected != 'directory'"
 			class="detailContainer"
 			name="Geen listing"
 			description="Nog geen listing geselecteerd, listings kan je ontdekken via (externe) directories.">
@@ -28,7 +28,7 @@ import { navigationStore, directoryStore, publicationTypeStore } from '../../sto
 				</NcButton>
 			</template>
 		</NcEmptyContent>
-		<NcAppSidebarTab v-if="directoryStore.listingItem?.id && navigationStore.selected === 'directory'"
+		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
 			id="detail-tab"
 			name="Details"
 			:order="1">
@@ -36,51 +36,51 @@ import { navigationStore, directoryStore, publicationTypeStore } from '../../sto
 				<InformationSlabSymbol :size="20" />
 			</template>
 			<div class="container">
-				<div v-if="directoryStore.listingItem.organization">
+				<div v-if="objectStore.getActiveObject('listing').organization">
 					<CertificateOutline class="orgCertIcon" :size="20" />
 					<p>Deze organisatie is niet gevalideerd met een certificaat.</p>
 				</div>
-				<div v-if="!directoryStore.listingItem.organization">
+				<div v-if="!objectStore.getActiveObject('listing').organization">
 					<CertificateOutline class="orgCertIcon" :size="20" />
 					<p>Deze listing heeft geen organisatie.</p>
 				</div>
 				<div>
 					<b>Samenvatting:</b>
-					<span>{{ directoryStore.listingItem?.summary }}</span>
+					<span>{{ objectStore.getActiveObject('listing')?.summary }}</span>
 				</div>
 				<div>
 					<b>Status:</b>
-					<span>{{ directoryStore.listingItem?.status }}</span>
+					<span>{{ objectStore.getActiveObject('listing')?.status }}</span>
 				</div>
 				<div>
 					<b>Last synchronysation:</b>
-					<span>{{ directoryStore.listingItem?.lastSync }}</span>
+					<span>{{ objectStore.getActiveObject('listing')?.lastSync }}</span>
 				</div>
 				<div>
 					<b>Directory:</b>
-					<span>{{ directoryStore.listingItem?.directory }}</span>
+					<span>{{ objectStore.getActiveObject('listing')?.directory }}</span>
 				</div>
 				<div>
 					<b>Zoeken:</b>
-					<span>{{ directoryStore.listingItem?.search }}</span>
+					<span>{{ objectStore.getActiveObject('listing')?.search }}</span>
 				</div>
 				<div>
 					<b>Beschrijving:</b>
-					<span>{{ directoryStore.listingItem?.description }}</span>
+					<span>{{ objectStore.getActiveObject('listing')?.description }}</span>
 				</div>
 			</div>
 		</NcAppSidebarTab>
-		<NcAppSidebarTab v-if="directoryStore.listingItem?.id && navigationStore.selected === 'directory'"
+		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
 			id="settings-tab"
 			name="Configuratie"
 			:order="2">
 			<template #icon>
 				<CogOutline :size="20" />
 			</template>
-			<NcCheckboxRadioSwitch :checked.sync="directoryStore.listingItem.available" type="switch">
+			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').available" type="switch">
 				Beschikbaar maken voor mijn zoekopdrachten
 			</NcCheckboxRadioSwitch>
-			<NcCheckboxRadioSwitch :checked.sync="directoryStore.listingItem.default" type="switch">
+			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').default" type="switch">
 				Standaard mee nemen in de beantwoording van mijn zoekopdrachten
 			</NcCheckboxRadioSwitch>
 
@@ -97,7 +97,7 @@ import { navigationStore, directoryStore, publicationTypeStore } from '../../sto
 				Synchroniseren
 			</NcButton>
 		</NcAppSidebarTab>
-		<NcAppSidebarTab v-if="directoryStore.listingItem?.id && navigationStore.selected === 'directory'"
+		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
 			id="metdata-tab"
 			name="Publicatietype"
 			:order="3">
@@ -106,7 +106,7 @@ import { navigationStore, directoryStore, publicationTypeStore } from '../../sto
 			</template>
 			Welke publicatietype zou u uit deze catalogus willen overnemen?
 			<div v-if="!loading">
-				<template v-for="(publicationType, i) in directoryStore.listingItem.publicationTypes">
+				<template v-for="(publicationType, i) in objectStore.getActiveObject('listing').publicationTypes">
 					<div v-if="publicationType.owner" :key="`${publicationType}${i}`" class="publication-type-item">
 						<Check :size="20" />
 						{{ publicationType.title ?? publicationType.source ?? publicationType }}
@@ -160,7 +160,7 @@ export default {
 	},
 	computed: {
 		listingItem() {
-			return directoryStore.listingItem
+			return objectStore.getActiveObject('listing')
 		},
 		checkedPublicationType() {
 			return Object.assign({}, this.checkedPublicationTypeObject)
@@ -192,7 +192,7 @@ export default {
 
 						if (shouldCopyPublicationType === true) {
 							this.copyPublicationType(publicationTypeUrl)
-						} else if (shouldCopyPublicationType === false && publicationTypeUrl && publicationTypeStore.publicationTypeList.length > 0) {
+						} else if (shouldCopyPublicationType === false && publicationTypeUrl && objectStore.getCollection('publication_type').results.length > 0) {
 							this.deletePublicationType(publicationTypeUrl)
 						}
 					}
@@ -205,7 +205,7 @@ export default {
 		},
 		listingItem: {
 			handler(newValue) {
-				if (newValue !== false && publicationTypeStore?.publicationTypeList) {
+				if (newValue !== false && objectStore.getCollection('publication_type').results) {
 					this.loading = true
 					this.switchedListing = true
 					this.checkPublicationTypeSwitches()
@@ -216,7 +216,7 @@ export default {
 		},
 	},
 	created() {
-		publicationTypeStore.refreshPublicationTypeList()
+		objectStore.fetchCollection('publication_type')
 		this.checkPublicationTypeSwitches()
 	},
 	methods: {
@@ -225,7 +225,7 @@ export default {
 		},
 		getPublicationTypeId(publicationTypeUrl) {
 			let publicationTypeId
-			publicationTypeStore.publicationTypeList.forEach((publicationTypeItem) => {
+			objectStore.getCollection('publication_type').results.forEach((publicationTypeItem) => {
 				if (publicationTypeUrl === publicationTypeItem.source) {
 					publicationTypeId = publicationTypeItem.id
 				}
@@ -233,10 +233,10 @@ export default {
 			return publicationTypeId
 		},
 		checkPublicationTypeSwitches() {
-			if (Array.isArray(directoryStore?.listingItem?.publicationType)) {
-				directoryStore.listingItem.publicationType.forEach((publicationTypeUrl) => {
+			if (Array.isArray(objectStore.getActiveObject('listing')?.publicationType)) {
+				objectStore.getActiveObject('listing').publicationType.forEach((publicationTypeUrl) => {
 					// Check if the publicationType URL exists in the publicationTypeStore.publicationTypeList
-					const exists = publicationTypeStore.publicationTypeList.some(publicationType => publicationType.source === publicationTypeUrl)
+					const exists = objectStore.getCollection('publication_type').results.some(publicationType => publicationType.source === publicationTypeUrl)
 					// Update the checkedPublicationType reactive state
 					this.$set(this.checkedPublicationTypeObject, publicationTypeUrl, exists)
 				})
@@ -253,9 +253,9 @@ export default {
 				},
 			)
 				.then((response) => {
-					publicationTypeStore.refreshPublicationTypeList()
+					objectStore.fetchCollection('publication_type')
 					response.json().then((data) => {
-						const publicationTypeSources = publicationTypeStore.publicationTypeList.map((publicationType) => publicationType.source)
+						const publicationTypeSources = objectStore.getCollection('publication_type').results.map((publicationType) => publicationType.source)
 						if (!publicationTypeSources.includes(data.source)) this.createPublicationType(data)
 					})
 					this.loading = false
@@ -279,18 +279,9 @@ export default {
 			delete data.id
 			delete data._id
 
-			fetch(
-				'/index.php/apps/opencatalogi/api/publication_types',
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(data),
-				},
-			)
+			objectStore.createObject('publication_type', data)
 				.then((response) => {
-					publicationTypeStore.refreshPublicationTypeList()
+					objectStore.fetchCollection('publication_type')
 					this.loading = false
 
 				})
@@ -305,19 +296,11 @@ export default {
 
 			const publicationTypeId = this.getPublicationTypeId(publicationTypeUrl)
 
-			fetch(
-				`/index.php/apps/opencatalogi/api/publication_types/${publicationTypeId}`,
-				{
-					method: 'DELETE',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				},
-			)
+			objectStore.deleteObject('publication_type', publicationTypeId)
 				.then(() => {
 					this.loading = false
 
-					publicationTypeStore.refreshPublicationTypeList()
+					objectStore.fetchCollection('publication_type')
 
 				})
 				.catch((err) => {
@@ -329,13 +312,13 @@ export default {
 		synDirectroy() {
 			this.syncLoading = true
 			fetch(
-				`/index.php/apps/opencatalogi/api/listings/synchronise/${directoryStore.listingItem.id}`,
+				`/index.php/apps/opencatalogi/api/listings/synchronise/${objectStore.getActiveObject('listing').id}`,
 				{
 					method: 'GET',
 				},
 			)
 				.then(() => {
-					directoryStore.refreshListingList()
+					objectStore.fetchCollection('listing')
 					this.syncLoading = false
 				})
 				.catch((err) => {

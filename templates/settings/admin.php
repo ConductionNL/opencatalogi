@@ -2,9 +2,9 @@
 use OCP\Util;
 
 $appId = OCA\OpenCatalogi\AppInfo\Application::APP_ID;
-Util::addScript($appId, $appId . '-settings-admin');
+Util::addScript($appId, $appId . '-settings');
 Util::addStyle($appId, 'main');
 
 ?>
 
-<div id="admin-settings"></div>
+<div id="settings"></div>
