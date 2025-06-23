@@ -167,11 +167,13 @@ class DirectoryService
      * Retrieves all unique directory URLs from listings that are currently 
      * stored in the system and available for synchronization.
      *
+     * @param bool $availableOnly Whether to include only available listings
+     * @param bool $defaultOnly Whether to include only default listings
      * @return array<string> Array of unique directory URLs
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
      */
-    public function getUniqueDirectories(): array
+    public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
     {
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
@@ -190,12 +192,21 @@ class DirectoryService
         // Get listings if configuration is available
         if (!empty($listingSchema) && !empty($listingRegister)) {
             try {
-                $config = [
-                    'filters' => [
-                        'register' => $listingRegister,
-                        'schema' => $listingSchema
-                    ]
+                $filters = [
+                    'register' => $listingRegister,
+                    'schema' => $listingSchema
                 ];
+                
+                // Add optional filters
+                if ($availableOnly) {
+                    $filters['available'] = true;
+                }
+                
+                if ($defaultOnly) {
+                    $filters['default'] = true;
+                }
+                
+                $config = ['filters' => $filters];
                 
                 $listings = $objectService->findAll($config);
                 
@@ -625,296 +636,107 @@ class DirectoryService
     }
 
     /**
-     * Get aggregated publications from all available listings asynchronously
+     * Get publications from all available federated catalogs asynchronously
      *
      * Fetches publications from all publication endpoints of listings marked as available,
-     * combining results into a single array with proper error handling and status tracking.
+     * combining results into a single array.
      *
      * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
      * @param bool $includeDefault Whether to include only default listings or all available listings
      *
-     * @return array<string, mixed> Array containing combined results and metadata
+     * @return array Array containing combined publications
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
      */
-    public function getAggregatedPublications(array $guzzleConfig = [], bool $includeDefault = false): array
+    public function getPublications(array $guzzleConfig = [], bool $includeDefault = false): array
     {
-        $startTime = microtime(true);
+        // Get directories based on criteria
+        $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
         
-        // Initialize results structure
-        $results = [
-            'results' => [],
-            'total' => 0,
-            'sources' => [],
-            'errors' => [],
-            'statistics' => [
-                'total_endpoints' => 0,
-                'successful_calls' => 0,
-                'failed_calls' => 0,
-                'total_publications' => 0,
-                'execution_time' => 0
-            ]
+        if (empty($directories)) {
+            return [];
+        }
+
+        // Get our own directory URL to exclude from search
+        $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+        );
+
+        // Prepare Guzzle client
+        $defaultGuzzleConfig = [
+            RequestOptions::TIMEOUT => 30,
+            RequestOptions::CONNECT_TIMEOUT => 10,
+            RequestOptions::HEADERS => [
+                'Accept' => 'application/json',
+                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+            ],
+            RequestOptions::HTTP_ERRORS => false
         ];
+        
+        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams = $finalGuzzleConfig['query_params'] ?? [];
+        $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
+        $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
+        
+        $client = new Client($finalGuzzleConfig);
+        $promises = [];
 
-        try {
-            // Check if OpenRegister service is available
-            if (!in_array('openregister', $this->appManager->getInstalledApps())) {
-                throw new \RuntimeException('OpenRegister service is not available.');
-            }
-
-            // Get ObjectService from container
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            
-            // Get listing configuration
-            $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-            $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-
-            if (empty($listingSchema) || empty($listingRegister)) {
-                throw new \RuntimeException('Listing schema or register not configured');
-            }
-
-            // Get listings with publication endpoints based on criteria
-            $filters = [
-                'register' => $listingRegister,
-                'schema' => $listingSchema,
-                'available' => true
-            ];
-            
-            // Add default filter if only default listings should be included
-            if ($includeDefault) {
-                $filters['default'] = true;
-            }
-            
-            $config = ['filters' => $filters];
-            
-            $listings = $objectService->findAll($config);
-            
-            // Extract unique publication endpoints
-            $publicationEndpoints = [];
-            $endpointToListing = [];
-            
-            foreach ($listings as $listing) {
-                $listingData = $listing->jsonSerialize();
-                $listingObject = $listingData['object'] ?? [];
-                
-                // Skip if no publication endpoint
-                if (empty($listingObject['publications'])) {
+        // Create promises for each directory
+        foreach ($directories as $directoryUrl) {
+            // Skip our own directory and local URLs
+            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
                 continue;
             }
 
-                $endpoint = $listingObject['publications'];
-                
-                // Store unique endpoints and their source listings
-                if (!isset($publicationEndpoints[$endpoint])) {
-                    $publicationEndpoints[$endpoint] = [
-                        'url' => $endpoint,
-                        'listing_id' => $listingData['id'],
-                        'listing_title' => $listingObject['title'] ?? 'Unknown',
-                        'catalog_id' => $listingObject['catalogusId'] ?? null
-                    ];
-                    $endpointToListing[$endpoint] = $listingData['id'];
-                }
-            }
-
-            $results['statistics']['total_endpoints'] = count($publicationEndpoints);
-
-                        if (empty($publicationEndpoints)) {
-                \OC::$server->getLogger()->info(
-                    'DirectoryService: No available listings with publication endpoints found'
-                );
-                return $results;
-            }
-
-            // Prepare Guzzle client with default configuration
-            $defaultGuzzleConfig = [
-                RequestOptions::TIMEOUT => 30,
-                RequestOptions::CONNECT_TIMEOUT => 10,
-                RequestOptions::HEADERS => [
-                    'Accept' => 'application/json',
-                    'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
-                ],
-                RequestOptions::HTTP_ERRORS => false // Handle errors manually
-            ];
+            // Build the publications endpoint URL
+            $publicationsUrl = rtrim($directoryUrl, '/') . '/publications';
             
-            // Merge with provided configuration
-            $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-            $client = new Client($finalGuzzleConfig);
-
-            // Create promises for async requests
-            $promises = [];
-            foreach ($publicationEndpoints as $endpoint => $endpointData) {
-                $promises[$endpoint] = new Promise(function ($resolve) use ($client, $endpoint, $endpointData, $objectService, $listingRegister, $listingSchema) {
-                    try {
-                        \OC::$server->getLogger()->debug(
-                            'DirectoryService: Fetching publications from: ' . $endpoint
-                        );
+            if (!empty($queryParams)) {
+                $publicationsUrl .= '?' . http_build_query($queryParams);
+            }
+            
+            $promises[] = new Promise(function ($resolve) use ($client, $publicationsUrl) {
+                try {
+                    $response = $client->get($publicationsUrl);
+                    
+                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                        $data = json_decode($response->getBody()->getContents(), true);
                         
-                        $response = $client->get($endpoint);
-                        $statusCode = $response->getStatusCode();
-                        
-                        $result = [
-                            'endpoint' => $endpoint,
-                            'listing_data' => $endpointData,
-                            'status_code' => $statusCode,
-                            'success' => false,
-                            'publications' => [],
-                            'total' => 0,
-                            'error' => null
-                        ];
-                        
-                        if ($statusCode >= 200 && $statusCode < 300) {
-                            // Successful response
-                            $body = $response->getBody()->getContents();
-                            $data = json_decode($body, true);
-                            
-                            if (json_last_error() === JSON_ERROR_NONE && isset($data['results'])) {
-                                $result['success'] = true;
-                                $result['publications'] = is_array($data['results']) ? $data['results'] : [];
-                                $result['total'] = count($result['publications']);
-                                
-                                // Update listing status to success
-                                $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, true);
-                                
-                                \OC::$server->getLogger()->info(
-                                    'DirectoryService: Successfully fetched ' . $result['total'] . 
-                                    ' publications from: ' . $endpoint
-                                );
-                            } else {
-                                $result['error'] = 'Invalid JSON response or missing results property';
-                                $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, false);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            // Handle different response formats
+                            if (isset($data['results']) && is_array($data['results'])) {
+                                $resolve($data['results']);
+                            } elseif (is_array($data)) {
+                                $resolve($data);
                             }
-                        } else {
-                            // HTTP error status
-                            $result['error'] = 'HTTP ' . $statusCode . ': ' . $response->getReasonPhrase();
-                            $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, false);
                         }
-                        
-                        $resolve($result);
-                        
-                    } catch (RequestException $e) {
-                        // Guzzle request exception
-                        $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : 0;
-                        $result = [
-                            'endpoint' => $endpoint,
-                            'listing_data' => $endpointData,
-                            'status_code' => $statusCode,
-                            'success' => false,
-                            'publications' => [],
-                            'total' => 0,
-                            'error' => 'Request failed: ' . $e->getMessage()
-                        ];
-                        
-                        $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, false);
-                        
-                        \OC::$server->getLogger()->error(
-                            'DirectoryService: Request failed for ' . $endpoint . ': ' . $e->getMessage()
-                        );
-                        
-                        $resolve($result);
-                        
-                    } catch (\Exception $e) {
-                        // Other exceptions
-                        $result = [
-                            'endpoint' => $endpoint,
-                            'listing_data' => $endpointData,
-                            'status_code' => 0,
-                            'success' => false,
-                            'publications' => [],
-                            'total' => 0,
-                            'error' => 'Unexpected error: ' . $e->getMessage()
-                        ];
-                        
-                        $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], 0, false);
-                        
-                        \OC::$server->getLogger()->error(
-                            'DirectoryService: Unexpected error for ' . $endpoint . ': ' . $e->getMessage()
-                        );
-                        
-                        $resolve($result);
-                    }
-                });
-            }
-
-            // Execute all promises concurrently and wait for results
-            $endpointResults = \React\Async\await(\React\Promise\all($promises));
-
-            // Process results and combine publications
-            $allPublications = [];
-            $sourceInfo = [];
-            
-            foreach ($endpointResults as $endpointResult) {
-                if ($endpointResult['success']) {
-                    $results['statistics']['successful_calls']++;
-                    
-                    // Add source information to each publication
-                    foreach ($endpointResult['publications'] as $publication) {
-                        // Add metadata about the source
-                        $publication['_source'] = [
-                            'endpoint' => $endpointResult['endpoint'],
-                            'listing_title' => $endpointResult['listing_data']['listing_title'],
-                            'catalog_id' => $endpointResult['listing_data']['catalog_id']
-                        ];
-                        $allPublications[] = $publication;
                     }
                     
-                    $results['statistics']['total_publications'] += $endpointResult['total'];
-                    
-                    // Track successful sources
-                    $sourceInfo[] = [
-                        'endpoint' => $endpointResult['endpoint'],
-                        'listing_title' => $endpointResult['listing_data']['listing_title'],
-                        'publication_count' => $endpointResult['total'],
-                        'status' => 'success'
-                    ];
-                } else {
-                    $results['statistics']['failed_calls']++;
-                    
-                    // Track failed sources
-                    $sourceInfo[] = [
-                        'endpoint' => $endpointResult['endpoint'],
-                        'listing_title' => $endpointResult['listing_data']['listing_title'],
-                        'publication_count' => 0,
-                        'status' => 'error',
-                        'error' => $endpointResult['error']
-                    ];
-                    
-                    $results['errors'][] = [
-                        'endpoint' => $endpointResult['endpoint'],
-                        'listing_title' => $endpointResult['listing_data']['listing_title'],
-                        'error' => $endpointResult['error'],
-                        'status_code' => $endpointResult['status_code']
-                    ];
+                    $resolve([]);
+                } catch (\Exception $e) {
+                    $resolve([]);
                 }
-            }
-
-            // Set final results
-            $results['results'] = $allPublications;
-            $results['total'] = count($allPublications);
-            $results['sources'] = $sourceInfo;
-            
-            // Calculate execution time
-            $results['statistics']['execution_time'] = round((microtime(true) - $startTime) * 1000, 2); // in milliseconds
-
-            \OC::$server->getLogger()->info(
-                'DirectoryService: Publication aggregation completed. ' .
-                'Total: ' . $results['total'] . ' publications from ' . 
-                $results['statistics']['successful_calls'] . '/' . $results['statistics']['total_endpoints'] . 
-                ' endpoints in ' . $results['statistics']['execution_time'] . 'ms'
-            );
-
-        } catch (\Exception $e) {
-            $results['errors'][] = [
-                'type' => 'system_error',
-                'error' => $e->getMessage(),
-                'status_code' => 0
-            ];
-            
-            \OC::$server->getLogger()->error(
-                'DirectoryService: Failed to get publications: ' . $e->getMessage()
-            );
+            });
         }
 
-        return $results;
+        // Execute all promises and collect results
+        $allResults = \React\Async\await(\React\Promise\all($promises));
+        
+        // Flatten and deduplicate results
+        $combinedResults = [];
+        $seenIds = [];
+        
+        foreach ($allResults as $results) {
+            foreach ($results as $item) {
+                $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
+                if (!isset($seenIds[$itemId])) {
+                    $combinedResults[] = $item;
+                    $seenIds[$itemId] = true;
+                }
+            }
+        }
+
+        return $combinedResults;
     }
 
     /**
@@ -1283,5 +1105,202 @@ class DirectoryService
         }
 
         return false;
+    }
+
+    /**
+     * Get objects from other catalogs that use/reference our local object
+     *
+     * Calls the /publications/{uuid}/used endpoint on all available federated
+     * catalogs to find objects that reference or use the specified local object UUID.
+     *
+     * @param string $uuid The UUID of the local object to find uses for
+     * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+     *
+     * @return array Array containing objects that use this object
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws DoesNotExistException|MultipleObjectsReturnedException
+     */
+    public function getUsed(string $uuid, array $guzzleConfig = []): array
+    {
+        // Get available listings with publication endpoints
+        $directories = $this->getUniqueDirectories(availableOnly: true);
+        
+        if (empty($directories)) {
+            return [];
+        }
+
+        // Get our own directory URL to exclude from search
+        $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+        );
+
+        // Prepare Guzzle client
+        $defaultGuzzleConfig = [
+            RequestOptions::TIMEOUT => 30,
+            RequestOptions::CONNECT_TIMEOUT => 10,
+            RequestOptions::HEADERS => [
+                'Accept' => 'application/json',
+                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+            ],
+            RequestOptions::HTTP_ERRORS => false
+        ];
+        
+        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams = $finalGuzzleConfig['query_params'] ?? [];
+        $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
+        $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
+        
+        $client = new Client($finalGuzzleConfig);
+        $promises = [];
+
+        // Create promises for each directory
+        foreach ($directories as $directoryUrl) {
+            // Skip our own directory and local URLs
+            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
+                continue;
+            }
+
+            // Build the /used endpoint URL
+            $usedUrl = rtrim($directoryUrl, '/') . '/publications/' . urlencode($uuid) . '/used';
+            
+            if (!empty($queryParams)) {
+                $usedUrl .= '?' . http_build_query($queryParams);
+            }
+            
+            $promises[] = new Promise(function ($resolve) use ($client, $usedUrl) {
+                try {
+                    $response = $client->get($usedUrl);
+                    
+                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                        $data = json_decode($response->getBody()->getContents(), true);
+                        
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            // Handle different response formats
+                            if (isset($data['results']) && is_array($data['results'])) {
+                                $resolve($data['results']);
+                            } elseif (is_array($data)) {
+                                $resolve($data);
+                            }
+                        }
+                    }
+                    
+                    $resolve([]);
+                } catch (\Exception $e) {
+                    $resolve([]);
+                }
+            });
+        }
+
+        // Execute all promises and collect results
+        $allResults = \React\Async\await(\React\Promise\all($promises));
+        
+        // Flatten and deduplicate results
+        $combinedResults = [];
+        $seenIds = [];
+        
+        foreach ($allResults as $results) {
+            foreach ($results as $item) {
+                $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
+                if (!isset($seenIds[$itemId])) {
+                    $combinedResults[] = $item;
+                    $seenIds[$itemId] = true;
+                }
+            }
+        }
+
+        return $combinedResults;
+    }
+
+    /**
+     * Get a single publication from federated catalogs by ID
+     *
+     * Searches across all available federated catalogs to find a specific
+     * publication by its ID. Returns the first match found.
+     *
+     * @param string $publicationId The ID of the publication to find
+     * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+     *
+     * @return array|null Array containing the publication data or null if not found
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws DoesNotExistException|MultipleObjectsReturnedException
+     */
+    public function getPublication(string $publicationId, array $guzzleConfig = []): ?array
+    {
+        // Get available directories
+        $directories = $this->getUniqueDirectories(availableOnly: true);
+        
+        if (empty($directories)) {
+            return null;
+        }
+
+        // Get our own directory URL to exclude from search
+        $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+        );
+
+        // Prepare Guzzle client
+        $defaultGuzzleConfig = [
+            RequestOptions::TIMEOUT => 30,
+            RequestOptions::CONNECT_TIMEOUT => 10,
+            RequestOptions::HEADERS => [
+                'Accept' => 'application/json',
+                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+            ],
+            RequestOptions::HTTP_ERRORS => false
+        ];
+        
+        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams = $finalGuzzleConfig['query_params'] ?? [];
+        $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
+        $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
+        
+        $client = new Client($finalGuzzleConfig);
+        $promises = [];
+
+        // Create promises for each directory
+        foreach ($directories as $directoryUrl) {
+            // Skip our own directory and local URLs
+            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
+                continue;
+            }
+
+            // Build the publication endpoint URL
+            $publicationUrl = rtrim($directoryUrl, '/') . '/publications/' . urlencode($publicationId);
+            
+            if (!empty($queryParams)) {
+                $publicationUrl .= '?' . http_build_query($queryParams);
+            }
+            
+            $promises[] = new Promise(function ($resolve) use ($client, $publicationUrl) {
+                try {
+                    $response = $client->get($publicationUrl);
+                    
+                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                        $data = json_decode($response->getBody()->getContents(), true);
+                        
+                        if (json_last_error() === JSON_ERROR_NONE && !empty($data)) {
+                            $resolve($data);
+                            return;
+                        }
+                    }
+                    
+                    $resolve(null);
+                } catch (\Exception $e) {
+                    $resolve(null);
+                }
+            });
+        }
+
+        // Execute all promises and return first successful result
+        $allResults = \React\Async\await(\React\Promise\all($promises));
+        
+        // Return the first non-null result
+        foreach ($allResults as $result) {
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
+        return null;
     }
 }

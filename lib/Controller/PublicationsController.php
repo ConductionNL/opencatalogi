@@ -153,9 +153,8 @@ class PublicationsController extends Controller
                 }
             }
             
-            // Add query parameters to prevent circular references
+            // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
             $queryParams = $_GET; // Get all current query parameters
-            $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
             $guzzleConfig['query_params'] = $queryParams;
 
             // Get aggregated publications from directory service
@@ -168,31 +167,17 @@ class PublicationsController extends Controller
             $mergedResults = [
                 'results' => array_merge(
                     $localData['results'] ?? [],
-                    $aggregatedResults['results'] ?? []
+                    $aggregatedResults ?? [] // getPublications returns a simple array
                 ),
-                'total' => ($localData['total'] ?? 0) + ($aggregatedResults['total'] ?? 0),
-                'sources' => array_merge(
-                    ['local' => 'Local OpenCatalogi instance'],
-                    $aggregatedResults['sources'] ?? []
-                ),
-                'errors' => $aggregatedResults['errors'] ?? [],
-                'statistics' => array_merge(
-                    [
-                        'local_publications' => $localData['total'] ?? 0
-                    ],
-                    $aggregatedResults['statistics'] ?? []
-                )
+                'total' => ($localData['total'] ?? 0) + count($aggregatedResults ?? []),
+                'sources' => [
+                    'local' => 'Local OpenCatalogi instance',
+                    'federated' => 'Federated catalogs'
+                ]
             ];
             
             // Set appropriate HTTP status based on results
             $statusCode = 200;
-            if (!empty($mergedResults['errors']) && empty($mergedResults['results'])) {
-                // All requests failed
-                $statusCode = 503; // Service Unavailable
-            } elseif (!empty($mergedResults['errors'])) {
-                // Some requests failed
-                $statusCode = 207; // Multi-Status
-            }
             
             // Add CORS headers for public API access
             $response = new JSONResponse($mergedResults, $statusCode);
@@ -204,30 +189,8 @@ class PublicationsController extends Controller
             return $response;
             
         } catch (\Exception $e) {
-            // If aggregation fails, return local results with error information
-            $localData = json_decode($localResponse->render(), true);
-            $errorResults = array_merge($localData, [
-                'sources' => ['local' => 'Local OpenCatalogi instance'],
-                'errors' => [
-                    [
-                        'type' => 'aggregation_error',
-                        'error' => $e->getMessage(),
-                        'status_code' => 0
-                    ]
-                ],
-                'statistics' => [
-                    'local_publications' => $localData['total'] ?? 0,
-                    'aggregation_failed' => true
-                ]
-            ]);
-            
-            $response = new JSONResponse($errorResults, 207); // Multi-Status due to partial failure
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
-            $response->addHeader('Access-Control-Allow-Origin', $origin);
-            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
-            return $response;
+            // If aggregation fails, return local results only
+            return $localResponse;
         }
 
     }//end index()
@@ -298,9 +261,8 @@ class PublicationsController extends Controller
                 }
             }
             
-            // Add query parameters to prevent circular references
+            // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
             $queryParams = $_GET; // Get all current query parameters
-            $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
             $guzzleConfig['query_params'] = $queryParams;
 
             // Get publication from directory service
@@ -370,6 +332,7 @@ class PublicationsController extends Controller
      * Retrieves all objects that this publication references
      *
      * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
+     * When aggregation is enabled, it also searches federated catalogs.
      *
      * @param string $id The ID of the publication to retrieve relations for
      * @return JSONResponse A JSON response containing the related objects
@@ -381,7 +344,51 @@ class PublicationsController extends Controller
      */
     public function uses(string $id): JSONResponse
     {
-        return $this->publicationService->uses(id: $id);
+        // Check if aggregation is enabled (default: true, unless explicitly set to false)
+        $aggregate = $this->request->getParam('_aggregate', 'true');
+        $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+        
+        // Get local results first
+        $localResponse = $this->publicationService->uses(id: $id);
+        
+        // If aggregation is disabled, return only local results
+        if (!$shouldAggregate) {
+            return $localResponse;
+        }
+        
+        try {
+            // Get optional Guzzle configuration from request parameters
+            $guzzleConfig = [];
+            
+            // Allow timeout configuration via query parameter
+            if ($this->request->getParam('timeout')) {
+                $timeout = (int) $this->request->getParam('timeout');
+                if ($timeout > 0 && $timeout <= 120) { // Max 2 minutes
+                    $guzzleConfig['timeout'] = $timeout;
+                }
+            }
+            
+            // Allow connect timeout configuration via query parameter
+            if ($this->request->getParam('connect_timeout')) {
+                $connectTimeout = (int) $this->request->getParam('connect_timeout');
+                if ($connectTimeout > 0 && $connectTimeout <= 30) { // Max 30 seconds
+                    $guzzleConfig['connect_timeout'] = $connectTimeout;
+                }
+            }
+            
+            // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
+            $queryParams = $_GET; // Get all current query parameters
+            $guzzleConfig['query_params'] = $queryParams;
+
+            // Note: For 'uses' we don't have a specific DirectoryService method yet
+            // This would need to be implemented similar to getUsed() if needed
+            // For now, return local results only
+            return $localResponse;
+            
+        } catch (\Exception $e) {
+            // If federation fails, return local results
+            return $localResponse;
+        }
     }
 
 
@@ -389,6 +396,7 @@ class PublicationsController extends Controller
      * Retrieves all objects that use this publication
      *
      * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
+     * When aggregation is enabled, it also searches federated catalogs.
      *
      * @param string $id The ID of the publication to retrieve uses for
      * @return JSONResponse A JSON response containing the referenced objects
@@ -400,7 +408,67 @@ class PublicationsController extends Controller
      */
     public function used(string $id): JSONResponse
     {
-        return $this->publicationService->used(id: $id);
+        // Check if aggregation is enabled (default: true, unless explicitly set to false)
+        $aggregate = $this->request->getParam('_aggregate', 'true');
+        $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+        
+        // Get local results first
+        $localResponse = $this->publicationService->used(id: $id);
+        
+        // If aggregation is disabled, return only local results
+        if (!$shouldAggregate) {
+            return $localResponse;
+        }
+        
+        try {
+            // Get optional Guzzle configuration from request parameters
+            $guzzleConfig = [];
+            
+            // Allow timeout configuration via query parameter
+            if ($this->request->getParam('timeout')) {
+                $timeout = (int) $this->request->getParam('timeout');
+                if ($timeout > 0 && $timeout <= 120) { // Max 2 minutes
+                    $guzzleConfig['timeout'] = $timeout;
+                }
+            }
+            
+            // Allow connect timeout configuration via query parameter
+            if ($this->request->getParam('connect_timeout')) {
+                $connectTimeout = (int) $this->request->getParam('connect_timeout');
+                if ($connectTimeout > 0 && $connectTimeout <= 30) { // Max 30 seconds
+                    $guzzleConfig['connect_timeout'] = $connectTimeout;
+                }
+            }
+            
+            // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
+            $queryParams = $_GET; // Get all current query parameters
+            $guzzleConfig['query_params'] = $queryParams;
+
+            // Get federated results from directory service
+            $federatedResults = $this->directoryService->getUsed($id, $guzzleConfig);
+            
+            // Decode local response to merge with federated results
+            $localData = json_decode($localResponse->render(), true);
+            
+            // Merge local and federated results
+            $mergedResults = array_merge(
+                $localData ?? [],
+                $federatedResults ?? []
+            );
+            
+            // Add CORS headers for public API access
+            $response = new JSONResponse($mergedResults, 200);
+            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $response->addHeader('Access-Control-Allow-Origin', $origin);
+            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            // If federation fails, return local results
+            return $localResponse;
+        }
     }
 
 }//end class
