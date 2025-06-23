@@ -146,6 +146,11 @@
             "description": "Search URL for the listing",
             "format": "url"
           },
+          "publications": {
+            "type": "string",
+            "description": "Publications API endpoint URL for the listing",
+            "format": "url"
+          },
           "directory": {
             "type": "string",
             "description": "Directory URL for the listing",
