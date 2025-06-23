@@ -17,6 +17,8 @@ namespace OCA\OpenCatalogi\Service;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\RequestOptions;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -48,7 +50,7 @@ class DirectoryService
      * @var Client The HTTP client for making requests
      */
     private readonly Client $client;
-    
+
     /**
      * @var array<string> Cached unique directory URLs for cross-directory checks
      */
@@ -516,6 +518,9 @@ class DirectoryService
             } else {
                 $listingData['schemaCount'] = 0;
             }
+            
+            // Detect or generate publication endpoint
+            $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
 
             // Check if listing already exists to determine action type
             $existingListings = $objectService->findAll([
@@ -617,6 +622,436 @@ class DirectoryService
         }
 
         return $result;
+    }
+
+    /**
+     * Get aggregated publications from all available listings asynchronously
+     *
+     * Fetches publications from all publication endpoints of listings marked as available,
+     * combining results into a single array with proper error handling and status tracking.
+     *
+     * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+     * @param bool $includeDefault Whether to include only default listings or all available listings
+     *
+     * @return array<string, mixed> Array containing combined results and metadata
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws DoesNotExistException|MultipleObjectsReturnedException
+     */
+    public function getAggregatedPublications(array $guzzleConfig = [], bool $includeDefault = false): array
+    {
+        $startTime = microtime(true);
+        
+        // Initialize results structure
+        $results = [
+            'results' => [],
+            'total' => 0,
+            'sources' => [],
+            'errors' => [],
+            'statistics' => [
+                'total_endpoints' => 0,
+                'successful_calls' => 0,
+                'failed_calls' => 0,
+                'total_publications' => 0,
+                'execution_time' => 0
+            ]
+        ];
+
+        try {
+            // Check if OpenRegister service is available
+            if (!in_array('openregister', $this->appManager->getInstalledApps())) {
+                throw new \RuntimeException('OpenRegister service is not available.');
+            }
+
+            // Get ObjectService from container
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            
+            // Get listing configuration
+            $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+            $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+
+            if (empty($listingSchema) || empty($listingRegister)) {
+                throw new \RuntimeException('Listing schema or register not configured');
+            }
+
+            // Get listings with publication endpoints based on criteria
+            $filters = [
+                'register' => $listingRegister,
+                'schema' => $listingSchema,
+                'available' => true
+            ];
+            
+            // Add default filter if only default listings should be included
+            if ($includeDefault) {
+                $filters['default'] = true;
+            }
+            
+            $config = ['filters' => $filters];
+            
+            $listings = $objectService->findAll($config);
+            
+            // Extract unique publication endpoints
+            $publicationEndpoints = [];
+            $endpointToListing = [];
+            
+            foreach ($listings as $listing) {
+                $listingData = $listing->jsonSerialize();
+                $listingObject = $listingData['object'] ?? [];
+                
+                // Skip if no publication endpoint
+                if (empty($listingObject['publications'])) {
+                continue;
+            }
+
+                $endpoint = $listingObject['publications'];
+                
+                // Store unique endpoints and their source listings
+                if (!isset($publicationEndpoints[$endpoint])) {
+                    $publicationEndpoints[$endpoint] = [
+                        'url' => $endpoint,
+                        'listing_id' => $listingData['id'],
+                        'listing_title' => $listingObject['title'] ?? 'Unknown',
+                        'catalog_id' => $listingObject['catalogusId'] ?? null
+                    ];
+                    $endpointToListing[$endpoint] = $listingData['id'];
+                }
+            }
+
+            $results['statistics']['total_endpoints'] = count($publicationEndpoints);
+
+                        if (empty($publicationEndpoints)) {
+                \OC::$server->getLogger()->info(
+                    'DirectoryService: No available listings with publication endpoints found'
+                );
+                return $results;
+            }
+
+            // Prepare Guzzle client with default configuration
+            $defaultGuzzleConfig = [
+                RequestOptions::TIMEOUT => 30,
+                RequestOptions::CONNECT_TIMEOUT => 10,
+                RequestOptions::HEADERS => [
+                    'Accept' => 'application/json',
+                    'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+                ],
+                RequestOptions::HTTP_ERRORS => false // Handle errors manually
+            ];
+            
+            // Merge with provided configuration
+            $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+            $client = new Client($finalGuzzleConfig);
+
+            // Create promises for async requests
+            $promises = [];
+            foreach ($publicationEndpoints as $endpoint => $endpointData) {
+                $promises[$endpoint] = new Promise(function ($resolve) use ($client, $endpoint, $endpointData, $objectService, $listingRegister, $listingSchema) {
+                    try {
+                        \OC::$server->getLogger()->debug(
+                            'DirectoryService: Fetching publications from: ' . $endpoint
+                        );
+                        
+                        $response = $client->get($endpoint);
+                        $statusCode = $response->getStatusCode();
+                        
+                        $result = [
+                            'endpoint' => $endpoint,
+                            'listing_data' => $endpointData,
+                            'status_code' => $statusCode,
+                            'success' => false,
+                            'publications' => [],
+                            'total' => 0,
+                            'error' => null
+                        ];
+                        
+                        if ($statusCode >= 200 && $statusCode < 300) {
+                            // Successful response
+                            $body = $response->getBody()->getContents();
+                            $data = json_decode($body, true);
+                            
+                            if (json_last_error() === JSON_ERROR_NONE && isset($data['results'])) {
+                                $result['success'] = true;
+                                $result['publications'] = is_array($data['results']) ? $data['results'] : [];
+                                $result['total'] = count($result['publications']);
+                                
+                                // Update listing status to success
+                                $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, true);
+                                
+                                \OC::$server->getLogger()->info(
+                                    'DirectoryService: Successfully fetched ' . $result['total'] . 
+                                    ' publications from: ' . $endpoint
+                                );
+                            } else {
+                                $result['error'] = 'Invalid JSON response or missing results property';
+                                $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, false);
+                            }
+                        } else {
+                            // HTTP error status
+                            $result['error'] = 'HTTP ' . $statusCode . ': ' . $response->getReasonPhrase();
+                            $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, false);
+                        }
+                        
+                        $resolve($result);
+                        
+                    } catch (RequestException $e) {
+                        // Guzzle request exception
+                        $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : 0;
+                        $result = [
+                            'endpoint' => $endpoint,
+                            'listing_data' => $endpointData,
+                            'status_code' => $statusCode,
+                            'success' => false,
+                            'publications' => [],
+                            'total' => 0,
+                            'error' => 'Request failed: ' . $e->getMessage()
+                        ];
+                        
+                        $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], $statusCode, false);
+                        
+                        \OC::$server->getLogger()->error(
+                            'DirectoryService: Request failed for ' . $endpoint . ': ' . $e->getMessage()
+                        );
+                        
+                        $resolve($result);
+                        
+                    } catch (\Exception $e) {
+                        // Other exceptions
+                        $result = [
+                            'endpoint' => $endpoint,
+                            'listing_data' => $endpointData,
+                            'status_code' => 0,
+                            'success' => false,
+                            'publications' => [],
+                            'total' => 0,
+                            'error' => 'Unexpected error: ' . $e->getMessage()
+                        ];
+                        
+                        $this->updateListingStatus($objectService, $listingRegister, $listingSchema, $endpointData['listing_id'], 0, false);
+                        
+                        \OC::$server->getLogger()->error(
+                            'DirectoryService: Unexpected error for ' . $endpoint . ': ' . $e->getMessage()
+                        );
+                        
+                        $resolve($result);
+                    }
+                });
+            }
+
+            // Execute all promises concurrently and wait for results
+            $endpointResults = \React\Async\await(\React\Promise\all($promises));
+
+            // Process results and combine publications
+            $allPublications = [];
+            $sourceInfo = [];
+            
+            foreach ($endpointResults as $endpointResult) {
+                if ($endpointResult['success']) {
+                    $results['statistics']['successful_calls']++;
+                    
+                    // Add source information to each publication
+                    foreach ($endpointResult['publications'] as $publication) {
+                        // Add metadata about the source
+                        $publication['_source'] = [
+                            'endpoint' => $endpointResult['endpoint'],
+                            'listing_title' => $endpointResult['listing_data']['listing_title'],
+                            'catalog_id' => $endpointResult['listing_data']['catalog_id']
+                        ];
+                        $allPublications[] = $publication;
+                    }
+                    
+                    $results['statistics']['total_publications'] += $endpointResult['total'];
+                    
+                    // Track successful sources
+                    $sourceInfo[] = [
+                        'endpoint' => $endpointResult['endpoint'],
+                        'listing_title' => $endpointResult['listing_data']['listing_title'],
+                        'publication_count' => $endpointResult['total'],
+                        'status' => 'success'
+                    ];
+                } else {
+                    $results['statistics']['failed_calls']++;
+                    
+                    // Track failed sources
+                    $sourceInfo[] = [
+                        'endpoint' => $endpointResult['endpoint'],
+                        'listing_title' => $endpointResult['listing_data']['listing_title'],
+                        'publication_count' => 0,
+                        'status' => 'error',
+                        'error' => $endpointResult['error']
+                    ];
+                    
+                    $results['errors'][] = [
+                        'endpoint' => $endpointResult['endpoint'],
+                        'listing_title' => $endpointResult['listing_data']['listing_title'],
+                        'error' => $endpointResult['error'],
+                        'status_code' => $endpointResult['status_code']
+                    ];
+                }
+            }
+
+            // Set final results
+            $results['results'] = $allPublications;
+            $results['total'] = count($allPublications);
+            $results['sources'] = $sourceInfo;
+            
+            // Calculate execution time
+            $results['statistics']['execution_time'] = round((microtime(true) - $startTime) * 1000, 2); // in milliseconds
+
+            \OC::$server->getLogger()->info(
+                'DirectoryService: Publication aggregation completed. ' .
+                'Total: ' . $results['total'] . ' publications from ' . 
+                $results['statistics']['successful_calls'] . '/' . $results['statistics']['total_endpoints'] . 
+                ' endpoints in ' . $results['statistics']['execution_time'] . 'ms'
+            );
+
+        } catch (\Exception $e) {
+            $results['errors'][] = [
+                'type' => 'system_error',
+                'error' => $e->getMessage(),
+                'status_code' => 0
+            ];
+            
+            \OC::$server->getLogger()->error(
+                'DirectoryService: Failed to get publications: ' . $e->getMessage()
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * Update listing status after publication endpoint call
+     *
+     * Updates the listing with the latest status code and availability based on
+     * the result of calling its publication endpoint.
+     *
+     * @param object $objectService The OpenRegister ObjectService instance
+     * @param string $listingRegister The listing register ID
+     * @param string $listingSchema The listing schema ID
+     * @param string $listingId The listing ID to update
+     * @param int $statusCode The HTTP status code from the endpoint call
+     * @param bool $success Whether the call was successful
+     *
+     * @return void
+     */
+    private function updateListingStatus($objectService, string $listingRegister, string $listingSchema, string $listingId, int $statusCode, bool $success): void
+    {
+        try {
+            // Get the existing listing
+            $existingListings = $objectService->findAll([
+                'filters' => [
+                    'register' => $listingRegister,
+                    'schema' => $listingSchema,
+                    'id' => $listingId
+                ]
+            ]);
+            
+            if (!empty($existingListings)) {
+                $existingListing = $existingListings[0];
+                $existingListingData = $existingListing->jsonSerialize();
+                $listingObject = $existingListingData['object'] ?? [];
+                
+                // Update status information
+                $listingObject['statusCode'] = $statusCode;
+                $listingObject['available'] = $success;
+                $listingObject['lastSync'] = (new \DateTime())->format('c');
+                
+                // Save the updated listing
+                $objectService->saveObject(
+                    object: $listingObject,
+                    register: $listingRegister,
+                    schema: $listingSchema,
+                    uuid: $existingListingData['id']
+                );
+                
+                \OC::$server->getLogger()->debug(
+                    'DirectoryService: Updated listing status for ID ' . $listingId . 
+                    ' - Status: ' . $statusCode . ', Available: ' . ($success ? 'true' : 'false')
+                );
+            }
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->warning(
+                'DirectoryService: Failed to update listing status for ID ' . $listingId . ': ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Detect or generate publication endpoint for a listing
+     *
+     * Checks if the listing has a publication endpoint, and if not,
+     * generates one based on the search endpoint by replacing 'search' with 'publications'.
+     *
+     * @param array $listingData The listing data to process
+     *
+     * @return string|null The publication endpoint URL or null if cannot be determined
+     */
+    private function detectPublicationEndpoint(array $listingData): ?string
+    {
+        // Check if listing already has a publication endpoint
+        if (!empty($listingData['publications'])) {
+            \OC::$server->getLogger()->debug(
+                'DirectoryService: Found existing publication endpoint: ' . $listingData['publications']
+            );
+            return $listingData['publications'];
+        }
+        
+        // Check if listing already has a publication endpoint (alternative field name)
+        if (!empty($listingData['publication'])) {
+            \OC::$server->getLogger()->debug(
+                'DirectoryService: Found existing publication endpoint (singular): ' . $listingData['publication']
+            );
+            return $listingData['publication'];
+        }
+        
+        // Try to generate from search endpoint
+        if (!empty($listingData['search'])) {
+            // Replace 'search' with 'publications' in the URL
+            $publicationEndpoint = str_replace('/search', '/publications', $listingData['search']);
+            
+            // Also handle cases where 'search' might be a query parameter or different pattern
+            if ($publicationEndpoint === $listingData['search']) {
+                // Try replacing 'search' anywhere in the URL path
+                $publicationEndpoint = preg_replace('/\/search(?=\/|$)/', '/publications', $listingData['search']);
+            }
+            
+            // If still no change, try a more generic approach
+            if ($publicationEndpoint === $listingData['search']) {
+                // Parse URL and replace 'search' in path segments
+                $urlParts = parse_url($listingData['search']);
+                if ($urlParts && isset($urlParts['path'])) {
+                    $pathSegments = explode('/', trim($urlParts['path'], '/'));
+                    $pathSegments = array_map(function($segment) {
+                        return $segment === 'search' ? 'publications' : $segment;
+                    }, $pathSegments);
+                    
+                    $newPath = '/' . implode('/', $pathSegments);
+                    $publicationEndpoint = $urlParts['scheme'] . '://' . $urlParts['host'];
+                    if (isset($urlParts['port'])) {
+                        $publicationEndpoint .= ':' . $urlParts['port'];
+                    }
+                    $publicationEndpoint .= $newPath;
+                    if (isset($urlParts['query'])) {
+                        $publicationEndpoint .= '?' . $urlParts['query'];
+                    }
+                }
+            }
+            
+            // Only return if we actually made a change
+            if ($publicationEndpoint !== $listingData['search']) {
+                \OC::$server->getLogger()->info(
+                    'DirectoryService: Generated publication endpoint from search URL. ' .
+                    'Search: ' . $listingData['search'] . ', ' .
+                    'Publications: ' . $publicationEndpoint
+                );
+                return $publicationEndpoint;
+            }
+        }
+        
+        \OC::$server->getLogger()->debug(
+            'DirectoryService: Could not detect or generate publication endpoint for listing: ' . 
+            ($listingData['title'] ?? $listingData['id'] ?? 'unknown')
+        );
+        
+        return null;
     }
 
     /**

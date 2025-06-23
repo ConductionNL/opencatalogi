@@ -2,6 +2,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
@@ -46,6 +47,7 @@ class PublicationsController extends Controller
      * @param string             $appName            The name of the app
      * @param IRequest           $request            The request object
      * @param PublicationService $publicationService The publication service
+     * @param DirectoryService   $directoryService   The directory service
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
      * @param int                $corsMaxAge         CORS max age
@@ -54,6 +56,7 @@ class PublicationsController extends Controller
         $appName,
         IRequest $request,
         private readonly PublicationService $publicationService,
+        private readonly DirectoryService $directoryService,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -92,6 +95,11 @@ class PublicationsController extends Controller
     /**
      * Retrieve a list of publications based on all available catalogs.
      *
+     * This method returns publications from the local catalog and optionally
+     * from federated catalogs if _aggregate parameter is not set to false.
+     * When aggregating, it prevents circular references by setting _aggregate=false
+     * on outgoing requests.
+     *
      * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
      * @return JSONResponse JSON response containing the list of publications and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -102,7 +110,125 @@ class PublicationsController extends Controller
      */
     public function index(): JSONResponse
     {
-        return $this->publicationService->index();
+        // Check if aggregation is enabled (default: true, unless explicitly set to false)
+        $aggregate = $this->request->getParam('_aggregate', 'true');
+        $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+        
+        // Get local publications first
+        $localResponse = $this->publicationService->index();
+        
+        // If aggregation is disabled, return only local results
+        if (!$shouldAggregate) {
+            return $localResponse;
+        }
+        
+        try {
+            // Get optional Guzzle configuration from request parameters
+            $guzzleConfig = [];
+            
+            // Allow timeout configuration via query parameter
+            if ($this->request->getParam('timeout')) {
+                $timeout = (int) $this->request->getParam('timeout');
+                if ($timeout > 0 && $timeout <= 120) { // Max 2 minutes
+                    $guzzleConfig['timeout'] = $timeout;
+                }
+            }
+            
+            // Allow connect timeout configuration via query parameter
+            if ($this->request->getParam('connect_timeout')) {
+                $connectTimeout = (int) $this->request->getParam('connect_timeout');
+                if ($connectTimeout > 0 && $connectTimeout <= 30) { // Max 30 seconds
+                    $guzzleConfig['connect_timeout'] = $connectTimeout;
+                }
+            }
+            
+            // Allow custom headers via query parameter (JSON encoded)
+            if ($this->request->getParam('headers')) {
+                $headers = json_decode($this->request->getParam('headers'), true);
+                if (is_array($headers)) {
+                    $guzzleConfig['headers'] = array_merge(
+                        $guzzleConfig['headers'] ?? [],
+                        $headers
+                    );
+                }
+            }
+            
+            // Add query parameters to prevent circular references
+            $queryParams = $_GET; // Get all current query parameters
+            $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
+            $guzzleConfig['query_params'] = $queryParams;
+
+            // Get aggregated publications from directory service
+            $aggregatedResults = $this->directoryService->getPublications($guzzleConfig);
+            
+            // Decode local response to merge with aggregated results
+            $localData = json_decode($localResponse->render(), true);
+            
+            // Merge local and aggregated results
+            $mergedResults = [
+                'results' => array_merge(
+                    $localData['results'] ?? [],
+                    $aggregatedResults['results'] ?? []
+                ),
+                'total' => ($localData['total'] ?? 0) + ($aggregatedResults['total'] ?? 0),
+                'sources' => array_merge(
+                    ['local' => 'Local OpenCatalogi instance'],
+                    $aggregatedResults['sources'] ?? []
+                ),
+                'errors' => $aggregatedResults['errors'] ?? [],
+                'statistics' => array_merge(
+                    [
+                        'local_publications' => $localData['total'] ?? 0
+                    ],
+                    $aggregatedResults['statistics'] ?? []
+                )
+            ];
+            
+            // Set appropriate HTTP status based on results
+            $statusCode = 200;
+            if (!empty($mergedResults['errors']) && empty($mergedResults['results'])) {
+                // All requests failed
+                $statusCode = 503; // Service Unavailable
+            } elseif (!empty($mergedResults['errors'])) {
+                // Some requests failed
+                $statusCode = 207; // Multi-Status
+            }
+            
+            // Add CORS headers for public API access
+            $response = new JSONResponse($mergedResults, $statusCode);
+            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $response->addHeader('Access-Control-Allow-Origin', $origin);
+            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            // If aggregation fails, return local results with error information
+            $localData = json_decode($localResponse->render(), true);
+            $errorResults = array_merge($localData, [
+                'sources' => ['local' => 'Local OpenCatalogi instance'],
+                'errors' => [
+                    [
+                        'type' => 'aggregation_error',
+                        'error' => $e->getMessage(),
+                        'status_code' => 0
+                    ]
+                ],
+                'statistics' => [
+                    'local_publications' => $localData['total'] ?? 0,
+                    'aggregation_failed' => true
+                ]
+            ]);
+            
+            $response = new JSONResponse($errorResults, 207); // Multi-Status due to partial failure
+            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $response->addHeader('Access-Control-Allow-Origin', $origin);
+            $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+            $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+            
+            return $response;
+        }
 
     }//end index()
 
@@ -110,8 +236,11 @@ class PublicationsController extends Controller
     /**
      * Retrieve a specific publication by its ID.
      *
-     * @param  string|int|null $catalogId     Optional ID of the catalog to filter by
-     * @param  string          $publicationId The ID of the publication to retrieve
+     * This method searches for a publication in the local catalog first,
+     * and optionally in federated catalogs if _aggregate parameter is not
+     * set to false and the publication is not found locally.
+     *
+     * @param  string $id The ID of the publication to retrieve
      * @return JSONResponse JSON response containing the requested publication
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -121,7 +250,80 @@ class PublicationsController extends Controller
      */
     public function show(string $id): JSONResponse
     {
-        return $this->publicationService->show(id: $id);
+        // Try to get the publication locally first
+        $localResponse = $this->publicationService->show(id: $id);
+        $localData = json_decode($localResponse->render(), true);
+        
+        // If found locally, return it (unless we want to also search federally for additional data)
+        if ($localResponse->getStatus() === 200 && !empty($localData)) {
+            // Check if aggregation is enabled for enrichment
+            $aggregate = $this->request->getParam('_aggregate', 'true');
+            $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+            
+            if (!$shouldAggregate) {
+                return $localResponse;
+            }
+            
+            // Add source information to local result
+            $localData['sources'] = ['local' => 'Local OpenCatalogi instance'];
+            return new JSONResponse($localData, 200);
+        }
+        
+        // Check if aggregation is enabled for federation search
+        $aggregate = $this->request->getParam('_aggregate', 'true');
+        $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+        
+        // If aggregation is disabled and not found locally, return 404
+        if (!$shouldAggregate) {
+            return $localResponse; // Return the original 404 response
+        }
+        
+        try {
+            // Search in federated catalogs
+            $guzzleConfig = [];
+            
+            // Allow timeout configuration via query parameter
+            if ($this->request->getParam('timeout')) {
+                $timeout = (int) $this->request->getParam('timeout');
+                if ($timeout > 0 && $timeout <= 120) { // Max 2 minutes
+                    $guzzleConfig['timeout'] = $timeout;
+                }
+            }
+            
+            // Allow connect timeout configuration via query parameter
+            if ($this->request->getParam('connect_timeout')) {
+                $connectTimeout = (int) $this->request->getParam('connect_timeout');
+                if ($connectTimeout > 0 && $connectTimeout <= 30) { // Max 30 seconds
+                    $guzzleConfig['connect_timeout'] = $connectTimeout;
+                }
+            }
+            
+            // Add query parameters to prevent circular references
+            $queryParams = $_GET; // Get all current query parameters
+            $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
+            $guzzleConfig['query_params'] = $queryParams;
+
+            // Get publication from directory service
+            $federatedResult = $this->directoryService->getPublication($id, $guzzleConfig);
+            
+            if (!empty($federatedResult)) {
+                // Add CORS headers for public API access
+                $response = new JSONResponse($federatedResult, 200);
+                $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+                $response->addHeader('Access-Control-Allow-Origin', $origin);
+                $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+                $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+                
+                return $response;
+            }
+            
+            // Not found in federated catalogs either, return 404
+            return new JSONResponse(['error' => 'Publication not found'], 404);
+            
+        } catch (\Exception $e) {
+            // If federation search fails, return the original local response (likely 404)
+            return $localResponse;
+        }
 
     }//end show()
 

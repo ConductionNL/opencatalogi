@@ -109,7 +109,14 @@ import { objectStore, navigationStore } from '../../store/store.js'
 											   :size="20" 
 											   :class="getStatusClass(listing)" />
 									{{ listing.name || listing.title }}
-									<span v-if="listing.default" class="defaultBadge">Default</span>
+									<span v-if="listing.default" class="defaultBadge">
+										<Star :size="14" />
+										Default
+									</span>
+									<span v-if="!listing.available" class="errorBadge">
+										<CloseCircle :size="14" />
+										Disabled
+									</span>
 								</h2>
 								<NcActions :primary="true" menu-name="Actions">
 									<template #icon>
@@ -164,7 +171,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Available') }}</td>
-										<td :class="getStatusClass(listing)">{{ listing.available ? 'Yes' : 'No' }}</td>
+										<td :class="listing.available ? 'status-success' : 'status-error'">{{ listing.available ? 'Yes' : 'No' }}</td>
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Status') }}</td>
@@ -172,7 +179,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Default Directory') }}</td>
-										<td>{{ listing.default ? 'Yes' : 'No' }}</td>
+										<td :class="listing.default ? 'status-success' : (listing.available ? '' : 'status-error')">
+											{{ listing.default ? 'Yes' : (listing.available ? 'No' : 'Disabled') }}
+										</td>
 									</tr>
 								</tbody>
 							</table>
@@ -217,7 +226,14 @@ import { objectStore, navigationStore } from '../../store/store.js'
 													   :class="getStatusClass(listing)" 
 													   style="margin-right: 8px;" />
 											<strong>{{ listing.name || listing.title }}</strong>
-											<span v-if="listing.default" class="defaultBadge">Default</span>
+											<span v-if="listing.default" class="defaultBadge">
+												<Star :size="12" />
+												Default
+											</span>
+											<span v-if="!listing.available" class="errorBadge">
+												<CloseCircle :size="12" />
+												Disabled
+											</span>
 											<span v-if="listing.summary" class="textDescription textEllipsis">{{ listing.summary }}</span>
 										</div>
 									</td>
@@ -509,7 +525,7 @@ export default {
 					available: newAvailableState
 				}
 				
-				await objectStore.updateObject('listing', updatedData)
+				await objectStore.updateObject('listing', listing.id, updatedData)
 				
 				// Show success notification
 				OC.Notification.showMessage(
@@ -538,7 +554,7 @@ export default {
 						if (otherListing.id !== listing.id && otherListing.default) {
 							this.$set(otherListing, 'default', false)
 							try {
-								await objectStore.updateObject('listing', {
+								await objectStore.updateObject('listing', otherListing.id, {
 									...otherListing,
 									default: false
 								})
@@ -557,7 +573,7 @@ export default {
 					default: newDefaultState
 				}
 				
-				await objectStore.updateObject('listing', updatedData)
+				await objectStore.updateObject('listing', listing.id, updatedData)
 				
 				// Show success notification
 				OC.Notification.showMessage(
@@ -603,8 +619,25 @@ export default {
 
 /* Default badge styling */
 .defaultBadge {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
 	background: var(--color-primary);
+	color: white;
+	font-size: 0.7em;
+	font-weight: bold;
+	padding: 2px 6px;
+	border-radius: 12px;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+/* Error badge styling */
+.errorBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--color-error);
 	color: white;
 	font-size: 0.7em;
 	font-weight: bold;
@@ -629,7 +662,8 @@ export default {
 	gap: 4px;
 }
 
-.titleContent .defaultBadge {
+.titleContent .defaultBadge,
+.titleContent .errorBadge {
 	margin-left: 4px;
 	margin-right: 0;
 }

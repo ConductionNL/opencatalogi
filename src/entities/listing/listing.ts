@@ -25,6 +25,7 @@ export class Listing implements TListing {
 	public summary: string
 	public description: string
 	public search: string
+	public publications: string
 	public directory: string
 	public metadata: string[]
 	public status: string
@@ -55,6 +56,7 @@ export class Listing implements TListing {
 		this.summary = data?.summary || ''
 		this.description = data?.description || ''
 		this.search = data?.search || ''
+		this.publications = data?.publications || ''
 		this.directory = data?.directory || ''
 		this.metadata = data?.metadata || []
 		this.status = data?.status || ''
@@ -78,6 +80,7 @@ export class Listing implements TListing {
 			summary: z.string().min(1, 'is verplicht'),
 			description: z.string(),
 			search: z.string().url().or(z.literal('')),
+			publications: z.string().url().or(z.literal('')),
 			directory: z.string().url().or(z.literal('')),
 			metadata: z.string().array(),
 			status: z.string(),
