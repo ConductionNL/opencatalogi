@@ -4,7 +4,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Exception\DirectoryUrlException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -63,9 +62,12 @@ class DirectoryController extends Controller
 	}
 
 	/**
-	 * Update an external directory
+	 * Synchronize with an external directory
 	 *
-	 * @return JSONResponse The JSON response containing the update result
+	 * Synchronizes listings from a specific external directory URL.
+	 * Accepts a 'directory' parameter containing the URL to sync with.
+	 *
+	 * @return JSONResponse The JSON response containing the synchronization result
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws GuzzleException
 	 *
@@ -74,22 +76,48 @@ class DirectoryController extends Controller
 	 */
 	public function update(): JSONResponse
 	{
-		// Get the URL from the request parameters
-		$url = $this->request->getParam('directory');
+		// Get the directory URL from the request parameters
+		$directoryUrl = $this->request->getParam('directory');
 
-		// Sync the external directory with the provided URL
-		try {
-			$data = $this->directoryService->syncExternalDirectory($url);
-		} catch (DirectoryUrlException $exception) {
-			if($exception->getMessage() === 'URL is required') {
-				$exception->setMessage('Property "directory" is required');
-			}
-
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
+		// Validate that directory URL is provided
+		if (empty($directoryUrl)) {
+			return new JSONResponse([
+				'message' => 'Property "directory" is required',
+				'error' => 'Missing directory URL parameter'
+			], 400);
 		}
 
-		// Return JSON response with the sync result
-		return new JSONResponse($data);
+		// Sync the directory with the provided URL
+		try {
+			$data = $this->directoryService->syncDirectory($directoryUrl);
+			
+			// Return success response with sync results
+			return new JSONResponse([
+				'message' => 'Directory synchronized successfully',
+				'data' => $data
+			]);
+			
+		} catch (\InvalidArgumentException $e) {
+			// Handle validation errors (invalid URL, etc.)
+			return new JSONResponse([
+				'message' => 'Invalid directory URL',
+				'error' => $e->getMessage()
+			], 400);
+			
+		} catch (GuzzleException $e) {
+			// Handle HTTP/network errors
+			return new JSONResponse([
+				'message' => 'Failed to fetch directory data',
+				'error' => $e->getMessage()
+			], 502);
+			
+		} catch (\Exception $e) {
+			// Handle other unexpected errors
+			return new JSONResponse([
+				'message' => 'Directory synchronization failed',
+				'error' => $e->getMessage()
+			], 500);
+		}
 	}
 
 	/**
