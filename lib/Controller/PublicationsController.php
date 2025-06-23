@@ -158,7 +158,7 @@ class PublicationsController extends Controller
             $guzzleConfig['query_params'] = $queryParams;
 
             // Get aggregated publications from directory service
-            $aggregatedResults = $this->directoryService->getPublications($guzzleConfig);
+            $federationResult = $this->directoryService->getPublications($guzzleConfig);
             
             // Decode local response to merge with aggregated results
             $localData = json_decode($localResponse->render(), true);
@@ -167,13 +167,13 @@ class PublicationsController extends Controller
             $mergedResults = [
                 'results' => array_merge(
                     $localData['results'] ?? [],
-                    $aggregatedResults ?? [] // getPublications returns a simple array
+                    $federationResult['results'] ?? []
                 ),
-                'total' => ($localData['total'] ?? 0) + count($aggregatedResults ?? []),
-                'sources' => [
-                    'local' => 'Local OpenCatalogi instance',
-                    'federated' => 'Federated catalogs'
-                ]
+                'total' => ($localData['total'] ?? 0) + count($federationResult['results'] ?? []),
+                'sources' => array_merge(
+                    ['local' => 'Local OpenCatalogi instance'],
+                    $federationResult['sources'] ?? []
+                )
             ];
             
             // Set appropriate HTTP status based on results
@@ -268,9 +268,13 @@ class PublicationsController extends Controller
             // Get publication from directory service
             $federatedResult = $this->directoryService->getPublication($id, $guzzleConfig);
             
-            if (!empty($federatedResult)) {
+            if (!empty($federatedResult) && isset($federatedResult['result'])) {
+                // Merge the result with source information
+                $responseData = $federatedResult['result'];
+                $responseData['sources'] = $federatedResult['source'] ?? [];
+                
                 // Add CORS headers for public API access
-                $response = new JSONResponse($federatedResult, 200);
+                $response = new JSONResponse($responseData, 200);
                 $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
                 $response->addHeader('Access-Control-Allow-Origin', $origin);
                 $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -451,10 +455,16 @@ class PublicationsController extends Controller
             $localData = json_decode($localResponse->render(), true);
             
             // Merge local and federated results
-            $mergedResults = array_merge(
-                $localData ?? [],
-                $federatedResults ?? []
-            );
+            $mergedResults = [
+                'results' => array_merge(
+                    $localData ?? [],
+                    $federatedResults['results'] ?? []
+                ),
+                'sources' => array_merge(
+                    ['local' => 'Local OpenCatalogi instance'],
+                    $federatedResults['sources'] ?? []
+                )
+            ];
             
             // Add CORS headers for public API access
             $response = new JSONResponse($mergedResults, 200);

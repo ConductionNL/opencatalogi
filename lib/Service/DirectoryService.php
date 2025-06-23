@@ -117,10 +117,7 @@ class DirectoryService
                 try {
                     $syncResult = $this->syncDirectory($directoryUrl);
                     
-                    // Log successful sync
-                    \OC::$server->getLogger()->info(
-                        'DirectoryService: Successfully synced directory: ' . $directoryUrl
-                    );
+                    // Directory sync completed successfully
                     
                     $resolve([
                         'success' => true,
@@ -207,7 +204,6 @@ class DirectoryService
                 }
                 
                 $config = ['filters' => $filters];
-                
                 $listings = $objectService->findAll($config);
                 
                 // Build unique directory URLs using URL as key to automatically handle duplicates
@@ -369,10 +365,6 @@ class DirectoryService
                 if (!$hasOurListings && !$this->isLocalUrl($ourDirectoryUrl)) {
                     try {
                         $this->broadcastService->broadcast($directoryUrl);
-                        \OC::$server->getLogger()->info(
-                            'DirectoryService: Broadcasted to directory: ' . $directoryUrl . 
-                            ' (they did not have our listings)'
-                        );
                     } catch (\Exception $e) {
                         \OC::$server->getLogger()->warning(
                             'DirectoryService: Failed to broadcast to directory ' . $directoryUrl . ': ' . $e->getMessage()
@@ -381,16 +373,15 @@ class DirectoryService
                 }
             }
 
-            // Log successful sync
-            \OC::$server->getLogger()->info(
-                'DirectoryService: Successfully processed ' . $results['total_processed'] . 
-                ' listings from directory: ' . $directoryUrl . 
-                ' (Created: ' . $results['listings_created'] . 
-                ', Updated: ' . $results['listings_updated'] . 
-                ', Unchanged: ' . $results['listings_unchanged'] . 
-                ', Skipped: ' . $results['listings_skipped'] . 
-                ', Failed: ' . $results['listings_failed'] . ')'
-            );
+            // Log sync summary only if there were significant changes or failures
+            if ($results['listings_created'] > 0 || $results['listings_updated'] > 0 || $results['listings_failed'] > 0) {
+                \OC::$server->getLogger()->info(
+                    'DirectoryService: Processed directory ' . $directoryUrl . 
+                    ' - Created: ' . $results['listings_created'] . 
+                    ', Updated: ' . $results['listings_updated'] . 
+                    ', Failed: ' . $results['listings_failed']
+                );
+            }
 
         } catch (GuzzleException $e) {
             $error = 'Failed to fetch directory data: ' . $e->getMessage();
@@ -459,11 +450,7 @@ class DirectoryService
                 $result['success'] = true;
                 $result['reason'] = 'Listing belongs to directory ' . $listingData['directory'] . ' which is processed separately';
                 
-                \OC::$server->getLogger()->info(
-                    'DirectoryService: Skipped listing ' . $result['listing_id'] . 
-                    ' from ' . $sourceDirectoryUrl . ' because it belongs to ' . $listingData['directory'] . 
-                    ' which is processed separately'
-                );
+                // No need to log routine skips
                 
                 return $result;
             }
@@ -555,10 +542,7 @@ class DirectoryService
                     $result['success'] = true;
                     $result['reason'] = 'Incoming listing data is older than existing data';
                     
-                    \OC::$server->getLogger()->info(
-                        'DirectoryService: Skipped outdated listing ' . $result['listing_id'] . 
-                        ' from directory: ' . $sourceDirectoryUrl
-                    );
+                    // Skipping outdated listing (no logging needed for routine operations)
                     
                     return $result;
                 }
@@ -654,7 +638,7 @@ class DirectoryService
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
         
         if (empty($directories)) {
-            return [];
+            return ['results' => [], 'sources' => []];
         }
 
         // Get our own directory URL to exclude from search
@@ -680,41 +664,60 @@ class DirectoryService
         
         $client = new Client($finalGuzzleConfig);
         $promises = [];
+        $urlToDirectoryMap = [];
 
         // Create promises for each directory
-        foreach ($directories as $directoryUrl) {
+        foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs
             if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
                 continue;
             }
 
             // Build the publications endpoint URL
-            $publicationsUrl = rtrim($directoryUrl, '/') . '/publications';
+            // Convert directory URL to publications URL by replacing /directory with /publications
+            $publicationsUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
             
             if (!empty($queryParams)) {
                 $publicationsUrl .= '?' . http_build_query($queryParams);
             }
             
+            // Store mapping for later source tracking
+            $urlToDirectoryMap[count($promises)] = [
+                'url' => $publicationsUrl,
+                'directoryUrl' => $directoryUrl,
+                'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
+            ];
+            
             $promises[] = new Promise(function ($resolve) use ($client, $publicationsUrl) {
                 try {
                     $response = $client->get($publicationsUrl);
+                    $statusCode = $response->getStatusCode();
                     
-                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-                        $data = json_decode($response->getBody()->getContents(), true);
+                    if ($statusCode >= 200 && $statusCode < 300) {
+                        $body = $response->getBody()->getContents();
+                        $data = json_decode($body, true);
                         
                         if (json_last_error() === JSON_ERROR_NONE) {
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
-                                $resolve($data['results']);
+                                $resolve(['success' => true, 'results' => $data['results']]);
                             } elseif (is_array($data)) {
-                                $resolve($data);
+                                $resolve(['success' => true, 'results' => $data]);
+                            } else {
+                                $resolve(['success' => false, 'results' => []]);
                             }
+                        } else {
+                            $resolve(['success' => false, 'results' => []]);
                         }
+                    } else {
+                        $resolve(['success' => false, 'results' => []]);
                     }
-                    
-                    $resolve([]);
                 } catch (\Exception $e) {
-                    $resolve([]);
+                    // Only log actual errors, not expected failures
+                    if (!str_contains($e->getMessage(), 'Could not resolve host')) {
+                        \OC::$server->getLogger()->error('DirectoryService: Federation request failed to ' . $publicationsUrl . ': ' . $e->getMessage());
+                    }
+                    $resolve(['success' => false, 'results' => []]);
                 }
             });
         }
@@ -722,21 +725,36 @@ class DirectoryService
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
         
-        // Flatten and deduplicate results
+        // Flatten and deduplicate results, track sources
         $combinedResults = [];
         $seenIds = [];
+        $sources = [];
         
-        foreach ($allResults as $results) {
-            foreach ($results as $item) {
-                $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
-                if (!isset($seenIds[$itemId])) {
-                    $combinedResults[] = $item;
-                    $seenIds[$itemId] = true;
+        foreach ($allResults as $index => $result) {
+            $directoryInfo = $urlToDirectoryMap[$index];
+            
+            if ($result['success'] && !empty($result['results'])) {
+                $sources[$directoryInfo['name']] = $directoryInfo['url'];
+                
+                foreach ($result['results'] as $item) {
+                    $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
+                    if (!isset($seenIds[$itemId])) {
+                        $combinedResults[] = $item;
+                        $seenIds[$itemId] = true;
+                    }
                 }
             }
         }
 
-        return $combinedResults;
+        // Log federation summary only if there are results or errors
+        if (count($combinedResults) > 0 || count($sources) > 0) {
+            \OC::$server->getLogger()->debug('DirectoryService: Federation completed - returning ' . count($combinedResults) . ' publications from ' . count($sources) . ' sources');
+        }
+
+        return [
+            'results' => $combinedResults,
+            'sources' => $sources
+        ];
     }
 
     /**
@@ -859,11 +877,6 @@ class DirectoryService
             
             // Only return if we actually made a change
             if ($publicationEndpoint !== $listingData['search']) {
-                \OC::$server->getLogger()->info(
-                    'DirectoryService: Generated publication endpoint from search URL. ' .
-                    'Search: ' . $listingData['search'] . ', ' .
-                    'Publications: ' . $publicationEndpoint
-                );
                 return $publicationEndpoint;
             }
         }
@@ -1116,7 +1129,7 @@ class DirectoryService
      * @param string $uuid The UUID of the local object to find uses for
      * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
      *
-     * @return array Array containing objects that use this object
+     * @return array Array with 'results' and 'sources' keys
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
      */
@@ -1126,7 +1139,7 @@ class DirectoryService
         $directories = $this->getUniqueDirectories(availableOnly: true);
         
         if (empty($directories)) {
-            return [];
+            return ['results' => [], 'sources' => []];
         }
 
         // Get our own directory URL to exclude from search
@@ -1152,20 +1165,30 @@ class DirectoryService
         
         $client = new Client($finalGuzzleConfig);
         $promises = [];
+        $urlToDirectoryMap = [];
 
         // Create promises for each directory
-        foreach ($directories as $directoryUrl) {
+        foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs
             if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
                 continue;
             }
 
             // Build the /used endpoint URL
-            $usedUrl = rtrim($directoryUrl, '/') . '/publications/' . urlencode($uuid) . '/used';
+            // Convert directory URL to publications URL by replacing /api/directory with /api/publications
+            $baseUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
+            $usedUrl = $baseUrl . '/' . urlencode($uuid) . '/used';
             
             if (!empty($queryParams)) {
                 $usedUrl .= '?' . http_build_query($queryParams);
             }
+            
+            // Store mapping for later source tracking
+            $urlToDirectoryMap[count($promises)] = [
+                'url' => $usedUrl,
+                'directoryUrl' => $directoryUrl,
+                'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
+            ];
             
             $promises[] = new Promise(function ($resolve) use ($client, $usedUrl) {
                 try {
@@ -1177,16 +1200,20 @@ class DirectoryService
                         if (json_last_error() === JSON_ERROR_NONE) {
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
-                                $resolve($data['results']);
+                                $resolve(['success' => true, 'results' => $data['results']]);
                             } elseif (is_array($data)) {
-                                $resolve($data);
+                                $resolve(['success' => true, 'results' => $data]);
+                            } else {
+                                $resolve(['success' => false, 'results' => []]);
                             }
+                        } else {
+                            $resolve(['success' => false, 'results' => []]);
                         }
+                    } else {
+                        $resolve(['success' => false, 'results' => []]);
                     }
-                    
-                    $resolve([]);
                 } catch (\Exception $e) {
-                    $resolve([]);
+                    $resolve(['success' => false, 'results' => []]);
                 }
             });
         }
@@ -1194,33 +1221,43 @@ class DirectoryService
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
         
-        // Flatten and deduplicate results
+        // Flatten and deduplicate results, track sources
         $combinedResults = [];
         $seenIds = [];
+        $sources = [];
         
-        foreach ($allResults as $results) {
-            foreach ($results as $item) {
-                $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
-                if (!isset($seenIds[$itemId])) {
-                    $combinedResults[] = $item;
-                    $seenIds[$itemId] = true;
+        foreach ($allResults as $index => $result) {
+            $directoryInfo = $urlToDirectoryMap[$index];
+            
+            if ($result['success'] && !empty($result['results'])) {
+                $sources[$directoryInfo['name']] = $directoryInfo['url'];
+                
+                foreach ($result['results'] as $item) {
+                    $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
+                    if (!isset($seenIds[$itemId])) {
+                        $combinedResults[] = $item;
+                        $seenIds[$itemId] = true;
+                    }
                 }
             }
         }
 
-        return $combinedResults;
+        return [
+            'results' => $combinedResults,
+            'sources' => $sources
+        ];
     }
 
     /**
      * Get a single publication from federated catalogs by ID
      *
      * Searches across all available federated catalogs to find a specific
-     * publication by its ID. Returns the first match found.
+     * publication by its ID. Returns the first match found with source information.
      *
      * @param string $publicationId The ID of the publication to find
      * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
      *
-     * @return array|null Array containing the publication data or null if not found
+     * @return array|null Array containing publication data and source, or null if not found
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
      */
@@ -1256,20 +1293,30 @@ class DirectoryService
         
         $client = new Client($finalGuzzleConfig);
         $promises = [];
+        $urlToDirectoryMap = [];
 
         // Create promises for each directory
-        foreach ($directories as $directoryUrl) {
+        foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs
             if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
                 continue;
             }
 
             // Build the publication endpoint URL
-            $publicationUrl = rtrim($directoryUrl, '/') . '/publications/' . urlencode($publicationId);
+            // Convert directory URL to publications URL by replacing /api/directory with /api/publications
+            $baseUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
+            $publicationUrl = $baseUrl . '/' . urlencode($publicationId);
             
             if (!empty($queryParams)) {
                 $publicationUrl .= '?' . http_build_query($queryParams);
             }
+            
+            // Store mapping for later source tracking
+            $urlToDirectoryMap[count($promises)] = [
+                'url' => $publicationUrl,
+                'directoryUrl' => $directoryUrl,
+                'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
+            ];
             
             $promises[] = new Promise(function ($resolve) use ($client, $publicationUrl) {
                 try {
@@ -1279,28 +1326,34 @@ class DirectoryService
                         $data = json_decode($response->getBody()->getContents(), true);
                         
                         if (json_last_error() === JSON_ERROR_NONE && !empty($data)) {
-                            $resolve($data);
+                            $resolve(['success' => true, 'data' => $data]);
                             return;
                         }
                     }
                     
-                    $resolve(null);
+                    $resolve(['success' => false, 'data' => null]);
                 } catch (\Exception $e) {
-                    $resolve(null);
+                    $resolve(['success' => false, 'data' => null]);
                 }
             });
         }
 
-        // Execute all promises and return first successful result
+        // Execute all promises and return first successful result with source
         $allResults = \React\Async\await(\React\Promise\all($promises));
         
-        // Return the first non-null result
-        foreach ($allResults as $result) {
-            if ($result !== null) {
-                return $result;
-            }
-        }
-
-        return null;
+                 // Return the first successful result with source information
+         foreach ($allResults as $index => $result) {
+             if ($result['success'] && $result['data'] !== null) {
+                 $directoryInfo = $urlToDirectoryMap[$index];
+                 return [
+                     'result' => $result['data'],
+                     'source' => [
+                         $directoryInfo['name'] => $directoryInfo['url']
+                     ]
+                 ];
+             }
+         }
+         
+         return null;
     }
 }
