@@ -38,17 +38,8 @@ return [
 		['name' => 'pages#index', 'url' => '/api/pages', 'verb' => 'GET'],
 		['name' => 'pages#show', 'url' => '/api/pages/{slug}', 'verb' => 'GET', 'requirements' => ['slug' => '.+']],
 		// Directory
-		['name' => 'listings#synchronise', 'url' => '/api/listings/synchronise/{id?}', 'verb' => 'POST'],
-		['name' => 'listings#index', 'url' => '/api/listings', 'verb' => 'GET'],
-		['name' => 'listings#show', 'url' => '/api/listings/{id}', 'verb' => 'GET'],
-		['name' => 'listings#create', 'url' => '/api/listings', 'verb' => 'POST'],
-		['name' => 'listings#update', 'url' => '/api/listings/{id}', 'verb' => 'PUT'],
-		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
-		['name' => 'listings#add', 'url' => '/api/listings/add', 'verb' => 'POST'],
 		['name' => 'directory#index', 'url' => '/api/directory', 'verb' => 'GET'],
-		['name' => 'directory#show', 'url' => '/api/directory/{id}', 'verb' => 'GET'],
 		['name' => 'directory#update', 'url' => '/api/directory', 'verb' => 'POST'],
-		['name' => 'directory#publicationType', 'url' => '/api/directory/publication_types/{id}', 'verb' => 'GET'],
 		// Search
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 	]
