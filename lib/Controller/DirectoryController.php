@@ -49,30 +49,61 @@ class DirectoryController extends Controller
 	 * @return JSONResponse The JSON response containing all directories
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @PublicPage
+     * @NoAdminRequired
 	 * @NoCSRFRequired
+	 * @PublicPage
 	 */
 	public function index(): JSONResponse
 	{
-		try {
-			// Get all directories from the directory service
-			$directories = $this->directoryService->getUniqueDirectories();
-			
-			// Format the response to match expected structure
-			$data = [
-				'results' => $directories,
-				'count' => count($directories),
-				'total' => count($directories)
-			];
+		
+        // Retrieve all request parameters
+        $requestParams = $this->request->getParams();
 
-			// Return JSON response with the directory data
-			return new JSONResponse($data);
-		} catch (\Exception $e) {
-			return new JSONResponse([
-				'message' => 'Failed to retrieve directories',
-				'error' => $e->getMessage()
-			], 500);
-		}
+        // Get listing schema and register from configuration
+        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+
+        // Build config for findAll
+        $config = [
+            'filters' => []
+        ];
+
+        // Add schema filter if configured
+        if (!empty($listingSchema)) {
+            $config['filters']['schema'] = $listingSchema;
+        }
+
+        // Add register filter if configured
+        if (!empty($listingRegister)) {
+            $config['filters']['register'] = $listingRegister;
+        }
+        
+        // Add any additional filters from request params
+        if (isset($requestParams['filters'])) {
+            $config['filters'] = array_merge($config['filters'], $requestParams['filters']);
+        }
+        
+        // Add pagination and other params
+        if (isset($requestParams['limit'])) {
+            $config['limit'] = (int) $requestParams['limit'];
+        }
+        if (isset($requestParams['offset'])) {
+            $config['offset'] = (int) $requestParams['offset'];
+        }
+
+        // Fetch listing objects based on filters and order
+        $result = $this->getObjectService()->findAll($config);
+        
+        // Convert objects to arrays
+        $data = [
+            'results' => array_map(function ($object) {
+                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+            }, $result['results'] ?? []),
+            'total' => $result['total'] ?? count($result['results'] ?? [])
+        ];
+
+        // Return JSON response
+        return new JSONResponse($data);
 	}
 
 	/**
@@ -85,8 +116,9 @@ class DirectoryController extends Controller
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
 	 * @throws GuzzleException
 	 *
-	 * @PublicPage
-	 * @NoCSRFRequired
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
 	 */
 	public function update(): JSONResponse
 	{
@@ -131,42 +163,6 @@ class DirectoryController extends Controller
 				'message' => 'Directory synchronization failed',
 				'error' => $e->getMessage()
 			], 500);
-		}
-	}
-
-	/**
-	 * Show a specific directory
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 * @param string|int $id The ID of the directory to show
-	 * @return JSONResponse The JSON response containing the directory details
-	 */
-	public function show(string|int $id): JSONResponse
-	{
-		// TODO: Implement the logic to retrieve and return the specific directory
-		// This method is currently empty and needs to be implemented
-
-		return new JSONResponse([]);
-	}
-
-	/**
-	 * Get a specific publication type, used by external applications to synchronyse
-	 *
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @param string|int $id The ID of the publication type to retrieve
-	 * @return JSONResponse The JSON response containing the publication type details
-	 */
-	public function publicationType(string|int $id): JSONResponse
-	{
-		try {
-			$publicationType = $this->getObjectService()->getObject('publicationType', $id);
-			return new JSONResponse($publicationType);
-		} catch (DoesNotExistException $e) {
-			return new JSONResponse(['error' => 'Publication type not found'], 404);
-		} catch (\Exception $e) {
-			return new JSONResponse(['error' => 'An error occurred while retrieving the publication type'], 500);
 		}
 	}
 
