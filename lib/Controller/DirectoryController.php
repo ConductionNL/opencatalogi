@@ -7,12 +7,8 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IRequest;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -26,17 +22,11 @@ class DirectoryController extends Controller
      *
      * @param string $appName The name of the app
      * @param IRequest $request The request object
-     * @param IAppConfig $config The app configuration
-     * @param ContainerInterface $container Server container for dependency injection
-     * @param IAppManager $appManager App manager for checking installed apps
      * @param DirectoryService $directoryService The directory service
      */
     public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
 		private readonly DirectoryService $directoryService
 	)
     {
@@ -55,55 +45,22 @@ class DirectoryController extends Controller
 	 */
 	public function index(): JSONResponse
 	{
-		
-        // Retrieve all request parameters
-        $requestParams = $this->request->getParams();
-
-        // Get listing schema and register from configuration
-        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
-        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
-
-        // Build config for findAll
-        $config = [
-            'filters' => []
-        ];
-
-        // Add schema filter if configured
-        if (!empty($listingSchema)) {
-            $config['filters']['schema'] = $listingSchema;
-        }
-
-        // Add register filter if configured
-        if (!empty($listingRegister)) {
-            $config['filters']['register'] = $listingRegister;
-        }
-        
-        // Add any additional filters from request params
-        if (isset($requestParams['filters'])) {
-            $config['filters'] = array_merge($config['filters'], $requestParams['filters']);
-        }
-        
-        // Add pagination and other params
-        if (isset($requestParams['limit'])) {
-            $config['limit'] = (int) $requestParams['limit'];
-        }
-        if (isset($requestParams['offset'])) {
-            $config['offset'] = (int) $requestParams['offset'];
-        }
-
-        // Fetch listing objects based on filters and order
-        $result = $this->getObjectService()->findAll($config);
-        
-        // Convert objects to arrays
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result['results'] ?? []),
-            'total' => $result['total'] ?? count($result['results'] ?? [])
-        ];
-
-        // Return JSON response
-        return new JSONResponse($data);
+		try {
+			// Retrieve all request parameters
+			$requestParams = $this->request->getParams();
+			
+			// Use the directory service to get combined directory data
+			$data = $this->directoryService->getDirectory($requestParams);
+			
+			// Return JSON response
+			return new JSONResponse($data);
+		} catch (\Exception $e) {
+			// Handle errors gracefully
+			return new JSONResponse([
+				'message' => 'Failed to retrieve directory data',
+				'error' => $e->getMessage()
+			], 500);
+		}
 	}
 
 	/**
@@ -166,20 +123,6 @@ class DirectoryController extends Controller
 		}
 	}
 
-    /**
-     * Attempts to retrieve the OpenRegister ObjectService from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     */
-    private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
-
-    }//end getObjectService()
 
 }
