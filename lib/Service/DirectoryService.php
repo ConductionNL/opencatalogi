@@ -1356,4 +1356,319 @@ class DirectoryService
          
          return null;
     }
+
+    /**
+     * Get directory entries (listings and catalogs formatted as listings)
+     *
+     * Retrieves both discovered listings and local catalogs, formatting catalogs
+     * as listing objects according to the publication register schema.
+     *
+     * @param array $requestParams Request parameters for filtering, pagination, etc.
+     * @return array<string, mixed> Array containing results and total count
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @throws DoesNotExistException|MultipleObjectsReturnedException
+     */
+    public function getDirectory(array $requestParams = []): array
+    {
+        // Check if OpenRegister service is available
+        if (!in_array('openregister', $this->appManager->getInstalledApps())) {
+            throw new \RuntimeException('OpenRegister service is not available.');
+        }
+
+        // Get ObjectService from container
+        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        
+        // Get configuration
+        $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+        $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+        $catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
+        $catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+        // Debug logging to help diagnose configuration issues
+        \OC::$server->getLogger()->debug(
+            'DirectoryService::getDirectory - Configuration: ' .
+            'listing_schema=' . $listingSchema . ', ' .
+            'listing_register=' . $listingRegister . ', ' .
+            'catalog_schema=' . $catalogSchema . ', ' .
+            'catalog_register=' . $catalogRegister
+        );
+
+        $allResults = [];
+
+        // Build base config for filters and pagination
+        $baseConfig = [
+            'filters' => []
+        ];
+        
+        // Add any additional filters from request params
+        if (isset($requestParams['filters'])) {
+            $baseConfig['filters'] = array_merge($baseConfig['filters'], $requestParams['filters']);
+        }
+        
+        // Add pagination params
+        if (isset($requestParams['limit'])) {
+            $baseConfig['limit'] = (int) $requestParams['limit'];
+        }
+        if (isset($requestParams['offset'])) {
+            $baseConfig['offset'] = (int) $requestParams['offset'];
+        }
+
+        // Fetch discovered listings
+        if (!empty($listingSchema) && !empty($listingRegister)) {
+            $listingConfig = $baseConfig;
+            $listingConfig['filters']['schema'] = $listingSchema;
+            $listingConfig['filters']['register'] = $listingRegister;
+
+            try {
+                $listingResult = $objectService->findAll($listingConfig);
+                
+                // Convert listing objects to arrays, expand schemas, and filter out internal properties
+                $listings = array_map(function ($object) {
+                    $listingData = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+                    $listingData = $this->processSchemaExpansion($listingData);
+                    return $this->filterListingProperties($listingData);
+                }, $listingResult['results'] ?? $listingResult ?? []);
+
+                \OC::$server->getLogger()->debug(
+                    'DirectoryService::getDirectory - Found ' . count($listings) . ' listings'
+                );
+
+                $allResults = array_merge($allResults, $listings);
+            } catch (\Exception $e) {
+                \OC::$server->getLogger()->warning(
+                    'DirectoryService: Failed to fetch listings: ' . $e->getMessage()
+                );
+            }
+        } else {
+            \OC::$server->getLogger()->debug(
+                'DirectoryService::getDirectory - Skipping listings: missing schema or register configuration'
+            );
+        }
+
+        // Fetch local catalogs and convert them to listing format
+        if (!empty($catalogSchema) && !empty($catalogRegister)) {
+            $catalogConfig = $baseConfig;
+            $catalogConfig['filters']['schema'] = $catalogSchema;
+            $catalogConfig['filters']['register'] = $catalogRegister;
+
+            try {
+                $catalogResult = $objectService->findAll($catalogConfig);
+                
+                // Convert catalog objects to listing format and expand schemas
+                $catalogsAsListings = array_map(function ($catalogObject) {
+                    $listing = $this->convertCatalogToListing($catalogObject);
+                    return $this->processSchemaExpansion($listing);
+                }, $catalogResult['results'] ?? $catalogResult ?? []);
+
+                \OC::$server->getLogger()->debug(
+                    'DirectoryService::getDirectory - Found ' . count($catalogsAsListings) . ' catalogs converted to listings'
+                );
+
+                $allResults = array_merge($allResults, $catalogsAsListings);
+            } catch (\Exception $e) {
+                \OC::$server->getLogger()->warning(
+                    'DirectoryService: Failed to fetch catalogs: ' . $e->getMessage()
+                );
+            }
+        } else {
+            \OC::$server->getLogger()->debug(
+                'DirectoryService::getDirectory - Skipping catalogs: missing schema or register configuration'
+            );
+        }
+
+        // Calculate total
+        $total = count($allResults);
+
+        \OC::$server->getLogger()->debug(
+            'DirectoryService::getDirectory - Returning ' . count($allResults) . ' results (total: ' . $total . ')'
+        );
+
+        return [
+            'results' => $allResults,
+            'total' => $total
+        ];
+    }
+
+    /**
+     * Convert a catalog object to listing format
+     *
+     * Transforms a catalog object into a listing object format according to the
+     * publication register schema, ensuring all required fields are present.
+     *
+     * @param mixed $catalogObject The catalog object to convert
+     * @return array The catalog formatted as a listing object
+     */
+    private function convertCatalogToListing($catalogObject): array
+    {
+        // Extract catalog data
+        $catalogData = $catalogObject instanceof \OCP\AppFramework\Db\Entity 
+            ? $catalogObject->jsonSerialize() 
+            : $catalogObject;
+        
+        $catalog = $catalogData['object'] ?? $catalogData;
+        
+        // Get our directory URL for the listing
+        $directoryUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
+        );
+        
+        // Get our search and publications URLs
+        $searchUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute('opencatalogi.search.index')
+        );
+        $publicationsUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute('opencatalogi.publications.index')
+        );
+
+        // Create listing object from catalog - only core API fields
+        $listing = [
+            // Required fields for listing
+            'catalogusId' => $catalog['id'] ?? $catalogData['id'] ?? '',
+            'title' => $catalog['title'] ?? 'Unknown Catalog',
+            'summary' => $catalog['summary'] ?? $catalog['description'] ?? 'Local catalog',
+            
+            // Optional fields from catalog
+            'description' => $catalog['description'] ?? null,
+            'organization' => $catalog['organization'] ?? null,
+            'schemas' => $catalog['schemas'] ?? [],
+            
+            // Directory-specific fields
+            'directory' => $directoryUrl,
+            'search' => $searchUrl,
+            'publications' => $publicationsUrl
+        ];
+
+        return $listing;
+    }
+
+    /**
+     * Filter listing object to remove properties not meant for external API
+     *
+     * Removes internal properties and unwanted properties that shouldn't be exposed 
+     * in the public API, keeping only the core listing properties.
+     *
+     * @param array $listing The listing object to filter
+     * @return array The filtered listing object with only public properties
+     */
+    private function filterListingProperties(array $listing): array
+    {
+        // Extract the actual object data
+        $objectData = $listing['object'] ?? $listing;
+        
+        // List of properties to remove for external API
+        $propertiesToRemove = [
+            // Internal/system properties 
+            'status',
+            'statusCode', 
+            'lastSync',
+            'available',
+            'default',
+            // Unwanted properties as requested
+            'metadata',
+            'image',
+            'listed',
+            'filters'
+        ];
+        
+        // Remove unwanted properties
+        foreach ($propertiesToRemove as $property) {
+            unset($objectData[$property]);
+        }
+        
+        // If this was a nested object structure, maintain it
+        if (isset($listing['object'])) {
+            $listing['object'] = $objectData;
+            return $listing;
+        }
+        
+        // Otherwise return the cleaned object directly
+        return $objectData;
+    }
+
+    /**
+     * Convert catalogi to listings format
+     *
+     * Public method to convert catalog objects to listing format for external use.
+     * This is the main function for translating catalogi to listings.
+     *
+     * @param array $catalogs Array of catalog objects to convert
+     * @return array Array of catalogs converted to listing format with expanded schemas
+     */
+    public function convertCatalogiToListings(array $catalogs): array
+    {
+        return array_map(function ($catalogObject) {
+            $listing = $this->convertCatalogToListing($catalogObject);
+            return $this->processSchemaExpansion($listing);
+        }, $catalogs);
+    }
+
+    /**
+     * Expand schema IDs to full schema objects
+     *
+     * Takes an array of schema IDs and returns the corresponding full schema objects
+     * using the OpenRegister SchemaMapper.
+     *
+     * @param array $schemaIds Array of schema IDs to expand
+     * @return array Array of full schema objects
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function expandSchemas(array $schemaIds): array
+    {
+        if (empty($schemaIds)) {
+            return [];
+        }
+
+        // Check if OpenRegister service is available
+        if (!in_array('openregister', $this->appManager->getInstalledApps())) {
+            return $schemaIds; // Return IDs if OpenRegister is not available
+        }
+
+        try {
+            // Get SchemaMapper from container
+            $schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+            
+            // Use findMultiple to get all schemas in one call
+            $schemas = $schemaMapper->findMultiple($schemaIds);
+            
+            // Convert schema entities to arrays
+            return array_map(function ($schema) {
+                return $schema instanceof \OCP\AppFramework\Db\Entity ? $schema->jsonSerialize() : $schema;
+            }, $schemas);
+            
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->warning(
+                'DirectoryService: Failed to expand schemas: ' . $e->getMessage()
+            );
+            // Return original IDs if expansion fails
+            return $schemaIds;
+        }
+    }
+
+    /**
+     * Process listing or catalog data to expand schema IDs
+     *
+     * Takes listing or catalog data and expands any schema IDs to full objects.
+     *
+     * @param array $data The listing or catalog data to process
+     * @return array The processed data with expanded schemas
+     */
+    private function processSchemaExpansion(array $data): array
+    {
+        // Extract the actual object data
+        $objectData = $data['object'] ?? $data;
+        
+        // Expand schemas if they exist and are an array of IDs
+        if (isset($objectData['schemas']) && is_array($objectData['schemas'])) {
+            $objectData['schemas'] = $this->expandSchemas($objectData['schemas']);
+        }
+        
+        // If this was a nested object structure, maintain it
+        if (isset($data['object'])) {
+            $data['object'] = $objectData;
+            return $data;
+        }
+        
+        // Otherwise return the processed object directly
+        return $objectData;
+    }
 }
