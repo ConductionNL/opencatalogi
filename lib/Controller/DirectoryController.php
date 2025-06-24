@@ -54,11 +54,25 @@ class DirectoryController extends Controller
 	 */
 	public function index(): JSONResponse
 	{
-		// Get all directories from the directory service
-        $data = $this->directoryService->getDirectories();
+		try {
+			// Get all directories from the directory service
+			$directories = $this->directoryService->getUniqueDirectories();
+			
+			// Format the response to match expected structure
+			$data = [
+				'results' => $directories,
+				'count' => count($directories),
+				'total' => count($directories)
+			];
 
-        // Return JSON response with the directory data
-        return new JSONResponse($data);
+			// Return JSON response with the directory data
+			return new JSONResponse($data);
+		} catch (\Exception $e) {
+			return new JSONResponse([
+				'message' => 'Failed to retrieve directories',
+				'error' => $e->getMessage()
+			], 500);
+		}
 	}
 
 	/**
