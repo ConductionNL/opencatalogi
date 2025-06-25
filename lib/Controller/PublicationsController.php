@@ -115,7 +115,7 @@ class PublicationsController extends Controller
         $parametersToMap = ['extend', 'fields', 'facets','order','page','limit'];
         
         // Get all current query parameters
-        $queryParams = $_GET;
+        $queryParams = $this->request->getParams();
         
         // Map specified parameters to _extend format and unset originals
         foreach ($parametersToMap as $param) {
@@ -171,7 +171,7 @@ class PublicationsController extends Controller
             }
             
             // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
-            $queryParams = $_GET; // Get all current query parameters
+            //$queryParams = $_GET; // Get all current query parameters
             $guzzleConfig['query_params'] = $queryParams;
 
             // Get aggregated publications from directory service
