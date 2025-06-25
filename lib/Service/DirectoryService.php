@@ -26,6 +26,7 @@ use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
 use OCP\IServerContainer;
+use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -36,6 +37,9 @@ use React\Promise\PromiseInterface;
  * DirectoryService
  *
  * Service for managing and synchronizing directories and listings.
+ * 
+ * Includes anti-loop protection to prevent infinite broadcast cycles when
+ * synchronizing with other OpenCatalogi instances.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -69,6 +73,7 @@ class DirectoryService
      * @param IAppManager        $appManager       App manager for checking installed apps
      * @param BroadcastService   $broadcastService Broadcast service for notifying other directories
      * @param IServerContainer   $server          Server container for logging and other services
+     * @param IRequest           $request         Request interface for accessing HTTP headers
      */
     public function __construct(
         private readonly IURLGenerator $urlGenerator,
@@ -76,7 +81,8 @@ class DirectoryService
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly BroadcastService $broadcastService,
-        private readonly IServerContainer $server
+        private readonly IServerContainer $server,
+        private readonly IRequest $request
     ) {
         $this->appName = 'opencatalogi';
         $this->client = new Client([]);
@@ -232,6 +238,10 @@ class DirectoryService
      *
      * Synchronizes listings and catalogs from a specific external directory URL
      * asynchronously using React PHP promises for better performance.
+     * 
+     * To prevent infinite broadcast loops, this method checks if the current request
+     * is from a system broadcast (identified by User-Agent header containing 
+     * 'OpenCatalogi-Broadcast'). If so, it will sync but not broadcast back.
      *
      * @param string $directoryUrl The URL of the directory to synchronize
      * 
@@ -362,7 +372,8 @@ class DirectoryService
                 }
 
                 // Broadcast to the directory if it doesn't have our listings and our URL is not local
-                if (!$hasOurListings && !$this->isLocalUrl($ourDirectoryUrl)) {
+                // Skip broadcasting if this sync was triggered by a system broadcast to prevent infinite loops
+                if (!$hasOurListings && !$this->isLocalUrl($ourDirectoryUrl) && !$this->isSystemBroadcast()) {
                     try {
                         $this->broadcastService->broadcast($directoryUrl);
                     } catch (\Exception $e) {
@@ -370,6 +381,11 @@ class DirectoryService
                             'DirectoryService: Failed to broadcast to directory ' . $directoryUrl . ': ' . $e->getMessage()
                         );
                     }
+                } elseif ($this->isSystemBroadcast()) {
+                    // Log that we're skipping broadcast due to system broadcast to avoid loops
+                    $this->server->getLogger()->debug(
+                        'DirectoryService: Skipping broadcast to ' . $directoryUrl . ' as this sync was triggered by a system broadcast'
+                    );
                 }
             }
 
@@ -1047,6 +1063,22 @@ class DirectoryService
                 'DirectoryService: Failed to update directory error status for ' . $directoryUrl . ': ' . $e->getMessage()
             );
         }
+    }
+
+    /**
+     * Check if the current request is from a system broadcast
+     *
+     * Determines if the current HTTP request is from another OpenCatalogi instance
+     * sending a broadcast notification, to prevent infinite broadcast loops.
+     *
+     * @return bool True if request is from a system broadcast, false otherwise
+     */
+    private function isSystemBroadcast(): bool
+    {
+        $userAgent = $this->request->getHeader('User-Agent');
+        
+        // Check if User-Agent contains 'OpenCatalogi-Broadcast' (future-proof for version changes)
+        return !empty($userAgent) && str_contains($userAgent, 'OpenCatalogi-Broadcast');
     }
 
     /**

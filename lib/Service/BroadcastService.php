@@ -38,6 +38,7 @@ use Symfony\Component\Uid\Uuid;
  *
  * This class provides functionality to broadcast this OpenCatalogi directory to other instances.
  * It allows for broadcasting to a specific URL or to all known directories.
+ * The service uses dynamic versioning in User-Agent headers for proper identification.
  */
 class BroadcastService
 {
@@ -122,6 +123,29 @@ class BroadcastService
 
 
     /**
+     * Get the current version of the OpenCatalogi app
+     *
+     * Retrieves the version string from the app manager to use in User-Agent headers
+     * and other version-specific functionality.
+     *
+     * @return string The current app version, defaults to 'unknown' if not available
+     */
+    private function getAppVersion(): string
+    {
+        try {
+            // Get the app version from the app manager
+            $appInfo = $this->appManager->getAppInfo($this->appName);
+            return $appInfo['version'] ?? 'unknown';
+        } catch (\Exception $e) {
+            // Log the error and return a fallback version
+            $this->logger->warning('Failed to retrieve app version: ' . $e->getMessage());
+            return 'unknown';
+        }
+
+    }//end getAppVersion()
+
+
+    /**
      * Get the current directory URL for this OpenCatalogi instance
      *
      * This method generates the absolute URL for this directory's index endpoint
@@ -178,6 +202,7 @@ class BroadcastService
      *
      * This method handles the actual HTTP POST request with built-in retry logic
      * for handling temporary network failures or service unavailability.
+     * The User-Agent header includes the current app version for identification.
      *
      * @param string $url         The target URL to broadcast to
      * @param string $directoryUrl The URL of this directory to include in broadcast
@@ -203,7 +228,7 @@ class BroadcastService
                             'source' => $this->appName,
                         ],
                         'headers' => [
-                            'User-Agent' => 'OpenCatalogi-Broadcast/1.0',
+                            'User-Agent' => 'OpenCatalogi-Broadcast/' . $this->getAppVersion(),
                             'Content-Type' => 'application/json',
                         ],
                     ]
