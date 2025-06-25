@@ -43,12 +43,7 @@ class EventService
      */
     private string $appName;
 
-    /**
-     * This property holds the settings service for accessing configuration.
-     *
-     * @var SettingsService $settingsService The settings service instance.
-     */
-    private readonly SettingsService $settingsService;
+
 
 
     /**
@@ -65,11 +60,10 @@ class EventService
         private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        SettingsService $settingsService
+        private readonly SettingsService $settingsService
     ) {
         // Set the application name for identification and configuration purposes.
         $this->appName = 'opencatalogi';
-        $this->settingsService = $settingsService;
 
     }//end __construct()
 
@@ -109,6 +103,26 @@ class EventService
 
 
     /**
+     * Get the FileMapper from the container.
+     *
+     * This method provides access to the FileMapper for direct database access
+     * to file information without triggering object updates.
+     *
+     * @return \OCA\OpenRegister\Db\FileMapper The FileMapper instance.
+     * @throws \RuntimeException If the FileMapper is not available.
+     */
+    public function getFileMapper(): ?\OCA\OpenRegister\Db\FileMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Db\FileMapper');
+        }
+
+        throw new \RuntimeException('OpenRegister FileMapper is not available.');
+
+    }//end getFileMapper()
+
+
+    /**
      * Handle object creation events with auto-publishing logic.
      *
      * This method processes newly created objects and applies auto-publishing
@@ -121,6 +135,8 @@ class EventService
      */
     public function handleObjectCreateEvents(array $objects): array
     {
+        error_log('OpenCatalogi handleObjectCreateEvents: Starting with ' . count($objects) . ' objects');
+        
         $results = [
             'processed' => 0,
             'published' => 0,
@@ -132,9 +148,12 @@ class EventService
         try {
             // Get current publishing options from configuration.
             $publishingOptions = $this->settingsService->getPublishingOptions();
+            
+            error_log('OpenCatalogi handleObjectCreateEvents: Publishing options - auto_publish_objects=' . ($publishingOptions['auto_publish_objects'] ? 'true' : 'false'));
 
             // Process each created object.
             foreach ($objects as $objectData) {
+                error_log('OpenCatalogi handleObjectCreateEvents: Processing object with register=' . ($objectData['@self']['register'] ?? 'null') . ', schema=' . ($objectData['@self']['schema'] ?? 'null'));
                 $objectResult = [
                     'objectId' => $objectData['@self']['id'] ?? 'unknown',
                     'actions' => [],
@@ -144,17 +163,26 @@ class EventService
                 try {
                     // Check if auto-publish objects is enabled and object should be published.
                     if ($publishingOptions['auto_publish_objects'] === true) {
+                        error_log('OpenCatalogi handleObjectCreateEvents: auto_publish_objects is enabled, checking shouldAutoPublishObject');
                         $shouldPublish = $this->shouldAutoPublishObject($objectData);
+                        error_log('OpenCatalogi handleObjectCreateEvents: shouldAutoPublishObject returned ' . ($shouldPublish ? 'true' : 'false'));
                         if ($shouldPublish === true) {
+                            error_log('OpenCatalogi handleObjectCreateEvents: Attempting to auto-publish object');
                             // Auto-publish the object.
                             $publishResult = $this->publishObject($objectData);
                             if ($publishResult['success'] === true) {
+                                error_log('OpenCatalogi handleObjectCreateEvents: Successfully auto-published object');
                                 $objectResult['actions'][] = 'object_published';
                                 $results['published']++;
                             } else {
+                                error_log('OpenCatalogi handleObjectCreateEvents: Failed to auto-publish object: ' . $publishResult['error']);
                                 $objectResult['errors'][] = 'Failed to auto-publish object: ' . $publishResult['error'];
                             }
+                        } else {
+                            error_log('OpenCatalogi handleObjectCreateEvents: shouldAutoPublishObject returned false, not publishing');
                         }
+                    } else {
+                        error_log('OpenCatalogi handleObjectCreateEvents: auto_publish_objects is disabled');
                     }
 
                     // Check if auto-publish attachments is enabled and object has published status.
@@ -198,6 +226,9 @@ class EventService
      */
     public function handleObjectUpdateEvents(array $objects): array
     {
+        // Add logging to track if this method is being called.
+        error_log('OpenCatalogi handleObjectUpdateEvents: Processing ' . count($objects) . ' objects');
+        
         $results = [
             'processed' => 0,
             'published' => 0,
@@ -209,6 +240,7 @@ class EventService
         try {
             // Get current publishing options from configuration.
             $publishingOptions = $this->settingsService->getPublishingOptions();
+            error_log('OpenCatalogi handleObjectUpdateEvents: Publishing options - auto_publish_objects=' . ($publishingOptions['auto_publish_objects'] ? 'true' : 'false') . ', auto_publish_attachments=' . ($publishingOptions['auto_publish_attachments'] ? 'true' : 'false'));
 
             // Process each updated object.
             foreach ($objects as $objectData) {
@@ -259,33 +291,68 @@ class EventService
      */
     private function shouldAutoPublishObject(array $objectData): bool
     {
+        // Add detailed logging for debugging.
+        error_log('OpenCatalogi shouldAutoPublishObject: Starting check for object: ' . json_encode($objectData['@self'] ?? []));
+        
         // Check if object has register and schema information.
         if (isset($objectData['@self']['register']) === false || isset($objectData['@self']['schema']) === false) {
+            error_log('OpenCatalogi shouldAutoPublishObject: Object missing register or schema information');
             return false;
         }
 
         $objectRegister = $objectData['@self']['register'];
         $objectSchema = $objectData['@self']['schema'];
+        
+        error_log("OpenCatalogi shouldAutoPublishObject: Object register='{$objectRegister}', schema='{$objectSchema}'");
 
         try {
-            // Get current settings to check for catalog configuration.
-            $settings = $this->settingsService->getSettings();
+            // Get the actual catalogs from the system to check if object matches any catalog.
+            $objectService = $this->getObjectService();
             
-            // Check each object type configuration.
-            foreach ($settings['objectTypes'] as $objectType) {
-                $configuredRegister = $settings['configuration']["{$objectType}_register"] ?? null;
-                $configuredSchema = $settings['configuration']["{$objectType}_schema"] ?? null;
+            // Get catalogs (assuming they're stored in a specific register/schema).
+            $settings = $this->settingsService->getSettings();
+            $catalogRegister = $settings['configuration']['catalog_register'] ?? null;
+            $catalogSchema = $settings['configuration']['catalog_schema'] ?? null;
+            
+            error_log("OpenCatalogi shouldAutoPublishObject: Looking for catalogs in register='{$catalogRegister}', schema='{$catalogSchema}'");
+            
+            if ($catalogRegister && $catalogSchema) {
+                // Get all catalog objects using findAll with proper filters.
+                $catalogObjects = $objectService->findAll([
+                    'filters' => [
+                        'register' => $catalogRegister,
+                        'schema' => $catalogSchema
+                    ]
+                ]);
+                error_log('OpenCatalogi shouldAutoPublishObject: Found ' . count($catalogObjects) . ' catalog objects');
                 
-                // If register and schema match catalog configuration, auto-publish.
-                if ($configuredRegister === $objectRegister && $configuredSchema === $objectSchema) {
-                    return true;
+                // Check each catalog to see if it includes our object's register and schema.
+                foreach ($catalogObjects as $catalog) {
+                    $catalogData = $catalog->jsonSerialize();
+                    $catalogRegisters = $catalogData['registers'] ?? [];
+                    $catalogSchemas = $catalogData['schemas'] ?? [];
+                    
+                    $catalogTitle = $catalogData['title'] ?? 'unknown';
+                    error_log("OpenCatalogi shouldAutoPublishObject: Checking catalog '{$catalogTitle}' - registers=" . json_encode($catalogRegisters) . ", schemas=" . json_encode($catalogSchemas));
+                    
+                    // Convert object register/schema to integers for comparison.
+                    $objectRegisterInt = (int) $objectRegister;
+                    $objectSchemaInt = (int) $objectSchema;
+                    
+                    // Check if this catalog includes the object's register and schema.
+                    if (in_array($objectRegisterInt, $catalogRegisters) && in_array($objectSchemaInt, $catalogSchemas)) {
+                        $catalogTitle = $catalogData['title'] ?? 'unknown';
+                        error_log("OpenCatalogi shouldAutoPublishObject: CATALOG MATCH FOUND! Object register={$objectRegister} and schema={$objectSchema} are included in catalog '{$catalogTitle}'");
+                        return true;
+                    }
                 }
             }
 
+            error_log('OpenCatalogi shouldAutoPublishObject: No matching catalog found for object');
             return false;
         } catch (\Exception $e) {
             // Log error but don't fail the process.
-            error_log('Error checking auto-publish criteria: ' . $e->getMessage());
+            error_log('OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: ' . $e->getMessage());
             return false;
         }
 
@@ -341,7 +408,7 @@ class EventService
             $objectId = $objectData['@self']['uuid'] ?? $objectData['@self']['id'];
 
             // Use the OpenRegister ObjectService to publish the object.
-            $publishedObject = $objectService->publish(uuid: $objectId);
+            $publishedObject = $objectService->publish($objectId);
 
             return [
                 'success' => true,
@@ -365,12 +432,15 @@ class EventService
      * This method processes all files attached to an object and publishes
      * any that don't already have an access url (indicating they're unpublished).
      *
-     * @param array $objectData The object data containing files to publish.
+     * @param array $objectData The object data containing object information.
      *
      * @return array Result of the attachment publishing operation.
      */
     private function publishObjectAttachments(array $objectData): array
     {
+        $objectId = $objectData['@self']['uuid'] ?? $objectData['@self']['id'];
+        error_log("OpenCatalogi publishObjectAttachments: Starting attachment publishing for object {$objectId}");
+        
         $result = [
             'published' => 0,
             'skipped' => 0,
@@ -379,39 +449,75 @@ class EventService
 
         try {
             $fileService = $this->getFileService();
-            $objectId = $objectData['@self']['uuid'] ?? $objectData['@self']['id'];
-            $files = $objectData['@self']['files'] ?? [];
+            $fileMapper = $this->getFileMapper();
+            
+            // Use FileMapper to get files directly from database without triggering object updates
+            // This completely avoids the infinite loop issue
+            error_log("OpenCatalogi publishObjectAttachments: Fetching files directly from FileMapper for object {$objectId}");
+            
+            // First, we need to get the ObjectEntity to use with FileMapper
+            $objectService = $this->getObjectService();
+            $objectEntity = $objectService->find($objectId);
+            
+            if ($objectEntity === null) {
+                error_log("OpenCatalogi publishObjectAttachments: Object entity not found for ID {$objectId}");
+                return $result;
+            }
+            
+            // Use FileMapper to get files directly from database (no object updates triggered)
+            $files = $fileMapper->getFilesForObject($objectEntity);
+            error_log("OpenCatalogi publishObjectAttachments: Found " . count($files) . " files to process");
 
-            // Process each file in the object.
+            // Process each file from the FileMapper.
             foreach ($files as $file) {
                 try {
-                    $fileName = $file['title'] ?? $file['path'] ?? 'unknown';
+                    $fileName = $file['name'] ?? 'unknown';
+                    $filePath = $file['path'] ?? '';
+                    $fileId = $file['fileid'] ?? null;
+                    error_log("OpenCatalogi publishObjectAttachments: Processing file '{$fileName}' (ID: {$fileId}) at path '{$filePath}'");
                     
-                    // Check if file is already published (has accessUrl).
-                    if (isset($file['accessUrl']) === true && empty($file['accessUrl']) === false) {
+                    // Check if file is already published by checking if it has a share token
+                    // FileMapper already includes share information in the file data
+                    if (!empty($file['share_token'])) {
+                        error_log("OpenCatalogi publishObjectAttachments: File '{$fileName}' already published (share token: {$file['share_token']})");
                         $result['skipped']++;
                         continue;
                     }
 
-                    // Extract file path for publishing.
-                    if (isset($file['path']) === true) {
-                        // Extract just the filename from the full path.
-                        $filePath = basename($file['path']);
+                    error_log("OpenCatalogi publishObjectAttachments: File '{$fileName}' not published (no share token found)");
+
+                    // Create share link directly without updating the object.
+                    // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix
+                    $openRegisterPath = '/OpenRegister/' . $filePath;
+                    error_log("OpenCatalogi publishObjectAttachments: Attempting to create share link for file '{$fileName}' (original path: '{$filePath}', converted path: '{$openRegisterPath}')");
+                    
+                    try {
+                        // Use the converted OpenRegister path format
+                        $shareLink = $fileService->createShareLink($openRegisterPath);
+                        error_log("OpenCatalogi publishObjectAttachments: createShareLink with OpenRegister path returned: " . var_export($shareLink, true));
                         
-                        // Publish the file using the FileService.
-                        $publishedFile = $fileService->publishFile(object: $objectId, filePath: $filePath);
-                        
-                        $result['published']++;
-                    } else {
-                        $result['errors'][] = "File {$fileName} has no path information";
+                        if ($shareLink && !str_contains($shareLink, 'not found') && !str_contains($shareLink, 'couldn\'t be found')) {
+                            error_log("OpenCatalogi publishObjectAttachments: Successfully created share link for file '{$fileName}': {$shareLink}");
+                            $result['published']++;
+                        } else {
+                            error_log("OpenCatalogi publishObjectAttachments: Failed to create share link for file '{$fileName}': " . var_export($shareLink, true));
+                            $result['errors'][] = "Failed to create share link for file {$fileName}: " . var_export($shareLink, true);
+                        }
+                    } catch (\Exception $shareException) {
+                        error_log("OpenCatalogi publishObjectAttachments: Exception in createShareLink for file '{$fileName}': " . $shareException->getMessage());
+                        $result['errors'][] = "Exception creating share link for file {$fileName}: " . $shareException->getMessage();
                     }
                 } catch (\Exception $e) {
+                    $fileName = $file['name'] ?? 'unknown';
+                    error_log("OpenCatalogi publishObjectAttachments: Error publishing file '{$fileName}': " . $e->getMessage());
                     $result['errors'][] = "Failed to publish file {$fileName}: " . $e->getMessage();
                 }
             }
 
+            error_log("OpenCatalogi publishObjectAttachments: Completed processing for object {$objectId} - published: {$result['published']}, skipped: {$result['skipped']}, errors: " . count($result['errors']));
             return $result;
         } catch (\Exception $e) {
+            error_log("OpenCatalogi publishObjectAttachments: Exception occurred for object {$objectId}: " . $e->getMessage());
             $result['errors'][] = 'Failed to access file service: ' . $e->getMessage();
             return $result;
         }

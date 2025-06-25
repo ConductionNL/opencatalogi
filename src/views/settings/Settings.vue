@@ -228,19 +228,19 @@ export default defineComponent({
 				r => r.id.toString() === this.selectedRegister.value,
 			)
 
-			return register && Array.isArray(register.schemas) && register.schemas.length > 0
+			// Check if register has valid schema objects (not just any array items)
+			return register && Array.isArray(register.schemas) && 
+				register.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
 		},
 		/**
-		 * Returns filtered schema options, excluding those that are already used
+		 * Returns all available schema options (no filtering for reuse)
 		 *
 		 * @return {Array<object>} Array of available schema options
 		 */
 		computedSchemaOptions() {
-			const usedSchemaIds = Object.values(this.configuration)
-				.filter(config => config.schema !== null)
-				.map(config => config.schema.value)
-
-			return this.schemaOptions.filter(option => !usedSchemaIds.includes(option.value))
+			// Don't filter out used schemas - allow reuse of schemas across object types
+			console.log('Schema options:', this.schemaOptions)
+			return this.schemaOptions
 		},
 	},
 
@@ -264,6 +264,7 @@ export default defineComponent({
 				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
 				const data = await response.json()
 				this.settings = data
+				console.log('Loaded settings:', data)
 
 				// Load publishing options
 				const publishingResponse = await fetch('/index.php/apps/opencatalogi/api/settings/publishing')
@@ -324,7 +325,10 @@ export default defineComponent({
 						r => r.id.toString() === this.selectedRegister.value,
 					)
 					if (register && Array.isArray(register.schemas)) {
-						const schema = register.schemas.find(s => s.id.toString() === schemaId)
+						// Filter out non-object schemas and find the matching one
+						const schema = register.schemas
+							.filter(s => s && typeof s === 'object' && s.id && s.title)
+							.find(s => s.id.toString() === schemaId)
 						if (schema) {
 							this.configuration = {
 								...this.configuration,
@@ -360,8 +364,9 @@ export default defineComponent({
 				}
 				this.updateSchemaOptions(opencatalogiRegister.id.toString())
 
-				// Only try to auto-select schemas if the register has schemas
-				if (Array.isArray(opencatalogiRegister.schemas)) {
+				// Only try to auto-select schemas if the register has valid schemas
+				if (Array.isArray(opencatalogiRegister.schemas) && 
+					opencatalogiRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)) {
 					this.autoSelectMatchingSchemas(opencatalogiRegister)
 				}
 			} else if (this.settings.availableRegisters.length > 0 && !this.selectedRegister) {
@@ -373,8 +378,9 @@ export default defineComponent({
 				}
 				this.updateSchemaOptions(firstRegister.id.toString())
 
-				// Only try to auto-select schemas if the register has schemas
-				if (Array.isArray(firstRegister.schemas)) {
+				// Only try to auto-select schemas if the register has valid schemas
+				if (Array.isArray(firstRegister.schemas) && 
+					firstRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)) {
 					this.autoSelectMatchingSchemas(firstRegister)
 				}
 			}
@@ -393,9 +399,10 @@ export default defineComponent({
 
 			this.settings.objectTypes.forEach(type => {
 				// Look for a schema with the same name as the object type
-				const matchingSchema = register.schemas.find(
-					schema => schema.title.toLowerCase() === type.toLowerCase(),
-				)
+				// Filter out non-object schemas first
+				const matchingSchema = register.schemas
+					.filter(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					.find(schema => schema.title.toLowerCase() === type.toLowerCase())
 
 				if (matchingSchema) {
 					this.configuration = {
@@ -419,11 +426,18 @@ export default defineComponent({
 		 */
 		updateSchemaOptions(registerId) {
 			const register = this.settings.availableRegisters.find(r => r.id.toString() === registerId)
+			console.log('Updating schema options for register:', register)
 			if (register && Array.isArray(register.schemas)) {
-				this.schemaOptions = register.schemas.map(schema => ({
+				console.log('Raw schemas:', register.schemas)
+				// Filter out non-object schemas and only include valid schema objects
+				const validSchemas = register.schemas
+					.filter(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+				console.log('Valid schemas:', validSchemas)
+				this.schemaOptions = validSchemas.map(schema => ({
 					label: schema.title,
 					value: schema.id.toString(),
 				}))
+				console.log('Schema options after mapping:', this.schemaOptions)
 			} else {
 				this.schemaOptions = []
 			}
@@ -462,7 +476,8 @@ export default defineComponent({
 				const register = this.settings.availableRegisters.find(
 					r => r.id.toString() === this.selectedRegister.value,
 				)
-				if (register && Array.isArray(register.schemas)) {
+				if (register && Array.isArray(register.schemas) && 
+					register.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)) {
 					this.autoSelectMatchingSchemas(register)
 				}
 			}
