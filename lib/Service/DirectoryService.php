@@ -435,6 +435,9 @@ class DirectoryService
      *
      * Processes an individual listing from a directory response, validates it,
      * and saves or updates it in the local storage.
+     * 
+     * For new listings, sets 'available' and 'default' to false (conservative approach).
+     * For updates, preserves existing 'available' and 'default' values to avoid overwriting status.
      *
      * @param array $listingData The listing data to synchronize
      * @param string $sourceDirectoryUrl The source directory URL for reference
@@ -521,11 +524,6 @@ class DirectoryService
                 $listingData['summary'] = 'unknown';
             }
             
-            // Set additional directory properties for display
-            $listingData['available'] = true; // Successfully fetched, so it's available
-            $listingData['default'] = $sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
-            $listingData['statusCode'] = 200; // Successful fetch
-            
             // Count schemas if available
             if (isset($listingData['schemas']) && is_array($listingData['schemas'])) {
                 $listingData['schemaCount'] = count($listingData['schemas']);
@@ -547,10 +545,27 @@ class DirectoryService
 
             $isUpdate = !empty($existingListings);
             
+            // Set directory properties based on whether it's new or updated
             if ($isUpdate) {
-                // For updates, check for race conditions and data changes
+                // For updates, preserve existing available and default values
                 $existingListing = $existingListings[0];
                 $existingListingData = $existingListing->jsonSerialize();
+                $existingObject = $existingListingData['object'] ?? [];
+                                
+                // Preserve existing availability and default status, but set smart defaults for missing fields
+                $listingData['available'] = $existingObject['available'] ?? true; // Default to true if not set (successful sync)
+                $listingData['default'] = $existingObject['default'] ?? ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+                $listingData['statusCode'] = 200; // Update status code to show successful fetch
+            } else {
+                // For new listings, start with conservative defaults
+                $listingData['available'] = false; // New listings start as unavailable until proven
+                $listingData['default'] = false; // New listings are not default by default
+                $listingData['statusCode'] = 200; // Successful fetch
+            }
+            
+            if ($isUpdate) {
+                // For updates, check for race conditions and data changes
+                // (existingListing and existingListingData already retrieved above)
                 
                 // Check for race condition: skip if incoming data is older than our last sync
                 if ($this->isListingDataOutdated($listingData, $existingListingData)) {
