@@ -333,6 +333,11 @@ class SettingsService
             $defaults["{$type}_register"] = '';
         }
 
+        // Add publishing options defaults.
+        $defaults['auto_publish_attachments']      = 'false';
+        $defaults['auto_publish_objects']          = 'false';
+        $defaults['use_old_style_publishing_view'] = 'false';
+
         // Get the current values for the object types from the configuration.
         try {
             foreach ($defaults as $key => $defaultValue) {
@@ -371,6 +376,74 @@ class SettingsService
         }//end try
 
     }//end updateSettings()
+
+
+    /**
+     * Get the current publishing options.
+     *
+     * @return array The current publishing options configuration.
+     * @throws \RuntimeException If publishing options retrieval fails.
+     */
+    public function getPublishingOptions(): array
+    {
+        try {
+            // Retrieve publishing options from configuration with defaults to false.
+            $publishingOptions = [
+                // Convert string 'true'/'false' to boolean for auto publish attachments setting.
+                'auto_publish_attachments'      => $this->config->getValueString($this->appName, 'auto_publish_attachments', 'false') === 'true',
+                // Convert string 'true'/'false' to boolean for auto publish objects setting.
+                'auto_publish_objects'          => $this->config->getValueString($this->appName, 'auto_publish_objects', 'false') === 'true',
+                // Convert string 'true'/'false' to boolean for old style publishing view setting.
+                'use_old_style_publishing_view' => $this->config->getValueString($this->appName, 'use_old_style_publishing_view', 'false') === 'true',
+            ];
+
+            return $publishingOptions;
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to retrieve publishing options: '.$e->getMessage());
+        }
+
+    }//end getPublishingOptions()
+
+
+    /**
+     * Update the publishing options configuration.
+     *
+     * @param array $options The publishing options data to update.
+     *
+     * @return array The updated publishing options configuration.
+     * @throws \RuntimeException If publishing options update fails.
+     */
+    public function updatePublishingOptions(array $options): array
+    {
+        try {
+            // Define valid publishing option keys for security.
+            $validOptions = [
+                'auto_publish_attachments',
+                'auto_publish_objects',
+                'use_old_style_publishing_view',
+            ];
+
+            $updatedOptions = [];
+
+            // Update each publishing option in the configuration.
+            foreach ($validOptions as $option) {
+                // Check if this option is provided in the input data.
+                if (isset($options[$option]) === true) {
+                    // Convert boolean or string to string format for storage.
+                    $value = $options[$option] === true || $options[$option] === 'true' ? 'true' : 'false';
+                    // Store the value in the configuration.
+                    $this->config->setValueString($this->appName, $option, $value);
+                    // Retrieve and convert back to boolean for the response.
+                    $updatedOptions[$option] = $this->config->getValueString($this->appName, $option) === 'true';
+                }
+            }
+
+            return $updatedOptions;
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to update publishing options: '.$e->getMessage());
+        }//end try
+
+    }//end updatePublishingOptions()
 
 
     /**

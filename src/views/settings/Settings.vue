@@ -71,6 +71,68 @@
 				:size="64"
 				appearance="dark" />
 		</NcSettingsSection>
+
+		<NcSettingsSection
+			name="Publishing Options"
+			description="Configure automatic publishing behavior and interface preferences">
+			<div v-if="!loading" class="publishing-options">
+				<!-- Auto Publish Attachments -->
+				<div class="option-section">
+					<NcCheckboxRadioSwitch
+						:checked.sync="publishingOptions.autoPublishAttachments"
+						:disabled="saving">
+						Auto publish attachments
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						When an object that has published not null automatically publish all publications
+					</p>
+				</div>
+
+				<!-- Auto Publish Objects -->
+				<div class="option-section">
+					<NcCheckboxRadioSwitch
+						:checked.sync="publishingOptions.autoPublishObjects"
+						:disabled="saving">
+						Auto publish objects
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						When an object that has a schema and register matching a catalog is created automatically set it to published
+					</p>
+				</div>
+
+				<!-- Use Old Style Publishing View -->
+				<div class="option-section">
+					<NcCheckboxRadioSwitch
+						:checked.sync="publishingOptions.useOldStylePublishingView"
+						:disabled="saving">
+						Use old style publishing view
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						Use the legacy publishing interface instead of the new interface
+					</p>
+				</div>
+
+				<!-- Save Button for Publishing Options -->
+				<div class="button-container">
+					<NcButton
+						type="primary"
+						:disabled="loading || saving"
+						@click="savePublishingOptions">
+						<template #icon>
+							<NcLoadingIcon v-if="saving" :size="20" />
+							<Save v-else :size="20" />
+						</template>
+						Save Publishing Options
+					</NcButton>
+				</div>
+			</div>
+
+			<!-- Loading State -->
+			<NcLoadingIcon v-else
+				class="loading-icon"
+				:size="64"
+				appearance="dark" />
+		</NcSettingsSection>
 	</div>
 </template>
 
@@ -82,6 +144,7 @@ import {
 	NcSelect,
 	NcButton,
 	NcLoadingIcon,
+	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
 import Download from 'vue-material-design-icons/Download.vue'
@@ -107,6 +170,7 @@ export default defineComponent({
 		NcSelect,
 		NcButton,
 		NcLoadingIcon,
+		NcCheckboxRadioSwitch,
 		Save,
 		Download,
 	},
@@ -131,6 +195,11 @@ export default defineComponent({
 			selectedRegister: null,
 			configuration: {},
 			schemaOptions: [],
+			publishingOptions: {
+				autoPublishAttachments: false,
+				autoPublishObjects: false,
+				useOldStylePublishingView: false,
+			},
 		}
 	},
 
@@ -191,9 +260,22 @@ export default defineComponent({
 		 */
 		async loadSettings() {
 			try {
+				// Load main settings
 				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
 				const data = await response.json()
 				this.settings = data
+
+				// Load publishing options
+				const publishingResponse = await fetch('/index.php/apps/opencatalogi/api/settings/publishing')
+				const publishingData = await publishingResponse.json()
+				
+				if (!publishingData.error) {
+					this.publishingOptions = {
+						autoPublishAttachments: publishingData.auto_publish_attachments,
+						autoPublishObjects: publishingData.auto_publish_objects,
+						useOldStylePublishingView: publishingData.use_old_style_publishing_view,
+					}
+				}
 
 				// Initialize configuration object
 				this.initializeConfiguration()
@@ -204,6 +286,7 @@ export default defineComponent({
 				this.loading = false
 			} catch (error) {
 				console.error('Failed to load settings:', error)
+				this.loading = false
 			}
 		},
 
@@ -257,6 +340,8 @@ export default defineComponent({
 					}
 				}
 			})
+
+
 		},
 
 		/**
@@ -452,6 +537,49 @@ export default defineComponent({
 				this.loadingConfiguration = false
 			}
 		},
+
+		/**
+		 * Saves publishing options to the backend
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		async savePublishingOptions() {
+			this.saving = true
+			try {
+				const configToSave = {
+					auto_publish_attachments: this.publishingOptions.autoPublishAttachments,
+					auto_publish_objects: this.publishingOptions.autoPublishObjects,
+					use_old_style_publishing_view: this.publishingOptions.useOldStylePublishingView,
+				}
+
+				// Send configuration to backend using the dedicated publishing options endpoint
+				const response = await fetch('/index.php/apps/opencatalogi/api/settings/publishing', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(configToSave),
+				})
+
+				const result = await response.json()
+				
+				if (result.error) {
+					console.error('Failed to save publishing options:', result.error)
+				} else {
+					// Update local state with the response from the backend
+					this.publishingOptions = {
+						autoPublishAttachments: result.auto_publish_attachments,
+						autoPublishObjects: result.auto_publish_objects,
+						useOldStylePublishingView: result.use_old_style_publishing_view,
+					}
+				}
+			} catch (error) {
+				console.error('Failed to save publishing options:', error)
+			} finally {
+				this.saving = false
+			}
+		},
 	},
 })
 </script>
@@ -493,5 +621,26 @@ export default defineComponent({
 	display: flex;
 	justify-content: center;
 	margin: 2rem 0;
+}
+
+.publishing-options {
+	max-width: 600px;
+}
+
+.option-section {
+	margin-bottom: 1.5rem;
+	padding: 1rem 0;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.option-section:last-child {
+	border-bottom: none;
+}
+
+.option-description {
+	margin-top: 0.5rem;
+	color: var(--color-text-lighter);
+	font-size: 0.9rem;
+	line-height: 1.4;
 }
 </style>
