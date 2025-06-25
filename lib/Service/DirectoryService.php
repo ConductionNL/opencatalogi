@@ -1523,6 +1523,7 @@ class DirectoryService
         // Create listing object from catalog - only core API fields
         $listing = [
             // Required fields for listing
+            'id' => $catalog['id'] ?? $catalogData['id'] ?? '',
             'catalogusId' => $catalog['id'] ?? $catalogData['id'] ?? '',
             'title' => $catalog['title'] ?? 'Unknown Catalog',
             'summary' => $catalog['summary'] ?? $catalog['description'] ?? 'Local catalog',
