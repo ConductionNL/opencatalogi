@@ -110,6 +110,23 @@ class PublicationsController extends Controller
      */
     public function index(): JSONResponse
     {
+        //@todo this is a temporary fix to map the parameters to _extend format
+        // Define parameters that should be mapped to _extend format
+        $parametersToMap = ['extend', 'fields', 'facets','order','page','limit'];
+        
+        // Get all current query parameters
+        $queryParams = $_GET;
+        
+        // Map specified parameters to _extend format and unset originals
+        foreach ($parametersToMap as $param) {
+            if (isset($queryParams[$param])) {
+                // Map the parameter to _extend format
+                $queryParams['_extend'] = $queryParams[$param];
+                // Unset the original parameter to prevent conflicts
+                unset($queryParams[$param]);
+            }
+        }
+        
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
         $aggregate = $this->request->getParam('_aggregate', 'true');
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
