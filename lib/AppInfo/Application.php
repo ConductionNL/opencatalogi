@@ -11,6 +11,10 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenCatalogi\Dashboard\CatalogWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
+use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
+use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\IConfig;
 use OCP\App\AppManager;
 
@@ -27,9 +31,15 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
+		
+		// Register dashboard widgets
 		$context->registerDashboardWidget(CatalogWidget::class);
 		$context->registerDashboardWidget(UnpublishedPublicationsWidget::class);
 		$context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
+				
+		// Register event listeners for OpenRegister events
+		$context->registerEventListener(ObjectCreatedEvent::class, ObjectCreatedEventListener::class);
+		$context->registerEventListener(ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class);
 	}//end register
 
 	public function boot(IBootContext $context): void {

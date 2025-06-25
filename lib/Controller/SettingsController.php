@@ -162,4 +162,44 @@ class SettingsController extends Controller
     }//end load()
 
 
+    /**
+     * Get the current publishing options.
+     *
+     * @return JSONResponse JSON response containing the current publishing options.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getPublishingOptions(): JSONResponse
+    {
+        try {
+            $data = $this->settingsService->getPublishingOptions();
+            return new JSONResponse($data);
+        } catch (\Exception $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 500);
+        }
+
+    }//end getPublishingOptions()
+
+
+    /**
+     * Update the publishing options.
+     *
+     * @return JSONResponse JSON response containing the updated publishing options.
+     *
+     * @NoCSRFRequired
+     */
+    public function updatePublishingOptions(): JSONResponse
+    {
+        try {
+            $data   = $this->request->getParams();
+            $result = $this->settingsService->updatePublishingOptions($data);
+            return new JSONResponse($result);
+        } catch (\Exception $e) {
+            return new JSONResponse(['error' => $e->getMessage()], 500);
+        }
+
+    }//end updatePublishingOptions()
+
+
 }//end class
