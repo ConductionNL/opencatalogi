@@ -70,12 +70,8 @@ class ObjectCreatedEventListener implements IEventListener
             // Check if any auto-publishing features are enabled before processing.
             $publishingOptions = $settingsService->getPublishingOptions();
             
-            // Add debug logging for configuration.
-            error_log('OpenCatalogi ObjectCreatedEventListener: Publishing options - auto_publish_objects=' . ($publishingOptions['auto_publish_objects'] ? 'true' : 'false') . ', auto_publish_attachments=' . ($publishingOptions['auto_publish_attachments'] ? 'true' : 'false'));
-            
             // Skip processing if no auto-publishing features are enabled.
             if ($publishingOptions['auto_publish_objects'] === false && $publishingOptions['auto_publish_attachments'] === false) {
-                error_log('OpenCatalogi ObjectCreatedEventListener: No auto-publishing features enabled, skipping');
                 return;
             }
 
@@ -84,8 +80,6 @@ class ObjectCreatedEventListener implements IEventListener
             
             // Convert ObjectEntity to array format expected by EventService.
             $objectData = $this->convertObjectEntityToArray($objectEntity);
-            
-            error_log('OpenCatalogi ObjectCreatedEventListener: Processing object with register=' . ($objectData['@self']['register'] ?? 'null') . ', schema=' . ($objectData['@self']['schema'] ?? 'null') . ', uuid=' . ($objectData['@self']['uuid'] ?? 'null'));
             
             // Process the object creation event through EventService.
             $result = $eventService->handleObjectCreateEvents([$objectData]);

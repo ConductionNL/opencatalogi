@@ -70,12 +70,8 @@ class ObjectUpdatedEventListener implements IEventListener
             // Check if any auto-publishing features are enabled before processing.
             $publishingOptions = $settingsService->getPublishingOptions();
             
-            // Add debug logging for configuration.
-            error_log('OpenCatalogi ObjectUpdatedEventListener: Publishing options - auto_publish_objects=' . ($publishingOptions['auto_publish_objects'] ? 'true' : 'false') . ', auto_publish_attachments=' . ($publishingOptions['auto_publish_attachments'] ? 'true' : 'false'));
-            
             // Skip processing if no auto-publishing features are enabled.
             if ($publishingOptions['auto_publish_objects'] === false && $publishingOptions['auto_publish_attachments'] === false) {
-                error_log('OpenCatalogi ObjectUpdatedEventListener: No auto-publishing features enabled, skipping');
                 return;
             }
 
@@ -86,15 +82,10 @@ class ObjectUpdatedEventListener implements IEventListener
             // Convert ObjectEntity to array format expected by EventService.
             $newObjectData = $this->convertObjectEntityToArray($newObjectEntity);
             
-            error_log('OpenCatalogi ObjectUpdatedEventListener: Processing object with register=' . ($newObjectData['@self']['register'] ?? 'null') . ', schema=' . ($newObjectData['@self']['schema'] ?? 'null') . ', uuid=' . ($newObjectData['@self']['uuid'] ?? 'null'));
-            
             // Check if this update should trigger auto-publishing logic.
             if ($this->shouldProcessUpdate($newObjectData, $oldObjectEntity, $publishingOptions) === false) {
-                error_log('OpenCatalogi ObjectUpdatedEventListener: shouldProcessUpdate returned false, skipping');
                 return;
             }
-            
-            error_log('OpenCatalogi ObjectUpdatedEventListener: shouldProcessUpdate returned true, proceeding with auto-publishing');
             
             // Process the object update event through EventService.
             $result = $eventService->handleObjectUpdateEvents([$newObjectData]);
@@ -139,21 +130,16 @@ class ObjectUpdatedEventListener implements IEventListener
      */
     private function shouldProcessUpdate(array $newObjectData, \OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity, array $publishingOptions): bool
     {
-        error_log('OpenCatalogi shouldProcessUpdate: Starting check');
-        
         // If auto-publish attachments is enabled, always process updates for published objects.
         if ($publishingOptions['auto_publish_attachments'] === true) {
             $isNewObjectPublished = $this->isObjectPublished($newObjectData);
-            error_log('OpenCatalogi shouldProcessUpdate: auto_publish_attachments=true, isNewObjectPublished=' . ($isNewObjectPublished ? 'true' : 'false'));
             if ($isNewObjectPublished === true) {
-                error_log('OpenCatalogi shouldProcessUpdate: Returning true for attachment publishing');
                 return true;
             }
         }
 
         // If auto-publish objects is not enabled, no further processing needed.
         if ($publishingOptions['auto_publish_objects'] === false) {
-            error_log('OpenCatalogi shouldProcessUpdate: auto_publish_objects=false, returning false');
             return false;
         }
 
@@ -161,15 +147,11 @@ class ObjectUpdatedEventListener implements IEventListener
         $wasPublished = $this->isObjectEntityPublished($oldObjectEntity);
         $isPublished = $this->isObjectPublished($newObjectData);
         
-        error_log('OpenCatalogi shouldProcessUpdate: wasPublished=' . ($wasPublished ? 'true' : 'false') . ', isPublished=' . ($isPublished ? 'true' : 'false'));
-        
         // Process if object became published.
         if ($wasPublished === false && $isPublished === true) {
-            error_log('OpenCatalogi shouldProcessUpdate: Object became published, returning true');
             return true;
         }
 
-        error_log('OpenCatalogi shouldProcessUpdate: No conditions met, returning false');
         return false;
 
     }//end shouldProcessUpdate()
@@ -263,7 +245,6 @@ class ObjectUpdatedEventListener implements IEventListener
         // The FileService->getFiles() call can trigger object updates which cause infinite loops.
         // TODO: Implement a safer way to get file information for attachment publishing.
         $objectData['@self']['files'] = [];
-        error_log("OpenCatalogi convertObjectEntityToArray: Skipping file fetching to prevent infinite loop");
         
         return $objectData;
 
