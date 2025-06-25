@@ -25,6 +25,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
+use OCP\IServerContainer;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -67,13 +68,15 @@ class DirectoryService
      * @param ContainerInterface $container        Server container for dependency injection
      * @param IAppManager        $appManager       App manager for checking installed apps
      * @param BroadcastService   $broadcastService Broadcast service for notifying other directories
+     * @param IServerContainer   $server          Server container for logging and other services
      */
     public function __construct(
         private readonly IURLGenerator $urlGenerator,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        private readonly BroadcastService $broadcastService
+        private readonly BroadcastService $broadcastService,
+        private readonly IServerContainer $server
     ) {
         $this->appName = 'opencatalogi';
         $this->client = new Client([]);
@@ -126,7 +129,7 @@ class DirectoryService
                     ]);
                 } catch (\Exception $e) {
                     // Log sync error
-                    \OC::$server->getLogger()->error(
+                    $this->server->getLogger()->error(
                         'DirectoryService: Failed to sync directory ' . $directoryUrl . ': ' . $e->getMessage()
                     );
                     
@@ -214,7 +217,7 @@ class DirectoryService
                     }
                 }
             } catch (\Exception $e) {
-                \OC::$server->getLogger()->warning(
+                $this->server->getLogger()->warning(
                     'DirectoryService: Failed to get unique directories: ' . $e->getMessage()
                 );
             }
@@ -306,9 +309,6 @@ class DirectoryService
                     
                     // Skip if listing has a local URL (localhost, .local, private IPs)
                     if (isset($listingData['directory']) && $this->isLocalUrl($listingData['directory'])) {
-                        \OC::$server->getLogger()->debug(
-                            'DirectoryService: Skipping local listing with directory: ' . $listingData['directory']
-                        );
                         return false;
                     }
                     
@@ -366,20 +366,18 @@ class DirectoryService
                     try {
                         $this->broadcastService->broadcast($directoryUrl);
                     } catch (\Exception $e) {
-                        \OC::$server->getLogger()->warning(
+                        $this->server->getLogger()->warning(
                             'DirectoryService: Failed to broadcast to directory ' . $directoryUrl . ': ' . $e->getMessage()
                         );
                     }
                 }
             }
 
-            // Log sync summary only if there were significant changes or failures
-            if ($results['listings_created'] > 0 || $results['listings_updated'] > 0 || $results['listings_failed'] > 0) {
-                \OC::$server->getLogger()->info(
-                    'DirectoryService: Processed directory ' . $directoryUrl . 
-                    ' - Created: ' . $results['listings_created'] . 
-                    ', Updated: ' . $results['listings_updated'] . 
-                    ', Failed: ' . $results['listings_failed']
+            // Log significant failures only
+            if ($results['listings_failed'] > 0) {
+                $this->server->getLogger()->warning(
+                    'DirectoryService: Directory sync had failures - ' . $directoryUrl . 
+                    ' - Failed: ' . $results['listings_failed']
                 );
             }
 
@@ -391,7 +389,7 @@ class DirectoryService
             try {
                 $this->updateDirectoryStatusOnError($directoryUrl, $e->getCode() ?: 500);
             } catch (\Exception $updateException) {
-                \OC::$server->getLogger()->warning(
+                $this->server->getLogger()->warning(
                     'DirectoryService: Failed to update directory error status: ' . $updateException->getMessage()
                 );
             }
@@ -405,7 +403,7 @@ class DirectoryService
             try {
                 $this->updateDirectoryStatusOnError($directoryUrl, 500);
             } catch (\Exception $updateException) {
-                \OC::$server->getLogger()->warning(
+                $this->server->getLogger()->warning(
                     'DirectoryService: Failed to update directory error status: ' . $updateException->getMessage()
                 );
             }
@@ -471,10 +469,12 @@ class DirectoryService
                 throw new \RuntimeException('Listing schema or register not configured');
             }
 
-            // Validate listing data
-            if (empty($listingData['id']) || empty($listingData['catalog'])) {
-                throw new \InvalidArgumentException('Invalid listing data: missing id or catalog');
+            // Validate listing data - only accept 'catalogusId'
+            if (empty($listingData['id']) || empty($listingData['catalogusId'])) {
+                throw new \InvalidArgumentException('Invalid listing data: missing id or catalogusId');
             }
+
+            $catalogId = $listingData['catalogusId'];
 
             // Clean up listing data to match schema
             // Keep the @self metadata for UUID handling, but clean it up
@@ -483,9 +483,9 @@ class DirectoryService
                 $uuid = $listingData['@self']['id'];
             } elseif (isset($listingData['id'])) {
                 $uuid = $listingData['id'];
-            } elseif (isset($listingData['catalog'])) {
-                // Use catalog ID as UUID if no explicit ID is provided
-                $uuid = $listingData['catalog'];
+            } elseif (isset($listingData['catalogusId'])) {
+                // Use catalogusId as UUID if no explicit ID is provided
+                $uuid = $listingData['catalogusId'];
             }
             
             // Remove @self metadata from the object data (but keep UUID for saveObject)
@@ -497,8 +497,8 @@ class DirectoryService
             // Set lastSync as ISO string format instead of DateTime object
             $listingData['lastSync'] = (new \DateTime())->format('c');
             
-            // Set catalogusId to the catalog ID, not the directory URL
-            $listingData['catalogusId'] = $listingData['catalog'];
+            // Set catalog field from catalogusId for internal consistency
+            $listingData['catalog'] = $catalogId;
             
             // Set summary to 'unknown' if empty (required field)
             if (empty($listingData['summary'])) {
@@ -525,7 +525,7 @@ class DirectoryService
                 'filters' => [
                     'register' => $listingRegister,
                     'schema' => $listingSchema,
-                    'catalog' => $listingData['catalog']
+                    'catalog' => $catalogId
                 ]
             ]);
 
@@ -606,12 +606,12 @@ class DirectoryService
                 }
             } catch (\Exception $updateException) {
                 // Ignore update errors, just log them
-                \OC::$server->getLogger()->warning(
+                $this->server->getLogger()->warning(
                     'DirectoryService: Failed to update listing error status: ' . $updateException->getMessage()
                 );
             }
             
-            \OC::$server->getLogger()->error(
+            $this->server->getLogger()->error(
                 'DirectoryService: Failed to sync listing ' . $result['listing_id'] . ': ' . $e->getMessage()
             );
         }
@@ -715,7 +715,7 @@ class DirectoryService
                 } catch (\Exception $e) {
                     // Only log actual errors, not expected failures
                     if (!str_contains($e->getMessage(), 'Could not resolve host')) {
-                        \OC::$server->getLogger()->error('DirectoryService: Federation request failed to ' . $publicationsUrl . ': ' . $e->getMessage());
+                        $this->server->getLogger()->error('DirectoryService: Federation request failed to ' . $publicationsUrl . ': ' . $e->getMessage());
                     }
                     $resolve(['success' => false, 'results' => []]);
                 }
@@ -746,10 +746,7 @@ class DirectoryService
             }
         }
 
-        // Log federation summary only if there are results or errors
-        if (count($combinedResults) > 0 || count($sources) > 0) {
-            \OC::$server->getLogger()->debug('DirectoryService: Federation completed - returning ' . count($combinedResults) . ' publications from ' . count($sources) . ' sources');
-        }
+
 
         return [
             'results' => $combinedResults,
@@ -802,13 +799,10 @@ class DirectoryService
                     uuid: $existingListingData['id']
                 );
                 
-                \OC::$server->getLogger()->debug(
-                    'DirectoryService: Updated listing status for ID ' . $listingId . 
-                    ' - Status: ' . $statusCode . ', Available: ' . ($success ? 'true' : 'false')
-                );
+
             }
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->warning(
+            $this->server->getLogger()->warning(
                 'DirectoryService: Failed to update listing status for ID ' . $listingId . ': ' . $e->getMessage()
             );
         }
@@ -828,17 +822,11 @@ class DirectoryService
     {
         // Check if listing already has a publication endpoint
         if (!empty($listingData['publications'])) {
-            \OC::$server->getLogger()->debug(
-                'DirectoryService: Found existing publication endpoint: ' . $listingData['publications']
-            );
             return $listingData['publications'];
         }
         
         // Check if listing already has a publication endpoint (alternative field name)
         if (!empty($listingData['publication'])) {
-            \OC::$server->getLogger()->debug(
-                'DirectoryService: Found existing publication endpoint (singular): ' . $listingData['publication']
-            );
             return $listingData['publication'];
         }
         
@@ -881,11 +869,6 @@ class DirectoryService
             }
         }
         
-        \OC::$server->getLogger()->debug(
-            'DirectoryService: Could not detect or generate publication endpoint for listing: ' . 
-            ($listingData['title'] ?? $listingData['id'] ?? 'unknown')
-        );
-        
         return null;
     }
 
@@ -926,19 +909,13 @@ class DirectoryService
             // Skip if incoming data is older than existing data
             $isOutdated = $incomingUpdated < $existingUpdated;
             
-            if ($isOutdated) {
-                \OC::$server->getLogger()->debug(
-                    'DirectoryService: Detected outdated listing data. ' .
-                    'Incoming: ' . $incomingUpdated->format('c') . ', ' .
-                    'Existing: ' . $existingUpdated->format('c')
-                );
-            }
+            // Incoming data is outdated, skip silently
             
             return $isOutdated;
             
         } catch (\Exception $e) {
             // If we can't determine timestamps, log warning and allow update to be safe
-            \OC::$server->getLogger()->warning(
+            $this->server->getLogger()->warning(
                 'DirectoryService: Failed to check listing timestamp: ' . $e->getMessage()
             );
             return false;
@@ -1066,7 +1043,7 @@ class DirectoryService
 
         } catch (\Exception $e) {
             // Log but don't throw - this is a best-effort update
-            \OC::$server->getLogger()->warning(
+            $this->server->getLogger()->warning(
                 'DirectoryService: Failed to update directory error status for ' . $directoryUrl . ': ' . $e->getMessage()
             );
         }
@@ -1384,14 +1361,7 @@ class DirectoryService
         $catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
         $catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
 
-        // Debug logging to help diagnose configuration issues
-        \OC::$server->getLogger()->debug(
-            'DirectoryService::getDirectory - Configuration: ' .
-            'listing_schema=' . $listingSchema . ', ' .
-            'listing_register=' . $listingRegister . ', ' .
-            'catalog_schema=' . $catalogSchema . ', ' .
-            'catalog_register=' . $catalogRegister
-        );
+
 
         $allResults = [];
 
@@ -1429,20 +1399,12 @@ class DirectoryService
                     return $this->filterListingProperties($listingData);
                 }, $listingResult['results'] ?? $listingResult ?? []);
 
-                \OC::$server->getLogger()->debug(
-                    'DirectoryService::getDirectory - Found ' . count($listings) . ' listings'
-                );
-
                 $allResults = array_merge($allResults, $listings);
             } catch (\Exception $e) {
-                \OC::$server->getLogger()->warning(
+                $this->server->getLogger()->warning(
                     'DirectoryService: Failed to fetch listings: ' . $e->getMessage()
                 );
             }
-        } else {
-            \OC::$server->getLogger()->debug(
-                'DirectoryService::getDirectory - Skipping listings: missing schema or register configuration'
-            );
         }
 
         // Fetch local catalogs and convert them to listing format
@@ -1460,28 +1422,18 @@ class DirectoryService
                     return $this->processSchemaExpansion($listing);
                 }, $catalogResult['results'] ?? $catalogResult ?? []);
 
-                \OC::$server->getLogger()->debug(
-                    'DirectoryService::getDirectory - Found ' . count($catalogsAsListings) . ' catalogs converted to listings'
-                );
-
                 $allResults = array_merge($allResults, $catalogsAsListings);
             } catch (\Exception $e) {
-                \OC::$server->getLogger()->warning(
+                $this->server->getLogger()->warning(
                     'DirectoryService: Failed to fetch catalogs: ' . $e->getMessage()
                 );
             }
-        } else {
-            \OC::$server->getLogger()->debug(
-                'DirectoryService::getDirectory - Skipping catalogs: missing schema or register configuration'
-            );
         }
 
         // Calculate total
         $total = count($allResults);
 
-        \OC::$server->getLogger()->debug(
-            'DirectoryService::getDirectory - Returning ' . count($allResults) . ' results (total: ' . $total . ')'
-        );
+
 
         return [
             'results' => $allResults,
@@ -1637,7 +1589,7 @@ class DirectoryService
             }, $schemas);
             
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->warning(
+            $this->server->getLogger()->warning(
                 'DirectoryService: Failed to expand schemas: ' . $e->getMessage()
             );
             // Return original IDs if expansion fails
