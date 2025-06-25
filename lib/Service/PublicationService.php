@@ -206,6 +206,20 @@ class PublicationService
     {
         $searchQuery = $this->request->getParams();
 
+        //@todo this is a temporary fix to map the parameters to _extend format
+        // Define parameters that should be mapped to _extend format
+        $parametersToMap = ['extend', 'fields', 'facets','order','page','limit'];
+        
+        // Map specified parameters to _extend format and unset originals
+        foreach ($parametersToMap as $param) {
+            if (isset($searchQuery[$param])) {
+                // Map the parameter to _extend format
+                $searchQuery['_extend'] = $searchQuery[$param];
+                // Unset the original parameter to prevent conflicts
+                unset($searchQuery[$param]);
+            }
+        }
+
         // Bit of route cleanup
         unset($searchQuery['id']);
         unset($searchQuery['_route']);
