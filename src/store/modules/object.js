@@ -488,7 +488,7 @@ export const useObjectStore = defineStore('object', {
 			const queryParams = new URLSearchParams({
 				_limit: params._limit || 20,
 				_page: params._page || 1,
-				extend: params.extend || '@self.schema',
+				_extend: params._extend || params.extend || '@self.schema',
 				...params,
 			})
 
@@ -496,6 +496,8 @@ export const useObjectStore = defineStore('object', {
 			queryParams.delete('_source')
 			queryParams.delete('_schema')
 			queryParams.delete('_register')
+			// Remove the old extend parameter to avoid duplication
+			queryParams.delete('extend')
 
 			return `${url}?${queryParams}`
 		},
@@ -518,10 +520,10 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add extend parameter if not explicitly set
+				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
-					extend: params.extend || '@self.schema',
+					_extend: params._extend || params.extend || '@self.schema',
 				}
 
 				const response = await fetch(this._constructApiUrl(type, null, null, queryParams))
@@ -578,10 +580,10 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add extend parameter if not explicitly set
+				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
-					extend: params.extend || '@self.schema',
+					_extend: params._extend || params.extend || '@self.schema',
 				}
 
 				const response = await fetch(this._constructApiUrl(type, id, null, queryParams))
@@ -622,10 +624,10 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add extend parameter for 'uses' and 'used' data types
+				// Add _extend parameter for 'uses' and 'used' data types
 				const queryParams = {
 					...params,
-					...(dataType === 'uses' || dataType === 'used' ? { extend: params.extend || '@self.schema' } : {}),
+					...(dataType === 'uses' || dataType === 'used' ? { _extend: params._extend || params.extend || '@self.schema' } : {}),
 				}
 
 				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams))
