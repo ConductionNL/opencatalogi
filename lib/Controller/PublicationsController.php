@@ -97,6 +97,14 @@ class PublicationsController extends Controller
      *
      * This method handles both local and aggregated search results when the _aggregate
      * parameter is not set to false. It supports faceting when _facetable parameter is provided.
+     * 
+     * AGGREGATION FEATURES:
+     * - Proper pagination: Collects sufficient data from all sources, merges and deduplicates,
+     *   then applies pagination to ensure consistent totals and page counts
+     * - Ordering: Supports _order parameters like _order[@self.published]=DESC to sort the
+     *   combined dataset from all sources according to specified criteria
+     * - Deduplication: Removes duplicate entries based on object ID across all sources
+     * - Faceting: Merges facet data from multiple sources when _facetable=true
      *
      * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
      *
@@ -287,26 +295,14 @@ class PublicationsController extends Controller
             $allLocalResponse = $this->publicationService->index(null, $localQueryParams);
             $allLocalData = json_decode($allLocalResponse->render(), true);
             
-            // Debug: Log the parameters and results for troubleshooting
-            error_log("AGGREGATION DEBUG - Page: {$page}, Limit: {$limit}, Items needed: {$itemsNeeded}");
-            error_log("AGGREGATION DEBUG - Local query params: " . json_encode($localQueryParams));
-            error_log("AGGREGATION DEBUG - Local results count: " . count($allLocalData['results'] ?? []));
-            error_log("AGGREGATION DEBUG - Local total: " . ($allLocalData['total'] ?? 0));
-            
             // Get federated results with modified parameters
             $federationResult = $this->directoryService->getPublications($federatedQueryParams);
-            
-            // Debug: Log federated results
-            error_log("AGGREGATION DEBUG - Federated results count: " . count($federationResult['results'] ?? []));
             
             // Merge local and federated results
             $allResults = array_merge(
                 $allLocalData['results'] ?? [],
                 $federationResult['results'] ?? []
             );
-            
-            // Debug: Log merged results
-            error_log("AGGREGATION DEBUG - Merged results count (before dedup): " . count($allResults));
             
             // Remove duplicates based on ID
             $uniqueResults = [];
@@ -319,6 +315,12 @@ class PublicationsController extends Controller
                 }
             }
             
+            // Apply ordering to the merged and deduplicated results
+            // This is crucial for aggregation because each source may have different ordering,
+            // so we need to re-sort the combined dataset according to the requested criteria
+            // Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
+            $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
+            
             // Apply pagination to the merged results
             $totalResults = count($uniqueResults);
             $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
@@ -326,12 +328,6 @@ class PublicationsController extends Controller
             // Calculate the correct slice for this page
             $startIndex = ($page - 1) * $limit;
             $paginatedResults = array_slice($uniqueResults, $startIndex, $limit);
-            
-            // Debug: Log final pagination results
-            error_log("AGGREGATION DEBUG - Unique results count: {$totalResults}");
-            error_log("AGGREGATION DEBUG - Total pages: {$totalPages}");
-            error_log("AGGREGATION DEBUG - Start index: {$startIndex}");
-            error_log("AGGREGATION DEBUG - Paginated results count: " . count($paginatedResults));
             
             // Update response with paginated combined data
             $responseData = [
@@ -779,6 +775,126 @@ class PublicationsController extends Controller
         ];
         
         return $mergedFacetable;
+    }
+
+    /**
+     * Apply ordering to the cumulated dataset from multiple sources
+     *
+     * This method handles ordering parameters in the format _order[field]=direction
+     * and applies them to the merged results from local and federated sources.
+     * Since each source may have different ordering, we need to re-sort the combined dataset.
+     *
+     * @param array $results The merged and deduplicated results to order
+     * @param array $queryParams The query parameters containing ordering instructions
+     * @return array The ordered results
+     */
+    private function applyCumulativeOrdering(array $results, array $queryParams): array
+    {
+        // Extract ordering parameters
+        $orderParams = $queryParams['_order'] ?? $queryParams['order'] ?? [];
+        
+        if (empty($orderParams) || !is_array($orderParams)) {
+            return $results;
+        }
+        
+        // Convert single field ordering to array format for consistency
+        if (!isset($orderParams[0])) {
+            $orderParams = [$orderParams];
+        }
+        
+        // Apply multiple field ordering (PHP's usort is stable for equal values)
+        usort($results, function($a, $b) use ($orderParams) {
+            foreach ($orderParams as $field => $direction) {
+                // Handle both associative array format: ['field' => 'direction']
+                // and indexed array format: [0 => ['field' => 'direction']]
+                if (is_numeric($field) && is_array($direction)) {
+                    // Format: [0 => ['@self.published' => 'DESC']]
+                    $fieldName = array_key_first($direction);
+                    $sortDirection = strtoupper($direction[$fieldName] ?? 'ASC');
+                } else {
+                    // Format: ['@self.published' => 'DESC']
+                    $fieldName = $field;
+                    $sortDirection = strtoupper($direction ?? 'ASC');
+                }
+                
+                // Extract values for comparison
+                $valueA = $this->extractFieldValue($a, $fieldName);
+                $valueB = $this->extractFieldValue($b, $fieldName);
+                
+                // Compare values
+                $comparison = $this->compareValues($valueA, $valueB);
+                
+                if ($comparison !== 0) {
+                    // Return result based on sort direction
+                    return $sortDirection === 'DESC' ? -$comparison : $comparison;
+                }
+                
+                // If values are equal, continue to next sort field
+            }
+            
+            return 0; // All compared fields are equal
+        });
+        
+        return $results;
+    }
+    
+    /**
+     * Extract field value from a result object using dot notation
+     *
+     * Supports nested field access like '@self.published' or 'data.title'
+     *
+     * @param array $result The result object to extract value from
+     * @param string $fieldPath The field path in dot notation
+     * @return mixed The extracted value or null if not found
+     */
+    private function extractFieldValue(array $result, string $fieldPath)
+    {
+        $parts = explode('.', $fieldPath);
+        $value = $result;
+        
+        foreach ($parts as $part) {
+            if (!is_array($value) || !isset($value[$part])) {
+                return null;
+            }
+            $value = $value[$part];
+        }
+        
+        return $value;
+    }
+    
+    /**
+     * Compare two values for sorting
+     *
+     * Handles different data types appropriately for sorting
+     *
+     * @param mixed $a First value
+     * @param mixed $b Second value
+     * @return int -1, 0, or 1 for less than, equal, or greater than
+     */
+    private function compareValues($a, $b): int
+    {
+        // Handle null values
+        if ($a === null && $b === null) return 0;
+        if ($a === null) return -1;
+        if ($b === null) return 1;
+        
+        // Handle date strings
+        if (is_string($a) && is_string($b)) {
+            $dateA = strtotime($a);
+            $dateB = strtotime($b);
+            
+            if ($dateA !== false && $dateB !== false) {
+                return $dateA <=> $dateB;
+            }
+        }
+        
+        // Handle numeric values
+        if (is_numeric($a) && is_numeric($b)) {
+            return $a <=> $b;
+        }
+        
+        // Handle string comparison
+        return strcmp((string)$a, (string)$b);
     }
 
 }//end class
