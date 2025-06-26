@@ -736,24 +736,32 @@ class DirectoryService
                         if (json_last_error() === JSON_ERROR_NONE) {
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
-                                $resolve(['success' => true, 'results' => $data['results']]);
+                                $resolve([
+                                    'success' => true, 
+                                    'results' => $data['results'],
+                                    'facets' => $data['facets'] ?? []
+                                ]);
                             } elseif (is_array($data)) {
-                                $resolve(['success' => true, 'results' => $data]);
+                                $resolve([
+                                    'success' => true, 
+                                    'results' => $data,
+                                    'facets' => []
+                                ]);
                             } else {
-                                $resolve(['success' => false, 'results' => []]);
+                                $resolve(['success' => false, 'results' => [], 'facets' => []]);
                             }
                         } else {
-                            $resolve(['success' => false, 'results' => []]);
+                            $resolve(['success' => false, 'results' => [], 'facets' => []]);
                         }
                     } else {
-                        $resolve(['success' => false, 'results' => []]);
+                        $resolve(['success' => false, 'results' => [], 'facets' => []]);
                     }
                 } catch (\Exception $e) {
                     // Only log actual errors, not expected failures
                     if (!str_contains($e->getMessage(), 'Could not resolve host')) {
                         $this->server->getLogger()->error('DirectoryService: Federation request failed to ' . $publicationsUrl . ': ' . $e->getMessage());
                     }
-                    $resolve(['success' => false, 'results' => []]);
+                    $resolve(['success' => false, 'results' => [], 'facets' => []]);
                 }
             });
         }
@@ -761,10 +769,11 @@ class DirectoryService
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
         
-        // Flatten and deduplicate results, track sources
+        // Flatten and deduplicate results, track sources, aggregate facets
         $combinedResults = [];
         $seenIds = [];
         $sources = [];
+        $combinedFacets = [];
         
         foreach ($allResults as $index => $result) {
             $directoryInfo = $urlToDirectoryMap[$index];
@@ -779,14 +788,18 @@ class DirectoryService
                         $seenIds[$itemId] = true;
                     }
                 }
+                
+                // Aggregate facets if they exist
+                if (!empty($result['facets'])) {
+                    $combinedFacets = $this->aggregateFacets($combinedFacets, $result['facets']);
+                }
             }
         }
 
-
-
         return [
             'results' => $combinedResults,
-            'sources' => $sources
+            'sources' => $sources,
+            'facets' => $combinedFacets
         ];
     }
 
@@ -1675,5 +1688,64 @@ class DirectoryService
         
         // Otherwise return the processed object directly
         return $objectData;
+    }
+
+    /**
+     * Aggregate facets from multiple directory sources
+     *
+     * Combines facet data from different publication endpoints,
+     * merging counts for the same facet values.
+     *
+     * @param array $existingFacets The current aggregated facets
+     * @param array $newFacets The new facets to merge in
+     * @return array The merged facets
+     */
+    private function aggregateFacets(array $existingFacets, array $newFacets): array
+    {
+        if (empty($newFacets)) {
+            return $existingFacets;
+        }
+        
+        if (empty($existingFacets)) {
+            return $newFacets;
+        }
+        
+        $mergedFacets = $existingFacets;
+        
+        foreach ($newFacets as $field => $facetValues) {
+            if (!isset($mergedFacets[$field])) {
+                $mergedFacets[$field] = $facetValues;
+                continue;
+            }
+            
+            // Create a lookup map for existing values
+            $existingValues = [];
+            foreach ($mergedFacets[$field] as $index => $existingFacet) {
+                $existingValues[$existingFacet['_id']] = $index;
+            }
+            
+            // Merge or add new values
+            foreach ($facetValues as $facetValue) {
+                $valueId = $facetValue['_id'];
+                
+                if (isset($existingValues[$valueId])) {
+                    // Add to existing count
+                    $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
+                } else {
+                    // Add new value
+                    $mergedFacets[$field][] = $facetValue;
+                }
+            }
+            
+            // Re-sort merged facets by count (descending) and then by value (ascending)
+            usort($mergedFacets[$field], function($a, $b) {
+                if ($a['count'] === $b['count']) {
+                    return strcmp($a['_id'], $b['_id']);
+                }
+                return $b['count'] <=> $a['count'];
+            });
+        }
+        
+        return $mergedFacets;
     }
 }

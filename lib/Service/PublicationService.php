@@ -198,13 +198,16 @@ class PublicationService
      * It handles catalog context validation, security parameters, and consistent filtering.
      *
      * @param null|string|int $catalogId Optional catalog ID to filter objects by
-     * @param array|null $ids Optional array of IDs to filter by (for uses/used functionality)
-     * @return array The search results with pagination and facets
+     * @param array|null $ids Optional array of specific IDs to filter by
+     * @param array|null $customParams Optional custom parameters to use instead of request params
+     * @return array Array containing search results with pagination and facets
+     * @throws \InvalidArgumentException When invalid registers or schemas are requested
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
-    private function searchPublications(null|string|int $catalogId = null, ?array $ids = null): array
+    private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array
     {
-        $searchQuery = $this->request->getParams();
+        // Use custom parameters if provided, otherwise use request parameters
+        $searchQuery = $customParams ?? $this->request->getParams();
 
         //@todo this is a temporary fix to map the parameters to _extend format
         // Define parameters that should be mapped to _extend format
@@ -279,17 +282,17 @@ class PublicationService
      * It supports filtering, sorting, and pagination through query parameters using the new search structure.
      *
      * @param null|string|int $catalogId Optional catalog ID to filter objects by
-     *
+     * @param array|null $customParams Optional custom parameters to use instead of request params
      * @return JSONResponse A JSON response containing the list of objects
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function index(null|string|int $catalogId = null): JSONResponse
+    public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse
     {
         try {
-            $result = $this->searchPublications($catalogId);
+            $result = $this->searchPublications($catalogId, null, $customParams);
             return new JSONResponse($result);
         } catch (\InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], 400);
