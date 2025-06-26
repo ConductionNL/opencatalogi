@@ -410,7 +410,12 @@ class DirectoryService
                 );
             }
             
-            throw new GuzzleException($error, $e->getCode(), $e);
+            // Re-throw as a RequestException (concrete GuzzleException implementation)
+            if ($e instanceof RequestException) {
+                throw new RequestException($error, $e->getRequest(), $e->getResponse(), $e);
+            } else {
+                throw new RequestException($error, null, null, $e);
+            }
         } catch (\Exception $e) {
             $error = 'Sync failed: ' . $e->getMessage();
             $results['errors'][] = $error;
