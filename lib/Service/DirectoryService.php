@@ -1444,10 +1444,10 @@ class DirectoryService
             try {
                 $listingResult = $objectService->findAll($listingConfig);
                 
-                // Convert listing objects to arrays, expand schemas, and filter out internal properties
+                // Convert listing objects to arrays and filter out internal properties
+                // Note: Don't expand schemas for listings as they already come with expanded schemas from external directories
                 $listings = array_map(function ($object) {
                     $listingData = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-                    $listingData = $this->processSchemaExpansion($listingData);
                     return $this->filterListingProperties($listingData);
                 }, $listingResult['results'] ?? $listingResult ?? []);
 
