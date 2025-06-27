@@ -1,5 +1,5 @@
 <script setup>
-import { objectStore, navigationStore, registerStore, schemaStore } from '../../store/store.js'
+import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -16,14 +16,14 @@ import { objectStore, navigationStore, registerStore, schemaStore } from '../../
 							<DatabaseOutline :size="16" />
 							<span class="card-label">Register:</span>
 						</div>
-						<span class="card-value">{{ registerStore.registerItem?.title || registerStore.registerItem?.id }}</span>
+						<span class="card-value">{{ sourceRegister?.title || sourceRegister?.id || 'Unknown' }}</span>
 					</div>
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<FileTreeOutline :size="16" />
 							<span class="card-label">Schema:</span>
 						</div>
-						<span class="card-value">{{ schemaStore.schemaItem?.title || schemaStore.schemaItem?.id }}</span>
+						<span class="card-value">{{ sourceSchema?.title || sourceSchema?.id || 'Unknown' }}</span>
 					</div>
 				</div>
 			</div>
@@ -131,14 +131,14 @@ import { objectStore, navigationStore, registerStore, schemaStore } from '../../
 
 			<NcNoteCard type="info">
 				Configure how properties should be mapped when migrating from source schema
-				<strong>{{ schemaStore.schemaItem?.title }}</strong> to target schema <strong>{{ targetSchema?.title }}</strong>
+				<strong>{{ sourceSchema?.title }}</strong> to target schema <strong>{{ targetSchema?.title }}</strong>
 			</NcNoteCard>
 
 			<div class="mapping-container">
 				<div class="mapping-header">
 					<div class="source-header">
 						<h4>Source Properties</h4>
-						<span class="schema-name">{{ schemaStore.schemaItem?.title }}</span>
+						<span class="schema-name">{{ sourceSchema?.title }}</span>
 					</div>
 					<div class="arrow-header">
 						→
@@ -196,7 +196,7 @@ import { objectStore, navigationStore, registerStore, schemaStore } from '../../
 						<div class="migration-detail">
 							<strong>Source:</strong>
 							<div class="migration-meta">
-								<span>{{ registerStore.registerItem?.title }} / {{ schemaStore.schemaItem?.title }}</span>
+								<span>{{ sourceRegister?.title }} / {{ sourceSchema?.title }}</span>
 								<span class="object-count">{{ selectedObjects.length }} object{{ selectedObjects.length > 1 ? 's' : '' }}</span>
 							</div>
 						</div>
@@ -377,6 +377,28 @@ export default {
 		}
 	},
 	computed: {
+		sourceRegister() {
+			// Get register info from the first selected object
+			if (this.selectedObjects.length === 0) return null
+			const firstObject = this.selectedObjects[0]
+			const register = firstObject['@self']?.register
+			if (typeof register === 'object') {
+				return register
+			}
+			// If it's just an ID, try to find it in available registers
+			return objectStore.availableRegisters.find(r => r.id === register) || { id: register, title: register }
+		},
+		sourceSchema() {
+			// Get schema info from the first selected object
+			if (this.selectedObjects.length === 0) return null
+			const firstObject = this.selectedObjects[0]
+			const schema = firstObject['@self']?.schema
+			if (typeof schema === 'object') {
+				return schema
+			}
+			// If it's just an ID, try to find it in available schemas
+			return objectStore.availableSchemas.find(s => s.id === schema) || { id: schema, title: schema }
+		},
 		targetPropertyOptions() {
 			const options = this.targetProperties.map(prop => ({
 				label: `${prop.name} (${prop.type})`,
@@ -466,13 +488,13 @@ export default {
 			}
 		},
 		async loadSchemaProperties() {
-			if (!schemaStore.schemaItem || !this.targetSchema) {
+			if (!this.sourceSchema || !this.targetSchema) {
 				return
 			}
 
 			try {
 				// Load source schema properties
-				this.sourceProperties = this.extractSchemaProperties(schemaStore.schemaItem)
+				this.sourceProperties = this.extractSchemaProperties(this.sourceSchema)
 
 				// Load target schema properties
 				const response = await fetch(`/index.php/apps/openregister/api/schemas/${this.targetSchema.id}`)
@@ -539,8 +561,8 @@ export default {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						sourceRegister: registerStore.registerItem.id,
-						sourceSchema: schemaStore.schemaItem.id,
+						sourceRegister: this.sourceRegister.id,
+						sourceSchema: this.sourceSchema.id,
 						targetRegister: this.targetRegister.id,
 						targetSchema: this.targetSchema.id,
 						objects: this.selectedObjects.map(obj => obj.id),

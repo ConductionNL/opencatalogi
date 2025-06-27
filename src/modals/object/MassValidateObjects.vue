@@ -8,7 +8,7 @@
  */
 
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
+import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -178,9 +178,10 @@ export default {
 
 				if (successful.length > 0) {
 					this.success = true
-					// Clear selected objects and refresh the object list
+					// Clear selected objects and refresh the publication list
 					objectStore.selectedObjects = []
-					objectStore.refreshObjectList()
+					// Refresh publications using catalogStore
+					catalogStore.fetchPublications()
 
 					this.closeModalTimeout = setTimeout(() => {
 						this.closeDialog()
@@ -248,4 +249,4 @@ export default {
 	font-size: 0.9em;
 	margin: 0;
 }
-</style> 
+</style>

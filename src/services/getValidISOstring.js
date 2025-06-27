@@ -17,4 +17,4 @@ export default function getValidISOstring(dateString) {
 	// Check if it's a valid date
 	const date = new Date(dateString)
 	return date instanceof Date && !isNaN(date.getTime())
-} 
+}

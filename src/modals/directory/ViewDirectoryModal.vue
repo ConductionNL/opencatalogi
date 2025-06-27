@@ -21,7 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>{{ listing?.name || listing?.title || 'Directory Listing' }}</h2>
-			
+
 			<div v-if="listing" class="directoryDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
@@ -48,8 +48,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="listing.publicationTypes?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Publication Types') }}</h3>
 					<div class="publicationTypesList">
-						<div v-for="publicationType in listing.publicationTypes" 
-							:key="publicationType.id || publicationType" 
+						<div v-for="publicationType in listing.publicationTypes"
+							:key="publicationType.id || publicationType"
 							class="publicationTypeItem">
 							<strong>{{ publicationType.title || publicationType.name || publicationType }}</strong>
 							<span v-if="publicationType.description" class="description">
@@ -216,4 +216,4 @@ export default {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
-</style> 
+</style>

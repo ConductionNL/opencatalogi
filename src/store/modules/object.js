@@ -84,23 +84,119 @@ export const useObjectStore = defineStore('object', {
 				description: 'Unique identifier of the object',
 				enabled: false,
 			},
+			uri: {
+				label: 'URI',
+				key: 'uri',
+				description: 'URI of the object',
+				enabled: false,
+			},
+			version: {
+				label: 'Version',
+				key: 'version',
+				description: 'Version of the object',
+				enabled: false,
+			},
+			register: {
+				label: 'Register',
+				key: 'register',
+				description: 'Register of the object',
+				enabled: false,
+			},
+			schema: {
+				label: 'Schema',
+				key: 'schema',
+				description: 'Schema of the object',
+				enabled: false,
+			},
 			files: {
 				label: 'Files',
 				key: 'files',
 				description: 'Attached files count',
 				enabled: true,
 			},
+			locked: {
+				label: 'Locked',
+				key: 'locked',
+				description: 'Whether the object is locked',
+				enabled: false,
+			},
+			organization: {
+				label: 'Organization',
+				key: 'organization',
+				description: 'Organization owning the object',
+				enabled: false,
+			},
+			validation: {
+				label: 'Validation',
+				key: 'validation',
+				description: 'Validation status of the object',
+				enabled: false,
+			},
+			owner: {
+				label: 'Owner',
+				key: 'owner',
+				description: 'Owner of the object',
+				enabled: false,
+			},
+			application: {
+				label: 'Application',
+				key: 'application',
+				description: 'Application of the object',
+				enabled: false,
+			},
+			folder: {
+				label: 'Folder',
+				key: 'folder',
+				description: 'Folder of the object',
+				enabled: false,
+			},
+			geo: {
+				label: 'Geo',
+				key: 'geo',
+				description: 'Geographic information',
+				enabled: false,
+			},
+			retention: {
+				label: 'Retention',
+				key: 'retention',
+				description: 'Retention policy',
+				enabled: false,
+			},
+			size: {
+				label: 'Size',
+				key: 'size',
+				description: 'Size of the object',
+				enabled: false,
+			},
+			published: {
+				label: 'Published',
+				key: 'published',
+				description: 'Publication date',
+				enabled: false,
+			},
+			depublished: {
+				label: 'Depublished',
+				key: 'depublished',
+				description: 'Depublication date',
+				enabled: false,
+			},
+			deleted: {
+				label: 'Deleted',
+				key: 'deleted',
+				description: 'Deletion date',
+				enabled: false,
+			},
 			created: {
 				label: 'Created',
 				key: 'created',
 				description: 'Creation date and time',
-				enabled: true,
+				enabled: false,
 			},
 			updated: {
 				label: 'Updated',
 				key: 'updated',
 				description: 'Last update date and time',
-				enabled: true,
+				enabled: false,
 			},
 		},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
@@ -315,8 +411,8 @@ export const useObjectStore = defineStore('object', {
 		isAllSelected: (state) => {
 			const publicationCollection = state.collections.publication
 			if (!publicationCollection?.results?.length) return false
-			return publicationCollection.results.every(pub => 
-				state.selectedObjects.includes(pub['@self']?.id || pub.id)
+			return publicationCollection.results.every(pub =>
+				state.selectedObjects.includes(pub['@self']?.id || pub.id),
 			)
 		},
 	},
@@ -429,12 +525,23 @@ export const useObjectStore = defineStore('object', {
 			// Fetch related data in parallel
 			if (object?.id) {
 				console.info('Fetching related data for:', { type, objectId: object.id })
+
+				// For publications, extract schema and register info from the object itself
+				let publicationData = null
+				if (type === 'publication' && object['@self']) {
+					publicationData = {
+						source: 'openregister',
+						schema: object['@self'].schema,
+						register: object['@self'].register,
+					}
+					console.info('Using publication-specific config:', publicationData)
+				}
+
 				const fetchPromises = []
 				const dataTypes = ['logs', 'uses', 'used', 'files']
-				// const dataTypes = ['logs', 'uses']
 				for (const dataType of dataTypes) {
 					if (!this.relatedData[type][dataType]) {
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType))
+						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, {}, publicationData))
 					}
 				}
 				await Promise.all(fetchPromises)
@@ -579,8 +686,12 @@ export const useObjectStore = defineStore('object', {
 			}
 			const baseUrl = '/index.php/apps/openregister/api/objects'
 
+			// Ensure register and schema are strings (extract id if they're objects)
+			const registerId = typeof config.register === 'object' ? config.register?.id || config.register?.uuid : config.register
+			const schemaId = typeof config.schema === 'object' ? config.schema?.id || config.schema?.uuid : config.schema
+
 			// Construct the path with register and schema
-			let url = `${baseUrl}/${config.register}/${config.schema}`
+			let url = `${baseUrl}/${registerId}/${schemaId}`
 
 			// Add ID and action if provided
 			if (id) {
@@ -723,9 +834,10 @@ export const useObjectStore = defineStore('object', {
 		 * @param {string} id - Object ID
 		 * @param {string} dataType - Type of related data (logs, uses, used, files)
 		 * @param {object} params - Query parameters
+		 * @param {object|null} publicationData - Publication data with schema and register info (optional)
 		 * @return {Promise<void>}
 		 */
-		async fetchRelatedData(type, id, dataType, params = {}) {
+		async fetchRelatedData(type, id, dataType, params = {}, publicationData = null) {
 			this.setLoading(`${type}_${id}_${dataType}`, true)
 			this.setState(type, { success: null, error: null })
 
@@ -741,7 +853,7 @@ export const useObjectStore = defineStore('object', {
 					...(dataType === 'uses' || dataType === 'used' ? { _extend: params._extend || params.extend || '@self.schema' } : {}),
 				}
 
-				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams))
+				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams, publicationData))
 				if (!response.ok) throw new Error(`Failed to fetch ${dataType} for ${type}`)
 
 				const data = await response.json()
@@ -851,7 +963,7 @@ export const useObjectStore = defineStore('object', {
 					body: JSON.stringify(objectItem),
 				})
 
-				const data = new ObjectEntity(await response.json())
+				const data = await response.json()
 				this.setObjectItem(data)
 				await this.refreshObjectList({ register, schema })
 				return { response, data }
@@ -1201,8 +1313,8 @@ export const useObjectStore = defineStore('object', {
 			if (this.isAllSelected) {
 				this.selectedObjects = []
 			} else {
-				this.selectedObjects = publicationCollection.results.map(pub => 
-					pub['@self']?.id || pub.id
+				this.selectedObjects = publicationCollection.results.map(pub =>
+					pub['@self']?.id || pub.id,
 				)
 			}
 		},

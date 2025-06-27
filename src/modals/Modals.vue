@@ -32,7 +32,7 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<ObjectModal v-if="navigationStore.modal === 'objectModal'" />
 		<!-- Object Modals -->
 		<ViewObject v-if="navigationStore.modal === 'viewObject'" />
-		<EditObject v-if="navigationStore.modal === 'editObject'" />
+
 		<DeleteObject />
 		<MergeObject v-if="navigationStore.modal === 'mergeObject'" />
 		<UploadObject v-if="navigationStore.modal === 'uploadObject'" />
@@ -76,7 +76,7 @@ import DeleteMenuItemModal from './menuItem/DeleteMenuItemModal.vue'
 import ObjectModal from './object/ObjectModal.vue'
 // Object Modals
 import ViewObject from './object/ViewObject.vue'
-import EditObject from './object/EditObject.vue'
+
 import DeleteObject from './object/DeleteObject.vue'
 import MergeObject from './object/MergeObject.vue'
 import UploadObject from './object/UploadObject.vue'
@@ -119,7 +119,6 @@ export default {
 		ObjectModal,
 		// Object Modals
 		ViewObject,
-		EditObject,
 		DeleteObject,
 		MergeObject,
 		UploadObject,

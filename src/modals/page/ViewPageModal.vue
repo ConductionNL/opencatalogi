@@ -21,7 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>{{ page?.title || 'Page' }}</h2>
-			
+
 			<div v-if="page" class="pageDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
@@ -56,8 +56,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="page.contents?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Content Items') }} ({{ page.contents.length }})</h3>
 					<div class="contentItemsList">
-						<div v-for="(content, index) in page.contents" 
-							:key="content.id || index" 
+						<div v-for="(content, index) in page.contents"
+							:key="content.id || index"
 							class="contentItem">
 							<div class="contentItemHeader">
 								<strong>{{ content.title || content.name || `Content ${index + 1}` }}</strong>
@@ -83,7 +83,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 				<div v-else class="detailSection">
 					<h3>{{ t('opencatalogi', 'Content Items') }}</h3>
-					<p class="emptyContentItems">{{ t('opencatalogi', 'No content items configured') }}</p>
+					<p class="emptyContentItems">
+						{{ t('opencatalogi', 'No content items configured') }}
+					</p>
 				</div>
 
 				<div v-if="page.metadata" class="detailSection">
@@ -326,4 +328,4 @@ export default {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
-</style> 
+</style>

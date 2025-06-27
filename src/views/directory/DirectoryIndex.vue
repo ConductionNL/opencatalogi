@@ -105,9 +105,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<div v-for="listing in paginatedListings" :key="listing.id" class="card">
 							<div class="cardHeader">
 								<h2 v-tooltip.bottom="listing.summary">
-									<component :is="getStatusIcon(listing)" 
-											   :size="20" 
-											   :class="getStatusClass(listing)" />
+									<component :is="getStatusIcon(listing)"
+										:size="20"
+										:class="getStatusClass(listing)" />
 									{{ listing.name || listing.title }}
 									<span v-if="listing.default" class="defaultBadge">
 										<Star :size="14" />
@@ -171,7 +171,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Available') }}</td>
-										<td :class="listing.available ? 'status-success' : 'status-error'">{{ listing.available ? 'Yes' : 'No' }}</td>
+										<td :class="listing.available ? 'status-success' : 'status-error'">
+											{{ listing.available ? 'Yes' : 'No' }}
+										</td>
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Status') }}</td>
@@ -221,10 +223,10 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</td>
 									<td class="tableColumnTitle">
 										<div class="titleContent">
-											<component :is="getStatusIcon(listing)" 
-													   :size="16" 
-													   :class="getStatusClass(listing)" 
-													   style="margin-right: 8px;" />
+											<component :is="getStatusIcon(listing)"
+												:size="16"
+												:class="getStatusClass(listing)"
+												style="margin-right: 8px;" />
 											<strong>{{ listing.name || listing.title }}</strong>
 											<span v-if="listing.default" class="defaultBadge">
 												<Star :size="12" />
@@ -243,7 +245,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</td>
 									<td>{{ listing.schemaCount || listing.schemas?.length || 0 }}</td>
 									<td>{{ formatDate(listing.lastSync) }}</td>
-									<td :class="getStatusClass(listing)">{{ getStatusLabel(listing) }}</td>
+									<td :class="getStatusClass(listing)">
+										{{ getStatusLabel(listing) }}
+									</td>
 									<td class="tableColumnActions">
 										<NcActions :primary="false">
 											<template #icon>
@@ -445,16 +449,16 @@ export default {
 		},
 		formatDate(dateString) {
 			if (!dateString) return 'Never'
-			
+
 			try {
 				const date = new Date(dateString)
 				if (isNaN(date.getTime())) return 'Invalid'
-				
+
 				const now = new Date()
 				const diffMs = now - date
 				const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
 				const diffDays = Math.floor(diffHours / 24)
-				
+
 				if (diffHours < 1) {
 					return 'Just now'
 				} else if (diffHours < 24) {
@@ -465,7 +469,7 @@ export default {
 					return date.toLocaleDateString('nl-NL', {
 						year: 'numeric',
 						month: 'short',
-						day: 'numeric'
+						day: 'numeric',
 					})
 				}
 			} catch (e) {
@@ -476,7 +480,7 @@ export default {
 			try {
 				// Show loading state
 				this.$set(listing, 'syncing', true)
-				
+
 				// Call the directory sync endpoint
 				const response = await fetch(generateUrl('/apps/opencatalogi/api/directory'), {
 					method: 'POST',
@@ -484,20 +488,20 @@ export default {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						directory: listing.directory
-					})
+						directory: listing.directory,
+					}),
 				})
-				
+
 				const result = await response.json()
-				
+
 				if (response.ok) {
 					// Refresh the listings collection to show updated data
 					await objectStore.fetchCollection('listing')
-					
+
 					// Show success notification
 					OC.Notification.showMessage(
 						`Directory "${listing.title || listing.name}" synced successfully`,
-						{ type: 'success' }
+						{ type: 'success' },
 					)
 				} else {
 					throw new Error(result.message || 'Sync failed')
@@ -506,7 +510,7 @@ export default {
 				console.error('Failed to sync directory:', error)
 				OC.Notification.showMessage(
 					`Failed to sync directory: ${error.message}`,
-					{ type: 'error' }
+					{ type: 'error' },
 				)
 			} finally {
 				// Remove loading state
@@ -518,35 +522,35 @@ export default {
 				// Update the listing locally first for immediate UI feedback
 				const newAvailableState = !listing.available
 				this.$set(listing, 'available', newAvailableState)
-				
+
 				// Update the listing on the server
 				const updatedData = {
 					...listing,
-					available: newAvailableState
+					available: newAvailableState,
 				}
-				
+
 				await objectStore.updateObject('listing', listing.id, updatedData)
-				
+
 				// Show success notification
 				OC.Notification.showMessage(
 					`Directory "${listing.title || listing.name}" ${newAvailableState ? 'enabled' : 'disabled'}`,
-					{ type: 'success' }
+					{ type: 'success' },
 				)
 			} catch (error) {
 				// Revert the local change on error
 				this.$set(listing, 'available', !listing.available)
-				
+
 				console.error('Failed to toggle available state:', error)
 				OC.Notification.showMessage(
 					`Failed to update directory: ${error.message}`,
-					{ type: 'error' }
+					{ type: 'error' },
 				)
 			}
 		},
 		async toggleDefault(listing) {
 			try {
 				const newDefaultState = !listing.default
-				
+
 				// If setting as default, first remove default from all other listings
 				if (newDefaultState) {
 					const allListings = this.filteredListings
@@ -556,7 +560,7 @@ export default {
 							try {
 								await objectStore.updateObject('listing', otherListing.id, {
 									...otherListing,
-									default: false
+									default: false,
 								})
 							} catch (error) {
 								console.warn('Failed to remove default from other listing:', error)
@@ -564,30 +568,30 @@ export default {
 						}
 					}
 				}
-				
+
 				// Update the current listing
 				this.$set(listing, 'default', newDefaultState)
-				
+
 				const updatedData = {
 					...listing,
-					default: newDefaultState
+					default: newDefaultState,
 				}
-				
+
 				await objectStore.updateObject('listing', listing.id, updatedData)
-				
+
 				// Show success notification
 				OC.Notification.showMessage(
 					`Directory "${listing.title || listing.name}" ${newDefaultState ? 'set as default' : 'removed as default'}`,
-					{ type: 'success' }
+					{ type: 'success' },
 				)
 			} catch (error) {
 				// Revert the local change on error
 				this.$set(listing, 'default', !listing.default)
-				
+
 				console.error('Failed to toggle default state:', error)
 				OC.Notification.showMessage(
 					`Failed to update directory: ${error.message}`,
-					{ type: 'error' }
+					{ type: 'error' },
 				)
 			}
 		},
