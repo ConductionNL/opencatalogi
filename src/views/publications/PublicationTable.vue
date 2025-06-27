@@ -60,6 +60,15 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							</template>
 							Depublish
 						</NcActionButton>
+						<NcActionButton
+							:disabled="selectedPublications.length === 0"
+							close-after-click
+							@click="bulkValidatePublications">
+							<template #icon>
+								<CheckCircle :size="20" />
+							</template>
+							Validate
+						</NcActionButton>
 					</NcActions>
 
 					<!-- View Mode Switch -->
@@ -131,24 +140,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							<FormatColumns :size="20" />
 						</template>
 
-						<!-- Properties Section -->
-						<NcActionCaption name="Properties" />
-						<NcActionCheckbox
-							v-for="(property, propertyName) in objectStore.properties"
-							:key="`prop_${propertyName}`"
-							:checked="objectStore.columnFilters[`prop_${propertyName}`]"
-							@update:checked="(status) => objectStore.updateColumnFilter(`prop_${propertyName}`, status)">
-							{{ property.label }}
-						</NcActionCheckbox>
-
-						<template v-if="!Object.keys(objectStore.properties || {}).length">
-							<NcActionText>
-								No properties available. Publication schema properties will appear here.
-							</NcActionText>
-						</template>
-
 						<!-- Metadata Section -->
-						<NcActionSeparator />
 						<NcActionCaption name="Metadata" />
 						<NcActionCheckbox
 							v-for="meta in metadataColumns"
@@ -183,10 +175,10 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						<div v-for="publication in paginatedPublications" :key="publication.id" class="card">
 							<div class="cardHeader">
 								<h2 v-tooltip.bottom="publication.summary">
-									<ListBoxOutline v-if="publication['@self']?.published" :size="20" />
+									<Publish v-if="publication['@self']?.published" :size="20" />
 									<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished" :size="20" />
 									<AlertOutline v-else-if="publication['@self']?.depublished" :size="20" />
-									{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}
+									{{ publication['@self']?.name || publication.title || publication.name || publication.titel || publication.naam || publication.id }}
 								</h2>
 								<NcActions :primary="true" menu-name="Actions">
 									<template #icon>
@@ -195,12 +187,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									<NcActionButton close-after-click @click="viewPublication(publication)">
 										<template #icon>
 											<Eye :size="20" />
-										</template>
-										View
-									</NcActionButton>
-									<NcActionButton close-after-click @click="editPublication(publication)">
-										<template #icon>
-											<Pencil :size="20" />
 										</template>
 										Edit
 									</NcActionButton>
@@ -342,10 +328,30 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													{{ getValidISOstring(publication['@self']?.[column.key]) ? new Date(publication['@self'][column.key]).toLocaleString() : 'N/A' }}
 												</span>
 												<span v-else-if="column.id === 'meta_name'">
-													<span>{{ publication['@self']?.name || 'N/A' }}</span>
+													<span class="titleWithIcon">
+														<Publish v-if="publication['@self']?.published" :size="16" />
+														<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished" :size="16" />
+														<AlertOutline v-else-if="publication['@self']?.depublished" :size="16" />
+														{{ publication['@self']?.name || 'N/A' }}
+													</span>
 												</span>
 												<span v-else-if="column.id === 'meta_description'">
 													<span>{{ publication['@self']?.description || 'N/A' }}</span>
+												</span>
+												<span v-else-if="column.id === 'meta_published'">
+													{{ publication['@self']?.published ? getValidISOstring(publication['@self'].published) ? new Date(publication['@self'].published).toLocaleString() : 'Yes' : 'No' }}
+												</span>
+												<span v-else-if="column.id === 'meta_depublished'">
+													{{ publication['@self']?.depublished ? getValidISOstring(publication['@self'].depublished) ? new Date(publication['@self'].depublished).toLocaleString() : 'Yes' : 'No' }}
+												</span>
+												<span v-else-if="column.id === 'meta_deleted'">
+													{{ publication['@self']?.deleted ? getValidISOstring(publication['@self'].deleted) ? new Date(publication['@self'].deleted).toLocaleString() : 'Yes' : 'No' }}
+												</span>
+												<span v-else-if="column.id === 'meta_locked'">
+													{{ publication['@self']?.locked ? 'Yes' : 'No' }}
+												</span>
+												<span v-else-if="column.id === 'meta_size'">
+													{{ publication['@self']?.size ? `${publication['@self'].size} bytes` : 'N/A' }}
 												</span>
 												<span v-else>
 													{{ publication['@self']?.[column.key] || 'N/A' }}
@@ -361,19 +367,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													<template #icon>
 														<Eye :size="20" />
 													</template>
-													View
-												</NcActionButton>
-												<NcActionButton close-after-click @click="editPublication(publication)">
-													<template #icon>
-														<Pencil :size="20" />
-													</template>
 													Edit
-												</NcActionButton>
-												<NcActionButton close-after-click @click="mergePublication(publication)">
-													<template #icon>
-														<Merge :size="20" />
-													</template>
-													Merge
 												</NcActionButton>
 												<NcActionButton
 													v-if="shouldShowPublishAction(publication)"
@@ -448,6 +442,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Merge from 'vue-material-design-icons/Merge.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 
 import PaginationComponent from '../../components/PaginationComponent.vue'
 
@@ -484,6 +479,7 @@ export default {
 		Merge,
 		FormatListChecks,
 		FormatColumns,
+		CheckCircle,
 		PaginationComponent,
 	},
 	data() {
@@ -530,7 +526,33 @@ export default {
 			return ''
 		},
 		metadataColumns() {
-			return Object.entries(objectStore.metadata || {}).map(([id, meta]) => ({
+			// Define all available metadata columns
+			const allMetadata = {
+				meta_name: { label: 'Name', key: 'name' },
+				meta_description: { label: 'Description', key: 'description' },
+				meta_id: { label: 'ID', key: 'id' },
+				meta_uri: { label: 'URI', key: 'uri' },
+				meta_version: { label: 'Version', key: 'version' },
+				meta_register: { label: 'Register', key: 'register' },
+				meta_schema: { label: 'Schema', key: 'schema' },
+				meta_files: { label: 'Files', key: 'files' },
+				meta_locked: { label: 'Locked', key: 'locked' },
+				meta_organization: { label: 'Organization', key: 'organization' },
+				meta_validation: { label: 'Validation', key: 'validation' },
+				meta_owner: { label: 'Owner', key: 'owner' },
+				meta_application: { label: 'Application', key: 'application' },
+				meta_folder: { label: 'Folder', key: 'folder' },
+				meta_geo: { label: 'Geo', key: 'geo' },
+				meta_retention: { label: 'Retention', key: 'retention' },
+				meta_size: { label: 'Size', key: 'size' },
+				meta_published: { label: 'Published', key: 'published' },
+				meta_depublished: { label: 'Depublished', key: 'depublished' },
+				meta_deleted: { label: 'Deleted', key: 'deleted' },
+				meta_created: { label: 'Created', key: 'created' },
+				meta_updated: { label: 'Updated', key: 'updated' },
+			}
+			
+			return Object.entries(allMetadata).map(([id, meta]) => ({
 				id,
 				...meta,
 			}))
@@ -612,14 +634,14 @@ export default {
 			this.selectedPublications = []
 		},
 		viewPublication(publication) {
-			// Set the publication for viewing and open the view modal
+			// Set the publication for viewing and open the view modal (now used for editing)
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setModal('viewObject')
 		},
 		editPublication(publication) {
 			// Set the publication for editing and open the edit modal
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('objectModal')
+			navigationStore.setModal('editObject')
 		},
 		copyPublication(publication) {
 			// Set the publication for copying and open the copy dialog
@@ -746,6 +768,23 @@ export default {
 			// Open the mass depublish modal
 			navigationStore.setDialog('massDepublishObjects')
 		},
+		bulkValidatePublications() {
+			if (this.selectedPublications.length === 0) return
+
+			// Prepare selected publications data for validation
+			const selectedPublicationsData = this.filteredPublications
+				.filter(pub => this.selectedPublications.includes(pub['@self']?.id || pub.id))
+				.map(pub => ({
+					...pub,
+					id: pub['@self']?.id || pub.id,
+				}))
+
+			// Store selected publications for the validate modal
+			objectStore.selectedObjects = selectedPublicationsData
+
+			// Open the mass validate modal
+			navigationStore.setDialog('massValidateObjects')
+		},
 		shouldShowPublishAction(publication) {
 			const published = publication['@self']?.published
 			const depublished = publication['@self']?.depublished
@@ -837,7 +876,7 @@ export default {
 
 .cardGrid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+	grid-template-columns: repeat(2, 1fr);
 	gap: 20px;
 	margin-bottom: 20px;
 }
