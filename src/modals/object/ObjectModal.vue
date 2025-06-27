@@ -320,6 +320,19 @@ export default {
 			},
 			deep: true,
 		},
+		'navigationStore.modal': {
+			handler(newValue) {
+				if (newValue === 'objectModal') {
+					// Reinitialize when modal opens
+					this.$nextTick(() => {
+						// Give the store time to update
+						setTimeout(() => {
+							this.initializeData()
+						}, 10)
+					})
+				}
+			},
+		},
 		jsonData: {
 			handler(newValue) {
 				if (this.activeTab === 1 && this.isValidJson(newValue)) {
@@ -339,13 +352,18 @@ export default {
 	mounted() {
 		this.initializeData()
 	},
+	beforeDestroy() {
+		clearTimeout(this.closeModalTimeout)
+	},
 	methods: {
 		initializeData() {
 			const activeCatalog = objectStore.getActiveObject('catalog')
 
 			// Set selected catalog based on active catalog
-			const catalogMatch = objectStore.getCollection('catalog').results
-				.find(catalog => catalog.id === activeCatalog.id)
+			const catalogMatch = activeCatalog
+				? objectStore.getCollection('catalog').results
+					.find(catalog => catalog.id === activeCatalog.id)
+				: null
 
 			this.selectedCatalogus = catalogMatch
 				? {
@@ -354,8 +372,47 @@ export default {
 				}
 				: null
 
+			// If no catalog is selected but there's only one available, auto-select it
+			if (!this.selectedCatalogus && objectStore.getCollection('catalog').results.length === 1) {
+				const onlyCatalog = objectStore.getCollection('catalog').results[0]
+				this.selectedCatalogus = {
+					id: onlyCatalog.id,
+					label: onlyCatalog.title,
+				}
+				// Also set it as the active catalog in the store
+				objectStore.setActiveObject('catalog', onlyCatalog)
+			}
+
 			const activeObject = objectStore.getActiveObject('publication')
-			this.isNewObject = !activeObject?.['@self']?.id
+			// Update activeCatalog reference in case we auto-selected one above
+			const updatedActiveCatalog = objectStore.getActiveObject('catalog')
+
+			// Check if we're in create mode based on navigation transfer data
+			const transferData = navigationStore.getTransferData()
+			const isCreateMode = transferData === 'ignore selectedCatalogus' || transferData === 'create'
+
+			// Force new object detection if in create mode or if activeObject is null/empty
+			if (isCreateMode || activeObject === null || activeObject === undefined || Object.keys(activeObject || {}).length === 0) {
+				this.isNewObject = true
+			} else {
+				// More robust detection of new vs existing objects
+				this.isNewObject = !activeObject || (!activeObject?.['@self']?.id && !activeObject?.id)
+			}
+
+			// Temporary debug to understand the state
+			if (window.location.hostname === 'nextcloud.local') {
+				// eslint-disable-next-line no-console
+				console.log('ObjectModal debug:', {
+					activeObject,
+					activeCatalog,
+					updatedActiveCatalog,
+					selectedCatalogus: this.selectedCatalogus,
+					transferData,
+					isCreateMode,
+					isNewObject: this.isNewObject,
+					objectKeys: activeObject ? Object.keys(activeObject) : 'null',
+				})
+			}
 
 			if (!this.isNewObject) { // is edit modal
 				// Initialize form with existing object data
@@ -379,17 +436,17 @@ export default {
 				}
 			} else {
 				// For new objects, auto-select register/schema if catalog only has one
-				if (activeCatalog.registers.length === 1) {
+				if (updatedActiveCatalog && updatedActiveCatalog.registers && updatedActiveCatalog.registers.length === 1) {
 					const register = objectStore.availableRegisters
-						.find(register => register.id === activeCatalog.registers[0])
+						.find(register => register.id === updatedActiveCatalog.registers[0])
 					this.selectedRegister = register && {
 						id: register.id,
 						label: register.title,
 					}
 
-					if (activeCatalog.schemas.length === 1) {
+					if (updatedActiveCatalog.schemas && updatedActiveCatalog.schemas.length === 1) {
 						const schema = objectStore.availableSchemas
-							.find(schema => schema.id === activeCatalog.schemas[0])
+							.find(schema => schema.id === updatedActiveCatalog.schemas[0])
 						this.selectedSchema = schema && {
 							id: schema.id,
 							label: schema.title,
@@ -409,7 +466,16 @@ export default {
 
 			const method = this.isNewObject ? 'POST' : 'PUT'
 			const BASE_URL = `/index.php/apps/openregister/api/objects/${this.selectedRegister.id}/${this.selectedSchema.id}`
-			const FETCH_URL = `${BASE_URL}${this.isNewObject ? '' : `/${this.selectedSchema.id}`}`
+
+			let FETCH_URL = BASE_URL
+			if (!this.isNewObject) {
+				const activeObject = objectStore.getActiveObject('publication')
+				const objectId = activeObject?.['@self']?.id || activeObject?.id
+				if (!objectId) {
+					throw new Error('Cannot update object: no object ID found')
+				}
+				FETCH_URL = `${BASE_URL}/${objectId}`
+			}
 			try {
 				let dataToSave
 				if (this.activeTab === 1) {
@@ -433,23 +499,49 @@ export default {
 					},
 				})
 
-				this.success = response.ok
 				if (response.ok) {
-					const newPublication = await response.json()
-					this.closeModalTimeout = setTimeout(this.closeModal, 2000)
-					catalogStore.refreshPublications()
-					objectStore.setActiveObject('publication', newPublication)
+					const responseData = await response.json()
+					this.success = true
+
+					if (responseData) {
+						const publicationId = responseData.id || responseData['@self']?.id || null
+						const publicationData = {
+							...responseData,
+							id: publicationId,
+						}
+
+						// Set the active object directly in the store without related data fetch
+						// This avoids the configuration error since publications might not be properly registered yet
+						objectStore.activeObjects = {
+							...objectStore.activeObjects,
+							publication: publicationData,
+						}
+
+						// Initialize related data structure without fetching
+						objectStore.relatedData = {
+							...objectStore.relatedData,
+							publication: {
+								logs: null,
+								uses: null,
+								used: null,
+								files: null,
+							},
+						}
+
+						this.closeModalTimeout = setTimeout(this.closeModal, 2000)
+						catalogStore.refreshPublications()
+						catalogStore.fetchPublications()
+					}
+				} else {
+					this.success = false
+					const errorData = await response.json().catch(() => ({ message: 'Unknown error' }))
+					this.error = errorData.message || 'Failed to save object'
 				}
-				catalogStore.fetchPublications()
-				response.json().then((data) => {
-					objectStore.setActiveObject('publication', { ...data, id: data.id || data['@self'].id })
-				})
 			} catch (e) {
 				this.error = e.message || 'Failed to save object'
 				this.success = false
 			} finally {
 				this.loading = false
-
 			}
 		},
 		updateFormFromJson() {
@@ -500,6 +592,12 @@ export default {
 			this.error = null
 			this.formData = {}
 			this.jsonData = ''
+			this.activeTab = 0
+			// Reset selections
+			this.selectedCatalogus = null
+			this.selectedRegister = null
+			this.selectedSchema = null
+			this.isNewObject = false
 		},
 
 		getFieldValue(key) {
