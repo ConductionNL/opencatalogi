@@ -10,11 +10,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<div class="detail-grid">
 			<div class="detail-item">
 				<span class="detail-label">Register:</span>
-				                            <span class="detail-value">{{ catalogStore.catalogiItem?.title || catalogStore.catalogiItem?.id }}</span>
+				<span class="detail-value">{{ catalogStore.catalogiItem?.title || catalogStore.catalogiItem?.id }}</span>
 			</div>
 			<div class="detail-item">
 				<span class="detail-label">Schema:</span>
-				                            <span class="detail-value">{{ catalogStore.schemaItem?.title || catalogStore.schemaItem?.id }}</span>
+				<span class="detail-value">{{ catalogStore.schemaItem?.title || catalogStore.schemaItem?.id }}</span>
 			</div>
 		</div>
 
@@ -659,7 +659,7 @@ export default {
 				// Use the object store method for consistent API handling
 				const result = await objectStore.mergeObjects({
 					                                    register: catalogStore.catalogiItem.id,
-                                    schema: catalogStore.schemaItem.id,
+					schema: catalogStore.schemaItem.id,
 					sourceObjectId: this.sourceObject['@self'].id,
 					target: this.selectedTargetObject['@self'].id,
 					object: finalMergedData,

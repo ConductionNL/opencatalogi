@@ -157,15 +157,15 @@ export default {
 					this.selectedObjects.map(async (obj) => {
 						try {
 							// Extract register and schema IDs (handle objects)
-							const registerId = typeof obj['@self']?.register === 'object' 
-								? obj['@self'].register?.id || obj['@self'].register?.uuid 
+							const registerId = typeof obj['@self']?.register === 'object'
+								? obj['@self'].register?.id || obj['@self'].register?.uuid
 								: obj['@self']?.register
-							const schemaId = typeof obj['@self']?.schema === 'object' 
-								? obj['@self'].schema?.id || obj['@self'].schema?.uuid 
+							const schemaId = typeof obj['@self']?.schema === 'object'
+								? obj['@self'].schema?.id || obj['@self'].schema?.uuid
 								: obj['@self']?.schema
-							
+
 							const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${obj.id}/depublish`
-							
+
 							const response = await fetch(endpoint, {
 								method: 'POST',
 							})

@@ -21,7 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>{{ menu?.title || 'Menu' }}</h2>
-			
+
 			<div v-if="menu" class="menuDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
@@ -69,8 +69,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="menu.items?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Menu Items') }} ({{ menu.items.length }})</h3>
 					<div class="menuItemsList">
-						<div v-for="(item, index) in menu.items" 
-							:key="item.id || index" 
+						<div v-for="(item, index) in menu.items"
+							:key="item.id || index"
 							class="menuItem">
 							<div class="menuItemHeader">
 								<strong>{{ item.title || item.name || `Item ${index + 1}` }}</strong>
@@ -82,7 +82,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								{{ item.description }}
 							</div>
 							<div v-if="item.url || item.link" class="menuItemLink">
-								<strong>Link:</strong> 
+								<strong>Link:</strong>
 								<a :href="item.url || item.link" target="_blank" rel="noopener noreferrer">
 									{{ item.url || item.link }}
 								</a>
@@ -99,7 +99,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 				<div v-else class="detailSection">
 					<h3>{{ t('opencatalogi', 'Menu Items') }}</h3>
-					<p class="emptyMenuItems">{{ t('opencatalogi', 'No menu items configured') }}</p>
+					<p class="emptyMenuItems">
+						{{ t('opencatalogi', 'No menu items configured') }}
+					</p>
 				</div>
 
 				<div v-if="menu.metadata" class="detailSection">
@@ -346,4 +348,4 @@ export default {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
-</style> 
+</style>

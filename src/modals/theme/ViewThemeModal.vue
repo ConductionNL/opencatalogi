@@ -21,7 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>{{ theme?.title || 'Theme' }}</h2>
-			
+
 			<div v-if="theme" class="themeDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
@@ -56,14 +56,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="theme.image || theme.screenshot" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Visual Preview') }}</h3>
 					<div class="imageContainer">
-						<img v-if="theme.image" 
-							:src="theme.image" 
+						<img v-if="theme.image"
+							:src="theme.image"
 							:alt="theme.title || 'Theme preview'"
-							class="themeImage" />
-						<img v-else-if="theme.screenshot" 
-							:src="theme.screenshot" 
+							class="themeImage">
+						<img v-else-if="theme.screenshot"
+							:src="theme.screenshot"
 							:alt="theme.title || 'Theme screenshot'"
-							class="themeImage" />
+							class="themeImage">
 					</div>
 				</div>
 
@@ -322,4 +322,4 @@ export default {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
-</style> 
+</style>

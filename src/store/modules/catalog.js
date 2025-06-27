@@ -121,14 +121,14 @@ export const useCatalogStore = defineStore('catalog', {
 				_limit: params.limit || this.pagination.limit || 20,
 				_extend: '@self.schema,@self.register', // Always include schema and register info
 			}
-			
+
 			// Add any additional parameters (excluding page and limit to avoid duplication)
 			Object.keys(params).forEach(key => {
 				if (key !== 'page' && key !== 'limit') {
 					searchParams[key] = params[key]
 				}
 			})
-			
+
 			const queryParams = new URLSearchParams(searchParams)
 
 			try {

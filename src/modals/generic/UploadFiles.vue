@@ -542,11 +542,11 @@ export default {
 
 		// Utility method to get register and schema IDs from publication object
 		getRegisterSchemaIds(publication) {
-			const registerId = typeof publication['@self'].register === 'object' 
-				? publication['@self'].register?.id || publication['@self'].register?.uuid 
+			const registerId = typeof publication['@self'].register === 'object'
+				? publication['@self'].register?.id || publication['@self'].register?.uuid
 				: publication['@self'].register
-			const schemaId = typeof publication['@self'].schema === 'object' 
-				? publication['@self'].schema?.id || publication['@self'].schema?.uuid 
+			const schemaId = typeof publication['@self'].schema === 'object'
+				? publication['@self'].schema?.id || publication['@self'].schema?.uuid
 				: publication['@self'].schema
 			return { registerId, schemaId }
 		},
@@ -578,7 +578,7 @@ export default {
 
 			const publication = objectStore.getActiveObject('publication')
 			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-			
+
 			return await axios.post(
 				`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/filesMultipart`,
 				formData,

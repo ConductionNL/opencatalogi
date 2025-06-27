@@ -60,15 +60,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							</template>
 							Depublish
 						</NcActionButton>
-						<NcActionButton
-							:disabled="selectedPublications.length === 0"
-							close-after-click
-							@click="bulkValidatePublications">
-							<template #icon>
-								<CheckCircle :size="20" />
-							</template>
-							Validate
-						</NcActionButton>
 					</NcActions>
 
 					<!-- View Mode Switch -->
@@ -120,14 +111,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							</template>
 							Refresh
 						</NcActionButton>
-						<NcActionButton
-							title="View documentation about publications"
-							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
-							<template #icon>
-								<HelpCircleOutline :size="20" />
-							</template>
-							Help
-						</NcActionButton>
 					</NcActions>
 
 					<!-- Columns Actions -->
@@ -174,12 +157,21 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<div class="cardGrid">
 						<div v-for="publication in paginatedPublications" :key="publication.id" class="card">
 							<div class="cardHeader">
-															<h2 v-tooltip.bottom="publication.summary">
-								<ListBoxOutline v-if="publication['@self']?.published" :size="20" />
-								<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished" :size="20" />
-								<AlertOutline v-else-if="publication['@self']?.depublished" :size="20" />
-								{{ publication['@self']?.name || publication.title || publication.name || publication.titel || publication.naam || publication.id }}
-							</h2>
+								<h2 v-tooltip.bottom="publication.summary">
+									<ListBoxOutline v-if="publication['@self']?.published"
+										v-tooltip="'Published: This publication is live and publicly available'"
+										:size="20"
+										class="published-icon" />
+									<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished"
+										v-tooltip="'Draft: This publication is not yet published'"
+										:size="20"
+										class="unpublished-icon" />
+									<AlertOutline v-else-if="publication['@self']?.depublished"
+										v-tooltip="'Depublished: This publication has been withdrawn from public access'"
+										:size="20"
+										class="depublished-icon" />
+									{{ publication['@self']?.name || publication.title || publication.name || publication.titel || publication.naam || publication.id }}
+								</h2>
 								<NcActions :primary="true" menu-name="Actions">
 									<template #icon>
 										<DotsHorizontal :size="20" />
@@ -302,8 +294,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												{{ column.label }}
 											</span>
 										</th>
-										<th class="tableColumnActions columnTitle">
-											{{ t('opencatalogi', 'Actions') }}
+										<th class="tableColumnActions">
+											<!-- Empty header for actions column -->
 										</th>
 									</tr>
 								</thead>
@@ -320,36 +312,47 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</td>
 										<td v-for="(column, index) in objectStore.enabledColumns"
 											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`">
-											<span v-if="column.id === 'files'">
+											<span v-if="column.id === 'meta_files'">
 												<NcCounterBubble :count="Array.isArray(publication['@self']?.files) ? publication['@self'].files.length : (publication['@self']?.files ? 1 : 0)" />
 											</span>
-											<span v-else-if="column.id === 'created' || column.id === 'updated'">
+											<span v-else-if="column.id === 'meta_created' || column.id === 'meta_updated'">
 												{{ getValidISOstring(publication['@self']?.[column.key]) ? new Date(publication['@self'][column.key]).toLocaleString() : (publication['@self']?.[column.key] || 'N/A') }}
 											</span>
-											<span v-else-if="column.id === 'name'">
+											<span v-else-if="column.id === 'meta_name'">
 												<span class="titleWithIcon">
-													<ListBoxOutline v-if="publication['@self']?.published" :size="16" />
-													<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished" :size="16" />
-													<AlertOutline v-else-if="publication['@self']?.depublished" :size="16" />
-													{{ publication['@self']?.name || 'N/A' }}
+													<ListBoxOutline v-if="publication['@self']?.published"
+														v-tooltip="'Published: This publication is live and publicly available'"
+														:size="16"
+														class="published-icon" />
+													<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished"
+														v-tooltip="'Draft: This publication is not yet published'"
+														:size="16"
+														class="unpublished-icon" />
+													<AlertOutline v-else-if="publication['@self']?.depublished"
+														v-tooltip="'Depublished: This publication has been withdrawn from public access'"
+														:size="16"
+														class="depublished-icon" />
+													<span class="truncatedName" :title="publication['@self']?.name || 'N/A'">
+														{{ publication['@self']?.name || 'N/A' }}
+													</span>
 												</span>
 											</span>
-											<span v-else-if="column.id === 'description'">
+											<span v-else-if="column.id === 'meta_description'">
 												<span>{{ publication['@self']?.description || 'N/A' }}</span>
 											</span>
-											<span v-else-if="column.id === 'published'">
+											<span v-else-if="column.id === 'meta_published'">
 												{{ publication['@self']?.published ? getValidISOstring(publication['@self'].published) ? new Date(publication['@self'].published).toLocaleString() : publication['@self'].published : 'No' }}
 											</span>
-											<span v-else-if="column.id === 'depublished'">
+											<span v-else-if="column.id === 'meta_depublished'">
 												{{ publication['@self']?.depublished ? getValidISOstring(publication['@self'].depublished) ? new Date(publication['@self'].depublished).toLocaleString() : publication['@self'].depublished : 'No' }}
 											</span>
-											<span v-else-if="column.id === 'deleted'">
+											<span v-else-if="column.id === 'meta_deleted'">
 												{{ publication['@self']?.deleted ? getValidISOstring(publication['@self'].deleted) ? new Date(publication['@self'].deleted).toLocaleString() : publication['@self'].deleted : 'No' }}
 											</span>
-											<span v-else-if="column.id === 'locked'">
+											<span v-else-if="column.id === 'meta_locked'">
 												{{ publication['@self']?.locked ? 'Yes' : 'No' }}
 											</span>
-											<span v-else-if="column.id === 'size'">
+											<span v-else-if="column.id === 'meta_size'">
 												{{ publication['@self']?.size ? `${publication['@self'].size} bytes` : 'N/A' }}
 											</span>
 											<span v-else>
@@ -497,8 +500,8 @@ export default {
 			return this.filteredPublications
 		},
 		allSelected() {
-			return this.filteredPublications.length > 0 && this.filteredPublications.every(publication => 
-				this.selectedPublications.includes(publication['@self']?.id || publication.id)
+			return this.filteredPublications.length > 0 && this.filteredPublications.every(publication =>
+				this.selectedPublications.includes(publication['@self']?.id || publication.id),
 			)
 		},
 		someSelected() {
@@ -544,8 +547,8 @@ export default {
 		},
 		toggleSelectAll(checked) {
 			if (checked) {
-				this.selectedPublications = this.filteredPublications.map(publication => 
-					publication['@self']?.id || publication.id
+				this.selectedPublications = this.filteredPublications.map(publication =>
+					publication['@self']?.id || publication.id,
 				)
 			} else {
 				this.selectedPublications = []
@@ -598,7 +601,7 @@ export default {
 		addPublication() {
 			// Clear any existing object and open the add publication modal
 			objectStore.setActiveObject('publication', null)
-			navigationStore.setModal('objectModal')
+			navigationStore.setModal('viewObject')
 		},
 		refreshPublications() {
 			// Refresh the publication list
@@ -614,7 +617,7 @@ export default {
 		editPublication(publication) {
 			// Set the publication for editing and open the edit modal
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('editObject')
+			navigationStore.setModal('viewObject')
 		},
 		copyPublication(publication) {
 			// Set the publication for copying and open the copy dialog
@@ -625,12 +628,12 @@ export default {
 			// Clear any existing selections to avoid conflicts with mass delete
 			this.selectedPublications = []
 			objectStore.selectedObjects = []
-			
+
 			// Set the publication for deletion and open the delete dialog
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setDialog('deleteObject', { 
-				objectType: 'publication', 
-				dialogTitle: publication['@self']?.name || publication.title || publication.name || publication.id
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'publication',
+				dialogTitle: publication['@self']?.name || publication.title || publication.name || publication.id,
 			})
 		},
 		addAttachment(publication) {
@@ -645,11 +648,11 @@ export default {
 		},
 		// Utility method to get register and schema IDs from publication object
 		getRegisterSchemaIds(publication) {
-			const registerId = typeof publication['@self'].register === 'object' 
-				? publication['@self'].register?.id || publication['@self'].register?.uuid 
+			const registerId = typeof publication['@self'].register === 'object'
+				? publication['@self'].register?.id || publication['@self'].register?.uuid
 				: publication['@self'].register
-			const schemaId = typeof publication['@self'].schema === 'object' 
-				? publication['@self'].schema?.id || publication['@self'].schema?.uuid 
+			const schemaId = typeof publication['@self'].schema === 'object'
+				? publication['@self'].schema?.id || publication['@self'].schema?.uuid
 				: publication['@self'].schema
 			return { registerId, schemaId }
 		},
@@ -820,6 +823,19 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+/* Publication status icon colors */
+.titleWithIcon .material-design-icon.published-icon {
+	color: var(--color-success);
+}
+
+.titleWithIcon .material-design-icon.unpublished-icon {
+	color: var(--color-warning);
+}
+
+.titleWithIcon .material-design-icon.depublished-icon {
+	color: var(--color-error);
 }
 
 .publicationStats {
@@ -1029,4 +1045,12 @@ export default {
 .table-row-selected {
 	background-color: var(--color-primary-light) !important;
 }
-</style> 
+
+.truncatedName {
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: inline-block;
+}
+</style>

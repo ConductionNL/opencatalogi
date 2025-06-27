@@ -51,7 +51,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 			<!-- Ordering Section -->
 			<div class="searchSideBar-content-item">
 				<h3>{{ t('opencatalogi', 'Sort Results') }}</h3>
-				
+
 				<!-- Current ordering display -->
 				<div v-if="Object.keys(searchStore.getOrdering).length > 0" class="currentOrdering">
 					<h4>{{ t('opencatalogi', 'Current Sorting') }}</h4>
@@ -86,8 +86,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 							label="title"
 							track-by="value"
 							:allow-empty="false"
-							:searchable="true">
-						</NcSelect>
+							:searchable="true" />
 						<div class="orderingDirectionButtons">
 							<NcButton
 								:type="'secondary'"
@@ -232,24 +231,24 @@ export default {
 			if (!facetable || (!facetable['@self'] && !facetable.object_fields)) {
 				return []
 			}
-			
+
 			const filters = []
-			
+
 			// Add system metadata filters
 			if (facetable['@self']) {
 				Object.entries(facetable['@self']).forEach(([key, config]) => {
 					if (config.sample_values && config.sample_values.length > 0) {
 						filters.push({
-							key: key, // Use the key directly without @self. prefix to avoid URL encoding issues
+							key, // Use the key directly without @self. prefix to avoid URL encoding issues
 							label: this.formatFilterLabel(key),
 							type: config.type,
 							options: config.sample_values,
-							category: 'system'
+							category: 'system',
 						})
 					}
 				})
 			}
-			
+
 			// Add object field filters
 			if (facetable.object_fields) {
 				Object.entries(facetable.object_fields).forEach(([key, config]) => {
@@ -259,47 +258,47 @@ export default {
 							label: this.formatFilterLabel(key),
 							type: config.type,
 							options: config.sample_values.map(value => ({ value, count: 'N/A' })),
-							category: 'object'
+							category: 'object',
 						})
 					}
 				})
 			}
-			
+
 			return filters
 		},
-		
+
 		/**
 		 * Get system metadata filters
 		 */
 		systemFilters() {
 			return this.availableFilters.filter(f => f.category === 'system')
 		},
-		
+
 		/**
 		 * Get object field filters
 		 */
 		objectFieldFilters() {
 			return this.availableFilters.filter(f => f.category === 'object')
 		},
-		
+
 		/**
 		 * Get available fields for ordering
 		 */
 		orderingOptions() {
 			const options = []
 			const facetable = this.searchStore.getFacetable
-			
+
 			// Add system metadata fields (with @self. prefix for ordering)
 			if (facetable['@self']) {
 				Object.entries(facetable['@self']).forEach(([key, config]) => {
 					options.push({
 						value: `@self.${key}`,
 						title: `${this.formatFilterLabel(key)} (System)`,
-						category: 'system'
+						category: 'system',
 					})
 				})
 			}
-			
+
 			// Add object fields that are suitable for ordering
 			if (facetable.object_fields) {
 				Object.entries(facetable.object_fields).forEach(([key, config]) => {
@@ -307,12 +306,12 @@ export default {
 						options.push({
 							value: key,
 							title: `${this.formatFilterLabel(key)} (Object)`,
-							category: 'object'
+							category: 'object',
 						})
 					}
 				})
 			}
-			
+
 			// Sort options by category and title
 			return options.sort((a, b) => {
 				if (a.category !== b.category) {
@@ -333,12 +332,12 @@ export default {
 	methods: {
 		onSearchTermChange(value) {
 			this.searchStore.setSearchTerm(value)
-			
+
 			// Clear existing timeout
 			if (this.searchTimeout) {
 				clearTimeout(this.searchTimeout)
 			}
-			
+
 			// Set new timeout for real-time search
 			this.searchTimeout = setTimeout(() => {
 				this.performSearch()
@@ -364,9 +363,10 @@ export default {
 			// Automatically search when filters change
 			this.performSearch()
 		},
-		
+
 		/**
 		 * Add ordering for the selected field
+		 * @param direction
 		 */
 		addOrdering(direction) {
 			if (this.selectedOrderField) {
@@ -375,15 +375,16 @@ export default {
 				this.performSearch()
 			}
 		},
-		
+
 		/**
 		 * Remove ordering for a field
+		 * @param field
 		 */
 		removeOrdering(field) {
 			this.searchStore.removeOrdering(field)
 			this.performSearch()
 		},
-		
+
 		/**
 		 * Clear all ordering
 		 */
@@ -391,9 +392,10 @@ export default {
 			this.searchStore.clearOrdering()
 			this.performSearch()
 		},
-		
+
 		/**
 		 * Format filter label for display
+		 * @param key
 		 */
 		formatFilterLabel(key) {
 			// Convert camelCase and snake_case to readable labels
@@ -403,51 +405,56 @@ export default {
 				.replace(/\b\w/g, l => l.toUpperCase())
 				.trim()
 		},
-		
+
 		/**
 		 * Format ordering label for display
+		 * @param field
 		 */
 		formatOrderingLabel(field) {
 			// Remove @self. prefix for display
 			const cleanField = field.replace('@self.', '')
 			return this.formatFilterLabel(cleanField)
 		},
-		
+
 		/**
 		 * Determine if a filter should be shown
+		 * @param key
+		 * @param config
 		 */
 		shouldShowFilter(key, config) {
 			// Skip filters with empty values or very high cardinality
 			if (!config.sample_values || config.sample_values.length === 0) {
 				return false
 			}
-			
+
 			// Skip fields that are likely not useful for filtering
 			const skipFields = ['id', 'extend', 'attachments.endpoint', 'attachments.filename']
 			if (skipFields.includes(key)) {
 				return false
 			}
-			
+
 			// Skip fields with only empty values
 			if (config.sample_values.every(val => val === '' || val === null)) {
 				return false
 			}
-			
+
 			// Show categorical and boolean fields
 			if (config.type === 'boolean' || config.type === 'categorical') {
 				return true
 			}
-			
+
 			// Show string fields with low cardinality
 			if (config.type === 'string' && config.cardinality === 'low') {
 				return true
 			}
-			
+
 			return false
 		},
-		
+
 		/**
 		 * Determine if a field should be available for ordering
+		 * @param key
+		 * @param config
 		 */
 		shouldShowForOrdering(key, config) {
 			// Skip fields that are not useful for ordering
@@ -455,12 +462,12 @@ export default {
 			if (skipFields.includes(key)) {
 				return false
 			}
-			
+
 			// Show date, numeric, and string fields
 			if (['date', 'numeric', 'numeric_string', 'string', 'integer'].includes(config.type)) {
 				return true
 			}
-			
+
 			return false
 		},
 	},

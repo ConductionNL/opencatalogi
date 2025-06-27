@@ -29,9 +29,9 @@ import { useSearchStore } from '../../store/modules/search.ts'
 			<div class="viewActionsBar">
 				<div class="viewInfo">
 					<span class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} publications', { 
-							showing: searchStore.getSearchResults.length, 
-							total: searchStore.getPagination.total || searchStore.getSearchResults.length 
+						{{ t('opencatalogi', 'Showing {showing} of {total} publications', {
+							showing: searchStore.getSearchResults.length,
+							total: searchStore.getPagination.total || searchStore.getSearchResults.length
 						}) }}
 					</span>
 					<span v-if="searchStore.getSelectedPublications.length > 0" class="viewIndicator">
@@ -302,14 +302,14 @@ import { useSearchStore } from '../../store/modules/search.ts'
 </template>
 
 <script>
-import { 
-	NcAppContent, 
-	NcEmptyContent, 
-	NcLoadingIcon, 
-	NcActions, 
-	NcActionButton, 
-	NcCheckboxRadioSwitch, 
-	NcButton
+import {
+	NcAppContent,
+	NcEmptyContent,
+	NcLoadingIcon,
+	NcActions,
+	NcActionButton,
+	NcCheckboxRadioSwitch,
+	NcButton,
 } from '@nextcloud/vue'
 
 // Icons
@@ -357,8 +357,8 @@ export default {
 	},
 	computed: {
 		allSelected() {
-			return this.searchStore.getSearchResults.length > 0 && 
-				   this.searchStore.getSearchResults.every(pub => this.searchStore.getSelectedPublications.includes(pub.id))
+			return this.searchStore.getSearchResults.length > 0
+				   && this.searchStore.getSearchResults.every(pub => this.searchStore.getSelectedPublications.includes(pub.id))
 		},
 		someSelected() {
 			return this.searchStore.getSelectedPublications.length > 0 && !this.allSelected
