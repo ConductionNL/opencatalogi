@@ -1,5 +1,5 @@
 <script setup>
-import { objectStore, schemaStore, catalogiStore, navigationStore } from '../../store/store.js'
+import { objectStore, catalogStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -156,7 +156,7 @@ import { BTabs, BTab } from 'bootstrap-vue'
 import CodeMirror from 'vue-codemirror6'
 import { getTheme } from '../../services/getTheme.js'
 import { json, jsonParseLinter } from '@codemirror/lang-json'
-import UploadFiles from '../file/UploadFiles.vue'
+import UploadFiles from '../generic/UploadFiles.vue'
 
 // Icons
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
@@ -191,10 +191,10 @@ export default {
 	},
 	computed: {
 		currentCatalogi() {
-			return catalogiStore.catalogiItem
+			return catalogStore.catalogiItem
 		},
 		currentSchema() {
-			return schemaStore.schemaItem
+			return catalogStore.schemaItem
 		},
 		schemaProperties() {
 			return this.currentSchema?.properties || {}

@@ -1,5 +1,5 @@
 <script setup>
-import { objectStore, navigationStore, schemaStore, registerStore } from '../../store/store.js'
+import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -182,12 +182,12 @@ export default {
 		initializeSchemas() {
 			this.schemasLoading = true
 
-			schemaStore.refreshSchemaList()
+			catalogStore.refreshSchemaList()
 				.then(() => {
 					this.schemas = {
 						multiple: false,
 						closeOnSelect: true,
-						options: schemaStore.schemaList.map((schema) => ({
+						options: catalogStore.schemaList.map((schema) => ({
 							id: schema.id,
 							label: schema.title,
 						})),
@@ -201,14 +201,14 @@ export default {
 		initializeRegisters() {
 			this.registersLoading = true
 
-			registerStore.refreshRegisterList()
+			catalogStore.refreshCatalogiList()
 				.then(() => {
 					this.registers = {
 						multiple: false,
 						closeOnSelect: true,
-						options: registerStore.registerList.map((register) => ({
-							id: register.id,
-							label: register.title,
+						options: catalogStore.catalogiList.map((catalogi) => ({
+							id: catalogi.id,
+							label: catalogi.title,
 						})),
 						value: null,
 					}

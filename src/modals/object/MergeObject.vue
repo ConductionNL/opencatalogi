@@ -1,5 +1,5 @@
 <script setup>
-import { objectStore, navigationStore, registerStore, schemaStore } from '../../store/store.js'
+import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -10,11 +10,11 @@ import { objectStore, navigationStore, registerStore, schemaStore } from '../../
 		<div class="detail-grid">
 			<div class="detail-item">
 				<span class="detail-label">Register:</span>
-				<span class="detail-value">{{ registerStore.registerItem?.title || registerStore.registerItem?.id }}</span>
+				                            <span class="detail-value">{{ catalogStore.catalogiItem?.title || catalogStore.catalogiItem?.id }}</span>
 			</div>
 			<div class="detail-item">
 				<span class="detail-label">Schema:</span>
-				<span class="detail-value">{{ schemaStore.schemaItem?.title || schemaStore.schemaItem?.id }}</span>
+				                            <span class="detail-value">{{ catalogStore.schemaItem?.title || catalogStore.schemaItem?.id }}</span>
 			</div>
 		</div>
 
@@ -480,13 +480,13 @@ export default {
 			this.searchObjects()
 		},
 		async searchObjects() {
-			if (!registerStore.registerItem || !schemaStore.schemaItem) {
+			                    if (!catalogStore.catalogiItem || !catalogStore.schemaItem) {
 				return
 			}
 
 			this.loading = true
 			try {
-				const response = await fetch(`/index.php/apps/openregister/api/objects/${registerStore.registerItem.id}/${schemaStore.schemaItem.id}?_search=${this.searchTerm}`)
+				                            const response = await fetch(`/index.php/apps/openregister/api/objects/${catalogStore.catalogiItem.id}/${catalogStore.schemaItem.id}?_search=${this.searchTerm}`)
 				const data = await response.json()
 
 				// Filter out the source object
@@ -658,8 +658,8 @@ export default {
 
 				// Use the object store method for consistent API handling
 				const result = await objectStore.mergeObjects({
-					register: registerStore.registerItem.id,
-					schema: schemaStore.schemaItem.id,
+					                                    register: catalogStore.catalogiItem.id,
+                                    schema: catalogStore.schemaItem.id,
 					sourceObjectId: this.sourceObject['@self'].id,
 					target: this.selectedTargetObject['@self'].id,
 					object: finalMergedData,

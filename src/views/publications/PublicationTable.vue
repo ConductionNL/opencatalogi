@@ -563,6 +563,9 @@ export default {
 		catalogStore.fetchPublications()
 		// Initialize column filters for publications
 		objectStore.initializeColumnFilters()
+		// Set published and depublished columns to display by default
+		objectStore.updateColumnFilter('meta_published', true)
+		objectStore.updateColumnFilter('meta_depublished', true)
 	},
 	methods: {
 		setViewMode(mode) {
