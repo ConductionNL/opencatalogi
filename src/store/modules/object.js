@@ -62,6 +62,51 @@ export const useObjectStore = defineStore('object', {
 		success: {},
 		/** @type {{[key: string]: {schema: string, register: string}}} */
 		objectTypeRegistry: {},
+		/** @type {Array<string>} */
+		selectedObjects: [],
+		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
+		metadata: {
+			name: {
+				label: 'Name',
+				key: 'name',
+				description: 'Display name of the object',
+				enabled: true,
+			},
+			description: {
+				label: 'Description',
+				key: 'description',
+				description: 'Description of the object',
+				enabled: false,
+			},
+			objectId: {
+				label: 'ID',
+				key: 'id',
+				description: 'Unique identifier of the object',
+				enabled: false,
+			},
+			files: {
+				label: 'Files',
+				key: 'files',
+				description: 'Attached files count',
+				enabled: true,
+			},
+			created: {
+				label: 'Created',
+				key: 'created',
+				description: 'Creation date and time',
+				enabled: true,
+			},
+			updated: {
+				label: 'Updated',
+				key: 'updated',
+				description: 'Last update date and time',
+				enabled: true,
+			},
+		},
+		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
+		properties: {},
+		/** @type {{[key: string]: boolean}} */
+		columnFilters: {},
 	}),
 
 	getters: {
@@ -208,6 +253,72 @@ export const useObjectStore = defineStore('object', {
 		 * @return {(slug: string) => boolean}
 		 */
 		hasObjectType: (state) => (slug) => !!state.objectTypeRegistry[slug],
+
+		/**
+		 * Get enabled metadata columns
+		 * @param {ObjectState} state - Store state
+		 * @return {Array<{id: string, label: string, key: string, description: string}>}
+		 */
+		enabledMetadata: (state) => {
+			return Object.entries(state.metadata)
+				.filter(([_, meta]) => meta.enabled)
+				.map(([id, meta]) => ({
+					id: `meta_${id}`,
+					...meta,
+				}))
+		},
+
+		/**
+		 * Get enabled property columns
+		 * @param {ObjectState} state - Store state
+		 * @return {Array<{id: string, label: string, key: string, description: string}>}
+		 */
+		enabledProperties: (state) => {
+			return Object.entries(state.properties)
+				.filter(([_, prop]) => prop.enabled)
+				.map(([key, prop]) => ({
+					id: `prop_${key}`,
+					key,
+					...prop,
+				}))
+		},
+
+		/**
+		 * Get all enabled columns (metadata + properties)
+		 * @param {ObjectState} state - Store state
+		 * @return {Array<{id: string, label: string, key: string, description: string}>}
+		 */
+		enabledColumns: (state) => {
+			const metadata = Object.entries(state.metadata)
+				.filter(([_, meta]) => meta.enabled)
+				.map(([id, meta]) => ({
+					id: `meta_${id}`,
+					...meta,
+				}))
+
+			const properties = Object.entries(state.properties)
+				.filter(([_, prop]) => prop.enabled)
+				.map(([key, prop]) => ({
+					id: `prop_${key}`,
+					key,
+					...prop,
+				}))
+
+			return [...metadata, ...properties]
+		},
+
+		/**
+		 * Check if all objects are selected
+		 * @param {ObjectState} state - Store state
+		 * @return {boolean}
+		 */
+		isAllSelected: (state) => {
+			const publicationCollection = state.collections.publication
+			if (!publicationCollection?.results?.length) return false
+			return publicationCollection.results.every(pub => 
+				state.selectedObjects.includes(pub['@self']?.id || pub.id)
+			)
+		},
 	},
 
 	actions: {
@@ -1070,6 +1181,97 @@ export const useObjectStore = defineStore('object', {
 			} finally {
 				this.setLoading(`${type}_${id}_copy`, false)
 			}
+		},
+
+		/**
+		 * Set selected objects
+		 * @param {Array<string>} objects - Array of object IDs
+		 */
+		setSelectedObjects(objects) {
+			this.selectedObjects = objects
+		},
+
+		/**
+		 * Toggle selection of all objects
+		 */
+		toggleSelectAllObjects() {
+			const publicationCollection = this.collections.publication
+			if (!publicationCollection?.results?.length) return
+
+			if (this.isAllSelected) {
+				this.selectedObjects = []
+			} else {
+				this.selectedObjects = publicationCollection.results.map(pub => 
+					pub['@self']?.id || pub.id
+				)
+			}
+		},
+
+		/**
+		 * Update column filter
+		 * @param {string} id - Column ID
+		 * @param {boolean} enabled - Whether the column is enabled
+		 */
+		updateColumnFilter(id, enabled) {
+			this.columnFilters = {
+				...this.columnFilters,
+				[id]: enabled,
+			}
+
+			// Update metadata or properties based on the column ID
+			if (id.startsWith('meta_')) {
+				const metaKey = id.replace('meta_', '')
+				if (this.metadata[metaKey]) {
+					this.metadata[metaKey].enabled = enabled
+				}
+			} else if (id.startsWith('prop_')) {
+				const propKey = id.replace('prop_', '')
+				if (this.properties[propKey]) {
+					this.properties[propKey].enabled = enabled
+				}
+			}
+		},
+
+		/**
+		 * Initialize properties from schema
+		 * @param {object} schema - Schema object
+		 */
+		initializeProperties(schema) {
+			if (!schema?.properties) {
+				this.properties = {}
+				return
+			}
+
+			const properties = {}
+			Object.entries(schema.properties).forEach(([key, property]) => {
+				properties[key] = {
+					label: property.title || key,
+					key,
+					description: property.description || `Property: ${key}`,
+					enabled: false, // Start with properties disabled
+				}
+			})
+
+			this.properties = properties
+		},
+
+		/**
+		 * Initialize column filters
+		 */
+		initializeColumnFilters() {
+			const filters = {}
+
+			// Initialize metadata filters
+			Object.keys(this.metadata).forEach(key => {
+				filters[`meta_${key}`] = this.metadata[key].enabled
+			})
+
+			// Initialize property filters
+			Object.keys(this.properties).forEach(key => {
+				filters[`prop_${key}`] = this.properties[key].enabled
+			})
+
+			this.columnFilters = filters
 		},
 	},
 })
