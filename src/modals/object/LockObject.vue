@@ -4,7 +4,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'lockObject'"
-		:name="'Lock ' + (objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id || 'Object')"
+		:name="'Lock ' + (objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id || 'Publication')"
 		size="normal"
 		:can-close="false">
 		<p v-if="success === null">

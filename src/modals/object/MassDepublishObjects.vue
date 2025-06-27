@@ -12,7 +12,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="`Depublish ${selectedObjects.length} object${selectedObjects.length !== 1 ? 's' : ''}`"
+	<NcDialog :name="`Depublish ${selectedObjects.length} publication${selectedObjects.length !== 1 ? 's' : ''}`"
 		:can-close="false"
 		size="normal">
 		<!-- Object Selection Review -->

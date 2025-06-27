@@ -12,34 +12,34 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="`Validate ${selectedObjects.length} object${selectedObjects.length !== 1 ? 's' : ''}`"
+	<NcDialog :name="`Validate ${selectedObjects.length} publication${selectedObjects.length !== 1 ? 's' : ''}`"
 		:can-close="false"
 		size="normal">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="validate-step">
 			<h3 class="step-title">
-				Confirm Object Validation
+				Confirm Publication Validation
 			</h3>
 
 			<NcNoteCard type="info">
-				Review the selected objects below. You can remove any objects you don't want to validate by clicking the remove button.<br><br>
+				Review the selected publications below. You can remove any publications you don't want to validate by clicking the remove button.<br><br>
 				<strong>When to use mass validation:</strong><br>
 				• After updating the schema to apply new validation rules<br>
-				• When objects need to be re-enriched with updated name/description logic<br>
+				• When publications need to be re-enriched with updated name/description logic<br>
 				• To refresh computed properties or auto-generated fields<br>
-				• After changing schema configuration that affects existing objects<br><br>
-				Objects will be saved without modification to trigger validation and enrichment processes against the current schema.
+				• After changing schema configuration that affects existing publications<br><br>
+				Publications will be saved without modification to trigger validation and enrichment processes against the current schema.
 			</NcNoteCard>
 
 			<div class="selected-objects-container">
-				<h4>Selected Objects ({{ selectedObjects.length }})</h4>
+				<h4>Selected Publications ({{ selectedObjects.length }})</h4>
 
 				<div v-if="selectedObjects.length" class="selected-objects-list">
 					<div v-for="obj in selectedObjects"
 						:key="obj.id"
 						class="selected-object-item">
 						<div class="object-info">
-							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || 'Unnamed Object' }}</strong>
+							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || 'Unnamed Publication' }}</strong>
 							<p class="object-id">
 								ID: {{ obj.id || obj['@self']?.id }}
 							</p>
@@ -54,16 +54,16 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					</div>
 				</div>
 
-				<NcEmptyContent v-else name="No objects selected">
+				<NcEmptyContent v-else name="No publications selected">
 					<template #description>
-						No objects are currently selected for validation.
+						No publications are currently selected for validation.
 					</template>
 				</NcEmptyContent>
 			</div>
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Object{{ selectedObjects.length > 1 ? 's' : '' }} successfully validated</p>
+			<p>Publication{{ selectedObjects.length > 1 ? 's' : '' }} successfully validated</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>

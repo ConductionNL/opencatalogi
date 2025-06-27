@@ -12,7 +12,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		</p>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Object successfully deleted</p>
+			<p>Publication successfully deleted</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -90,7 +90,7 @@ export default {
 				}
 			} catch (error) {
 				this.success = false
-				this.error = error.message || 'An error occurred while deleting the object'
+				this.error = error.message || 'An error occurred while deleting the publication'
 			} finally {
 				this.loading = false
 			}
