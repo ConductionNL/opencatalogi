@@ -519,7 +519,9 @@ export default {
 
 				this.getAllTags()
 
-				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files`)
+				const publication = objectStore.getActiveObject('publication')
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
 
@@ -538,6 +540,16 @@ export default {
 			}
 		},
 
+		// Utility method to get register and schema IDs from publication object
+		getRegisterSchemaIds(publication) {
+			const registerId = typeof publication['@self'].register === 'object' 
+				? publication['@self'].register?.id || publication['@self'].register?.uuid 
+				: publication['@self'].register
+			const schemaId = typeof publication['@self'].schema === 'object' 
+				? publication['@self'].schema?.id || publication['@self'].schema?.uuid 
+				: publication['@self'].schema
+			return { registerId, schemaId }
+		},
 		async createPublicationAttachment(files, reset, share = false) {
 			if (!files) {
 				throw Error('No files to import')
@@ -564,8 +576,11 @@ export default {
 				formData.append('share', share.toString())
 			})
 
+			const publication = objectStore.getActiveObject('publication')
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+			
 			return await axios.post(
-				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/filesMultipart`,
+				`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/filesMultipart`,
 				formData,
 				{
 					headers: {

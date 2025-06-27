@@ -1,5 +1,5 @@
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
+import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -152,9 +152,10 @@ export default {
 					this.success = result.successfulIds.length > 0
 					this.error = result.failedIds.length > 0
 					if (result.successfulIds.length > 0) {
-						// Clear selected objects and refresh the object list
+						// Clear selected objects and refresh the publication list
 						objectStore.selectedObjects = []
-						objectStore.refreshObjectList()
+						// Refresh publications using catalogStore
+						catalogStore.fetchPublications()
 
 						this.closeModalTimeout = setTimeout(() => {
 							this.closeDialog()

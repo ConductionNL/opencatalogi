@@ -204,34 +204,173 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</table>
 								</div>
 							</BTab>
-							<BTab title="Data">
-								<NcNoteCard v-if="success" type="success" class="note-card">
-									<p>Object successfully modified</p>
-								</NcNoteCard>
-								<div class="json-editor">
-									<div :class="`codeMirrorContainer ${getTheme()}`">
-										<CodeMirror
-											v-model="jsonData"
-											:basic="true"
-											placeholder="{ &quot;key&quot;: &quot;value&quot; }"
-											:dark="getTheme() === 'dark'"
-											:linter="jsonParseLinter()"
-											:lang="json()"
-											:extensions="[json()]"
-											:tab-size="2"
-											style="height: 400px" />
-										<NcButton
-											class="format-json-button"
-											type="secondary"
-											size="small"
-											@click="formatJSON">
-											Format JSON
-										</NcButton>
-									</div>
-									<span v-if="!isValidJson(jsonData)" class="error-message">
-										Invalid JSON format
-									</span>
+							<BTab title="Files">
+								<div v-if="paginatedFiles.length > 0" class="viewTableContainer">
+									<table class="viewTable">
+										<thead>
+											<tr class="viewTableRow">
+												<th class="tableColumnCheckbox">
+													<NcCheckboxRadioSwitch
+														:checked="allFilesSelected"
+														:indeterminate="someFilesSelected"
+														@update:checked="toggleSelectAllFiles" />
+												</th>
+												<th class="tableColumnExpanded">
+													Name
+												</th>
+												<th class="tableColumnConstrained">
+													Size
+												</th>
+												<th class="tableColumnConstrained">
+													Type
+												</th>
+												<th class="tableColumnConstrained">
+													Labels
+												</th>
+												<th class="tableColumnActions">
+													<NcActions
+														:force-name="true"
+														:disabled="selectedAttachments.length === 0"
+														:title="selectedAttachments.length === 0 ? 'Select one or more files to use mass actions' : `Mass actions (${selectedAttachments.length} selected)`"
+														:menu-name="`Mass Actions (${selectedAttachments.length})`">
+														<template #icon>
+															<FormatListChecks :size="20" />
+														</template>
+														<NcActionButton
+															:disabled="publishLoading.length > 0 || selectedAttachments.length === 0"
+															@click="publishSelectedFiles">
+															<template #icon>
+																<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
+																<FileOutline v-else :size="20" />
+															</template>
+															Publish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+														</NcActionButton>
+														<NcActionButton
+															:disabled="depublishLoading.length > 0 || selectedAttachments.length === 0"
+															@click="depublishSelectedFiles">
+															<template #icon>
+																<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
+																<LockOutline v-else :size="20" />
+															</template>
+															Depublish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+														</NcActionButton>
+														<NcActionButton
+															:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
+															@click="deleteSelectedFiles">
+															<template #icon>
+																<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
+																<Delete v-else :size="20" />
+															</template>
+															Delete {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+														</NcActionButton>
+													</NcActions>
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="(attachment, i) in paginatedFiles"
+												:key="`${attachment.id}${i}`"
+												:class="{ 'active': activeAttachment === attachment.id }"
+												class="viewTableRow"
+												@click="() => {
+													if (activeAttachment === attachment.id) activeAttachment = null
+													else activeAttachment = attachment.id
+												}">
+												<td class="tableColumnCheckbox">
+													<NcCheckboxRadioSwitch
+														:checked="selectedAttachments.includes(attachment.id)"
+														@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
+												</td>
+												<td class="tableColumnExpanded table-row-title">
+													<div class="file-name-container">
+														<div class="file-status-icons">
+															<!-- Show lock icon if file is not shared -->
+															<LockOutline v-if="!attachment.accessUrl && !attachment.downloadUrl"
+																v-tooltip="'Not shared'"
+																class="notSharedIcon"
+																:size="20" />
+															<!-- Show published icon if file is shared -->
+															<FileOutline v-else class="publishedIcon" :size="20" />
+														</div>
+														<span class="file-name">{{ truncateFileName(attachment.name ?? attachment?.title) }}</span>
+													</div>
+												</td>
+												<td class="tableColumnConstrained">
+													{{ formatFileSize(attachment?.size) }}
+												</td>
+												<td class="tableColumnConstrained">
+													{{ attachment?.type || 'No type' }}
+												</td>
+												<td class="tableColumnConstrained">
+													<div class="fileLabelsContainer">
+														<NcCounterBubble v-for="label of attachment.labels" :key="label">
+															{{ label }}
+														</NcCounterBubble>
+													</div>
+												</td>
+												<td class="tableColumnActions">
+													<NcActions>
+														<NcActionButton @click="openFile(attachment)">
+															<template #icon>
+																<OpenInNew :size="20" />
+															</template>
+															View
+														</NcActionButton>
+														<NcActionButton @click="editFileLabels(attachment)">
+															<template #icon>
+																<Tag :size="20" />
+															</template>
+															Labels
+														</NcActionButton>
+														<NcActionButton
+															v-if="!attachment.accessUrl && !attachment.downloadUrl"
+															:disabled="publishLoading.includes(attachment.id)"
+															@click="publishFile(attachment)">
+															<template #icon>
+																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
+																<FileOutline v-else :size="20" />
+															</template>
+															Publish
+														</NcActionButton>
+														<NcActionButton
+															v-else
+															:disabled="depublishLoading.includes(attachment.id)"
+															@click="depublishFile(attachment)">
+															<template #icon>
+																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
+																<LockOutline v-else :size="20" />
+															</template>
+															Depublish
+														</NcActionButton>
+														<NcActionButton
+															:disabled="fileIdsLoading.includes(attachment.id)"
+															@click="deleteFile(attachment)">
+															<template #icon>
+																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
+																<Delete v-else :size="20" />
+															</template>
+															Delete
+														</NcActionButton>
+													</NcActions>
+												</td>
+											</tr>
+										</tbody>
+									</table>
 								</div>
+								<NcNoteCard v-else type="info">
+									<p>No files have been attached to this object</p>
+								</NcNoteCard>
+
+								<!-- Files Pagination -->
+								<PaginationComponent
+									v-if="currentObject?.['@self']?.files?.length > filesPerPage"
+									:current-page="filesCurrentPage"
+									:total-pages="filesTotalPages"
+									:total-items="currentObject?.['@self']?.files?.length || 0"
+									:current-page-size="filesPerPage"
+									:min-items-to-show="5"
+									@page-changed="onFilesPageChanged"
+									@page-size-changed="onFilesPageSizeChanged" />
 							</BTab>
 						</BTabs>
 					</div>
@@ -244,6 +383,30 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<Cancel :size="20" />
 					</template>
 					Close
+				</NcButton>
+				<NcButton @click="uploadFiles">
+					<template #icon>
+						<Upload :size="20" />
+					</template>
+					Add File
+				</NcButton>
+				<NcButton v-if="shouldShowPublishAction(currentObject)"
+					:disabled="isPublishing"
+					@click="publishObject">
+					<template #icon>
+						<NcLoadingIcon v-if="isPublishing" :size="20" />
+						<Publish v-else :size="20" />
+					</template>
+					Publish
+				</NcButton>
+				<NcButton v-if="shouldShowDepublishAction(currentObject)"
+					:disabled="isDepublishing"
+					@click="depublishObject">
+					<template #icon>
+						<NcLoadingIcon v-if="isDepublishing" :size="20" />
+						<PublishOff v-else :size="20" />
+					</template>
+					Depublish
 				</NcButton>
 				<NcButton type="primary" :disabled="isSaving" @click="saveObject">
 					<template #icon>
@@ -329,7 +492,10 @@ import { objectStore, navigationStore } from '../../store/store.js'
 import {
 	NcDialog,
 	NcButton,
+	NcActions,
+	NcActionButton,
 	NcNoteCard,
+	NcCounterBubble,
 	NcTextField,
 	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
@@ -340,15 +506,22 @@ import CodeMirror from 'vue-codemirror6'
 import { BTabs, BTab } from 'bootstrap-vue'
 import { getTheme } from '../../services/getTheme.js'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import Upload from 'vue-material-design-icons/Upload.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Check from 'vue-material-design-icons/Check.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
+import Tag from 'vue-material-design-icons/Tag.vue'
+import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import Alert from 'vue-material-design-icons/Alert.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
+import PaginationComponent from '../../components/PaginationComponent.vue'
 
 export default {
 	name: 'ViewObject',
@@ -356,23 +529,33 @@ export default {
 		NcDialog,
 		NcButton,
 		NcNoteCard,
+		NcCounterBubble,
 		NcTextField,
 		NcCheckboxRadioSwitch,
 		NcLoadingIcon,
+		NcActions,
+		NcActionButton,
 		NcDateTimePickerNative,
 		CodeMirror,
 		BTabs,
 		BTab,
 		Cancel,
+		FileOutline,
+		OpenInNew,
+		Delete,
+		Upload,
 		ContentCopy,
 		Check,
 		ContentSave,
 		LockOutline,
+		Tag,
+		FormatListChecks,
 		Alert,
 		AlertCircle,
 		Plus,
 		Publish,
 		PublishOff,
+		PaginationComponent,
 	},
 	data() {
 		return {
@@ -391,6 +574,14 @@ export default {
 			depublishDate: null,
 			isPublishing: false,
 			isDepublishing: false,
+			// Files tab properties
+			activeAttachment: null,
+			selectedAttachments: [],
+			publishLoading: [],
+			depublishLoading: [],
+			fileIdsLoading: [],
+			filesCurrentPage: 1,
+			filesPerPage: 10,
 		}
 	},
 	computed: {
@@ -492,6 +683,31 @@ export default {
 
 			return metadata
 		},
+		// Files tab computed properties
+		paginatedFiles() {
+			const filesData = objectStore.getRelatedData('publication', 'files')
+			const files = filesData?.results || []
+			// Ensure files is an array before calling slice
+			if (!Array.isArray(files)) {
+				console.warn('Files data is not an array:', files)
+				return []
+			}
+			const start = (this.filesCurrentPage - 1) * this.filesPerPage
+			const end = start + this.filesPerPage
+			return files.slice(start, end)
+		},
+		filesTotalPages() {
+			const filesData = objectStore.getRelatedData('publication', 'files')
+			const files = filesData?.results || []
+			const totalFiles = Array.isArray(files) ? files.length : 0
+			return Math.ceil(totalFiles / this.filesPerPage)
+		},
+		allFilesSelected() {
+			return this.paginatedFiles.length > 0 && this.paginatedFiles.every(file => this.selectedAttachments.includes(file.id))
+		},
+		someFilesSelected() {
+			return this.selectedAttachments.length > 0 && !this.allFilesSelected
+		},
 	},
 	watch: {
 		currentObject: {
@@ -534,7 +750,29 @@ export default {
 				|| this.currentObject.title
 				|| this.currentObject.id
 			
-			return `${name} (Publication)`
+			// Try to get schema name from the object itself
+			let schemaName = 'Publication'
+			
+			// Check if schema is an object with title/name properties
+			if (this.currentObject.schema && typeof this.currentObject.schema === 'object') {
+				schemaName = this.currentObject.schema.title 
+					|| this.currentObject.schema.name 
+					|| this.currentObject.schema.id
+					|| 'Publication'
+			} 
+			// Check if @self.schema is an object with title/name properties
+			else if (this.currentObject['@self']?.schema && typeof this.currentObject['@self'].schema === 'object') {
+				schemaName = this.currentObject['@self'].schema.title 
+					|| this.currentObject['@self'].schema.name 
+					|| this.currentObject['@self'].schema.id
+					|| 'Publication'
+			}
+			// If it's a string, use it directly
+			else if (typeof this.currentObject['@self']?.schema === 'string') {
+				schemaName = this.currentObject['@self'].schema
+			}
+			
+			return `${name} (${schemaName})`
 		},
 		closeModal() {
 			// Clear state first
@@ -551,6 +789,14 @@ export default {
 			this.depublishDate = null
 			this.isPublishing = false
 			this.isDepublishing = false
+
+			// Clear Files tab state
+			this.activeAttachment = null
+			this.selectedAttachments = []
+			this.publishLoading = []
+			this.depublishLoading = []
+			this.fileIdsLoading = []
+			this.filesCurrentPage = 1
 
 			// Close modal
 			navigationStore.setModal(null)
@@ -808,6 +1054,392 @@ export default {
 				this.isDepublishing = false
 			}
 		},
+		// Files tab methods
+		/**
+		 * Open a file in the Nextcloud Files app
+		 * @param {object} file - The file object to open
+		 */
+		openFile(file) {
+			const dirPath = file.path.substring(0, file.path.lastIndexOf('/'))
+			const cleanPath = dirPath.replace(/^\/admin\/files\//, '/')
+			const filesAppUrl = `/index.php/apps/files/files/${file.id}?dir=${encodeURIComponent(cleanPath)}&openfile=true`
+			window.open(filesAppUrl, '_blank')
+		},
+		/**
+		 * Format file size for display
+		 * @param {number} bytes - The file size in bytes
+		 * @return {string} The formatted file size
+		 */
+		formatFileSize(bytes) {
+			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+			if (bytes === 0) return 'n/a'
+			const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
+			if (i === 0) return bytes + ' ' + sizes[i]
+			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+		},
+		/**
+		 * Truncate file name to prevent dialog alignment issues
+		 * @param {string} fileName - The file name to truncate
+		 * @return {string} The truncated file name (22 chars + ... if longer than 25)
+		 */
+		truncateFileName(fileName) {
+			if (!fileName) return ''
+			if (fileName.length <= 25) return fileName
+			return fileName.substring(0, 22) + '...'
+		},
+		toggleSelectAllFiles(checked) {
+			if (checked) {
+				// Add all current page files to selection
+				this.paginatedFiles.forEach(file => {
+					if (!this.selectedAttachments.includes(file.id)) {
+						this.selectedAttachments.push(file.id)
+					}
+				})
+			} else {
+				// Remove all current page files from selection
+				const currentPageIds = this.paginatedFiles.map(file => file.id)
+				this.selectedAttachments = this.selectedAttachments.filter(id => !currentPageIds.includes(id))
+			}
+		},
+		toggleFileSelection(fileId, checked) {
+			if (checked) {
+				if (!this.selectedAttachments.includes(fileId)) {
+					this.selectedAttachments.push(fileId)
+				}
+			} else {
+				this.selectedAttachments = this.selectedAttachments.filter(id => id !== fileId)
+			}
+		},
+		onFilesPageChanged(page) {
+			this.filesCurrentPage = page
+		},
+		onFilesPageSizeChanged(pageSize) {
+			this.filesPerPage = pageSize
+			this.filesCurrentPage = 1
+		},
+		async publishSelectedFiles() {
+			if (this.selectedAttachments.length === 0) return
+
+			try {
+				this.publishLoading = [...this.selectedAttachments]
+
+				// Get the selected files
+				const selectedFiles = this.paginatedFiles.filter(file =>
+					this.selectedAttachments.includes(file.id),
+				)
+
+				// Publish each file individually
+				for (const file of selectedFiles) {
+					const publication = this.currentObject
+					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/publish`
+
+					const response = await fetch(endpoint, {
+						method: 'POST',
+					})
+
+					if (!response.ok) {
+						throw new Error(`Failed to publish file ${file.title || file.name}: ${response.statusText}`)
+					}
+				}
+
+				// Refresh files list once after all operations with publication data
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+
+				// Clear selection after successful operation
+				this.selectedAttachments = []
+
+			} catch (error) {
+				console.error('Error publishing files:', error)
+			} finally {
+				this.publishLoading = []
+			}
+		},
+		async depublishSelectedFiles() {
+			if (this.selectedAttachments.length === 0) return
+
+			try {
+				this.depublishLoading = [...this.selectedAttachments]
+
+				// Get the selected files
+				const selectedFiles = this.paginatedFiles.filter(file =>
+					this.selectedAttachments.includes(file.id),
+				)
+
+				// Depublish each file individually
+				for (const file of selectedFiles) {
+					const publication = this.currentObject
+					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/depublish`
+
+					const response = await fetch(endpoint, {
+						method: 'POST',
+					})
+
+					if (!response.ok) {
+						throw new Error(`Failed to depublish file ${file.title || file.name}: ${response.statusText}`)
+					}
+				}
+
+				// Refresh files list once after all operations with publication data
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+
+				// Clear selection after successful operation
+				this.selectedAttachments = []
+
+			} catch (error) {
+				console.error('Error depublishing files:', error)
+			} finally {
+				this.depublishLoading = []
+			}
+		},
+		async deleteSelectedFiles() {
+			if (this.selectedAttachments.length === 0) return
+
+			try {
+				this.fileIdsLoading = [...this.selectedAttachments]
+
+				// Get the selected files
+				const selectedFiles = this.paginatedFiles.filter(item =>
+					this.selectedAttachments.includes(item.id),
+				)
+
+				// Delete each selected file
+				for (const file of selectedFiles) {
+					const publication = this.currentObject
+					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+
+					const response = await fetch(endpoint, {
+						method: 'DELETE',
+					})
+
+					if (!response.ok) {
+						throw new Error(`Failed to delete file ${file.title || file.name}: ${response.statusText}`)
+					}
+				}
+
+				// Refresh files list once after all operations with publication data
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+
+				// Clear selection - files list is automatically refreshed by the store methods
+				this.selectedAttachments = []
+			} catch (error) {
+				console.error('Failed to delete selected files:', error)
+			} finally {
+				this.fileIdsLoading = []
+			}
+		},
+		async publishFile(file) {
+			try {
+				this.publishLoading.push(file.id)
+
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/publish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to publish file: ${response.statusText}`)
+				}
+
+				// Refresh files list with publication data
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+			} catch (error) {
+				console.error('Failed to publish file:', error)
+			} finally {
+				this.publishLoading = this.publishLoading.filter(id => id !== file.id)
+			}
+		},
+		async depublishFile(file) {
+			try {
+				this.depublishLoading.push(file.id)
+
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/depublish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to depublish file: ${response.statusText}`)
+				}
+
+				// Refresh files list with publication data
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+			} catch (error) {
+				console.error('Failed to depublish file:', error)
+			} finally {
+				this.depublishLoading = this.depublishLoading.filter(id => id !== file.id)
+			}
+		},
+		async deleteFile(file) {
+			try {
+				this.fileIdsLoading.push(file.id)
+
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+
+				const response = await fetch(endpoint, {
+					method: 'DELETE',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to delete file: ${response.statusText}`)
+				}
+
+				// Refresh files list with publication data
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+			} catch (error) {
+				console.error('Failed to delete file:', error)
+			} finally {
+				this.fileIdsLoading = this.fileIdsLoading.filter(id => id !== file.id)
+			}
+		},
+		editFileLabels(file) {
+			// You'll need to implement the labels editing functionality
+			// This could open a modal or inline editor for file labels
+			console.log('Editing labels for file:', file.name)
+			// Placeholder for labels editing implementation
+		},
+		// Utility method to get register and schema IDs from publication object
+		getRegisterSchemaIds(publication) {
+			const registerId = typeof publication['@self'].register === 'object' 
+				? publication['@self'].register?.id || publication['@self'].register?.uuid 
+				: publication['@self'].register
+			const schemaId = typeof publication['@self'].schema === 'object' 
+				? publication['@self'].schema?.id || publication['@self'].schema?.uuid 
+				: publication['@self'].schema
+			return { registerId, schemaId }
+		},
+		// Action button methods
+		uploadFiles() {
+			// Close the ViewObject modal first
+			this.closeModal()
+			// Open the upload files modal (same as in PublicationDetail.vue)
+			navigationStore.setModal('uploadFiles')
+		},
+		shouldShowPublishAction(object) {
+			if (!object || !object['@self']) return false
+			return object['@self'].published === null || object['@self'].published === undefined
+		},
+		shouldShowDepublishAction(object) {
+			if (!object || !object['@self']) return false
+			return object['@self'].published !== null && object['@self'].published !== undefined
+		},
+		async publishObject() {
+			if (!this.currentObject) return
+			
+			this.isPublishing = true
+			try {
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/publish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to publish object: ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+				// Update the active object with the new data
+				objectStore.setActiveObject('publication', updatedObject)
+				
+				this.success = 'Object published successfully'
+				setTimeout(() => {
+					this.success = null
+				}, 3000)
+			} catch (error) {
+				console.error('Failed to publish object:', error)
+				this.error = 'Failed to publish object: ' + error.message
+				setTimeout(() => {
+					this.error = null
+				}, 5000)
+			} finally {
+				this.isPublishing = false
+			}
+		},
+		async depublishObject() {
+			if (!this.currentObject) return
+			
+			this.isDepublishing = true
+			try {
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/depublish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to depublish object: ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+				// Update the active object with the new data
+				objectStore.setActiveObject('publication', updatedObject)
+				
+				this.success = 'Object depublished successfully'
+				setTimeout(() => {
+					this.success = null
+				}, 3000)
+			} catch (error) {
+				console.error('Failed to depublish object:', error)
+				this.error = 'Failed to depublish object: ' + error.message
+				setTimeout(() => {
+					this.error = null
+				}, 5000)
+			} finally {
+				this.isDepublishing = false
+			}
+		},
 	},
 }
 </script>
@@ -919,5 +1551,32 @@ export default {
 	padding: 8px;
 	border-radius: 4px;
 	margin: 0;
+}
+
+/* File name and status icons layout */
+.file-name-container {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	gap: 8px;
+}
+
+.file-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.file-status-icons {
+	flex-shrink: 0;
+}
+
+.notSharedIcon {
+	color: var(--color-text-lighter);
+}
+
+.publishedIcon {
+	color: var(--color-success);
 }
 </style> 

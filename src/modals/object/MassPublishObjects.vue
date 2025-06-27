@@ -8,7 +8,7 @@
  */
 
 <script setup>
-import { objectStore, navigationStore } from '../../store/store.js'
+import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -152,16 +152,28 @@ export default {
 			try {
 				const publishedDate = new Date().toISOString()
 
-				// Publish each object individually
+				// Publish each object individually using OpenRegister API
 				const results = await Promise.allSettled(
 					this.selectedObjects.map(async (obj) => {
 						try {
-							await objectStore.publishObject({
-								register: obj.register,
-								schema: obj.schema,
-								objectId: obj.id,
-								publishedDate,
+							// Extract register and schema IDs (handle objects)
+							const registerId = typeof obj['@self']?.register === 'object' 
+								? obj['@self'].register?.id || obj['@self'].register?.uuid 
+								: obj['@self']?.register
+							const schemaId = typeof obj['@self']?.schema === 'object' 
+								? obj['@self'].schema?.id || obj['@self'].schema?.uuid 
+								: obj['@self']?.schema
+							
+							const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${obj.id}/publish`
+							
+							const response = await fetch(endpoint, {
+								method: 'POST',
 							})
+
+							if (!response.ok) {
+								throw new Error(`Failed to publish object: ${response.statusText}`)
+							}
+
 							return { success: true, id: obj.id }
 						} catch (error) {
 							console.error(`Failed to publish object ${obj.id}:`, error)
@@ -176,9 +188,10 @@ export default {
 
 				if (successful.length > 0) {
 					this.success = true
-					// Clear selected objects and refresh the object list
+					// Clear selected objects and refresh the publication list
 					objectStore.selectedObjects = []
-					objectStore.refreshObjectList()
+					// Refresh publications using catalogStore
+					catalogStore.fetchPublications()
 
 					this.closeModalTimeout = setTimeout(() => {
 						this.closeDialog()
