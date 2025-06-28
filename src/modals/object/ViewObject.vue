@@ -14,11 +14,12 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 <template>
 	<div>
 		<NcDialog v-if="navigationStore.modal === 'viewObject'"
+			:name="getModalTitle()"
 			size="large"
 			:can-close="true"
 			@update:open="handleDialogClose">
-			<template name>
-				<h2 class="dialog__name">
+			<template #name>
+				<div class="dialog__name">
 					<PublishedIcon v-if="shouldShowPublishedIcon"
 						:object="currentObject"
 						:size="30"
@@ -26,8 +27,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<Pencil v-else
 						:size="30"
 						class="status-icon draft-icon" />
-					{{ getModalTitle() }}
-				</h2>
+					<span>{{ getModalTitle() }}</span>
+				</div>
 			</template>
 			<div class="formContainer viewObjectDialog">
 				<!-- Display Object -->
@@ -127,63 +128,83 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</div>
 									</td>
 									<td class="tableColumnExpanded value-cell">
-										<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
-											<!-- Boolean properties -->
-											<NcCheckboxRadioSwitch
-												v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
-												:checked="formData[key] !== undefined ? formData[key] : value"
-												type="switch"
-												@update:checked="updatePropertyValue(key, $event)">
-												{{ getPropertyDisplayName(key) }}
-											</NcCheckboxRadioSwitch>
+										<div class="value-cell-content">
+											<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
+												<!-- Boolean properties -->
+												<NcCheckboxRadioSwitch
+													v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
+													:checked="formData[key] !== undefined ? formData[key] : value"
+													type="switch"
+													@update:checked="updatePropertyValue(key, $event)">
+													{{ getPropertyDisplayName(key) }}
+												</NcCheckboxRadioSwitch>
 
-											<!-- Date/Time properties -->
-											<NcDateTimePickerNative
-												v-else-if="getPropertyInputComponent(key) === 'NcDateTimePickerNative'"
-												:value="formData[key] !== undefined ? formData[key] : value"
-												:type="getPropertyInputType(key)"
-												:label="getPropertyDisplayName(key)"
-												@update:value="updatePropertyValue(key, $event)" />
+												<!-- Date/Time properties -->
+												<NcDateTimePicker
+													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
+													:value="getDateTimePickerValue(key, value)"
+													:label="getPropertyDisplayName(key)"
+													:type="getDateTimePickerType(key)"
+													:placeholder="getPropertyDisplayName(key)"
+													@update:value="updatePropertyValue(key, $event)" />
 
-											<!-- Text/Number properties -->
-											<NcTextField
-												v-else
-												ref="propertyValueInput"
-												:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-												:type="getPropertyInputType(key)"
-												:placeholder="getPropertyDisplayName(key)"
-												:min="getPropertyMinimum(key)"
-												:max="getPropertyMaximum(key)"
-												:step="getPropertyStep(key)"
-												@update:value="updatePropertyValue(key, $event)" />
-										</div>
-										<div v-else>
-											<template v-if="formData[key] !== undefined">
-												<!-- Show edited value -->
-												<pre
-													v-if="typeof formData[key] === 'object' && formData[key] !== null"
-													v-tooltip="'JSON object (edited)'"
-													class="json-value">{{ formatValue(formData[key]) }}</pre>
-												<span
-													v-else-if="isValidDate(formData[key])"
-													v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
-												<span
+												<!-- Text/Number properties -->
+												<NcTextField
 													v-else
-													v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-											</template>
-											<template v-else>
-												<!-- Show original value -->
-												<pre
-													v-if="typeof value === 'object' && value !== null"
-													v-tooltip="'JSON object'"
-													class="json-value">{{ formatValue(value) }}</pre>
-												<span
-													v-else-if="isValidDate(value)"
-													v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
-												<span
-													v-else
-													v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-											</template>
+													ref="propertyValueInput"
+													:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+													:type="getPropertyInputType(key)"
+													:placeholder="getPropertyDisplayName(key)"
+													:min="getPropertyMinimum(key)"
+													:max="getPropertyMaximum(key)"
+													:step="getPropertyStep(key)"
+													@update:value="updatePropertyValue(key, $event)" />
+											</div>
+											<div v-else>
+												<template v-if="formData[key] !== undefined">
+													<!-- Show edited value -->
+													<pre
+														v-if="typeof formData[key] === 'object' && formData[key] !== null"
+														v-tooltip="'JSON object (edited)'"
+														class="json-value">{{ formatValue(formData[key]) }}</pre>
+													<span
+														v-else-if="isDateTimeProperty(key) && formData[key]"
+														v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
+													<span
+														v-else-if="isValidDate(formData[key])"
+														v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
+													<span
+														v-else
+														v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+												</template>
+												<template v-else>
+													<!-- Show original value -->
+													<pre
+														v-if="typeof value === 'object' && value !== null"
+														v-tooltip="'JSON object'"
+														class="json-value">{{ formatValue(value) }}</pre>
+													<span
+														v-else-if="isDateTimeProperty(key) && value"
+														v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
+													<span
+														v-else-if="isValidDate(value)"
+														v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
+													<span
+														v-else
+														v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+												</template>
+											</div>
+											<NcButton v-if="canDropProperty(key, value)"
+												v-tooltip="getDropPropertyTooltip(key)"
+												type="tertiary-no-background"
+												size="small"
+												class="drop-property-btn"
+												:aria-label="getDropPropertyTooltip(key)"
+												@click.stop="dropProperty(key)">
+												<template #icon>
+													<Close :size="16" />
+												</template>
+											</NcButton>
 										</div>
 									</td>
 								</tr>
@@ -244,63 +265,83 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													</div>
 												</td>
 												<td class="tableColumnExpanded value-cell">
-													<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
-														<!-- Boolean properties -->
-														<NcCheckboxRadioSwitch
-															v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
-															:checked="formData[key] !== undefined ? formData[key] : value"
-															type="switch"
-															@update:checked="updatePropertyValue(key, $event)">
-															{{ getPropertyDisplayName(key) }}
-														</NcCheckboxRadioSwitch>
+													<div class="value-cell-content">
+														<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
+															<!-- Boolean properties -->
+															<NcCheckboxRadioSwitch
+																v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
+																:checked="formData[key] !== undefined ? formData[key] : value"
+																type="switch"
+																@update:checked="updatePropertyValue(key, $event)">
+																{{ getPropertyDisplayName(key) }}
+															</NcCheckboxRadioSwitch>
 
-														<!-- Date/Time properties -->
-														<NcDateTimePickerNative
-															v-else-if="getPropertyInputComponent(key) === 'NcDateTimePickerNative'"
-															:value="formData[key] !== undefined ? formData[key] : value"
-															:type="getPropertyInputType(key)"
-															:label="getPropertyDisplayName(key)"
-															@update:value="updatePropertyValue(key, $event)" />
+															<!-- Date/Time properties -->
+															<NcDateTimePicker
+																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
+																:value="getDateTimePickerValue(key, value)"
+																:label="getPropertyDisplayName(key)"
+																:type="getDateTimePickerType(key)"
+																:placeholder="getPropertyDisplayName(key)"
+																@update:value="updatePropertyValue(key, $event)" />
 
-														<!-- Text/Number properties -->
-														<NcTextField
-															v-else
-															ref="propertyValueInput"
-															:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-															:type="getPropertyInputType(key)"
-															:placeholder="getPropertyDisplayName(key)"
-															:min="getPropertyMinimum(key)"
-															:max="getPropertyMaximum(key)"
-															:step="getPropertyStep(key)"
-															@update:value="updatePropertyValue(key, $event)" />
-													</div>
-													<div v-else>
-														<template v-if="formData[key] !== undefined">
-															<!-- Show edited value -->
-															<pre
-																v-if="typeof formData[key] === 'object' && formData[key] !== null"
-																v-tooltip="'JSON object (edited)'"
-																class="json-value">{{ formatValue(formData[key]) }}</pre>
-															<span
-																v-else-if="isValidDate(formData[key])"
-																v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
-															<span
+															<!-- Text/Number properties -->
+															<NcTextField
 																v-else
-																v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-														</template>
-														<template v-else>
-															<!-- Show original value -->
-															<pre
-																v-if="typeof value === 'object' && value !== null"
-																v-tooltip="'JSON object'"
-																class="json-value">{{ formatValue(value) }}</pre>
-															<span
-																v-else-if="isValidDate(value)"
-																v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
-															<span
-																v-else
-																v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-														</template>
+																ref="propertyValueInput"
+																:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+																:type="getPropertyInputType(key)"
+																:placeholder="getPropertyDisplayName(key)"
+																:min="getPropertyMinimum(key)"
+																:max="getPropertyMaximum(key)"
+																:step="getPropertyStep(key)"
+																@update:value="updatePropertyValue(key, $event)" />
+														</div>
+														<div v-else>
+															<template v-if="formData[key] !== undefined">
+																<!-- Show edited value -->
+																<pre
+																	v-if="typeof formData[key] === 'object' && formData[key] !== null"
+																	v-tooltip="'JSON object (edited)'"
+																	class="json-value">{{ formatValue(formData[key]) }}</pre>
+																<span
+																	v-else-if="isDateTimeProperty(key) && formData[key]"
+																	v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
+																<span
+																	v-else-if="isValidDate(formData[key])"
+																	v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
+																<span
+																	v-else
+																	v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+															</template>
+															<template v-else>
+																<!-- Show original value -->
+																<pre
+																	v-if="typeof value === 'object' && value !== null"
+																	v-tooltip="'JSON object'"
+																	class="json-value">{{ formatValue(value) }}</pre>
+																<span
+																	v-else-if="isDateTimeProperty(key) && value"
+																	v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
+																<span
+																	v-else-if="isValidDate(value)"
+																	v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
+																<span
+																	v-else
+																	v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+															</template>
+														</div>
+														<NcButton v-if="canDropProperty(key, value)"
+															v-tooltip="getDropPropertyTooltip(key)"
+															type="tertiary-no-background"
+															size="small"
+															class="drop-property-btn"
+															:aria-label="getDropPropertyTooltip(key)"
+															@click.stop="dropProperty(key)">
+															<template #icon>
+																<Close :size="16" />
+															</template>
+														</NcButton>
 													</div>
 												</td>
 											</tr>
@@ -448,7 +489,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													</div>
 												</td>
 												<td class="tableColumnActions">
-													<NcActions>
+													<NcActions :aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
 														<NcActionButton @click="openFile(attachment)">
 															<template #icon>
 																<OpenInNew :size="20" />
@@ -578,7 +619,7 @@ import {
 	NcTextField,
 	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
-	NcDateTimePickerNative,
+	NcDateTimePicker,
 	NcEmptyContent,
 	NcSelect,
 } from '@nextcloud/vue'
@@ -604,6 +645,7 @@ import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
 import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
+import Close from 'vue-material-design-icons/Close.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 
@@ -619,7 +661,7 @@ export default {
 		NcLoadingIcon,
 		NcActions,
 		NcActionButton,
-		NcDateTimePickerNative,
+		NcDateTimePicker,
 		NcEmptyContent,
 		NcSelect,
 		// CodeMirror,
@@ -643,6 +685,7 @@ export default {
 		Pencil,
 		ExclamationThick,
 		ArrowRight,
+		Close,
 		PaginationComponent,
 		PublishedIcon,
 	},
@@ -724,9 +767,11 @@ export default {
 			const additionalProperties = []
 			for (const [objectKey, objectValue] of Object.entries(objectData)) {
 				// Skip metadata and properties already handled by schema
+				// Also skip properties that have been marked for deletion (undefined in formData)
 				if (objectKey !== '@self'
 					&& objectKey !== 'id'
-					&& !Object.prototype.hasOwnProperty.call(schemaProperties, objectKey)) {
+					&& !Object.prototype.hasOwnProperty.call(schemaProperties, objectKey)
+					&& !(this.formData[objectKey] === undefined)) {
 					additionalProperties.push([objectKey, objectValue])
 				}
 			}
@@ -1260,6 +1305,47 @@ export default {
 			const date = new Date(value)
 			return date instanceof Date && !isNaN(date) && date.getFullYear() > 1900
 		},
+		isDateTimeProperty(key) {
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			return schemaProperty && schemaProperty.type === 'string' && ['date', 'time', 'date-time'].includes(schemaProperty.format)
+		},
+		getDateTimePropertyFormat(key) {
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			return schemaProperty?.format || 'unknown'
+		},
+		formatDateTimeValue(key, value) {
+			if (!value) return ''
+
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			const format = schemaProperty?.format
+
+			try {
+				switch (format) {
+				case 'date':
+					// For date-only, show as date without time
+					if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+						return new Date(value + 'T12:00:00').toLocaleDateString()
+					}
+					return new Date(value).toLocaleDateString()
+				case 'time':
+					// For time-only, show just the time part
+					if (typeof value === 'string' && value.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+						return value
+					}
+					return new Date(value).toLocaleTimeString()
+				case 'date-time':
+					// For date-time, show full date and time
+					return new Date(value).toLocaleString()
+				default:
+					return value
+				}
+			} catch (e) {
+				return value
+			}
+		},
 		formatValue(val) {
 			return JSON.stringify(val, null, 2)
 		},
@@ -1418,8 +1504,79 @@ export default {
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
 			}
+
+			// Convert date/time values to proper format for storage
+			const processedValue = this.processDateTimeValue(key, newValue)
+
 			// Update the form data using Vue 2 reactivity
-			this.$set(this.formData, key, newValue)
+			this.$set(this.formData, key, processedValue)
+		},
+		processDateTimeValue(key, value) {
+			// Get schema information to determine if this is a date/time field
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+
+			if (!schemaProperty || schemaProperty.type !== 'string') {
+				return value
+			}
+
+			const format = schemaProperty.format
+			if (!format || !['date', 'time', 'date-time'].includes(format)) {
+				return value
+			}
+
+			// If value is empty or null, return empty string
+			if (!value || value === '') {
+				return ''
+			}
+
+			// Handle Date objects from NcDateTimePicker
+			if (value instanceof Date) {
+				try {
+					switch (format) {
+					case 'date':
+						// Return YYYY-MM-DD format
+						return value.toISOString().split('T')[0]
+					case 'time':
+						// Return HH:MM:SS format
+						return value.toTimeString().split(' ')[0]
+					case 'date-time':
+						// Return full ISO string
+						return value.toISOString()
+					default:
+						return value.toISOString()
+					}
+				} catch (e) {
+					return ''
+				}
+			}
+
+			// Handle string values (legacy or fallback)
+			try {
+				switch (format) {
+				case 'date':
+					// HTML date input returns YYYY-MM-DD, which is correct for JSON Schema date format
+					return value
+				case 'time':
+					// HTML time input returns HH:MM, convert to full time format if needed
+					// For time format, we might want to store as HH:MM:SS or keep as HH:MM
+					return value.length === 5 ? `${value}:00` : value
+				case 'date-time': {
+					// HTML datetime-local input returns YYYY-MM-DDTHH:MM
+					// Convert to full ISO string if needed
+					if (value.length === 16) {
+						// Add seconds and timezone
+						return `${value}:00.000Z`
+					}
+					// If it's already a full ISO string, return as-is
+					return value
+				}
+				default:
+					return value
+				}
+			} catch (e) {
+				return value
+			}
 		},
 		getPropertyInputType(key) {
 			const schemaProperties = this.getSchemaProperties()
@@ -1461,8 +1618,11 @@ export default {
 			case 'boolean':
 				return 'NcCheckboxRadioSwitch'
 			case 'string':
-				if (format === 'date' || format === 'time' || format === 'date-time') {
-					return 'NcDateTimePickerNative'
+				if (format === 'date' || format === 'date-time') {
+					return 'NcDateTimePicker'
+				}
+				if (format === 'time') {
+					return 'NcTextField' // Use text field with time input type for time-only
 				}
 				return 'NcTextField'
 			case 'number':
@@ -1549,6 +1709,110 @@ export default {
 
 			// Return the value as-is for everything else
 			return value
+		},
+		getDateTimeValue(key, value) {
+			// Get the current value (either from formData or original value)
+			const currentValue = this.formData[key] !== undefined ? this.formData[key] : value
+
+			if (!currentValue) {
+				return ''
+			}
+
+			// Get the input type to determine the expected format
+			const inputType = this.getPropertyInputType(key)
+
+			// Convert to appropriate format for the input type
+			try {
+				const date = new Date(currentValue)
+				if (isNaN(date.getTime())) {
+					return ''
+				}
+
+				switch (inputType) {
+				case 'date':
+					// Format as YYYY-MM-DD
+					return date.toISOString().split('T')[0]
+				case 'time':
+					// Format as HH:MM
+					return date.toTimeString().split(' ')[0].substring(0, 5)
+				case 'datetime-local': {
+					// Format as YYYY-MM-DDTHH:MM
+					const isoString = date.toISOString()
+					return isoString.substring(0, 16) // Remove seconds and timezone
+				}
+				default:
+					return currentValue
+				}
+			} catch (e) {
+				return currentValue
+			}
+		},
+		getDateTimePickerValue(key, value) {
+			// Get the current value (either from formData or original value)
+			const currentValue = this.formData[key] !== undefined ? this.formData[key] : value
+
+			if (!currentValue) {
+				return null
+			}
+
+			// Get schema information to handle different date formats properly
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			const format = schemaProperty?.format
+
+			// NcDateTimePicker expects a Date object or null
+			try {
+				let date
+
+				if (format === 'date') {
+					// For date-only fields, ensure we create the date correctly
+					// to avoid timezone issues
+					if (typeof currentValue === 'string' && currentValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+						// Create date at noon to avoid timezone issues
+						date = new Date(currentValue + 'T12:00:00')
+					} else {
+						date = new Date(currentValue)
+					}
+				} else if (format === 'time') {
+					// For time-only fields, create a date with today's date
+					if (typeof currentValue === 'string' && currentValue.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+						const today = new Date().toISOString().split('T')[0]
+						date = new Date(today + 'T' + currentValue)
+					} else {
+						date = new Date(currentValue)
+					}
+				} else {
+					// For datetime fields, use as-is
+					date = new Date(currentValue)
+				}
+
+				if (isNaN(date.getTime())) {
+					return null
+				}
+				return date
+			} catch (e) {
+				return null
+			}
+		},
+		getDateTimePickerType(key) {
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+
+			if (!schemaProperty || !schemaProperty.format) {
+				return 'datetime'
+			}
+
+			// Map schema formats to NcDateTimePicker types
+			switch (schemaProperty.format) {
+			case 'date':
+				return 'date'
+			case 'date-time':
+				return 'datetime'
+			case 'time':
+				return 'time'
+			default:
+				return 'datetime'
+			}
 		},
 		// Publish/Depublish methods
 		openPublishModal() {
@@ -2205,8 +2469,15 @@ export default {
 			// Add all schema properties with appropriate values
 			for (const [propertyKey, schemaProperty] of Object.entries(schemaProperties)) {
 				if (Object.prototype.hasOwnProperty.call(cleanedFormData, propertyKey)) {
-					// Use edited value from formData
-					objectData[propertyKey] = cleanedFormData[propertyKey]
+					// Check if property was marked for deletion (undefined)
+					if (cleanedFormData[propertyKey] === undefined) {
+						// For schema properties, don't include undefined values - let backend handle defaults
+						// This effectively removes the property from the payload
+						delete objectData[propertyKey]
+					} else {
+						// Use edited value from formData
+						objectData[propertyKey] = cleanedFormData[propertyKey]
+					}
 				} else if (Object.prototype.hasOwnProperty.call(currentObjectData, propertyKey)) {
 					// Keep existing value from current object
 					objectData[propertyKey] = currentObjectData[propertyKey]
@@ -2241,17 +2512,103 @@ export default {
 			}
 
 			// Also include any edited properties that might not be in the schema
-			// But only include valid property names (not numeric indices)
+			// But only include valid property names (not numeric indices) and not undefined values
 			for (const [key, value] of Object.entries(cleanedFormData)) {
 				if (!Object.prototype.hasOwnProperty.call(schemaProperties, key)
 					&& typeof key === 'string'
 					&& key.length > 0
-					&& !/^\d+$/.test(key)) {
+					&& !/^\d+$/.test(key)
+					&& value !== undefined) { // Don't include properties marked for deletion
 					objectData[key] = value
 				}
 			}
 
 			return objectData
+		},
+
+		// Property dropping methods
+		canDropProperty(key, value) {
+			// Don't show drop button for metadata properties
+			if (key === '@self' || key === 'id') {
+				return false
+			}
+
+			// Don't show drop button for const properties
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			if (schemaProperty?.const !== undefined) {
+				return false
+			}
+
+			// Show drop button if:
+			// 1. Property has a value (either in formData or original object)
+			// 2. Property exists in current object or has been edited
+			const hasFormValue = this.formData[key] !== undefined
+			const hasOriginalValue = this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)
+
+			return hasFormValue || hasOriginalValue
+		},
+
+		getDropPropertyTooltip(key) {
+			const schemaProperties = this.getSchemaProperties()
+			const isSchemaProperty = Object.prototype.hasOwnProperty.call(schemaProperties, key)
+
+			if (isSchemaProperty) {
+				return `Reset '${this.getPropertyDisplayName(key)}' to empty value`
+			} else {
+				return `Remove '${this.getPropertyDisplayName(key)}' property completely`
+			}
+		},
+
+		dropProperty(key) {
+			const schemaProperties = this.getSchemaProperties()
+			const isSchemaProperty = Object.prototype.hasOwnProperty.call(schemaProperties, key)
+
+			if (isSchemaProperty) {
+				// For schema properties, reset to appropriate default/null value
+				const schemaProperty = schemaProperties[key]
+				let defaultValue = null
+
+				switch (schemaProperty.type) {
+				case 'string':
+					defaultValue = schemaProperty.const || ''
+					break
+				case 'number':
+				case 'integer':
+					defaultValue = 0
+					break
+				case 'boolean':
+					defaultValue = false
+					break
+				case 'array':
+					defaultValue = []
+					break
+				case 'object':
+					defaultValue = {}
+					break
+				default:
+					defaultValue = ''
+				}
+
+				// Set the default value in formData
+				this.$set(this.formData, key, defaultValue)
+			} else {
+				// For non-schema properties, remove completely from formData
+				if (this.formData[key] !== undefined) {
+					this.$delete(this.formData, key)
+				}
+
+				// If it was in the original object, we need to track its removal
+				// We'll set it to a special marker that indicates deletion
+				if (this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)) {
+					this.$set(this.formData, key, undefined)
+				}
+			}
+
+			// Clear selection if this property was selected
+			if (this.selectedProperty === key) {
+				this.selectedProperty = null
+			}
 		},
 
 		// Enhanced property validation and editing methods (from openregister version)
@@ -2352,6 +2709,33 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	text-align: left;
+}
+
+.value-cell-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	text-align: left;
+	width: 100%;
+}
+
+.value-input-container {
+	flex: 1;
+	text-align: left;
+}
+
+.drop-property-btn {
+	opacity: 1;
+	transition: opacity 0.2s ease;
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+.drop-property-btn:hover {
+	opacity: 1 !important;
+	background-color: var(--color-error-hover) !important;
+	color: var(--color-error) !important;
 }
 
 .validation-icon {
@@ -2386,9 +2770,12 @@ export default {
 
 .value-cell {
 	position: relative;
+	text-align: left;
 }
 
 .value-input-container {
+	flex: 1;
+	text-align: left;
 	padding: 0;
 	margin: 0;
 	width: 100%;
@@ -2397,6 +2784,17 @@ export default {
 .value-input-container .text-field {
 	margin: 0;
 	padding: 0;
+}
+
+/* Ensure proper alignment for table cells */
+.tableColumnConstrained {
+	text-align: left;
+	vertical-align: top;
+}
+
+.tableColumnExpanded {
+	text-align: left;
+	vertical-align: top;
 }
 
 .json-value {
