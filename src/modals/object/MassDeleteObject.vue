@@ -146,27 +146,63 @@ export default {
 		async deleteObject() {
 			this.loading = true
 
-			objectStore.massDeleteObject(this.selectedObjects.map(obj => obj.id))
-				.then((result) => {
-					this.result = result
-					this.success = result.successfulIds.length > 0
-					this.error = result.failedIds.length > 0
-					if (result.successfulIds.length > 0) {
-						// Clear selected objects and refresh the publication list
-						objectStore.selectedObjects = []
-						// Refresh publications using catalogStore
-						catalogStore.fetchPublications()
+			try {
+				// Delete each object individually using OpenRegister API
+				const results = await Promise.allSettled(
+					this.selectedObjects.map(async (obj) => {
+						try {
+							// Extract register and schema IDs (handle objects)
+							const registerId = typeof obj['@self']?.register === 'object'
+								? obj['@self'].register?.id || obj['@self'].register?.uuid
+								: obj['@self']?.register
+							const schemaId = typeof obj['@self']?.schema === 'object'
+								? obj['@self'].schema?.id || obj['@self'].schema?.uuid
+								: obj['@self']?.schema
 
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
-				}).catch((error) => {
-					this.success = false
-					this.error = error.message || 'An error occurred while deleting the object'
-				}).finally(() => {
-					this.loading = false
-				})
+							const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${obj.id}`
+
+							const response = await fetch(endpoint, {
+								method: 'DELETE',
+							})
+
+							if (!response.ok) {
+								throw new Error(`Failed to delete object: ${response.statusText}`)
+							}
+
+							return { success: true, id: obj.id }
+						} catch (error) {
+							console.error(`Failed to delete object ${obj.id}:`, error)
+							return { success: false, id: obj.id, error: error.message }
+						}
+					}),
+				)
+
+				// Count successful and failed operations
+				const successful = results.filter(r => r.status === 'fulfilled' && r.value.success)
+				const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
+
+				if (successful.length > 0) {
+					this.success = true
+					// Clear selected objects and refresh the publication list
+					objectStore.selectedObjects = []
+					// Refresh publications using catalogStore
+					catalogStore.fetchPublications()
+
+					this.closeModalTimeout = setTimeout(() => {
+						this.closeDialog()
+					}, 2000)
+				}
+
+				if (failed.length > 0) {
+					this.error = `Failed to delete ${failed.length} object${failed.length > 1 ? 's' : ''}`
+				}
+
+			} catch (error) {
+				this.success = false
+				this.error = error.message || 'An error occurred while deleting objects'
+			} finally {
+				this.loading = false
+			}
 		},
 	},
 }
