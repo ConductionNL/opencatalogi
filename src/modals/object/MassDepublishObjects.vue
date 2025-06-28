@@ -12,53 +12,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog :name="`Depublish ${selectedObjects.length} publication${selectedObjects.length !== 1 ? 's' : ''}`"
-		:can-close="false"
-		size="normal">
+	<NcDialog :name="dialogTitle"
+		:can-close="true"
+		size="normal"
+		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="depublish-step">
-			<h3 class="step-title">
-				Confirm Object Depublication
-			</h3>
-
 			<NcNoteCard type="warning">
-				Review the selected objects below. You can remove any objects you don't want to depublish by clicking the remove button.<br><br>
 				Objects will be depublished with the current date and time. This will make them unavailable to the public while keeping their published date intact.
 			</NcNoteCard>
 
-			<div class="selected-objects-container">
-				<h4>Selected Objects ({{ selectedObjects.length }})</h4>
-
-				<div v-if="selectedObjects.length" class="selected-objects-list">
-					<div v-for="obj in selectedObjects"
-						:key="obj.id"
-						class="selected-object-item">
-						<div class="object-info">
-							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || 'Unnamed Object' }}</strong>
-							<p class="object-id">
-								ID: {{ obj.id || obj['@self']?.id }}
-							</p>
-						</div>
-						<NcButton type="tertiary"
-							:aria-label="`Remove ${obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id}`"
-							@click="removeObject(obj.id)">
-							<template #icon>
-								<Close :size="20" />
-							</template>
-						</NcButton>
-					</div>
-				</div>
-
-				<NcEmptyContent v-else name="No objects selected">
-					<template #description>
-						No objects are currently selected for depublication.
-					</template>
-				</NcEmptyContent>
-			</div>
+			<SelectedObjectsList
+				:title="objectsToDepublish.length === 1 ? 'Publication to Depublish' : 'Selected Publications'"
+				:objects="objectsToDepublish"
+				:show-remove="objectsToDepublish.length > 1" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Object{{ selectedObjects.length > 1 ? 's' : '' }} successfully depublished</p>
+			<p>Object{{ originalSelectedCount > 1 ? 's' : '' }} successfully depublished</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -72,7 +43,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || selectedObjects.length === 0"
+				:disabled="loading || objectsToDepublish.length === 0"
 				type="error"
 				@click="depublishObjects()">
 				<template #icon>
@@ -89,27 +60,29 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import {
 	NcButton,
 	NcDialog,
-	NcEmptyContent,
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import Close from 'vue-material-design-icons/Close.vue'
+import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
 export default {
 	name: 'MassDepublishObjects',
 	components: {
 		NcDialog,
 		NcButton,
-		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
+		SelectedObjectsList,
 		// Icons
 		PublishOff,
 		Cancel,
-		Close,
+	},
+
+	props: {
+		// No props needed - always uses selected objects from store
 	},
 
 	data() {
@@ -119,83 +92,78 @@ export default {
 			error: false,
 			result: null,
 			closeModalTimeout: null,
-			selectedObjects: [],
+			originalSelectedCount: 0,
 		}
+	},
+
+	computed: {
+		/**
+		 * Get the objects to operate on from selected objects
+		 * @return {Array<object>} Array of objects to depublish
+		 */
+		objectsToDepublish() {
+			return objectStore.selectedObjects || []
+		},
+
+		/**
+		 * Get the dialog title based on number of objects
+		 * @return {string} Dialog title
+		 */
+		dialogTitle() {
+			const count = this.objectsToDepublish.length
+			if (count === 1) {
+				return 'Depublish publication'
+			}
+			return `Depublish ${count} publication${count !== 1 ? 's' : ''}`
+		},
 	},
 	mounted() {
 		this.initializeSelection()
 	},
 	methods: {
 		initializeSelection() {
-			// Get selected objects from the store or navigation context
-			this.selectedObjects = objectStore.selectedObjects || []
-			if (this.selectedObjects.length === 0) {
-				this.closeDialog()
-			}
-		},
-		removeObject(objectId) {
-			this.selectedObjects = this.selectedObjects.filter(obj => obj.id !== objectId)
-			// Update the store as well
-			objectStore.selectedObjects = this.selectedObjects
-			if (this.selectedObjects.length === 0) {
+			// Store the original count for success message
+			this.originalSelectedCount = this.objectsToDepublish.length
+
+			// Close dialog if no objects are selected
+			if (this.objectsToDepublish.length === 0) {
 				this.closeDialog()
 			}
 		},
 		closeDialog() {
-			clearTimeout(this.closeModalTimeout)
-			this.startClosing = true
+			// Clear any pending timeout that might reopen the dialog
+			if (this.closeModalTimeout) {
+				clearTimeout(this.closeModalTimeout)
+				this.closeModalTimeout = null
+			}
 			navigationStore.setDialog(false)
+		},
+		handleDialogClose(isOpen) {
+			if (!isOpen) {
+				this.closeDialog()
+			}
 		},
 		async depublishObjects() {
 			this.loading = true
 
 			try {
-				const depublishedDate = new Date().toISOString()
+				// Get the objects to depublish
+				const objectsToProcess = [...this.objectsToDepublish]
 
-				// Depublish each object individually using OpenRegister API
-				const results = await Promise.allSettled(
-					this.selectedObjects.map(async (obj) => {
-						try {
-							// Extract register and schema IDs (handle objects)
-							const registerId = typeof obj['@self']?.register === 'object'
-								? obj['@self'].register?.id || obj['@self'].register?.uuid
-								: obj['@self']?.register
-							const schemaId = typeof obj['@self']?.schema === 'object'
-								? obj['@self'].schema?.id || obj['@self'].schema?.uuid
-								: obj['@self']?.schema
-
-							const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${obj.id}/depublish`
-
-							const response = await fetch(endpoint, {
-								method: 'POST',
-							})
-
-							if (!response.ok) {
-								throw new Error(`Failed to depublish object: ${response.statusText}`)
-							}
-
-							return { success: true, id: obj.id }
-						} catch (error) {
-							console.error(`Failed to depublish object ${obj.id}:`, error)
-							return { success: false, id: obj.id, error: error.message }
-						}
-					}),
-				)
-
-				// Count successful and failed operations
-				const successful = results.filter(r => r.status === 'fulfilled' && r.value.success)
-				const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
+				// Use the store's mass depublish method
+				const { successful, failed } = await objectStore.massDepublishObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
-					// Clear selected objects and refresh the publication list
-					objectStore.selectedObjects = []
 					// Refresh publications using catalogStore
 					catalogStore.fetchPublications()
 
-					this.closeModalTimeout = setTimeout(() => {
-						this.closeDialog()
-					}, 2000)
+					// Only auto-close if there are no failures
+					if (failed.length === 0) {
+						this.closeModalTimeout = setTimeout(() => {
+							this.closeDialog()
+						}, 2000)
+					}
 				}
 
 				if (failed.length > 0) {
@@ -222,41 +190,5 @@ export default {
 	margin-top: 0 !important;
 	margin-bottom: 16px;
 	color: var(--color-main-text);
-}
-
-.selected-objects-container {
-	margin: 20px 0;
-}
-
-.selected-objects-list {
-	max-height: 300px;
-	overflow-y: auto;
-	border: 1px solid var(--color-border);
-	border-radius: 4px;
-}
-
-.selected-object-item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 12px;
-	border-bottom: 1px solid var(--color-border);
-	background-color: var(--color-background-hover);
-}
-
-.selected-object-item:last-child {
-	border-bottom: none;
-}
-
-.object-info strong {
-	display: block;
-	margin-bottom: 4px;
-	color: var(--color-main-text);
-}
-
-.object-id {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-	margin: 0;
 }
 </style>

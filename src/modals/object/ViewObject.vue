@@ -14,17 +14,20 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 <template>
 	<div>
 		<NcDialog v-if="navigationStore.modal === 'viewObject'"
-			:name="getModalTitle()"
 			size="large"
 			:can-close="true"
 			@update:open="handleDialogClose">
-			<template #header>
-				<div class="modal-header">
-					<component :is="getStatusIcon()"
-						:class="getStatusIconClass()"
-						:size="20" />
-					<span class="modal-title">{{ getModalTitle() }}</span>
-				</div>
+			<template name>
+				<h2 class="dialog__name">
+					<PublishedIcon v-if="shouldShowPublishedIcon"
+						:object="currentObject"
+						:size="30"
+						class="status-icon draft-icon" />
+					<Pencil v-else
+						:size="30"
+						class="status-icon draft-icon" />
+					{{ getModalTitle() }}
+				</h2>
 			</template>
 			<div class="formContainer viewObjectDialog">
 				<!-- Display Object -->
@@ -316,14 +319,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<th class="tableColumnExpanded">
 													Value
 												</th>
-												<th class="tableColumnActions">
-													Actions
-												</th>
 											</tr>
 										</thead>
 										<tbody>
 											<tr
-												v-for="([key, value, hasAction]) in metadataProperties"
+												v-for="([key, value]) in metadataProperties"
 												:key="key"
 												class="viewTableRow">
 												<td class="tableColumnConstrained">
@@ -331,41 +331,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												</td>
 												<td class="tableColumnExpanded">
 													{{ value }}
-												</td>
-												<td class="tableColumnActions">
-													<NcButton
-														v-if="hasAction && key === 'ID'"
-														class="copy-button"
-														size="small"
-														@click="copyToClipboard(currentObject.id)">
-														<template #icon>
-															<Check v-if="isCopied" :size="16" />
-															<ContentCopy v-else :size="16" />
-														</template>
-														{{ isCopied ? 'Copied' : 'Copy' }}
-													</NcButton>
-													<NcButton
-														v-else-if="hasAction && key === 'Published'"
-														:disabled="isPublishing"
-														size="small"
-														@click="openPublishModal">
-														<template #icon>
-															<NcLoadingIcon v-if="isPublishing" :size="16" />
-															<Publish v-else :size="16" />
-														</template>
-														Change
-													</NcButton>
-													<NcButton
-														v-else-if="hasAction && key === 'Depublished'"
-														:disabled="isDepublishing"
-														size="small"
-														@click="openDepublishModal">
-														<template #icon>
-															<NcLoadingIcon v-if="isDepublishing" :size="16" />
-															<PublishOff v-else :size="16" />
-														</template>
-														Change
-													</NcButton>
 												</td>
 											</tr>
 										</tbody>
@@ -569,22 +534,26 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					Add File
 				</NcButton>
 				<NcButton v-if="shouldShowPublishAction(currentObject)"
-					:disabled="isPublishing"
-					@click="publishObject">
+					@click="singlePublishObject">
 					<template #icon>
-						<NcLoadingIcon v-if="isPublishing" :size="20" />
-						<Publish v-else :size="20" />
+						<Publish :size="20" />
 					</template>
 					Publish
 				</NcButton>
 				<NcButton v-if="shouldShowDepublishAction(currentObject)"
-					:disabled="isDepublishing"
-					@click="depublishObject">
+					@click="singleDepublishObject">
 					<template #icon>
-						<NcLoadingIcon v-if="isDepublishing" :size="20" />
-						<PublishOff v-else :size="20" />
+						<PublishOff :size="20" />
 					</template>
 					Depublish
+				</NcButton>
+				<NcButton v-if="!isNewObject"
+					type="error"
+					@click="singleDeleteObject">
+					<template #icon>
+						<Delete :size="20" />
+					</template>
+					Delete
 				</NcButton>
 				<NcButton type="primary" :disabled="isSaving" @click="saveObject">
 					<template #icon>
@@ -596,73 +565,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</template>
 		</NcDialog>
 
-		<!-- Publish Object Modal -->
-		<NcDialog :open="showPublishModal"
-			name="Publish Object"
-			size="small"
-			:style="{ zIndex: 10001 }"
-			@update:open="showPublishModal = $event">
-			<div class="modal-content">
-				<p>Set the publication date for this object. Leave empty to NOT publish this object.</p>
 
-				<NcDateTimePickerNative
-					v-model="publishDate"
-					label="Publication Date"
-					type="datetime-local" />
-			</div>
-
-			<template #actions>
-				<NcButton @click="closePublishModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					Cancel
-				</NcButton>
-				<NcButton type="primary"
-					:disabled="isPublishing"
-					@click="publishObject">
-					<template #icon>
-						<NcLoadingIcon v-if="isPublishing" :size="20" />
-						<ContentSave v-else :size="20" />
-					</template>
-					{{ isPublishing ? 'Publishing...' : 'Save' }}
-				</NcButton>
-			</template>
-		</NcDialog>
-
-		<!-- Depublish Object Modal -->
-		<NcDialog :open="showDepublishModal"
-			name="Depublish Object"
-			size="small"
-			:style="{ zIndex: 10001 }"
-			@update:open="showDepublishModal = $event">
-			<div class="modal-content">
-				<p>Set the depublication date for this object. Leave empty to NOT depublish this object.</p>
-
-				<NcDateTimePickerNative
-					v-model="depublishDate"
-					label="Depublication Date"
-					type="datetime-local" />
-			</div>
-
-			<template #actions>
-				<NcButton @click="closeDepublishModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					Cancel
-				</NcButton>
-				<NcButton type="primary"
-					:disabled="isDepublishing"
-					@click="depublishObject">
-					<template #icon>
-						<NcLoadingIcon v-if="isDepublishing" :size="20" />
-						<ContentSave v-else :size="20" />
-					</template>
-					{{ isDepublishing ? 'Depublishing...' : 'Save' }}
-				</NcButton>
-			</template>
-		</NcDialog>
 	</div>
 </template>
 
@@ -701,12 +604,11 @@ import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
 import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
+import PublishedIcon from '../../components/PublishedIcon.vue'
 
 export default {
 	name: 'ViewObject',
@@ -742,12 +644,11 @@ export default {
 		Plus,
 		Publish,
 		PublishOff,
-		ListBoxOutline,
 		Pencil,
-		AlertOutline,
 		ExclamationThick,
 		ArrowRight,
 		PaginationComponent,
+		PublishedIcon,
 	},
 	data() {
 		return {
@@ -759,13 +660,7 @@ export default {
 			success: null,
 			error: null,
 			isCopied: false,
-			// Object publish/depublish modal states
-			showPublishModal: false,
-			showDepublishModal: false,
-			publishDate: null,
-			depublishDate: null,
-			isPublishing: false,
-			isDepublishing: false,
+
 			// Files tab properties
 			activeAttachment: null,
 			selectedAttachments: [],
@@ -835,63 +730,109 @@ export default {
 			if (existingProperties.length === 0 && missingSchemaProperties.length === 0) {
 				return [
 					['title', ''],
-						['description', ''],
-						['summary', ''],
-						['category', ''],
-						['status', 'draft'],
-					]
+					['description', ''],
+					['summary', ''],
+					['category', ''],
+					['status', 'draft'],
+				]
 			}
 
 			// Combine existing properties and missing schema properties
 			return [...existingProperties, ...missingSchemaProperties]
 		},
 		metadataProperties() {
-			// Return array of [key, value, hasAction] for metadata display
+			// Return array of [key, value] for metadata display
 			if (!this.currentObject) return []
 
 			const obj = this.currentObject
 			const metadata = []
 
-			// ID with copy action
+			// ID
 			metadata.push([
 				'ID',
 				obj.id || 'Not set',
-				true,
 			])
 
 			// Version
 			metadata.push([
 				'Version',
 				obj['@self']?.version || 'Not set',
-				false,
+			])
+
+			// Register
+			const register = obj['@self']?.register
+			let registerDisplay = 'Not set'
+			if (register) {
+				if (typeof register === 'object') {
+					registerDisplay = register.title || register.name || register.id || register
+				} else {
+					// Try to find the register title from available registers
+					const availableRegister = objectStore.availableRegisters.find(r => r.id === register)
+					registerDisplay = availableRegister?.title || register
+				}
+			}
+			metadata.push([
+				'Register',
+				registerDisplay,
+			])
+
+			// Schema
+			const schema = obj['@self']?.schema
+			let schemaDisplay = 'Not set'
+			if (schema) {
+				if (typeof schema === 'object') {
+					schemaDisplay = schema.title || schema.name || schema.id || schema
+				} else {
+					// Try to find the schema title from available schemas
+					const availableSchema = objectStore.availableSchemas.find(s => s.id === schema)
+					schemaDisplay = availableSchema?.title || schema
+				}
+			}
+			metadata.push([
+				'Schema',
+				schemaDisplay,
+			])
+
+			// Locked
+			const locked = obj['@self']?.locked
+			let lockedDisplay = 'Not locked'
+			if (locked) {
+				if (typeof locked === 'object') {
+					const lockedBy = locked.lockedBy || 'Unknown user'
+					const lockedAt = locked.lockedAt ? new Date(locked.lockedAt).toLocaleString() : 'Unknown time'
+					const process = locked.process ? ` (${locked.process})` : ''
+					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${process}`
+				} else {
+					lockedDisplay = 'Locked'
+				}
+			}
+			metadata.push([
+				'Locked',
+				lockedDisplay,
 			])
 
 			// Created
 			metadata.push([
 				'Created',
 				obj['@self']?.created ? new Date(obj['@self'].created).toLocaleString() : 'Not set',
-				false,
 			])
 
 			// Updated
 			metadata.push([
 				'Updated',
 				obj['@self']?.updated ? new Date(obj['@self'].updated).toLocaleString() : 'Not set',
-				false,
 			])
 
-			// Published with change action
+			// Published
 			metadata.push([
 				'Published',
 				obj['@self']?.published ? new Date(obj['@self'].published).toLocaleString() : 'Not published',
-				true,
 			])
 
-			// Depublished with change action
+			// Depublished
 			metadata.push([
 				'Depublished',
 				obj['@self']?.depublished ? new Date(obj['@self'].depublished).toLocaleString() : 'Not depublished',
-				true,
 			])
 
 			return metadata
@@ -976,6 +917,10 @@ export default {
 		},
 		allSelectionsComplete() {
 			return this.selectedCatalog && this.selectedRegister && this.selectedSchema
+		},
+
+		shouldShowPublishedIcon() {
+			return this.currentObject && this.currentObject['@self']
 		},
 	},
 	watch: {
@@ -1080,32 +1025,7 @@ export default {
 
 			return `${name} (${schemaName})`
 		},
-		getStatusIcon() {
-			if (!this.currentObject || this.isNewObject) {
-				return 'Pencil' // New/Draft
-			}
 
-			if (this.currentObject['@self']?.published) {
-				return 'ListBoxOutline' // Published
-			} else if (this.currentObject['@self']?.depublished) {
-				return 'AlertOutline' // Depublished
-			} else {
-				return 'Pencil' // Draft/Unpublished
-			}
-		},
-		getStatusIconClass() {
-			if (!this.currentObject || this.isNewObject) {
-				return 'status-icon draft-icon'
-			}
-
-			if (this.currentObject['@self']?.published) {
-				return 'status-icon published-icon'
-			} else if (this.currentObject['@self']?.depublished) {
-				return 'status-icon depublished-icon'
-			} else {
-				return 'status-icon draft-icon'
-			}
-		},
 		closeModal() {
 			// Clear state first
 			this.activeTab = 0
@@ -1114,13 +1034,7 @@ export default {
 			this.isCopied = false
 			this.selectedProperty = null
 
-			// Clear publish/depublish modal states
-			this.showPublishModal = false
-			this.showDepublishModal = false
-			this.publishDate = null
-			this.depublishDate = null
-			this.isPublishing = false
-			this.isDepublishing = false
+
 
 			// Clear Files tab state
 			this.activeAttachment = null
@@ -1240,9 +1154,6 @@ export default {
 					method = 'PUT'
 				}
 
-				console.log(`${isCreating ? 'Creating' : 'Updating'} object at endpoint:`, endpoint)
-				console.log('Object data:', objectData)
-
 				const response = await fetch(endpoint, {
 					method,
 					headers: {
@@ -1257,7 +1168,6 @@ export default {
 				}
 
 				const result = await response.json()
-				console.log(`${isCreating ? 'Created' : 'Updated'} object result:`, result)
 
 				// Set the newly created/updated object as active in the object store
 				objectStore.setActiveObject('publication', result)
@@ -1321,20 +1231,20 @@ export default {
 		},
 		isValidDate(value) {
 			if (!value || typeof value !== 'string') return false
-			
+
 			// Don't treat simple strings like "test 12" as dates
 			if (value.length < 8) return false
-			
+
 			// Check if it looks like a date format
 			const datePatterns = [
 				/^\d{4}-\d{2}-\d{2}/, // YYYY-MM-DD
 				/^\d{1,2}-\d{1,2}-\d{4}/, // M-D-YYYY or MM-DD-YYYY
 				/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO datetime
 			]
-			
+
 			const looksLikeDate = datePatterns.some(pattern => pattern.test(value))
 			if (!looksLikeDate) return false
-			
+
 			// Try to parse it
 			const date = new Date(value)
 			return date instanceof Date && !isNaN(date) && date.getFullYear() > 1900
@@ -1599,12 +1509,12 @@ export default {
 				}
 				return editedValue
 			}
-			
+
 			// Handle original value
 			if (value === null || value === undefined) {
 				return ''
 			}
-			
+
 			// Handle date formatting for original values - only if it's actually a date string
 			if (this.isValidDate(value) && typeof value === 'string' && (value.includes('T') || value.includes('-'))) {
 				// Check if it looks like a date (has date separators)
@@ -1613,7 +1523,7 @@ export default {
 					return new Date(value).toLocaleString()
 				}
 			}
-			
+
 			// For arrays and objects, format them nicely
 			if (Array.isArray(value)) {
 				return JSON.stringify(value)
@@ -1621,7 +1531,7 @@ export default {
 			if (typeof value === 'object' && value !== null) {
 				return JSON.stringify(value)
 			}
-			
+
 			// Return the value as-is for everything else
 			return value
 		},
@@ -1661,10 +1571,10 @@ export default {
 
 				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
 				const objectId = this.currentObject['@self']?.id || this.currentObject.id
-				
+
 				let endpoint
 				let body = {}
-				
+
 				if (this.showPublishModal && this.publishDate) {
 					// Publishing with a specific date from the modal
 					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
@@ -1672,8 +1582,8 @@ export default {
 						...this.currentObject,
 						'@self': {
 							...this.currentObject['@self'],
-							published: this.publishDate instanceof Date ? this.publishDate.toISOString() : this.publishDate
-						}
+							published: this.publishDate instanceof Date ? this.publishDate.toISOString() : this.publishDate,
+						},
 					}
 				} else {
 					// Direct publish action (publish now)
@@ -1682,9 +1592,11 @@ export default {
 
 				const response = await fetch(endpoint, {
 					method: this.showPublishModal ? 'PUT' : 'POST',
-					headers: this.showPublishModal ? {
-						'Content-Type': 'application/json',
-					} : undefined,
+					headers: this.showPublishModal
+						? {
+							'Content-Type': 'application/json',
+						}
+						: undefined,
 					body: this.showPublishModal ? JSON.stringify(body) : undefined,
 				})
 
@@ -1694,13 +1606,16 @@ export default {
 				}
 
 				const result = await response.json()
-				
-				// Update the current object with the new data
-				objectStore.setActiveObject('publication', result)
-				
+
+				// Rebuild the object with schema properties like we do in objectProperties computed
+				const updatedObject = this.rebuildObjectWithSchemaProperties(result)
+
+				// Update the current object with the rebuilt data
+				objectStore.setActiveObject('publication', updatedObject)
+
 				// Refresh the publications list
 				catalogStore.fetchPublications()
-				
+
 				this.closePublishModal()
 				this.success = 'Object published successfully'
 				setTimeout(() => {
@@ -1725,10 +1640,10 @@ export default {
 
 				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
 				const objectId = this.currentObject['@self']?.id || this.currentObject.id
-				
+
 				let endpoint
 				let body = {}
-				
+
 				if (this.showDepublishModal && this.depublishDate) {
 					// Depublishing with a specific date from the modal
 					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
@@ -1736,8 +1651,8 @@ export default {
 						...this.currentObject,
 						'@self': {
 							...this.currentObject['@self'],
-							depublished: this.depublishDate instanceof Date ? this.depublishDate.toISOString() : this.depublishDate
-						}
+							depublished: this.depublishDate instanceof Date ? this.depublishDate.toISOString() : this.depublishDate,
+						},
 					}
 				} else {
 					// Direct depublish action (depublish now)
@@ -1746,9 +1661,11 @@ export default {
 
 				const response = await fetch(endpoint, {
 					method: this.showDepublishModal ? 'PUT' : 'POST',
-					headers: this.showDepublishModal ? {
-						'Content-Type': 'application/json',
-					} : undefined,
+					headers: this.showDepublishModal
+						? {
+							'Content-Type': 'application/json',
+						}
+						: undefined,
 					body: this.showDepublishModal ? JSON.stringify(body) : undefined,
 				})
 
@@ -1758,13 +1675,16 @@ export default {
 				}
 
 				const result = await response.json()
-				
-				// Update the current object with the new data
-				objectStore.setActiveObject('publication', result)
-				
+
+				// Rebuild the object with schema properties like we do in objectProperties computed
+				const updatedObject = this.rebuildObjectWithSchemaProperties(result)
+
+				// Update the current object with the rebuilt data
+				objectStore.setActiveObject('publication', updatedObject)
+
 				// Refresh the publications list
 				catalogStore.fetchPublications()
-				
+
 				this.closeDepublishModal()
 				this.success = 'Object depublished successfully'
 				setTimeout(() => {
@@ -2096,6 +2016,45 @@ export default {
 			if (!object || !object['@self']) return false
 			return object['@self'].published !== null && object['@self'].published !== undefined
 		},
+		singlePublishObject() {
+			if (!this.currentObject) return
+
+			// Set the single publication as selected object (as full object, not just ID)
+			const publicationObject = {
+				...this.currentObject,
+				id: this.currentObject['@self']?.id || this.currentObject.id,
+			}
+			objectStore.setSelectedObjects([publicationObject])
+
+			// Open the mass publish dialog
+			navigationStore.setDialog('massPublishObjects')
+		},
+		singleDepublishObject() {
+			if (!this.currentObject) return
+
+			// Set the single publication as selected object (as full object, not just ID)
+			const publicationObject = {
+				...this.currentObject,
+				id: this.currentObject['@self']?.id || this.currentObject.id,
+			}
+			objectStore.setSelectedObjects([publicationObject])
+
+			// Open the mass depublish dialog
+			navigationStore.setDialog('massDepublishObjects')
+		},
+		singleDeleteObject() {
+			if (!this.currentObject) return
+
+			// Set the single publication as selected object (as full object, not just ID)
+			const publicationObject = {
+				...this.currentObject,
+				id: this.currentObject['@self']?.id || this.currentObject.id,
+			}
+			objectStore.setSelectedObjects([publicationObject])
+
+			// Open the mass delete dialog
+			navigationStore.setDialog('massDeleteObject')
+		},
 		// Schema handling methods
 		getSchemaProperties() {
 			// For new objects, use the selected schema
@@ -2108,14 +2067,14 @@ export default {
 			if (this.currentObject && this.currentObject['@self']?.schema) {
 				const schemaRef = this.currentObject['@self'].schema
 				let schemaId = null
-				
+
 				// Handle both object and string schema references
 				if (typeof schemaRef === 'object') {
 					schemaId = schemaRef.id || schemaRef.uuid
 				} else {
 					schemaId = schemaRef
 				}
-				
+
 				if (schemaId) {
 					const fullSchema = objectStore.availableSchemas.find(schema => schema.id === schemaId)
 					if (fullSchema?.properties) {
@@ -2132,6 +2091,53 @@ export default {
 			// Fallback: return empty object
 			return {}
 		},
+		// Helper method to rebuild object with schema properties after API operations
+		rebuildObjectWithSchemaProperties(apiResult) {
+			// Start with the API result merged with current object
+			const mergedObject = {
+				...this.currentObject,
+				...apiResult,
+				'@self': {
+					...this.currentObject['@self'],
+					...apiResult['@self'],
+				},
+			}
+
+			// Get schema properties to ensure we don't lose any
+			const schemaProperties = this.getSchemaProperties()
+
+			// Add missing schema properties with default values
+			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
+				if (!Object.prototype.hasOwnProperty.call(mergedObject, key)) {
+					// Add with appropriate default value based on type
+					let defaultValue = ''
+					switch (schemaProperty.type) {
+					case 'string':
+						defaultValue = schemaProperty.const || ''
+						break
+					case 'number':
+					case 'integer':
+						defaultValue = 0
+						break
+					case 'boolean':
+						defaultValue = false
+						break
+					case 'array':
+						defaultValue = []
+						break
+					case 'object':
+						defaultValue = {}
+						break
+					default:
+						defaultValue = ''
+					}
+					mergedObject[key] = defaultValue
+				}
+			}
+
+			return mergedObject
+		},
+
 		// Enhanced property validation and editing methods (from openregister version)
 		isValidPropertyValue(key, value, schemaProperty) {
 			// Handle null/undefined values
@@ -2395,6 +2401,22 @@ export default {
 
 .files-info-card p:last-child {
 	margin-bottom: 0;
+}
+
+/* Modal header styling */
+.dialog__name {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.75rem !important;
+	margin: 0 !important;
+	font-size: 1.25rem !important;
+	font-weight: 600 !important;
+	text-align: center !important;
+}
+
+.dialog__name .status-icon {
+	flex-shrink: 0;
 }
 
 </style>
