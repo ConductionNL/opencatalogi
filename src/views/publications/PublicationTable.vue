@@ -8,7 +8,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<!-- Header -->
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('opencatalogi', 'Publications') }} (New)
+					{{ t('opencatalogi', 'Publications') }}
 				</h1>
 				<p>{{ t('opencatalogi', 'Manage your publications and their status') }}</p>
 			</div>
@@ -158,18 +158,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						<div v-for="publication in paginatedPublications" :key="publication.id" class="card">
 							<div class="cardHeader">
 								<h2 v-tooltip.bottom="publication.summary">
-									<ListBoxOutline v-if="publication['@self']?.published"
-										v-tooltip="'Published: This publication is live and publicly available'"
-										:size="20"
-										class="published-icon" />
-									<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished"
-										v-tooltip="'Draft: This publication is not yet published'"
-										:size="20"
-										class="unpublished-icon" />
-									<AlertOutline v-else-if="publication['@self']?.depublished"
-										v-tooltip="'Depublished: This publication has been withdrawn from public access'"
-										:size="20"
-										class="depublished-icon" />
+									<PublishedIcon :object="publication" :size="20" />
 									{{ publication['@self']?.name || publication.title || publication.name || publication.titel || publication.naam || publication.id }}
 								</h2>
 								<NcActions :primary="true" menu-name="Actions">
@@ -190,23 +179,19 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									</NcActionButton>
 									<NcActionButton
 										v-if="shouldShowPublishAction(publication)"
-										:disabled="publishingPublications.includes(publication.id)"
 										close-after-click
-										@click="publishPublication(publication)">
+										@click="singlePublishPublication(publication)">
 										<template #icon>
-											<NcLoadingIcon v-if="publishingPublications.includes(publication.id)" :size="20" />
-											<Publish v-else :size="20" />
+											<Publish :size="20" />
 										</template>
 										Publish
 									</NcActionButton>
 									<NcActionButton
 										v-if="shouldShowDepublishAction(publication)"
-										:disabled="depublishingPublications.includes(publication.id)"
 										close-after-click
-										@click="depublishPublication(publication)">
+										@click="singleDepublishPublication(publication)">
 										<template #icon>
-											<NcLoadingIcon v-if="depublishingPublications.includes(publication.id)" :size="20" />
-											<PublishOff v-else :size="20" />
+											<PublishOff :size="20" />
 										</template>
 										Depublish
 									</NcActionButton>
@@ -216,7 +201,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</template>
 										Add Attachment
 									</NcActionButton>
-									<NcActionButton close-after-click @click="deletePublication(publication)">
+									<NcActionButton close-after-click @click="singleDeletePublication(publication)">
 										<template #icon>
 											<TrashCanOutline :size="20" />
 										</template>
@@ -320,18 +305,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 											</span>
 											<span v-else-if="column.id === 'meta_name'">
 												<span class="titleWithIcon">
-													<ListBoxOutline v-if="publication['@self']?.published"
-														v-tooltip="'Published: This publication is live and publicly available'"
-														:size="16"
-														class="published-icon" />
-													<Pencil v-else-if="!publication['@self']?.published && !publication['@self']?.depublished"
-														v-tooltip="'Draft: This publication is not yet published'"
-														:size="16"
-														class="unpublished-icon" />
-													<AlertOutline v-else-if="publication['@self']?.depublished"
-														v-tooltip="'Depublished: This publication has been withdrawn from public access'"
-														:size="16"
-														class="depublished-icon" />
+													<PublishedIcon :object="publication" :size="16" />
 													<span class="truncatedName" :title="publication['@self']?.name || 'N/A'">
 														{{ publication['@self']?.name || 'N/A' }}
 													</span>
@@ -369,27 +343,23 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												</NcActionButton>
 												<NcActionButton
 													v-if="shouldShowPublishAction(publication)"
-													:disabled="publishingPublications.includes(publication['@self']?.id || publication.id)"
 													close-after-click
-													@click="publishPublication(publication)">
+													@click="singlePublishPublication(publication)">
 													<template #icon>
-														<NcLoadingIcon v-if="publishingPublications.includes(publication['@self']?.id || publication.id)" :size="20" />
-														<Publish v-else :size="20" />
+														<Publish :size="20" />
 													</template>
 													Publish
 												</NcActionButton>
 												<NcActionButton
 													v-if="shouldShowDepublishAction(publication)"
-													:disabled="depublishingPublications.includes(publication['@self']?.id || publication.id)"
 													close-after-click
-													@click="depublishPublication(publication)">
+													@click="singleDepublishPublication(publication)">
 													<template #icon>
-														<NcLoadingIcon v-if="depublishingPublications.includes(publication['@self']?.id || publication.id)" :size="20" />
-														<PublishOff v-else :size="20" />
+														<PublishOff :size="20" />
 													</template>
 													Depublish
 												</NcActionButton>
-												<NcActionButton close-after-click @click="deletePublication(publication)">
+												<NcActionButton close-after-click @click="singleDeletePublication(publication)">
 													<template #icon>
 														<Delete :size="20" />
 													</template>
@@ -423,9 +393,7 @@ import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton,
 import { VueDraggable } from 'vue-draggable-plus'
 import getValidISOstring from '../../services/getValidISOstring.js'
 
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -433,13 +401,13 @@ import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
 
 import PaginationComponent from '../../components/PaginationComponent.vue'
+import PublishedIcon from '../../components/PublishedIcon.vue'
 
 export default {
 	name: 'PublicationTable',
@@ -455,9 +423,7 @@ export default {
 		NcButton,
 		NcCounterBubble,
 		VueDraggable,
-		ListBoxOutline,
 		DotsHorizontal,
-		Pencil,
 		TrashCanOutline,
 		Refresh,
 		Plus,
@@ -465,19 +431,17 @@ export default {
 		Publish,
 		PublishOff,
 		FilePlusOutline,
-		AlertOutline,
 		Eye,
 		Delete,
 		FormatListChecks,
 		FormatColumns,
 		PaginationComponent,
+		PublishedIcon,
 	},
 	data() {
 		return {
 			selectedPublications: [],
 			viewMode: 'table',
-			publishingPublications: [],
-			depublishingPublications: [],
 		}
 	},
 	computed: {
@@ -616,17 +580,19 @@ export default {
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setDialog('copyPublication')
 		},
-		deletePublication(publication) {
-			// Clear any existing selections to avoid conflicts with mass delete
+		singleDeletePublication(publication) {
+			// Clear any existing selections to avoid conflicts
 			this.selectedPublications = []
-			objectStore.selectedObjects = []
+			
+			// Set the single publication as selected object (as full object, not just ID)
+			const publicationObject = {
+				...publication,
+				id: publication['@self']?.id || publication.id,
+			}
+			objectStore.setSelectedObjects([publicationObject])
 
-			// Set the publication for deletion and open the delete dialog
-			objectStore.setActiveObject('publication', publication)
-			navigationStore.setDialog('deleteObject', {
-				objectType: 'publication',
-				dialogTitle: publication['@self']?.name || publication.title || publication.name || publication.id,
-			})
+			// Open the mass delete dialog
+			navigationStore.setDialog('massDeleteObject')
 		},
 		addAttachment(publication) {
 			// Set the publication and open the add attachment modal
@@ -638,71 +604,33 @@ export default {
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setModal('mergeObject')
 		},
-		// Utility method to get register and schema IDs from publication object
-		getRegisterSchemaIds(publication) {
-			const registerId = typeof publication['@self'].register === 'object'
-				? publication['@self'].register?.id || publication['@self'].register?.uuid
-				: publication['@self'].register
-			const schemaId = typeof publication['@self'].schema === 'object'
-				? publication['@self'].schema?.id || publication['@self'].schema?.uuid
-				: publication['@self'].schema
-			return { registerId, schemaId }
+		singlePublishPublication(publication) {
+			// Clear any existing selections to avoid conflicts
+			this.selectedPublications = []
+			
+			// Set the single publication as selected object (as full object, not just ID)
+			const publicationObject = {
+				...publication,
+				id: publication['@self']?.id || publication.id,
+			}
+			objectStore.setSelectedObjects([publicationObject])
+
+			// Open the mass publish dialog
+			navigationStore.setDialog('massPublishObjects')
 		},
-		async publishPublication(publication) {
-			const publicationId = publication['@self']?.id || publication.id
-
-			if (this.publishingPublications.includes(publicationId)) {
-				return // Already publishing
+		singleDepublishPublication(publication) {
+			// Clear any existing selections to avoid conflicts
+			this.selectedPublications = []
+			
+			// Set the single publication as selected object (as full object, not just ID)
+			const publicationObject = {
+				...publication,
+				id: publication['@self']?.id || publication.id,
 			}
+			objectStore.setSelectedObjects([publicationObject])
 
-			try {
-				this.publishingPublications.push(publicationId)
-
-				// Use the existing publishPublication method from the original component
-				objectStore.setActiveObject('publication', publication)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const response = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/publish`, {
-					method: 'POST',
-				})
-
-				if (response.ok) {
-					catalogStore.fetchPublications()
-					const data = await response.json()
-					objectStore.setActiveObject('publication', { ...data, id: data.id || data['@self'].id })
-				}
-			} catch (error) {
-				console.error('Failed to publish publication:', error)
-			} finally {
-				this.publishingPublications = this.publishingPublications.filter(id => id !== publicationId)
-			}
-		},
-		async depublishPublication(publication) {
-			const publicationId = publication['@self']?.id || publication.id
-
-			if (this.depublishingPublications.includes(publicationId)) {
-				return // Already depublishing
-			}
-
-			try {
-				this.depublishingPublications.push(publicationId)
-
-				// Use the existing depublish method from the original component
-				objectStore.setActiveObject('publication', publication)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const response = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/depublish`, {
-					method: 'POST',
-				})
-
-				if (response.ok) {
-					catalogStore.fetchPublications()
-					const data = await response.json()
-					objectStore.setActiveObject('publication', { ...data, id: data.id || data['@self'].id })
-				}
-			} catch (error) {
-				console.error('Failed to depublish publication:', error)
-			} finally {
-				this.depublishingPublications = this.depublishingPublications.filter(id => id !== publicationId)
-			}
+			// Open the mass depublish dialog
+			navigationStore.setDialog('massDepublishObjects')
 		},
 		bulkDeletePublications() {
 			if (this.selectedPublications.length === 0) return
@@ -716,7 +644,7 @@ export default {
 				}))
 
 			// Store selected publications for the deletion modal
-			objectStore.selectedObjects = selectedPublicationsData
+			objectStore.setSelectedObjects(selectedPublicationsData)
 
 			// Set the dialog to mass delete
 			navigationStore.setDialog('massDeleteObject')
@@ -733,7 +661,7 @@ export default {
 				}))
 
 			// Store selected publications for the publish modal
-			objectStore.selectedObjects = selectedPublicationsData
+			objectStore.setSelectedObjects(selectedPublicationsData)
 
 			// Open the mass publish modal
 			navigationStore.setDialog('massPublishObjects')
@@ -750,7 +678,7 @@ export default {
 				}))
 
 			// Store selected publications for the depublish modal
-			objectStore.selectedObjects = selectedPublicationsData
+			objectStore.setSelectedObjects(selectedPublicationsData)
 
 			// Open the mass depublish modal
 			navigationStore.setDialog('massDepublishObjects')
@@ -767,7 +695,7 @@ export default {
 				}))
 
 			// Store selected publications for the validate modal
-			objectStore.selectedObjects = selectedPublicationsData
+			objectStore.setSelectedObjects(selectedPublicationsData)
 
 			// Open the mass validate modal
 			navigationStore.setDialog('massValidateObjects')
@@ -815,19 +743,6 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-}
-
-/* Publication status icon colors */
-.titleWithIcon .material-design-icon.published-icon {
-	color: var(--color-success);
-}
-
-.titleWithIcon .material-design-icon.unpublished-icon {
-	color: var(--color-warning);
-}
-
-.titleWithIcon .material-design-icon.depublished-icon {
-	color: var(--color-error);
 }
 
 .publicationStats {

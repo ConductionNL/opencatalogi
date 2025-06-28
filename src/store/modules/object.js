@@ -64,6 +64,8 @@ export const useObjectStore = defineStore('object', {
 		objectTypeRegistry: {},
 		/** @type {Array<string>} */
 		selectedObjects: [],
+		/** @type {{[key: string]: string}} */
+		objectErrors: {},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
 		metadata: {
 			name: {
@@ -947,13 +949,27 @@ export const useObjectStore = defineStore('object', {
 				throw new Error('Object item, register and schema are required')
 			}
 
-			const isNewObject = !objectItem['@self'].id
-			const endpoint = this._buildObjectPath({
-				register,
-				schema,
-				objectId: isNewObject ? '' : objectItem['@self'].id,
-			})
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
 
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			const isNewObject = !objectItem['@self']?.id
+			const objectId = objectItem['@self']?.id
+
+			// Build endpoint URL
+			let endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}`
+			if (!isNewObject && objectId) {
+				endpoint += `/${objectId}`
+			}
+
+			// Update timestamp
+			if (!objectItem['@self']) {
+				objectItem['@self'] = {}
+			}
 			objectItem['@self'].updated = new Date().toISOString()
 
 			try {
@@ -963,9 +979,11 @@ export const useObjectStore = defineStore('object', {
 					body: JSON.stringify(objectItem),
 				})
 
+				if (!response.ok) {
+					throw new Error(`Failed to save object: ${response.status} ${response.statusText}`)
+				}
+
 				const data = await response.json()
-				this.setObjectItem(data)
-				await this.refreshObjectList({ register, schema })
 				return { response, data }
 			} catch (error) {
 				console.error('Error saving object:', error)
@@ -1028,52 +1046,305 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Extract ID from a value that can be either a primitive or an object
+		 * @param {string|number|object} value - The value to extract ID from
+		 * @return {string|number} The extracted ID
+		 */
+		extractId(value) {
+			if (value === null || value === undefined) {
+				return value
+			}
+
+			// If it's an object, try to get id property
+			if (typeof value === 'object') {
+				return value.id || value.uuid || value._id
+			}
+
+			// If it's a primitive, return as-is
+			return value
+		},
+
+		/**
 		 * Delete object
-		 * @param {string} type - Object type
-		 * @param {string} id - Object ID
-		 * @param {object} publicationData - Publication data
+		 * @param {object} objectItem - Object to delete
 		 * @return {Promise<void>}
 		 */
-		async deleteObject(type, id, publicationData = null) {
-			this.setLoading(`${type}_${id}`, true)
-			this.setError(`${type}_${id}`, null)
-			this.setState(type, { success: null, error: null })
+		async deleteObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`delete_${objectId}`, true)
+			this.setError(`delete_${objectId}`, null)
 
 			try {
-				// Ensure settings are loaded first
-				if (!this.settings) {
-					await this.fetchSettings()
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
 
+				const response = await fetch(endpoint, {
+					method: 'DELETE',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to delete object: ${response.status} ${response.statusText}`)
 				}
 
-				const response = await fetch(
-					this._constructApiUrl(type, id, null, {}, publicationData),
-					{ method: 'DELETE' },
-				)
-				if (!response.ok) throw new Error(`Failed to delete ${type} object`)
-
-				// Remove from objects
-				if (this.objects[type]) {
-					delete this.objects[type][id]
-				}
-
-				// If this was the active object, clear it
-				if (this.activeObjects[type]?.id === id) {
-					this.clearActiveObject(type)
-				}
-
-				// Refresh the collection to ensure it's up to date
-				await this.fetchCollection(type)
-
-				// Set success state
-				this.setState(type, { success: true, error: null })
+				return true
 			} catch (error) {
-				console.error(`Error deleting ${type} object:`, error)
-				this.setError(`${type}_${id}`, error.message)
-				this.setState(type, { success: false, error: error.message })
+				console.error('Error deleting object:', error)
+				this.setError(`delete_${objectId}`, error.message)
 				throw error
 			} finally {
-				this.setLoading(`${type}_${id}`, false)
+				this.setLoading(`delete_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Publish object
+		 * @param {object} objectItem - Object to publish
+		 * @return {Promise<object>} The updated object
+		 */
+		async publishObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`publish_${objectId}`, true)
+			this.setError(`publish_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to publish object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+				return updatedObject
+			} catch (error) {
+				console.error('Error publishing object:', error)
+				this.setError(`publish_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`publish_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Depublish object
+		 * @param {object} objectItem - Object to depublish
+		 * @return {Promise<object>} The updated object
+		 */
+		async depublishObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`depublish_${objectId}`, true)
+			this.setError(`depublish_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to depublish object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+				return updatedObject
+			} catch (error) {
+				console.error('Error depublishing object:', error)
+				this.setError(`depublish_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`depublish_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Validate object by saving it without modifications
+		 * @param {object} objectItem - Object to validate
+		 * @return {Promise<object>} The validated object
+		 */
+		async validateObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`validate_${objectId}`, true)
+			this.setError(`validate_${objectId}`, null)
+
+			try {
+				// Save the object as-is to trigger validation and enrichment
+				const result = await this.saveObject(objectItem, {
+					register: registerId,
+					schema: schemaId,
+				})
+
+				return result.data
+			} catch (error) {
+				console.error('Error validating object:', error)
+				this.setError(`validate_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`validate_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Lock object
+		 * @param {object} objectItem - Object to lock
+		 * @param {string} process - Process name (optional)
+		 * @param {number} duration - Duration in seconds (optional)
+		 * @return {Promise<object>} The updated object
+		 */
+		async lockObject(objectItem, process = null, duration = null) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`lock_${objectId}`, true)
+			this.setError(`lock_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/lock`
+
+				const body = {}
+				if (process) body.process = process
+				if (duration) body.duration = duration
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+					headers: Object.keys(body).length > 0 ? { 'Content-Type': 'application/json' } : undefined,
+					body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to lock object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+				return updatedObject
+			} catch (error) {
+				console.error('Error locking object:', error)
+				this.setError(`lock_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`lock_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Unlock object
+		 * @param {object} objectItem - Object to unlock
+		 * @return {Promise<object>} The updated object
+		 */
+		async unlockObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`unlock_${objectId}`, true)
+			this.setError(`unlock_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to unlock object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+				return updatedObject
+			} catch (error) {
+				console.error('Error unlocking object:', error)
+				this.setError(`unlock_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`unlock_${objectId}`, false)
 			}
 		},
 
@@ -1304,6 +1575,39 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Set error for a specific object
+		 * @param {string} objectId - The object ID
+		 * @param {string} error - The error message
+		 */
+		setObjectError(objectId, error) {
+			this.objectErrors[objectId] = error
+		},
+
+		/**
+		 * Clear error for a specific object
+		 * @param {string} objectId - The object ID
+		 */
+		clearObjectError(objectId) {
+			delete this.objectErrors[objectId]
+		},
+
+		/**
+		 * Clear all object errors
+		 */
+		clearAllObjectErrors() {
+			this.objectErrors = {}
+		},
+
+		/**
+		 * Get error for a specific object
+		 * @param {string} objectId - The object ID
+		 * @return {string|null} The error message or null if no error
+		 */
+		getObjectError(objectId) {
+			return this.objectErrors[objectId] || null
+		},
+
+		/**
 		 * Toggle selection of all objects
 		 */
 		toggleSelectAllObjects() {
@@ -1384,6 +1688,374 @@ export const useObjectStore = defineStore('object', {
 			})
 
 			this.columnFilters = filters
+		},
+
+		/**
+		 * Mass delete objects
+		 * @param {Array<object>} objects - Array of objects to delete
+		 * @param {Function} onProgress - Callback function called after each deletion (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massDeleteObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual deleteObject method
+						await this.deleteObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Remove successfully processed object from selection
+						const currentSelected = [...this.selectedObjects]
+						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
+						if (index > -1) {
+							currentSelected.splice(index, 1)
+							this.setSelectedObjects(currentSelected)
+						}
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to delete object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass publish objects
+		 * @param {Array<object>} objects - Array of objects to publish
+		 * @param {Function} onProgress - Callback function called after each publication (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massPublishObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual publishObject method
+						await this.publishObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Remove successfully processed object from selection
+						const currentSelected = [...this.selectedObjects]
+						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
+						if (index > -1) {
+							currentSelected.splice(index, 1)
+							this.setSelectedObjects(currentSelected)
+						}
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to publish object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass depublish objects
+		 * @param {Array<object>} objects - Array of objects to depublish
+		 * @param {Function} onProgress - Callback function called after each depublication (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massDepublishObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual depublishObject method
+						await this.depublishObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Remove successfully processed object from selection
+						const currentSelected = [...this.selectedObjects]
+						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
+						if (index > -1) {
+							currentSelected.splice(index, 1)
+							this.setSelectedObjects(currentSelected)
+						}
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to depublish object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass validate objects
+		 * @param {Array<object>} objects - Array of objects to validate
+		 * @param {Function} onProgress - Callback function called after each validation (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massValidateObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual validateObject method
+						await this.validateObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Remove successfully processed object from selection
+						const currentSelected = [...this.selectedObjects]
+						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
+						if (index > -1) {
+							currentSelected.splice(index, 1)
+							this.setSelectedObjects(currentSelected)
+						}
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to validate object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass lock objects
+		 * @param {Array<object>} objects - Array of objects to lock
+		 * @param {string} process - Process name (optional)
+		 * @param {number} duration - Duration in seconds (optional)
+		 * @param {Function} onProgress - Callback function called after each lock operation (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massLockObjects(objects, process = null, duration = null, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual lockObject method
+						await this.lockObject(obj, process, duration)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Remove successfully processed object from selection
+						const currentSelected = [...this.selectedObjects]
+						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
+						if (index > -1) {
+							currentSelected.splice(index, 1)
+							this.setSelectedObjects(currentSelected)
+						}
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to lock object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass unlock objects
+		 * @param {Array<object>} objects - Array of objects to unlock
+		 * @param {Function} onProgress - Callback function called after each unlock operation (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massUnlockObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual unlockObject method
+						await this.unlockObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Remove successfully processed object from selection
+						const currentSelected = [...this.selectedObjects]
+						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
+						if (index > -1) {
+							currentSelected.splice(index, 1)
+							this.setSelectedObjects(currentSelected)
+						}
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to unlock object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			return { successful, failed }
 		},
 	},
 })

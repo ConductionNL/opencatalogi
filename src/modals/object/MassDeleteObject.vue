@@ -1,55 +1,35 @@
+/**
+ * @file MassDeleteObject.vue
+ * @module Modals/Object
+ * @author Your Name
+ * @copyright 2024 Your Organization
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ */
+
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="`Delete ${selectedObjects.length} publication${selectedObjects.length !== 1 ? 's' : ''}`"
-		:can-close="false"
-		size="normal">
+	<NcDialog :name="dialogTitle"
+		:can-close="true"
+		size="normal"
+		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="delete-step">
-			<h3 class="step-title">
-				Confirm Publication Deletion
-			</h3>
-
 			<NcNoteCard type="info">
-				Review the selected publications below. You can remove any publications you don't want to delete by clicking the remove button.<br><br>
-				Publications will be soft deleted and moved to the <a href="#" class="deleted-link" @click.prevent="navigateToDeleted">deleted publications section</a>. They will be retained according to their schema's configured retention period and automatically permanently deleted when the retention period expires. The retention period is configurable per schema and can be found in the schema's settings.
+				Publications will be soft deleted and moved to the <a href="#" class="deleted-link" @click.prevent="navigateToDeleted">deleted publications section</a>. They will be retained according to their schema's configured retention period and automatically permanently deleted after wards.
 			</NcNoteCard>
 
-			<div class="selected-objects-container">
-				<h4>Selected Publications ({{ selectedObjects.length }})</h4>
-
-				<div v-if="selectedObjects.length" class="selected-objects-list">
-					<div v-for="obj in selectedObjects"
-						:key="obj.id"
-						class="selected-object-item">
-						<div class="object-info">
-							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || 'Unnamed Publication' }}</strong>
-							<p class="object-id">
-								ID: {{ obj.id || obj['@self']?.id }}
-							</p>
-						</div>
-						<NcButton type="tertiary"
-							:aria-label="`Remove ${obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id}`"
-							@click="removeObject(obj.id)">
-							<template #icon>
-								<Close :size="20" />
-							</template>
-						</NcButton>
-					</div>
-				</div>
-
-				<NcEmptyContent v-else name="No publications selected">
-					<template #description>
-						No publications are currently selected for deletion.
-					</template>
-				</NcEmptyContent>
-			</div>
+			<SelectedObjectsList
+				:title="objectsToDelete.length === 1 ? 'Publication to Delete' : 'Selected Publications'"
+				:objects="objectsToDelete"
+				:show-remove="objectsToDelete.length > 1" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Publication{{ objectStore.selectedObjects.length > 1 ? 's' : '' }} successfully deleted</p>
+			<p>Publication{{ originalSelectedCount > 1 ? 's' : '' }} successfully deleted</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -63,7 +43,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || selectedObjects.length === 0"
+				:disabled="loading || objectsToDelete.length === 0"
 				type="error"
 				@click="deleteObject()">
 				<template #icon>
@@ -80,27 +60,29 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import {
 	NcButton,
 	NcDialog,
-	NcEmptyContent,
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
-import Close from 'vue-material-design-icons/Close.vue'
+import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
 export default {
 	name: 'MassDeleteObject',
 	components: {
 		NcDialog,
 		NcButton,
-		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
+		SelectedObjectsList,
 		// Icons
 		TrashCanOutline,
 		Cancel,
-		Close,
+	},
+
+	props: {
+		// No props needed - always uses selected objects from store
 	},
 
 	data() {
@@ -110,31 +92,50 @@ export default {
 			error: false,
 			result: null,
 			closeModalTimeout: null,
-			selectedObjects: [],
+			originalSelectedCount: 0,
 		}
+	},
+
+	computed: {
+		/**
+		 * Get the objects to operate on from selected objects
+		 * @return {Array<object>} Array of objects to delete
+		 */
+		objectsToDelete() {
+			return objectStore.selectedObjects || []
+		},
+
+		/**
+		 * Get the dialog title based on number of objects
+		 * @return {string} Dialog title
+		 */
+		dialogTitle() {
+			const count = this.objectsToDelete.length
+			if (count === 1) {
+				return 'Delete publication'
+			}
+			return `Delete ${count} publication${count !== 1 ? 's' : ''}`
+		},
 	},
 	mounted() {
 		this.initializeSelection()
 	},
 	methods: {
 		initializeSelection() {
-			// Get selected objects from the store or navigation context
-			this.selectedObjects = objectStore.selectedObjects || []
-			if (this.selectedObjects.length === 0) {
-				this.closeDialog()
-			}
-		},
-		removeObject(objectId) {
-			this.selectedObjects = this.selectedObjects.filter(obj => obj.id !== objectId)
-			// Update the store as well
-			objectStore.selectedObjects = this.selectedObjects
-			if (this.selectedObjects.length === 0) {
+			// Store the original count for success message
+			this.originalSelectedCount = this.objectsToDelete.length
+
+			// Close dialog if no objects are selected
+			if (this.objectsToDelete.length === 0) {
 				this.closeDialog()
 			}
 		},
 		closeDialog() {
-			clearTimeout(this.closeModalTimeout)
-			this.startClosing = true
+			// Clear any pending timeout that might reopen the dialog
+			if (this.closeModalTimeout) {
+				clearTimeout(this.closeModalTimeout)
+				this.closeModalTimeout = null
+			}
 			navigationStore.setDialog(false)
 		},
 		navigateToDeleted() {
@@ -147,50 +148,23 @@ export default {
 			this.loading = true
 
 			try {
-				// Delete each object individually using OpenRegister API
-				const results = await Promise.allSettled(
-					this.selectedObjects.map(async (obj) => {
-						try {
-							// Extract register and schema IDs (handle objects)
-							const registerId = typeof obj['@self']?.register === 'object'
-								? obj['@self'].register?.id || obj['@self'].register?.uuid
-								: obj['@self']?.register
-							const schemaId = typeof obj['@self']?.schema === 'object'
-								? obj['@self'].schema?.id || obj['@self'].schema?.uuid
-								: obj['@self']?.schema
+				// Get the objects to delete
+				const objectsToProcess = [...this.objectsToDelete]
 
-							const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${obj.id}`
-
-							const response = await fetch(endpoint, {
-								method: 'DELETE',
-							})
-
-							if (!response.ok) {
-								throw new Error(`Failed to delete object: ${response.statusText}`)
-							}
-
-							return { success: true, id: obj.id }
-						} catch (error) {
-							console.error(`Failed to delete object ${obj.id}:`, error)
-							return { success: false, id: obj.id, error: error.message }
-						}
-					}),
-				)
-
-				// Count successful and failed operations
-				const successful = results.filter(r => r.status === 'fulfilled' && r.value.success)
-				const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
+				// Use the store's mass delete method
+				const { successful, failed } = await objectStore.massDeleteObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
-					// Clear selected objects and refresh the publication list
-					objectStore.selectedObjects = []
 					// Refresh publications using catalogStore
 					catalogStore.fetchPublications()
 
-					this.closeModalTimeout = setTimeout(() => {
-						this.closeDialog()
-					}, 2000)
+					// Only auto-close if there are no failures
+					if (failed.length === 0) {
+						this.closeModalTimeout = setTimeout(() => {
+							this.closeDialog()
+						}, 2000)
+					}
 				}
 
 				if (failed.length > 0) {
@@ -202,6 +176,11 @@ export default {
 				this.error = error.message || 'An error occurred while deleting objects'
 			} finally {
 				this.loading = false
+			}
+		},
+		handleDialogClose(isOpen) {
+			if (!isOpen) {
+				this.closeDialog()
 			}
 		},
 	},
@@ -217,42 +196,6 @@ export default {
 	margin-top: 0 !important;
 	margin-bottom: 16px;
 	color: var(--color-main-text);
-}
-
-.selected-objects-container {
-	margin: 20px 0;
-}
-
-.selected-objects-list {
-	max-height: 300px;
-	overflow-y: auto;
-	border: 1px solid var(--color-border);
-	border-radius: 4px;
-}
-
-.selected-object-item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 12px;
-	border-bottom: 1px solid var(--color-border);
-	background-color: var(--color-background-hover);
-}
-
-.selected-object-item:last-child {
-	border-bottom: none;
-}
-
-.object-info strong {
-	display: block;
-	margin-bottom: 4px;
-	color: var(--color-main-text);
-}
-
-.object-id {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-	margin: 0;
 }
 
 .deleted-link {

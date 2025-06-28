@@ -62,6 +62,8 @@
 				:value="currentPageSizeOption"
 				:options="pageSizeOptions"
 				:clearable="false"
+				:input-label="t('opencatalogi', 'Items per page')"
+				:label-outside="true"
 				@option:selected="changePageSize" />
 		</div>
 	</div>

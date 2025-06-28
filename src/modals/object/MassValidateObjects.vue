@@ -12,17 +12,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog :name="`Validate ${selectedObjects.length} publication${selectedObjects.length !== 1 ? 's' : ''}`"
-		:can-close="false"
-		size="normal">
+	<NcDialog :name="dialogTitle"
+		:can-close="true"
+		size="normal"
+		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="validate-step">
-			<h3 class="step-title">
-				Confirm Publication Validation
-			</h3>
-
 			<NcNoteCard type="info">
-				Review the selected publications below. You can remove any publications you don't want to validate by clicking the remove button.<br><br>
 				<strong>When to use mass validation:</strong><br>
 				• After updating the schema to apply new validation rules<br>
 				• When publications need to be re-enriched with updated name/description logic<br>
@@ -31,39 +27,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				Publications will be saved without modification to trigger validation and enrichment processes against the current schema.
 			</NcNoteCard>
 
-			<div class="selected-objects-container">
-				<h4>Selected Publications ({{ selectedObjects.length }})</h4>
-
-				<div v-if="selectedObjects.length" class="selected-objects-list">
-					<div v-for="obj in selectedObjects"
-						:key="obj.id"
-						class="selected-object-item">
-						<div class="object-info">
-							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || 'Unnamed Publication' }}</strong>
-							<p class="object-id">
-								ID: {{ obj.id || obj['@self']?.id }}
-							</p>
-						</div>
-						<NcButton type="tertiary"
-							:aria-label="`Remove ${obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id}`"
-							@click="removeObject(obj.id)">
-							<template #icon>
-								<Close :size="20" />
-							</template>
-						</NcButton>
-					</div>
-				</div>
-
-				<NcEmptyContent v-else name="No publications selected">
-					<template #description>
-						No publications are currently selected for validation.
-					</template>
-				</NcEmptyContent>
-			</div>
+			<SelectedObjectsList
+				:title="objectsToValidate.length === 1 ? 'Publication to Validate' : 'Selected Publications'"
+				:objects="objectsToValidate"
+				:show-remove="objectsToValidate.length > 1" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Publication{{ selectedObjects.length > 1 ? 's' : '' }} successfully validated</p>
+			<p>Publication{{ originalSelectedCount > 1 ? 's' : '' }} successfully validated</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -77,7 +48,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || selectedObjects.length === 0"
+				:disabled="loading || objectsToValidate.length === 0"
 				type="primary"
 				@click="validateObjects()">
 				<template #icon>
@@ -94,27 +65,29 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import {
 	NcButton,
 	NcDialog,
-	NcEmptyContent,
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
-import Close from 'vue-material-design-icons/Close.vue'
+import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
 export default {
 	name: 'MassValidateObjects',
 	components: {
 		NcDialog,
 		NcButton,
-		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
+		SelectedObjectsList,
 		// Icons
 		CheckCircle,
 		Cancel,
-		Close,
+	},
+
+	props: {
+		// No props needed - always uses selected objects from store
 	},
 
 	data() {
@@ -124,68 +97,78 @@ export default {
 			error: false,
 			result: null,
 			closeModalTimeout: null,
-			selectedObjects: [],
+			originalSelectedCount: 0,
 		}
+	},
+
+	computed: {
+		/**
+		 * Get the objects to operate on from selected objects
+		 * @return {Array<object>} Array of objects to validate
+		 */
+		objectsToValidate() {
+			return objectStore.selectedObjects || []
+		},
+
+		/**
+		 * Get the dialog title based on number of objects
+		 * @return {string} Dialog title
+		 */
+		dialogTitle() {
+			const count = this.objectsToValidate.length
+			if (count === 1) {
+				return 'Validate publication'
+			}
+			return `Validate ${count} publication${count !== 1 ? 's' : ''}`
+		},
 	},
 	mounted() {
 		this.initializeSelection()
 	},
 	methods: {
 		initializeSelection() {
-			// Get selected objects from the store or navigation context
-			this.selectedObjects = objectStore.selectedObjects || []
-			if (this.selectedObjects.length === 0) {
-				this.closeDialog()
-			}
-		},
-		removeObject(objectId) {
-			this.selectedObjects = this.selectedObjects.filter(obj => obj.id !== objectId)
-			// Update the store as well
-			objectStore.selectedObjects = this.selectedObjects
-			if (this.selectedObjects.length === 0) {
+			// Store the original count for success message
+			this.originalSelectedCount = this.objectsToValidate.length
+
+			// Close dialog if no objects are selected
+			if (this.objectsToValidate.length === 0) {
 				this.closeDialog()
 			}
 		},
 		closeDialog() {
-			clearTimeout(this.closeModalTimeout)
-			this.startClosing = true
+			// Clear any pending timeout that might reopen the dialog
+			if (this.closeModalTimeout) {
+				clearTimeout(this.closeModalTimeout)
+				this.closeModalTimeout = null
+			}
 			navigationStore.setDialog(false)
+		},
+		handleDialogClose(isOpen) {
+			if (!isOpen) {
+				this.closeDialog()
+			}
 		},
 		async validateObjects() {
 			this.loading = true
 
 			try {
-				// Validate each object individually by saving it without modifications
-				const results = await Promise.allSettled(
-					this.selectedObjects.map(async (obj) => {
-						try {
-							// Save the object as-is to trigger validation and enrichment
-							await objectStore.saveObject(obj, {
-								register: obj['@self']?.register || obj.register,
-								schema: obj['@self']?.schema || obj.schema,
-							})
-							return { success: true, id: obj.id }
-						} catch (error) {
-							console.error(`Failed to validate object ${obj.id}:`, error)
-							return { success: false, id: obj.id, error: error.message }
-						}
-					}),
-				)
+				// Get the objects to validate
+				const objectsToProcess = [...this.objectsToValidate]
 
-				// Count successful and failed operations
-				const successful = results.filter(r => r.status === 'fulfilled' && r.value.success)
-				const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
+				// Use the store's mass validate method
+				const { successful, failed } = await objectStore.massValidateObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
-					// Clear selected objects and refresh the publication list
-					objectStore.selectedObjects = []
 					// Refresh publications using catalogStore
 					catalogStore.fetchPublications()
 
-					this.closeModalTimeout = setTimeout(() => {
-						this.closeDialog()
-					}, 2000)
+					// Only auto-close if there are no failures
+					if (failed.length === 0) {
+						this.closeModalTimeout = setTimeout(() => {
+							this.closeDialog()
+						}, 2000)
+					}
 				}
 
 				if (failed.length > 0) {
@@ -212,41 +195,5 @@ export default {
 	margin-top: 0 !important;
 	margin-bottom: 16px;
 	color: var(--color-main-text);
-}
-
-.selected-objects-container {
-	margin: 20px 0;
-}
-
-.selected-objects-list {
-	max-height: 300px;
-	overflow-y: auto;
-	border: 1px solid var(--color-border);
-	border-radius: 4px;
-}
-
-.selected-object-item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 12px;
-	border-bottom: 1px solid var(--color-border);
-	background-color: var(--color-background-hover);
-}
-
-.selected-object-item:last-child {
-	border-bottom: none;
-}
-
-.object-info strong {
-	display: block;
-	margin-bottom: 4px;
-	color: var(--color-main-text);
-}
-
-.object-id {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-	margin: 0;
 }
 </style>

@@ -1,5 +1,5 @@
 /**
- * @file MassPublishObjects.vue
+ * @file MassUnlockObjects.vue
  * @module Modals/Object
  * @author Your Name
  * @copyright 2024 Your Organization
@@ -17,19 +17,19 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		size="normal"
 		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
-		<div v-if="success === null" class="publish-step">
-			<NcNoteCard type="info">
-				Objects will be published with the current date and time. If any objects have a depublication date set, it will be removed to make them fully published.
+		<div v-if="success === null" class="unlock-step">
+			<NcNoteCard type="warning">
+				Objects will be unlocked and made available for editing by other users. Only objects that are currently locked can be unlocked.
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="objectsToPublish.length === 1 ? 'Publication to Publish' : 'Selected Publications'"
-				:objects="objectsToPublish"
-				:show-remove="objectsToPublish.length > 1" />
+				:title="objectsToUnlock.length === 1 ? 'Publication to Unlock' : 'Selected Publications'"
+				:objects="objectsToUnlock"
+				:show-remove="objectsToUnlock.length > 1" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Object{{ originalSelectedCount > 1 ? 's' : '' }} successfully published</p>
+			<p>Publication{{ originalSelectedCount > 1 ? 's' : '' }} successfully unlocked</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -43,14 +43,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || objectsToPublish.length === 0"
-				type="primary"
-				@click="publishObjects()">
+				:disabled="loading || objectsToUnlock.length === 0"
+				type="warning"
+				@click="unlockObjects()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
-					<Publish v-if="!loading" :size="20" />
+					<LockOpenOutline v-if="!loading" :size="20" />
 				</template>
-				Publish
+				Unlock
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -65,11 +65,11 @@ import {
 } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import Publish from 'vue-material-design-icons/Publish.vue'
+import LockOpenOutline from 'vue-material-design-icons/LockOpenOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
 export default {
-	name: 'MassPublishObjects',
+	name: 'MassUnlockObjects',
 	components: {
 		NcDialog,
 		NcButton,
@@ -77,7 +77,7 @@ export default {
 		NcNoteCard,
 		SelectedObjectsList,
 		// Icons
-		Publish,
+		LockOpenOutline,
 		Cancel,
 	},
 
@@ -99,9 +99,9 @@ export default {
 	computed: {
 		/**
 		 * Get the objects to operate on from selected objects
-		 * @return {Array<object>} Array of objects to publish
+		 * @return {Array<object>} Array of objects to unlock
 		 */
-		objectsToPublish() {
+		objectsToUnlock() {
 			return objectStore.selectedObjects || []
 		},
 
@@ -110,11 +110,11 @@ export default {
 		 * @return {string} Dialog title
 		 */
 		dialogTitle() {
-			const count = this.objectsToPublish.length
+			const count = this.objectsToUnlock.length
 			if (count === 1) {
-				return 'Publish publication'
+				return 'Unlock publication'
 			}
-			return `Publish ${count} publication${count !== 1 ? 's' : ''}`
+			return `Unlock ${count} publication${count !== 1 ? 's' : ''}`
 		},
 	},
 	mounted() {
@@ -123,10 +123,10 @@ export default {
 	methods: {
 		initializeSelection() {
 			// Store the original count for success message
-			this.originalSelectedCount = this.objectsToPublish.length
+			this.originalSelectedCount = this.objectsToUnlock.length
 
 			// Close dialog if no objects are selected
-			if (this.objectsToPublish.length === 0) {
+			if (this.objectsToUnlock.length === 0) {
 				this.closeDialog()
 			}
 		},
@@ -143,15 +143,15 @@ export default {
 				this.closeDialog()
 			}
 		},
-		async publishObjects() {
+		async unlockObjects() {
 			this.loading = true
 
 			try {
-				// Get the objects to publish
-				const objectsToProcess = [...this.objectsToPublish]
+				// Get the objects to unlock
+				const objectsToProcess = [...this.objectsToUnlock]
 
-				// Use the store's mass publish method
-				const { successful, failed } = await objectStore.massPublishObjects(objectsToProcess)
+				// Use the store's mass unlock method
+				const { successful, failed } = await objectStore.massUnlockObjects(objectsToProcess)
 
 				if (successful.length > 0) {
 					this.success = true
@@ -167,12 +167,12 @@ export default {
 				}
 
 				if (failed.length > 0) {
-					this.error = `Failed to publish ${failed.length} object${failed.length > 1 ? 's' : ''}`
+					this.error = `Failed to unlock ${failed.length} object${failed.length > 1 ? 's' : ''}`
 				}
 
 			} catch (error) {
 				this.success = false
-				this.error = error.message || 'An error occurred while publishing objects'
+				this.error = error.message || 'An error occurred while unlocking objects'
 			} finally {
 				this.loading = false
 			}
@@ -182,7 +182,7 @@ export default {
 </script>
 
 <style scoped>
-.publish-step {
+.unlock-step {
 	padding: 0;
 }
 
@@ -191,4 +191,4 @@ export default {
 	margin-bottom: 16px;
 	color: var(--color-main-text);
 }
-</style>
+</style> 
