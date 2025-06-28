@@ -419,7 +419,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcActionCheckbox, NcActionCaption, NcActionSeparator, NcActionText, NcCheckboxRadioSwitch, NcButton, NcCounterBubble } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcActionCheckbox, NcActionCaption, NcCheckboxRadioSwitch, NcButton, NcCounterBubble } from '@nextcloud/vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import getValidISOstring from '../../services/getValidISOstring.js'
 
@@ -430,17 +430,14 @@ import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
-import Merge from 'vue-material-design-icons/Merge.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
-import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 
 import PaginationComponent from '../../components/PaginationComponent.vue'
 
@@ -454,8 +451,6 @@ export default {
 		NcActionButton,
 		NcActionCheckbox,
 		NcActionCaption,
-		NcActionSeparator,
-		NcActionText,
 		NcCheckboxRadioSwitch,
 		NcButton,
 		NcCounterBubble,
@@ -467,17 +462,14 @@ export default {
 		Refresh,
 		Plus,
 		ContentCopy,
-		HelpCircleOutline,
 		Publish,
 		PublishOff,
 		FilePlusOutline,
 		AlertOutline,
 		Eye,
 		Delete,
-		Merge,
 		FormatListChecks,
 		FormatColumns,
-		CheckCircle,
 		PaginationComponent,
 	},
 	data() {

@@ -801,39 +801,7 @@ export default {
 			const existingProperties = Object.entries(objectData)
 				.filter(([key]) => key !== '@self' && key !== 'id')
 
-			// For new objects, if we have no existing properties but have schema properties,
-			// show all schema properties with default values
-			if (this.isNewObject && existingProperties.length === 0 && Object.keys(schemaProperties).length > 0) {
-				const schemaBasedProperties = []
-				for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
-					// Add with appropriate default value based on type
-					let defaultValue = ''
-					switch (schemaProperty.type) {
-					case 'string':
-						defaultValue = schemaProperty.const || ''
-						break
-					case 'number':
-					case 'integer':
-						defaultValue = 0
-						break
-					case 'boolean':
-						defaultValue = false
-						break
-					case 'array':
-						defaultValue = []
-						break
-					case 'object':
-						defaultValue = {}
-						break
-					default:
-						defaultValue = ''
-					}
-					schemaBasedProperties.push([key, defaultValue])
-				}
-				return schemaBasedProperties
-			}
-
-			// Add schema properties that don't exist in the object yet
+			// Always add schema properties that don't exist in the object yet (for both create and edit modes)
 			const missingSchemaProperties = []
 			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
 				if (!Object.prototype.hasOwnProperty.call(objectData, key)) {
@@ -863,15 +831,15 @@ export default {
 				}
 			}
 
-			// If we still have no properties to show, provide some basic ones for new publications
-			if (this.isNewObject && existingProperties.length === 0 && missingSchemaProperties.length === 0) {
+			// If we have no properties to show (new object with no schema), provide some basic ones
+			if (existingProperties.length === 0 && missingSchemaProperties.length === 0) {
 				return [
 					['title', ''],
-					['description', ''],
-					['summary', ''],
-					['category', ''],
-					['status', 'draft'],
-				]
+						['description', ''],
+						['summary', ''],
+						['category', ''],
+						['status', 'draft'],
+					]
 			}
 
 			// Combine existing properties and missing schema properties
@@ -1302,12 +1270,18 @@ export default {
 				// Refresh the publications list
 				catalogStore.fetchPublications()
 
-				// Close the modal after successful save
-				this.closeModal()
+				// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
+				if (!isCreating) {
+					// For existing objects (edit mode), close the modal after save
+					setTimeout(() => {
+						this.closeModal()
+					}, 1000) // Give time for success message to show
+				}
 
 				setTimeout(() => {
 					this.success = null
 				}, 3000)
+
 			} catch (e) {
 				console.error('Save error:', e)
 				this.error = e.message || 'Failed to save object'
@@ -1346,9 +1320,24 @@ export default {
 			}
 		},
 		isValidDate(value) {
-			if (!value) return false
+			if (!value || typeof value !== 'string') return false
+			
+			// Don't treat simple strings like "test 12" as dates
+			if (value.length < 8) return false
+			
+			// Check if it looks like a date format
+			const datePatterns = [
+				/^\d{4}-\d{2}-\d{2}/, // YYYY-MM-DD
+				/^\d{1,2}-\d{1,2}-\d{4}/, // M-D-YYYY or MM-DD-YYYY
+				/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO datetime
+			]
+			
+			const looksLikeDate = datePatterns.some(pattern => pattern.test(value))
+			if (!looksLikeDate) return false
+			
+			// Try to parse it
 			const date = new Date(value)
-			return date instanceof Date && !isNaN(date)
+			return date instanceof Date && !isNaN(date) && date.getFullYear() > 1900
 		},
 		formatValue(val) {
 			return JSON.stringify(val, null, 2)
@@ -1603,9 +1592,37 @@ export default {
 		getDisplayValue(key, value) {
 			// If we have an edited value in formData, use that
 			if (this.formData[key] !== undefined) {
-				return this.formData[key]
+				const editedValue = this.formData[key]
+				// Handle date formatting for edited values
+				if (this.isValidDate(editedValue) && typeof editedValue === 'string' && editedValue.includes('T')) {
+					return new Date(editedValue).toLocaleString()
+				}
+				return editedValue
 			}
-			// Otherwise use the original value
+			
+			// Handle original value
+			if (value === null || value === undefined) {
+				return ''
+			}
+			
+			// Handle date formatting for original values - only if it's actually a date string
+			if (this.isValidDate(value) && typeof value === 'string' && (value.includes('T') || value.includes('-'))) {
+				// Check if it looks like a date (has date separators)
+				const datePattern = /^\d{4}-\d{2}-\d{2}|^\d{1,2}-\d{1,2}-\d{4}/
+				if (datePattern.test(value)) {
+					return new Date(value).toLocaleString()
+				}
+			}
+			
+			// For arrays and objects, format them nicely
+			if (Array.isArray(value)) {
+				return JSON.stringify(value)
+			}
+			if (typeof value === 'object' && value !== null) {
+				return JSON.stringify(value)
+			}
+			
+			// Return the value as-is for everything else
 			return value
 		},
 		// Publish/Depublish methods
@@ -1638,16 +1655,60 @@ export default {
 		async publishObject() {
 			this.isPublishing = true
 			try {
-				// Implement publish logic here
-				console.log('Publishing object with date:', this.publishDate)
+				if (!this.currentObject) {
+					throw new Error('No object to publish')
+				}
+
+				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const objectId = this.currentObject['@self']?.id || this.currentObject.id
+				
+				let endpoint
+				let body = {}
+				
+				if (this.showPublishModal && this.publishDate) {
+					// Publishing with a specific date from the modal
+					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
+					body = {
+						...this.currentObject,
+						'@self': {
+							...this.currentObject['@self'],
+							published: this.publishDate instanceof Date ? this.publishDate.toISOString() : this.publishDate
+						}
+					}
+				} else {
+					// Direct publish action (publish now)
+					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`
+				}
+
+				const response = await fetch(endpoint, {
+					method: this.showPublishModal ? 'PUT' : 'POST',
+					headers: this.showPublishModal ? {
+						'Content-Type': 'application/json',
+					} : undefined,
+					body: this.showPublishModal ? JSON.stringify(body) : undefined,
+				})
+
+				if (!response.ok) {
+					const errorText = await response.text()
+					throw new Error(`Failed to publish object: ${response.status} ${response.statusText} - ${errorText}`)
+				}
+
+				const result = await response.json()
+				
+				// Update the current object with the new data
+				objectStore.setActiveObject('publication', result)
+				
+				// Refresh the publications list
+				catalogStore.fetchPublications()
+				
 				this.closePublishModal()
 				this.success = 'Object published successfully'
 				setTimeout(() => {
 					this.success = null
 				}, 3000)
 			} catch (error) {
-				console.error('Failed to update object publication:', error)
-				this.error = 'Failed to update object publication: ' + error.message
+				console.error('Failed to publish object:', error)
+				this.error = 'Failed to publish object: ' + error.message
 				setTimeout(() => {
 					this.error = null
 				}, 5000)
@@ -1658,16 +1719,60 @@ export default {
 		async depublishObject() {
 			this.isDepublishing = true
 			try {
-				// Implement depublish logic here
-				console.log('Depublishing object with date:', this.depublishDate)
+				if (!this.currentObject) {
+					throw new Error('No object to depublish')
+				}
+
+				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const objectId = this.currentObject['@self']?.id || this.currentObject.id
+				
+				let endpoint
+				let body = {}
+				
+				if (this.showDepublishModal && this.depublishDate) {
+					// Depublishing with a specific date from the modal
+					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
+					body = {
+						...this.currentObject,
+						'@self': {
+							...this.currentObject['@self'],
+							depublished: this.depublishDate instanceof Date ? this.depublishDate.toISOString() : this.depublishDate
+						}
+					}
+				} else {
+					// Direct depublish action (depublish now)
+					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`
+				}
+
+				const response = await fetch(endpoint, {
+					method: this.showDepublishModal ? 'PUT' : 'POST',
+					headers: this.showDepublishModal ? {
+						'Content-Type': 'application/json',
+					} : undefined,
+					body: this.showDepublishModal ? JSON.stringify(body) : undefined,
+				})
+
+				if (!response.ok) {
+					const errorText = await response.text()
+					throw new Error(`Failed to depublish object: ${response.status} ${response.statusText} - ${errorText}`)
+				}
+
+				const result = await response.json()
+				
+				// Update the current object with the new data
+				objectStore.setActiveObject('publication', result)
+				
+				// Refresh the publications list
+				catalogStore.fetchPublications()
+				
 				this.closeDepublishModal()
 				this.success = 'Object depublished successfully'
 				setTimeout(() => {
 					this.success = null
 				}, 3000)
 			} catch (error) {
-				console.error('Failed to update object depublication:', error)
-				this.error = 'Failed to update object depublication: ' + error.message
+				console.error('Failed to depublish object:', error)
+				this.error = 'Failed to depublish object: ' + error.message
 				setTimeout(() => {
 					this.error = null
 				}, 5000)
@@ -1999,16 +2104,32 @@ export default {
 				return fullSchema?.properties || {}
 			}
 
+			// For existing objects, try to get schema from the object's schema reference
+			if (this.currentObject && this.currentObject['@self']?.schema) {
+				const schemaRef = this.currentObject['@self'].schema
+				let schemaId = null
+				
+				// Handle both object and string schema references
+				if (typeof schemaRef === 'object') {
+					schemaId = schemaRef.id || schemaRef.uuid
+				} else {
+					schemaId = schemaRef
+				}
+				
+				if (schemaId) {
+					const fullSchema = objectStore.availableSchemas.find(schema => schema.id === schemaId)
+					if (fullSchema?.properties) {
+						return fullSchema.properties
+					}
+				}
+			}
+
 			// Try to get schema properties from the catalogStore
 			if (this.currentSchema?.properties) {
 				return this.currentSchema.properties
 			}
 
-			// Fallback: try to get schema properties from the current object
-			if (!this.currentObject) return {}
-
-			// For publications, we might not have direct access to schema
-			// but we can infer some common properties or return empty for now
+			// Fallback: return empty object
 			return {}
 		},
 		// Enhanced property validation and editing methods (from openregister version)
