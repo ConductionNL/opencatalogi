@@ -110,7 +110,7 @@ export default {
 		 * @return {string} Dialog title
 		 */
 		dialogTitle() {
-			const count = this.objectsToPublish.length
+			const count = objectStore.selectedObjects?.length || 0
 			if (count === 1) {
 				return 'Publish publication'
 			}
@@ -123,12 +123,7 @@ export default {
 	methods: {
 		initializeSelection() {
 			// Store the original count for success message
-			this.originalSelectedCount = this.objectsToPublish.length
-
-			// Close dialog if no objects are selected
-			if (this.objectsToPublish.length === 0) {
-				this.closeDialog()
-			}
+			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
@@ -148,7 +143,7 @@ export default {
 
 			try {
 				// Get the objects to publish
-				const objectsToProcess = [...this.objectsToPublish]
+				const objectsToProcess = [...(objectStore.selectedObjects || [])]
 
 				// Use the store's mass publish method
 				const { successful, failed } = await objectStore.massPublishObjects(objectsToProcess)

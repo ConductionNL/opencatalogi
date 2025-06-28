@@ -123,12 +123,7 @@ export default {
 	methods: {
 		initializeSelection() {
 			// Store the original count for success message
-			this.originalSelectedCount = this.objectsToDepublish.length
-
-			// Close dialog if no objects are selected
-			if (this.objectsToDepublish.length === 0) {
-				this.closeDialog()
-			}
+			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
