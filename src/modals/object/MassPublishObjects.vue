@@ -15,6 +15,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 	<NcDialog :name="dialogTitle"
 		:can-close="true"
 		size="normal"
+		class="mass-action-dialog"
 		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="publish-step">
@@ -23,9 +24,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="objectsToPublish.length === 1 ? 'Publication to Publish' : 'Selected Publications'"
-				:objects="objectsToPublish"
-				:show-remove="objectsToPublish.length > 1" />
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Publish' : 'Selected Publications'"
+				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
@@ -43,7 +43,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || objectsToPublish.length === 0"
+				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
 				type="primary"
 				@click="publishObjects()">
 				<template #icon>
@@ -110,7 +110,7 @@ export default {
 		 * @return {string} Dialog title
 		 */
 		dialogTitle() {
-			const count = this.objectsToPublish.length
+			const count = objectStore.selectedObjects?.length || 0
 			if (count === 1) {
 				return 'Publish publication'
 			}
@@ -123,12 +123,7 @@ export default {
 	methods: {
 		initializeSelection() {
 			// Store the original count for success message
-			this.originalSelectedCount = this.objectsToPublish.length
-
-			// Close dialog if no objects are selected
-			if (this.objectsToPublish.length === 0) {
-				this.closeDialog()
-			}
+			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
@@ -148,7 +143,7 @@ export default {
 
 			try {
 				// Get the objects to publish
-				const objectsToProcess = [...this.objectsToPublish]
+				const objectsToProcess = [...(objectStore.selectedObjects || [])]
 
 				// Use the store's mass publish method
 				const { successful, failed } = await objectStore.massPublishObjects(objectsToProcess)
@@ -190,5 +185,12 @@ export default {
 	margin-top: 0 !important;
 	margin-bottom: 16px;
 	color: var(--color-main-text);
+}
+</style>
+
+<style>
+/* Ensure mass action dialogs appear on top of other modals */
+.mass-action-dialog {
+	z-index: 10000 !important;
 }
 </style>

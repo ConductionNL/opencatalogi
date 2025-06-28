@@ -440,7 +440,6 @@ export default {
 	},
 	data() {
 		return {
-			selectedPublications: [],
 			viewMode: 'table',
 		}
 	},
@@ -486,7 +485,14 @@ export default {
 				...meta,
 			}))
 		},
+		selectedPublications() {
+			// Get selected publication IDs from the store
+			return (objectStore.selectedObjects || []).map(obj =>
+				obj.id || obj['@self']?.id,
+			).filter(Boolean)
+		},
 	},
+
 	mounted() {
 		console.info('PublicationTable mounted, fetching publications...')
 		catalogStore.fetchPublications()
@@ -503,19 +509,40 @@ export default {
 		},
 		toggleSelectAll(checked) {
 			if (checked) {
-				this.selectedPublications = this.filteredPublications.map(publication =>
-					publication['@self']?.id || publication.id,
-				)
+				// Select all - update store with full objects
+				const selectedObjects = this.filteredPublications.map(pub => ({
+					...pub,
+					id: pub['@self']?.id || pub.id,
+				}))
+				objectStore.setSelectedObjects(selectedObjects)
 			} else {
-				this.selectedPublications = []
+				// Deselect all
+				objectStore.setSelectedObjects([])
 			}
 		},
 		handleSelectPublication(publicationId) {
-			if (this.selectedPublications.includes(publicationId)) {
-				this.selectedPublications = this.selectedPublications.filter(id => id !== publicationId)
+			const currentSelected = [...(objectStore.selectedObjects || [])]
+			const existingIndex = currentSelected.findIndex(obj =>
+				(obj.id || obj['@self']?.id) === publicationId,
+			)
+
+			if (existingIndex > -1) {
+				// Remove from selection
+				currentSelected.splice(existingIndex, 1)
 			} else {
-				this.selectedPublications.push(publicationId)
+				// Add to selection - find the full object
+				const publicationToAdd = this.filteredPublications.find(pub =>
+					(pub['@self']?.id || pub.id) === publicationId,
+				)
+				if (publicationToAdd) {
+					currentSelected.push({
+						...publicationToAdd,
+						id: publicationToAdd['@self']?.id || publicationToAdd.id,
+					})
+				}
 			}
+
+			objectStore.setSelectedObjects(currentSelected)
 		},
 		handleRowClick(id, event) {
 			// Don't select if clicking on the checkbox, actions button, or inside actions menu
@@ -563,7 +590,7 @@ export default {
 			// Refresh the publication list
 			catalogStore.fetchPublications()
 			// Clear selection after refresh
-			this.selectedPublications = []
+			objectStore.setSelectedObjects([])
 		},
 		viewPublication(publication) {
 			// Set the publication for viewing and open the view modal (now used for editing)
@@ -581,9 +608,6 @@ export default {
 			navigationStore.setDialog('copyPublication')
 		},
 		singleDeletePublication(publication) {
-			// Clear any existing selections to avoid conflicts
-			this.selectedPublications = []
-			
 			// Set the single publication as selected object (as full object, not just ID)
 			const publicationObject = {
 				...publication,
@@ -605,9 +629,6 @@ export default {
 			navigationStore.setModal('mergeObject')
 		},
 		singlePublishPublication(publication) {
-			// Clear any existing selections to avoid conflicts
-			this.selectedPublications = []
-			
 			// Set the single publication as selected object (as full object, not just ID)
 			const publicationObject = {
 				...publication,
@@ -619,9 +640,6 @@ export default {
 			navigationStore.setDialog('massPublishObjects')
 		},
 		singleDepublishPublication(publication) {
-			// Clear any existing selections to avoid conflicts
-			this.selectedPublications = []
-			
 			// Set the single publication as selected object (as full object, not just ID)
 			const publicationObject = {
 				...publication,
@@ -635,69 +653,25 @@ export default {
 		bulkDeletePublications() {
 			if (this.selectedPublications.length === 0) return
 
-			// Prepare selected publications data for deletion
-			const selectedPublicationsData = this.filteredPublications
-				.filter(pub => this.selectedPublications.includes(pub['@self']?.id || pub.id))
-				.map(pub => ({
-					...pub,
-					id: pub['@self']?.id || pub.id,
-				}))
-
-			// Store selected publications for the deletion modal
-			objectStore.setSelectedObjects(selectedPublicationsData)
-
-			// Set the dialog to mass delete
+			// The selected objects are already in the store, just open the dialog
 			navigationStore.setDialog('massDeleteObject')
 		},
 		bulkPublishPublications() {
 			if (this.selectedPublications.length === 0) return
 
-			// Prepare selected publications data for publishing
-			const selectedPublicationsData = this.filteredPublications
-				.filter(pub => this.selectedPublications.includes(pub['@self']?.id || pub.id))
-				.map(pub => ({
-					...pub,
-					id: pub['@self']?.id || pub.id,
-				}))
-
-			// Store selected publications for the publish modal
-			objectStore.setSelectedObjects(selectedPublicationsData)
-
-			// Open the mass publish modal
+			// The selected objects are already in the store, just open the dialog
 			navigationStore.setDialog('massPublishObjects')
 		},
 		bulkDepublishPublications() {
 			if (this.selectedPublications.length === 0) return
 
-			// Prepare selected publications data for depublishing
-			const selectedPublicationsData = this.filteredPublications
-				.filter(pub => this.selectedPublications.includes(pub['@self']?.id || pub.id))
-				.map(pub => ({
-					...pub,
-					id: pub['@self']?.id || pub.id,
-				}))
-
-			// Store selected publications for the depublish modal
-			objectStore.setSelectedObjects(selectedPublicationsData)
-
-			// Open the mass depublish modal
+			// The selected objects are already in the store, just open the dialog
 			navigationStore.setDialog('massDepublishObjects')
 		},
 		bulkValidatePublications() {
 			if (this.selectedPublications.length === 0) return
 
-			// Prepare selected publications data for validation
-			const selectedPublicationsData = this.filteredPublications
-				.filter(pub => this.selectedPublications.includes(pub['@self']?.id || pub.id))
-				.map(pub => ({
-					...pub,
-					id: pub['@self']?.id || pub.id,
-				}))
-
-			// Store selected publications for the validate modal
-			objectStore.setSelectedObjects(selectedPublicationsData)
-
-			// Open the mass validate modal
+			// The selected objects are already in the store, just open the dialog
 			navigationStore.setDialog('massValidateObjects')
 		},
 		shouldShowPublishAction(publication) {

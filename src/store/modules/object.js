@@ -1100,6 +1100,17 @@ export const useObjectStore = defineStore('object', {
 					throw new Error(`Failed to delete object: ${response.status} ${response.statusText}`)
 				}
 
+				// Remove from selection if it's currently selected
+				const isSelected = this.selectedObjects.some(obj => 
+					(obj.id || obj['@self']?.id) === objectId
+				)
+				if (isSelected) {
+					const remainingSelected = this.selectedObjects.filter(obj => 
+						(obj.id || obj['@self']?.id) !== objectId
+					)
+					this.setSelectedObjects(remainingSelected)
+				}
+
 				return true
 			} catch (error) {
 				console.error('Error deleting object:', error)
@@ -1147,6 +1158,27 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
+				
+				// Update active object if it matches the published object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+
+				// Remove from selection if it's currently selected
+				const isSelected = this.selectedObjects.some(obj => 
+					(obj.id || obj['@self']?.id) === objectId
+				)
+				if (isSelected) {
+					const remainingSelected = this.selectedObjects.filter(obj => 
+						(obj.id || obj['@self']?.id) !== objectId
+					)
+					this.setSelectedObjects(remainingSelected)
+				}
+				
 				return updatedObject
 			} catch (error) {
 				console.error('Error publishing object:', error)
@@ -1194,6 +1226,27 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
+				
+				// Update active object if it matches the depublished object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+
+				// Remove from selection if it's currently selected
+				const isSelected = this.selectedObjects.some(obj => 
+					(obj.id || obj['@self']?.id) === objectId
+				)
+				if (isSelected) {
+					const remainingSelected = this.selectedObjects.filter(obj => 
+						(obj.id || obj['@self']?.id) !== objectId
+					)
+					this.setSelectedObjects(remainingSelected)
+				}
+				
 				return updatedObject
 			} catch (error) {
 				console.error('Error depublishing object:', error)
@@ -1235,6 +1288,15 @@ export const useObjectStore = defineStore('object', {
 					register: registerId,
 					schema: schemaId,
 				})
+
+				// Update active object if it matches the validated object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: result.data,
+					}
+				}
 
 				return result.data
 			} catch (error) {
@@ -1291,6 +1353,16 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
+				
+				// Update active object if it matches the locked object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+				
 				return updatedObject
 			} catch (error) {
 				console.error('Error locking object:', error)
@@ -1338,6 +1410,16 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
+				
+				// Update active object if it matches the unlocked object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+				
 				return updatedObject
 			} catch (error) {
 				console.error('Error unlocking object:', error)
@@ -1692,7 +1774,7 @@ export const useObjectStore = defineStore('object', {
 
 		/**
 		 * Mass delete objects
-		 * @param {Array<object>} objects - Array of objects to delete
+		 * @param {Array<object|string>} objects - Array of objects or object IDs to delete
 		 * @param {Function} onProgress - Callback function called after each deletion (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
 		 */
@@ -1703,21 +1785,15 @@ export const useObjectStore = defineStore('object', {
 			const results = await Promise.allSettled(
 				objects.map(async (obj) => {
 					try {
-						const objectId = obj.id || obj['@self']?.id
+						// Handle both object and ID inputs
+						const objectId = typeof obj === 'string' ? obj : (obj.id || obj['@self']?.id)
+						const objectToDelete = typeof obj === 'string' ? { id: obj } : obj
 
 						// Use the individual deleteObject method
-						await this.deleteObject(obj)
+						await this.deleteObject(objectToDelete)
 
 						// Clear any previous error for this object
 						this.clearObjectError(objectId)
-
-						// Remove successfully processed object from selection
-						const currentSelected = [...this.selectedObjects]
-						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
-						if (index > -1) {
-							currentSelected.splice(index, 1)
-							this.setSelectedObjects(currentSelected)
-						}
 
 						// Call progress callback if provided
 						if (onProgress) {
@@ -1748,6 +1824,13 @@ export const useObjectStore = defineStore('object', {
 			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
 			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
 
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
 			return { successful, failed }
 		},
 
@@ -1771,14 +1854,6 @@ export const useObjectStore = defineStore('object', {
 
 						// Clear any previous error for this object
 						this.clearObjectError(objectId)
-
-						// Remove successfully processed object from selection
-						const currentSelected = [...this.selectedObjects]
-						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
-						if (index > -1) {
-							currentSelected.splice(index, 1)
-							this.setSelectedObjects(currentSelected)
-						}
 
 						// Call progress callback if provided
 						if (onProgress) {
@@ -1809,6 +1884,13 @@ export const useObjectStore = defineStore('object', {
 			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
 			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
 
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
 			return { successful, failed }
 		},
 
@@ -1832,14 +1914,6 @@ export const useObjectStore = defineStore('object', {
 
 						// Clear any previous error for this object
 						this.clearObjectError(objectId)
-
-						// Remove successfully processed object from selection
-						const currentSelected = [...this.selectedObjects]
-						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
-						if (index > -1) {
-							currentSelected.splice(index, 1)
-							this.setSelectedObjects(currentSelected)
-						}
 
 						// Call progress callback if provided
 						if (onProgress) {
@@ -1870,6 +1944,13 @@ export const useObjectStore = defineStore('object', {
 			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
 			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
 
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
 			return { successful, failed }
 		},
 
@@ -1893,14 +1974,6 @@ export const useObjectStore = defineStore('object', {
 
 						// Clear any previous error for this object
 						this.clearObjectError(objectId)
-
-						// Remove successfully processed object from selection
-						const currentSelected = [...this.selectedObjects]
-						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
-						if (index > -1) {
-							currentSelected.splice(index, 1)
-							this.setSelectedObjects(currentSelected)
-						}
 
 						// Call progress callback if provided
 						if (onProgress) {
@@ -1931,6 +2004,13 @@ export const useObjectStore = defineStore('object', {
 			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
 			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
 
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
 			return { successful, failed }
 		},
 
@@ -1956,14 +2036,6 @@ export const useObjectStore = defineStore('object', {
 
 						// Clear any previous error for this object
 						this.clearObjectError(objectId)
-
-						// Remove successfully processed object from selection
-						const currentSelected = [...this.selectedObjects]
-						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
-						if (index > -1) {
-							currentSelected.splice(index, 1)
-							this.setSelectedObjects(currentSelected)
-						}
 
 						// Call progress callback if provided
 						if (onProgress) {
@@ -1994,6 +2066,13 @@ export const useObjectStore = defineStore('object', {
 			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
 			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
 
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
 			return { successful, failed }
 		},
 
@@ -2017,14 +2096,6 @@ export const useObjectStore = defineStore('object', {
 
 						// Clear any previous error for this object
 						this.clearObjectError(objectId)
-
-						// Remove successfully processed object from selection
-						const currentSelected = [...this.selectedObjects]
-						const index = currentSelected.findIndex(selectedId => selectedId === objectId)
-						if (index > -1) {
-							currentSelected.splice(index, 1)
-							this.setSelectedObjects(currentSelected)
-						}
 
 						// Call progress callback if provided
 						if (onProgress) {
@@ -2054,6 +2125,13 @@ export const useObjectStore = defineStore('object', {
 			// Separate successful and failed operations
 			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
 			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
 
 			return { successful, failed }
 		},
