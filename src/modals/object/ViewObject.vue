@@ -564,8 +564,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</NcButton>
 			</template>
 		</NcDialog>
-
-
 	</div>
 </template>
 
@@ -593,8 +591,7 @@ import FileOutline from 'vue-material-design-icons/FileOutline.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import Check from 'vue-material-design-icons/Check.vue'
+
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
@@ -633,8 +630,7 @@ export default {
 		OpenInNew,
 		Delete,
 		Upload,
-		ContentCopy,
-		Check,
+
 		ContentSave,
 		LockOutline,
 		Tag,
@@ -653,7 +649,7 @@ export default {
 	data() {
 		return {
 			activeTab: 0,
-			formData: {},
+			formData: {}, // Ensure this is always an object, never an array
 			jsonData: '',
 			selectedProperty: null,
 			isSaving: false,
@@ -688,19 +684,17 @@ export default {
 		objectProperties() {
 			// Return array of [key, value] pairs, excluding '@self' and 'id'
 			const objectData = this.currentObject || {}
-
-			// Get schema properties from the selected schema or current object's schema info
 			const schemaProperties = this.getSchemaProperties()
 
-			// Start with properties that exist in the object
-			const existingProperties = Object.entries(objectData)
-				.filter(([key]) => key !== '@self' && key !== 'id')
+			const properties = []
 
-			// Always add schema properties that don't exist in the object yet (for both create and edit modes)
-			const missingSchemaProperties = []
-			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
-				if (!Object.prototype.hasOwnProperty.call(objectData, key)) {
-					// Add with appropriate default value based on type
+			// First, add all schema properties in their defined order
+			for (const [schemaKey, schemaProperty] of Object.entries(schemaProperties)) {
+				if (Object.prototype.hasOwnProperty.call(objectData, schemaKey)) {
+					// Property exists in object, use its value
+					properties.push([schemaKey, objectData[schemaKey]])
+				} else {
+					// Property doesn't exist in object, use appropriate default value
 					let defaultValue = ''
 					switch (schemaProperty.type) {
 					case 'string':
@@ -722,12 +716,26 @@ export default {
 					default:
 						defaultValue = ''
 					}
-					missingSchemaProperties.push([key, defaultValue])
+					properties.push([schemaKey, defaultValue])
 				}
 			}
 
+			// Then, add any additional properties from the object that aren't in the schema
+			const additionalProperties = []
+			for (const [objectKey, objectValue] of Object.entries(objectData)) {
+				// Skip metadata and properties already handled by schema
+				if (objectKey !== '@self'
+					&& objectKey !== 'id'
+					&& !Object.prototype.hasOwnProperty.call(schemaProperties, objectKey)) {
+					additionalProperties.push([objectKey, objectValue])
+				}
+			}
+
+			// Sort additional properties alphabetically for consistency
+			additionalProperties.sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+
 			// If we have no properties to show (new object with no schema), provide some basic ones
-			if (existingProperties.length === 0 && missingSchemaProperties.length === 0) {
+			if (properties.length === 0 && additionalProperties.length === 0) {
 				return [
 					['title', ''],
 					['description', ''],
@@ -737,8 +745,8 @@ export default {
 				]
 			}
 
-			// Combine existing properties and missing schema properties
-			return [...existingProperties, ...missingSchemaProperties]
+			// Combine schema properties first, then additional properties
+			return [...properties, ...additionalProperties]
 		},
 		metadataProperties() {
 			// Return array of [key, value] for metadata display
@@ -1034,8 +1042,6 @@ export default {
 			this.isCopied = false
 			this.selectedProperty = null
 
-
-
 			// Clear Files tab state
 			this.activeAttachment = null
 			this.selectedAttachments = []
@@ -1108,9 +1114,17 @@ export default {
 				}
 			}
 
+			// Ensure formData is always an object, never an array
+			this.formData = {}
 			// Create a safe copy for formData
 			try {
-				this.formData = JSON.parse(JSON.stringify(filtered))
+				const parsedData = JSON.parse(JSON.stringify(filtered))
+				// Explicitly ensure it's an object
+				if (typeof parsedData === 'object' && !Array.isArray(parsedData)) {
+					this.formData = parsedData
+				} else {
+					this.formData = { ...filtered }
+				}
 			} catch (e) {
 				// Fallback if JSON serialization fails
 				this.formData = { ...filtered }
@@ -1136,17 +1150,14 @@ export default {
 
 				if (isCreating) {
 					// Create a new object using openregister API
-					objectData = {
-						...this.formData,
-					}
+					// For new objects, build complete object with all schema properties
+					objectData = this.buildCompleteObjectData()
 					endpoint = `/index.php/apps/openregister/api/objects/${this.selectedRegister.id}/${this.selectedSchema.id}`
 					method = 'POST'
 				} else {
 					// Update existing object using openregister API
-					objectData = {
-						...this.currentObject,
-						...this.formData,
-					}
+					// For existing objects, merge current object with all schema properties
+					objectData = this.buildCompleteObjectData()
 					// Get register and schema info from the current object
 					const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
 					const objectId = this.currentObject['@self']?.id || this.currentObject.id
@@ -1403,6 +1414,10 @@ export default {
 			})
 		},
 		updatePropertyValue(key, newValue) {
+			// Ensure formData is an object before updating
+			if (!this.formData || Array.isArray(this.formData)) {
+				this.formData = {}
+			}
 			// Update the form data using Vue 2 reactivity
 			this.$set(this.formData, key, newValue)
 		},
@@ -2136,6 +2151,107 @@ export default {
 			}
 
 			return mergedObject
+		},
+
+		/**
+		 * Clean formData to ensure it's a proper object with correct property keys
+		 * @return {object} Cleaned form data object
+		 */
+		cleanFormData() {
+			const cleaned = {}
+
+			// If formData is somehow an array, convert it properly
+			if (Array.isArray(this.formData)) {
+				// This should never happen, but just in case
+				return {}
+			}
+
+			// Copy all valid properties from formData
+			for (const [key, value] of Object.entries(this.formData || {})) {
+				// Only include valid property names:
+				// - Must be a string
+				// - Must not be empty
+				// - Must not be purely numeric (array indices)
+				// - Must not be special Vue/internal keys
+				if (typeof key === 'string'
+					&& key.length > 0
+					&& !/^\d+$/.test(key)
+					&& !key.startsWith('_')
+					&& !key.startsWith('$')) {
+					cleaned[key] = value
+				}
+			}
+
+			return cleaned
+		},
+
+		/**
+		 * Build complete object data including all schema properties
+		 * @return {object} Complete object with all properties from schema and current object
+		 */
+		buildCompleteObjectData() {
+			const schemaProperties = this.getSchemaProperties()
+			const cleanedFormData = this.cleanFormData()
+			const currentObjectData = this.currentObject || {}
+
+			// Start with current object data (excluding id but keeping @self for updates)
+			const objectData = {}
+			for (const [key, value] of Object.entries(currentObjectData)) {
+				if (key !== 'id') {
+					objectData[key] = value
+				}
+			}
+
+			// Add all schema properties with appropriate values
+			for (const [propertyKey, schemaProperty] of Object.entries(schemaProperties)) {
+				if (Object.prototype.hasOwnProperty.call(cleanedFormData, propertyKey)) {
+					// Use edited value from formData
+					objectData[propertyKey] = cleanedFormData[propertyKey]
+				} else if (Object.prototype.hasOwnProperty.call(currentObjectData, propertyKey)) {
+					// Keep existing value from current object
+					objectData[propertyKey] = currentObjectData[propertyKey]
+				} else {
+					// Property doesn't exist, set appropriate default or null
+					let defaultValue = null
+
+					// Only set non-null defaults for specific cases
+					switch (schemaProperty.type) {
+					case 'string':
+						defaultValue = schemaProperty.const || null
+						break
+					case 'number':
+					case 'integer':
+						defaultValue = null // Let backend handle defaults
+						break
+					case 'boolean':
+						defaultValue = null // Let backend handle defaults
+						break
+					case 'array':
+						defaultValue = null // Let backend handle defaults
+						break
+					case 'object':
+						defaultValue = null // Let backend handle defaults
+						break
+					default:
+						defaultValue = null
+					}
+
+					objectData[propertyKey] = defaultValue
+				}
+			}
+
+			// Also include any edited properties that might not be in the schema
+			// But only include valid property names (not numeric indices)
+			for (const [key, value] of Object.entries(cleanedFormData)) {
+				if (!Object.prototype.hasOwnProperty.call(schemaProperties, key)
+					&& typeof key === 'string'
+					&& key.length > 0
+					&& !/^\d+$/.test(key)) {
+					objectData[key] = value
+				}
+			}
+
+			return objectData
 		},
 
 		// Enhanced property validation and editing methods (from openregister version)

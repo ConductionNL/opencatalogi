@@ -15,6 +15,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 	<NcDialog :name="dialogTitle"
 		:can-close="true"
 		size="normal"
+		class="mass-action-dialog"
 		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="unlock-step">
@@ -23,9 +24,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="objectsToUnlock.length === 1 ? 'Publication to Unlock' : 'Selected Publications'"
-				:objects="objectsToUnlock"
-				:show-remove="objectsToUnlock.length > 1" />
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Unlock' : 'Selected Publications'"
+				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
@@ -43,7 +43,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || objectsToUnlock.length === 0"
+				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
 				type="warning"
 				@click="unlockObjects()">
 				<template #icon>
@@ -190,5 +190,12 @@ export default {
 	margin-top: 0 !important;
 	margin-bottom: 16px;
 	color: var(--color-main-text);
+}
+</style>
+
+<style>
+/* Ensure mass action dialogs appear on top of other modals */
+.mass-action-dialog {
+	z-index: 10000 !important;
 }
 </style> 

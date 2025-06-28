@@ -15,6 +15,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 	<NcDialog :name="dialogTitle"
 		:can-close="true"
 		size="normal"
+		class="mass-action-dialog"
 		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="lock-step">
@@ -23,9 +24,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="objectsToLock.length === 1 ? 'Publication to Lock' : 'Selected Publications'"
-				:objects="objectsToLock"
-				:show-remove="objectsToLock.length > 1" />
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Lock' : 'Selected Publications'"
+				:show-remove="true" />
 
 			<div v-if="!success" class="formContainer">
 				<NcTextField
@@ -55,7 +55,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || objectsToLock.length === 0"
+				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
 				type="primary"
 				@click="lockObjects()">
 				<template #icon>
@@ -217,5 +217,12 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+}
+</style>
+
+<style>
+/* Ensure mass action dialogs appear on top of other modals */
+.mass-action-dialog {
+	z-index: 10000 !important;
 }
 </style> 

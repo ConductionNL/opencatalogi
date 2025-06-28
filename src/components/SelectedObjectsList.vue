@@ -120,16 +120,14 @@ export default {
 		 * @param {string} objectId - The object ID to remove
 		 */
 		removeObject(objectId) {
-			// Only remove from store if we're using store objects
-			if (!this.objects) {
-				const currentSelected = [...objectStore.selectedObjects]
-				const index = currentSelected.findIndex(obj =>
-					(obj.id || obj['@self']?.id) === objectId,
-				)
-				if (index > -1) {
-					currentSelected.splice(index, 1)
-					objectStore.setSelectedObjects(currentSelected)
-				}
+			// Always remove from store - the store is the source of truth
+			const currentSelected = [...objectStore.selectedObjects]
+			const index = currentSelected.findIndex(obj =>
+				(obj.id || obj['@self']?.id) === objectId,
+			)
+			if (index > -1) {
+				currentSelected.splice(index, 1)
+				objectStore.setSelectedObjects(currentSelected)
 			}
 		},
 

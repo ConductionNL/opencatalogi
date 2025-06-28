@@ -15,6 +15,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 	<NcDialog :name="dialogTitle"
 		:can-close="true"
 		size="normal"
+		class="mass-action-dialog"
 		@update:open="handleDialogClose">
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="delete-step">
@@ -23,9 +24,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="objectsToDelete.length === 1 ? 'Publication to Delete' : 'Selected Publications'"
-				:objects="objectsToDelete"
-				:show-remove="objectsToDelete.length > 1" />
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Delete' : 'Selected Publications'"
+				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
@@ -43,7 +43,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ success === null ? 'Cancel' : 'Close' }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || objectsToDelete.length === 0"
+				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
 				type="error"
 				@click="deleteObject()">
 				<template #icon>
@@ -110,25 +110,21 @@ export default {
 		 * @return {string} Dialog title
 		 */
 		dialogTitle() {
-			const count = this.objectsToDelete.length
+			const count = objectStore.selectedObjects?.length || 0
 			if (count === 1) {
 				return 'Delete publication'
 			}
 			return `Delete ${count} publication${count !== 1 ? 's' : ''}`
 		},
 	},
+
 	mounted() {
 		this.initializeSelection()
 	},
 	methods: {
 		initializeSelection() {
 			// Store the original count for success message
-			this.originalSelectedCount = this.objectsToDelete.length
-
-			// Close dialog if no objects are selected
-			if (this.objectsToDelete.length === 0) {
-				this.closeDialog()
-			}
+			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
@@ -149,7 +145,7 @@ export default {
 
 			try {
 				// Get the objects to delete
-				const objectsToProcess = [...this.objectsToDelete]
+				const objectsToProcess = [...(objectStore.selectedObjects || [])]
 
 				// Use the store's mass delete method
 				const { successful, failed } = await objectStore.massDeleteObjects(objectsToProcess)
@@ -206,5 +202,12 @@ export default {
 
 .deleted-link:hover {
 	color: var(--color-primary-hover);
+}
+</style>
+
+<style>
+/* Ensure mass action dialogs appear on top of other modals */
+.mass-action-dialog {
+	z-index: 10000 !important;
 }
 </style>
