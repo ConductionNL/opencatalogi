@@ -44,5 +44,12 @@ return [
 		['name' => 'directory#update', 'url' => '/api/directory', 'verb' => 'POST'],
 		// Search
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
+		// Federation
+		['name' => 'federation#publications', 'url' => '/api/federation/publications', 'verb' => 'GET'],
+		['name' => 'federation#publication', 'url' => '/api/federation/publications/{id}', 'verb' => 'GET'],
+		['name' => 'federation#publicationUses', 'url' => '/api/federation/publications/{id}/uses', 'verb' => 'GET'],
+		['name' => 'federation#publicationUsed', 'url' => '/api/federation/publications/{id}/used', 'verb' => 'GET'],
+		['name' => 'federation#publicationAttachments', 'url' => '/api/federation/publications/{id}/attachments', 'verb' => 'GET'],
+		['name' => 'federation#publicationDownload', 'url' => '/api/federation/publications/{id}/download', 'verb' => 'GET'],
 	]
 ];

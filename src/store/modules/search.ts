@@ -173,15 +173,19 @@ export const useSearchStore = defineStore('search', {
 			try {
 				// Build search parameters
 				const searchParams = new URLSearchParams({
-					// Add search term if provided
-					...(this.searchTerm && { _search: this.searchTerm }),
+					// Add search term if provided (change from _search to q for federation endpoint)
+					...(this.searchTerm && { q: this.searchTerm }),
 
 					// Add pagination
 					_page: (params._page as string) || this.pagination.page.toString(),
 					_limit: (params._limit as string) || this.pagination.limit.toString(),
 
-					// Enable facets to get all possible filter options
+					// Enable facets and aggregation for federation
 					_facetable: 'true',
+					_aggregate: 'true',
+
+					// Always include extended data
+					'_extend[]': '@self.schema',
 
 					// Add filters
 					...this.filters,
@@ -190,6 +194,11 @@ export const useSearchStore = defineStore('search', {
 					...params,
 				})
 
+				// Add additional extend parameters if not already present
+				if (!searchParams.has('_extend[]')) {
+					searchParams.append('_extend[]', '@self.register')
+				}
+
 				// Add ordering parameters
 				Object.entries(this.ordering).forEach(([field, direction]) => {
 					searchParams.append(`_order[${field}]`, direction as string)
@@ -197,8 +206,8 @@ export const useSearchStore = defineStore('search', {
 
 				console.log('Searching publications with params:', searchParams.toString())
 
-				// Make API call to SearchController
-				const response = await fetch(`/index.php/apps/opencatalogi/api/search?${searchParams.toString()}`, {
+				// Make API call to Federation endpoint
+				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications?${searchParams.toString()}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -256,7 +265,7 @@ export const useSearchStore = defineStore('search', {
 		 */
 		async getPublication(publicationId: string) {
 			try {
-				const response = await fetch(`/index.php/apps/opencatalogi/api/search/${publicationId}`, {
+				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -286,7 +295,7 @@ export const useSearchStore = defineStore('search', {
 		async getPublicationUses(publicationId: string, params: Record<string, any> = {}) {
 			try {
 				const searchParams = new URLSearchParams(params as Record<string, string>)
-				const response = await fetch(`/index.php/apps/opencatalogi/api/search/${publicationId}/uses?${searchParams.toString()}`, {
+				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/uses?${searchParams.toString()}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -316,7 +325,7 @@ export const useSearchStore = defineStore('search', {
 		async getPublicationUsed(publicationId: string, params: Record<string, any> = {}) {
 			try {
 				const searchParams = new URLSearchParams(params as Record<string, string>)
-				const response = await fetch(`/index.php/apps/opencatalogi/api/search/${publicationId}/used?${searchParams.toString()}`, {
+				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/used?${searchParams.toString()}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',

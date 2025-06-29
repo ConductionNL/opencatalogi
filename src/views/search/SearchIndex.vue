@@ -421,8 +421,8 @@ export default {
 		},
 		downloadPublication(publication) {
 			console.info('Downloading publication:', publication)
-			// Open download URL in new tab
-			window.open(`/index.php/apps/opencatalogi/api/search/${publication.id}/download`, '_blank')
+			// Use federation endpoint for download
+			window.open(`/index.php/apps/opencatalogi/api/federation/publications/${publication.id}/download`, '_blank')
 		},
 		formatDate(dateString) {
 			if (!dateString) return '-'
