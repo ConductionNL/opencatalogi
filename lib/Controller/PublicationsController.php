@@ -7,6 +7,9 @@ use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IAppConfig;
+use OCP\App\IAppManager;
+use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -48,6 +51,9 @@ class PublicationsController extends Controller
      * @param IRequest           $request            The request object
      * @param PublicationService $publicationService The publication service
      * @param DirectoryService   $directoryService   The directory service
+     * @param IAppConfig         $config             The app configuration
+     * @param ContainerInterface $container          The container for dependency injection
+     * @param IAppManager        $appManager         The app manager
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
      * @param int                $corsMaxAge         CORS max age
@@ -57,6 +63,9 @@ class PublicationsController extends Controller
         IRequest $request,
         private readonly PublicationService $publicationService,
         private readonly DirectoryService $directoryService,
+        private readonly IAppConfig $config,
+        private readonly ContainerInterface $container,
+        private readonly IAppManager $appManager,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -65,6 +74,87 @@ class PublicationsController extends Controller
         $this->corsMethods = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
         $this->corsMaxAge = $corsMaxAge;
+    }
+
+    /**
+     * Attempts to retrieve the OpenRegister ObjectService from the container.
+     *
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getObjectService()
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+    }
+
+    /**
+     * Get local catalog information for adding to publication @self.catalogs property.
+     *
+     * This method retrieves all local catalogs that are available in the current instance.
+     * It returns an array of catalog objects with their basic information.
+     *
+     * @todo Adding catalog information to publications adds ~200ms performance overhead.
+     *       Consider making this optional via query parameter (e.g., _include_catalogs=true)
+     *       to improve response times when catalog info is not needed.
+     *
+     * @return array Array of catalog objects with id, title, summary, description, etc.
+     */
+    private function getLocalCatalogs(): array
+    {
+        try {
+            // Get catalog configuration from settings
+            $catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            if (empty($catalogSchema) || empty($catalogRegister)) {
+                return [];
+            }
+
+            // Setup config for finding catalogs
+            $config = [
+                'filters' => [
+                    'schema' => $catalogSchema,
+                    'register' => $catalogRegister,
+                ]
+            ];
+
+            // Get all catalogs using ObjectService
+            $objectService = $this->getObjectService();
+            $catalogs = $objectService->findAll($config);
+
+            // Convert catalog objects to arrays and filter for public use
+            $catalogArray = [];
+            foreach ($catalogs as $catalog) {
+                $catalogData = $catalog instanceof \OCP\AppFramework\Db\Entity 
+                    ? $catalog->jsonSerialize() 
+                    : $catalog;
+
+                // Extract the relevant catalog information
+                $catalogInfo = [
+                    'id' => $catalogData['id'] ?? '',
+                    'title' => $catalogData['title'] ?? 'Local Catalog',
+                    'summary' => $catalogData['summary'] ?? 'Local catalog instance',
+                    'description' => $catalogData['description'] ?? null,
+                    'organization' => $catalogData['organization'] ?? null,
+                    'listed' => $catalogData['listed'] ?? false,
+                ];
+
+                // Only include non-empty catalog info
+                if (!empty($catalogInfo['id'])) {
+                    $catalogArray[] = $catalogInfo;
+                }
+            }
+
+            return $catalogArray;
+
+        } catch (\Exception $e) {
+            // If we can't get catalog information, return empty array
+            return [];
+        }
     }
 
     /**
@@ -175,13 +265,28 @@ class PublicationsController extends Controller
         $localResponse = $this->publicationService->index();
         $localData = json_decode($localResponse->render(), true);
         
+        // Add catalog information to local publications' @self.catalogs property
+        // @todo This adds ~200ms overhead - consider making optional via query parameter
+        $localResults = $localData['results'] ?? [];
+        if (!empty($localResults)) {
+            $localCatalogs = $this->getLocalCatalogs();
+            if (!empty($localCatalogs)) {
+                foreach ($localResults as &$publication) {
+                    if (isset($publication['@self']) && is_array($publication['@self'])) {
+                        $publication['@self']['catalogs'] = $localCatalogs;
+                    }
+                }
+                unset($publication); // Break the reference
+            }
+        }
+        
         // Calculate pagination info
         $totalResults = ($localData['total'] ?? 0);
         $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
         
         // Initialize response structure with pagination
         $responseData = [
-            'results' => $localData['results'] ?? [],
+            'results' => $localResults,
             'total' => $totalResults,
             'limit' => $limit,
             'offset' => $offset,
@@ -295,12 +400,27 @@ class PublicationsController extends Controller
             $allLocalResponse = $this->publicationService->index(null, $localQueryParams);
             $allLocalData = json_decode($allLocalResponse->render(), true);
             
+            // Add catalog information to local publications' @self.catalogs property
+            // @todo This adds ~200ms overhead - consider making optional via query parameter
+            $allLocalResults = $allLocalData['results'] ?? [];
+            if (!empty($allLocalResults)) {
+                $localCatalogs = $this->getLocalCatalogs();
+                if (!empty($localCatalogs)) {
+                    foreach ($allLocalResults as &$publication) {
+                        if (isset($publication['@self']) && is_array($publication['@self'])) {
+                            $publication['@self']['catalogs'] = $localCatalogs;
+                        }
+                    }
+                    unset($publication); // Break the reference
+                }
+            }
+            
             // Get federated results with modified parameters
             $federationResult = $this->directoryService->getPublications($federatedQueryParams);
             
             // Merge local and federated results
             $allResults = array_merge(
-                $allLocalData['results'] ?? [],
+                $allLocalResults,
                 $federationResult['results'] ?? []
             );
             
@@ -442,8 +562,15 @@ class PublicationsController extends Controller
                 return $localResponse;
             }
             
-            // Add source information to local result
-            $localData['sources'] = ['local' => 'Local OpenCatalogi instance'];
+            // Add local catalog information to @self.catalogs for local publications
+            // @todo This adds ~200ms overhead - consider making optional via query parameter
+            if (isset($localData['@self']) && is_array($localData['@self'])) {
+                $localCatalogs = $this->getLocalCatalogs();
+                if (!empty($localCatalogs)) {
+                    $localData['@self']['catalogs'] = $localCatalogs;
+                }
+            }
+            
             return new JSONResponse($localData, 200);
         }
         
