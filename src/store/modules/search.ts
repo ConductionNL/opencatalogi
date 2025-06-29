@@ -173,8 +173,8 @@ export const useSearchStore = defineStore('search', {
 			try {
 				// Build search parameters
 				const searchParams = new URLSearchParams({
-					// Add search term if provided (change from _search to q for federation endpoint)
-					...(this.searchTerm && { q: this.searchTerm }),
+					// Add search term using _search for better compatibility with federated OpenCatalogi APIs
+					...(this.searchTerm && { _search: this.searchTerm }),
 
 					// Add pagination
 					_page: (params._page as string) || this.pagination.page.toString(),

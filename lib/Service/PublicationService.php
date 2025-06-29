@@ -794,7 +794,18 @@ class PublicationService
             }
             
             // Get federated results with modified parameters
-            $federationResult = $this->directoryService->getPublications($federatedQueryParams);
+            // Prepare query parameters for federation - exclude pagination params since aggregation handles those
+            $federatedFilterParams = array_filter($federatedQueryParams, function($key) {
+                // Exclude pagination parameters since aggregation handles those
+                return !in_array($key, ['_limit', '_page', '_offset', 'offset']);
+            }, ARRAY_FILTER_USE_KEY);
+            
+            // Pass query parameters in the format expected by DirectoryService
+            $federationGuzzleConfig = [
+                'query_params' => $federatedFilterParams
+            ];
+            
+            $federationResult = $this->directoryService->getPublications($federationGuzzleConfig);
             
             // Merge local and federated results
             $allResults = array_merge(
