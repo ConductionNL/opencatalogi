@@ -658,19 +658,29 @@ class PublicationService
         $localResponse = $this->index(null, $queryParams);
         $localData = json_decode($localResponse->render(), true);
         
-        // Add catalog information to local publications' @self.catalogs property
+        // Add catalog and directory information to local publications
         // @todo This adds ~200ms overhead - consider making optional via query parameter
         $localResults = $localData['results'] ?? [];
         if (!empty($localResults)) {
             $localCatalogs = $this->getLocalCatalogs();
-            if (!empty($localCatalogs)) {
-                foreach ($localResults as &$publication) {
-                    if (isset($publication['@self']) && is_array($publication['@self'])) {
+            foreach ($localResults as &$publication) {
+                if (isset($publication['@self']) && is_array($publication['@self'])) {
+                    // Add directory information for faceting
+                    $publication['@self']['directory'] = 'local';
+                    
+                    // Add catalog information if available
+                    if (!empty($localCatalogs)) {
+                        $publication['@self']['catalogs'] = $localCatalogs;
+                    }
+                } else {
+                    // Ensure @self exists with directory information
+                    $publication['@self'] = ['directory' => 'local'];
+                    if (!empty($localCatalogs)) {
                         $publication['@self']['catalogs'] = $localCatalogs;
                     }
                 }
-                unset($publication); // Break the reference
             }
+            unset($publication); // Break the reference
         }
         
         // Calculate pagination info
@@ -700,9 +710,6 @@ class PublicationService
             $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
         }
         
-        // Store sources information for facetable
-        $sources = ['local' => 'Local OpenCatalogi instance'];
-        
         // Add facets and facetable from local service if present
         if (isset($localData['facets'])) {
             // Check if facets are nested (unwrap if needed)
@@ -713,10 +720,10 @@ class PublicationService
             $responseData['facets'] = $facetsData;
         }
         if (isset($localData['facetable'])) {
-            $responseData['facetable'] = $this->mergeFacetableData($localData['facetable'], [], $sources);
+            $responseData['facetable'] = $this->mergeFacetableData($localData['facetable'], []);
         } elseif ($shouldIncludeFacets) {
             // If faceting is requested but no facetable data exists, create basic structure
-            $responseData['facetable'] = $this->mergeFacetableData([], [], $sources);
+            $responseData['facetable'] = $this->mergeFacetableData([], []);
         }
         
         // If aggregation is disabled, return only local results
@@ -778,26 +785,49 @@ class PublicationService
             $allLocalResponse = $this->index(null, $localQueryParams);
             $allLocalData = json_decode($allLocalResponse->render(), true);
             
-            // Add catalog information to local publications' @self.catalogs property
+            // Add catalog and directory information to local publications
             // @todo This adds ~200ms overhead - consider making optional via query parameter
             $allLocalResults = $allLocalData['results'] ?? [];
             if (!empty($allLocalResults)) {
                 $localCatalogs = $this->getLocalCatalogs();
-                if (!empty($localCatalogs)) {
-                    foreach ($allLocalResults as &$publication) {
-                        if (isset($publication['@self']) && is_array($publication['@self'])) {
+                foreach ($allLocalResults as &$publication) {
+                    if (isset($publication['@self']) && is_array($publication['@self'])) {
+                        // Add directory information for faceting
+                        $publication['@self']['directory'] = 'local';
+                        
+                        // Add catalog information if available
+                        if (!empty($localCatalogs)) {
+                            $publication['@self']['catalogs'] = $localCatalogs;
+                        }
+                    } else {
+                        // Ensure @self exists with directory information
+                        $publication['@self'] = ['directory' => 'local'];
+                        if (!empty($localCatalogs)) {
                             $publication['@self']['catalogs'] = $localCatalogs;
                         }
                     }
-                    unset($publication); // Break the reference
                 }
+                unset($publication); // Break the reference
             }
             
             // Get federated results with modified parameters
-            // Prepare query parameters for federation - exclude pagination params since aggregation handles those
+            // Prepare query parameters for federation - exclude pagination and directory filter params since aggregation handles those
             $federatedFilterParams = array_filter($federatedQueryParams, function($key) {
                 // Exclude pagination parameters since aggregation handles those
-                return !in_array($key, ['_limit', '_page', '_offset', 'offset']);
+                if (in_array($key, ['_limit', '_page', '_offset', 'offset'])) {
+                    return false;
+                }
+                
+                // Exclude directory-related facet filters when querying external directories
+                // since each directory only has its own publications
+                if (strpos($key, '_facets[@self][directory]') !== false) {
+                    return false;
+                }
+                if (strpos($key, '_facets[directory]') !== false) {
+                    return false;
+                }
+                
+                return true;
             }, ARRAY_FILTER_USE_KEY);
             
             // Pass query parameters in the format expected by DirectoryService
@@ -861,9 +891,6 @@ class PublicationService
                 $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
             }
             
-            // Update sources with federated information
-            $sources = array_merge($sources, $federationResult['sources'] ?? []);
-            
             // Merge facets and facetable data if present
             if (isset($allLocalData['facets']) || isset($federationResult['facets'])) {
                 $localFacets = $allLocalData['facets'] ?? [];
@@ -883,11 +910,10 @@ class PublicationService
             if (isset($allLocalData['facetable']) || isset($federationResult['facetable'])) {
                 $responseData['facetable'] = $this->mergeFacetableData(
                     $allLocalData['facetable'] ?? [], 
-                    $federationResult['facetable'] ?? [], 
-                    $sources
+                    $federationResult['facetable'] ?? []
                 );
             } elseif ($shouldIncludeFacets) {
-                $responseData['facetable'] = $this->mergeFacetableData([], [], $sources);
+                $responseData['facetable'] = $this->mergeFacetableData([], []);
             }
             
             return $responseData;
@@ -984,10 +1010,9 @@ class PublicationService
      *
      * @param array $localFacetable Facetable metadata from local source
      * @param array $federatedFacetable Facetable metadata from federated sources
-     * @param array $sources Sources information
      * @return array Merged facetable metadata
      */
-    private function mergeFacetableData(array $localFacetable, array $federatedFacetable, array $sources): array
+    private function mergeFacetableData(array $localFacetable, array $federatedFacetable): array
     {
         // Start with local facetable as base
         $mergedFacetable = !empty($localFacetable) ? $localFacetable : $federatedFacetable;
@@ -997,50 +1022,30 @@ class PublicationService
             $mergedFacetable['@self'] = [];
         }
         
-        // Add catalog facet based on sources
-        $catalogSamples = [];
-        foreach ($sources as $key => $url) {
-            $catalogSamples[] = [
-                'value' => $key,
-                'label' => $key === 'local' ? 'Local OpenCatalogi instance' : $key,
-                'count' => 1 // This would need actual counting in a real implementation
-            ];
-        }
-        
-        $mergedFacetable['@self']['catalog'] = [
+        // Add directory facet for filtering by catalog source
+        // This will be populated dynamically based on available directories
+        $mergedFacetable['@self']['directory'] = [
             'type' => 'categorical',
-            'description' => 'Catalog source of the publication',
+            'description' => 'Directory/catalog source of the publication',
             'facet_types' => ['terms'],
             'has_labels' => true,
-            'sample_values' => $catalogSamples
-        ];
-        
-        // Add organisation facet based on sources
-        $organisationSamples = [];
-        foreach ($sources as $key => $url) {
-            if ($key !== 'local') {
-                // Extract organisation from domain name
-                $domain = parse_url($url, PHP_URL_HOST) ?? $key;
-                $organisationSamples[] = [
-                    'value' => $domain,
-                    'label' => ucfirst(str_replace(['.', '_', '-'], ' ', $domain)),
-                    'count' => 1
-                ];
-            } else {
-                $organisationSamples[] = [
+            'sample_values' => [
+                [
                     'value' => 'local',
-                    'label' => 'Local Organisation',
+                    'label' => 'Local OpenCatalogi',
                     'count' => 1
-                ];
-            }
-        }
-        
-        $mergedFacetable['@self']['organisation'] = [
-            'type' => 'categorical',
-            'description' => 'Organisation that published the content',
-            'facet_types' => ['terms'],
-            'has_labels' => true,
-            'sample_values' => $organisationSamples
+                ],
+                [
+                    'value' => 'directory.opencatalogi.nl',
+                    'label' => 'OpenCatalogi Directory',
+                    'count' => 1
+                ],
+                [
+                    'value' => 'dimpact.commonground.nu',
+                    'label' => 'Dimpact',
+                    'count' => 1
+                ]
+            ]
         ];
         
         return $mergedFacetable;

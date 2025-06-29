@@ -886,6 +886,13 @@ class DirectoryService
                 foreach ($result['results'] as $item) {
                     $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
                     if (!isset($seenIds[$itemId])) {
+                        // Add directory information to federated publications for faceting
+                        if (isset($item['@self']) && is_array($item['@self'])) {
+                            $item['@self']['directory'] = $directoryInfo['name'];
+                        } else {
+                            $item['@self'] = ['directory' => $directoryInfo['name']];
+                        }
+                        
                         $combinedResults[] = $item;
                         $seenIds[$itemId] = true;
                     } else {
