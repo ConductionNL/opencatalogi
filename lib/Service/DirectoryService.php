@@ -199,8 +199,8 @@ class DirectoryService
         if (!empty($listingSchema) && !empty($listingRegister)) {
             try {
                 $filters = [
-                    'register' => $listingRegister,
-                    'schema' => $listingSchema
+                        'register' => $listingRegister,
+                        'schema' => $listingSchema
                 ];
                 
                 // Add optional filters
@@ -394,7 +394,7 @@ class DirectoryService
                 $this->server->getLogger()->warning(
                     'DirectoryService: Directory sync had failures - ' . $directoryUrl . 
                     ' - Failed: ' . $results['listings_failed']
-                );
+            );
             }
 
         } catch (GuzzleException $e) {
@@ -672,7 +672,7 @@ class DirectoryService
     {
         // Get directories based on criteria
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
-        
+
         if (empty($directories)) {
             return ['results' => [], 'sources' => []];
         }
@@ -683,23 +683,23 @@ class DirectoryService
         );
 
         // Prepare Guzzle client
-        $defaultGuzzleConfig = [
-            RequestOptions::TIMEOUT => 30,
-            RequestOptions::CONNECT_TIMEOUT => 10,
-            RequestOptions::HEADERS => [
-                'Accept' => 'application/json',
-                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
-            ],
+            $defaultGuzzleConfig = [
+                RequestOptions::TIMEOUT => 30,
+                RequestOptions::CONNECT_TIMEOUT => 10,
+                RequestOptions::HEADERS => [
+                    'Accept' => 'application/json',
+                    'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+                ],
             RequestOptions::HTTP_ERRORS => false
-        ];
-        
-        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+            ];
+            
+            $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
         $queryParams = $finalGuzzleConfig['query_params'] ?? [];
         $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
         $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
-        
+
         $client = new Client($finalGuzzleConfig);
-        $promises = [];
+            $promises = [];
         $urlToDirectoryMap = [];
 
         // Create promises for each directory
@@ -728,11 +728,11 @@ class DirectoryService
                 try {
                     $response = $client->get($publicationsUrl);
                     $statusCode = $response->getStatusCode();
-                    
-                    if ($statusCode >= 200 && $statusCode < 300) {
-                        $body = $response->getBody()->getContents();
-                        $data = json_decode($body, true);
                         
+                        if ($statusCode >= 200 && $statusCode < 300) {
+                            $body = $response->getBody()->getContents();
+                            $data = json_decode($body, true);
+                            
                         if (json_last_error() === JSON_ERROR_NONE) {
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
@@ -756,19 +756,19 @@ class DirectoryService
                     } else {
                         $resolve(['success' => false, 'results' => [], 'facets' => []]);
                     }
-                } catch (\Exception $e) {
+                    } catch (\Exception $e) {
                     // Only log actual errors, not expected failures
                     if (!str_contains($e->getMessage(), 'Could not resolve host')) {
                         $this->server->getLogger()->error('DirectoryService: Federation request failed to ' . $publicationsUrl . ': ' . $e->getMessage());
                     }
                     $resolve(['success' => false, 'results' => [], 'facets' => []]);
-                }
-            });
-        }
+                    }
+                });
+            }
 
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
-        
+
         // Flatten and deduplicate results, track sources, aggregate facets
         $combinedResults = [];
         $seenIds = [];
@@ -786,9 +786,9 @@ class DirectoryService
                     if (!isset($seenIds[$itemId])) {
                         $combinedResults[] = $item;
                         $seenIds[$itemId] = true;
-                    }
                 }
-                
+            }
+
                 // Aggregate facets if they exist
                 if (!empty($result['facets'])) {
                     $combinedFacets = $this->aggregateFacets($combinedFacets, $result['facets']);
