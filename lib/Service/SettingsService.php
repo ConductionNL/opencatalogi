@@ -119,10 +119,7 @@ class SettingsService
     {
         try {
             if ($this->isOpenRegisterInstalled($minVersion) === false) {
-                // First try to download the app from the app store.
-                if (OC_App::downloadApp(self::OPENREGISTER_APP_ID) === false) {
-                    throw new \RuntimeException('Failed to download OpenRegister from the app store');
-                }
+                // Removed problematic download functionality
 
                 // Then install the downloaded app.
                 if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
@@ -137,10 +134,7 @@ class SettingsService
                 // Check if update is needed.
                 $currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
                 if (version_compare($currentVersion, $minVersion, '<') === true) {
-                    // First try to download the update from the app store.
-                    if (OC_App::downloadApp(self::OPENREGISTER_APP_ID) === false) {
-                        throw new \RuntimeException('Failed to download OpenRegister update from the app store');
-                    }
+                    // Removed problematic download functionality
 
                     // Then update the app.
                     if (OC_App::updateApp(self::OPENREGISTER_APP_ID) === false) {

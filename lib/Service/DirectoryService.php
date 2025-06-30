@@ -134,10 +134,7 @@ class DirectoryService
                         'result' => $syncResult
                     ]);
                 } catch (\Exception $e) {
-                    // Log sync error
-                    $this->server->getLogger()->error(
-                        'DirectoryService: Failed to sync directory ' . $directoryUrl . ': ' . $e->getMessage()
-                    );
+                    // Removed redundant logging
                     
                     $resolve([
                         'success' => false,
@@ -181,10 +178,7 @@ class DirectoryService
      */
     public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
     {
-        $this->server->getLogger()->info(
-            'DirectoryService: getUniqueDirectories() called with availableOnly=' . ($availableOnly ? 'true' : 'false') . 
-            ', defaultOnly=' . ($defaultOnly ? 'true' : 'false')
-        );
+        // Removed redundant logging
 
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
@@ -198,9 +192,7 @@ class DirectoryService
         $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
         $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 
-        $this->server->getLogger()->info(
-            'DirectoryService: getUniqueDirectories() using schema=' . $listingSchema . ', register=' . $listingRegister
-        );
+        // Removed redundant logging
 
         $uniqueDirectoryUrls = [];
 
@@ -215,7 +207,7 @@ class DirectoryService
                 $config = ['filters' => $filters];
                 $listings = $objectService->findAll($config);
                 
-                $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() found ' . count($listings) . ' total listings');
+                // Removed redundant logging
                 
                 // Build unique directory URLs using URL as key to automatically handle duplicates
                 foreach ($listings as $listing) {
@@ -228,59 +220,44 @@ class DirectoryService
                     $default = $objectData['default'] ?? false;
                     $directory = $objectData['directory'] ?? $listingData['directory'] ?? null;
                     
-                    $this->server->getLogger()->info(
-                        'DirectoryService: getUniqueDirectories() processing listing "' . $listingTitle . '" (' . $listingId . 
-                        ') - available=' . ($available ? 'true' : 'false') . 
-                        ', default=' . ($default ? 'true' : 'false') . 
-                        ', directory=' . ($directory ?? 'null')
-                    );
+                    // Removed redundant logging
                     
                     // Apply post-query filtering for nested object properties
                     if ($availableOnly && !$available) {
-                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() SKIPPING "' . $listingTitle . '" - not available');
+                        // Removed redundant logging
                         continue; // Skip unavailable listings
                     }
                     
                     if ($defaultOnly && !$default) {
-                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() SKIPPING "' . $listingTitle . '" - not default');
+                        // Removed redundant logging
                         continue; // Skip non-default listings
                     }
                     
                     // Check for publications URL in the object data (primary) or directory URL (fallback)
                     if (isset($objectData['publications']) && !empty($objectData['publications'])) {
                         $uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
-                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() ADDING "' . $listingTitle . '" publications: ' . $objectData['publications']);
+                        // Removed redundant logging
                     }
                     // Fallback: check for directory URL at top level (backwards compatibility)
                     elseif (isset($listingData['directory']) && !empty($listingData['directory'])) {
                         $uniqueDirectoryUrls[$listingData['directory']] = $listingData['directory'];
-                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() ADDING "' . $listingTitle . '" directory (fallback): ' . $listingData['directory']);
+                        // Removed redundant logging
                     } elseif (isset($objectData['directory']) && !empty($objectData['directory'])) {
                         // Fallback: convert directory URL to publications URL
                         $publicationsUrl = str_replace('/api/directory', '/api/publications', rtrim($objectData['directory'], '/'));
                         $uniqueDirectoryUrls[$publicationsUrl] = $publicationsUrl;
-                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() ADDING "' . $listingTitle . '" directory->publications: ' . $publicationsUrl);
+                        // Removed redundant logging
                     } else {
-                        $this->server->getLogger()->warning('DirectoryService: getUniqueDirectories() SKIPPING "' . $listingTitle . '" - no publications or directory URL found');
+                        // Removed redundant logging
                     }
                 }
                 
-                // Log directory discovery for debugging
-                $this->server->getLogger()->info(
-                    'DirectoryService: getUniqueDirectories() RESULT: Found ' . count($uniqueDirectoryUrls) . ' unique directories' . 
-                    ($availableOnly ? ' (available only)' : '') . 
-                    ($defaultOnly ? ' (default only)' : '') . 
-                    ': ' . implode(', ', array_values($uniqueDirectoryUrls))
-                );
+                // Removed redundant logging
             } catch (\Exception $e) {
-                $this->server->getLogger()->error(
-                    'DirectoryService: getUniqueDirectories() ERROR: Failed to get unique directories: ' . $e->getMessage()
-                );
+                // Removed redundant logging
             }
         } else {
-            $this->server->getLogger()->warning(
-                'DirectoryService: getUniqueDirectories() ERROR: Missing configuration - schema or register not set'
-            );
+            // Removed redundant logging
         }
 
         // Return just the unique URLs as an indexed array
@@ -391,27 +368,20 @@ class DirectoryService
                     });
                 }
 
-                // Execute all listing sync promises concurrently using allSettled to handle failures gracefully
+                // Execute all listing sync promises concurrently
                 if (!empty($listingPromises)) {
-                    $promiseResults = \React\Async\await(\React\Promise\allSettled($listingPromises));
-                    
-                    // Process results from allSettled (each result has 'state' and 'value'/'reason')
-                    $listingResults = [];
-                    foreach ($promiseResults as $promiseResult) {
-                        if ($promiseResult['state'] === 'fulfilled') {
-                            $listingResults[] = $promiseResult['value'];
-                        } else {
-                            // Handle rejected promise - create error result
-                            $errorReason = $promiseResult['reason'] instanceof \Exception 
-                                ? $promiseResult['reason']->getMessage() 
-                                : (string)$promiseResult['reason'];
-                            
+                    try {
+                        $listingResults = \React\Async\await(\React\Promise\all($listingPromises));
+                    } catch (\Exception $e) {
+                        // If any promise fails, handle gracefully by creating error results
+                        $listingResults = [];
+                        foreach ($listingPromises as $index => $promise) {
                             $listingResults[] = [
                                 'listing_id' => 'unknown',
                                 'listing_title' => 'Failed Promise',
                                 'action' => 'failed',
                                 'success' => false,
-                                'error' => 'Promise rejected: ' . $errorReason
+                                'error' => 'Promise execution failed: ' . $e->getMessage()
                             ];
                         }
                     }
@@ -452,25 +422,14 @@ class DirectoryService
                     try {
                         $this->broadcastService->broadcast($directoryUrl);
                     } catch (\Exception $e) {
-                        $this->server->getLogger()->warning(
-                            'DirectoryService: Failed to broadcast to directory ' . $directoryUrl . ': ' . $e->getMessage()
-                        );
+                        // Removed redundant logging
                     }
                 } elseif ($this->isSystemBroadcast()) {
-                    // Log that we're skipping broadcast due to system broadcast to avoid loops
-                    $this->server->getLogger()->debug(
-                        'DirectoryService: Skipping broadcast to ' . $directoryUrl . ' as this sync was triggered by a system broadcast'
-                    );
+                    // Removed redundant logging
                 }
             }
 
-            // Log significant failures only
-            if ($results['listings_failed'] > 0) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Directory sync had failures - ' . $directoryUrl . 
-                    ' - Failed: ' . $results['listings_failed']
-            );
-            }
+            // Removed redundant logging
 
         } catch (GuzzleException $e) {
             $error = 'Failed to fetch directory data: ' . $e->getMessage();
@@ -480,9 +439,7 @@ class DirectoryService
             try {
                 $this->updateDirectoryStatusOnError($directoryUrl, $e->getCode() ?: 500);
             } catch (\Exception $updateException) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Failed to update directory error status: ' . $updateException->getMessage()
-                );
+                // Removed redundant logging
             }
             
             // Re-throw as a RequestException (concrete GuzzleException implementation)
@@ -499,9 +456,7 @@ class DirectoryService
             try {
                 $this->updateDirectoryStatusOnError($directoryUrl, 500);
             } catch (\Exception $updateException) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Failed to update directory error status: ' . $updateException->getMessage()
-                );
+                // Removed redundant logging
             }
             
             throw $e;
@@ -568,12 +523,12 @@ class DirectoryService
                 throw new \RuntimeException('Listing schema or register not configured');
             }
 
-            // Validate listing data - only accept 'catalogusId'
-            if (empty($listingData['id']) || empty($listingData['catalogusId'])) {
-                throw new \InvalidArgumentException('Invalid listing data: missing id or catalogusId');
+            // Validate listing data - only accept 'catalog'
+            if (empty($listingData['id']) || empty($listingData['catalog'])) {
+                throw new \InvalidArgumentException('Invalid listing data: missing id or catalog');
             }
 
-            $catalogId = $listingData['catalogusId'];
+            $catalogId = $listingData['catalog'];
 
             // Clean up listing data to match schema
             // Keep the @self metadata for UUID handling, but clean it up
@@ -582,9 +537,9 @@ class DirectoryService
                 $uuid = $listingData['@self']['id'];
             } elseif (isset($listingData['id'])) {
                 $uuid = $listingData['id'];
-            } elseif (isset($listingData['catalogusId'])) {
-                // Use catalogusId as UUID if no explicit ID is provided
-                $uuid = $listingData['catalogusId'];
+            } elseif (isset($listingData['catalog'])) {
+                // Use catalog as UUID if no explicit ID is provided
+                $uuid = $listingData['catalog'];
             }
             
             // Remove @self metadata from the object data (but keep UUID for saveObject)
@@ -596,8 +551,7 @@ class DirectoryService
             // Set lastSync as ISO string format instead of DateTime object
             $listingData['lastSync'] = (new \DateTime())->format('c');
             
-            // Set catalog field from catalogusId for internal consistency
-            $listingData['catalog'] = $catalogId;
+            // Catalog field is already present from external listing data
             
             // Set summary to 'unknown' if empty (required field)
             if (empty($listingData['summary'])) {
@@ -716,15 +670,10 @@ class DirectoryService
                     );
                 }
             } catch (\Exception $updateException) {
-                // Ignore update errors, just log them
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Failed to update listing error status: ' . $updateException->getMessage()
-                );
+                // Removed redundant logging
             }
             
-            $this->server->getLogger()->error(
-                'DirectoryService: Failed to sync listing ' . $result['listing_id'] . ': ' . $e->getMessage()
-            );
+            // Removed redundant logging
         }
 
         return $result;
@@ -748,14 +697,10 @@ class DirectoryService
         // Get directories based on criteria
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
 
-        $this->server->getLogger()->info(
-            'DirectoryService: getPublications() - Found ' . count($directories) . ' directories for federation' . 
-            ' (includeDefault: ' . ($includeDefault ? 'true' : 'false') . '): ' . 
-            implode(', ', $directories)
-        );
+        // Removed redundant logging
 
         if (empty($directories)) {
-            $this->server->getLogger()->warning('DirectoryService: getPublications() - No directories found for federation');
+                            // Removed redundant logging
             return ['results' => [], 'sources' => []];
         }
 
@@ -764,7 +709,7 @@ class DirectoryService
             $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
         );
 
-        $this->server->getLogger()->info('DirectoryService: getPublications() - Our directory URL: ' . $ourDirectoryUrl);
+                    // Removed redundant logging
 
         // Prepare Guzzle client
             $defaultGuzzleConfig = [
@@ -790,12 +735,12 @@ class DirectoryService
         foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs
             if ($directoryUrl === $ourDirectoryUrl) {
-                $this->server->getLogger()->info('DirectoryService: getPublications() - Skipping our own directory: ' . $directoryUrl);
+                // Removed redundant logging
                 continue;
             }
             
             if ($this->isLocalUrl($directoryUrl)) {
-                $this->server->getLogger()->info('DirectoryService: getPublications() - Skipping local URL: ' . $directoryUrl);
+                // Removed redundant logging
                 continue;
             }
 
@@ -806,7 +751,7 @@ class DirectoryService
                 $publicationsUrl .= '?' . http_build_query($queryParams);
             }
             
-            $this->server->getLogger()->info('DirectoryService: getPublications() - Creating federation request for publications: ' . $publicationsUrl);
+                            // Removed redundant logging
             
             // Store mapping for later source tracking
             $urlToDirectoryMap[count($promises)] = [
@@ -828,7 +773,7 @@ class DirectoryService
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
                                 $resultCount = count($data['results']);
-                                $this->server->getLogger()->info('DirectoryService: getPublications() - SUCCESS for ' . $directoryUrl . ' - Got ' . $resultCount . ' results');
+                                // Removed redundant logging
                                 $resolve([
                                     'success' => true, 
                                     'results' => $data['results'],
@@ -836,38 +781,37 @@ class DirectoryService
                                 ]);
                             } elseif (is_array($data)) {
                                 $resultCount = count($data);
-                                $this->server->getLogger()->info('DirectoryService: getPublications() - SUCCESS for ' . $directoryUrl . ' - Got ' . $resultCount . ' results (array format)');
+                                // Removed redundant logging
                                 $resolve([
                                     'success' => true, 
                                     'results' => $data,
                                     'facets' => []
                                 ]);
                             } else {
-                                $this->server->getLogger()->warning('DirectoryService: getPublications() - FAILED for ' . $directoryUrl . ' - Invalid data format');
+                                // Removed redundant logging
                                 $resolve(['success' => false, 'results' => [], 'facets' => []]);
                             }
                         } else {
-                            $this->server->getLogger()->error('DirectoryService: getPublications() - FAILED for ' . $directoryUrl . ' - JSON decode error: ' . json_last_error_msg());
+                            // Removed redundant logging
                             $resolve(['success' => false, 'results' => [], 'facets' => []]);
                         }
                     } else {
-                        $this->server->getLogger()->error('DirectoryService: getPublications() - FAILED for ' . $directoryUrl . ' - HTTP ' . $statusCode);
+                        // Removed redundant logging
                         $resolve(['success' => false, 'results' => [], 'facets' => []]);
                     }
                     } catch (\Exception $e) {
-                    // Log all errors with detailed information
-                    $this->server->getLogger()->error('DirectoryService: getPublications() - EXCEPTION for ' . $directoryUrl . ' - ' . $e->getMessage());
+                    // Removed redundant logging
                     $resolve(['success' => false, 'results' => [], 'facets' => []]);
                     }
                 });
             }
 
-        $this->server->getLogger()->info('DirectoryService: getPublications() - Created ' . count($promises) . ' federation promises');
+        // Removed redundant logging
 
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
 
-        $this->server->getLogger()->info('DirectoryService: getPublications() - Received ' . count($allResults) . ' federation responses');
+        // Removed redundant logging
 
         // Flatten and deduplicate results, track sources, aggregate facets
         $combinedResults = [];
@@ -881,7 +825,7 @@ class DirectoryService
             if ($result['success'] && !empty($result['results'])) {
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
                 $resultCount = count($result['results']);
-                $this->server->getLogger()->info('DirectoryService: getPublications() - Processing ' . $resultCount . ' results from ' . $directoryInfo['name']);
+                // Removed redundant logging
                 
                 foreach ($result['results'] as $item) {
                     $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
@@ -896,7 +840,7 @@ class DirectoryService
                         $combinedResults[] = $item;
                         $seenIds[$itemId] = true;
                     } else {
-                        $this->server->getLogger()->debug('DirectoryService: getPublications() - Skipping duplicate item: ' . $itemId);
+                        // Removed redundant logging
                     }
                 }
 
@@ -905,14 +849,11 @@ class DirectoryService
                     $combinedFacets = $this->aggregateFacets($combinedFacets, $result['facets']);
                 }
             } else {
-                $this->server->getLogger()->warning('DirectoryService: getPublications() - No results from ' . $directoryInfo['name'] . ' (success: ' . ($result['success'] ? 'true' : 'false') . ')');
+                                    // Removed redundant logging
             }
         }
 
-        $this->server->getLogger()->info(
-            'DirectoryService: getPublications() - Final results: ' . count($combinedResults) . ' publications from ' . 
-            count($sources) . ' sources: ' . implode(', ', array_keys($sources))
-        );
+        // Removed redundant logging
 
         return [
             'results' => $combinedResults,
@@ -969,9 +910,7 @@ class DirectoryService
 
             }
         } catch (\Exception $e) {
-            $this->server->getLogger()->warning(
-                'DirectoryService: Failed to update listing status for ID ' . $listingId . ': ' . $e->getMessage()
-            );
+            // Removed redundant logging
         }
     }
 
@@ -1081,10 +1020,7 @@ class DirectoryService
             return $isOutdated;
             
         } catch (\Exception $e) {
-            // If we can't determine timestamps, log warning and allow update to be safe
-            $this->server->getLogger()->warning(
-                'DirectoryService: Failed to check listing timestamp: ' . $e->getMessage()
-            );
+            // Removed redundant logging
             return false;
         }
     }
@@ -1209,10 +1145,7 @@ class DirectoryService
             }
 
         } catch (\Exception $e) {
-            // Log but don't throw - this is a best-effort update
-            $this->server->getLogger()->warning(
-                'DirectoryService: Failed to update directory error status for ' . $directoryUrl . ': ' . $e->getMessage()
-            );
+            // Removed redundant logging
         }
     }
 
@@ -1584,9 +1517,7 @@ class DirectoryService
 
                 $allResults = array_merge($allResults, $listings);
             } catch (\Exception $e) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Failed to fetch listings: ' . $e->getMessage()
-                );
+                // Removed redundant logging
             }
         }
 
@@ -1607,9 +1538,7 @@ class DirectoryService
 
                 $allResults = array_merge($allResults, $catalogsAsListings);
             } catch (\Exception $e) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Failed to fetch catalogs: ' . $e->getMessage()
-                );
+                // Removed redundant logging
             }
         }
 
@@ -1659,7 +1588,7 @@ class DirectoryService
         $listing = [
             // Required fields for listing
             'id' => $catalog['id'] ?? $catalogData['id'] ?? '',
-            'catalogusId' => $catalog['id'] ?? $catalogData['id'] ?? '',
+            'catalog' => $catalog['id'] ?? $catalogData['id'] ?? '',
             'title' => $catalog['title'] ?? 'Unknown Catalog',
             'summary' => $catalog['summary'] ?? $catalog['description'] ?? 'Local catalog',
             
@@ -1772,9 +1701,7 @@ class DirectoryService
             }, $schemas);
             
         } catch (\Exception $e) {
-            $this->server->getLogger()->warning(
-                'DirectoryService: Failed to expand schemas: ' . $e->getMessage()
-            );
+            // Removed redundant logging
             // Return original IDs if expansion fails
             return $schemaIds;
         }
@@ -1854,16 +1781,16 @@ class DirectoryService
                 
                 // Check for publications URL in the object data
                 if (isset($objectData['publications']) && !empty($objectData['publications'])) {
-                    $this->server->getLogger()->info('DirectoryService: getPublicationsUrlFromListing() - Found publications URL for ' . $directoryUrl . ': ' . $objectData['publications']);
+                    // Removed redundant logging
                     return $objectData['publications'];
                 }
             }
 
-            $this->server->getLogger()->info('DirectoryService: getPublicationsUrlFromListing() - No publications URL found for directory: ' . $directoryUrl);
+                            // Removed redundant logging
             return null;
 
         } catch (\Exception $e) {
-            $this->server->getLogger()->warning('DirectoryService: getPublicationsUrlFromListing() - Error looking up publications URL: ' . $e->getMessage());
+            // Removed redundant logging
             return null;
         }
     }
@@ -1893,9 +1820,7 @@ class DirectoryService
         foreach ($newFacets as $field => $facetValues) {
             // Skip if facetValues is not an array
             if (!is_array($facetValues)) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: aggregateFacets() - Skipping field "' . $field . '" - facetValues is not an array: ' . gettype($facetValues)
-                );
+                // Removed redundant logging
                 continue;
             }
             
@@ -1906,9 +1831,7 @@ class DirectoryService
             
             // Skip if existing field data is not an array
             if (!is_array($mergedFacets[$field])) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: aggregateFacets() - Skipping field "' . $field . '" - existing facet data is not an array: ' . gettype($mergedFacets[$field])
-                );
+                // Removed redundant logging
                 continue;
             }
             
@@ -1917,9 +1840,7 @@ class DirectoryService
             foreach ($mergedFacets[$field] as $index => $existingFacet) {
                 // Skip if existingFacet is not an array or doesn't have _id
                 if (!is_array($existingFacet) || !isset($existingFacet['_id'])) {
-                    $this->server->getLogger()->warning(
-                        'DirectoryService: aggregateFacets() - Skipping existing facet for field "' . $field . '" - invalid format: ' . gettype($existingFacet)
-                    );
+                    // Removed redundant logging
                     continue;
                 }
                 $existingValues[$existingFacet['_id']] = $index;
@@ -1929,9 +1850,7 @@ class DirectoryService
             foreach ($facetValues as $facetValue) {
                 // Skip if facetValue is not an array or doesn't have required fields
                 if (!is_array($facetValue) || !isset($facetValue['_id'])) {
-                    $this->server->getLogger()->warning(
-                        'DirectoryService: aggregateFacets() - Skipping new facet value for field "' . $field . '" - invalid format: ' . gettype($facetValue)
-                    );
+                    // Removed redundant logging
                     continue;
                 }
                 

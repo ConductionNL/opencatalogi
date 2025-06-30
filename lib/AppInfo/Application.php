@@ -51,9 +51,9 @@ class Application extends App implements IBootstrap {
 			// Install and enable OpenRegister
 			$settingsService = $container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
 			$settingsService->initialize();
-			\OC::$server->getLogger()->info('OpenRegister has been installed, enabled and configured successfully');
+			// Removed redundant logging
 		} catch (\Exception $e) {
-			\OC::$server->getLogger()->warning('Failed to install/enable/configrue OpenRegister: ' . $e->getMessage());
+			// Removed redundant logging
 		}
 
 		// @TODO: This should only run if the app is enabled for the user
@@ -75,9 +75,7 @@ class Application extends App implements IBootstrap {
 					// Mark initial sync as done
 					// $config->setAppValue(self::APP_ID, 'initial_sync_done', 'true');
 				} catch (\Exception $e) {
-					\OC::$server->getLogger()->error('Failed to run initial directory sync: ' . $e->getMessage(), [
-						'app' => self::APP_ID
-					]);
+					// Removed redundant logging
 				}
 			}			
 		//}		

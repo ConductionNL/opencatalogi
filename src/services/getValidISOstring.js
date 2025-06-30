@@ -8,8 +8,8 @@ export default function getValidISOstring(dateString) {
 		return false
 	}
 
-	// Check if it matches ISO 8601 format
-	const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/
+	// Check if it matches ISO 8601 format (with timezone offset support)
+	const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?$/
 	if (!isoDateRegex.test(dateString)) {
 		return false
 	}
