@@ -185,6 +185,30 @@ import { objectStore, navigationStore } from '../../store/store.js'
 											{{ listing.default ? 'Yes' : (listing.available ? 'No' : 'Disabled') }}
 										</td>
 									</tr>
+									<tr v-if="listing.directory">
+										<td>{{ t('opencatalogi', 'Directory URL') }}</td>
+										<td class="urlCell">
+											<a :href="listing.directory" target="_blank" class="urlLink">
+												{{ listing.directory }}
+											</a>
+										</td>
+									</tr>
+									<tr v-if="listing.publications">
+										<td>{{ t('opencatalogi', 'Publications URL') }}</td>
+										<td class="urlCell">
+											<a :href="listing.publications" target="_blank" class="urlLink">
+												{{ listing.publications }}
+											</a>
+										</td>
+									</tr>
+									<tr v-if="listing.search">
+										<td>{{ t('opencatalogi', 'Search URL') }}</td>
+										<td class="urlCell">
+											<a :href="listing.search" target="_blank" class="urlLink">
+												{{ listing.search }}
+											</a>
+										</td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
@@ -204,6 +228,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									<th>{{ t('opencatalogi', 'Name') }}</th>
 									<th>{{ t('opencatalogi', 'Organization') }}</th>
 									<th>{{ t('opencatalogi', 'Schemas') }}</th>
+									<th>{{ t('opencatalogi', 'Publications URL') }}</th>
+									<th>{{ t('opencatalogi', 'Search URL') }}</th>
+									<th>{{ t('opencatalogi', 'Directory URL') }}</th>
 									<th>{{ t('opencatalogi', 'Last Sync') }}</th>
 									<th>{{ t('opencatalogi', 'Status') }}</th>
 									<th class="tableColumnActions">
@@ -244,6 +271,33 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<span v-else>-</span>
 									</td>
 									<td>{{ listing.schemaCount || listing.schemas?.length || 0 }}</td>
+									<td class="tableColumnUrl">
+										<a v-if="listing.publications"
+											:href="listing.publications"
+											target="_blank"
+											class="urlLink">
+											{{ truncateUrl(listing.publications) }}
+										</a>
+										<span v-else>-</span>
+									</td>
+									<td class="tableColumnUrl">
+										<a v-if="listing.search"
+											:href="listing.search"
+											target="_blank"
+											class="urlLink">
+											{{ truncateUrl(listing.search) }}
+										</a>
+										<span v-else>-</span>
+									</td>
+									<td class="tableColumnUrl">
+										<a v-if="listing.directory"
+											:href="listing.directory"
+											target="_blank"
+											class="urlLink">
+											{{ truncateUrl(listing.directory) }}
+										</a>
+										<span v-else>-</span>
+									</td>
 									<td>{{ formatDate(listing.lastSync) }}</td>
 									<td :class="getStatusClass(listing)">
 										{{ getStatusLabel(listing) }}
@@ -595,6 +649,16 @@ export default {
 				)
 			}
 		},
+		truncateUrl(url) {
+			if (!url) return ''
+			// Remove protocol and www
+			const cleanUrl = url.replace(/^https?:\/\/(www\.)?/, '')
+			// If still too long, truncate and add ellipsis
+			if (cleanUrl.length > 35) {
+				return cleanUrl.substring(0, 32) + '...'
+			}
+			return cleanUrl
+		},
 	},
 }
 </script>
@@ -670,5 +734,26 @@ export default {
 .titleContent .errorBadge {
 	margin-left: 4px;
 	margin-right: 0;
+}
+
+/* URL column styling */
+.tableColumnUrl {
+	max-width: 200px;
+}
+
+.urlCell {
+	max-width: 300px;
+	word-break: break-all;
+}
+
+.urlLink {
+	color: var(--color-primary);
+	text-decoration: none;
+	font-size: 0.9em;
+}
+
+.urlLink:hover {
+	text-decoration: underline;
+	color: var(--color-primary-hover, var(--color-primary));
 }
 </style>

@@ -181,6 +181,11 @@ class DirectoryService
      */
     public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
     {
+        $this->server->getLogger()->info(
+            'DirectoryService: getUniqueDirectories() called with availableOnly=' . ($availableOnly ? 'true' : 'false') . 
+            ', defaultOnly=' . ($defaultOnly ? 'true' : 'false')
+        );
+
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
             throw new \RuntimeException('OpenRegister service is not available.');
@@ -193,6 +198,10 @@ class DirectoryService
         $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
         $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 
+        $this->server->getLogger()->info(
+            'DirectoryService: getUniqueDirectories() using schema=' . $listingSchema . ', register=' . $listingRegister
+        );
+
         $uniqueDirectoryUrls = [];
 
         // Get listings if configuration is available
@@ -203,30 +212,75 @@ class DirectoryService
                         'schema' => $listingSchema
                 ];
                 
-                // Add optional filters
-                if ($availableOnly) {
-                    $filters['available'] = true;
-                }
-                
-                if ($defaultOnly) {
-                    $filters['default'] = true;
-                }
-                
                 $config = ['filters' => $filters];
                 $listings = $objectService->findAll($config);
+                
+                $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() found ' . count($listings) . ' total listings');
                 
                 // Build unique directory URLs using URL as key to automatically handle duplicates
                 foreach ($listings as $listing) {
                     $listingData = $listing->jsonSerialize();
-                    if (isset($listingData['directory']) && !empty($listingData['directory'])) {
+                    $objectData = $listingData['object'] ?? $listingData;
+                    
+                    $listingId = $objectData['id'] ?? $listingData['id'] ?? 'unknown';
+                    $listingTitle = $objectData['title'] ?? 'unknown';
+                    $available = $objectData['available'] ?? false;
+                    $default = $objectData['default'] ?? false;
+                    $directory = $objectData['directory'] ?? $listingData['directory'] ?? null;
+                    
+                    $this->server->getLogger()->info(
+                        'DirectoryService: getUniqueDirectories() processing listing "' . $listingTitle . '" (' . $listingId . 
+                        ') - available=' . ($available ? 'true' : 'false') . 
+                        ', default=' . ($default ? 'true' : 'false') . 
+                        ', directory=' . ($directory ?? 'null')
+                    );
+                    
+                    // Apply post-query filtering for nested object properties
+                    if ($availableOnly && !$available) {
+                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() SKIPPING "' . $listingTitle . '" - not available');
+                        continue; // Skip unavailable listings
+                    }
+                    
+                    if ($defaultOnly && !$default) {
+                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() SKIPPING "' . $listingTitle . '" - not default');
+                        continue; // Skip non-default listings
+                    }
+                    
+                    // Check for publications URL in the object data (primary) or directory URL (fallback)
+                    if (isset($objectData['publications']) && !empty($objectData['publications'])) {
+                        $uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
+                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() ADDING "' . $listingTitle . '" publications: ' . $objectData['publications']);
+                    }
+                    // Fallback: check for directory URL at top level (backwards compatibility)
+                    elseif (isset($listingData['directory']) && !empty($listingData['directory'])) {
                         $uniqueDirectoryUrls[$listingData['directory']] = $listingData['directory'];
+                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() ADDING "' . $listingTitle . '" directory (fallback): ' . $listingData['directory']);
+                    } elseif (isset($objectData['directory']) && !empty($objectData['directory'])) {
+                        // Fallback: convert directory URL to publications URL
+                        $publicationsUrl = str_replace('/api/directory', '/api/publications', rtrim($objectData['directory'], '/'));
+                        $uniqueDirectoryUrls[$publicationsUrl] = $publicationsUrl;
+                        $this->server->getLogger()->info('DirectoryService: getUniqueDirectories() ADDING "' . $listingTitle . '" directory->publications: ' . $publicationsUrl);
+                    } else {
+                        $this->server->getLogger()->warning('DirectoryService: getUniqueDirectories() SKIPPING "' . $listingTitle . '" - no publications or directory URL found');
                     }
                 }
+                
+                // Log directory discovery for debugging
+                $this->server->getLogger()->info(
+                    'DirectoryService: getUniqueDirectories() RESULT: Found ' . count($uniqueDirectoryUrls) . ' unique directories' . 
+                    ($availableOnly ? ' (available only)' : '') . 
+                    ($defaultOnly ? ' (default only)' : '') . 
+                    ': ' . implode(', ', array_values($uniqueDirectoryUrls))
+                );
             } catch (\Exception $e) {
-                $this->server->getLogger()->warning(
-                    'DirectoryService: Failed to get unique directories: ' . $e->getMessage()
+                $this->server->getLogger()->error(
+                    'DirectoryService: getUniqueDirectories() ERROR: Failed to get unique directories: ' . $e->getMessage()
                 );
             }
+        } else {
+            $this->server->getLogger()->warning(
+                'DirectoryService: getUniqueDirectories() ERROR: Missing configuration - schema or register not set'
+            );
         }
 
         // Return just the unique URLs as an indexed array
@@ -337,9 +391,30 @@ class DirectoryService
                     });
                 }
 
-                // Execute all listing sync promises concurrently
+                // Execute all listing sync promises concurrently using allSettled to handle failures gracefully
                 if (!empty($listingPromises)) {
-                    $listingResults = \React\Async\await(\React\Promise\all($listingPromises));
+                    $promiseResults = \React\Async\await(\React\Promise\allSettled($listingPromises));
+                    
+                    // Process results from allSettled (each result has 'state' and 'value'/'reason')
+                    $listingResults = [];
+                    foreach ($promiseResults as $promiseResult) {
+                        if ($promiseResult['state'] === 'fulfilled') {
+                            $listingResults[] = $promiseResult['value'];
+                        } else {
+                            // Handle rejected promise - create error result
+                            $errorReason = $promiseResult['reason'] instanceof \Exception 
+                                ? $promiseResult['reason']->getMessage() 
+                                : (string)$promiseResult['reason'];
+                            
+                            $listingResults[] = [
+                                'listing_id' => 'unknown',
+                                'listing_title' => 'Failed Promise',
+                                'action' => 'failed',
+                                'success' => false,
+                                'error' => 'Promise rejected: ' . $errorReason
+                            ];
+                        }
+                    }
                     
                     // Process results
                     foreach ($listingResults as $listingResult) {
@@ -562,9 +637,9 @@ class DirectoryService
                 $listingData['default'] = $existingObject['default'] ?? ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
                 $listingData['statusCode'] = 200; // Update status code to show successful fetch
             } else {
-                // For new listings, start with conservative defaults
-                $listingData['available'] = false; // New listings start as unavailable until proven
-                $listingData['default'] = false; // New listings are not default by default
+                // For new listings, mark as available since we successfully fetched and validated the data
+                $listingData['available'] = true; // New listings that sync successfully are available for federation
+                $listingData['default'] = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'); // Only default OpenCatalogi directory is default
                 $listingData['statusCode'] = 200; // Successful fetch
             }
             
@@ -673,7 +748,14 @@ class DirectoryService
         // Get directories based on criteria
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
 
+        $this->server->getLogger()->info(
+            'DirectoryService: getPublications() - Found ' . count($directories) . ' directories for federation' . 
+            ' (includeDefault: ' . ($includeDefault ? 'true' : 'false') . '): ' . 
+            implode(', ', $directories)
+        );
+
         if (empty($directories)) {
+            $this->server->getLogger()->warning('DirectoryService: getPublications() - No directories found for federation');
             return ['results' => [], 'sources' => []];
         }
 
@@ -681,6 +763,8 @@ class DirectoryService
         $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
             $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
         );
+
+        $this->server->getLogger()->info('DirectoryService: getPublications() - Our directory URL: ' . $ourDirectoryUrl);
 
         // Prepare Guzzle client
             $defaultGuzzleConfig = [
@@ -705,17 +789,24 @@ class DirectoryService
         // Create promises for each directory
         foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
+            if ($directoryUrl === $ourDirectoryUrl) {
+                $this->server->getLogger()->info('DirectoryService: getPublications() - Skipping our own directory: ' . $directoryUrl);
+                continue;
+            }
+            
+            if ($this->isLocalUrl($directoryUrl)) {
+                $this->server->getLogger()->info('DirectoryService: getPublications() - Skipping local URL: ' . $directoryUrl);
                 continue;
             }
 
-            // Build the publications endpoint URL
-            // Convert directory URL to publications URL by replacing /directory with /publications
-            $publicationsUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
+            // The directoryUrl is now actually a publications URL from getUniqueDirectories()
+            $publicationsUrl = $directoryUrl;
             
             if (!empty($queryParams)) {
                 $publicationsUrl .= '?' . http_build_query($queryParams);
             }
+            
+            $this->server->getLogger()->info('DirectoryService: getPublications() - Creating federation request for publications: ' . $publicationsUrl);
             
             // Store mapping for later source tracking
             $urlToDirectoryMap[count($promises)] = [
@@ -724,7 +815,7 @@ class DirectoryService
                 'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
             ];
             
-            $promises[] = new Promise(function ($resolve) use ($client, $publicationsUrl) {
+            $promises[] = new Promise(function ($resolve) use ($client, $publicationsUrl, $directoryUrl) {
                 try {
                     $response = $client->get($publicationsUrl);
                     $statusCode = $response->getStatusCode();
@@ -736,38 +827,47 @@ class DirectoryService
                         if (json_last_error() === JSON_ERROR_NONE) {
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
+                                $resultCount = count($data['results']);
+                                $this->server->getLogger()->info('DirectoryService: getPublications() - SUCCESS for ' . $directoryUrl . ' - Got ' . $resultCount . ' results');
                                 $resolve([
                                     'success' => true, 
                                     'results' => $data['results'],
                                     'facets' => $data['facets'] ?? []
                                 ]);
                             } elseif (is_array($data)) {
+                                $resultCount = count($data);
+                                $this->server->getLogger()->info('DirectoryService: getPublications() - SUCCESS for ' . $directoryUrl . ' - Got ' . $resultCount . ' results (array format)');
                                 $resolve([
                                     'success' => true, 
                                     'results' => $data,
                                     'facets' => []
                                 ]);
                             } else {
+                                $this->server->getLogger()->warning('DirectoryService: getPublications() - FAILED for ' . $directoryUrl . ' - Invalid data format');
                                 $resolve(['success' => false, 'results' => [], 'facets' => []]);
                             }
                         } else {
+                            $this->server->getLogger()->error('DirectoryService: getPublications() - FAILED for ' . $directoryUrl . ' - JSON decode error: ' . json_last_error_msg());
                             $resolve(['success' => false, 'results' => [], 'facets' => []]);
                         }
                     } else {
+                        $this->server->getLogger()->error('DirectoryService: getPublications() - FAILED for ' . $directoryUrl . ' - HTTP ' . $statusCode);
                         $resolve(['success' => false, 'results' => [], 'facets' => []]);
                     }
                     } catch (\Exception $e) {
-                    // Only log actual errors, not expected failures
-                    if (!str_contains($e->getMessage(), 'Could not resolve host')) {
-                        $this->server->getLogger()->error('DirectoryService: Federation request failed to ' . $publicationsUrl . ': ' . $e->getMessage());
-                    }
+                    // Log all errors with detailed information
+                    $this->server->getLogger()->error('DirectoryService: getPublications() - EXCEPTION for ' . $directoryUrl . ' - ' . $e->getMessage());
                     $resolve(['success' => false, 'results' => [], 'facets' => []]);
                     }
                 });
             }
 
+        $this->server->getLogger()->info('DirectoryService: getPublications() - Created ' . count($promises) . ' federation promises');
+
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
+
+        $this->server->getLogger()->info('DirectoryService: getPublications() - Received ' . count($allResults) . ' federation responses');
 
         // Flatten and deduplicate results, track sources, aggregate facets
         $combinedResults = [];
@@ -780,21 +880,39 @@ class DirectoryService
             
             if ($result['success'] && !empty($result['results'])) {
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
+                $resultCount = count($result['results']);
+                $this->server->getLogger()->info('DirectoryService: getPublications() - Processing ' . $resultCount . ' results from ' . $directoryInfo['name']);
                 
                 foreach ($result['results'] as $item) {
                     $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
                     if (!isset($seenIds[$itemId])) {
+                        // Add directory information to federated publications for faceting
+                        if (isset($item['@self']) && is_array($item['@self'])) {
+                            $item['@self']['directory'] = $directoryInfo['name'];
+                        } else {
+                            $item['@self'] = ['directory' => $directoryInfo['name']];
+                        }
+                        
                         $combinedResults[] = $item;
                         $seenIds[$itemId] = true;
+                    } else {
+                        $this->server->getLogger()->debug('DirectoryService: getPublications() - Skipping duplicate item: ' . $itemId);
+                    }
                 }
-            }
 
                 // Aggregate facets if they exist
                 if (!empty($result['facets'])) {
                     $combinedFacets = $this->aggregateFacets($combinedFacets, $result['facets']);
                 }
+            } else {
+                $this->server->getLogger()->warning('DirectoryService: getPublications() - No results from ' . $directoryInfo['name'] . ' (success: ' . ($result['success'] ? 'true' : 'false') . ')');
             }
         }
+
+        $this->server->getLogger()->info(
+            'DirectoryService: getPublications() - Final results: ' . count($combinedResults) . ' publications from ' . 
+            count($sources) . ' sources: ' . implode(', ', array_keys($sources))
+        );
 
         return [
             'results' => $combinedResults,
@@ -1691,6 +1809,66 @@ class DirectoryService
     }
 
     /**
+     * Get the actual publications URL from listing data for a given directory URL
+     *
+     * This method looks up listings that have the specified directory URL and returns
+     * the publications URL from the listing data. This ensures we use the correct
+     * publications endpoint even if it differs from the directory URL pattern.
+     *
+     * @param string $directoryUrl The directory URL to look up
+     * @return string|null The publications URL if found, null otherwise
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getPublicationsUrlFromListing(string $directoryUrl): ?string
+    {
+        try {
+            // Check if OpenRegister service is available
+            if (!in_array('openregister', $this->appManager->getInstalledApps())) {
+                return null;
+            }
+
+            // Get ObjectService from container
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            
+            // Get listing configuration
+            $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+            $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+
+            if (empty($listingSchema) || empty($listingRegister)) {
+                return null;
+            }
+
+            // Find listings with this directory URL
+            $listings = $objectService->findAll([
+                'filters' => [
+                    'register' => $listingRegister,
+                    'schema' => $listingSchema,
+                    'directory' => $directoryUrl
+                ]
+            ]);
+
+            // Look for the first listing that has a publications URL
+            foreach ($listings as $listing) {
+                $listingData = $listing->jsonSerialize();
+                $objectData = $listingData['object'] ?? $listingData;
+                
+                // Check for publications URL in the object data
+                if (isset($objectData['publications']) && !empty($objectData['publications'])) {
+                    $this->server->getLogger()->info('DirectoryService: getPublicationsUrlFromListing() - Found publications URL for ' . $directoryUrl . ': ' . $objectData['publications']);
+                    return $objectData['publications'];
+                }
+            }
+
+            $this->server->getLogger()->info('DirectoryService: getPublicationsUrlFromListing() - No publications URL found for directory: ' . $directoryUrl);
+            return null;
+
+        } catch (\Exception $e) {
+            $this->server->getLogger()->warning('DirectoryService: getPublicationsUrlFromListing() - Error looking up publications URL: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Aggregate facets from multiple directory sources
      *
      * Combines facet data from different publication endpoints,
@@ -1713,24 +1891,57 @@ class DirectoryService
         $mergedFacets = $existingFacets;
         
         foreach ($newFacets as $field => $facetValues) {
+            // Skip if facetValues is not an array
+            if (!is_array($facetValues)) {
+                $this->server->getLogger()->warning(
+                    'DirectoryService: aggregateFacets() - Skipping field "' . $field . '" - facetValues is not an array: ' . gettype($facetValues)
+                );
+                continue;
+            }
+            
             if (!isset($mergedFacets[$field])) {
                 $mergedFacets[$field] = $facetValues;
+                continue;
+            }
+            
+            // Skip if existing field data is not an array
+            if (!is_array($mergedFacets[$field])) {
+                $this->server->getLogger()->warning(
+                    'DirectoryService: aggregateFacets() - Skipping field "' . $field . '" - existing facet data is not an array: ' . gettype($mergedFacets[$field])
+                );
                 continue;
             }
             
             // Create a lookup map for existing values
             $existingValues = [];
             foreach ($mergedFacets[$field] as $index => $existingFacet) {
+                // Skip if existingFacet is not an array or doesn't have _id
+                if (!is_array($existingFacet) || !isset($existingFacet['_id'])) {
+                    $this->server->getLogger()->warning(
+                        'DirectoryService: aggregateFacets() - Skipping existing facet for field "' . $field . '" - invalid format: ' . gettype($existingFacet)
+                    );
+                    continue;
+                }
                 $existingValues[$existingFacet['_id']] = $index;
             }
             
             // Merge or add new values
             foreach ($facetValues as $facetValue) {
+                // Skip if facetValue is not an array or doesn't have required fields
+                if (!is_array($facetValue) || !isset($facetValue['_id'])) {
+                    $this->server->getLogger()->warning(
+                        'DirectoryService: aggregateFacets() - Skipping new facet value for field "' . $field . '" - invalid format: ' . gettype($facetValue)
+                    );
+                    continue;
+                }
+                
                 $valueId = $facetValue['_id'];
                 
-                if (isset($existingValues[$valueId])) {
+                if (isset($existingValues[$valueId]) && isset($facetValue['count'])) {
                     // Add to existing count
-                    $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
+                    if (isset($mergedFacets[$field][$existingValues[$valueId]]['count'])) {
+                        $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
+                    }
                 } else {
                     // Add new value
                     $mergedFacets[$field][] = $facetValue;
@@ -1738,12 +1949,23 @@ class DirectoryService
             }
             
             // Re-sort merged facets by count (descending) and then by value (ascending)
-            usort($mergedFacets[$field], function($a, $b) {
-                if ($a['count'] === $b['count']) {
-                    return strcmp($a['_id'], $b['_id']);
-                }
-                return $b['count'] <=> $a['count'];
-            });
+            // Only sort if we have valid array data
+            if (is_array($mergedFacets[$field]) && !empty($mergedFacets[$field])) {
+                usort($mergedFacets[$field], function($a, $b) {
+                    // Ensure both items are arrays with required fields
+                    if (!is_array($a) || !is_array($b) || !isset($a['_id']) || !isset($b['_id'])) {
+                        return 0;
+                    }
+                    
+                    $countA = $a['count'] ?? 0;
+                    $countB = $b['count'] ?? 0;
+                    
+                    if ($countA === $countB) {
+                        return strcmp($a['_id'], $b['_id']);
+                    }
+                    return $countB <=> $countA;
+                });
+            }
         }
         
         return $mergedFacets;
