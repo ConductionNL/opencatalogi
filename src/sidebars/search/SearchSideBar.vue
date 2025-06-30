@@ -12,8 +12,6 @@ import {
 	NcNoteCard 
 } from '@nextcloud/vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
-import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
-import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue'
@@ -35,7 +33,6 @@ const emit = defineEmits(['update:open'])
 const searchStore = useSearchStore()
 
 // Local state
-const activeTab = ref('search-tab')
 const searchTerm = ref('')
 const searchTimeout = ref(null)
 
@@ -123,9 +120,67 @@ const formatFilterValue = (value) => {
 	return String(value)
 }
 
+const getFieldDisplayName = (fieldName) => {
+	// Format field names nicely for display
+	return fieldName
+		.replace(/[@._]/g, ' ')
+		.replace(/\b\w/g, l => l.toUpperCase())
+		.trim()
+}
+
+const getFacetOptions = (facetResult) => {
+	// Convert facet buckets to dropdown options
+	if (!facetResult || (!facetResult.buckets && !Array.isArray(facetResult))) {
+		return []
+	}
+	
+	const buckets = facetResult.buckets || facetResult
+	return buckets.map(bucket => ({
+		value: bucket._id || bucket.key || bucket.value,
+		label: `${bucket._id || bucket.key || bucket.value} (${bucket.count || bucket.results || bucket.doc_count || 0})`
+	}))
+}
+
+const getSelectedFilterValue = (fieldName) => {
+	// Get the currently selected filter value for this field
+	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
+	const currentValue = searchStore.getFilters[filterKey]
+	
+	console.log('getSelectedFilterValue:', { fieldName, filterKey, currentValue, allFilters: searchStore.getFilters })
+	
+	if (!currentValue) return null
+	
+	// Find the option that matches the current filter value
+	const facetResult = searchStore.currentFacets[fieldName]
+	const options = getFacetOptions(facetResult)
+	const selectedOption = options.find(option => option.value === currentValue) || null
+	
+	console.log('Selected option found:', selectedOption, 'from options:', options)
+	return selectedOption
+}
+
+const handleFilterSelect = (fieldName, option) => {
+	// Handle filter selection from dropdown
+	console.log('handleFilterSelect called:', { fieldName, option })
+	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
+	
+	if (option && option.value) {
+		// Set the selected filter
+		console.log('Setting filter:', { [filterKey]: option.value })
+		searchStore.setFilters({ [filterKey]: option.value })
+	} else {
+		// Clear the filter if option is null (clearable)
+		console.log('Clearing filter:', filterKey)
+		searchStore.clearFilter(filterKey)
+	}
+	
+	// Trigger search with new filter
+	console.log('Triggering search with filters:', searchStore.getFilters)
+	searchStore.searchPublications()
+}
+
 // Watchers
 watch(() => searchStore.getSearchTerm, (newTerm) => {
-	console.log('Store search term changed:', newTerm, typeof newTerm)
 	if (newTerm !== searchTerm.value) {
 		searchTerm.value = typeof newTerm === 'string' ? newTerm : String(newTerm || '')
 	}
@@ -133,7 +188,6 @@ watch(() => searchStore.getSearchTerm, (newTerm) => {
 
 // Watch for changes to searchTerm and debounce the search
 watch(searchTerm, (newValue) => {
-	console.log('Local search term changed:', newValue, typeof newValue)
 	// Ensure we have a string value, not an event object
 	const searchValue = typeof newValue === 'string' ? newValue : String(newValue || '')
 	
@@ -143,7 +197,6 @@ watch(searchTerm, (newValue) => {
 	}
 	
 	searchTimeout.value = setTimeout(() => {
-		console.log('Setting search term in store:', searchValue)
 		searchStore.setSearchTerm(searchValue)
 		searchStore.searchPublications()
 	}, 800)
@@ -172,7 +225,6 @@ onMounted(async () => {
 <template>
 	<NcAppSidebar
 		ref="sidebar"
-		v-model="activeTab"
 		name="Search Publications"
 		subtitle="Filter and explore publications"
 		subname="Across all federated catalogs"
@@ -207,6 +259,27 @@ onMounted(async () => {
 						</template>
 						{{ t('opencatalogi', 'Clear') }}
 					</NcButton>
+				</div>
+
+				<!-- Filter Results Section -->
+				<div v-if="searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0" class="filter-results-section">
+					<h4>{{ t('opencatalogi', 'Filter Results') }}</h4>
+					
+					<div class="filter-results-list">
+						<div v-for="(facetResult, fieldName) in searchStore.currentFacets" 
+							:key="`filter-${fieldName}`"
+							class="filter-result-item">
+							<label>{{ getFieldDisplayName(fieldName.replace('@self.', '').replace('@self', 'metadata')) }}</label>
+							<NcSelect
+								:value="getSelectedFilterValue(fieldName)"
+								:options="getFacetOptions(facetResult)"
+								label="label"
+								:placeholder="t('opencatalogi', 'Select a filter...')"
+								:clearable="true"
+								@option:selected="(option) => handleFilterSelect(fieldName, option)"
+								@option:deselected="() => handleFilterSelect(fieldName, null)" />
+						</div>
+					</div>
 				</div>
 
 				<!-- Quick filters -->
@@ -277,98 +350,79 @@ onMounted(async () => {
 						{{ t('opencatalogi', 'Clear All Filters') }}
 					</NcButton>
 				</div>
-			</div>
-		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="facets-tab" name="Facets" :order="2">
-			<template #icon>
-				<FilterOutline :size="20" />
-			</template>
-
-			<!-- Facet discovery and management -->
-			<div class="facets-section">
-				<div class="facets-header">
-					<h3>{{ t('opencatalogi', 'Faceted Filtering') }}</h3>
-					<NcButton 
-						type="tertiary"
-						:disabled="searchStore.isFacetsLoading"
-						:aria-label="t('opencatalogi', 'Refresh facets')"
-						@click="refreshFacets">
-						<template #icon>
-							<Refresh :size="16" />
-						</template>
-						{{ t('opencatalogi', 'Refresh') }}
-					</NcButton>
-				</div>
-				
-				<NcNoteCard type="info" class="facets-info">
-					{{ t('opencatalogi', 'Facets help you filter results by different criteria. Enable facets below to see available filter options.') }}
-				</NcNoteCard>
-
-				<!-- Facet component -->
-				<FacetComponent />
-			</div>
-		</NcAppSidebarTab>
-
-		<NcAppSidebarTab id="results-tab" name="Results" :order="3">
-			<template #icon>
-				<FormatListBulleted :size="20" />
-			</template>
-
-			<!-- Results summary -->
-			<div class="results-section">
-				<h3>{{ t('opencatalogi', 'Search Results') }}</h3>
-				
-				<!-- Results statistics -->
-				<div class="results-stats">
-					<div class="stat-item">
-						<strong>{{ searchStore.getPagination.total }}</strong>
-						<span>{{ t('opencatalogi', 'Total Results') }}</span>
+				<!-- Faceted Filtering Section -->
+				<div class="facets-section">
+					<div class="facets-header">
+						<h3>{{ t('opencatalogi', 'Faceted Filtering') }}</h3>
+						<NcButton 
+							type="tertiary"
+							:disabled="searchStore.isFacetsLoading"
+							:aria-label="t('opencatalogi', 'Refresh facets')"
+							@click="refreshFacets">
+							<template #icon>
+								<Refresh :size="16" />
+							</template>
+							{{ t('opencatalogi', 'Refresh') }}
+						</NcButton>
 					</div>
-					<div class="stat-item">
-						<strong>{{ searchStore.getPagination.page }}</strong>
-						<span>{{ t('opencatalogi', 'of') }} {{ searchStore.getPagination.pages }} {{ t('opencatalogi', 'pages') }}</span>
-					</div>
-					<div v-if="searchStore.hasFacets" class="stat-item">
-						<strong>{{ Object.keys(searchStore.getFacets).length }}</strong>
-						<span>{{ t('opencatalogi', 'Active Facets') }}</span>
-					</div>
-				</div>
+					
+					<NcNoteCard type="info" class="facets-info">
+						{{ t('opencatalogi', 'Facets help you filter results by different criteria. Enable facets below to see available filter options.') }}
+					</NcNoteCard>
 
-				<!-- Directory filtering is now handled via facets -->
-
-				<!-- Selection info -->
-				<div v-if="searchStore.getSelectedPublications.length > 0" class="selection-info">
-					<h4>{{ t('opencatalogi', 'Selected Items') }}</h4>
-					<p>
-						{{ t('opencatalogi', '{count} publications selected', { count: searchStore.getSelectedPublications.length }) }}
-					</p>
-					<NcButton 
-						type="tertiary"
-						:aria-label="t('opencatalogi', 'Clear selection')"
-						@click="searchStore.clearAllSelections()">
-						{{ t('opencatalogi', 'Clear Selection') }}
-					</NcButton>
+					<!-- Facet component -->
+					<FacetComponent />
 				</div>
 			</div>
 		</NcAppSidebarTab>
+
+
 	</NcAppSidebar>
 </template>
 
 <style scoped>
-.search-section,
-.facets-section,
-.results-section {
+.search-section {
 	padding: 16px 0;
 }
 
 .search-section h3,
-.facets-section h3,
-.results-section h3 {
+.facets-section h3 {
 	margin: 0 0 16px 0;
 	font-size: 16px;
 	font-weight: 600;
 	color: var(--color-main-text);
+}
+
+.filter-results-section {
+	margin: 20px 0;
+	padding: 16px 0;
+	border-top: 1px solid var(--color-border);
+}
+
+.filter-results-section h4 {
+	margin: 0 0 16px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-main-text);
+}
+
+.filter-results-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.filter-result-item {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.filter-result-item label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--color-text-maxcontrast);
 }
 
 .search-group {
@@ -458,6 +512,12 @@ onMounted(async () => {
 	color: var(--color-main-text);
 }
 
+.facets-section {
+	border-top: 1px solid var(--color-border);
+	margin-top: 20px;
+	padding-top: 20px;
+}
+
 .facets-header {
 	display: flex;
 	align-items: center;
@@ -469,90 +529,15 @@ onMounted(async () => {
 	margin-bottom: 16px;
 }
 
-.results-stats {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 16px;
-	background: var(--color-background-hover);
-	border-radius: 8px;
-	margin-bottom: 20px;
-}
-
-.stat-item {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.stat-item strong {
-	color: var(--color-primary);
-	font-weight: 600;
-}
-
-.stat-item span {
-	font-size: 13px;
-	color: var(--color-text-maxcontrast);
-}
-
-.federation-info,
-.selection-info {
-	border-top: 1px solid var(--color-border);
-	padding-top: 16px;
-	margin-bottom: 20px;
-}
-
-.federation-info h4,
-.selection-info h4 {
-	margin: 0 0 12px 0;
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--color-text-maxcontrast);
-}
-
-.source-list {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.source-item {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	padding: 8px 12px;
-	background: var(--color-background-hover);
-	border-radius: 6px;
-	font-size: 12px;
-}
-
-.source-name {
-	font-weight: 500;
-	color: var(--color-main-text);
-}
-
-.source-url {
-	color: var(--color-text-maxcontrast);
-	word-break: break-all;
-}
-
-.selection-info p {
-	margin: 0 0 12px 0;
-	font-size: 13px;
-	color: var(--color-text-maxcontrast);
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
 	.search-section,
-	.facets-section,
-	.results-section {
+	.facets-section {
 		padding: 12px 0;
 	}
 	
 	.search-section h3,
-	.facets-section h3,
-	.results-section h3 {
+	.facets-section h3 {
 		font-size: 14px;
 	}
 	

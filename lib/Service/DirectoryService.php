@@ -1891,24 +1891,57 @@ class DirectoryService
         $mergedFacets = $existingFacets;
         
         foreach ($newFacets as $field => $facetValues) {
+            // Skip if facetValues is not an array
+            if (!is_array($facetValues)) {
+                $this->server->getLogger()->warning(
+                    'DirectoryService: aggregateFacets() - Skipping field "' . $field . '" - facetValues is not an array: ' . gettype($facetValues)
+                );
+                continue;
+            }
+            
             if (!isset($mergedFacets[$field])) {
                 $mergedFacets[$field] = $facetValues;
+                continue;
+            }
+            
+            // Skip if existing field data is not an array
+            if (!is_array($mergedFacets[$field])) {
+                $this->server->getLogger()->warning(
+                    'DirectoryService: aggregateFacets() - Skipping field "' . $field . '" - existing facet data is not an array: ' . gettype($mergedFacets[$field])
+                );
                 continue;
             }
             
             // Create a lookup map for existing values
             $existingValues = [];
             foreach ($mergedFacets[$field] as $index => $existingFacet) {
+                // Skip if existingFacet is not an array or doesn't have _id
+                if (!is_array($existingFacet) || !isset($existingFacet['_id'])) {
+                    $this->server->getLogger()->warning(
+                        'DirectoryService: aggregateFacets() - Skipping existing facet for field "' . $field . '" - invalid format: ' . gettype($existingFacet)
+                    );
+                    continue;
+                }
                 $existingValues[$existingFacet['_id']] = $index;
             }
             
             // Merge or add new values
             foreach ($facetValues as $facetValue) {
+                // Skip if facetValue is not an array or doesn't have required fields
+                if (!is_array($facetValue) || !isset($facetValue['_id'])) {
+                    $this->server->getLogger()->warning(
+                        'DirectoryService: aggregateFacets() - Skipping new facet value for field "' . $field . '" - invalid format: ' . gettype($facetValue)
+                    );
+                    continue;
+                }
+                
                 $valueId = $facetValue['_id'];
                 
-                if (isset($existingValues[$valueId])) {
+                if (isset($existingValues[$valueId]) && isset($facetValue['count'])) {
                     // Add to existing count
-                    $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
+                    if (isset($mergedFacets[$field][$existingValues[$valueId]]['count'])) {
+                        $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
+                    }
                 } else {
                     // Add new value
                     $mergedFacets[$field][] = $facetValue;
@@ -1916,12 +1949,23 @@ class DirectoryService
             }
             
             // Re-sort merged facets by count (descending) and then by value (ascending)
-            usort($mergedFacets[$field], function($a, $b) {
-                if ($a['count'] === $b['count']) {
-                    return strcmp($a['_id'], $b['_id']);
-                }
-                return $b['count'] <=> $a['count'];
-            });
+            // Only sort if we have valid array data
+            if (is_array($mergedFacets[$field]) && !empty($mergedFacets[$field])) {
+                usort($mergedFacets[$field], function($a, $b) {
+                    // Ensure both items are arrays with required fields
+                    if (!is_array($a) || !is_array($b) || !isset($a['_id']) || !isset($b['_id'])) {
+                        return 0;
+                    }
+                    
+                    $countA = $a['count'] ?? 0;
+                    $countB = $b['count'] ?? 0;
+                    
+                    if ($countA === $countB) {
+                        return strcmp($a['_id'], $b['_id']);
+                    }
+                    return $countB <=> $countA;
+                });
+            }
         }
         
         return $mergedFacets;

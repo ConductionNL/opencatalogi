@@ -129,60 +129,29 @@
 			</div>
 		</div>
 
-		<!-- Facet results display -->
-		<div v-if="searchStore.hasFacets && searchStore.hasActiveFacets" class="facet-results">
-			<h4 class="facet-section-title">
-				{{ t('opencatalogi', 'Filter Results') }}
-			</h4>
-			
-			<!-- Metadata facet results -->
-			<div v-if="searchStore.currentFacets['@self']" class="facet-results-category">
-				<div v-for="(facetResult, fieldName) in searchStore.currentFacets['@self']" 
-					:key="`result-meta-${fieldName}`"
-					class="facet-result">
-					<h6 class="facet-result-title">
-						{{ getFieldDisplayName(fieldName, {}) }}
-					</h6>
-					<div class="facet-buckets">
-						<div v-for="bucket in facetResult.buckets" 
-							:key="`bucket-${fieldName}-${bucket.key}`"
-							class="facet-bucket">
-							<NcCheckboxRadioSwitch
-								:checked="isFilterActive(`@self.${fieldName}`, bucket.key)"
-								@update:checked="(checked) => toggleFilter(`@self.${fieldName}`, bucket.key, checked)">
-								{{ bucket.key }}
-								<span class="facet-count">({{ bucket.results || bucket.doc_count || 0 }})</span>
-							</NcCheckboxRadioSwitch>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Object field facet results -->
-			<div class="facet-results-category">
-				<div v-for="(facetResult, fieldName) in searchStore.currentFacets" 
-					:key="`result-obj-${fieldName}`"
-					class="facet-result">
-					<template v-if="fieldName !== '@self'">
-						<h6 class="facet-result-title">
-							{{ getFieldDisplayName(fieldName, {}) }}
-						</h6>
-						<div class="facet-buckets">
-							<div v-for="bucket in facetResult.buckets" 
-								:key="`bucket-${fieldName}-${bucket.key}`"
-								class="facet-bucket">
-								<NcCheckboxRadioSwitch
-									:checked="isFilterActive(fieldName, bucket.key)"
-									@update:checked="(checked) => toggleFilter(fieldName, bucket.key, checked)">
-									{{ bucket.key }}
-									<span class="facet-count">({{ bucket.results || bucket.doc_count || 0 }})</span>
-								</NcCheckboxRadioSwitch>
-							</div>
-						</div>
-					</template>
-				</div>
-			</div>
+		<!-- Debug information (always show) -->
+		<div v-if="false" class="debug-info" style="margin-top: 20px;">
+			<h5>Debug Information</h5>
+			<p>Active facets: {{ Object.keys(searchStore.getActiveFacets).join(', ') || 'None' }}</p>
+			<p>Active facets count: {{ Object.keys(searchStore.getActiveFacets).length }}</p>
+			<p>Facet results keys: {{ Object.keys(searchStore.currentFacets).join(', ') || 'None' }}</p>
+			<p>Has @self facets: {{ searchStore.currentFacets['@self'] ? 'Yes' : 'No' }}</p>
+			<p>Has facet results: {{ searchStore.hasFacetResults ? 'Yes' : 'No' }}</p>
+			<p>Has active facets (getter): {{ searchStore.hasActiveFacets ? 'Yes' : 'No' }}</p>
+			<p>Has active facets (direct): {{ Object.keys(searchStore.getActiveFacets).length > 0 ? 'Yes' : 'No' }}</p>
+			<p>Show filter results condition: {{ searchStore.hasFacetResults && searchStore.hasActiveFacets ? 'Yes' : 'No' }}</p>
+			<p>Direct condition check: {{ searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0 ? 'Yes' : 'No' }}</p>
+			<details>
+				<summary>Raw facet data</summary>
+				<pre>{{ JSON.stringify(searchStore.currentFacets, null, 2) }}</pre>
+			</details>
+			<details>
+				<summary>Raw active facets</summary>
+				<pre>{{ JSON.stringify(searchStore.getActiveFacets, null, 2) }}</pre>
+			</details>
 		</div>
+
+
 	</div>
 </template>
 
@@ -218,6 +187,8 @@ const getActiveFacetInterval = (fieldName) => {
 }
 
 const toggleFacet = (fieldName, fieldInfo, enabled) => {
+	console.log('FacetComponent: toggleFacet called with:', { fieldName, fieldInfo, enabled })
+	
 	if (enabled) {
 		// Determine default facet type
 		const defaultType = fieldInfo.facet_types?.[0] || 'terms'
@@ -228,16 +199,19 @@ const toggleFacet = (fieldName, fieldInfo, enabled) => {
 			config.interval = fieldInfo.intervals?.[0] || 'month'
 		}
 		
+		console.log('FacetComponent: Calling toggleActiveFacet with:', { fieldName, defaultType, enabled: true, config })
 		searchStore.toggleActiveFacet(fieldName, defaultType, true, config)
 	} else {
+		console.log('FacetComponent: Calling toggleActiveFacet to disable:', { fieldName })
 		searchStore.toggleActiveFacet(fieldName, '', false)
 	}
 	
-	// Trigger new search with updated facets
-	searchStore.searchPublications()
+	// Don't trigger search here - the store method already does it
 }
 
 const updateFacetType = (fieldName, newType, fieldInfo) => {
+	console.log('FacetComponent: updateFacetType called with:', { fieldName, newType, fieldInfo })
+	
 	const config = {}
 	
 	// Add type-specific configuration
@@ -245,35 +219,37 @@ const updateFacetType = (fieldName, newType, fieldInfo) => {
 		config.interval = fieldInfo.intervals?.[0] || 'month'
 	}
 	
+	console.log('FacetComponent: Calling toggleActiveFacet with new type:', { fieldName, newType, config })
 	searchStore.toggleActiveFacet(fieldName, newType, true, config)
 	
-	// Trigger new search with updated facets
-	searchStore.searchPublications()
+	// Don't trigger search here - the store method already does it
 }
 
 const updateFacetInterval = (fieldName, interval) => {
+	console.log('FacetComponent: updateFacetInterval called with:', { fieldName, interval })
+	
 	const currentConfig = searchStore.getActiveFacets[fieldName]
 	if (currentConfig) {
 		const newConfig = { ...currentConfig.config, interval }
+		console.log('FacetComponent: Updating facet interval:', { fieldName, newConfig })
 		searchStore.toggleActiveFacet(fieldName, currentConfig.type, true, newConfig)
 		
-		// Trigger new search with updated facets
-		searchStore.searchPublications()
+		// Don't trigger search here - the store method already does it
 	}
 }
 
 const removeFacet = (fieldName) => {
+	console.log('FacetComponent: removeFacet called with:', { fieldName })
 	searchStore.toggleActiveFacet(fieldName, '', false)
 	
-	// Trigger new search without this facet
-	searchStore.searchPublications()
+	// Don't trigger search here - the store method already does it
 }
 
 const clearAllFacets = () => {
+	console.log('FacetComponent: clearAllFacets called')
 	searchStore.clearAllActiveFacets()
 	
-	// Trigger new search without facets
-	searchStore.searchPublications()
+	// Don't trigger search here - the store method already does it
 }
 
 const getFacetTypeOptions = (facetTypes) => {
@@ -306,49 +282,7 @@ const getFieldDisplayName = (fieldName, fieldInfo) => {
 		.trim()
 }
 
-const isFilterActive = (fieldName, value) => {
-	// Check if this specific filter value is active
-	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
-	return searchStore.getFilters[filterKey] === value || 
-		   (Array.isArray(searchStore.getFilters[filterKey]) && searchStore.getFilters[filterKey].includes(value))
-}
 
-const toggleFilter = (fieldName, value, checked) => {
-	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
-	
-	if (checked) {
-		// Add filter
-		const currentValue = searchStore.getFilters[filterKey]
-		if (currentValue === undefined) {
-			searchStore.setFilters({ [filterKey]: value })
-		} else if (Array.isArray(currentValue)) {
-			if (!currentValue.includes(value)) {
-				searchStore.setFilters({ [filterKey]: [...currentValue, value] })
-			}
-		} else {
-			// Convert single value to array
-			searchStore.setFilters({ [filterKey]: [currentValue, value] })
-		}
-	} else {
-		// Remove filter
-		const currentValue = searchStore.getFilters[filterKey]
-		if (Array.isArray(currentValue)) {
-			const newValue = currentValue.filter(v => v !== value)
-			if (newValue.length === 0) {
-				searchStore.clearFilter(filterKey)
-			} else if (newValue.length === 1) {
-				searchStore.setFilters({ [filterKey]: newValue[0] })
-			} else {
-				searchStore.setFilters({ [filterKey]: newValue })
-			}
-		} else if (currentValue === value) {
-			searchStore.clearFilter(filterKey)
-		}
-	}
-	
-	// Trigger new search with updated filters
-	searchStore.searchPublications()
-}
 </script>
 
 <style scoped>
@@ -453,48 +387,23 @@ const toggleFilter = (fieldName, value, checked) => {
 	font-size: 11px;
 }
 
-.facet-results {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid var(--color-border);
-}
 
-.facet-results-category {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-}
 
-.facet-result {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.facet-result-title {
-	font-size: 13px;
-	font-weight: 600;
-	margin: 0;
-	color: var(--color-main-text);
-}
-
-.facet-buckets {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	margin-left: 12px;
-}
-
-.facet-bucket {
-	display: flex;
-	align-items: center;
-}
-
-.facet-count {
-	font-size: 11px;
+.debug-info {
+	background: var(--color-background-hover);
+	border: 1px solid var(--color-border);
+	border-radius: 6px;
+	padding: 12px;
+	margin-bottom: 16px;
+	font-size: 12px;
 	color: var(--color-text-maxcontrast);
-	margin-left: 6px;
 }
+
+.debug-info p {
+	margin: 4px 0;
+}
+
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
