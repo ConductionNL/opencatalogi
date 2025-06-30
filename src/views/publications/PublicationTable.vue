@@ -260,7 +260,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</template>
 				<template v-else>
 					<div class="viewTableContainer">
-						<VueDraggable v-model="objectStore.enabledColumns"
+						<VueDraggable v-model="orderedEnabledColumns"
 							target=".sort-target"
 							animation="150"
 							draggable="> *:not(.staticColumn)">
@@ -273,8 +273,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												:indeterminate="someSelected"
 												@update:checked="toggleSelectAll" />
 										</th>
-										<th v-for="(column, index) in objectStore.enabledColumns"
-											:key="`header-${column.id || column.key || `col-${index}`}`">
+										<th v-for="(column, index) in orderedEnabledColumns"
+											:key="`header-${column.id || column.key || `col-${index}`}`"
+											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 											<span class="stickyHeader columnTitle" :title="column.description">
 												{{ column.label }}
 											</span>
@@ -295,13 +296,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												:checked="selectedPublications.includes(publication['@self']?.id || publication.id)"
 												@update:checked="handleSelectPublication(publication['@self']?.id || publication.id)" />
 										</td>
-										<td v-for="(column, index) in objectStore.enabledColumns"
-											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`">
+										<td v-for="(column, index) in orderedEnabledColumns"
+											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`"
+											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 											<span v-if="column.id === 'meta_files'">
 												<NcCounterBubble :count="Array.isArray(publication['@self']?.files) ? publication['@self'].files.length : (publication['@self']?.files ? 1 : 0)" />
 											</span>
 											<span v-else-if="column.id === 'meta_created' || column.id === 'meta_updated'">
-												{{ getValidISOstring(publication['@self']?.[column.key]) ? new Date(publication['@self'][column.key]).toLocaleString() : (publication['@self']?.[column.key] || 'N/A') }}
+												{{ getValidISOstring(publication['@self']?.[column.key]) ? new Date(publication['@self'][column.key]).toLocaleString() : 'N/A' }}
 											</span>
 											<span v-else-if="column.id === 'meta_name'">
 												<span class="titleWithIcon">
@@ -491,6 +493,23 @@ export default {
 				obj.id || obj['@self']?.id,
 			).filter(Boolean)
 		},
+		orderedEnabledColumns() {
+			// Define the desired column order for publications
+			const desiredOrder = ['meta_name', 'meta_published', 'meta_files', 'meta_updated']
+			const enabledColumns = objectStore.enabledColumns
+
+			// Sort columns based on desired order, putting unlisted columns at the end
+			return enabledColumns.sort((a, b) => {
+				const aIndex = desiredOrder.indexOf(a.id)
+				const bIndex = desiredOrder.indexOf(b.id)
+
+				if (aIndex === -1 && bIndex === -1) return 0 // Both not in desired order
+				if (aIndex === -1) return 1 // a not in desired order, put at end
+				if (bIndex === -1) return -1 // b not in desired order, put at end
+
+				return aIndex - bIndex // Sort by desired order
+			})
+		},
 	},
 
 	mounted() {
@@ -498,9 +517,12 @@ export default {
 		catalogStore.fetchPublications()
 		// Initialize column filters for publications
 		objectStore.initializeColumnFilters()
-		// Set published and depublished columns to display by default
+		// Set default columns: title, published, files, updated
+		objectStore.updateColumnFilter('meta_name', true)
 		objectStore.updateColumnFilter('meta_published', true)
-		objectStore.updateColumnFilter('meta_depublished', true)
+		objectStore.updateColumnFilter('meta_files', true)
+		objectStore.updateColumnFilter('meta_updated', true)
+		objectStore.updateColumnFilter('meta_depublished', false)
 	},
 	methods: {
 		setViewMode(mode) {
@@ -816,11 +838,16 @@ export default {
 
 .viewTableContainer {
 	overflow-x: auto;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-main-background);
 }
 
 .viewTable {
 	width: 100%;
 	border-collapse: collapse;
+	table-layout: auto;
+	min-width: 600px;
 }
 
 .viewTable th,
@@ -828,6 +855,28 @@ export default {
 	padding: 12px 8px;
 	text-align: left;
 	border-bottom: 1px solid var(--color-border);
+	width: auto;
+	min-width: 120px;
+}
+
+/* Specific column width styling */
+.tableColumnMetaName {
+	min-width: 200px;
+	width: auto;
+}
+
+.tableColumnMetaFiles {
+	min-width: 80px;
+	width: 80px;
+	text-align: center;
+}
+
+.tableColumnMetaPublished,
+.tableColumnMetaDepublished,
+.tableColumnMetaUpdated,
+.tableColumnMetaCreated {
+	min-width: 150px;
+	width: 150px;
 }
 
 .viewTable th {
@@ -847,7 +896,9 @@ export default {
 }
 
 .tableColumnCheckbox {
-	width: 40px;
+	width: 40px !important;
+	min-width: 40px !important;
+	max-width: 40px !important;
 	text-align: center;
 	padding: 8px !important;
 }
@@ -868,7 +919,9 @@ export default {
 }
 
 .tableColumnActions {
-	width: 60px;
+	width: 60px !important;
+	min-width: 60px !important;
+	max-width: 60px !important;
 	text-align: center;
 }
 

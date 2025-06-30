@@ -89,11 +89,26 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									<th class="tableColumnExpanded">
 										Value
 									</th>
+									<th class="tableColumnActions actions-header-cell">
+										<!-- Show/Hide Constant & Immutable Properties Toggle -->
+										<NcButton v-if="hasConstantOrImmutableProperties"
+											v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+											type="primary"
+											size="small"
+											class="action-btn eye-toggle-btn"
+											:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+											@click="showConstantProperties = !showConstantProperties">
+											<template #icon>
+												<Eye v-if="!showConstantProperties" :size="16" />
+												<EyeOff v-else :size="16" />
+											</template>
+										</NcButton>
+									</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr
-									v-for="([key, value]) in objectProperties"
+									v-for="([key, value]) in filteredObjectProperties"
 									:key="key"
 									class="viewTableRow"
 									:class="{
@@ -142,11 +157,36 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<!-- Date/Time properties -->
 												<NcDateTimePicker
 													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
+													:key="`datetime-${key}-edit`"
 													:value="getDateTimePickerValue(key, value)"
 													:label="getPropertyDisplayName(key)"
 													:type="getDateTimePickerType(key)"
 													:placeholder="getPropertyDisplayName(key)"
+													:clearable="true"
+													@input="handleDateTimeUpdate(key, $event)"
+													@update:value="handleDateTimeUpdate(key, $event)"
+													@change="handleDateTimeUpdate(key, $event)"
+													@update:modelValue="handleDateTimeUpdate(key, $event)" />
+
+												<!-- Text area properties -->
+												<NcTextArea
+													v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
+													ref="propertyValueInput"
+													:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+													:placeholder="getPropertyDisplayName(key)"
+													:rows="4"
 													@update:value="updatePropertyValue(key, $event)" />
+
+												<!-- Markdown editor properties -->
+												<Editor
+													v-else-if="getPropertyInputComponent(key) === 'Editor'"
+													:key="`editor-${key}`"
+													:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
+													:options="getMarkdownEditorOptions(key)"
+													initial-edit-type="wysiwyg"
+													height="400px"
+													@load="(editor) => markdownEditors[key] = editor"
+													@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
 												<!-- Text/Number properties -->
 												<NcTextField
@@ -194,18 +234,20 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
 												</template>
 											</div>
-											<NcButton v-if="canDropProperty(key, value)"
-												v-tooltip="getDropPropertyTooltip(key)"
-												type="tertiary-no-background"
-												size="small"
-												class="drop-property-btn"
-												:aria-label="getDropPropertyTooltip(key)"
-												@click.stop="dropProperty(key)">
-												<template #icon>
-													<Close :size="16" />
-												</template>
-											</NcButton>
 										</div>
+									</td>
+									<td class="tableColumnActions">
+										<NcButton v-if="canDropProperty(key, value)"
+											v-tooltip="getDropPropertyTooltip(key)"
+											type="tertiary-no-background"
+											size="small"
+											class="drop-property-btn"
+											:aria-label="getDropPropertyTooltip(key)"
+											@click.stop="dropProperty(key)">
+											<template #icon>
+												<Close :size="16" />
+											</template>
+										</NcButton>
 									</td>
 								</tr>
 							</tbody>
@@ -226,11 +268,26 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<th class="tableColumnExpanded">
 													Value
 												</th>
+												<th class="tableColumnActions actions-header-cell">
+													<!-- Show/Hide Constant & Immutable Properties Toggle -->
+													<NcButton v-if="hasConstantOrImmutableProperties"
+														v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+														type="primary"
+														size="small"
+														class="action-btn eye-toggle-btn"
+														:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+														@click="showConstantProperties = !showConstantProperties">
+														<template #icon>
+															<Eye v-if="!showConstantProperties" :size="16" />
+															<EyeOff v-else :size="16" />
+														</template>
+													</NcButton>
+												</th>
 											</tr>
 										</thead>
 										<tbody>
 											<tr
-												v-for="([key, value]) in objectProperties"
+												v-for="([key, value]) in filteredObjectProperties"
 												:key="key"
 												class="viewTableRow"
 												:class="{
@@ -279,11 +336,36 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<!-- Date/Time properties -->
 															<NcDateTimePicker
 																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
+																:key="`datetime-${key}`"
 																:value="getDateTimePickerValue(key, value)"
 																:label="getPropertyDisplayName(key)"
 																:type="getDateTimePickerType(key)"
 																:placeholder="getPropertyDisplayName(key)"
+																:clearable="true"
+																@input="handleDateTimeUpdate(key, $event)"
+																@update:value="handleDateTimeUpdate(key, $event)"
+																@change="handleDateTimeUpdate(key, $event)"
+																@update:modelValue="handleDateTimeUpdate(key, $event)" />
+
+															<!-- Text area properties -->
+															<NcTextArea
+																v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
+																ref="propertyValueInput"
+																:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+																:placeholder="getPropertyDisplayName(key)"
+																:rows="4"
 																@update:value="updatePropertyValue(key, $event)" />
+
+															<!-- Markdown editor properties -->
+															<Editor
+																v-else-if="getPropertyInputComponent(key) === 'Editor'"
+																:key="`editor-${key}-tab`"
+																:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
+																:options="getMarkdownEditorOptions(key)"
+																initial-edit-type="wysiwyg"
+																height="400px"
+																@load="(editor) => markdownEditors[key] = editor"
+																@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
 															<!-- Text/Number properties -->
 															<NcTextField
@@ -331,18 +413,20 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																	v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
 															</template>
 														</div>
-														<NcButton v-if="canDropProperty(key, value)"
-															v-tooltip="getDropPropertyTooltip(key)"
-															type="tertiary-no-background"
-															size="small"
-															class="drop-property-btn"
-															:aria-label="getDropPropertyTooltip(key)"
-															@click.stop="dropProperty(key)">
-															<template #icon>
-																<Close :size="16" />
-															</template>
-														</NcButton>
 													</div>
+												</td>
+												<td class="tableColumnActions">
+													<NcButton v-if="canDropProperty(key, value)"
+														v-tooltip="getDropPropertyTooltip(key)"
+														type="tertiary-no-background"
+														size="small"
+														class="drop-property-btn"
+														:aria-label="getDropPropertyTooltip(key)"
+														@click.stop="dropProperty(key)">
+														<template #icon>
+															<Close :size="16" />
+														</template>
+													</NcButton>
 												</td>
 											</tr>
 										</tbody>
@@ -617,6 +701,7 @@ import {
 	NcNoteCard,
 	NcCounterBubble,
 	NcTextField,
+	NcTextArea,
 	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
 	NcDateTimePicker,
@@ -627,6 +712,8 @@ import {
 // import CodeMirror from 'vue-codemirror6'
 import { BTabs, BTab } from 'bootstrap-vue'
 import { getTheme } from '../../services/getTheme.js'
+import { Editor } from '@toast-ui/vue-editor'
+import '@toast-ui/editor/dist/toastui-editor.css'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
@@ -646,6 +733,8 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
 import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
+import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 
@@ -657,6 +746,7 @@ export default {
 		NcNoteCard,
 		NcCounterBubble,
 		NcTextField,
+		NcTextArea,
 		NcCheckboxRadioSwitch,
 		NcLoadingIcon,
 		NcActions,
@@ -664,6 +754,7 @@ export default {
 		NcDateTimePicker,
 		NcEmptyContent,
 		NcSelect,
+		Editor,
 		// CodeMirror,
 		BTabs,
 		BTab,
@@ -686,6 +777,8 @@ export default {
 		ExclamationThick,
 		ArrowRight,
 		Close,
+		Eye,
+		EyeOff,
 		PaginationComponent,
 		PublishedIcon,
 	},
@@ -700,6 +793,9 @@ export default {
 			error: null,
 			isCopied: false,
 
+			// Markdown editors instances
+			markdownEditors: {},
+
 			// Files tab properties
 			activeAttachment: null,
 			selectedAttachments: [],
@@ -713,6 +809,9 @@ export default {
 			selectedRegister: null,
 			selectedSchema: null,
 			showProperties: false,
+
+			// Constant/immutable properties visibility
+			showConstantProperties: false,
 		}
 	},
 	computed: {
@@ -729,13 +828,15 @@ export default {
 			const objectData = this.currentObject || {}
 			const schemaProperties = this.getSchemaProperties()
 
-			const properties = []
+			const propertiesWithOrder = []
+			const propertiesWithoutOrder = []
 
 			// First, add all schema properties in their defined order
 			for (const [schemaKey, schemaProperty] of Object.entries(schemaProperties)) {
+				let propertyValue
 				if (Object.prototype.hasOwnProperty.call(objectData, schemaKey)) {
 					// Property exists in object, use its value
-					properties.push([schemaKey, objectData[schemaKey]])
+					propertyValue = objectData[schemaKey]
 				} else {
 					// Property doesn't exist in object, use appropriate default value
 					let defaultValue = ''
@@ -759,7 +860,16 @@ export default {
 					default:
 						defaultValue = ''
 					}
-					properties.push([schemaKey, defaultValue])
+					propertyValue = defaultValue
+				}
+
+				const propertyData = [schemaKey, propertyValue, schemaProperty]
+
+				// Check if property has an order value
+				if (schemaProperty.order !== undefined && schemaProperty.order !== null) {
+					propertiesWithOrder.push(propertyData)
+				} else {
+					propertiesWithoutOrder.push(propertyData)
 				}
 			}
 
@@ -772,15 +882,39 @@ export default {
 					&& objectKey !== 'id'
 					&& !Object.prototype.hasOwnProperty.call(schemaProperties, objectKey)
 					&& !(this.formData[objectKey] === undefined)) {
-					additionalProperties.push([objectKey, objectValue])
+					additionalProperties.push([objectKey, objectValue, null])
 				}
 			}
+
+			// Sort properties with order: ascending by order value, then alphabetically by key
+			propertiesWithOrder.sort((a, b) => {
+				const [keyA, , schemaA] = a
+				const [keyB, , schemaB] = b
+
+				// First sort by order (ascending)
+				const orderA = schemaA?.order || 0
+				const orderB = schemaB?.order || 0
+
+				if (orderA !== orderB) {
+					return orderA - orderB // Ascending order
+				}
+
+				// If same order, sort alphabetically
+				return keyA.localeCompare(keyB)
+			})
+
+			// Sort properties without order alphabetically by key
+			propertiesWithoutOrder.sort((a, b) => {
+				const [keyA] = a
+				const [keyB] = b
+				return keyA.localeCompare(keyB)
+			})
 
 			// Sort additional properties alphabetically for consistency
 			additionalProperties.sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
 
 			// If we have no properties to show (new object with no schema), provide some basic ones
-			if (properties.length === 0 && additionalProperties.length === 0) {
+			if (propertiesWithoutOrder.length === 0 && propertiesWithOrder.length === 0 && additionalProperties.length === 0) {
 				return [
 					['title', ''],
 					['description', ''],
@@ -790,8 +924,45 @@ export default {
 				]
 			}
 
-			// Combine schema properties first, then additional properties
-			return [...properties, ...additionalProperties]
+			// Combine: properties with order first (descending order), then properties without order, then additional properties
+			const combinedProperties = [
+				...propertiesWithOrder.map(([key, value]) => [key, value]),
+				...propertiesWithoutOrder.map(([key, value]) => [key, value]),
+				...additionalProperties,
+			]
+
+			return combinedProperties
+		},
+		/**
+		 * Filter out constant and immutable properties based on showConstantProperties state
+		 * @return {Array} Filtered properties array
+		 */
+		filteredObjectProperties() {
+			if (this.showConstantProperties) {
+				return this.objectProperties
+			}
+
+			return this.objectProperties.filter(([key, value]) => {
+				// Use the same detection logic as isConstantOrImmutable method
+				const isConstantOrImmutableProperty = this.isConstantOrImmutable(key)
+
+				// Debug: Log property filtering
+				if (process.env.NODE_ENV === 'development' && isConstantOrImmutableProperty) {
+					// eslint-disable-next-line no-console
+					console.log(`Filtering out property ${key}: constant or immutable`)
+				}
+
+				return !isConstantOrImmutableProperty
+			})
+		},
+		/**
+		 * Check if there are any constant or immutable properties
+		 * @return {boolean} True if there are constant/immutable properties
+		 */
+		hasConstantOrImmutableProperties() {
+			return this.objectProperties.some(([key, value]) => {
+				return this.isConstantOrImmutable(key)
+			})
 		},
 		metadataProperties() {
 			// Return array of [key, value] for metadata display
@@ -1511,6 +1682,57 @@ export default {
 			// Update the form data using Vue 2 reactivity
 			this.$set(this.formData, key, processedValue)
 		},
+		// Test method to verify Vue methods are working
+		testVueMethod(message) {
+			if (process.env.NODE_ENV === 'development') {
+				alert(`Vue method works: ${message}`)
+			}
+		},
+		handleDateTimeUpdate(key, newValue) {
+
+			// Ensure formData is an object before updating
+			if (!this.formData || Array.isArray(this.formData)) {
+				this.formData = {}
+			}
+
+			// Get schema information to determine the correct format
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			const format = schemaProperty?.format
+
+			let processedValue = newValue
+
+			// Handle Date objects from NcDateTimePicker
+			if (newValue instanceof Date && !isNaN(newValue.getTime())) {
+				try {
+					switch (format) {
+					case 'date':
+						// Store as YYYY-MM-DD
+						processedValue = newValue.toISOString().split('T')[0]
+						break
+					case 'time':
+						// Store as HH:MM
+						processedValue = newValue.toTimeString().split(' ')[0].substring(0, 5)
+						break
+					case 'date-time':
+						// Store as full ISO string
+						processedValue = newValue.toISOString()
+						break
+					default:
+						processedValue = newValue.toISOString()
+					}
+
+				} catch (e) {
+					processedValue = ''
+				}
+			} else if (newValue === null || newValue === undefined) {
+				processedValue = ''
+			}
+
+			// Update the form data using Vue 2 reactivity
+			this.$set(this.formData, key, processedValue)
+
+		},
 		processDateTimeValue(key, value) {
 			// Get schema information to determine if this is a date/time field
 			const schemaProperties = this.getSchemaProperties()
@@ -1538,8 +1760,8 @@ export default {
 						// Return YYYY-MM-DD format
 						return value.toISOString().split('T')[0]
 					case 'time':
-						// Return HH:MM:SS format
-						return value.toTimeString().split(' ')[0]
+					// Return HH:MM format for consistency with HTML time input
+						return value.toTimeString().split(' ')[0].substring(0, 5)
 					case 'date-time':
 						// Return full ISO string
 						return value.toISOString()
@@ -1558,9 +1780,12 @@ export default {
 					// HTML date input returns YYYY-MM-DD, which is correct for JSON Schema date format
 					return value
 				case 'time':
-					// HTML time input returns HH:MM, convert to full time format if needed
-					// For time format, we might want to store as HH:MM:SS or keep as HH:MM
-					return value.length === 5 ? `${value}:00` : value
+					// HTML time input returns HH:MM, keep as HH:MM for consistency
+					// Only add seconds if the value already has them
+					if (value.length === 5 && value.match(/^\d{2}:\d{2}$/)) {
+						return value // Keep as HH:MM
+					}
+					return value
 				case 'date-time': {
 					// HTML datetime-local input returns YYYY-MM-DDTHH:MM
 					// Convert to full ISO string if needed
@@ -1618,11 +1843,14 @@ export default {
 			case 'boolean':
 				return 'NcCheckboxRadioSwitch'
 			case 'string':
-				if (format === 'date' || format === 'date-time') {
+				if (format === 'date' || format === 'date-time' || format === 'time') {
 					return 'NcDateTimePicker'
 				}
-				if (format === 'time') {
-					return 'NcTextField' // Use text field with time input type for time-only
+				if (format === 'text') {
+					return 'NcTextArea'
+				}
+				if (format === 'markdown') {
+					return 'Editor'
 				}
 				return 'NcTextField'
 			case 'number':
@@ -1633,9 +1861,22 @@ export default {
 			}
 		},
 		getPropertyDisplayName(key) {
+			// Ensure we always have a valid key
+			if (!key || typeof key !== 'string') {
+				console.warn('Invalid key passed to getPropertyDisplayName:', key)
+				return 'Unknown Property'
+			}
+
 			const schemaProperties = this.getSchemaProperties()
 			const schemaProperty = schemaProperties[key]
-			return schemaProperty?.title || key
+
+			// Return the title if it exists and is not empty or just "new" (placeholder)
+			const title = schemaProperty?.title
+			if (title && typeof title === 'string' && title.trim() !== '' && title.trim().toLowerCase() !== 'new') {
+				return title
+			}
+
+			return key
 		},
 		getPropertyTooltip(key) {
 			const schemaProperties = this.getSchemaProperties()
@@ -1674,10 +1915,110 @@ export default {
 			}
 			return undefined
 		},
+		getMarkdownEditorOptions(key) {
+			return {
+				placeholder: this.getPropertyDisplayName(key),
+				minHeight: '200px',
+				language: 'en-US',
+				hideModeSwitch: true, // Hide the markdown/wysiwyg mode switch
+				toolbarItems: [
+					['heading', 'bold', 'italic', 'strike'],
+					['hr', 'quote'],
+					['ul', 'ol', 'task', 'indent', 'outdent'],
+					['table', 'image', 'link'],
+					['code', 'codeblock'],
+				],
+				viewer: true, // Enable WYSIWYG mode
+				initialEditType: 'wysiwyg', // Start in WYSIWYG mode
+				// Hook into the editor events to remove borders after initialization
+				hooks: {
+					addImageBlobHook: () => false, // Disable image uploads
+				},
+				events: {
+					load: (editor) => {
+						// Remove borders after the editor is fully loaded
+						this.$nextTick(() => {
+							this.removeBordersFromEditor(editor)
+						})
+					},
+					changeMode: (editor) => {
+						// Remove borders when mode changes
+						this.$nextTick(() => {
+							this.removeBordersFromEditor(editor)
+						})
+					},
+				},
+			}
+		},
+		removeBordersFromEditor(editor) {
+			try {
+				// Get the editor container
+				const editorEl = editor.getEl()
+				if (editorEl) {
+					// Remove borders from all nested elements
+					const allElements = editorEl.querySelectorAll('*')
+					allElements.forEach(el => {
+						el.style.border = 'none'
+						el.style.borderWidth = '0'
+						el.style.borderStyle = 'none'
+						el.style.borderColor = 'transparent'
+						el.style.outline = 'none'
+						el.style.boxShadow = 'none'
+					})
+
+					// Also remove from the container itself
+					editorEl.style.border = 'none'
+					editorEl.style.borderWidth = '0'
+					editorEl.style.borderStyle = 'none'
+					editorEl.style.borderColor = 'transparent'
+					editorEl.style.outline = 'none'
+					editorEl.style.boxShadow = 'none'
+				}
+			} catch (error) {
+				console.warn('Could not remove borders from editor:', error)
+			}
+		},
+		updateMarkdownValue(key, editorInstance) {
+			// Get the current content from the editor as MARKDOWN
+			let content = ''
+
+			try {
+				// Always prefer markdown output over HTML
+				if (editorInstance && typeof editorInstance.getMarkdown === 'function') {
+					content = editorInstance.getMarkdown()
+				} else if (editorInstance && typeof editorInstance.getHTML === 'function') {
+					// Fallback to HTML if markdown not available
+					content = editorInstance.getHTML()
+				} else {
+					// Fallback: if it's a string, use it directly
+					content = typeof editorInstance === 'string' ? editorInstance : ''
+				}
+			} catch (error) {
+				console.warn('Error getting content from markdown editor:', error)
+				content = ''
+			}
+
+			// Update the form data
+			this.updatePropertyValue(key, content)
+		},
 		getDisplayValue(key, value) {
+			// Get the schema information to determine format
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+			const format = schemaProperty?.format
+
 			// If we have an edited value in formData, use that
 			if (this.formData[key] !== undefined) {
 				const editedValue = this.formData[key]
+
+				// Handle specific format display
+				if (format === 'time' && typeof editedValue === 'string') {
+					// For time format, ensure we show HH:MM without seconds
+					if (editedValue.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+						return editedValue.substring(0, 5) // Remove seconds if present
+					}
+				}
+
 				// Handle date formatting for edited values
 				if (this.isValidDate(editedValue) && typeof editedValue === 'string' && editedValue.includes('T')) {
 					return new Date(editedValue).toLocaleString()
@@ -1688,6 +2029,14 @@ export default {
 			// Handle original value
 			if (value === null || value === undefined) {
 				return ''
+			}
+
+			// Handle specific format display for original values
+			if (format === 'time' && typeof value === 'string') {
+				// For time format, ensure we show HH:MM without seconds
+				if (value.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+					return value.substring(0, 5) // Remove seconds if present
+				}
 			}
 
 			// Handle date formatting for original values - only if it's actually a date string
@@ -1733,7 +2082,7 @@ export default {
 					// Format as YYYY-MM-DD
 					return date.toISOString().split('T')[0]
 				case 'time':
-					// Format as HH:MM
+					// Format as HH:MM for HTML time input
 					return date.toTimeString().split(' ')[0].substring(0, 5)
 				case 'datetime-local': {
 					// Format as YYYY-MM-DDTHH:MM
@@ -1789,6 +2138,7 @@ export default {
 				if (isNaN(date.getTime())) {
 					return null
 				}
+
 				return date
 			} catch (e) {
 				return null
@@ -1802,17 +2152,30 @@ export default {
 				return 'datetime'
 			}
 
+			let pickerType = 'datetime'
+
 			// Map schema formats to NcDateTimePicker types
 			switch (schemaProperty.format) {
 			case 'date':
-				return 'date'
+				pickerType = 'date'
+				break
 			case 'date-time':
-				return 'datetime'
+				pickerType = 'datetime'
+				break
 			case 'time':
-				return 'time'
+				pickerType = 'time'
+				break
 			default:
-				return 'datetime'
+				// For string type with no specific format, default to datetime
+				if (schemaProperty.type === 'string') {
+					pickerType = 'datetime'
+				} else {
+					pickerType = 'datetime'
+				}
+				break
 			}
+
+			return pickerType
 		},
 		// Publish/Depublish methods
 		openPublishModal() {
@@ -2336,14 +2699,14 @@ export default {
 		},
 		// Schema handling methods
 		getSchemaProperties() {
+			let properties = {}
+
 			// For new objects, use the selected schema
 			if (this.isNewObject && this.selectedSchema) {
 				const fullSchema = objectStore.availableSchemas.find(schema => schema.id === this.selectedSchema.id)
-				return fullSchema?.properties || {}
-			}
-
-			// For existing objects, try to get schema from the object's schema reference
-			if (this.currentObject && this.currentObject['@self']?.schema) {
+				properties = fullSchema?.properties || {}
+			} else if (this.currentObject && this.currentObject['@self']?.schema) {
+				// For existing objects, try to get schema from the object's schema reference
 				const schemaRef = this.currentObject['@self'].schema
 				let schemaId = null
 
@@ -2357,18 +2720,15 @@ export default {
 				if (schemaId) {
 					const fullSchema = objectStore.availableSchemas.find(schema => schema.id === schemaId)
 					if (fullSchema?.properties) {
-						return fullSchema.properties
+						properties = fullSchema.properties
 					}
 				}
+			} else if (this.currentSchema?.properties) {
+				// Try to get schema properties from the catalogStore
+				properties = this.currentSchema.properties
 			}
 
-			// Try to get schema properties from the catalogStore
-			if (this.currentSchema?.properties) {
-				return this.currentSchema.properties
-			}
-
-			// Fallback: return empty object
-			return {}
+			return properties
 		},
 		// Helper method to rebuild object with schema properties after API operations
 		rebuildObjectWithSchemaProperties(apiResult) {
@@ -2533,10 +2893,8 @@ export default {
 				return false
 			}
 
-			// Don't show drop button for const properties
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			if (schemaProperty?.const !== undefined) {
+			// Don't show drop button for const or immutable properties
+			if (this.isConstantOrImmutable(key)) {
 				return false
 			}
 
@@ -2547,6 +2905,41 @@ export default {
 			const hasOriginalValue = this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)
 
 			return hasFormValue || hasOriginalValue
+		},
+		/**
+		 * Check if a property is constant or immutable
+		 * @param {string} key - Property key
+		 * @return {boolean} True if property is constant or immutable
+		 */
+		isConstantOrImmutable(key) {
+			const schemaProperties = this.getSchemaProperties()
+			const schemaProperty = schemaProperties[key]
+
+			// Check by property name patterns (case insensitive)
+			const immutablePatterns = ['immutable', 'readonly', 'constant']
+			const isImmutableByName = immutablePatterns.some(pattern =>
+				key.toLowerCase().includes(pattern),
+			)
+
+			if (schemaProperty) {
+				const isConstant = schemaProperty.const !== undefined
+				const isImmutable = schemaProperty.readOnly === true || schemaProperty.immutable === true
+
+				// Debug: Log all detection methods
+				if (process.env.NODE_ENV === 'development') {
+					// eslint-disable-next-line no-console
+					console.log(`Property ${key} detection:`, {
+						isConstant,
+						isImmutable,
+						isImmutableByName,
+						schemaProperty,
+					})
+				}
+
+				return isConstant || isImmutable || isImmutableByName
+			}
+
+			return isImmutableByName
 		},
 
 		getDropPropertyTooltip(key) {
@@ -2657,9 +3050,23 @@ export default {
 
 <style scoped>
 /* ViewObject-specific overrides only */
+
 .tableColumnActions {
 	width: 100px;
 	text-align: center;
+}
+
+/* Actions header cell styling for toggle button */
+.actions-header-cell {
+	text-align: right !important;
+	vertical-align: middle !important;
+	padding-right: 8px !important;
+}
+
+/* Toggle button styling */
+.eye-toggle-btn {
+	float: right;
+	margin: 0;
 }
 
 /* Inline editing styles */
@@ -2931,6 +3338,76 @@ export default {
 
 .dialog__name .status-icon {
 	flex-shrink: 0;
+}
+
+/* Textarea and Rich content editor specific styles */
+.value-input-container .nc-textarea,
+.value-input-container .rich-contenteditable {
+	width: 100%;
+	margin: 0;
+}
+
+.value-input-container .rich-contenteditable {
+	min-height: 100px;
+}
+
+/* Ensure proper spacing for multi-line inputs */
+.value-input-container .nc-textarea textarea {
+	min-height: 100px;
+	resize: vertical;
+}
+
+/* Toast UI Editor - Basic Nextcloud Integration */
+.value-input-container .toastui-editor-defaultUI {
+	font-family: var(--font-face) !important;
+	font-size: var(--default-font-size) !important;
+	background-color: var(--color-main-background) !important;
+	width: 100% !important;
+}
+
+/* Toolbar styling */
+.value-input-container .toastui-editor-toolbar {
+	background-color: var(--color-background-hover) !important;
+	border-bottom: 1px solid var(--color-border-dark) !important;
+	padding: 8px !important;
+}
+
+.value-input-container .toastui-editor-toolbar-icons button {
+	color: var(--color-main-text) !important;
+	background-color: transparent !important;
+	border: none !important;
+	border-radius: var(--border-radius) !important;
+	padding: 6px !important;
+	margin: 2px !important;
+}
+
+.value-input-container .toastui-editor-toolbar-icons button:hover {
+	background-color: var(--color-background-dark) !important;
+}
+
+.value-input-container .toastui-editor-toolbar-icons button.active {
+	background-color: var(--color-primary-element) !important;
+	color: var(--color-primary-element-text) !important;
+}
+
+/* Hide mode switch for WYSIWYG-only */
+.value-input-container .toastui-editor-mode-switch {
+	display: none !important;
+}
+
+/* Editor content styling */
+.value-input-container .toastui-editor-contents {
+	color: var(--color-main-text) !important;
+	font-family: var(--font-face) !important;
+}
+
+.value-input-container .ProseMirror {
+	background-color: var(--color-main-background) !important;
+	color: var(--color-main-text) !important;
+	font-family: var(--font-face) !important;
+	font-size: var(--default-font-size) !important;
+	padding: 12px !important;
+	min-height: 200px !important;
 }
 
 </style>
