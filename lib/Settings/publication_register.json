@@ -199,7 +199,7 @@
       "organization": {
         "slug": "organization",
         "title": "Organization",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "summary": "An organization that publishes or manages catalogs",
         "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
         "icon": null,
