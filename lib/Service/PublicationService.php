@@ -233,6 +233,21 @@ class PublicationService
         unset($searchQuery['id']);
         unset($searchQuery['_route']);
 
+        // Filter out virtual field facet requests before passing to OpenRegister
+        // Directory and catalogs are virtual fields injected at runtime, not database columns
+        $requestedDirectoryFacets = false;
+        $requestedCatalogFacets = false;
+        
+        if (isset($searchQuery['_facets']['@self']['directory'])) {
+            $requestedDirectoryFacets = true;
+            unset($searchQuery['_facets']['@self']['directory']);
+        }
+        
+        if (isset($searchQuery['_facets']['@self']['catalogs'])) {
+            $requestedCatalogFacets = true;
+            unset($searchQuery['_facets']['@self']['catalogs']);
+        }
+
         // Get the context for the catalog
         $context = $this->getCatalogFilters($catalogId);
 
@@ -278,7 +293,161 @@ class PublicationService
         // Filter unwanted properties from results
         $result['results'] = $this->filterUnwantedProperties($result['results']);
 
+        // Add virtual field facets if they were requested
+        if (($requestedDirectoryFacets || $requestedCatalogFacets) && isset($result['facets'])) {
+            $result['facets'] = $this->addVirtualFieldFacets($result['facets'], $requestedDirectoryFacets, $requestedCatalogFacets);
+        }
+
         return $result;
+    }
+    
+    /**
+     * Get external catalogs from listings stored in the directory service
+     *
+     * This method retrieves all listings and extracts catalog information from them
+     * to provide catalog facets that include external/federated catalogs.
+     *
+     * @return array Array of catalog objects with 'key' and 'label' fields
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getExternalCatalogsFromListings(): array
+    {
+        try {
+            // Get the directory (which includes listings)
+            $directoryResult = $this->directoryService->getDirectory();
+            $listings = $directoryResult['results'] ?? [];
+            
+            $externalCatalogs = [];
+            $seenCatalogs = [];
+            
+            foreach ($listings as $listing) {
+                // Extract catalog information from listing
+                $catalogId = $listing['catalog'] ?? $listing['id'] ?? null;
+                $catalogTitle = $listing['title'] ?? $catalogId ?? 'Unknown Catalog';
+                
+                if ($catalogId && !isset($seenCatalogs[$catalogId])) {
+                    $externalCatalogs[] = [
+                        'key' => $catalogId,
+                        'label' => $catalogTitle
+                    ];
+                    $seenCatalogs[$catalogId] = true;
+                }
+            }
+            
+            return $externalCatalogs;
+            
+        } catch (\Exception $e) {
+            // If we can't get external catalog information, return empty array
+            return [];
+        }
+    }
+
+    /**
+     * Add virtual field facets manually (directory and catalog facets)
+     *
+     * This method handles faceting for virtual fields that are injected at runtime
+     * rather than stored as real database columns. It supports directory and catalog facets.
+     *
+     * @param array $existingFacets The existing facets from the search result
+     * @param bool $includeDirectoryFacets Whether to include directory facets
+     * @param bool $includeCatalogFacets Whether to include catalog facets
+     * @return array The facets with virtual field facets added
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function addVirtualFieldFacets(array $existingFacets, bool $includeDirectoryFacets = false, bool $includeCatalogFacets = false): array
+    {
+        try {
+            // Ensure @self section exists
+            if (!isset($existingFacets['@self'])) {
+                $existingFacets['@self'] = [];
+            }
+            
+            // Add directory facets if requested
+            if ($includeDirectoryFacets) {
+                // Get unique directories from the directory service
+                $uniqueDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
+                
+                // Add local directory
+                $directoryFacets = [
+                    [
+                        'key' => 'local',
+                        'label' => 'local',
+                        'count' => 1 // We'll count this properly later if needed
+                    ]
+                ];
+                
+                // Add federated directories
+                foreach ($uniqueDirectories as $directoryUrl) {
+                    $directoryName = parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl;
+                    $directoryFacets[] = [
+                        'key' => $directoryName,
+                        'label' => $directoryName,
+                        'count' => 1 // We'll count this properly later if needed
+                    ];
+                }
+                
+                $existingFacets['@self']['directory'] = $directoryFacets;
+            }
+            
+            // Add catalog facets if requested
+            if ($includeCatalogFacets) {
+                $catalogFacets = [];
+                
+                // Get local catalogs
+                $localCatalogs = $this->getLocalCatalogs();
+                foreach ($localCatalogs as $catalog) {
+                    $catalogKey = $catalog['id'] ?: ($catalog['title'] ?: 'unknown');
+                    $catalogLabel = $catalog['title'] ?: $catalog['id'] ?: 'unknown';
+                    
+                    $catalogFacets[] = [
+                        'key' => $catalogKey,
+                        'label' => $catalogLabel,
+                        'count' => 1 // We'll count this properly later if needed
+                    ];
+                }
+                
+                // Get external catalogs from listings
+                $externalCatalogs = $this->getExternalCatalogsFromListings();
+                foreach ($externalCatalogs as $catalog) {
+                    $catalogKey = $catalog['key'];
+                    $catalogLabel = $catalog['label'];
+                    
+                    // Check if this catalog is already in our list to avoid duplicates
+                    $exists = false;
+                    foreach ($catalogFacets as $existingCatalog) {
+                        if ($existingCatalog['key'] === $catalogKey) {
+                            $exists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!$exists) {
+                        $catalogFacets[] = [
+                            'key' => $catalogKey,
+                            'label' => $catalogLabel,
+                            'count' => 1 // We'll count this properly later if needed
+                        ];
+                    }
+                }
+                
+                // If no catalogs found, add a default entry
+                if (empty($catalogFacets)) {
+                    $catalogFacets[] = [
+                        'key' => 'default',
+                        'label' => 'Default Catalog',
+                        'count' => 1
+                    ];
+                }
+                
+                $existingFacets['@self']['catalogs'] = $catalogFacets;
+            }
+            
+            return $existingFacets;
+            
+        } catch (\Exception $e) {
+            // If we can't get virtual field information, return existing facets unchanged
+            return $existingFacets;
+        }
     }
 
     /**
@@ -639,6 +808,10 @@ class PublicationService
         $facetable = $queryParams['_facetable'] ?? null;
         $shouldIncludeFacets = ($facetable === 'true' || $facetable === true);
         
+        // Check if virtual field facets were specifically requested
+        $requestedDirectoryFacets = isset($queryParams['_facets']['@self']['directory']);
+        $requestedCatalogFacets = isset($queryParams['_facets']['@self']['catalogs']);
+        
         // Always add _extend parameters for schema and register information
         if (!isset($queryParams['_extend'])) {
             $queryParams['_extend'] = [];
@@ -717,7 +890,16 @@ class PublicationService
             if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
                 $facetsData = $facetsData['facets'];
             }
+            
+            // Add virtual field facets if they were requested
+            if ($requestedDirectoryFacets || $requestedCatalogFacets) {
+                $facetsData = $this->addVirtualFieldFacets($facetsData, $requestedDirectoryFacets, $requestedCatalogFacets);
+            }
+            
             $responseData['facets'] = $facetsData;
+        } elseif ($requestedDirectoryFacets || $requestedCatalogFacets) {
+            // If virtual field facets were requested but no other facets exist, create them
+            $responseData['facets'] = $this->addVirtualFieldFacets([], $requestedDirectoryFacets, $requestedCatalogFacets);
         }
         if (isset($localData['facetable'])) {
             $responseData['facetable'] = $this->mergeFacetableData($localData['facetable'], []);
@@ -818,17 +1000,31 @@ class PublicationService
                     return false;
                 }
                 
-                // Exclude directory-related facet filters when querying external directories
-                // since each directory only has its own publications
+                // Exclude virtual field facet filters when querying external directories
+                // since these are handled locally after aggregation
                 if (strpos($key, '_facets[@self][directory]') !== false) {
                     return false;
                 }
                 if (strpos($key, '_facets[directory]') !== false) {
                     return false;
                 }
+                if (strpos($key, '_facets[@self][catalogs]') !== false) {
+                    return false;
+                }
+                if (strpos($key, '_facets[catalogs]') !== false) {
+                    return false;
+                }
                 
                 return true;
             }, ARRAY_FILTER_USE_KEY);
+            
+            // Also filter out virtual field facets from the nested _facets array structure
+            if (isset($federatedFilterParams['_facets']['@self']['directory'])) {
+                unset($federatedFilterParams['_facets']['@self']['directory']);
+            }
+            if (isset($federatedFilterParams['_facets']['@self']['catalogs'])) {
+                unset($federatedFilterParams['_facets']['@self']['catalogs']);
+            }
             
             // Pass query parameters in the format expected by DirectoryService
             $federationGuzzleConfig = [
@@ -904,7 +1100,17 @@ class PublicationService
                     $federatedFacets = $federatedFacets['facets'];
                 }
                 
-                $responseData['facets'] = $this->mergeFacetsData($localFacets, $federatedFacets);
+                $mergedFacets = $this->mergeFacetsData($localFacets, $federatedFacets);
+                
+                // Add virtual field facets if they were requested
+                if ($requestedDirectoryFacets || $requestedCatalogFacets) {
+                    $mergedFacets = $this->addVirtualFieldFacets($mergedFacets, $requestedDirectoryFacets, $requestedCatalogFacets);
+                }
+                
+                $responseData['facets'] = $mergedFacets;
+            } elseif ($requestedDirectoryFacets || $requestedCatalogFacets) {
+                // If virtual field facets were requested but no other facets exist, create them
+                $responseData['facets'] = $this->addVirtualFieldFacets([], $requestedDirectoryFacets, $requestedCatalogFacets);
             }
             
             if (isset($allLocalData['facetable']) || isset($federationResult['facetable'])) {
@@ -1043,6 +1249,27 @@ class PublicationService
                 [
                     'value' => 'dimpact.commonground.nu',
                     'label' => 'Dimpact',
+                    'count' => 1
+                ]
+            ]
+        ];
+        
+        // Add catalogs facet for filtering by catalog
+        // This will be populated dynamically based on available catalogs
+        $mergedFacetable['@self']['catalogs'] = [
+            'type' => 'categorical',
+            'description' => 'Catalog that contains the publication',
+            'facet_types' => ['terms'],
+            'has_labels' => true,
+            'sample_values' => [
+                [
+                    'value' => 'default',
+                    'label' => 'Default Catalog',
+                    'count' => 1
+                ],
+                [
+                    'value' => 'test-catalog',
+                    'label' => 'Test Catalog',
                     'count' => 1
                 ]
             ]
