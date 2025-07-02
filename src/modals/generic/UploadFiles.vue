@@ -530,7 +530,7 @@ export default {
 				objectStore.setCollection('publicationAttachments', attachments)
 
 				if (uploadError) {
-					this.error = uploadError.response?.data?.error ?? uploadError
+					this.error = uploadError.response?.data?.error ?? String(uploadError)
 				} else {
 					this.success = true
 				}
