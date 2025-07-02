@@ -368,30 +368,33 @@ class PublicationService
                 $uniqueDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
                 
                 // Add local directory
-                $directoryFacets = [
+                $directoryBuckets = [
                     [
                         'key' => 'local',
                         'label' => 'local',
-                        'count' => 1 // We'll count this properly later if needed
+                        'results' => 1 // We'll count this properly later if needed
                     ]
                 ];
                 
                 // Add federated directories
                 foreach ($uniqueDirectories as $directoryUrl) {
                     $directoryName = parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl;
-                    $directoryFacets[] = [
+                    $directoryBuckets[] = [
                         'key' => $directoryName,
                         'label' => $directoryName,
-                        'count' => 1 // We'll count this properly later if needed
+                        'results' => 1 // We'll count this properly later if needed
                     ];
                 }
                 
-                $existingFacets['@self']['directory'] = $directoryFacets;
+                $existingFacets['@self']['directory'] = [
+                    'type' => 'terms',
+                    'buckets' => $directoryBuckets
+                ];
             }
             
             // Add catalog facets if requested
             if ($includeCatalogFacets) {
-                $catalogFacets = [];
+                $catalogBuckets = [];
                 
                 // Get local catalogs
                 $localCatalogs = $this->getLocalCatalogs();
@@ -399,10 +402,10 @@ class PublicationService
                     $catalogKey = $catalog['id'] ?: ($catalog['title'] ?: 'unknown');
                     $catalogLabel = $catalog['title'] ?: $catalog['id'] ?: 'unknown';
                     
-                    $catalogFacets[] = [
+                    $catalogBuckets[] = [
                         'key' => $catalogKey,
                         'label' => $catalogLabel,
-                        'count' => 1 // We'll count this properly later if needed
+                        'results' => 1 // We'll count this properly later if needed
                     ];
                 }
                 
@@ -414,7 +417,7 @@ class PublicationService
                     
                     // Check if this catalog is already in our list to avoid duplicates
                     $exists = false;
-                    foreach ($catalogFacets as $existingCatalog) {
+                    foreach ($catalogBuckets as $existingCatalog) {
                         if ($existingCatalog['key'] === $catalogKey) {
                             $exists = true;
                             break;
@@ -422,24 +425,27 @@ class PublicationService
                     }
                     
                     if (!$exists) {
-                        $catalogFacets[] = [
+                        $catalogBuckets[] = [
                             'key' => $catalogKey,
                             'label' => $catalogLabel,
-                            'count' => 1 // We'll count this properly later if needed
+                            'results' => 1 // We'll count this properly later if needed
                         ];
                     }
                 }
                 
                 // If no catalogs found, add a default entry
-                if (empty($catalogFacets)) {
-                    $catalogFacets[] = [
+                if (empty($catalogBuckets)) {
+                    $catalogBuckets[] = [
                         'key' => 'default',
                         'label' => 'Default Catalog',
-                        'count' => 1
+                        'results' => 1
                     ];
                 }
                 
-                $existingFacets['@self']['catalogs'] = $catalogFacets;
+                $existingFacets['@self']['catalogs'] = [
+                    'type' => 'terms',
+                    'buckets' => $catalogBuckets
+                ];
             }
             
             return $existingFacets;
