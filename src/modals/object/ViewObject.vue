@@ -198,7 +198,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														:min="getPropertyMinimum(key)"
 														:max="getPropertyMaximum(key)"
 														:step="getPropertyStep(key)"
-														@update:value="updatePropertyValue(key, $event.split(',').map(item => item.trim()))" />
+														@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
 													<InformationOutline
 														v-tooltip="'Array values should be separated by commas'"
 														:size="25"
