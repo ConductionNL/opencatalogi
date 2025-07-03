@@ -497,25 +497,29 @@ export default {
 					return
 				}
 
-				// file calls
-				const calls = filesToUpload.map(async (file) => {
-					// Set status to 'uploading'
+				filesToUpload.forEach(file => {
 					file.status = 'uploading'
-					try {
-						const response = await this.createPublicationAttachment([file], reset, this.share)
-						// Set status to 'uploaded' on success
-						if (response.status === 200) file.status = 'uploaded'
-						else file.status = 'failed'
-
-						return response
-					} catch (error) {
-						// Set status to 'failed' on error
-						file.status = 'failed'
-						throw error
-					}
 				})
 
-				const results = await Promise.allSettled(calls)
+				let uploadError = null
+				try {
+					const response = await this.createPublicationAttachment(filesToUpload, reset, this.share)
+
+					if (response.status === 200) {
+						filesToUpload.forEach(file => {
+							file.status = 'uploaded'
+						})
+					} else {
+						filesToUpload.forEach(file => {
+							file.status = 'failed'
+						})
+					}
+				} catch (error) {
+					filesToUpload.forEach(file => {
+						file.status = 'failed'
+					})
+					uploadError = error
+				}
 
 				this.getAllTags()
 
@@ -525,10 +529,8 @@ export default {
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
 
-				const failed = results.filter(result => result.status === 'rejected')
-
-				if (failed.length > 0) {
-					this.error = failed[0].reason
+				if (uploadError) {
+					this.error = uploadError.response?.data?.error ?? String(uploadError)
 				} else {
 					this.success = true
 				}
@@ -573,8 +575,9 @@ export default {
 				if (file.tags) {
 					formData.append('tags[]', file.tags.join(','))
 				}
-				formData.append('share', share.toString())
 			})
+
+			formData.append('share', share.toString())
 
 			const publication = objectStore.getActiveObject('publication')
 			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
