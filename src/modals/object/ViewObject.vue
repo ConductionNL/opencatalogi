@@ -188,7 +188,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													@load="(editor) => markdownEditors[key] = editor"
 													@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
-												<!-- Array properties -->
+												<!-- Themes properties -->
 												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
 													<NcSelect
 														v-model="themeFormData"
@@ -196,6 +196,22 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														input-label="Themes"
 														multiple
 														:placeholder="getPropertyDisplayName(key)" />
+												</div>
+												<!-- Array properties -->
+												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
+													<NcTextField
+														ref="propertyValueInput"
+														:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
+														:type="getPropertyInputType(key)"
+														:placeholder="getPropertyDisplayName(key)"
+														:min="getPropertyMinimum(key)"
+														:max="getPropertyMaximum(key)"
+														:step="getPropertyStep(key)"
+														@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
+													<InformationOutline
+														v-tooltip="'Array values should be separated by commas'"
+														:size="25"
+														class="info-icon" />
 												</div>
 
 												<!-- Text/Number properties -->
@@ -377,7 +393,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																@load="(editor) => markdownEditors[key] = editor"
 																@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
-															<!-- Array properties -->
+															<!-- Themes properties -->
 															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
 																<NcSelect
 																	v-model="themeFormData"
@@ -386,7 +402,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																	multiple
 																	:placeholder="getPropertyDisplayName(key)" />
 															</div>
-
 															<!-- Array properties -->
 															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
 																<NcTextField
@@ -397,7 +412,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																	:min="getPropertyMinimum(key)"
 																	:max="getPropertyMaximum(key)"
 																	:step="getPropertyStep(key)"
-																	@update:value="updatePropertyValue(key, $event.split(',').map(item => item.trim()))" />
+																	@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
 																<InformationOutline
 																	v-tooltip="'Array values should be separated by commas'"
 																	:size="25"
