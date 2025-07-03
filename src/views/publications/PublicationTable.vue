@@ -299,7 +299,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										<td v-for="(column, index) in orderedEnabledColumns"
 											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`"
 											:class="getClassName(column.id)">
-											<span v-if="column.id === 'meta_files'" style="display: flex; justify-content: center;">
+											<span v-if="column.id === 'meta_files'" :class="`${column.id === 'meta_files' ? 'metaFilesContent' : ''}`">
 												<NcCounterBubble :count="Array.isArray(publication['@self']?.files) ? publication['@self'].files.length : (publication['@self']?.files ? 1 : 0)" />
 											</span>
 											<span v-else-if="column.id === 'meta_created' || column.id === 'meta_updated'">
@@ -886,6 +886,11 @@ export default {
 
 .tableColumnMetaDescription {
 	text-align: center !important;
+}
+
+.metaFilesContent {
+	display: flex;
+	justify-content: center;
 }
 
 .viewTable th {
