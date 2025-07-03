@@ -189,20 +189,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
 												<!-- Array properties -->
-												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
-													<NcTextField
-														ref="propertyValueInput"
-														:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
-														:type="getPropertyInputType(key)"
-														:placeholder="getPropertyDisplayName(key)"
-														:min="getPropertyMinimum(key)"
-														:max="getPropertyMaximum(key)"
-														:step="getPropertyStep(key)"
-														@update:value="updatePropertyValue(key, $event.split(',').map(item => item.trim()))" />
-													<InformationOutline
-														v-tooltip="'Array values should be separated by commas'"
-														:size="25"
-														class="info-icon" />
+												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
+													<NcSelect
+														v-model="themeFormData"
+														:options="themeOptions"
+														input-label="Themes"
+														multiple
+														:placeholder="getPropertyDisplayName(key)" />
 												</div>
 
 												<!-- Text/Number properties -->
@@ -383,6 +376,16 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																height="400px"
 																@load="(editor) => markdownEditors[key] = editor"
 																@blur="updateMarkdownValue(key, markdownEditors[key])" />
+
+															<!-- Array properties -->
+															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
+																<NcSelect
+																	v-model="themeFormData"
+																	:options="themeOptions"
+																	input-label="Themes"
+																	multiple
+																	:placeholder="getPropertyDisplayName(key)" />
+															</div>
 
 															<!-- Array properties -->
 															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
@@ -1182,6 +1185,32 @@ export default {
 		shouldShowPublishedIcon() {
 			return this.currentObject && this.currentObject['@self']
 		},
+		themeOptions() {
+			const themes = objectStore.getCollection('theme').results || []
+			return themes.map(theme => ({
+				id: theme.id,
+				label: theme.title || `#${theme.id}`,
+			}))
+		},
+		// Replace the existing themeFormData with this new version
+		themeFormData: {
+			get() {
+				if (!this.formData.themes || !Array.isArray(this.formData.themes)) {
+					return []
+				}
+
+				const themes = objectStore.getCollection('theme').results || []
+				return this.formData.themes.map(themeId => {
+					const theme = themes.find(t => t.id === themeId)
+					return theme ? { id: theme.id, label: theme.title || `#${theme.id}` } : { id: themeId, label: themeId }
+				})
+			},
+			set(selectedThemes) {
+				// Extract just the IDs from the selected theme objects
+				const themeIds = selectedThemes.map(theme => typeof theme === 'object' ? theme.id : theme)
+				this.$set(this.formData, 'themes', themeIds)
+			},
+		},
 	},
 	watch: {
 		currentObject: {
@@ -1247,6 +1276,8 @@ export default {
 	},
 	mounted() {
 		this.initializeData()
+		// Fetch themes for the theme options dropdown
+		objectStore.fetchCollection('theme')
 	},
 	methods: {
 		getModalTitle() {
@@ -1381,6 +1412,15 @@ export default {
 				// Fallback if JSON serialization fails
 				this.formData = { ...filtered }
 			}
+
+			// Ensure themes are properly initialized as an array of IDs
+			if (this.formData.themes && Array.isArray(this.formData.themes)) {
+				// Convert any theme objects back to IDs if needed
+				this.formData.themes = this.formData.themes.map(theme =>
+					typeof theme === 'object' ? theme.id : theme,
+				)
+			}
+
 			this.jsonData = JSON.stringify(filtered, null, 2)
 		},
 		async saveObject() {
@@ -1710,6 +1750,14 @@ export default {
 			// Ensure formData is an object before updating
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
+			}
+
+			// Special handling for themes: extract IDs from selected objects
+			if (key === 'themes' && Array.isArray(newValue)) {
+				// Extract just the IDs from the selected theme objects
+				const themeIds = newValue.map(theme => typeof theme === 'object' ? theme.id : theme)
+				this.$set(this.formData, key, themeIds)
+				return
 			}
 
 			// Convert date/time values to proper format for storage
@@ -3082,7 +3130,6 @@ export default {
 				return true // Unknown type, assume valid
 			}
 		},
-
 	},
 }
 </script>
