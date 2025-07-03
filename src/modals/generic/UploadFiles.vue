@@ -355,10 +355,13 @@ export default {
 	},
 	methods: {
 		closeModal() {
+			navigationStore.setModal(null)
+			setTimeout(() => {
+				navigationStore.setModal('viewObject')
+			}, 10)
 			this.success = null
 			this.error = null
 			reset()
-			navigationStore.setModal(false)
 		},
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
