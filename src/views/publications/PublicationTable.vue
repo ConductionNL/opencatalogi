@@ -275,6 +275,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</th>
 										<th v-for="(column, index) in orderedEnabledColumns"
 											:key="`header-${column.id || column.key || `col-${index}`}`"
+											:style="customColumnStyles(column.id)"
 											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 											<span class="stickyHeader columnTitle" :title="column.description">
 												{{ column.label }}
@@ -298,8 +299,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</td>
 										<td v-for="(column, index) in orderedEnabledColumns"
 											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`"
+											:style="customColumnStyles(column.id)"
 											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
-											<span v-if="column.id === 'meta_files'">
+											<span v-if="column.id === 'meta_files'" style="display: flex; justify-content: center;">
 												<NcCounterBubble :count="Array.isArray(publication['@self']?.files) ? publication['@self'].files.length : (publication['@self']?.files ? 1 : 0)" />
 											</span>
 											<span v-else-if="column.id === 'meta_created' || column.id === 'meta_updated'">
@@ -713,6 +715,33 @@ export default {
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+		customColumnStyles(columnId) {
+			switch (columnId) {
+			case 'meta_files':
+				return {
+					minWidth: '80px',
+					width: '80px',
+					textAlign: 'center',
+				}
+			case 'meta_published':
+				return {
+					minWidth: '150px',
+					width: '150px',
+				}
+			case 'meta_depublished':
+				return {
+					minWidth: '150px',
+					width: '150px',
+				}
+			case 'meta_updated':
+				return {
+					minWidth: '150px',
+					width: '150px',
+				}
+			default:
+				return {}
+			}
+		},
 		getValidISOstring,
 	},
 }
@@ -856,27 +885,12 @@ export default {
 	text-align: left;
 	border-bottom: 1px solid var(--color-border);
 	width: auto;
-	min-width: 120px;
 }
 
 /* Specific column width styling */
 .tableColumnMetaName {
 	min-width: 200px;
 	width: auto;
-}
-
-.tableColumnMetaFiles {
-	min-width: 80px;
-	width: 80px;
-	text-align: center;
-}
-
-.tableColumnMetaPublished,
-.tableColumnMetaDepublished,
-.tableColumnMetaUpdated,
-.tableColumnMetaCreated {
-	min-width: 150px;
-	width: 150px;
 }
 
 .viewTable th {
@@ -981,10 +995,11 @@ export default {
 }
 
 .truncatedName {
-	max-width: 200px;
+	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	word-break: break-all;
 	display: inline-block;
 }
 </style>
