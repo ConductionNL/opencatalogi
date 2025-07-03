@@ -167,7 +167,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									</template>
 									<NcActionButton close-after-click @click="viewPublication(publication)">
 										<template #icon>
-											<Eye :size="20" />
+											<Pencil :size="20" />
 										</template>
 										Edit
 									</NcActionButton>
@@ -339,7 +339,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 											<NcActions class="actionsButton">
 												<NcActionButton close-after-click @click="viewPublication(publication)">
 													<template #icon>
-														<Eye :size="20" />
+														<Pencil :size="20" />
 													</template>
 													Edit
 												</NcActionButton>
@@ -403,7 +403,7 @@ import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
@@ -433,7 +433,7 @@ export default {
 		Publish,
 		PublishOff,
 		FilePlusOutline,
-		Eye,
+		Pencil,
 		Delete,
 		FormatListChecks,
 		FormatColumns,

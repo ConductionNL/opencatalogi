@@ -188,6 +188,23 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													@load="(editor) => markdownEditors[key] = editor"
 													@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
+												<!-- Array properties -->
+												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
+													<NcTextField
+														ref="propertyValueInput"
+														:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
+														:type="getPropertyInputType(key)"
+														:placeholder="getPropertyDisplayName(key)"
+														:min="getPropertyMinimum(key)"
+														:max="getPropertyMaximum(key)"
+														:step="getPropertyStep(key)"
+														@update:value="updatePropertyValue(key, $event.split(',').map(item => item.trim()))" />
+													<InformationOutline
+														v-tooltip="'Array values should be separated by commas'"
+														:size="25"
+														class="info-icon" />
+												</div>
+
 												<!-- Text/Number properties -->
 												<NcTextField
 													v-else
@@ -366,6 +383,23 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																height="400px"
 																@load="(editor) => markdownEditors[key] = editor"
 																@blur="updateMarkdownValue(key, markdownEditors[key])" />
+
+															<!-- Array properties -->
+															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
+																<NcTextField
+																	ref="propertyValueInput"
+																	:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
+																	:type="getPropertyInputType(key)"
+																	:placeholder="getPropertyDisplayName(key)"
+																	:min="getPropertyMinimum(key)"
+																	:max="getPropertyMaximum(key)"
+																	:step="getPropertyStep(key)"
+																	@update:value="updatePropertyValue(key, $event.split(',').map(item => item.trim()))" />
+																<InformationOutline
+																	v-tooltip="'Array values should be separated by commas'"
+																	:size="25"
+																	class="info-icon" />
+															</div>
 
 															<!-- Text/Number properties -->
 															<NcTextField
@@ -737,6 +771,7 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 
 export default {
 	name: 'ViewObject',
@@ -781,6 +816,7 @@ export default {
 		EyeOff,
 		PaginationComponent,
 		PublishedIcon,
+		InformationOutline,
 	},
 	data() {
 		return {
@@ -1856,6 +1892,9 @@ export default {
 			case 'number':
 			case 'integer':
 				return 'NcTextField'
+			case 'array':
+				return 'NcTextFieldArray'
+
 			default:
 				return 'NcTextField'
 			}
@@ -3408,6 +3447,12 @@ export default {
 	font-size: var(--default-font-size) !important;
 	padding: 12px !important;
 	min-height: 200px !important;
+}
+
+.input-with-icon {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 </style>
