@@ -275,8 +275,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</th>
 										<th v-for="(column, index) in orderedEnabledColumns"
 											:key="`header-${column.id || column.key || `col-${index}`}`"
-											:style="customColumnStyles(column.id)"
-											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
+											:class="getClassName(column.id)">
 											<span class="stickyHeader columnTitle" :title="column.description">
 												{{ column.label }}
 											</span>
@@ -299,8 +298,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</td>
 										<td v-for="(column, index) in orderedEnabledColumns"
 											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`"
-											:style="customColumnStyles(column.id)"
-											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
+											:class="getClassName(column.id)">
 											<span v-if="column.id === 'meta_files'" style="display: flex; justify-content: center;">
 												<NcCounterBubble :count="Array.isArray(publication['@self']?.files) ? publication['@self'].files.length : (publication['@self']?.files ? 1 : 0)" />
 											</span>
@@ -715,31 +713,16 @@ export default {
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
-		customColumnStyles(columnId) {
+		getClassName(columnId) {
 			switch (columnId) {
 			case 'meta_files':
-				return {
-					minWidth: '80px',
-					width: '80px',
-					textAlign: 'center',
-				}
-			case 'meta_published':
-				return {
-					minWidth: '150px',
-					width: '150px',
-				}
-			case 'meta_depublished':
-				return {
-					minWidth: '150px',
-					width: '150px',
-				}
-			case 'meta_updated':
-				return {
-					minWidth: '150px',
-					width: '150px',
-				}
+				return 'tableColumnMetaFiles'
+			case 'meta_description':
+				return 'tableColumnMetaDescription'
+			case 'meta_name':
+				return 'tableColumnMetaName'
 			default:
-				return {}
+				return ''
 			}
 		},
 		getValidISOstring,
@@ -885,12 +868,24 @@ export default {
 	text-align: left;
 	border-bottom: 1px solid var(--color-border);
 	width: auto;
+	min-width: 100px;
+	width: 100px;
 }
 
 /* Specific column width styling */
 .tableColumnMetaName {
-	min-width: 200px;
-	width: auto;
+	min-width: 200px !important;
+	width: auto !important;
+}
+
+.tableColumnMetaFiles {
+	min-width: 80px !important;
+	width: 80px !important;
+	text-align: center !important;
+}
+
+.tableColumnMetaDescription {
+	text-align: center !important;
 }
 
 .viewTable th {
