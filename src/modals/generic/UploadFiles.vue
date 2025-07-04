@@ -1,12 +1,12 @@
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'uploadFiles'"
+	<NcModal v-if="navigationStore.dialog === 'uploadFiles'"
 		ref="modalRef"
 		label-id="AddAttachmentModal"
-		@close="closeModal()">
+		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
 			<h2>Bijlage toevoegen</h2>
 
@@ -144,7 +144,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="!files">
 					Geen bestanden geselecteerd
 				</div>
-
+				<div v-if="files" class="uploadSummaryContainer">
+					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} bestanden geüpload</span>
+					<div class="buttonContainer">
+						<NcButton v-if="failedCount > 0"
+							type="primary"
+							:disabled="loading"
+							@click="retryAllFailed">
+							<template #icon>
+								<Refresh :size="20" />
+							</template>
+							Retry all ({{ failedCount }})
+						</NcButton>
+					</div>
+				</div>
 				<table v-if="files" class="files-table">
 					<thead>
 						<tr class="files-table-tr">
@@ -312,6 +325,8 @@ export default {
 				multiple: true,
 			},
 			tagsLoading: false,
+			uploadedCount: 0,
+			failedCount: 0,
 		}
 	},
 	computed: {
@@ -348,17 +363,23 @@ export default {
 			},
 			deep: true,
 		},
+		success() {
+			this.updateUploadCounts()
+		},
+		error() {
+			this.updateUploadCounts()
+		},
 	},
 	mounted() {
 		objectStore.setActiveObject('attachment', [])
 		this.getAllTags()
+		this.updateUploadCounts()
 	},
 	methods: {
-		closeModal() {
-			navigationStore.setModal(null)
-			setTimeout(() => {
-				navigationStore.setModal('viewObject')
-			}, 10)
+		closeDialog() {
+			navigationStore.setDialog(null)
+			objectStore.setActiveObject('publication', objectStore.getActiveObject('publication'))
+			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
 			reset()
@@ -537,6 +558,9 @@ export default {
 				} else {
 					this.success = true
 				}
+
+				// обновляем счётчики после завершения попытки загрузки
+				this.updateUploadCounts()
 			} catch (err) {
 				// This block generally catches unexpected errors.
 				this.error = err.response?.data?.error ?? err
@@ -602,6 +626,21 @@ export default {
 					console.error('Error importing files:', err)
 					throw err
 				})
+		},
+		retryAllFailed() {
+			this.files.value.forEach(file => {
+				this.addAttachments(file)
+			})
+		},
+		updateUploadCounts() {
+			if (!this.files || !this.files.value) {
+				this.uploadedCount = 0
+				this.failedCount = 0
+				return
+			}
+			const filesArr = this.files.value
+			this.uploadedCount = filesArr.filter(f => f.status === 'uploaded').length
+			this.failedCount = filesArr.filter(f => f.status === 'failed').length
 		},
 	},
 }
@@ -784,5 +823,16 @@ div[class='modal-container']:has(.TestMappingMainModal) {
 .buttonContainer {
     display: flex;
     gap: 10px;
+}
+
+.uploadSummaryContainer{
+	margin-block-end: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.uploadSummary{
+	font-weight: bold;
 }
 </style>

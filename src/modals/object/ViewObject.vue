@@ -2747,10 +2747,8 @@ export default {
 		},
 		// Action button methods
 		uploadFiles() {
-			// Close the ViewObject modal first
-			this.closeModal()
 			// Open the upload files modal (same as in PublicationDetail.vue)
-			navigationStore.setModal('uploadFiles')
+			navigationStore.setDialog('uploadFiles')
 		},
 		shouldShowPublishAction(object) {
 			if (!object || !object['@self']) return false
