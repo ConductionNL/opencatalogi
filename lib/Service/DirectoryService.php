@@ -746,46 +746,48 @@ class DirectoryService
 
             // The directoryUrl is now actually a publications URL from getUniqueDirectories()
             $publicationsUrl = $directoryUrl;
-            
+
             if (!empty($queryParams)) {
                 $publicationsUrl .= '?' . http_build_query($queryParams);
             }
-            
+
                             // Removed redundant logging
-            
+
             // Store mapping for later source tracking
             $urlToDirectoryMap[count($promises)] = [
                 'url' => $publicationsUrl,
                 'directoryUrl' => $directoryUrl,
                 'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
             ];
-            
+
             $promises[] = new Promise(function ($resolve) use ($client, $publicationsUrl, $directoryUrl) {
                 try {
                     $response = $client->get($publicationsUrl);
                     $statusCode = $response->getStatusCode();
-                        
+
                         if ($statusCode >= 200 && $statusCode < 300) {
                             $body = $response->getBody()->getContents();
                             $data = json_decode($body, true);
-                            
+
                         if (json_last_error() === JSON_ERROR_NONE) {
                             // Handle different response formats
                             if (isset($data['results']) && is_array($data['results'])) {
                                 $resultCount = count($data['results']);
                                 // Removed redundant logging
                                 $resolve([
-                                    'success' => true, 
+                                    'success' => true,
                                     'results' => $data['results'],
-                                    'facets' => $data['facets'] ?? []
+                                    'facets' => $data['facets'] ?? [],
+									'total'  => $data['total'],
                                 ]);
                             } elseif (is_array($data)) {
                                 $resultCount = count($data);
                                 // Removed redundant logging
                                 $resolve([
-                                    'success' => true, 
+                                    'success' => true,
                                     'results' => $data,
-                                    'facets' => []
+                                    'facets' => [],
+									'total'  => $data['total'],
                                 ]);
                             } else {
                                 // Removed redundant logging
@@ -793,15 +795,15 @@ class DirectoryService
                             }
                         } else {
                             // Removed redundant logging
-                            $resolve(['success' => false, 'results' => [], 'facets' => []]);
+                            $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
                         }
                     } else {
                         // Removed redundant logging
-                        $resolve(['success' => false, 'results' => [], 'facets' => []]);
+                        $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
                     }
                     } catch (\Exception $e) {
                     // Removed redundant logging
-                    $resolve(['success' => false, 'results' => [], 'facets' => []]);
+                    $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
                     }
                 });
             }
@@ -818,15 +820,16 @@ class DirectoryService
         $seenIds = [];
         $sources = [];
         $combinedFacets = [];
-        
+		$combinedTotal = 0;
+
         foreach ($allResults as $index => $result) {
             $directoryInfo = $urlToDirectoryMap[$index];
-            
+
             if ($result['success'] && !empty($result['results'])) {
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
-                $resultCount = count($result['results']);
+                $combinedTotal += $result['total'];
                 // Removed redundant logging
-                
+
                 foreach ($result['results'] as $item) {
                     $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
                     if (!isset($seenIds[$itemId])) {
@@ -836,7 +839,7 @@ class DirectoryService
                         } else {
                             $item['@self'] = ['directory' => $directoryInfo['name']];
                         }
-                        
+
                         $combinedResults[] = $item;
                         $seenIds[$itemId] = true;
                     } else {
@@ -858,7 +861,8 @@ class DirectoryService
         return [
             'results' => $combinedResults,
             'sources' => $sources,
-            'facets' => $combinedFacets
+            'facets' => $combinedFacets,
+			'total'  => $combinedTotal,
         ];
     }
 

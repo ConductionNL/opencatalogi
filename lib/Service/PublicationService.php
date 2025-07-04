@@ -1055,17 +1055,18 @@ class PublicationService
                     $seenIds[$id] = true;
                 }
             }
-            
-            // Apply ordering to the merged and deduplicated results
-            // This is crucial for aggregation because each source may have different ordering,
-            // so we need to re-sort the combined dataset according to the requested criteria
-            // Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
-            $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
-            
-            // Apply pagination to the merged results
-            $totalResults = count($uniqueResults);
-            $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
-            
+
+			$totalResults = ($federationResult['total'] ?? 0) + $localData['total'];
+
+			// Apply ordering to the merged and deduplicated results
+			// This is crucial for aggregation because each source may have different ordering,
+			// so we need to re-sort the combined dataset according to the requested criteria
+			// Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
+			$uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
+
+			// Apply pagination to the merged results
+			$totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
+
             // Calculate the correct slice for this page
             $startIndex = ($page - 1) * $limit;
             $paginatedResults = array_slice($uniqueResults, $startIndex, $limit);
