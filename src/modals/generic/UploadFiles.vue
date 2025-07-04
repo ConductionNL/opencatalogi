@@ -628,7 +628,7 @@ export default {
 				})
 		},
 		retryAllFailed() {
-			this.files.value.forEach(file => {
+			this.files.value.filter(file => file.status === 'failed').forEach(file => {
 				this.addAttachments(file)
 			})
 		},
