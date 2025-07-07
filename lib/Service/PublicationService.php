@@ -286,7 +286,7 @@ class PublicationService
         if ($ids !== null && !empty($ids)) {
             $searchQuery['_ids'] = $ids;
         }
-        
+
         // Search objects using the new structure
         $result = $objectService->searchObjectsPaginated($searchQuery);
 
@@ -961,12 +961,12 @@ class PublicationService
             // For local results: request from page 1 with enough items
             $localQueryParams['_page'] = 1;
             $localQueryParams['_limit'] = $itemsNeeded;
-            unset($localQueryParams['offset']); // Remove offset to start from beginning
+            unset($localQueryParams['_offset']); // Remove offset to start from beginning
 
             // For federated results: request from page 1 with enough items
             $federatedQueryParams['_page'] = 1;
             $federatedQueryParams['_limit'] = $itemsNeeded;
-            unset($federatedQueryParams['offset']); // Remove offset to start from beginning
+            unset($federatedQueryParams['_offset']); // Remove offset to start from beginning
 
             // Get local results with modified parameters
             // Pass the modified parameters directly to the service
