@@ -505,14 +505,11 @@ export default {
 			try {
 				let filesToUpload = []
 
-				// only get the specific file if it is passed
 				if (specificFile) {
 					filesToUpload = [specificFile]
 				} else {
-					// filter out successful and pending files
 					filesToUpload = this.files.value.filter(file => file.status !== 'uploaded' && file.status !== 'uploading')
 
-					// filter out files too large
 					filesToUpload = filesToUpload.filter(file => !this.getTooBigFiles(file.size))
 				}
 
@@ -525,27 +522,25 @@ export default {
 					file.status = 'uploading'
 				})
 
-				let uploadError = null
-				try {
-					const response = await this.createPublicationAttachment(filesToUpload, reset, this.share)
-
-					if (response.status === 200) {
-						filesToUpload.forEach(file => {
-							file.status = 'uploaded'
+				const uploadPromises = filesToUpload.map(file => {
+					return this.createPublicationAttachment([file], reset, this.share)
+						.then(response => {
+							if (response.status === 200) {
+								file.status = 'uploaded'
+							} else {
+								file.status = 'failed'
+							}
+							return response
 						})
-					} else {
-						filesToUpload.forEach(file => {
+						.catch(error => {
 							file.status = 'failed'
+							throw error
 						})
-					}
-				} catch (error) {
-					filesToUpload.forEach(file => {
-						file.status = 'failed'
-					})
-					uploadError = error
-				}
+				})
 
-				this.getAllTags()
+				const results = await Promise.allSettled(uploadPromises)
+
+				await this.getAllTags()
 
 				const publication = objectStore.getActiveObject('publication')
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
@@ -553,16 +548,16 @@ export default {
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
 
-				if (uploadError) {
-					this.error = uploadError.response?.data?.error ?? String(uploadError)
+				const rejected = results.filter(r => r.status === 'rejected')
+				if (rejected.length > 0) {
+					const firstError = rejected[0].reason
+					this.error = firstError?.response?.data?.error ?? String(firstError)
 				} else {
 					this.success = true
 				}
 
-				// обновляем счётчики после завершения попытки загрузки
 				this.updateUploadCounts()
 			} catch (err) {
-				// This block generally catches unexpected errors.
 				this.error = err.response?.data?.error ?? err
 			} finally {
 				this.loading = false
@@ -627,10 +622,26 @@ export default {
 					throw err
 				})
 		},
-		retryAllFailed() {
-			this.files.value.filter(file => file.status === 'failed').forEach(file => {
-				this.addAttachments(file)
+		async retryAllFailed() {
+			const uploadPromises = this.files.value.filter(file => file.status === 'failed').map(file => {
+				return this.createPublicationAttachment([file], reset, this.share)
+					.then(response => {
+						if (response.status === 200) {
+							file.status = 'uploaded'
+						} else {
+							file.status = 'failed'
+						}
+						return response
+					})
+					.catch(error => {
+						file.status = 'failed'
+						throw error
+					})
 			})
+
+			await Promise.allSettled(uploadPromises)
+
+			this.updateUploadCounts()
 		},
 		updateUploadCounts() {
 			if (!this.files || !this.files.value) {
