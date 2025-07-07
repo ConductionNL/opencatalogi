@@ -8,6 +8,7 @@
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
+export type CatalogStatus = 'development' | 'beta' | 'stable' | 'obsolete'
 
 export type TCatalogi = {
     id: string
@@ -22,5 +23,3 @@ export type TCatalogi = {
     filters: Record<string, unknown>
     status: CatalogStatus
 }
-
-export type CatalogStatus = 'development' | 'beta' | 'stable' | 'obsolete'
