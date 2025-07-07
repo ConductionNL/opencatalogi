@@ -456,7 +456,6 @@
 .viewTableContainer {
   background: var(--color-main-background);
   border-radius: var(--border-radius);
-  overflow: hidden;
   box-shadow: 0 2px 4px var(--color-box-shadow);
 }
 
@@ -500,7 +499,6 @@
 
 .tableColumnConstrained {
   max-width: 150px;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -509,7 +507,6 @@
   min-width: 120px;
   max-width: 200px;
   word-wrap: break-word;
-  overflow: hidden;
 }
 
 /* Title Content Layout */
@@ -613,7 +610,6 @@
 
 /* Text Utilities */
 .textEllipsis {
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -630,7 +626,6 @@
   font-size: 0.9em;
   background: var(--color-main-background);
   border-radius: var(--border-radius);
-  overflow: hidden;
 }
 
 .statisticsTable th,

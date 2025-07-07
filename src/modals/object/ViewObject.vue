@@ -3517,4 +3517,11 @@ export default {
 	gap: 8px;
 }
 
+div :has(.viewObjectDialog) {
+	overflow: visible !important;
+}
+
+div :has(.mx-calendar-content) {
+	box-sizing: content-box !important;
+}
 </style>
