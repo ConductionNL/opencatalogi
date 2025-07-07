@@ -152,9 +152,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							:disabled="loading"
 							@click="retryAllFailed">
 							<template #icon>
-								<Refresh :size="20" />
+								<Refresh :size="20" :class="{ 'loadingIcon': loading }" />
 							</template>
-							Retry all ({{ failedCount }})
+							{{ loading ? 'In progress...' : 'Retry all (' + failedCount + ')' }}
 						</NcButton>
 					</div>
 				</div>
@@ -480,7 +480,7 @@ export default {
 		saveTags(file, editedTags) {
 			file.tags = editedTags
 			file.status = 'pending'
-			this.addAttachments()
+			this.addAttachments(file)
 
 			this.editingTags = null
 			this.editedTags = []
@@ -508,7 +508,7 @@ export default {
 				if (specificFile) {
 					filesToUpload = [specificFile]
 				} else {
-					filesToUpload = this.files.value.filter(file => file.status !== 'uploaded' && file.status !== 'uploading')
+					filesToUpload = this.files.value.filter(file => file.status !== 'uploaded' && file.status !== 'uploading' && file.status !== 'failed')
 
 					filesToUpload = filesToUpload.filter(file => !this.getTooBigFiles(file.size))
 				}
@@ -623,7 +623,9 @@ export default {
 				})
 		},
 		async retryAllFailed() {
+			this.loading = true
 			const uploadPromises = this.files.value.filter(file => file.status === 'failed').map(file => {
+				file.status = 'uploading'
 				return this.createPublicationAttachment([file], reset, this.share)
 					.then(response => {
 						if (response.status === 200) {
@@ -642,6 +644,7 @@ export default {
 			await Promise.allSettled(uploadPromises)
 
 			this.updateUploadCounts()
+			this.loading = false
 		},
 		updateUploadCounts() {
 			if (!this.files || !this.files.value) {
@@ -845,5 +848,18 @@ div[class='modal-container']:has(.TestMappingMainModal) {
 
 .uploadSummary{
 	font-weight: bold;
+}
+
+.loadingIcon {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }
 </style>
