@@ -58,6 +58,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					input-label="Schema's"
 					:disabled="objectStore.isLoading('catalog')"
 					multiple />
+				<NcSelect v-model="catalogi.status"
+					:options="statusOptions"
+					:label-attribute="'label'"
+					input-label="Status"
+					:disabled="objectStore.isLoading('catalog')" />
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -106,11 +111,18 @@ export default {
 				registers: [],
 				schemas: [],
 				filters: {},
+				status: { id: 'development', label: 'Development' },
 			},
 			selectedOrganization: null,
 			selectedRegisters: [],
 			selectedSchemas: [],
 			hasUpdated: false,
+			statusOptions: [
+				{ id: 'development', label: 'Development' },
+				{ id: 'beta', label: 'Beta' },
+				{ id: 'stable', label: 'Stable' },
+				{ id: 'obsolete', label: 'Obsolete' },
+			],
 		}
 	},
 	computed: {
@@ -154,8 +166,10 @@ export default {
 			const registers = this.selectedRegisters.map(register => register.id)
 			const schemas = this.selectedSchemas.map(schema => schema.id)
 
+			const status = typeof this.catalogi.status === 'object' ? this.catalogi.status.id : this.catalogi.status.toLowerCase()
 			const catalogiItem = new Catalogi({
 				...this.catalogi,
+				status,
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
@@ -181,6 +195,7 @@ export default {
 				this.catalogi = {
 					...activeCatalog,
 					filters: Array.isArray(activeCatalog.filters) ? {} : activeCatalog.filters || {},
+					status: this.statusOptions.find(opt => opt.id === (activeCatalog.status || '').toLowerCase()) || this.statusOptions[0],
 				}
 
 				// Find and set the selected organization
@@ -215,6 +230,7 @@ export default {
 				registers: [],
 				schemas: [],
 				filters: {},
+				status: { id: 'development', label: 'Development' },
 			}
 			this.selectedOrganization = null
 			this.selectedRegisters = []
@@ -227,8 +243,10 @@ export default {
 			const registers = this.selectedRegisters.map(register => register.id)
 			const schemas = this.selectedSchemas.map(schema => schema.id)
 
+			const status = typeof this.catalogi.status === 'object' ? this.catalogi.status.id : this.catalogi.status.toLowerCase()
 			const catalogiItem = new Catalogi({
 				...this.catalogi,
+				status,
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,

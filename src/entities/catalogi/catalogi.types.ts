@@ -20,4 +20,7 @@ export type TCatalogi = {
     registers: string[]
     schemas: string[]
     filters: Record<string, unknown>
+    status: CatalogStatus
 }
+
+export type CatalogStatus = 'development' | 'beta' | 'stable' | 'obsolete'

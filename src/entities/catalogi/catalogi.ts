@@ -20,6 +20,7 @@ export class Catalogi implements TCatalogi {
 	public description: string
 	public image: string
 	public listed: boolean
+	public status: 'development' | 'beta' | 'stable' | 'obsolete'
 	public organization: string
 	public registers: string[]
 	public schemas: string[]
@@ -37,6 +38,7 @@ export class Catalogi implements TCatalogi {
 		this.description = data?.description || ''
 		this.image = data?.image || ''
 		this.listed = data?.listed || false
+		this.status = (data?.status as 'development' | 'beta' | 'stable' | 'obsolete') || 'development'
 		this.organization = data.organization || ''
 		this.registers = (Array.isArray(data.registers) && data.registers) || []
 		this.schemas = (Array.isArray(data.schemas) && data.schemas) || []
@@ -54,6 +56,7 @@ export class Catalogi implements TCatalogi {
 			description: z.string().max(2555, 'kan niet langer dan 2555 zijn'),
 			image: z.string().max(255, 'kan niet langer dan 255 zijn'),
 			listed: z.boolean(),
+			status: z.enum(['development', 'beta', 'stable', 'obsolete']),
 			organization: z.number().or(z.string()).or(z.null()),
 			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
