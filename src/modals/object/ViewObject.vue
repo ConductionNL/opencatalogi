@@ -158,6 +158,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<NcDateTimePicker
 													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 													:key="`datetime-${key}-edit`"
+													:append-to-body="true"
+													:popup-class="'view-object-datepicker'"
+													:popup-style="{ zIndex: 12000 }"
 													:value="getDateTimePickerValue(key, value)"
 													:label="getPropertyDisplayName(key)"
 													:type="getDateTimePickerType(key)"
@@ -363,6 +366,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<NcDateTimePicker
 																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 																:key="`datetime-${key}`"
+																:append-to-body="true"
+																:popup-class="'view-object-datepicker'"
+																:popup-style="{ zIndex: 12000 }"
 																:value="getDateTimePickerValue(key, value)"
 																:label="getPropertyDisplayName(key)"
 																:type="getDateTimePickerType(key)"
@@ -3532,11 +3538,7 @@ export default {
 	gap: 8px;
 }
 
-div :has(.viewObjectDialog) {
-	overflow: visible !important;
-}
-
-div :has(.mx-calendar-content) {
-	box-sizing: content-box !important;
+.view-object-datepicker {
+	z-index: 12000 !important;
 }
 </style>
