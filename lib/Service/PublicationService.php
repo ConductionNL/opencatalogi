@@ -218,7 +218,7 @@ class PublicationService
         //@todo this is a temporary fix to map the parameters to _extend format
         // Define parameters that should be mapped to _extend format
         $parametersToMap = ['extend', 'fields', 'facets','order','page','limit'];
-        
+
         // Map specified parameters to _extend format and unset originals
         foreach ($parametersToMap as $param) {
             if (isset($searchQuery[$param])) {
@@ -237,12 +237,12 @@ class PublicationService
         // Directory and catalogs are virtual fields injected at runtime, not database columns
         $requestedDirectoryFacets = false;
         $requestedCatalogFacets = false;
-        
+
         if (isset($searchQuery['_facets']['@self']['directory'])) {
             $requestedDirectoryFacets = true;
             unset($searchQuery['_facets']['@self']['directory']);
         }
-        
+
         if (isset($searchQuery['_facets']['@self']['catalogs'])) {
             $requestedCatalogFacets = true;
             unset($searchQuery['_facets']['@self']['catalogs']);
@@ -300,7 +300,7 @@ class PublicationService
 
         return $result;
     }
-    
+
     /**
      * Get external catalogs from listings stored in the directory service
      *
@@ -316,15 +316,15 @@ class PublicationService
             // Get the directory (which includes listings)
             $directoryResult = $this->directoryService->getDirectory();
             $listings = $directoryResult['results'] ?? [];
-            
+
             $externalCatalogs = [];
             $seenCatalogs = [];
-            
+
             foreach ($listings as $listing) {
                 // Extract catalog information from listing
                 $catalogId = $listing['catalog'] ?? $listing['id'] ?? null;
                 $catalogTitle = $listing['title'] ?? $catalogId ?? 'Unknown Catalog';
-                
+
                 if ($catalogId && !isset($seenCatalogs[$catalogId])) {
                     $externalCatalogs[] = [
                         'key' => $catalogId,
@@ -333,9 +333,9 @@ class PublicationService
                     $seenCatalogs[$catalogId] = true;
                 }
             }
-            
+
             return $externalCatalogs;
-            
+
         } catch (\Exception $e) {
             // If we can't get external catalog information, return empty array
             return [];
@@ -361,12 +361,12 @@ class PublicationService
             if (!isset($existingFacets['@self'])) {
                 $existingFacets['@self'] = [];
             }
-            
+
             // Add directory facets if requested
             if ($includeDirectoryFacets) {
                 // Get unique directories from the directory service
                 $uniqueDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
-                
+
                 // Add local directory
                 $directoryBuckets = [
                     [
@@ -375,7 +375,7 @@ class PublicationService
                         'results' => 1 // We'll count this properly later if needed
                     ]
                 ];
-                
+
                 // Add federated directories
                 foreach ($uniqueDirectories as $directoryUrl) {
                     $directoryName = parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl;
@@ -385,36 +385,36 @@ class PublicationService
                         'results' => 1 // We'll count this properly later if needed
                     ];
                 }
-                
+
                 $existingFacets['@self']['directory'] = [
                     'type' => 'terms',
                     'buckets' => $directoryBuckets
                 ];
             }
-            
+
             // Add catalog facets if requested
             if ($includeCatalogFacets) {
                 $catalogBuckets = [];
-                
+
                 // Get local catalogs
                 $localCatalogs = $this->getLocalCatalogs();
                 foreach ($localCatalogs as $catalog) {
                     $catalogKey = $catalog['id'] ?: ($catalog['title'] ?: 'unknown');
                     $catalogLabel = $catalog['title'] ?: $catalog['id'] ?: 'unknown';
-                    
+
                     $catalogBuckets[] = [
                         'key' => $catalogKey,
                         'label' => $catalogLabel,
                         'results' => 1 // We'll count this properly later if needed
                     ];
                 }
-                
+
                 // Get external catalogs from listings
                 $externalCatalogs = $this->getExternalCatalogsFromListings();
                 foreach ($externalCatalogs as $catalog) {
                     $catalogKey = $catalog['key'];
                     $catalogLabel = $catalog['label'];
-                    
+
                     // Check if this catalog is already in our list to avoid duplicates
                     $exists = false;
                     foreach ($catalogBuckets as $existingCatalog) {
@@ -423,7 +423,7 @@ class PublicationService
                             break;
                         }
                     }
-                    
+
                     if (!$exists) {
                         $catalogBuckets[] = [
                             'key' => $catalogKey,
@@ -432,7 +432,7 @@ class PublicationService
                         ];
                     }
                 }
-                
+
                 // If no catalogs found, add a default entry
                 if (empty($catalogBuckets)) {
                     $catalogBuckets[] = [
@@ -441,15 +441,15 @@ class PublicationService
                         'results' => 1
                     ];
                 }
-                
+
                 $existingFacets['@self']['catalogs'] = [
                     'type' => 'terms',
                     'buckets' => $catalogBuckets
                 ];
             }
-            
+
             return $existingFacets;
-            
+
         } catch (\Exception $e) {
             // If we can't get virtual field information, return existing facets unchanged
             return $existingFacets;
@@ -772,7 +772,7 @@ class PublicationService
      *
      * This method handles both local and aggregated search results when the _aggregate
      * parameter is not set to false. It supports faceting when _facetable parameter is provided.
-     * 
+     *
      * AGGREGATION FEATURES:
      * - Proper pagination: Collects sufficient data from all sources, merges and deduplicates,
      *   then applies pagination to ensure consistent totals and page counts
@@ -793,38 +793,38 @@ class PublicationService
         $limit = (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
         $page = (int) ($queryParams['_page'] ?? $queryParams['page'] ?? 1);
         $offset = (int) ($queryParams['offset'] ?? (($page - 1) * $limit));
-        
+
         // Ensure minimum values
         $limit = max(1, $limit);
         $page = max(1, $page);
         $offset = max(0, $offset);
-        
+
         // Add pagination parameters to query
         $queryParams['_limit'] = $limit;
         $queryParams['_page'] = $page;
         if ($offset > 0) {
-            $queryParams['offset'] = $offset;
+            $queryParams['_offset'] = $offset;
         }
-        
+
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
         $aggregate = $queryParams['_aggregate'] ?? 'true';
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-        
+
         // Check if faceting is requested
         $facetable = $queryParams['_facetable'] ?? null;
         $shouldIncludeFacets = ($facetable === 'true' || $facetable === true);
-        
+
         // Check if virtual field facets were specifically requested
         $requestedDirectoryFacets = isset($queryParams['_facets']['@self']['directory']);
         $requestedCatalogFacets = isset($queryParams['_facets']['@self']['catalogs']);
-        
+
         // Always add _extend parameters for schema and register information
         if (!isset($queryParams['_extend'])) {
             $queryParams['_extend'] = [];
         } elseif (!is_array($queryParams['_extend'])) {
             $queryParams['_extend'] = [$queryParams['_extend']];
         }
-        
+
         // Ensure @self.schema and @self.register are always included
         if (!in_array('@self.schema', $queryParams['_extend'])) {
             $queryParams['_extend'][] = '@self.schema';
@@ -832,11 +832,11 @@ class PublicationService
         if (!in_array('@self.register', $queryParams['_extend'])) {
             $queryParams['_extend'][] = '@self.register';
         }
-        
+
         // Get local publications first
         $localResponse = $this->index(null, $queryParams);
         $localData = json_decode($localResponse->render(), true);
-        
+
         // Add catalog and directory information to local publications
         // @todo This adds ~200ms overhead - consider making optional via query parameter
         $localResults = $localData['results'] ?? [];
@@ -846,7 +846,7 @@ class PublicationService
                 if (isset($publication['@self']) && is_array($publication['@self'])) {
                     // Add directory information for faceting
                     $publication['@self']['directory'] = 'local';
-                    
+
                     // Add catalog information if available
                     if (!empty($localCatalogs)) {
                         $publication['@self']['catalogs'] = $localCatalogs;
@@ -861,11 +861,11 @@ class PublicationService
             }
             unset($publication); // Break the reference
         }
-        
+
         // Calculate pagination info
         $totalResults = ($localData['total'] ?? 0);
         $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
-        
+
         // Initialize response structure with pagination
         $responseData = [
             'results' => $localResults,
@@ -875,20 +875,20 @@ class PublicationService
             'page' => $page,
             'pages' => $totalPages
         ];
-        
+
         // Add pagination links
         if ($page < $totalPages) {
             $nextParams = $requestParams;
             $nextParams['_page'] = $page + 1;
             $responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
         }
-        
+
         if ($page > 1) {
             $prevParams = $requestParams;
             $prevParams['_page'] = $page - 1;
             $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
         }
-        
+
         // Add facets and facetable from local service if present
         if (isset($localData['facets'])) {
             // Check if facets are nested (unwrap if needed)
@@ -896,12 +896,12 @@ class PublicationService
             if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
                 $facetsData = $facetsData['facets'];
             }
-            
+
             // Add virtual field facets if they were requested
             if ($requestedDirectoryFacets || $requestedCatalogFacets) {
                 $facetsData = $this->addVirtualFieldFacets($facetsData, $requestedDirectoryFacets, $requestedCatalogFacets);
             }
-            
+
             $responseData['facets'] = $facetsData;
         } elseif ($requestedDirectoryFacets || $requestedCatalogFacets) {
             // If virtual field facets were requested but no other facets exist, create them
@@ -913,66 +913,66 @@ class PublicationService
             // If faceting is requested but no facetable data exists, create basic structure
             $responseData['facetable'] = $this->mergeFacetableData([], []);
         }
-        
+
         // If aggregation is disabled, return only local results
         if (!$shouldAggregate) {
             return $responseData;
         }
-        
+
         try {
             /**
              * AGGREGATION PAGINATION FIX
-             * 
+             *
              * When aggregating results from multiple sources (local + federated), we cannot
              * simply request the same page from each source and merge the results, because:
-             * 
+             *
              * 1. Each source has different data, so page 2 from Source A + page 2 from Source B
              *    does not equal page 2 of the merged dataset
-             * 2. This causes inconsistent totals between pages (e.g., page 1 shows total=22, 
+             * 2. This causes inconsistent totals between pages (e.g., page 1 shows total=22,
              *    page 2 shows total=20)
              * 3. Users may see missing results or empty pages
-             * 
+             *
              * SOLUTION:
              * 1. Calculate how many items we need: requestedPage * itemsPerPage
              * 2. Request that many items from page 1 of ALL sources
              * 3. Merge and deduplicate all collected results
              * 4. Apply pagination to the merged dataset to get the correct slice
-             * 
+             *
              * Example: User requests page 2 with limit 20
              * - We request 40 items (2*20) from page 1 of each source
              * - Merge all results, remove duplicates
              * - Take items 21-40 from the merged list (page 2)
-             * 
+             *
              * This ensures consistent pagination and totals across all pages.
              */
-            
+
             // For aggregation, we need to collect enough data from all sources
             // to properly paginate the merged results
-            
+
             // Calculate how many items we need to collect from each source
             // to ensure we have enough data for the requested page
             // Example: page 3 with limit 10 = need 30 items to get items 21-30
             $itemsNeeded = $page * $limit;
-            
+
             // Prepare query parameters for fetching from sources
             $localQueryParams = $queryParams;
             $federatedQueryParams = $queryParams;
-            
+
             // For local results: request from page 1 with enough items
             $localQueryParams['_page'] = 1;
             $localQueryParams['_limit'] = $itemsNeeded;
-            unset($localQueryParams['offset']); // Remove offset to start from beginning
-            
+            unset($localQueryParams['_offset']); // Remove offset to start from beginning
+
             // For federated results: request from page 1 with enough items
             $federatedQueryParams['_page'] = 1;
             $federatedQueryParams['_limit'] = $itemsNeeded;
-            unset($federatedQueryParams['offset']); // Remove offset to start from beginning
-            
+            unset($federatedQueryParams['_offset']); // Remove offset to start from beginning
+
             // Get local results with modified parameters
             // Pass the modified parameters directly to the service
             $allLocalResponse = $this->index(null, $localQueryParams);
             $allLocalData = json_decode($allLocalResponse->render(), true);
-            
+
             // Add catalog and directory information to local publications
             // @todo This adds ~200ms overhead - consider making optional via query parameter
             $allLocalResults = $allLocalData['results'] ?? [];
@@ -982,7 +982,7 @@ class PublicationService
                     if (isset($publication['@self']) && is_array($publication['@self'])) {
                         // Add directory information for faceting
                         $publication['@self']['directory'] = 'local';
-                        
+
                         // Add catalog information if available
                         if (!empty($localCatalogs)) {
                             $publication['@self']['catalogs'] = $localCatalogs;
@@ -997,7 +997,7 @@ class PublicationService
                 }
                 unset($publication); // Break the reference
             }
-            
+
             // Get federated results with modified parameters
             // Prepare query parameters for federation - exclude pagination and directory filter params since aggregation handles those
             $federatedFilterParams = array_filter($federatedQueryParams, function($key) {
@@ -1005,7 +1005,7 @@ class PublicationService
                 if (in_array($key, ['_limit', '_page', '_offset', 'offset'])) {
                     return false;
                 }
-                
+
                 // Exclude virtual field facet filters when querying external directories
                 // since these are handled locally after aggregation
                 if (strpos($key, '_facets[@self][directory]') !== false) {
@@ -1020,10 +1020,10 @@ class PublicationService
                 if (strpos($key, '_facets[catalogs]') !== false) {
                     return false;
                 }
-                
+
                 return true;
             }, ARRAY_FILTER_USE_KEY);
-            
+
             // Also filter out virtual field facets from the nested _facets array structure
             if (isset($federatedFilterParams['_facets']['@self']['directory'])) {
                 unset($federatedFilterParams['_facets']['@self']['directory']);
@@ -1031,20 +1031,20 @@ class PublicationService
             if (isset($federatedFilterParams['_facets']['@self']['catalogs'])) {
                 unset($federatedFilterParams['_facets']['@self']['catalogs']);
             }
-            
+
             // Pass query parameters in the format expected by DirectoryService
             $federationGuzzleConfig = [
                 'query_params' => $federatedFilterParams
             ];
-            
+
             $federationResult = $this->directoryService->getPublications($federationGuzzleConfig);
-            
+
             // Merge local and federated results
             $allResults = array_merge(
                 $allLocalResults,
                 $federationResult['results'] ?? []
             );
-            
+
             // Remove duplicates based on ID
             $uniqueResults = [];
             $seenIds = [];
@@ -1055,21 +1055,22 @@ class PublicationService
                     $seenIds[$id] = true;
                 }
             }
-            
-            // Apply ordering to the merged and deduplicated results
-            // This is crucial for aggregation because each source may have different ordering,
-            // so we need to re-sort the combined dataset according to the requested criteria
-            // Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
-            $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
-            
-            // Apply pagination to the merged results
-            $totalResults = count($uniqueResults);
-            $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
-            
+
+			$totalResults = ($federationResult['total'] ?? 0) + $localData['total'];
+
+			// Apply ordering to the merged and deduplicated results
+			// This is crucial for aggregation because each source may have different ordering,
+			// so we need to re-sort the combined dataset according to the requested criteria
+			// Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
+			$uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
+
+			// Apply pagination to the merged results
+			$totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
+
             // Calculate the correct slice for this page
             $startIndex = ($page - 1) * $limit;
             $paginatedResults = array_slice($uniqueResults, $startIndex, $limit);
-            
+
             // Update response with paginated combined data
             $responseData = [
                 'results' => $paginatedResults,
@@ -1079,25 +1080,25 @@ class PublicationService
                 'page' => $page,
                 'pages' => $totalPages
             ];
-            
+
             // Update pagination links
             if ($page < $totalPages) {
                 $nextParams = $requestParams;
                 $nextParams['_page'] = $page + 1;
                 $responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
             }
-            
+
             if ($page > 1) {
                 $prevParams = $requestParams;
                 $prevParams['_page'] = $page - 1;
                 $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
             }
-            
+
             // Merge facets and facetable data if present
             if (isset($allLocalData['facets']) || isset($federationResult['facets'])) {
                 $localFacets = $allLocalData['facets'] ?? [];
                 $federatedFacets = $federationResult['facets'] ?? [];
-                
+
                 // Check if facets are nested and unwrap if needed
                 if (isset($localFacets['facets']) && is_array($localFacets['facets'])) {
                     $localFacets = $localFacets['facets'];
@@ -1105,31 +1106,31 @@ class PublicationService
                 if (isset($federatedFacets['facets']) && is_array($federatedFacets['facets'])) {
                     $federatedFacets = $federatedFacets['facets'];
                 }
-                
+
                 $mergedFacets = $this->mergeFacetsData($localFacets, $federatedFacets);
-                
+
                 // Add virtual field facets if they were requested
                 if ($requestedDirectoryFacets || $requestedCatalogFacets) {
                     $mergedFacets = $this->addVirtualFieldFacets($mergedFacets, $requestedDirectoryFacets, $requestedCatalogFacets);
                 }
-                
+
                 $responseData['facets'] = $mergedFacets;
             } elseif ($requestedDirectoryFacets || $requestedCatalogFacets) {
                 // If virtual field facets were requested but no other facets exist, create them
                 $responseData['facets'] = $this->addVirtualFieldFacets([], $requestedDirectoryFacets, $requestedCatalogFacets);
             }
-            
+
             if (isset($allLocalData['facetable']) || isset($federationResult['facetable'])) {
                 $responseData['facetable'] = $this->mergeFacetableData(
-                    $allLocalData['facetable'] ?? [], 
+                    $allLocalData['facetable'] ?? [],
                     $federationResult['facetable'] ?? []
                 );
             } elseif ($shouldIncludeFacets) {
                 $responseData['facetable'] = $this->mergeFacetableData([], []);
             }
-            
+
             return $responseData;
-            
+
         } catch (\Exception $e) {
             // If aggregation fails, return local results only
             return $responseData;
@@ -1175,8 +1176,8 @@ class PublicationService
             // Convert catalog objects to arrays and filter for public use
             $catalogArray = [];
             foreach ($catalogs as $catalog) {
-                $catalogData = $catalog instanceof \OCP\AppFramework\Db\Entity 
-                    ? $catalog->jsonSerialize() 
+                $catalogData = $catalog instanceof \OCP\AppFramework\Db\Entity
+                    ? $catalog->jsonSerialize()
                     : $catalog;
 
                 // Extract the relevant catalog information
@@ -1216,7 +1217,7 @@ class PublicationService
         // In the future, we could implement more sophisticated merging
         return !empty($localFacets) ? $localFacets : $federatedFacets;
     }
-    
+
     /**
      * Simple merge function for facetable metadata from multiple sources.
      *
@@ -1228,12 +1229,12 @@ class PublicationService
     {
         // Start with local facetable as base
         $mergedFacetable = !empty($localFacetable) ? $localFacetable : $federatedFacetable;
-        
+
         // Ensure @self section exists
         if (!isset($mergedFacetable['@self'])) {
             $mergedFacetable['@self'] = [];
         }
-        
+
         // Add directory facet for filtering by catalog source
         // This will be populated dynamically based on available directories
         $mergedFacetable['@self']['directory'] = [
@@ -1259,7 +1260,7 @@ class PublicationService
                 ]
             ]
         ];
-        
+
         // Add catalogs facet for filtering by catalog
         // This will be populated dynamically based on available catalogs
         $mergedFacetable['@self']['catalogs'] = [
@@ -1280,7 +1281,7 @@ class PublicationService
                 ]
             ]
         ];
-        
+
         return $mergedFacetable;
     }
 
@@ -1299,16 +1300,16 @@ class PublicationService
     {
         // Extract ordering parameters
         $orderParams = $queryParams['_order'] ?? $queryParams['order'] ?? [];
-        
+
         if (empty($orderParams) || !is_array($orderParams)) {
             return $results;
         }
-        
+
         // Convert single field ordering to array format for consistency
         if (!isset($orderParams[0])) {
             $orderParams = [$orderParams];
         }
-        
+
         // Apply multiple field ordering (PHP's usort is stable for equal values)
         usort($results, function($a, $b) use ($orderParams) {
             foreach ($orderParams as $field => $direction) {
@@ -1323,28 +1324,28 @@ class PublicationService
                     $fieldName = $field;
                     $sortDirection = strtoupper($direction ?? 'ASC');
                 }
-                
+
                 // Extract values for comparison
                 $valueA = $this->extractFieldValue($a, $fieldName);
                 $valueB = $this->extractFieldValue($b, $fieldName);
-                
+
                 // Compare values
                 $comparison = $this->compareValues($valueA, $valueB);
-                
+
                 if ($comparison !== 0) {
                     // Return result based on sort direction
                     return $sortDirection === 'DESC' ? -$comparison : $comparison;
                 }
-                
+
                 // If values are equal, continue to next sort field
             }
-            
+
             return 0; // All compared fields are equal
         });
-        
+
         return $results;
     }
-    
+
     /**
      * Extract field value from a result object using dot notation
      *
@@ -1358,17 +1359,17 @@ class PublicationService
     {
         $parts = explode('.', $fieldPath);
         $value = $result;
-        
+
         foreach ($parts as $part) {
             if (!is_array($value) || !isset($value[$part])) {
                 return null;
             }
             $value = $value[$part];
         }
-        
+
         return $value;
     }
-    
+
     /**
      * Compare two values for sorting
      *
@@ -1384,22 +1385,22 @@ class PublicationService
         if ($a === null && $b === null) return 0;
         if ($a === null) return -1;
         if ($b === null) return 1;
-        
+
         // Handle date strings
         if (is_string($a) && is_string($b)) {
             $dateA = strtotime($a);
             $dateB = strtotime($b);
-            
+
             if ($dateA !== false && $dateB !== false) {
                 return $dateA <=> $dateB;
             }
         }
-        
+
         // Handle numeric values
         if (is_numeric($a) && is_numeric($b)) {
             return $a <=> $b;
         }
-        
+
         // Handle string comparison
         return strcmp((string)$a, (string)$b);
     }
@@ -1421,13 +1422,13 @@ class PublicationService
         // Try to get the publication locally first
         $localResponse = $this->show(id: $id);
         $localData = json_decode($localResponse->render(), true);
-        
+
         // If found locally, return it (unless we want to also search federally for additional data)
         if ($localResponse->getStatus() === 200 && !empty($localData)) {
             // Check if aggregation is enabled for enrichment
             $aggregate = $queryParams['_aggregate'] ?? 'true';
             $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-            
+
             if (!$shouldAggregate) {
                 return [
                     'success' => true,
@@ -1435,7 +1436,7 @@ class PublicationService
                     'status' => 200
                 ];
             }
-            
+
             // Add local catalog information to @self.catalogs for local publications
             // @todo This adds ~200ms overhead - consider making optional via query parameter
             if (isset($localData['@self']) && is_array($localData['@self'])) {
@@ -1444,18 +1445,18 @@ class PublicationService
                     $localData['@self']['catalogs'] = $localCatalogs;
                 }
             }
-            
+
             return [
                 'success' => true,
                 'data' => $localData,
                 'status' => 200
             ];
         }
-        
+
         // Check if aggregation is enabled for federation search
         $aggregate = $queryParams['_aggregate'] ?? 'true';
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-        
+
         // If aggregation is disabled and not found locally, return 404
         if (!$shouldAggregate) {
             return [
@@ -1464,11 +1465,11 @@ class PublicationService
                 'status' => 404
             ];
         }
-        
+
         try {
             // Search in federated catalogs
             $guzzleConfig = [];
-            
+
             // Allow timeout configuration via query parameter
             if (isset($queryParams['timeout'])) {
                 $timeout = (int) $queryParams['timeout'];
@@ -1476,7 +1477,7 @@ class PublicationService
                     $guzzleConfig['timeout'] = $timeout;
                 }
             }
-            
+
             // Allow connect timeout configuration via query parameter
             if (isset($queryParams['connect_timeout'])) {
                 $connectTimeout = (int) $queryParams['connect_timeout'];
@@ -1484,32 +1485,32 @@ class PublicationService
                     $guzzleConfig['connect_timeout'] = $connectTimeout;
                 }
             }
-            
+
             // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
             $guzzleConfig['query_params'] = $queryParams;
 
             // Get publication from directory service
             $federatedResult = $this->directoryService->getPublication($id, $guzzleConfig);
-            
+
             if (!empty($federatedResult) && isset($federatedResult['result'])) {
                 // Merge the result with source information
                 $responseData = $federatedResult['result'];
                 $responseData['sources'] = $federatedResult['source'] ?? [];
-                
+
                 return [
                     'success' => true,
                     'data' => $responseData,
                     'status' => 200
                 ];
             }
-            
+
             // Not found in federated catalogs either, return 404
             return [
                 'success' => false,
                 'error' => 'Publication not found',
                 'status' => 404
             ];
-            
+
         } catch (\Exception $e) {
             // If federation search fails, return the original local response (likely 404)
             return [
@@ -1536,11 +1537,11 @@ class PublicationService
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
         $aggregate = $queryParams['_aggregate'] ?? 'true';
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-        
+
         // Get local results first
         $localResponse = $this->used(id: $id);
         $localData = json_decode($localResponse->render(), true);
-        
+
         // If aggregation is disabled, return only local results
         if (!$shouldAggregate) {
             return [
@@ -1549,11 +1550,11 @@ class PublicationService
                 'status' => 200
             ];
         }
-        
+
         try {
             // Get optional Guzzle configuration from query parameters
             $guzzleConfig = [];
-            
+
             // Allow timeout configuration via query parameter
             if (isset($queryParams['timeout'])) {
                 $timeout = (int) $queryParams['timeout'];
@@ -1561,7 +1562,7 @@ class PublicationService
                     $guzzleConfig['timeout'] = $timeout;
                 }
             }
-            
+
             // Allow connect timeout configuration via query parameter
             if (isset($queryParams['connect_timeout'])) {
                 $connectTimeout = (int) $queryParams['connect_timeout'];
@@ -1569,13 +1570,13 @@ class PublicationService
                     $guzzleConfig['connect_timeout'] = $connectTimeout;
                 }
             }
-            
+
             // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
             $guzzleConfig['query_params'] = $queryParams;
 
             // Get federated results from directory service
             $federatedResults = $this->directoryService->getUsed($id, $guzzleConfig);
-            
+
             // Merge local and federated results
             $mergedResults = [
                 'results' => array_merge(
@@ -1587,13 +1588,13 @@ class PublicationService
                     $federatedResults['sources'] ?? []
                 )
             ];
-            
+
             return [
                 'success' => true,
                 'data' => $mergedResults,
                 'status' => 200
             ];
-            
+
         } catch (\Exception $e) {
             // If federation fails, return local results
             return [
@@ -1620,11 +1621,11 @@ class PublicationService
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
         $aggregate = $queryParams['_aggregate'] ?? 'true';
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-        
+
         // Get local results first
         $localResponse = $this->uses(id: $id);
         $localData = json_decode($localResponse->render(), true);
-        
+
         // If aggregation is disabled, return only local results
         if (!$shouldAggregate) {
             return [
@@ -1633,11 +1634,11 @@ class PublicationService
                 'status' => 200
             ];
         }
-        
+
         try {
             // Get optional Guzzle configuration from query parameters
             $guzzleConfig = [];
-            
+
             // Allow timeout configuration via query parameter
             if (isset($queryParams['timeout'])) {
                 $timeout = (int) $queryParams['timeout'];
@@ -1645,7 +1646,7 @@ class PublicationService
                     $guzzleConfig['timeout'] = $timeout;
                 }
             }
-            
+
             // Allow connect timeout configuration via query parameter
             if (isset($queryParams['connect_timeout'])) {
                 $connectTimeout = (int) $queryParams['connect_timeout'];
@@ -1653,7 +1654,7 @@ class PublicationService
                     $guzzleConfig['connect_timeout'] = $connectTimeout;
                 }
             }
-            
+
             // Pass through current query parameters (DirectoryService will handle _aggregate and _extend)
             $guzzleConfig['query_params'] = $queryParams;
 
@@ -1665,7 +1666,7 @@ class PublicationService
                 'data' => $localData,
                 'status' => 200
             ];
-            
+
         } catch (\Exception $e) {
             // If federation fails, return local results
             return [

@@ -158,6 +158,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<NcDateTimePicker
 													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 													:key="`datetime-${key}-edit`"
+													:append-to-body="true"
+													:popup-class="'view-object-datepicker'"
+													:popup-style="{ zIndex: 12000 }"
 													:value="getDateTimePickerValue(key, value)"
 													:label="getPropertyDisplayName(key)"
 													:type="getDateTimePickerType(key)"
@@ -187,6 +190,32 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													height="400px"
 													@load="(editor) => markdownEditors[key] = editor"
 													@blur="updateMarkdownValue(key, markdownEditors[key])" />
+
+												<!-- Themes properties -->
+												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
+													<NcSelect
+														v-model="themeFormData"
+														:options="themeOptions"
+														input-label="Themes"
+														multiple
+														:placeholder="getPropertyDisplayName(key)" />
+												</div>
+												<!-- Array properties -->
+												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
+													<NcTextField
+														ref="propertyValueInput"
+														:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
+														:type="getPropertyInputType(key)"
+														:placeholder="getPropertyDisplayName(key)"
+														:min="getPropertyMinimum(key)"
+														:max="getPropertyMaximum(key)"
+														:step="getPropertyStep(key)"
+														@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
+													<InformationOutline
+														v-tooltip="'Array values should be separated by commas'"
+														:size="25"
+														class="info-icon" />
+												</div>
 
 												<!-- Text/Number properties -->
 												<NcTextField
@@ -337,6 +366,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<NcDateTimePicker
 																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 																:key="`datetime-${key}`"
+																:append-to-body="true"
+																:popup-class="'view-object-datepicker'"
+																:popup-style="{ zIndex: 12000 }"
 																:value="getDateTimePickerValue(key, value)"
 																:label="getPropertyDisplayName(key)"
 																:type="getDateTimePickerType(key)"
@@ -366,6 +398,32 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																height="400px"
 																@load="(editor) => markdownEditors[key] = editor"
 																@blur="updateMarkdownValue(key, markdownEditors[key])" />
+
+															<!-- Themes properties -->
+															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
+																<NcSelect
+																	v-model="themeFormData"
+																	:options="themeOptions"
+																	input-label="Themes"
+																	multiple
+																	:placeholder="getPropertyDisplayName(key)" />
+															</div>
+															<!-- Array properties -->
+															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
+																<NcTextField
+																	ref="propertyValueInput"
+																	:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
+																	:type="getPropertyInputType(key)"
+																	:placeholder="getPropertyDisplayName(key)"
+																	:min="getPropertyMinimum(key)"
+																	:max="getPropertyMaximum(key)"
+																	:step="getPropertyStep(key)"
+																	@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
+																<InformationOutline
+																	v-tooltip="'Array values should be separated by commas'"
+																	:size="25"
+																	class="info-icon" />
+															</div>
 
 															<!-- Text/Number properties -->
 															<NcTextField
@@ -462,7 +520,15 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									</table>
 								</div>
 							</BTab>
-							<BTab title="Files">
+							<BTab>
+								<template #title>
+									<div class="tab-title">
+										<span>Files</span>
+										<NcCounterBubble>
+											{{ paginatedFiles.length }}
+										</NcCounterBubble>
+									</div>
+								</template>
 								<!-- Info box for new objects -->
 								<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
 									<p><strong>Files can be added after the publication is created.</strong></p>
@@ -737,6 +803,7 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 
 export default {
 	name: 'ViewObject',
@@ -781,6 +848,7 @@ export default {
 		EyeOff,
 		PaginationComponent,
 		PublishedIcon,
+		InformationOutline,
 	},
 	data() {
 		return {
@@ -1146,6 +1214,32 @@ export default {
 		shouldShowPublishedIcon() {
 			return this.currentObject && this.currentObject['@self']
 		},
+		themeOptions() {
+			const themes = objectStore.getCollection('theme').results || []
+			return themes.map(theme => ({
+				id: theme.id,
+				label: theme.title || `#${theme.id}`,
+			}))
+		},
+		// Replace the existing themeFormData with this new version
+		themeFormData: {
+			get() {
+				if (!this.formData.themes || !Array.isArray(this.formData.themes)) {
+					return []
+				}
+
+				const themes = objectStore.getCollection('theme').results || []
+				return this.formData.themes.map(themeId => {
+					const theme = themes.find(t => t.id === themeId)
+					return theme ? { id: theme.id, label: theme.title || `#${theme.id}` } : { id: themeId, label: themeId }
+				})
+			},
+			set(selectedThemes) {
+				// Extract just the IDs from the selected theme objects
+				const themeIds = selectedThemes.map(theme => typeof theme === 'object' ? theme.id : theme)
+				this.$set(this.formData, 'themes', themeIds)
+			},
+		},
 	},
 	watch: {
 		currentObject: {
@@ -1211,6 +1305,8 @@ export default {
 	},
 	mounted() {
 		this.initializeData()
+		// Fetch themes for the theme options dropdown
+		objectStore.fetchCollection('theme')
 	},
 	methods: {
 		getModalTitle() {
@@ -1345,6 +1441,15 @@ export default {
 				// Fallback if JSON serialization fails
 				this.formData = { ...filtered }
 			}
+
+			// Ensure themes are properly initialized as an array of IDs
+			if (this.formData.themes && Array.isArray(this.formData.themes)) {
+				// Convert any theme objects back to IDs if needed
+				this.formData.themes = this.formData.themes.map(theme =>
+					typeof theme === 'object' ? theme.id : theme,
+				)
+			}
+
 			this.jsonData = JSON.stringify(filtered, null, 2)
 		},
 		async saveObject() {
@@ -1676,6 +1781,14 @@ export default {
 				this.formData = {}
 			}
 
+			// Special handling for themes: extract IDs from selected objects
+			if (key === 'themes' && Array.isArray(newValue)) {
+				// Extract just the IDs from the selected theme objects
+				const themeIds = newValue.map(theme => typeof theme === 'object' ? theme.id : theme)
+				this.$set(this.formData, key, themeIds)
+				return
+			}
+
 			// Convert date/time values to proper format for storage
 			const processedValue = this.processDateTimeValue(key, newValue)
 
@@ -1689,7 +1802,6 @@ export default {
 			}
 		},
 		handleDateTimeUpdate(key, newValue) {
-
 			// Ensure formData is an object before updating
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
@@ -1700,6 +1812,15 @@ export default {
 			const schemaProperty = schemaProperties[key]
 			const format = schemaProperty?.format
 
+			// Helper to format date in local TZ as YYYY-MM-DD
+			const toLocalDateString = date => {
+				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				return `${yyyy}-${mm}-${dd}`
+			}
+
 			let processedValue = newValue
 
 			// Handle Date objects from NcDateTimePicker
@@ -1707,15 +1828,12 @@ export default {
 				try {
 					switch (format) {
 					case 'date':
-						// Store as YYYY-MM-DD
-						processedValue = newValue.toISOString().split('T')[0]
+						processedValue = toLocalDateString(newValue)
 						break
 					case 'time':
-						// Store as HH:MM
 						processedValue = newValue.toTimeString().split(' ')[0].substring(0, 5)
 						break
 					case 'date-time':
-						// Store as full ISO string
 						processedValue = newValue.toISOString()
 						break
 					default:
@@ -1747,6 +1865,15 @@ export default {
 				return value
 			}
 
+			// Helper to format date in local TZ as YYYY-MM-DD
+			const toLocalDateString = date => {
+				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				return `${yyyy}-${mm}-${dd}`
+			}
+
 			// If value is empty or null, return empty string
 			if (!value || value === '') {
 				return ''
@@ -1757,10 +1884,10 @@ export default {
 				try {
 					switch (format) {
 					case 'date':
-						// Return YYYY-MM-DD format
-						return value.toISOString().split('T')[0]
+						// Return YYYY-MM-DD format **in local timezone**
+						return toLocalDateString(value)
 					case 'time':
-					// Return HH:MM format for consistency with HTML time input
+						// Return HH:MM format for consistency with HTML time input
 						return value.toTimeString().split(' ')[0].substring(0, 5)
 					case 'date-time':
 						// Return full ISO string
@@ -1777,23 +1904,20 @@ export default {
 			try {
 				switch (format) {
 				case 'date':
-					// HTML date input returns YYYY-MM-DD, which is correct for JSON Schema date format
+					// Expect YYYY-MM-DD string already in local TZ
 					return value
 				case 'time':
 					// HTML time input returns HH:MM, keep as HH:MM for consistency
-					// Only add seconds if the value already has them
 					if (value.length === 5 && value.match(/^\d{2}:\d{2}$/)) {
 						return value // Keep as HH:MM
 					}
 					return value
 				case 'date-time': {
 					// HTML datetime-local input returns YYYY-MM-DDTHH:MM
-					// Convert to full ISO string if needed
 					if (value.length === 16) {
 						// Add seconds and timezone
 						return `${value}:00.000Z`
 					}
-					// If it's already a full ISO string, return as-is
 					return value
 				}
 				default:
@@ -1856,6 +1980,9 @@ export default {
 			case 'number':
 			case 'integer':
 				return 'NcTextField'
+			case 'array':
+				return 'NcTextFieldArray'
+
 			default:
 				return 'NcTextField'
 			}
@@ -3043,7 +3170,6 @@ export default {
 				return true // Unknown type, assume valid
 			}
 		},
-
 	},
 }
 </script>
@@ -3243,6 +3369,13 @@ export default {
 	color: var(--color-success);
 }
 
+.tab-title {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+}
+
 /* Selection flow styles */
 .selectionContainer {
 	padding: 2rem;
@@ -3410,4 +3543,13 @@ export default {
 	min-height: 200px !important;
 }
 
+.input-with-icon {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.view-object-datepicker {
+	z-index: 12000 !important;
+}
 </style>

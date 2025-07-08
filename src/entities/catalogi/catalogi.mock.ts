@@ -25,6 +25,7 @@ export const mockCatalogi: TCatalogi = {
 		field1: 'value1',
 		field2: 'value2',
 	},
+	status: 'development',
 }
 
 export const mockCatalogiList: TCatalogi[] = [
@@ -42,5 +43,6 @@ export const mockCatalogiList: TCatalogi[] = [
 		filters: {
 			field3: 'value3',
 		},
+		status: 'development',
 	},
 ]
