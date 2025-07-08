@@ -524,9 +524,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<template #title>
 									<div class="tab-title">
 										<span>Files</span>
-										<NcCounterBubble>
-											{{ paginatedFiles.length }}
-										</NcCounterBubble>
+										<NcCounterBubble :count="filesTotalItems" />
 									</div>
 								</template>
 								<!-- Info box for new objects -->
@@ -697,11 +695,12 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 								<!-- Files Pagination -->
 								<PaginationComponent
-									v-if="currentObject?.['@self']?.files?.length > filesPerPage"
-									:current-page="filesCurrentPage"
+									v-if="filesTotalItems > 10"
+									:current-page="objectStore.getPagination('publication_files').page"
 									:total-pages="filesTotalPages"
-									:total-items="currentObject?.['@self']?.files?.length || 0"
-									:current-page-size="filesPerPage"
+									:total-items="filesTotalItems"
+									:current-page-size="filesCurrentPageSize"
+									:page-size-options="pageSizeOptions"
 									:min-items-to-show="5"
 									@page-changed="onFilesPageChanged"
 									@page-size-changed="onFilesPageSizeChanged" />
@@ -871,7 +870,17 @@ export default {
 			depublishLoading: [],
 			fileIdsLoading: [],
 			filesCurrentPage: 1,
-			filesPerPage: 10,
+			filesPerPage: 500,
+			// Page size options matching PaginationComponent
+			pageSizeOptions: [
+				{ value: 10, label: '10' },
+				{ value: 20, label: '20' },
+				{ value: 50, label: '50' },
+				{ value: 100, label: '100' },
+				{ value: 250, label: '250' },
+				{ value: 500, label: '500' },
+				{ value: 1000, label: '1000' },
+			],
 			// Selection flow properties
 			selectedCatalog: null,
 			selectedRegister: null,
@@ -1133,20 +1142,24 @@ export default {
 		paginatedFiles() {
 			const filesData = objectStore.getRelatedData('publication', 'files')
 			const files = filesData?.results || []
-			// Ensure files is an array before calling slice
+			// Ensure files is an array
 			if (!Array.isArray(files)) {
 				console.warn('Files data is not an array:', files)
 				return []
 			}
-			const start = (this.filesCurrentPage - 1) * this.filesPerPage
-			const end = start + this.filesPerPage
-			return files.slice(start, end)
+			return files
 		},
 		filesTotalPages() {
-			const filesData = objectStore.getRelatedData('publication', 'files')
-			const files = filesData?.results || []
-			const totalFiles = Array.isArray(files) ? files.length : 0
-			return Math.ceil(totalFiles / this.filesPerPage)
+			const filesPagination = objectStore.getPagination('publication_files')
+			return filesPagination.pages
+		},
+		filesTotalItems() {
+			const filesPagination = objectStore.getPagination('publication_files')
+			return filesPagination.total
+		},
+		filesCurrentPageSize() {
+			const filesPagination = objectStore.getPagination('publication_files')
+			return filesPagination.limit
 		},
 		allFilesSelected() {
 			return this.paginatedFiles.length > 0 && this.paginatedFiles.every(file => this.selectedAttachments.includes(file.id))
@@ -1360,7 +1373,6 @@ export default {
 			this.publishLoading = []
 			this.depublishLoading = []
 			this.fileIdsLoading = []
-			this.filesCurrentPage = 1
 
 			// Clear selection flow state
 			this.selectedCatalog = null
@@ -2526,12 +2538,37 @@ export default {
 				this.selectedAttachments = this.selectedAttachments.filter(id => id !== fileId)
 			}
 		},
-		onFilesPageChanged(page) {
-			this.filesCurrentPage = page
+		async onFilesPageChanged(page) {
+			if (!this.currentObject) return
+			
+			const publication = this.currentObject
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+			const publicationData = {
+				source: 'openregister',
+				schema: schemaId,
+				register: registerId,
+			}
+			
+			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
+				_page: page,
+				_limit: this.filesCurrentPageSize,
+			}, publicationData)
 		},
-		onFilesPageSizeChanged(pageSize) {
-			this.filesPerPage = pageSize
-			this.filesCurrentPage = 1
+		async onFilesPageSizeChanged(pageSize) {
+			if (!this.currentObject) return
+			
+			const publication = this.currentObject
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+			const publicationData = {
+				source: 'openregister',
+				schema: schemaId,
+				register: registerId,
+			}
+			
+			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
+				_page: 1,
+				_limit: pageSize,
+			}, publicationData)
 		},
 		async publishSelectedFiles() {
 			if (this.selectedAttachments.length === 0) return
