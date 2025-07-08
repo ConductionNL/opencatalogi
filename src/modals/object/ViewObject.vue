@@ -158,6 +158,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<NcDateTimePicker
 													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 													:key="`datetime-${key}-edit`"
+													:append-to-body="true"
+													:popup-class="'view-object-datepicker'"
+													:popup-style="{ zIndex: 12000 }"
 													:value="getDateTimePickerValue(key, value)"
 													:label="getPropertyDisplayName(key)"
 													:type="getDateTimePickerType(key)"
@@ -363,6 +366,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<NcDateTimePicker
 																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 																:key="`datetime-${key}`"
+																:append-to-body="true"
+																:popup-class="'view-object-datepicker'"
+																:popup-style="{ zIndex: 12000 }"
 																:value="getDateTimePickerValue(key, value)"
 																:label="getPropertyDisplayName(key)"
 																:type="getDateTimePickerType(key)"
@@ -1796,7 +1802,6 @@ export default {
 			}
 		},
 		handleDateTimeUpdate(key, newValue) {
-
 			// Ensure formData is an object before updating
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
@@ -1807,6 +1812,15 @@ export default {
 			const schemaProperty = schemaProperties[key]
 			const format = schemaProperty?.format
 
+			// Helper to format date in local TZ as YYYY-MM-DD
+			const toLocalDateString = date => {
+				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				return `${yyyy}-${mm}-${dd}`
+			}
+
 			let processedValue = newValue
 
 			// Handle Date objects from NcDateTimePicker
@@ -1814,15 +1828,12 @@ export default {
 				try {
 					switch (format) {
 					case 'date':
-						// Store as YYYY-MM-DD
-						processedValue = newValue.toISOString().split('T')[0]
+						processedValue = toLocalDateString(newValue)
 						break
 					case 'time':
-						// Store as HH:MM
 						processedValue = newValue.toTimeString().split(' ')[0].substring(0, 5)
 						break
 					case 'date-time':
-						// Store as full ISO string
 						processedValue = newValue.toISOString()
 						break
 					default:
@@ -1854,6 +1865,15 @@ export default {
 				return value
 			}
 
+			// Helper to format date in local TZ as YYYY-MM-DD
+			const toLocalDateString = date => {
+				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				return `${yyyy}-${mm}-${dd}`
+			}
+
 			// If value is empty or null, return empty string
 			if (!value || value === '') {
 				return ''
@@ -1864,10 +1884,10 @@ export default {
 				try {
 					switch (format) {
 					case 'date':
-						// Return YYYY-MM-DD format
-						return value.toISOString().split('T')[0]
+						// Return YYYY-MM-DD format **in local timezone**
+						return toLocalDateString(value)
 					case 'time':
-					// Return HH:MM format for consistency with HTML time input
+						// Return HH:MM format for consistency with HTML time input
 						return value.toTimeString().split(' ')[0].substring(0, 5)
 					case 'date-time':
 						// Return full ISO string
@@ -1884,23 +1904,20 @@ export default {
 			try {
 				switch (format) {
 				case 'date':
-					// HTML date input returns YYYY-MM-DD, which is correct for JSON Schema date format
+					// Expect YYYY-MM-DD string already in local TZ
 					return value
 				case 'time':
 					// HTML time input returns HH:MM, keep as HH:MM for consistency
-					// Only add seconds if the value already has them
 					if (value.length === 5 && value.match(/^\d{2}:\d{2}$/)) {
 						return value // Keep as HH:MM
 					}
 					return value
 				case 'date-time': {
 					// HTML datetime-local input returns YYYY-MM-DDTHH:MM
-					// Convert to full ISO string if needed
 					if (value.length === 16) {
 						// Add seconds and timezone
 						return `${value}:00.000Z`
 					}
-					// If it's already a full ISO string, return as-is
 					return value
 				}
 				default:
@@ -3532,11 +3549,7 @@ export default {
 	gap: 8px;
 }
 
-div :has(.viewObjectDialog) {
-	overflow: visible !important;
-}
-
-div :has(.mx-calendar-content) {
-	box-sizing: content-box !important;
+.view-object-datepicker {
+	z-index: 12000 !important;
 }
 </style>
