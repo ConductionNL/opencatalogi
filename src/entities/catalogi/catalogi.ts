@@ -10,7 +10,7 @@
  */
 
 import { SafeParseReturnType, z } from 'zod'
-import { TCatalogi } from './catalogi.types'
+import { CatalogStatus, TCatalogi } from './catalogi.types'
 
 export class Catalogi implements TCatalogi {
 
@@ -20,7 +20,7 @@ export class Catalogi implements TCatalogi {
 	public description: string
 	public image: string
 	public listed: boolean
-	public status: 'development' | 'beta' | 'stable' | 'obsolete'
+	public status: CatalogStatus
 	public organization: string
 	public registers: string[]
 	public schemas: string[]
@@ -38,7 +38,7 @@ export class Catalogi implements TCatalogi {
 		this.description = data?.description || ''
 		this.image = data?.image || ''
 		this.listed = data?.listed || false
-		this.status = (data?.status as 'development' | 'beta' | 'stable' | 'obsolete') || 'development'
+		this.status = (data?.status as CatalogStatus) || 'development'
 		this.organization = data.organization || ''
 		this.registers = (Array.isArray(data.registers) && data.registers) || []
 		this.schemas = (Array.isArray(data.schemas) && data.schemas) || []
