@@ -514,7 +514,15 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									</table>
 								</div>
 							</BTab>
-							<BTab title="Files">
+							<BTab>
+								<template #title>
+									<div class="tab-title">
+										<span>Files</span>
+										<NcCounterBubble>
+											{{ paginatedFiles.length }}
+										</NcCounterBubble>
+									</div>
+								</template>
 								<!-- Info box for new objects -->
 								<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
 									<p><strong>Files can be added after the publication is created.</strong></p>
@@ -3342,6 +3350,13 @@ export default {
 
 .publishedIcon {
 	color: var(--color-success);
+}
+
+.tab-title {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
 }
 
 /* Selection flow styles */
