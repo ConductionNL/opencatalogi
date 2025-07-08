@@ -631,24 +631,59 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												</td>
 												<td class="tableColumnConstrained">
 													<div class="fileLabelsContainer">
-														<NcCounterBubble v-for="label of attachment.labels" :key="label">
-															{{ label }}
-														</NcCounterBubble>
+														<span v-if="editingTags !== attachment.id"
+															class="files-list__row-action--inline files-list__row-action-system-tags">
+															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+																<li v-for="label of attachment.labels"
+																	:key="label"
+																	class="files-list__system-tag"
+																	:title="label">
+																	{{ label }}
+																</li>
+															</ul>
+															<span v-if="!attachment.labels || attachment.labels.length === 0">
+																No labels
+															</span>
+														</span>
+														<div v-if="editingTags === attachment.id" class="label-edit-container">
+															<NcSelect
+																v-model="editedTags"
+																:disabled="tagsLoading"
+																:loading="tagsLoading"
+																:multiple="true"
+																:aria-label-combobox="labelOptionsEdit.inputLabel"
+																:options="labelOptionsEdit.options" />
+															<NcButton
+																v-tooltip="'Save labels'"
+																type="primary"
+																size="small"
+																:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
+																class="editTagsButton"
+																@click="saveTags(attachment, editedTags)">
+																<template #icon>
+																	<ContentSaveOutline :size="20" />
+																</template>
+															</NcButton>
+														</div>
 													</div>
 												</td>
 												<td class="tableColumnActions">
-													<NcActions :aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
+													<NcActions
+														v-if="editingTags !== attachment.id"
+														:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
 														<NcActionButton @click="openFile(attachment)">
 															<template #icon>
 																<OpenInNew :size="20" />
 															</template>
 															View
 														</NcActionButton>
-														<NcActionButton @click="editFileLabels(attachment)">
+														<NcActionButton
+															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
+															@click="editFileLabels(attachment)">
 															<template #icon>
 																<Tag :size="20" />
 															</template>
-															Labels
+															Edit Labels
 														</NcActionButton>
 														<NcActionButton
 															v-if="!attachment.accessUrl && !attachment.downloadUrl"
@@ -786,6 +821,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
@@ -831,6 +867,7 @@ export default {
 		Upload,
 
 		ContentSave,
+		ContentSaveOutline,
 		LockOutline,
 		Tag,
 		FormatListChecks,
@@ -889,6 +926,16 @@ export default {
 
 			// Constant/immutable properties visibility
 			showConstantProperties: false,
+
+			// Label editing properties (from UploadFiles.vue)
+			editingTags: null,
+			editedTags: [],
+			labelOptionsEdit: {
+				inputLabel: 'Labels',
+				multiple: true,
+				options: [],
+			},
+			tagsLoading: false,
 		}
 	},
 	computed: {
@@ -1320,6 +1367,8 @@ export default {
 		this.initializeData()
 		// Fetch themes for the theme options dropdown
 		objectStore.fetchCollection('theme')
+		// Fetch tags for the label options dropdown
+		this.getAllTags()
 	},
 	methods: {
 		getModalTitle() {
@@ -1379,6 +1428,10 @@ export default {
 			this.selectedRegister = null
 			this.selectedSchema = null
 			this.showProperties = false
+
+			// Clear label editing state
+			this.editingTags = null
+			this.editedTags = []
 
 			// Close modal
 			navigationStore.setModal(null)
@@ -2540,7 +2593,7 @@ export default {
 		},
 		async onFilesPageChanged(page) {
 			if (!this.currentObject) return
-			
+
 			const publication = this.currentObject
 			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 			const publicationData = {
@@ -2548,7 +2601,7 @@ export default {
 				schema: schemaId,
 				register: registerId,
 			}
-			
+
 			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
 				_page: page,
 				_limit: this.filesCurrentPageSize,
@@ -2556,7 +2609,7 @@ export default {
 		},
 		async onFilesPageSizeChanged(pageSize) {
 			if (!this.currentObject) return
-			
+
 			const publication = this.currentObject
 			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 			const publicationData = {
@@ -2564,7 +2617,7 @@ export default {
 				schema: schemaId,
 				register: registerId,
 			}
-			
+
 			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
 				_page: 1,
 				_limit: pageSize,
@@ -2792,10 +2845,74 @@ export default {
 			}
 		},
 		editFileLabels(file) {
-			// You'll need to implement the labels editing functionality
-			// This could open a modal or inline editor for file labels
-			// console.log('Editing labels for file:', file.name)
-			// Placeholder for labels editing implementation
+			this.editingTags = file.id
+			this.editedTags = file.labels || []
+		},
+		async getAllTags() {
+			this.tagsLoading = true
+			try {
+				const response = await fetch(
+					'/index.php/apps/openregister/api/tags',
+					{ method: 'get' },
+				)
+				const data = await response.json()
+
+				const newLabelOptionsEdit = []
+				const tags = data.map((tag) => tag)
+				newLabelOptionsEdit.push(...tags)
+
+				this.labelOptionsEdit.options = newLabelOptionsEdit
+			} catch (error) {
+				console.error('Error fetching tags:', error)
+			} finally {
+				this.tagsLoading = false
+			}
+		},
+		async saveTags(file, editedTags) {
+			try {
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+
+				// Update file tags using the same approach as PublicationDetail.vue
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+
+				const response = await fetch(endpoint, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						tags: editedTags,
+					}),
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to update file tags: ${response.statusText}`)
+				}
+
+				// Refresh files list with publication data
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+
+				this.editingTags = null
+				this.editedTags = []
+
+				// Show success message
+				this.success = 'File labels updated successfully'
+				setTimeout(() => {
+					this.success = null
+				}, 3000)
+			} catch (error) {
+				console.error('Error saving tags:', error)
+				this.error = 'Failed to save file labels: ' + error.message
+				setTimeout(() => {
+					this.error = null
+				}, 5000)
+			}
 		},
 		// Utility method to get register and schema IDs from publication object
 		getRegisterSchemaIds(publication) {
@@ -3588,5 +3705,81 @@ export default {
 
 .view-object-datepicker {
 	z-index: 12000 !important;
+}
+
+/* Label editing styles (from UploadFiles.vue) */
+.files-list__row-action-system-tags {
+	margin-right: 7px;
+	display: flex;
+}
+
+.files-list__system-tags {
+	--min-size: 32px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width: calc(var(--min-size) * 2);
+	max-width: 300px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.files-list__system-tag {
+	padding: 5px 10px;
+	border: 1px solid;
+	border-radius: var(--border-radius-pill);
+	border-color: var(--color-border);
+	color: var(--color-text-maxcontrast);
+	height: var(--min-size);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 22px;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.files-list__system-tag:not(:first-child) {
+	margin-inline-start: 5px;
+}
+
+.editTagsButton {
+	margin-inline-end: 3px;
+	margin-inline-start: 3px;
+}
+
+.fileLabelsContainer {
+	display: flex;
+	justify-content: space-between;
+	text-align: unset;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.inline-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-right: 8px;
+}
+
+.label-edit-container {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	max-width: 280px;
+}
+
+.label-edit-container .nc-select {
+	flex: 1;
+	min-width: 120px;
+	max-width: 160px;
+}
+
+.label-edit-container .editTagsButton {
+	flex-shrink: 0;
+	margin-left: 2px;
 }
 </style>
