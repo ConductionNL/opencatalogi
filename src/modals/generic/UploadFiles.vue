@@ -530,10 +530,12 @@ export default {
 							} else {
 								file.status = 'failed'
 							}
+							this.updateUploadCounts()
 							return response
 						})
 						.catch(error => {
 							file.status = 'failed'
+							this.updateUploadCounts()
 							throw error
 						})
 				})
@@ -633,10 +635,12 @@ export default {
 						} else {
 							file.status = 'failed'
 						}
+						this.updateUploadCounts()
 						return response
 					})
 					.catch(error => {
 						file.status = 'failed'
+						this.updateUploadCounts()
 						throw error
 					})
 			})
