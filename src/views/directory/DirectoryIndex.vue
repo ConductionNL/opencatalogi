@@ -128,11 +128,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</template>
 										Sync Directory
 									</NcActionButton>
-									<NcActionButton close-after-click @click="toggleAvailable(listing)">
+									<NcActionButton close-after-click @click="toggleIntegrationLevel(listing)">
 										<template #icon>
-											<component :is="listing.available ? 'CheckCircle' : 'CloseCircle'" :size="20" />
+											<component :is="listing.integrationLevel === 'search' ? 'CloseCircle' : 'CheckCircle'" :size="20" />
 										</template>
-										{{ listing.available ? 'Disable' : 'Enable' }}
+										{{ listing.integrationLevel === 'search' ? 'Disable' : 'Enable' }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="toggleDefault(listing)">
 										<template #icon>
@@ -160,6 +160,14 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<td class="truncatedText">
 											{{ listing.summary }}
 										</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Integration Level') }}</td>
+										<td>{{ _.upperFirst(listing.integrationLevel) || '-' }}</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Version') }}</td>
+										<td>{{ listing.version || '-' }}</td>
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Schemas') }}</td>
@@ -228,6 +236,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									<th>{{ t('opencatalogi', 'Name') }}</th>
 									<th>{{ t('opencatalogi', 'Organization') }}</th>
 									<th>{{ t('opencatalogi', 'Schemas') }}</th>
+
 									<th>{{ t('opencatalogi', 'Publications URL') }}</th>
 									<th>{{ t('opencatalogi', 'Search URL') }}</th>
 									<th>{{ t('opencatalogi', 'Directory URL') }}</th>
@@ -313,11 +322,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 												</template>
 												Sync Directory
 											</NcActionButton>
-											<NcActionButton close-after-click @click="toggleAvailable(listing)">
+											<NcActionButton close-after-click @click="toggleIntegrationLevel(listing)">
 												<template #icon>
-													<component :is="listing.available ? 'CheckCircle' : 'CloseCircle'" :size="20" />
+													<component :is="listing.integrationLevel === 'search' ? 'CloseCircle' : 'CheckCircle'" :size="20" />
 												</template>
-												{{ listing.available ? 'Disable' : 'Enable' }}
+												{{ listing.integrationLevel === 'search' ? 'Disable' : 'Enable' }}
 											</NcActionButton>
 											<NcActionButton close-after-click @click="toggleDefault(listing)">
 												<template #icon>
@@ -350,6 +359,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 <script>
 import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcCheckboxRadioSwitch, NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import _ from 'lodash'
 import LayersOutline from 'vue-material-design-icons/LayersOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
@@ -571,30 +581,30 @@ export default {
 				this.$delete(listing, 'syncing')
 			}
 		},
-		async toggleAvailable(listing) {
+		async toggleIntegrationLevel(listing) {
 			try {
 				// Update the listing locally first for immediate UI feedback
-				const newAvailableState = !listing.available
-				this.$set(listing, 'available', newAvailableState)
+				const newIntegrationLevel = (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection'
+				this.$set(listing, 'integrationLevel', newIntegrationLevel)
 
 				// Update the listing on the server
 				const updatedData = {
 					...listing,
-					available: newAvailableState,
+					integrationLevel: newIntegrationLevel,
 				}
 
 				await objectStore.updateObject('listing', listing.id, updatedData)
 
 				// Show success notification
 				OC.Notification.showMessage(
-					`Directory "${listing.title || listing.name}" ${newAvailableState ? 'enabled' : 'disabled'}`,
+					`Directory "${listing.title || listing.name}" ${newIntegrationLevel ? 'enabled' : 'disabled'}`,
 					{ type: 'success' },
 				)
 			} catch (error) {
 				// Revert the local change on error
-				this.$set(listing, 'available', !listing.available)
+				this.$set(listing, 'integrationLevel', (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection')
 
-				console.error('Failed to toggle available state:', error)
+				console.error('Failed to toggle integration level:', error)
 				OC.Notification.showMessage(
 					`Failed to update directory: ${error.message}`,
 					{ type: 'error' },

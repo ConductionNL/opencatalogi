@@ -299,7 +299,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {total: number, page: number, pages: number, limit: number}}
 		 */
-		getPagination: (state) => (type) => state.pagination[type] || { total: 0, page: 1, pages: 1, limit: 20 },
+		getPagination: (state) => (type) => {
+			if (state.pagination[type]) {
+				return state.pagination[type]
+			}
+			// Default limit depends on the data type
+			const defaultLimit = type.includes('files') ? 500 : 20
+			return { total: 0, page: 1, pages: 1, limit: defaultLimit }
+		},
 
 		/**
 		 * Check if there are more pages to load for type
@@ -543,7 +550,9 @@ export const useObjectStore = defineStore('object', {
 				const dataTypes = ['logs', 'uses', 'used', 'files']
 				for (const dataType of dataTypes) {
 					if (!this.relatedData[type][dataType]) {
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, {}, publicationData))
+						// Set default limit to 500 for files, 20 for other data types
+						const defaultLimit = dataType === 'files' ? 500 : 20
+						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
 					}
 				}
 				await Promise.all(fetchPromises)
@@ -861,6 +870,25 @@ export const useObjectStore = defineStore('object', {
 				const data = await response.json()
 				if (!this.relatedData[type]) {
 					this.relatedData[type] = {}
+				}
+
+				// Update pagination info for related data
+				if (data.total !== undefined || data.page !== undefined) {
+					const paginationKey = `${type}_${dataType}`
+					// Use the limit from the request params if the API doesn't return it
+					const requestedLimit = params._limit || params.limit
+					// Convert string limits to numbers and provide fallbacks
+					const apiLimit = data.limit ? parseInt(data.limit, 10) : null
+					const actualLimit = apiLimit || requestedLimit || (dataType === 'files' ? 500 : 20)
+					const paginationInfo = {
+						total: data.total || 0,
+						page: data.page || 1,
+						pages: data.pages || Math.ceil((data.total || 0) / actualLimit),
+						limit: actualLimit,
+						next: data.next || null,
+						prev: data.prev || null,
+					}
+					this.setPagination(paginationKey, paginationInfo)
 				}
 
 				// For audit trails, store the results array

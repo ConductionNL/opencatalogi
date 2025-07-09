@@ -154,8 +154,13 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</tr>
 								</thead>
 								<tbody>
-									<tr>
+									<tr v-if="catalog.status">
 										<td>{{ t('opencatalogi', 'Status') }}</td>
+										<td>{{ catalog.status.charAt(0).toUpperCase() + catalog.status.slice(1) }}</td>
+										<td>-</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Visibility') }}</td>
 										<td>{{ catalog.listed ? 'Public' : 'Private' }}</td>
 										<td>{{ catalog.listed ? 'Listed' : 'Not Listed' }}</td>
 									</tr>

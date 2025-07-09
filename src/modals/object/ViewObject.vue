@@ -158,6 +158,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<NcDateTimePicker
 													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 													:key="`datetime-${key}-edit`"
+													:append-to-body="true"
+													:popup-class="'view-object-datepicker'"
+													:popup-style="{ zIndex: 12000 }"
 													:value="getDateTimePickerValue(key, value)"
 													:label="getPropertyDisplayName(key)"
 													:type="getDateTimePickerType(key)"
@@ -363,6 +366,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<NcDateTimePicker
 																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
 																:key="`datetime-${key}`"
+																:append-to-body="true"
+																:popup-class="'view-object-datepicker'"
+																:popup-style="{ zIndex: 12000 }"
 																:value="getDateTimePickerValue(key, value)"
 																:label="getPropertyDisplayName(key)"
 																:type="getDateTimePickerType(key)"
@@ -514,7 +520,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									</table>
 								</div>
 							</BTab>
-							<BTab title="Files">
+							<BTab>
+								<template #title>
+									<div class="tab-title">
+										<span>Files</span>
+										<NcCounterBubble :count="filesTotalItems" />
+									</div>
+								</template>
 								<!-- Info box for new objects -->
 								<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
 									<p><strong>Files can be added after the publication is created.</strong></p>
@@ -619,24 +631,59 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												</td>
 												<td class="tableColumnConstrained">
 													<div class="fileLabelsContainer">
-														<NcCounterBubble v-for="label of attachment.labels" :key="label">
-															{{ label }}
-														</NcCounterBubble>
+														<span v-if="editingTags !== attachment.id"
+															class="files-list__row-action--inline files-list__row-action-system-tags">
+															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+																<li v-for="label of attachment.labels"
+																	:key="label"
+																	class="files-list__system-tag"
+																	:title="label">
+																	{{ label }}
+																</li>
+															</ul>
+															<span v-if="!attachment.labels || attachment.labels.length === 0">
+																No labels
+															</span>
+														</span>
+														<div v-if="editingTags === attachment.id" class="label-edit-container">
+															<NcSelect
+																v-model="editedTags"
+																:disabled="tagsLoading"
+																:loading="tagsLoading"
+																:multiple="true"
+																:aria-label-combobox="labelOptionsEdit.inputLabel"
+																:options="labelOptionsEdit.options" />
+															<NcButton
+																v-tooltip="'Save labels'"
+																type="primary"
+																size="small"
+																:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
+																class="editTagsButton"
+																@click="saveTags(attachment, editedTags)">
+																<template #icon>
+																	<ContentSaveOutline :size="20" />
+																</template>
+															</NcButton>
+														</div>
 													</div>
 												</td>
 												<td class="tableColumnActions">
-													<NcActions :aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
+													<NcActions
+														v-if="editingTags !== attachment.id"
+														:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
 														<NcActionButton @click="openFile(attachment)">
 															<template #icon>
 																<OpenInNew :size="20" />
 															</template>
 															View
 														</NcActionButton>
-														<NcActionButton @click="editFileLabels(attachment)">
+														<NcActionButton
+															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
+															@click="editFileLabels(attachment)">
 															<template #icon>
 																<Tag :size="20" />
 															</template>
-															Labels
+															Edit Labels
 														</NcActionButton>
 														<NcActionButton
 															v-if="!attachment.accessUrl && !attachment.downloadUrl"
@@ -683,11 +730,12 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 								<!-- Files Pagination -->
 								<PaginationComponent
-									v-if="currentObject?.['@self']?.files?.length > filesPerPage"
-									:current-page="filesCurrentPage"
+									v-if="filesTotalItems > 10"
+									:current-page="objectStore.getPagination('publication_files').page"
 									:total-pages="filesTotalPages"
-									:total-items="currentObject?.['@self']?.files?.length || 0"
-									:current-page-size="filesPerPage"
+									:total-items="filesTotalItems"
+									:current-page-size="filesCurrentPageSize"
+									:page-size-options="pageSizeOptions"
 									:min-items-to-show="5"
 									@page-changed="onFilesPageChanged"
 									@page-size-changed="onFilesPageSizeChanged" />
@@ -773,6 +821,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
@@ -818,6 +867,7 @@ export default {
 		Upload,
 
 		ContentSave,
+		ContentSaveOutline,
 		LockOutline,
 		Tag,
 		FormatListChecks,
@@ -857,7 +907,17 @@ export default {
 			depublishLoading: [],
 			fileIdsLoading: [],
 			filesCurrentPage: 1,
-			filesPerPage: 10,
+			filesPerPage: 500,
+			// Page size options matching PaginationComponent
+			pageSizeOptions: [
+				{ value: 10, label: '10' },
+				{ value: 20, label: '20' },
+				{ value: 50, label: '50' },
+				{ value: 100, label: '100' },
+				{ value: 250, label: '250' },
+				{ value: 500, label: '500' },
+				{ value: 1000, label: '1000' },
+			],
 			// Selection flow properties
 			selectedCatalog: null,
 			selectedRegister: null,
@@ -866,6 +926,16 @@ export default {
 
 			// Constant/immutable properties visibility
 			showConstantProperties: false,
+
+			// Label editing properties (from UploadFiles.vue)
+			editingTags: null,
+			editedTags: [],
+			labelOptionsEdit: {
+				inputLabel: 'Labels',
+				multiple: true,
+				options: [],
+			},
+			tagsLoading: false,
 		}
 	},
 	computed: {
@@ -1119,20 +1189,24 @@ export default {
 		paginatedFiles() {
 			const filesData = objectStore.getRelatedData('publication', 'files')
 			const files = filesData?.results || []
-			// Ensure files is an array before calling slice
+			// Ensure files is an array
 			if (!Array.isArray(files)) {
 				console.warn('Files data is not an array:', files)
 				return []
 			}
-			const start = (this.filesCurrentPage - 1) * this.filesPerPage
-			const end = start + this.filesPerPage
-			return files.slice(start, end)
+			return files
 		},
 		filesTotalPages() {
-			const filesData = objectStore.getRelatedData('publication', 'files')
-			const files = filesData?.results || []
-			const totalFiles = Array.isArray(files) ? files.length : 0
-			return Math.ceil(totalFiles / this.filesPerPage)
+			const filesPagination = objectStore.getPagination('publication_files')
+			return filesPagination.pages
+		},
+		filesTotalItems() {
+			const filesPagination = objectStore.getPagination('publication_files')
+			return filesPagination.total
+		},
+		filesCurrentPageSize() {
+			const filesPagination = objectStore.getPagination('publication_files')
+			return filesPagination.limit
 		},
 		allFilesSelected() {
 			return this.paginatedFiles.length > 0 && this.paginatedFiles.every(file => this.selectedAttachments.includes(file.id))
@@ -1293,6 +1367,8 @@ export default {
 		this.initializeData()
 		// Fetch themes for the theme options dropdown
 		objectStore.fetchCollection('theme')
+		// Fetch tags for the label options dropdown
+		this.getAllTags()
 	},
 	methods: {
 		getModalTitle() {
@@ -1346,13 +1422,16 @@ export default {
 			this.publishLoading = []
 			this.depublishLoading = []
 			this.fileIdsLoading = []
-			this.filesCurrentPage = 1
 
 			// Clear selection flow state
 			this.selectedCatalog = null
 			this.selectedRegister = null
 			this.selectedSchema = null
 			this.showProperties = false
+
+			// Clear label editing state
+			this.editingTags = null
+			this.editedTags = []
 
 			// Close modal
 			navigationStore.setModal(null)
@@ -1788,7 +1867,6 @@ export default {
 			}
 		},
 		handleDateTimeUpdate(key, newValue) {
-
 			// Ensure formData is an object before updating
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
@@ -1799,6 +1877,15 @@ export default {
 			const schemaProperty = schemaProperties[key]
 			const format = schemaProperty?.format
 
+			// Helper to format date in local TZ as YYYY-MM-DD
+			const toLocalDateString = date => {
+				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				return `${yyyy}-${mm}-${dd}`
+			}
+
 			let processedValue = newValue
 
 			// Handle Date objects from NcDateTimePicker
@@ -1806,15 +1893,12 @@ export default {
 				try {
 					switch (format) {
 					case 'date':
-						// Store as YYYY-MM-DD
-						processedValue = newValue.toISOString().split('T')[0]
+						processedValue = toLocalDateString(newValue)
 						break
 					case 'time':
-						// Store as HH:MM
 						processedValue = newValue.toTimeString().split(' ')[0].substring(0, 5)
 						break
 					case 'date-time':
-						// Store as full ISO string
 						processedValue = newValue.toISOString()
 						break
 					default:
@@ -1846,6 +1930,15 @@ export default {
 				return value
 			}
 
+			// Helper to format date in local TZ as YYYY-MM-DD
+			const toLocalDateString = date => {
+				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+				const yyyy = date.getFullYear()
+				const mm = String(date.getMonth() + 1).padStart(2, '0')
+				const dd = String(date.getDate()).padStart(2, '0')
+				return `${yyyy}-${mm}-${dd}`
+			}
+
 			// If value is empty or null, return empty string
 			if (!value || value === '') {
 				return ''
@@ -1856,10 +1949,10 @@ export default {
 				try {
 					switch (format) {
 					case 'date':
-						// Return YYYY-MM-DD format
-						return value.toISOString().split('T')[0]
+						// Return YYYY-MM-DD format **in local timezone**
+						return toLocalDateString(value)
 					case 'time':
-					// Return HH:MM format for consistency with HTML time input
+						// Return HH:MM format for consistency with HTML time input
 						return value.toTimeString().split(' ')[0].substring(0, 5)
 					case 'date-time':
 						// Return full ISO string
@@ -1876,23 +1969,20 @@ export default {
 			try {
 				switch (format) {
 				case 'date':
-					// HTML date input returns YYYY-MM-DD, which is correct for JSON Schema date format
+					// Expect YYYY-MM-DD string already in local TZ
 					return value
 				case 'time':
 					// HTML time input returns HH:MM, keep as HH:MM for consistency
-					// Only add seconds if the value already has them
 					if (value.length === 5 && value.match(/^\d{2}:\d{2}$/)) {
 						return value // Keep as HH:MM
 					}
 					return value
 				case 'date-time': {
 					// HTML datetime-local input returns YYYY-MM-DDTHH:MM
-					// Convert to full ISO string if needed
 					if (value.length === 16) {
 						// Add seconds and timezone
 						return `${value}:00.000Z`
 					}
-					// If it's already a full ISO string, return as-is
 					return value
 				}
 				default:
@@ -2501,12 +2591,37 @@ export default {
 				this.selectedAttachments = this.selectedAttachments.filter(id => id !== fileId)
 			}
 		},
-		onFilesPageChanged(page) {
-			this.filesCurrentPage = page
+		async onFilesPageChanged(page) {
+			if (!this.currentObject) return
+
+			const publication = this.currentObject
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+			const publicationData = {
+				source: 'openregister',
+				schema: schemaId,
+				register: registerId,
+			}
+
+			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
+				_page: page,
+				_limit: this.filesCurrentPageSize,
+			}, publicationData)
 		},
-		onFilesPageSizeChanged(pageSize) {
-			this.filesPerPage = pageSize
-			this.filesCurrentPage = 1
+		async onFilesPageSizeChanged(pageSize) {
+			if (!this.currentObject) return
+
+			const publication = this.currentObject
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+			const publicationData = {
+				source: 'openregister',
+				schema: schemaId,
+				register: registerId,
+			}
+
+			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
+				_page: 1,
+				_limit: pageSize,
+			}, publicationData)
 		},
 		async publishSelectedFiles() {
 			if (this.selectedAttachments.length === 0) return
@@ -2730,10 +2845,74 @@ export default {
 			}
 		},
 		editFileLabels(file) {
-			// You'll need to implement the labels editing functionality
-			// This could open a modal or inline editor for file labels
-			// console.log('Editing labels for file:', file.name)
-			// Placeholder for labels editing implementation
+			this.editingTags = file.id
+			this.editedTags = file.labels || []
+		},
+		async getAllTags() {
+			this.tagsLoading = true
+			try {
+				const response = await fetch(
+					'/index.php/apps/openregister/api/tags',
+					{ method: 'get' },
+				)
+				const data = await response.json()
+
+				const newLabelOptionsEdit = []
+				const tags = data.map((tag) => tag)
+				newLabelOptionsEdit.push(...tags)
+
+				this.labelOptionsEdit.options = newLabelOptionsEdit
+			} catch (error) {
+				console.error('Error fetching tags:', error)
+			} finally {
+				this.tagsLoading = false
+			}
+		},
+		async saveTags(file, editedTags) {
+			try {
+				const publication = this.currentObject
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+
+				// Update file tags using the same approach as PublicationDetail.vue
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+
+				const response = await fetch(endpoint, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						tags: editedTags,
+					}),
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to update file tags: ${response.statusText}`)
+				}
+
+				// Refresh files list with publication data
+				const publicationData = {
+					source: 'openregister',
+					schema: schemaId,
+					register: registerId,
+				}
+				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+
+				this.editingTags = null
+				this.editedTags = []
+
+				// Show success message
+				this.success = 'File labels updated successfully'
+				setTimeout(() => {
+					this.success = null
+				}, 3000)
+			} catch (error) {
+				console.error('Error saving tags:', error)
+				this.error = 'Failed to save file labels: ' + error.message
+				setTimeout(() => {
+					this.error = null
+				}, 5000)
+			}
 		},
 		// Utility method to get register and schema IDs from publication object
 		getRegisterSchemaIds(publication) {
@@ -3342,6 +3521,13 @@ export default {
 	color: var(--color-success);
 }
 
+.tab-title {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+}
+
 /* Selection flow styles */
 .selectionContainer {
 	padding: 2rem;
@@ -3515,4 +3701,83 @@ export default {
 	gap: 8px;
 }
 
+.view-object-datepicker {
+	z-index: 12000 !important;
+}
+
+/* Label editing styles (from UploadFiles.vue) */
+.files-list__row-action-system-tags {
+	margin-right: 7px;
+	display: flex;
+}
+
+.files-list__system-tags {
+	--min-size: 32px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width: calc(var(--min-size) * 2);
+	max-width: 300px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.files-list__system-tag {
+	padding: 5px 10px;
+	border: 1px solid;
+	border-radius: var(--border-radius-pill);
+	border-color: var(--color-border);
+	color: var(--color-text-maxcontrast);
+	height: var(--min-size);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 22px;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.files-list__system-tag:not(:first-child) {
+	margin-inline-start: 5px;
+}
+
+.editTagsButton {
+	margin-inline-end: 3px;
+	margin-inline-start: 3px;
+}
+
+.fileLabelsContainer {
+	display: flex;
+	justify-content: space-between;
+	text-align: unset;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.inline-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-right: 8px;
+}
+
+.label-edit-container {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	max-width: 280px;
+}
+
+.label-edit-container .nc-select {
+	flex: 1;
+	min-width: 120px;
+	max-width: 160px;
+}
+
+.label-edit-container .editTagsButton {
+	flex-shrink: 0;
+	margin-left: 2px;
+}
 </style>
