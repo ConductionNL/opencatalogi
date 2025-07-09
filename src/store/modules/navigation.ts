@@ -9,7 +9,7 @@ interface DialogProperties {
 }
 
 interface NavigationStoreState {
-    selected: 'dashboard' | 'publication' | 'catalogi' | 'publicationType' | 'organizations' | 'themes' | 'search' | 'directory' | 'pages' | 'menus' | 'glossary';
+    selected: 'dashboard' | 'publication' | 'catalogi' | 'publicationType' | 'organizations' | 'themes' | 'search' | 'directory' | 'pages' | 'menus' | 'glossary' | 'uploadFiles';
     selectedCatalogus: string;
     modal: string;
     dialog: string;
