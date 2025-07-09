@@ -13,12 +13,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
 					v-model="labelOptions.value"
-					:disabled="loading || tagsLoading"
+					:disabled="loading || retryLoading || tagsLoading"
 					:loading="tagsLoading"
 					:taggable="true"
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
-				<NcCheckboxRadioSwitch :disabled="loading"
+				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
 					label="Automatisch delen"
 					type="switch"
 					:checked.sync="share">
@@ -27,7 +27,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			</div>
 
 			<div class="container">
-				<div v-if="!labelOptions.value?.length || loading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
+				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
 							<p>Selecteer of maak labels aan of selecteer "Geen label" om bestanden toe te voegen</p>
@@ -49,7 +49,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							</NcNoteCard>
 						</div>
 					</div>
-					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading }">
+					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading || retryLoading }">
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
@@ -63,7 +63,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
-								:disabled="loading || !labelOptions.value?.length"
+								:disabled="loading || retryLoading || !labelOptions.value?.length"
 								type="primary"
 								@click="openFileUpload()">
 								<template #icon>
@@ -74,7 +74,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</div>
 					</div>
 				</div>
-				<div v-if="labelOptions.value?.length && !loading"
+				<div v-if="labelOptions.value?.length && !loading && !retryLoading"
 					ref="dropZoneRef"
 					class="filesListDragDropNotice"
 					:class="'tabPanelFileUpload'">
@@ -116,7 +116,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							</NcNoteCard>
 						</div>
 					</div>
-					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length }">
+					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading || retryLoading }">
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
@@ -130,7 +130,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
-								:disabled="loading || !labelOptions.value?.length"
+								:disabled="loading || retryLoading || !labelOptions.value?.length"
 								type="primary"
 								@click="openFileUpload()">
 								<template #icon>
@@ -149,12 +149,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					<div class="buttonContainer">
 						<NcButton v-if="failedCount > 0"
 							type="primary"
-							:disabled="loading"
+							:disabled="loading || retryLoading"
 							@click="retryAllFailed">
 							<template #icon>
-								<Refresh :size="20" :class="{ 'loadingIcon': loading }" />
+								<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
 							</template>
-							{{ loading ? 'In progress...' : 'Retry all (' + failedCount + ')' }}
+							{{ retryLoading ? 'In progress...' : 'Retry all (' + failedCount + ')' }}
 						</NcButton>
 					</div>
 				</div>
@@ -206,7 +206,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<NcSelect
 									v-if="editingTags === file.name"
 									v-model="editedTags"
-									:disabled="loading || tagsLoading"
+									:disabled="loading || retryLoading || tagsLoading"
 									:loading="tagsLoading"
 									:taggable="true"
 									:multiple="true"
@@ -218,7 +218,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<NcButton
 										v-if="editingTags !== file.name"
 										v-tooltip="'Labels bewerken'"
-										:disabled="editingTags && editingTags !== file.name || loading || file.status === 'too_large' || tagsLoading"
+										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
 										:aria-label="`edit tags for ${file.name}`"
 										type="secondary"
 										class="editTagsButton"
@@ -311,6 +311,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			retryLoading: false,
 			success: null,
 			error: false,
 			share: false,
@@ -625,7 +626,7 @@ export default {
 				})
 		},
 		async retryAllFailed() {
-			this.loading = true
+			this.retryLoading = true
 			const uploadPromises = this.files.value.filter(file => file.status === 'failed').map(file => {
 				file.status = 'uploading'
 				return this.createPublicationAttachment([file], reset, this.share)
@@ -648,7 +649,7 @@ export default {
 			await Promise.allSettled(uploadPromises)
 
 			this.updateUploadCounts()
-			this.loading = false
+			this.retryLoading = false
 		},
 		updateUploadCounts() {
 			if (!this.files || !this.files.value) {
