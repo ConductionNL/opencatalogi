@@ -524,7 +524,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<template #title>
 									<div class="tab-title">
 										<span>Files</span>
-										<NcCounterBubble :count="filesTotalItems" />
+										<NcLoadingIcon v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)" :size="16" />
+										<NcCounterBubble v-else :count="filesTotalItems" />
 									</div>
 								</template>
 								<!-- Info box for new objects -->
@@ -533,6 +534,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									<p>Save the publication first, then you'll be able to upload and manage files.</p>
 								</NcNoteCard>
 
+								<NcEmptyContent v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)"
+									title="Loading files..."
+									:description="'Loading files for this publication...'">
+									<template #icon>
+										<NcLoadingIcon :size="64" />
+									</template>
+								</NcEmptyContent>
 								<div v-else-if="paginatedFiles.length > 0" class="viewTableContainer">
 									<table class="viewTable">
 										<thead>
