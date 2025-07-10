@@ -41,11 +41,11 @@ interface SearchState {
 	}
 	facets: Record<string, any>
 	facetable: FacetableFields
-	
+
 	// Facet management
 	activeFacets: Record<string, ActiveFacetConfig>
 	facetsLoading: boolean
-	
+
 	// Loading and error states
 	loading: boolean
 	error: string | null
@@ -73,11 +73,11 @@ export const useSearchStore = defineStore('search', {
 		},
 		facets: {},
 		facetable: {},
-		
+
 		// Facet management
 		activeFacets: {}, // Currently enabled facets { fieldName: { type: 'terms', config: {} } }
 		facetsLoading: false, // Loading state for facet discovery
-		
+
 		// Loading and error states
 		loading: false,
 		error: null,
@@ -92,76 +92,76 @@ export const useSearchStore = defineStore('search', {
 		getSearchTerm: (state): string => state.searchTerm,
 		getFilters: (state): Record<string, any> => state.filters,
 		getOrdering: (state): Record<string, 'ASC' | 'DESC'> => state.ordering,
-		
+
 		// Results getters
 		getSearchResults: (state): any[] => state.searchResults,
 		getPagination: (state) => state.pagination,
 		getFacets: (state): Record<string, any> => state.facets,
 		getFacetable: (state): FacetableFields => state.facetable,
-		
+
 		// Loading state getters
 		isLoading: (state): boolean => state.loading,
 		getError: (state): string | null => state.error,
 		isFacetsLoading: (state): boolean => state.facetsLoading,
-		
+
 		// View mode getters
 		getViewMode: (state): 'cards' | 'table' => state.viewMode,
 		getSelectedPublications: (state): string[] => state.selectedPublications,
-		
+
 		// Facet management getters
 		getActiveFacets: (state): Record<string, ActiveFacetConfig> => state.activeFacets,
-		
+
 		// Get metadata facets (from @self)
 		getMetadataFacets: (state): Record<string, FacetFieldInfo> => {
 			return state.facetable['@self'] || {}
 		},
-		
+
 		// Get object field facets
 		getObjectFieldFacets: (state): Record<string, FacetFieldInfo> => {
 			return state.facetable.object_fields || {}
 		},
-		
+
 		// Get all available facet fields
 		getAllFacetFields: (state): Record<string, FacetFieldInfo> => {
 			return {
 				...state.facetable['@self'] || {},
-				...state.facetable.object_fields || {}
+				...state.facetable.object_fields || {},
 			}
 		},
-		
+
 		// Check if facets are available
 		hasFacets: (state): boolean => {
 			const metadataCount = Object.keys(state.facetable['@self'] || {}).length
 			const objectFieldCount = Object.keys(state.facetable.object_fields || {}).length
 			return metadataCount > 0 || objectFieldCount > 0
 		},
-		
+
 		// Aliases for FacetComponent compatibility
 		hasFacetableFields: (state): boolean => {
 			const metadataCount = Object.keys(state.facetable['@self'] || {}).length
 			const objectFieldCount = Object.keys(state.facetable.object_fields || {}).length
 			return metadataCount > 0 || objectFieldCount > 0
 		},
-		
+
 		availableMetadataFacets: (state): Record<string, FacetFieldInfo> => {
 			return state.facetable['@self'] || {}
 		},
-		
+
 		availableObjectFieldFacets: (state): Record<string, FacetFieldInfo> => {
 			return state.facetable.object_fields || {}
 		},
-		
+
 		hasActiveFacets: (state): boolean => {
 			const activeFacetKeys = Object.keys(state.activeFacets)
 			const count = activeFacetKeys.length
 			console.log('hasActiveFacets getter called, count:', count, 'activeFacets:', state.activeFacets, 'keys:', activeFacetKeys)
 			return count > 0
 		},
-		
+
 		currentFacets: (state): Record<string, any> => {
 			return state.facets
 		},
-		
+
 		// Check if there are actual facet results from search
 		hasFacetResults: (state): boolean => {
 			return Object.keys(state.facets).length > 0
@@ -280,28 +280,28 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Discover facetable fields
-		 * 
+		 *
 		 * @param params Optional parameters for facetable discovery
 		 */
 		async discoverFacetableFields(params: Record<string, any> = {}) {
 			this.facetsLoading = true
-			
+
 			try {
 				// Build search parameters for facetable discovery
 				const searchParams = new URLSearchParams({
 					// Include current search context
 					...(this.searchTerm && { _search: this.searchTerm }),
-					
+
 					// Request facetable field discovery
 					_facetable: 'true',
 					_aggregate: 'true',
-					
+
 					// Limit to 0 for discovery only (no actual results needed)
 					_limit: '0',
-					
+
 					// Add current filters to get contextual facetable fields
 					...this.filters,
-					
+
 					// Add any additional parameters
 					...params,
 				})
@@ -350,13 +350,13 @@ export const useSearchStore = defineStore('search', {
 				enabled,
 				config,
 				fieldNameType: typeof fieldName,
-				facetTypeType: typeof facetType
+				facetTypeType: typeof facetType,
 			})
-			
+
 			if (enabled) {
 				this.activeFacets[fieldName] = {
 					type: facetType,
-					config: config
+					config,
 				}
 				console.log('✅ Added active facet:', fieldName, '=', this.activeFacets[fieldName])
 			} else {
@@ -364,9 +364,9 @@ export const useSearchStore = defineStore('search', {
 				this.activeFacets = remainingFacets
 				console.log('❌ Removed active facet:', fieldName)
 			}
-			
+
 			console.log('📋 All active facets after update:', this.activeFacets)
-			
+
 			// Automatically trigger search when facets change to get facet buckets
 			if (Object.keys(this.activeFacets).length > 0) {
 				console.log('🔍 Triggering search to get facet buckets for:', Object.keys(this.activeFacets))
@@ -385,32 +385,32 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Build facet query configuration from active facets
 		 *
-		 * @returns Facet query configuration object
+		 * @return Facet query configuration object
 		 */
 		buildFacetQuery() {
 			console.log('🏗️ buildFacetQuery() - Building from active facets:', this.activeFacets)
-			
+
 			const facetQuery: Record<string, any> = {
 				'@self': {},
 			}
 
 			Object.entries(this.activeFacets).forEach(([fieldName, facetConfig]: [string, any]) => {
 				console.log(`🔨 Processing field: "${fieldName}", config:`, facetConfig)
-				
+
 				if (fieldName.startsWith('@self.')) {
 					// Metadata facet
 					const metaField = fieldName.replace('@self.', '')
 					console.log(`📊 Adding metadata facet: "${metaField}" from field "${fieldName}"`)
 					facetQuery['@self'][metaField] = {
 						type: facetConfig.type,
-						...facetConfig.config
+						...facetConfig.config,
 					}
 				} else {
 					// Object field facet
 					console.log(`📦 Adding object field facet: "${fieldName}"`)
 					facetQuery[fieldName] = {
 						type: facetConfig.type,
-						...facetConfig.config
+						...facetConfig.config,
 					}
 				}
 			})
@@ -424,10 +424,10 @@ export const useSearchStore = defineStore('search', {
 		 */
 		async loadInitialResults() {
 			console.log('Loading initial search results with facets...')
-			
+
 			// First discover facetable fields
 			await this.discoverFacetableFields()
-			
+
 			// Then load results
 			await this.searchPublications({ _limit: 20, _page: 1 })
 		},
@@ -479,23 +479,23 @@ export const useSearchStore = defineStore('search', {
 				if (Object.keys(this.activeFacets).length > 0) {
 					const facetQuery = this.buildFacetQuery()
 					console.log('🔗 Converting facet query to URL parameters...')
-					
+
 					// Convert facet query to URL parameters
 					Object.entries(facetQuery).forEach(([category, facets]) => {
 						console.log(`🏷️ Processing category: "${category}", facets:`, facets)
-						
+
 						if (typeof facets === 'object' && facets !== null) {
 							if (category === '@self') {
 								// Handle @self metadata facets
 								Object.entries(facets as Record<string, any>).forEach(([field, config]) => {
 									console.log(`🎛️ Processing @self field: "${field}", config:`, config)
-									
+
 									// Add the type parameter
 									const paramKey = `_facets[@self][${field}][type]`
 									const paramValue = String(config.type)
 									console.log(`🔧 Adding metadata facet param: ${paramKey} = "${paramValue}"`)
 									searchParams.append(paramKey, paramValue)
-									
+
 									// Add additional config parameters (only if they are primitive values)
 									Object.entries(config).forEach(([key, value]) => {
 										if (key !== 'type' && value !== undefined && typeof value !== 'object') {
@@ -509,15 +509,15 @@ export const useSearchStore = defineStore('search', {
 							} else {
 								// Handle object field facets - category is the field name
 								console.log(`🎛️ Processing object field: "${category}", config:`, facets)
-								
+
 								const facetConfig = facets as Record<string, any>
-								
+
 								// Add the type parameter - use category as the field name
 								const paramKey = `_facets[${category}][type]`
 								const paramValue = String(facetConfig.type)
 								console.log(`🔧 Adding object field facet param: ${paramKey} = "${paramValue}"`)
 								searchParams.append(paramKey, paramValue)
-								
+
 								// Add additional config parameters (only if they are primitive values)
 								Object.entries(facetConfig).forEach(([key, value]) => {
 									if (key !== 'type' && value !== undefined && typeof value !== 'object') {
@@ -530,14 +530,14 @@ export const useSearchStore = defineStore('search', {
 							}
 						}
 					})
-					
+
 					console.log('🌐 Final search params string:', searchParams.toString())
 				}
 
 				console.log('Searching publications with params:', searchParams.toString())
 				console.log('Active facets before search:', this.activeFacets)
 				console.log('Facet query built:', this.buildFacetQuery())
-				
+
 				// Debug facet parameter building
 				if (Object.keys(this.activeFacets).length > 0) {
 					console.log('Building facet parameters from active facets:')

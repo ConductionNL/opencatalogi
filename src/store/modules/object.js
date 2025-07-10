@@ -1129,12 +1129,12 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				// Remove from selection if it's currently selected
-				const isSelected = this.selectedObjects.some(obj => 
-					(obj.id || obj['@self']?.id) === objectId
+				const isSelected = this.selectedObjects.some(obj =>
+					(obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj => 
-						(obj.id || obj['@self']?.id) !== objectId
+					const remainingSelected = this.selectedObjects.filter(obj =>
+						(obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
@@ -1186,7 +1186,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
-				
+
 				// Update active object if it matches the published object
 				const activePublication = this.activeObjects.publication
 				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
@@ -1197,16 +1197,16 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				// Remove from selection if it's currently selected
-				const isSelected = this.selectedObjects.some(obj => 
-					(obj.id || obj['@self']?.id) === objectId
+				const isSelected = this.selectedObjects.some(obj =>
+					(obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj => 
-						(obj.id || obj['@self']?.id) !== objectId
+					const remainingSelected = this.selectedObjects.filter(obj =>
+						(obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
-				
+
 				return updatedObject
 			} catch (error) {
 				console.error('Error publishing object:', error)
@@ -1254,7 +1254,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
-				
+
 				// Update active object if it matches the depublished object
 				const activePublication = this.activeObjects.publication
 				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
@@ -1265,16 +1265,16 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				// Remove from selection if it's currently selected
-				const isSelected = this.selectedObjects.some(obj => 
-					(obj.id || obj['@self']?.id) === objectId
+				const isSelected = this.selectedObjects.some(obj =>
+					(obj.id || obj['@self']?.id) === objectId,
 				)
 				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(obj => 
-						(obj.id || obj['@self']?.id) !== objectId
+					const remainingSelected = this.selectedObjects.filter(obj =>
+						(obj.id || obj['@self']?.id) !== objectId,
 					)
 					this.setSelectedObjects(remainingSelected)
 				}
-				
+
 				return updatedObject
 			} catch (error) {
 				console.error('Error depublishing object:', error)
@@ -1381,7 +1381,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
-				
+
 				// Update active object if it matches the locked object
 				const activePublication = this.activeObjects.publication
 				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
@@ -1390,7 +1390,7 @@ export const useObjectStore = defineStore('object', {
 						publication: updatedObject,
 					}
 				}
-				
+
 				return updatedObject
 			} catch (error) {
 				console.error('Error locking object:', error)
@@ -1438,7 +1438,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const updatedObject = await response.json()
-				
+
 				// Update active object if it matches the unlocked object
 				const activePublication = this.activeObjects.publication
 				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
@@ -1447,7 +1447,7 @@ export const useObjectStore = defineStore('object', {
 						publication: updatedObject,
 					}
 				}
-				
+
 				return updatedObject
 			} catch (error) {
 				console.error('Error unlocking object:', error)

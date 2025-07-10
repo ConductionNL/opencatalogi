@@ -450,12 +450,12 @@ export default {
 			window.open(url, type)
 		},
 		formatCatalogs(publication) {
-			if (!publication['@self'] || !publication['@self']['catalogs'] || !Array.isArray(publication['@self']['catalogs'])) return '-'
-			return publication['@self']['catalogs'].map(catalog => catalog.title || catalog.name || 'Unknown').join(', ')
+			if (!publication['@self'] || !publication['@self'].catalogs || !Array.isArray(publication['@self'].catalogs)) return '-'
+			return publication['@self'].catalogs.map(catalog => catalog.title || catalog.name || 'Unknown').join(', ')
 		},
 		formatSchema(publication) {
-			if (!publication['@self'] || !publication['@self']['schema']) return '-'
-			return publication['@self']['schema']['title'] || publication['@self']['schema']['name'] || 'Unknown'
+			if (!publication['@self'] || !publication['@self'].schema) return '-'
+			return publication['@self'].schema.title || publication['@self'].schema.name || 'Unknown'
 		},
 	},
 }

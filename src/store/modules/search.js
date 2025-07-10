@@ -1,11 +1,11 @@
 /**
  * Pinia store for search functionality
- * 
+ *
  * This store handles search operations for publications across local and federated sources.
  * It provides read-only access to publication data through federation endpoints.
- * 
+ *
  * @category Store
- * @package  opencatalogi
+ * @package
  * @author   Ruben van der Linde
  * @copyright 2024
  * @license  AGPL-3.0-or-later
@@ -18,7 +18,7 @@ import { generateOcsUrl } from '@nextcloud/router'
 
 /**
  * Search store for handling publication search operations
- * 
+ *
  * Provides functionality for:
  * - Searching publications across local and federated sources
  * - Managing search filters and ordering
@@ -33,99 +33,110 @@ export const useSearchStore = defineStore('search', {
 		searchTerm: '',
 		isLoading: false,
 		error: null,
-		
+
 		// Pagination
 		pagination: {
 			page: 1,
 			limit: 20,
 			total: 0,
 			pages: 0,
-			offset: 0
+			offset: 0,
 		},
-		
+
 		// Filters and facets
 		filters: {},
 		facets: {},
 		facetable: {},
-		
+
 		// Ordering
 		ordering: {},
-		
+
 		// View settings
 		viewMode: 'cards', // 'cards' or 'table'
 		selectedPublications: [],
-		
+
 		// Search configuration
 		searchEndpoint: '/apps/opencatalogi/api/federation/publications',
-		aggregateByDefault: true
+		aggregateByDefault: true,
 	}),
 
 	getters: {
 		/**
 		 * Get current search results
-		 * @returns {Array} Array of search results
+		 * @param state
+		 * @return {Array} Array of search results
 		 */
 		getSearchResults: (state) => state.searchResults,
 
 		/**
 		 * Get current search term
-		 * @returns {string} Current search term
+		 * @param state
+		 * @return {string} Current search term
 		 */
 		getSearchTerm: (state) => state.searchTerm,
 
 		/**
 		 * Get loading state
-		 * @returns {boolean} Whether search is currently loading
+		 * @param state
+		 * @return {boolean} Whether search is currently loading
 		 */
 		isSearchLoading: (state) => state.isLoading,
 
 		/**
 		 * Get error state
-		 * @returns {string|null} Current error message or null
+		 * @param state
+		 * @return {string|null} Current error message or null
 		 */
 		getError: (state) => state.error,
 
 		/**
 		 * Get pagination information
-		 * @returns {Object} Pagination object with page, limit, total, etc.
+		 * @param state
+		 * @return {object} Pagination object with page, limit, total, etc.
 		 */
 		getPagination: (state) => state.pagination,
 
 		/**
 		 * Get current filters
-		 * @returns {Object} Current filter settings
+		 * @param state
+		 * @return {object} Current filter settings
 		 */
 		getFilters: (state) => state.filters,
 
 		/**
 		 * Get current facets
-		 * @returns {Object} Current facet data
+		 * @param state
+		 * @return {object} Current facet data
 		 */
 		getFacets: (state) => state.facets,
 
 		/**
 		 * Get facetable metadata
-		 * @returns {Object} Facetable metadata for dynamic filters
+		 * @param state
+		 * @return {object} Facetable metadata for dynamic filters
 		 */
 		getFacetable: (state) => state.facetable,
 
 		/**
 		 * Get current ordering
-		 * @returns {Object} Current ordering settings
+		 * @param state
+		 * @return {object} Current ordering settings
 		 */
 		getOrdering: (state) => state.ordering,
 
 		/**
 		 * Get current view mode
-		 * @returns {string} Current view mode ('cards' or 'table')
+		 * @param state
+		 * @return {string} Current view mode ('cards' or 'table')
 		 */
 		getViewMode: (state) => state.viewMode,
 
 		/**
 		 * Get selected publications
-		 * @returns {Array} Array of selected publication IDs
+		 * @param state
+		 * @return {Array} Array of selected publication IDs
 		 */
-		getSelectedPublications: (state) => state.selectedPublications
+		getSelectedPublications: (state) => state.selectedPublications,
 	},
 
 	actions: {
@@ -163,18 +174,18 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set pagination data
-		 * @param {Object} paginationData - Pagination information
+		 * @param {object} paginationData - Pagination information
 		 */
 		setPagination(paginationData) {
 			this.pagination = {
 				...this.pagination,
-				...paginationData
+				...paginationData,
 			}
 		},
 
 		/**
 		 * Set filters
-		 * @param {Object} filters - Filter object to merge with existing filters
+		 * @param {object} filters - Filter object to merge with existing filters
 		 */
 		setFilters(filters) {
 			this.filters = { ...this.filters, ...filters }
@@ -199,7 +210,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set facets data
-		 * @param {Object} facets - Facets data
+		 * @param {object} facets - Facets data
 		 */
 		setFacets(facets) {
 			this.facets = facets || {}
@@ -207,7 +218,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Set facetable metadata
-		 * @param {Object} facetable - Facetable metadata
+		 * @param {object} facetable - Facetable metadata
 		 */
 		setFacetable(facetable) {
 			this.facetable = facetable || {}
@@ -279,33 +290,33 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Build query parameters for search
-		 * @param {Object} additionalParams - Additional parameters to include
-		 * @returns {Object} Query parameters object
+		 * @param {object} additionalParams - Additional parameters to include
+		 * @return {object} Query parameters object
 		 */
 		buildQueryParams(additionalParams = {}) {
 			const params = {
 				// Search term
 				...(this.searchTerm && { q: this.searchTerm }),
-				
+
 				// Pagination
 				_page: this.pagination.page,
 				_limit: this.pagination.limit,
-				
+
 				// Filters
 				...this.filters,
-				
+
 				// Ordering
 				...(Object.keys(this.ordering).length > 0 && { _order: this.ordering }),
-				
+
 				// Enable faceting and aggregation
 				_facetable: true,
 				_aggregate: this.aggregateByDefault,
-				
+
 				// Always include extended data
 				_extend: ['@self.schema', '@self.register'],
-				
+
 				// Additional parameters
-				...additionalParams
+				...additionalParams,
 			}
 
 			// Remove empty values
@@ -321,12 +332,12 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Build API URL with query parameters
 		 * @param {string} endpoint - API endpoint (relative to base)
-		 * @param {Object} params - Query parameters
-		 * @returns {string} Complete API URL
+		 * @param {object} params - Query parameters
+		 * @return {string} Complete API URL
 		 */
 		buildApiUrl(endpoint, params = {}) {
 			const queryString = new URLSearchParams()
-			
+
 			Object.entries(params).forEach(([key, value]) => {
 				if (Array.isArray(value)) {
 					value.forEach(v => queryString.append(`${key}[]`, v))
@@ -345,8 +356,8 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Perform search for publications
-		 * @param {Object} additionalParams - Additional search parameters
-		 * @returns {Promise} Search promise
+		 * @param {object} additionalParams - Additional search parameters
+		 * @return {Promise} Search promise
 		 */
 		async searchPublications(additionalParams = {}) {
 			this.setLoading(true)
@@ -365,13 +376,13 @@ export const useSearchStore = defineStore('search', {
 				const url = this.buildApiUrl(this.searchEndpoint, params)
 
 				console.info('Searching publications with URL:', url)
-				
+
 				const response = await fetch(url, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json'
-					}
+						Accept: 'application/json',
+					},
 				})
 
 				if (!response.ok) {
@@ -379,7 +390,7 @@ export const useSearchStore = defineStore('search', {
 				}
 
 				const data = await response.json()
-				
+
 				// Update state with response data
 				this.setSearchResults(data.results || [])
 				this.setPagination({
@@ -387,7 +398,7 @@ export const useSearchStore = defineStore('search', {
 					limit: data.limit || 20,
 					total: data.total || 0,
 					pages: data.pages || 1,
-					offset: data.offset || 0
+					offset: data.offset || 0,
 				})
 
 				// Update facets and facetable if present
@@ -401,7 +412,7 @@ export const useSearchStore = defineStore('search', {
 				console.info('Search completed:', {
 					total: data.total,
 					results: data.results?.length || 0,
-					page: data.page
+					page: data.page,
 				})
 
 			} catch (error) {
@@ -415,7 +426,7 @@ export const useSearchStore = defineStore('search', {
 
 		/**
 		 * Load initial results without search term
-		 * @returns {Promise} Load promise
+		 * @return {Promise} Load promise
 		 */
 		async loadInitialResults() {
 			console.info('Loading initial search results')
@@ -431,7 +442,7 @@ export const useSearchStore = defineStore('search', {
 			this.clearOrdering()
 			this.clearAllSelections()
 			this.setPagination({ page: 1, limit: 20, total: 0, pages: 0, offset: 0 })
-			
+
 			// Load initial results
 			await this.loadInitialResults()
 		},
@@ -439,7 +450,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Get publication by ID
 		 * @param {string} id - Publication ID
-		 * @returns {Promise<Object>} Publication data
+		 * @return {Promise<object>} Publication data
 		 */
 		async getPublication(id) {
 			if (!id) {
@@ -448,13 +459,13 @@ export const useSearchStore = defineStore('search', {
 
 			try {
 				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}`)
-				
+
 				const response = await fetch(url, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json'
-					}
+						Accept: 'application/json',
+					},
 				})
 
 				if (!response.ok) {
@@ -472,7 +483,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Get publications that this publication uses
 		 * @param {string} id - Publication ID
-		 * @returns {Promise<Object>} Publications that this publication uses
+		 * @return {Promise<object>} Publications that this publication uses
 		 */
 		async getPublicationUses(id) {
 			if (!id) {
@@ -481,13 +492,13 @@ export const useSearchStore = defineStore('search', {
 
 			try {
 				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/uses`)
-				
+
 				const response = await fetch(url, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json'
-					}
+						Accept: 'application/json',
+					},
 				})
 
 				if (!response.ok) {
@@ -505,7 +516,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Get publications that use this publication
 		 * @param {string} id - Publication ID
-		 * @returns {Promise<Object>} Publications that use this publication
+		 * @return {Promise<object>} Publications that use this publication
 		 */
 		async getPublicationUsed(id) {
 			if (!id) {
@@ -514,13 +525,13 @@ export const useSearchStore = defineStore('search', {
 
 			try {
 				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/used`)
-				
+
 				const response = await fetch(url, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json'
-					}
+						Accept: 'application/json',
+					},
 				})
 
 				if (!response.ok) {
@@ -538,7 +549,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Get publication attachments
 		 * @param {string} id - Publication ID
-		 * @returns {Promise<Object>} Publication attachments
+		 * @return {Promise<object>} Publication attachments
 		 */
 		async getPublicationAttachments(id) {
 			if (!id) {
@@ -547,13 +558,13 @@ export const useSearchStore = defineStore('search', {
 
 			try {
 				const url = generateOcsUrl(`/apps/opencatalogi/api/federation/publications/${id}/attachments`)
-				
+
 				const response = await fetch(url, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json'
-					}
+						Accept: 'application/json',
+					},
 				})
 
 				if (!response.ok) {
@@ -566,6 +577,6 @@ export const useSearchStore = defineStore('search', {
 				console.error('Error fetching publication attachments:', error)
 				throw error
 			}
-		}
-	}
-}) 
+		},
+	},
+})

@@ -37,7 +37,7 @@ export default {
 	props: {
 		/**
 		 * The object to check publication status for
-		 * @type {Object}
+		 * @type {object}
 		 */
 		object: {
 			type: Object,
@@ -45,7 +45,7 @@ export default {
 		},
 		/**
 		 * Size of the icon
-		 * @type {Number}
+		 * @type {number}
 		 */
 		size: {
 			type: Number,
@@ -53,7 +53,7 @@ export default {
 		},
 		/**
 		 * Additional CSS class to apply to the icon
-		 * @type {String}
+		 * @type {string}
 		 */
 		iconClass: {
 			type: String,
@@ -61,7 +61,7 @@ export default {
 		},
 		/**
 		 * Custom tooltip for published state
-		 * @type {String}
+		 * @type {string}
 		 */
 		publishedTooltip: {
 			type: String,
@@ -69,7 +69,7 @@ export default {
 		},
 		/**
 		 * Custom tooltip for draft state
-		 * @type {String}
+		 * @type {string}
 		 */
 		draftTooltip: {
 			type: String,
@@ -77,7 +77,7 @@ export default {
 		},
 		/**
 		 * Custom tooltip for depublished state
-		 * @type {String}
+		 * @type {string}
 		 */
 		depublishedTooltip: {
 			type: String,
@@ -88,7 +88,7 @@ export default {
 		icon() {
 			const published = this.object?.['@self']?.published
 			const depublished = this.object?.['@self']?.depublished
-			
+
 			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
 				return 'ListBoxOutline'
 			}
@@ -100,7 +100,7 @@ export default {
 		iconColor() {
 			const published = this.object?.['@self']?.published
 			const depublished = this.object?.['@self']?.depublished
-			
+
 			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
 				return 'published-icon'
 			}
@@ -112,7 +112,7 @@ export default {
 		tooltip() {
 			const published = this.object?.['@self']?.published
 			const depublished = this.object?.['@self']?.depublished
-			
+
 			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
 				return this.publishedTooltip
 			}
@@ -123,14 +123,14 @@ export default {
 		},
 		/**
 		 * Check if the object is published
-		 * @return {Boolean} True if the object is published
+		 * @return {boolean} True if the object is published
 		 */
 		isPublished() {
 			return !!(this.object?.['@self']?.published && !this.object?.['@self']?.depublished)
 		},
 		/**
 		 * Check if the object is depublished
-		 * @return {Boolean} True if the object is depublished
+		 * @return {boolean} True if the object is depublished
 		 */
 		isDepublished() {
 			return !!(this.object?.['@self']?.depublished)
@@ -152,4 +152,4 @@ export default {
 .depublished-icon {
 	color: var(--color-error);
 }
-</style> 
+</style>

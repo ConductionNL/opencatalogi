@@ -203,7 +203,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 				</template>
 				<template v-else>
 					<div class="viewTableContainer">
-						<VueDraggable v-if="enableColumnReorder" v-model="orderedEnabledColumns"
+						<VueDraggable v-if="enableColumnReorder"
+							v-model="orderedEnabledColumns"
 							target=".sort-target"
 							animation="150"
 							draggable="> *:not(.staticColumn)">
@@ -346,16 +347,16 @@ import { objectStore, navigationStore } from '../store/store.js'
 </template>
 
 <script>
-import { 
-	NcAppContent, 
-	NcEmptyContent, 
-	NcLoadingIcon, 
-	NcActions, 
-	NcActionButton, 
+import {
+	NcAppContent,
+	NcEmptyContent,
+	NcLoadingIcon,
+	NcActions,
+	NcActionButton,
 	NcActionCheckbox,
 	NcActionCaption,
-	NcCheckboxRadioSwitch, 
-	NcButton 
+	NcCheckboxRadioSwitch,
+	NcButton,
 } from '@nextcloud/vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
@@ -383,7 +384,7 @@ export default {
 		FormatColumns,
 		PaginationComponent,
 	},
-	
+
 	props: {
 		/**
 		 * Object type identifier
@@ -534,12 +535,12 @@ export default {
 		selectedObjects() {
 			// Use store-managed selected objects if available, otherwise use local state
 			return (objectStore.selectedObjects || []).map(obj =>
-				this.getObjectId(obj)
+				this.getObjectId(obj),
 			).filter(Boolean)
 		},
 		allSelected() {
 			return this.filteredObjects.length > 0 && this.filteredObjects.every(obj =>
-				this.selectedObjects.includes(this.getObjectId(obj))
+				this.selectedObjects.includes(this.getObjectId(obj)),
 			)
 		},
 		someSelected() {
@@ -577,8 +578,8 @@ export default {
 		},
 		orderedEnabledColumns() {
 			// Get enabled columns from the store or use provided properties
-			const enabledColumns = objectStore.enabledColumns.length > 0 
-				? objectStore.enabledColumns 
+			const enabledColumns = objectStore.enabledColumns.length > 0
+				? objectStore.enabledColumns
 				: this.properties
 
 			// Apply custom ordering if provided
@@ -630,7 +631,7 @@ export default {
 		handleSelectObject(objectId) {
 			const currentSelected = [...(objectStore.selectedObjects || [])]
 			const existingIndex = currentSelected.findIndex(obj =>
-				this.getObjectId(obj) === objectId
+				this.getObjectId(obj) === objectId,
 			)
 
 			if (existingIndex > -1) {
@@ -639,7 +640,7 @@ export default {
 			} else {
 				// Add to selection - find the full object
 				const objectToAdd = this.filteredObjects.find(obj =>
-					this.getObjectId(obj) === objectId
+					this.getObjectId(obj) === objectId,
 				)
 				if (objectToAdd) {
 					currentSelected.push({
@@ -987,4 +988,4 @@ export default {
 	color: var(--color-primary);
 	font-weight: 500;
 }
-</style> 
+</style>
