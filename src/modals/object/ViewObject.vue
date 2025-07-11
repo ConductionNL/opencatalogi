@@ -2646,7 +2646,7 @@ export default {
 				for (const file of selectedFiles) {
 					const publication = this.currentObject
 					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/publish`
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/publish`
 
 					const response = await fetch(endpoint, {
 						method: 'POST',
@@ -2691,7 +2691,7 @@ export default {
 				for (const file of selectedFiles) {
 					const publication = this.currentObject
 					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/depublish`
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/depublish`
 
 					const response = await fetch(endpoint, {
 						method: 'POST',
@@ -2736,7 +2736,7 @@ export default {
 				for (const file of selectedFiles) {
 					const publication = this.currentObject
 					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
 					const response = await fetch(endpoint, {
 						method: 'DELETE',
@@ -2771,7 +2771,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/publish`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/publish`
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
@@ -2800,7 +2800,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}/depublish`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/depublish`
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
@@ -2829,7 +2829,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
 				const response = await fetch(endpoint, {
 					method: 'DELETE',
@@ -2882,7 +2882,7 @@ export default {
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 
 				// Update file tags using the same approach as PublicationDetail.vue
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${encodeURIComponent(file.title || file.name || file.path)}`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
 				const response = await fetch(endpoint, {
 					method: 'PUT',
