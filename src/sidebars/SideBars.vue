@@ -14,34 +14,13 @@
 import { computed, ref } from 'vue'
 import { objectStore, navigationStore } from '../store/store.js'
 import SearchSideBar from './search/SearchSideBar.vue'
-
-// Reactive state for sidebar visibility
-const isSidebarOpen = ref(true)
-
-/**
- * Get the active directory from the store
- * @return {object | null}
- */
-const directory = computed(() => objectStore.getActiveObject('directory'))
-
-/**
- * Get the active listing from the store
- * @return {object | null}
- */
-const listing = computed(() => objectStore.getActiveObject('listing'))
-
-/**
- * Check if we're on the search page
- * @return {boolean}
- */
-const isSearchPage = computed(() => navigationStore.selected === 'search')
 </script>
 
 <template>
 	<div class="sidebars">
 		<!-- Search Sidebar -->
-		<SearchSideBar 
-			v-if="isSearchPage" 
+		<SearchSideBar
+			v-if="isSearchPage"
 			:open="isSidebarOpen"
 			@update:open="(e) => isSidebarOpen = e" />
 
@@ -80,6 +59,27 @@ const isSearchPage = computed(() => navigationStore.selected === 'search')
 <script>
 import { NcAppSidebar, NcButton } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+
+// Reactive state for sidebar visibility
+const isSidebarOpen = ref(true)
+
+/**
+ * Get the active directory from the store
+ * @return {object | null}
+ */
+const directory = computed(() => objectStore.getActiveObject('directory'))
+
+/**
+ * Get the active listing from the store
+ * @return {object | null}
+ */
+const listing = computed(() => objectStore.getActiveObject('listing'))
+
+/**
+ * Check if we're on the search page
+ * @return {boolean}
+ */
+const isSearchPage = computed(() => navigationStore.selected === 'search')
 
 export default {
 	name: 'SideBars',

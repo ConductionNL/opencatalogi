@@ -216,7 +216,7 @@ class DirectoryService
 
                     $listingId = $objectData['id'] ?? $listingData['id'] ?? 'unknown';
                     $listingTitle = $objectData['title'] ?? 'unknown';
-                    $available = $objectData['integrationLevel'] === 'search';
+                    $available = ($objectData['integrationLevel'] ?? null) === 'search';
                     $default = $objectData['default'] ?? false;
                     $directory = $objectData['directory'] ?? $listingData['directory'] ?? null;
 

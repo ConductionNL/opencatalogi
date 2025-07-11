@@ -193,4 +193,4 @@ export default {
 .mass-action-dialog {
 	z-index: 10000 !important;
 }
-</style> 
+</style>

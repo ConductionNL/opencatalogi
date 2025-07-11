@@ -165,7 +165,7 @@ export default {
 				const { successful, failed } = await objectStore.massLockObjects(
 					objectsToProcess,
 					this.process || null,
-					this.duration || null
+					this.duration || null,
 				)
 
 				if (successful.length > 0) {
@@ -220,4 +220,4 @@ export default {
 .mass-action-dialog {
 	z-index: 10000 !important;
 }
-</style> 
+</style>
