@@ -600,7 +600,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													<th class="tableColumnConstrained table-row-type">
 														Type
 													</th>
-													<th class="tableColumnConstrained short-column">
+													<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
 														Labels
 													</th>
 													<th class="table-row-actions" />
@@ -3860,6 +3860,11 @@ export default {
 .table-row-actions {
 	width: 35px;
 	text-align: center;
+}
+
+.table-row-labels {
+	width: 280px;
+	max-width: 280px;
 }
 
 .viewObjectDialog .viewTable th.table-row-title,
