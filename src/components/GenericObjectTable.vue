@@ -807,10 +807,6 @@ export default {
 	display: inline-block;
 }
 
-.viewContainer {
-	padding: 20px;
-}
-
 .viewHeader {
 	margin-bottom: 24px;
 }

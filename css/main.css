@@ -396,7 +396,7 @@
 
 /* Container and Layout */
 .viewContainer {
-  padding: 20px;
+  padding: 0 20px 20px 20px;
   max-width: 100%;
 }
 

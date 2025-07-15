@@ -6,10 +6,10 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 	<NcAppContent>
 		<div class="viewContainer">
 			<!-- Header -->
-			<div class="viewHeader">
-				<h1 class="viewHeaderTitleIndented">
+			<div class="viewHeader publicationTableHeader">
+				<h2 class="pageHeader">
 					{{ t('opencatalogi', 'Publications') }}
-				</h1>
+				</h2>
 				<p>{{ t('opencatalogi', 'Manage your publications and their status') }}</p>
 			</div>
 
@@ -66,6 +66,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
 							v-tooltip="'See publications as cards'"
+							:class="viewMode === 'cards' ? 'active' : ''"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
 							value="cards"
@@ -77,6 +78,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
 							v-tooltip="'See publications as a table'"
+							:class="viewMode === 'table' ? 'active' : ''"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
 							value="table"
@@ -171,12 +173,6 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										</template>
 										Edit
 									</NcActionButton>
-									<NcActionButton close-after-click @click="copyPublication(publication)">
-										<template #icon>
-											<ContentCopy :size="20" />
-										</template>
-										Copy
-									</NcActionButton>
 									<NcActionButton
 										v-if="shouldShowPublishAction(publication)"
 										close-after-click
@@ -215,43 +211,36 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									<tr>
 										<th>{{ t('opencatalogi', 'Property') }}</th>
 										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr>
 										<td>{{ t('opencatalogi', 'Status') }}</td>
 										<td>{{ getPublicationStatus(publication) }}</td>
-										<td>{{ getPublicationStatusLabel(publication) }}</td>
 									</tr>
 									<tr v-if="publication.summary">
 										<td>{{ t('opencatalogi', 'Summary') }}</td>
 										<td class="truncatedText">
 											{{ publication.summary }}
 										</td>
-										<td>{{ 'Available' }}</td>
 									</tr>
 									<tr v-if="publication.description">
 										<td>{{ t('opencatalogi', 'Description') }}</td>
 										<td class="truncatedText">
 											{{ publication.description }}
 										</td>
-										<td>{{ 'Available' }}</td>
 									</tr>
 									<tr v-if="publication.category">
 										<td>{{ t('opencatalogi', 'Category') }}</td>
 										<td>{{ publication.category }}</td>
-										<td>{{ 'Set' }}</td>
 									</tr>
 									<tr v-if="publication.published">
 										<td>{{ t('opencatalogi', 'Published') }}</td>
 										<td>{{ new Date(publication.published).toLocaleDateString() }}</td>
-										<td>{{ 'Published' }}</td>
 									</tr>
 									<tr v-if="publication.modified">
 										<td>{{ t('opencatalogi', 'Modified') }}</td>
 										<td>{{ publication.modified }}</td>
-										<td>{{ 'Updated' }}</td>
 									</tr>
 								</tbody>
 							</table>
@@ -429,7 +418,6 @@ export default {
 		TrashCanOutline,
 		Refresh,
 		Plus,
-		ContentCopy,
 		Publish,
 		PublishOff,
 		FilePlusOutline,
@@ -643,7 +631,7 @@ export default {
 		addAttachment(publication) {
 			// Set the publication and open the add attachment modal
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('AddAttachment')
+			navigationStore.setDialog('uploadFiles')
 		},
 		mergePublication(publication) {
 			// Set the source publication for merging and open the merge modal
@@ -758,12 +746,8 @@ export default {
 	margin-top: 12px;
 }
 
-.viewContainer {
-	padding: 20px;
-}
-
-.viewHeader {
-	margin-bottom: 24px;
+.publicationTableHeader {
+	margin-inline-start: -20px;
 }
 
 .viewHeaderTitleIndented {
@@ -795,6 +779,14 @@ export default {
 
 .viewModeSwitchContainer {
 	display: flex;
+}
+
+.viewModeSwitchContainer :deep(.checkbox-radio-switch.active .checkbox-radio-switch__content),
+.viewModeSwitchContainer :deep(.checkbox-radio-switch__content.active) {
+    background-color: var(--color-primary-element) !important;
+    color: var(--color-primary-text) !important;
+    border-radius: var(--border-radius-large) !important;
+	text-align: center;
 }
 
 .cardGrid {
