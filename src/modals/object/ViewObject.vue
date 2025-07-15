@@ -233,7 +233,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<template v-if="formData[key] !== undefined">
 													<!-- Show edited value -->
 													<pre
-														v-if="typeof formData[key] === 'object' && formData[key] !== null"
+														v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
 														v-tooltip="'JSON object (edited)'"
 														class="json-value">{{ formatValue(formData[key]) }}</pre>
 													<span
@@ -249,7 +249,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<template v-else>
 													<!-- Show original value -->
 													<pre
-														v-if="typeof value === 'object' && value !== null"
+														v-if="key !== 'themes' && typeof value === 'object' && value !== null"
 														v-tooltip="'JSON object'"
 														class="json-value">{{ formatValue(value) }}</pre>
 													<span
@@ -383,6 +383,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<NcTextArea
 																v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
 																ref="propertyValueInput"
+																class="textarea-property"
 																:value="String(formData[key] !== undefined ? formData[key] : value || '')"
 																:placeholder="getPropertyDisplayName(key)"
 																:rows="4"
@@ -441,7 +442,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<template v-if="formData[key] !== undefined">
 																<!-- Show edited value -->
 																<pre
-																	v-if="typeof formData[key] === 'object' && formData[key] !== null"
+																	v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
 																	v-tooltip="'JSON object (edited)'"
 																	class="json-value">{{ formatValue(formData[key]) }}</pre>
 																<span
@@ -457,7 +458,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															<template v-else>
 																<!-- Show original value -->
 																<pre
-																	v-if="typeof value === 'object' && value !== null"
+																	v-if="key !== 'themes' && typeof value === 'object' && value !== null"
 																	v-tooltip="'JSON object'"
 																	class="json-value">{{ formatValue(value) }}</pre>
 																<span
@@ -541,193 +542,196 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										<NcLoadingIcon :size="64" />
 									</template>
 								</NcEmptyContent>
-								<div v-else-if="paginatedFiles.length > 0" class="viewTableContainer">
-									<table class="viewTable">
-										<thead>
-											<tr class="viewTableRow">
-												<th class="tableColumnCheckbox">
-													<NcCheckboxRadioSwitch
-														:checked="allFilesSelected"
-														:indeterminate="someFilesSelected"
-														@update:checked="toggleSelectAllFiles" />
-												</th>
-												<th class="tableColumnExpanded">
-													Name
-												</th>
-												<th class="tableColumnConstrained">
-													Size
-												</th>
-												<th class="tableColumnConstrained">
-													Type
-												</th>
-												<th class="tableColumnConstrained">
-													Labels
-												</th>
-												<th class="tableColumnActions">
-													<NcActions
-														:force-name="true"
-														:disabled="selectedAttachments.length === 0"
-														:title="selectedAttachments.length === 0 ? 'Select one or more files to use mass actions' : `Mass actions (${selectedAttachments.length} selected)`"
-														:menu-name="`Mass Actions (${selectedAttachments.length})`">
-														<template #icon>
-															<FormatListChecks :size="20" />
-														</template>
-														<NcActionButton
-															:disabled="publishLoading.length > 0 || selectedAttachments.length === 0"
-															@click="publishSelectedFiles">
-															<template #icon>
-																<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
-																<FileOutline v-else :size="20" />
-															</template>
-															Publish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
-														</NcActionButton>
-														<NcActionButton
-															:disabled="depublishLoading.length > 0 || selectedAttachments.length === 0"
-															@click="depublishSelectedFiles">
-															<template #icon>
-																<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
-																<LockOutline v-else :size="20" />
-															</template>
-															Depublish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
-														</NcActionButton>
-														<NcActionButton
-															:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
-															@click="deleteSelectedFiles">
-															<template #icon>
-																<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
-																<Delete v-else :size="20" />
-															</template>
-															Delete {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
-														</NcActionButton>
-													</NcActions>
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr v-for="(attachment, i) in paginatedFiles"
-												:key="`${attachment.id}${i}`"
-												:class="{ 'active': activeAttachment === attachment.id }"
-												class="viewTableRow"
-												@click="() => {
-													if (activeAttachment === attachment.id) activeAttachment = null
-													else activeAttachment = attachment.id
-												}">
-												<td class="tableColumnCheckbox">
-													<NcCheckboxRadioSwitch
-														:checked="selectedAttachments.includes(attachment.id)"
-														@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
-												</td>
-												<td class="tableColumnExpanded table-row-title">
-													<div class="file-name-container">
-														<div class="file-status-icons">
-															<!-- Show warning icon if file is not shared -->
-															<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
-																v-tooltip="'Not shared'"
-																class="warningIcon"
-																:size="20" />
-															<!-- Show published icon if file is shared -->
-															<FileOutline v-else class="publishedIcon" :size="20" />
+								<template v-else-if="paginatedFiles.length > 0">
+									<div class="multi-actions-container">
+										<NcActions
+											:force-name="true"
+											:disabled="selectedAttachments.length === 0"
+											:title="selectedAttachments.length === 0 ? 'Select one or more files to use mass actions' : `Mass actions (${selectedAttachments.length} selected)`"
+											:menu-name="`Mass Actions (${selectedAttachments.length})`">
+											<template #icon>
+												<FormatListChecks :size="20" />
+											</template>
+											<NcActionButton
+												:disabled="publishLoading.length > 0 || selectedAttachments.length === 0"
+												@click="publishSelectedFiles">
+												<template #icon>
+													<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
+													<FileOutline v-else :size="20" />
+												</template>
+												Publish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+											</NcActionButton>
+											<NcActionButton
+												:disabled="depublishLoading.length > 0 || selectedAttachments.length === 0"
+												@click="depublishSelectedFiles">
+												<template #icon>
+													<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
+													<LockOutline v-else :size="20" />
+												</template>
+												Depublish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+											</NcActionButton>
+											<NcActionButton
+												:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
+												@click="deleteSelectedFiles">
+												<template #icon>
+													<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
+													<Delete v-else :size="20" />
+												</template>
+												Delete {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+											</NcActionButton>
+										</NcActions>
+									</div>
+									<div class="viewTableContainer">
+										<table class="viewTable">
+											<thead>
+												<tr class="viewTableRow">
+													<th class="tableColumnCheckbox">
+														<NcCheckboxRadioSwitch
+															:checked="allFilesSelected"
+															:indeterminate="someFilesSelected"
+															@update:checked="toggleSelectAllFiles" />
+													</th>
+													<th class="tableColumnExpanded table-row-title">
+														Name
+													</th>
+													<th class="tableColumnConstrained short-column">
+														Size
+													</th>
+													<th class="tableColumnConstrained table-row-type">
+														Type
+													</th>
+													<th class="tableColumnConstrained short-column">
+														Labels
+													</th>
+													<th class="table-row-actions" />
+												</tr>
+											</thead>
+											<tbody>
+												<tr v-for="(attachment, i) in paginatedFiles"
+													:key="`${attachment.id}${i}`"
+													:class="{ 'active': activeAttachment === attachment.id }"
+													class="viewTableRow"
+													@click="() => {
+														if (activeAttachment === attachment.id) activeAttachment = null
+														else activeAttachment = attachment.id
+													}">
+													<td class="tableColumnCheckbox">
+														<NcCheckboxRadioSwitch
+															:checked="selectedAttachments.includes(attachment.id)"
+															@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
+													</td>
+													<td class="tableColumnExpanded table-row-title">
+														<div class="file-name-container">
+															<div class="file-status-icons">
+																<!-- Show warning icon if file is not shared -->
+																<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
+																	v-tooltip="'Not shared'"
+																	class="warningIcon"
+																	:size="20" />
+																<!-- Show published icon if file is shared -->
+																<FileOutline v-else class="publishedIcon" :size="20" />
+															</div>
+															<span class="file-name">{{ attachment.name ?? attachment?.title }}</span>
 														</div>
-														<span class="file-name">{{ truncateFileName(attachment.name ?? attachment?.title) }}</span>
-													</div>
-												</td>
-												<td class="tableColumnConstrained">
-													{{ formatFileSize(attachment?.size) }}
-												</td>
-												<td class="tableColumnConstrained">
-													{{ attachment?.type || 'No type' }}
-												</td>
-												<td class="tableColumnConstrained">
-													<div class="fileLabelsContainer">
-														<span v-if="editingTags !== attachment.id"
-															class="files-list__row-action--inline files-list__row-action-system-tags">
-															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
-																<li v-for="label of attachment.labels"
-																	:key="label"
-																	class="files-list__system-tag"
-																	:title="label">
-																	{{ label }}
-																</li>
-															</ul>
-															<span v-if="!attachment.labels || attachment.labels.length === 0">
-																No labels
+													</td>
+													<td class="tableColumnConstrained short-column">
+														{{ formatFileSize(attachment?.size) }}
+													</td>
+													<td class="tableColumnConstrained table-row-type">
+														{{ attachment?.type || 'No type' }}
+													</td>
+													<td class="tableColumnConstrained short-column">
+														<div class="fileLabelsContainer">
+															<span v-if="editingTags !== attachment.id"
+																class="files-list__row-action--inline files-list__row-action-system-tags">
+																<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+																	<li v-for="label of attachment.labels"
+																		:key="label"
+																		class="files-list__system-tag"
+																		:title="label">
+																		{{ label }}
+																	</li>
+																</ul>
+																<span v-if="!attachment.labels || attachment.labels.length === 0">
+																	No labels
+																</span>
 															</span>
-														</span>
-														<div v-if="editingTags === attachment.id" class="label-edit-container">
-															<NcSelect
-																v-model="editedTags"
-																:disabled="tagsLoading"
-																:loading="tagsLoading"
-																:multiple="true"
-																:aria-label-combobox="labelOptionsEdit.inputLabel"
-																:options="labelOptionsEdit.options" />
-															<NcButton
-																v-tooltip="'Save labels'"
-																type="primary"
-																size="small"
-																:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
-																class="editTagsButton"
-																@click="saveTags(attachment, editedTags)">
-																<template #icon>
-																	<ContentSaveOutline :size="20" />
-																</template>
-															</NcButton>
+															<div v-if="editingTags === attachment.id" class="label-edit-container">
+																<NcSelect
+																	v-model="editedTags"
+																	:disabled="tagsLoading"
+																	:loading="tagsLoading"
+																	:multiple="true"
+																	:aria-label-combobox="labelOptionsEdit.inputLabel"
+																	:options="labelOptionsEdit.options" />
+																<NcButton
+																	v-tooltip="'Save labels'"
+																	type="primary"
+																	size="small"
+																	:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
+																	class="editTagsButton"
+																	@click="saveTags(attachment, editedTags)">
+																	<template #icon>
+																		<ContentSaveOutline :size="20" />
+																	</template>
+																</NcButton>
+															</div>
 														</div>
-													</div>
-												</td>
-												<td class="tableColumnActions">
-													<NcActions
-														v-if="editingTags !== attachment.id"
-														:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
-														<NcActionButton @click="openFile(attachment)">
-															<template #icon>
-																<OpenInNew :size="20" />
-															</template>
-															View
-														</NcActionButton>
-														<NcActionButton
-															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
-															@click="editFileLabels(attachment)">
-															<template #icon>
-																<Tag :size="20" />
-															</template>
-															Edit Labels
-														</NcActionButton>
-														<NcActionButton
-															v-if="!attachment.accessUrl && !attachment.downloadUrl"
-															:disabled="publishLoading.includes(attachment.id)"
-															@click="publishFile(attachment)">
-															<template #icon>
-																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
-																<FileOutline v-else :size="20" />
-															</template>
-															Publish
-														</NcActionButton>
-														<NcActionButton
-															v-else
-															:disabled="depublishLoading.includes(attachment.id)"
-															@click="depublishFile(attachment)">
-															<template #icon>
-																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
-																<LockOutline v-else :size="20" />
-															</template>
-															Depublish
-														</NcActionButton>
-														<NcActionButton
-															:disabled="fileIdsLoading.includes(attachment.id)"
-															@click="deleteFile(attachment)">
-															<template #icon>
-																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
-																<Delete v-else :size="20" />
-															</template>
-															Delete
-														</NcActionButton>
-													</NcActions>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
+													</td>
+													<td class="table-row-actions">
+														<NcActions
+															v-if="editingTags !== attachment.id"
+															:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
+															<NcActionButton @click="openFile(attachment)">
+																<template #icon>
+																	<OpenInNew :size="20" />
+																</template>
+																View
+															</NcActionButton>
+															<NcActionButton
+																:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
+																@click="editFileLabels(attachment)">
+																<template #icon>
+																	<Tag :size="20" />
+																</template>
+																Edit Labels
+															</NcActionButton>
+															<NcActionButton
+																v-if="!attachment.accessUrl && !attachment.downloadUrl"
+																:disabled="publishLoading.includes(attachment.id)"
+																@click="publishFile(attachment)">
+																<template #icon>
+																	<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
+																	<FileOutline v-else :size="20" />
+																</template>
+																Publish
+															</NcActionButton>
+															<NcActionButton
+																v-else
+																:disabled="depublishLoading.includes(attachment.id)"
+																@click="depublishFile(attachment)">
+																<template #icon>
+																	<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
+																	<LockOutline v-else :size="20" />
+																</template>
+																Depublish
+															</NcActionButton>
+															<NcActionButton
+																:disabled="fileIdsLoading.includes(attachment.id)"
+																@click="deleteFile(attachment)">
+																<template #icon>
+																	<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
+																	<Delete v-else :size="20" />
+																</template>
+																Delete
+															</NcActionButton>
+														</NcActions>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</template>
 								<NcEmptyContent v-else-if="!isNewObject"
 									name="No files attached"
 									description="No files have been attached to this object">
@@ -1573,9 +1577,9 @@ export default {
 				}
 
 				const result = await response.json()
-
+				const schema = objectStore.availableSchemas.find(schema => schema.id === Number(result['@self'].schema))
 				// Set the newly created/updated object as active in the object store
-				objectStore.setActiveObject('publication', result)
+				objectStore.setActiveObject('publication', { ...result, '@self': { ...result['@self'], schema } })
 
 				// Clear form data since we now have the saved object
 				this.formData = {}
@@ -2202,6 +2206,18 @@ export default {
 			this.updatePropertyValue(key, content)
 		},
 		getDisplayValue(key, value) {
+			if (key === 'themes') {
+				const themes = objectStore.getCollection('theme').results || []
+				const idToLabel = (id) => {
+					const themeObj = themes.find(t => t.id === id)
+					return themeObj ? (themeObj.title || `#${themeObj.id}`) : id
+				}
+				const currentVal = this.formData[key] !== undefined ? this.formData[key] : value
+				if (Array.isArray(currentVal)) {
+					return currentVal.map(idToLabel).join(', ')
+				}
+				return idToLabel(currentVal)
+			}
 			// Get the schema information to determine format
 			const schemaProperties = this.getSchemaProperties()
 			const schemaProperty = schemaProperties[key]
@@ -2565,16 +2581,6 @@ export default {
 			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
 			if (i === 0) return bytes + ' ' + sizes[i]
 			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
-		},
-		/**
-		 * Truncate file name to prevent dialog alignment issues
-		 * @param {string} fileName - The file name to truncate
-		 * @return {string} The truncated file name (22 chars + ... if longer than 25)
-		 */
-		truncateFileName(fileName) {
-			if (!fileName) return ''
-			if (fileName.length <= 25) return fileName
-			return fileName.substring(0, 22) + '...'
 		},
 		toggleSelectAllFiles(checked) {
 			if (checked) {
@@ -3337,9 +3343,10 @@ export default {
 <style scoped>
 /* ViewObject-specific overrides only */
 
-.tableColumnActions {
-	width: 100px;
-	text-align: center;
+.multi-actions-container {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 10px;
 }
 
 /* Actions header cell styling for toggle button */
@@ -3419,8 +3426,8 @@ export default {
 }
 
 .drop-property-btn {
-	opacity: 1;
-	transition: opacity 0.2s ease;
+	opacity: 0.3 !important;
+	transition: .2s ease !important;
 	margin-left: auto;
 	flex-shrink: 0;
 }
@@ -3428,7 +3435,7 @@ export default {
 .drop-property-btn:hover {
 	opacity: 1 !important;
 	background-color: var(--color-error-hover) !important;
-	color: var(--color-error) !important;
+	color: white !important;
 }
 
 .validation-icon {
@@ -3482,12 +3489,14 @@ export default {
 /* Ensure proper alignment for table cells */
 .tableColumnConstrained {
 	text-align: left;
-	vertical-align: top;
+	align-items: center;
 }
 
 .tableColumnExpanded {
 	text-align: left;
-	vertical-align: top;
+	align-items: center;
+	white-space: normal;
+	word-break: break-word;
 }
 
 .json-value {
@@ -3648,6 +3657,9 @@ export default {
 .value-input-container .nc-textarea textarea {
 	min-height: 100px;
 	resize: vertical;
+	white-space: pre-wrap;
+	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 
 /* Toast UI Editor - Basic Nextcloud Integration */
@@ -3787,5 +3799,71 @@ export default {
 .label-edit-container .editTagsButton {
 	flex-shrink: 0;
 	margin-left: 2px;
+}
+
+.viewObjectDialog .viewTable {
+	table-layout: fixed;
+}
+
+.viewObjectDialog .viewTable th,
+.viewObjectDialog .viewTable td {
+	white-space: normal;
+	word-break: break-word;
+}
+
+.value-cell-content {
+	flex-wrap: wrap;
+}
+
+.viewObjectDialog .viewTable td.table-row-type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+	word-break: unset !important;
+}
+
+.viewObjectDialog .viewTable td.short-column {
+	width: 100px;
+}
+
+.viewObjectDialog .viewTable td.table-row-title {
+	flex: 1;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.short-column {
+    width: 100px;
+    max-width: 100px;
+    overflow: hidden;
+	text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table-row-title {
+    width: 100%;
+    max-width: initial;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.table-row-type {
+	width: 120px;
+	max-width: 120px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	word-break: unset !important;
+}
+
+.table-row-actions {
+	width: 35px;
+	text-align: center;
+}
+
+.viewObjectDialog .viewTable th.table-row-title,
+.viewObjectDialog .viewTable td.table-row-title {
+    width: 100%;
 }
 </style>
