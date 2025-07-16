@@ -235,12 +235,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												v-tooltip="getPropertyWarningMessage(key, value)"
 												class="validation-icon warning-icon"
 												:size="16" />
-											<Asterisk v-else-if="getPropertyValidationClass(key, value) === 'property-required-empty'"
-												v-tooltip="getPropertyRequiredMessage(key)"
-												class="validation-icon required-icon"
-												:size="16" />
-											<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-												v-tooltip="getPropertyNewMessage(key)"
+											<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new' || getPropertyValidationClass(key, value) === 'property-required-empty'"
+												:v-tooltip="getPropertyValidationClass(key, value) === 'property-required-empty' ? getPropertyRequiredMessage(key) : getPropertyNewMessage(key)"
 												class="validation-icon new-icon"
 												:size="16" />
 											<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
@@ -250,6 +246,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 											<span
 												v-tooltip="getPropertyTooltip(key)">
 												{{ getPropertyDisplayName(key) }}
+												<span v-if="getPropertyValidationClass(key, value) === 'property-required-empty'"
+													v-tooltip="getPropertyRequiredMessage(key)"
+													class="required-asterisk">*</span>
 											</span>
 										</div>
 									</td>
@@ -447,12 +446,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															v-tooltip="getPropertyWarningMessage(key, value)"
 															class="validation-icon warning-icon"
 															:size="16" />
-														<Asterisk v-else-if="getPropertyValidationClass(key, value) === 'property-required-empty'"
-															v-tooltip="getPropertyRequiredMessage(key)"
-															class="validation-icon required-icon"
-															:size="16" />
-														<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-															v-tooltip="getPropertyNewMessage(key)"
+														<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new' || getPropertyValidationClass(key, value) === 'property-required-empty'"
+															:v-tooltip="getPropertyValidationClass(key, value) === 'property-required-empty' ? getPropertyRequiredMessage(key) : getPropertyNewMessage(key)"
 															class="validation-icon new-icon"
 															:size="16" />
 														<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
@@ -462,6 +457,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														<span
 															v-tooltip="getPropertyTooltip(key)">
 															{{ getPropertyDisplayName(key) }}
+															<span v-if="getPropertyValidationClass(key, value) === 'property-required-empty'"
+																v-tooltip="getPropertyRequiredMessage(key)"
+																class="required-asterisk">*</span>
 														</span>
 													</div>
 												</td>
@@ -964,7 +962,6 @@ import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import Alert from 'vue-material-design-icons/Alert.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Asterisk from 'vue-material-design-icons/Asterisk.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -1013,7 +1010,6 @@ export default {
 		Alert,
 		AlertCircle,
 		Plus,
-		Asterisk,
 		Publish,
 		PublishOff,
 		Pencil,
@@ -4184,5 +4180,9 @@ export default {
 
 .viewTableRow.property-valid {
 	border-left: 4px solid var(--color-success);
+}
+
+.required-asterisk {
+	color: var(--color-error);
 }
 </style>
