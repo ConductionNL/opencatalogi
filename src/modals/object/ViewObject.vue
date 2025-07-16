@@ -640,7 +640,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													<td class="tableColumnConstrained table-row-type">
 														{{ attachment?.type || 'No type' }}
 													</td>
-													<td class="tableColumnConstrained short-column">
+													<td class="tableColumnConstrained td-labels">
 														<div class="fileLabelsContainer">
 															<span v-if="editingTags !== attachment.id"
 																class="files-list__row-action--inline files-list__row-action-system-tags">
@@ -673,6 +673,15 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																	@click="saveTags(attachment, editedTags)">
 																	<template #icon>
 																		<ContentSaveOutline :size="20" />
+																	</template>
+																</NcButton>
+																<NcButton
+																	v-tooltip="'Cancel'"
+																	type="secondary"
+																	size="small"
+																	@click="cancelFileLabelEditing">
+																	<template #icon>
+																		<Cancel :size="20" />
 																	</template>
 																</NcButton>
 															</div>
@@ -2862,6 +2871,10 @@ export default {
 			this.editingTags = file.id
 			this.editedTags = file.labels || []
 		},
+		cancelFileLabelEditing() {
+			this.editingTags = null
+			this.editedTags = []
+		},
 		async getAllTags() {
 			this.tagsLoading = true
 			try {
@@ -3734,10 +3747,12 @@ export default {
 .files-list__system-tags {
 	--min-size: 32px;
 	display: flex;
-	justify-content: center;
-	align-items: center;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	align-items: flex-start;
+	gap: 5px;
 	min-width: calc(var(--min-size) * 2);
-	max-width: 300px;
+	max-width: 100%;
 	list-style: none;
 	margin: 0;
 	padding: 0;
@@ -3749,11 +3764,9 @@ export default {
 	border-radius: var(--border-radius-pill);
 	border-color: var(--color-border);
 	color: var(--color-text-maxcontrast);
-	height: var(--min-size);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	line-height: 22px;
+	min-height: var(--min-size);
+	display: inline-block;
+	line-height: 1.3;
 	text-align: center;
 	box-sizing: border-box;
 }
@@ -3811,6 +3824,11 @@ export default {
 	word-break: break-word;
 }
 
+.viewObjectDialog .viewTable td.td-labels {
+	white-space: nowrap;
+	word-break: unset;
+}
+
 .value-cell-content {
 	flex-wrap: wrap;
 }
@@ -3863,8 +3881,14 @@ export default {
 }
 
 .table-row-labels {
-	width: 280px;
-	max-width: 280px;
+	width: 315px;
+	max-width: 315px;
+}
+
+.td-labels {
+	width: 100px;
+	max-width: 100px;
+	flex-wrap: wrap;
 }
 
 .viewObjectDialog .viewTable th.table-row-title,
