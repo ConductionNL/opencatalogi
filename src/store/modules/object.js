@@ -62,6 +62,149 @@ export const useObjectStore = defineStore('object', {
 		success: {},
 		/** @type {{[key: string]: {schema: string, register: string}}} */
 		objectTypeRegistry: {},
+		/** @type {Array<string>} */
+		selectedObjects: [],
+		/** @type {{[key: string]: string}} */
+		objectErrors: {},
+		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
+		metadata: {
+			name: {
+				label: 'Name',
+				key: 'name',
+				description: 'Display name of the object',
+				enabled: true,
+			},
+			description: {
+				label: 'Description',
+				key: 'description',
+				description: 'Description of the object',
+				enabled: false,
+			},
+			objectId: {
+				label: 'ID',
+				key: 'id',
+				description: 'Unique identifier of the object',
+				enabled: false,
+			},
+			uri: {
+				label: 'URI',
+				key: 'uri',
+				description: 'URI of the object',
+				enabled: false,
+			},
+			version: {
+				label: 'Version',
+				key: 'version',
+				description: 'Version of the object',
+				enabled: false,
+			},
+			register: {
+				label: 'Register',
+				key: 'register',
+				description: 'Register of the object',
+				enabled: false,
+			},
+			schema: {
+				label: 'Schema',
+				key: 'schema',
+				description: 'Schema of the object',
+				enabled: false,
+			},
+			files: {
+				label: 'Files',
+				key: 'files',
+				description: 'Attached files count',
+				enabled: true,
+			},
+			locked: {
+				label: 'Locked',
+				key: 'locked',
+				description: 'Whether the object is locked',
+				enabled: false,
+			},
+			organization: {
+				label: 'Organization',
+				key: 'organization',
+				description: 'Organization owning the object',
+				enabled: false,
+			},
+			validation: {
+				label: 'Validation',
+				key: 'validation',
+				description: 'Validation status of the object',
+				enabled: false,
+			},
+			owner: {
+				label: 'Owner',
+				key: 'owner',
+				description: 'Owner of the object',
+				enabled: false,
+			},
+			application: {
+				label: 'Application',
+				key: 'application',
+				description: 'Application of the object',
+				enabled: false,
+			},
+			folder: {
+				label: 'Folder',
+				key: 'folder',
+				description: 'Folder of the object',
+				enabled: false,
+			},
+			geo: {
+				label: 'Geo',
+				key: 'geo',
+				description: 'Geographic information',
+				enabled: false,
+			},
+			retention: {
+				label: 'Retention',
+				key: 'retention',
+				description: 'Retention policy',
+				enabled: false,
+			},
+			size: {
+				label: 'Size',
+				key: 'size',
+				description: 'Size of the object',
+				enabled: false,
+			},
+			published: {
+				label: 'Published',
+				key: 'published',
+				description: 'Publication date',
+				enabled: false,
+			},
+			depublished: {
+				label: 'Depublished',
+				key: 'depublished',
+				description: 'Depublication date',
+				enabled: false,
+			},
+			deleted: {
+				label: 'Deleted',
+				key: 'deleted',
+				description: 'Deletion date',
+				enabled: false,
+			},
+			created: {
+				label: 'Created',
+				key: 'created',
+				description: 'Creation date and time',
+				enabled: false,
+			},
+			updated: {
+				label: 'Updated',
+				key: 'updated',
+				description: 'Last update date and time',
+				enabled: false,
+			},
+		},
+		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
+		properties: {},
+		/** @type {{[key: string]: boolean}} */
+		columnFilters: {},
 	}),
 
 	getters: {
@@ -156,7 +299,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {ObjectState} state - Store state
 		 * @return {(type: string) => {total: number, page: number, pages: number, limit: number}}
 		 */
-		getPagination: (state) => (type) => state.pagination[type] || { total: 0, page: 1, pages: 1, limit: 20 },
+		getPagination: (state) => (type) => {
+			if (state.pagination[type]) {
+				return state.pagination[type]
+			}
+			// Default limit depends on the data type
+			const defaultLimit = type.includes('files') ? 500 : 20
+			return { total: 0, page: 1, pages: 1, limit: defaultLimit }
+		},
 
 		/**
 		 * Check if there are more pages to load for type
@@ -208,6 +358,72 @@ export const useObjectStore = defineStore('object', {
 		 * @return {(slug: string) => boolean}
 		 */
 		hasObjectType: (state) => (slug) => !!state.objectTypeRegistry[slug],
+
+		/**
+		 * Get enabled metadata columns
+		 * @param {ObjectState} state - Store state
+		 * @return {Array<{id: string, label: string, key: string, description: string}>}
+		 */
+		enabledMetadata: (state) => {
+			return Object.entries(state.metadata)
+				.filter(([_, meta]) => meta.enabled)
+				.map(([id, meta]) => ({
+					id: `meta_${id}`,
+					...meta,
+				}))
+		},
+
+		/**
+		 * Get enabled property columns
+		 * @param {ObjectState} state - Store state
+		 * @return {Array<{id: string, label: string, key: string, description: string}>}
+		 */
+		enabledProperties: (state) => {
+			return Object.entries(state.properties)
+				.filter(([_, prop]) => prop.enabled)
+				.map(([key, prop]) => ({
+					id: `prop_${key}`,
+					key,
+					...prop,
+				}))
+		},
+
+		/**
+		 * Get all enabled columns (metadata + properties)
+		 * @param {ObjectState} state - Store state
+		 * @return {Array<{id: string, label: string, key: string, description: string}>}
+		 */
+		enabledColumns: (state) => {
+			const metadata = Object.entries(state.metadata)
+				.filter(([_, meta]) => meta.enabled)
+				.map(([id, meta]) => ({
+					id: `meta_${id}`,
+					...meta,
+				}))
+
+			const properties = Object.entries(state.properties)
+				.filter(([_, prop]) => prop.enabled)
+				.map(([key, prop]) => ({
+					id: `prop_${key}`,
+					key,
+					...prop,
+				}))
+
+			return [...metadata, ...properties]
+		},
+
+		/**
+		 * Check if all objects are selected
+		 * @param {ObjectState} state - Store state
+		 * @return {boolean}
+		 */
+		isAllSelected: (state) => {
+			const publicationCollection = state.collections.publication
+			if (!publicationCollection?.results?.length) return false
+			return publicationCollection.results.every(pub =>
+				state.selectedObjects.includes(pub['@self']?.id || pub.id),
+			)
+		},
 	},
 
 	actions: {
@@ -318,12 +534,25 @@ export const useObjectStore = defineStore('object', {
 			// Fetch related data in parallel
 			if (object?.id) {
 				console.info('Fetching related data for:', { type, objectId: object.id })
+
+				// For publications, extract schema and register info from the object itself
+				let publicationData = null
+				if (type === 'publication' && object['@self']) {
+					publicationData = {
+						source: 'openregister',
+						schema: object['@self'].schema,
+						register: object['@self'].register,
+					}
+					console.info('Using publication-specific config:', publicationData)
+				}
+
 				const fetchPromises = []
 				const dataTypes = ['logs', 'uses', 'used', 'files']
-				// const dataTypes = ['logs', 'uses']
 				for (const dataType of dataTypes) {
 					if (!this.relatedData[type][dataType]) {
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType))
+						// Set default limit to 500 for files, 20 for other data types
+						const defaultLimit = dataType === 'files' ? 500 : 20
+						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
 					}
 				}
 				await Promise.all(fetchPromises)
@@ -468,8 +697,12 @@ export const useObjectStore = defineStore('object', {
 			}
 			const baseUrl = '/index.php/apps/openregister/api/objects'
 
+			// Ensure register and schema are strings (extract id if they're objects)
+			const registerId = typeof config.register === 'object' ? config.register?.id || config.register?.uuid : config.register
+			const schemaId = typeof config.schema === 'object' ? config.schema?.id || config.schema?.uuid : config.schema
+
 			// Construct the path with register and schema
-			let url = `${baseUrl}/${config.register}/${config.schema}`
+			let url = `${baseUrl}/${registerId}/${schemaId}`
 
 			// Add ID and action if provided
 			if (id) {
@@ -488,7 +721,7 @@ export const useObjectStore = defineStore('object', {
 			const queryParams = new URLSearchParams({
 				_limit: params._limit || 20,
 				_page: params._page || 1,
-				extend: params.extend || '@self.schema',
+				_extend: params._extend || params.extend || '@self.schema',
 				...params,
 			})
 
@@ -496,6 +729,8 @@ export const useObjectStore = defineStore('object', {
 			queryParams.delete('_source')
 			queryParams.delete('_schema')
 			queryParams.delete('_register')
+			// Remove the old extend parameter to avoid duplication
+			queryParams.delete('extend')
 
 			return `${url}?${queryParams}`
 		},
@@ -518,10 +753,10 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add extend parameter if not explicitly set
+				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
-					extend: params.extend || '@self.schema',
+					_extend: params._extend || params.extend || '@self.schema',
 				}
 
 				const response = await fetch(this._constructApiUrl(type, null, null, queryParams))
@@ -578,10 +813,10 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add extend parameter if not explicitly set
+				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
-					extend: params.extend || '@self.schema',
+					_extend: params._extend || params.extend || '@self.schema',
 				}
 
 				const response = await fetch(this._constructApiUrl(type, id, null, queryParams))
@@ -610,9 +845,10 @@ export const useObjectStore = defineStore('object', {
 		 * @param {string} id - Object ID
 		 * @param {string} dataType - Type of related data (logs, uses, used, files)
 		 * @param {object} params - Query parameters
+		 * @param {object|null} publicationData - Publication data with schema and register info (optional)
 		 * @return {Promise<void>}
 		 */
-		async fetchRelatedData(type, id, dataType, params = {}) {
+		async fetchRelatedData(type, id, dataType, params = {}, publicationData = null) {
 			this.setLoading(`${type}_${id}_${dataType}`, true)
 			this.setState(type, { success: null, error: null })
 
@@ -622,18 +858,37 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				// Add extend parameter for 'uses' and 'used' data types
+				// Add _extend parameter for 'uses' and 'used' data types
 				const queryParams = {
 					...params,
-					...(dataType === 'uses' || dataType === 'used' ? { extend: params.extend || '@self.schema' } : {}),
+					...(dataType === 'uses' || dataType === 'used' ? { _extend: params._extend || params.extend || '@self.schema' } : {}),
 				}
 
-				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams))
+				const response = await fetch(this._constructApiUrl(type, id, dataType, queryParams, publicationData))
 				if (!response.ok) throw new Error(`Failed to fetch ${dataType} for ${type}`)
 
 				const data = await response.json()
 				if (!this.relatedData[type]) {
 					this.relatedData[type] = {}
+				}
+
+				// Update pagination info for related data
+				if (data.total !== undefined || data.page !== undefined) {
+					const paginationKey = `${type}_${dataType}`
+					// Use the limit from the request params if the API doesn't return it
+					const requestedLimit = params._limit || params.limit
+					// Convert string limits to numbers and provide fallbacks
+					const apiLimit = data.limit ? parseInt(data.limit, 10) : null
+					const actualLimit = apiLimit || requestedLimit || (dataType === 'files' ? 500 : 20)
+					const paginationInfo = {
+						total: data.total || 0,
+						page: data.page || 1,
+						pages: data.pages || Math.ceil((data.total || 0) / actualLimit),
+						limit: actualLimit,
+						next: data.next || null,
+						prev: data.prev || null,
+					}
+					this.setPagination(paginationKey, paginationInfo)
 				}
 
 				// For audit trails, store the results array
@@ -722,13 +977,27 @@ export const useObjectStore = defineStore('object', {
 				throw new Error('Object item, register and schema are required')
 			}
 
-			const isNewObject = !objectItem['@self'].id
-			const endpoint = this._buildObjectPath({
-				register,
-				schema,
-				objectId: isNewObject ? '' : objectItem['@self'].id,
-			})
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
 
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			const isNewObject = !objectItem['@self']?.id
+			const objectId = objectItem['@self']?.id
+
+			// Build endpoint URL
+			let endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}`
+			if (!isNewObject && objectId) {
+				endpoint += `/${objectId}`
+			}
+
+			// Update timestamp
+			if (!objectItem['@self']) {
+				objectItem['@self'] = {}
+			}
 			objectItem['@self'].updated = new Date().toISOString()
 
 			try {
@@ -738,9 +1007,11 @@ export const useObjectStore = defineStore('object', {
 					body: JSON.stringify(objectItem),
 				})
 
-				const data = new ObjectEntity(await response.json())
-				this.setObjectItem(data)
-				await this.refreshObjectList({ register, schema })
+				if (!response.ok) {
+					throw new Error(`Failed to save object: ${response.status} ${response.statusText}`)
+				}
+
+				const data = await response.json()
 				return { response, data }
 			} catch (error) {
 				console.error('Error saving object:', error)
@@ -803,52 +1074,387 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Extract ID from a value that can be either a primitive or an object
+		 * @param {string|number|object} value - The value to extract ID from
+		 * @return {string|number} The extracted ID
+		 */
+		extractId(value) {
+			if (value === null || value === undefined) {
+				return value
+			}
+
+			// If it's an object, try to get id property
+			if (typeof value === 'object') {
+				return value.id || value.uuid || value._id
+			}
+
+			// If it's a primitive, return as-is
+			return value
+		},
+
+		/**
 		 * Delete object
-		 * @param {string} type - Object type
-		 * @param {string} id - Object ID
-		 * @param {object} publicationData - Publication data
+		 * @param {object} objectItem - Object to delete
 		 * @return {Promise<void>}
 		 */
-		async deleteObject(type, id, publicationData = null) {
-			this.setLoading(`${type}_${id}`, true)
-			this.setError(`${type}_${id}`, null)
-			this.setState(type, { success: null, error: null })
+		async deleteObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`delete_${objectId}`, true)
+			this.setError(`delete_${objectId}`, null)
 
 			try {
-				// Ensure settings are loaded first
-				if (!this.settings) {
-					await this.fetchSettings()
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
 
+				const response = await fetch(endpoint, {
+					method: 'DELETE',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to delete object: ${response.status} ${response.statusText}`)
 				}
 
-				const response = await fetch(
-					this._constructApiUrl(type, id, null, {}, publicationData),
-					{ method: 'DELETE' },
+				// Remove from selection if it's currently selected
+				const isSelected = this.selectedObjects.some(obj =>
+					(obj.id || obj['@self']?.id) === objectId,
 				)
-				if (!response.ok) throw new Error(`Failed to delete ${type} object`)
-
-				// Remove from objects
-				if (this.objects[type]) {
-					delete this.objects[type][id]
+				if (isSelected) {
+					const remainingSelected = this.selectedObjects.filter(obj =>
+						(obj.id || obj['@self']?.id) !== objectId,
+					)
+					this.setSelectedObjects(remainingSelected)
 				}
 
-				// If this was the active object, clear it
-				if (this.activeObjects[type]?.id === id) {
-					this.clearActiveObject(type)
-				}
-
-				// Refresh the collection to ensure it's up to date
-				await this.fetchCollection(type)
-
-				// Set success state
-				this.setState(type, { success: true, error: null })
+				return true
 			} catch (error) {
-				console.error(`Error deleting ${type} object:`, error)
-				this.setError(`${type}_${id}`, error.message)
-				this.setState(type, { success: false, error: error.message })
+				console.error('Error deleting object:', error)
+				this.setError(`delete_${objectId}`, error.message)
 				throw error
 			} finally {
-				this.setLoading(`${type}_${id}`, false)
+				this.setLoading(`delete_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Publish object
+		 * @param {object} objectItem - Object to publish
+		 * @return {Promise<object>} The updated object
+		 */
+		async publishObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`publish_${objectId}`, true)
+			this.setError(`publish_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to publish object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+
+				// Update active object if it matches the published object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+
+				// Remove from selection if it's currently selected
+				const isSelected = this.selectedObjects.some(obj =>
+					(obj.id || obj['@self']?.id) === objectId,
+				)
+				if (isSelected) {
+					const remainingSelected = this.selectedObjects.filter(obj =>
+						(obj.id || obj['@self']?.id) !== objectId,
+					)
+					this.setSelectedObjects(remainingSelected)
+				}
+
+				return updatedObject
+			} catch (error) {
+				console.error('Error publishing object:', error)
+				this.setError(`publish_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`publish_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Depublish object
+		 * @param {object} objectItem - Object to depublish
+		 * @return {Promise<object>} The updated object
+		 */
+		async depublishObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`depublish_${objectId}`, true)
+			this.setError(`depublish_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to depublish object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+
+				// Update active object if it matches the depublished object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+
+				// Remove from selection if it's currently selected
+				const isSelected = this.selectedObjects.some(obj =>
+					(obj.id || obj['@self']?.id) === objectId,
+				)
+				if (isSelected) {
+					const remainingSelected = this.selectedObjects.filter(obj =>
+						(obj.id || obj['@self']?.id) !== objectId,
+					)
+					this.setSelectedObjects(remainingSelected)
+				}
+
+				return updatedObject
+			} catch (error) {
+				console.error('Error depublishing object:', error)
+				this.setError(`depublish_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`depublish_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Validate object by saving it without modifications
+		 * @param {object} objectItem - Object to validate
+		 * @return {Promise<object>} The validated object
+		 */
+		async validateObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`validate_${objectId}`, true)
+			this.setError(`validate_${objectId}`, null)
+
+			try {
+				// Save the object as-is to trigger validation and enrichment
+				const result = await this.saveObject(objectItem, {
+					register: registerId,
+					schema: schemaId,
+				})
+
+				// Update active object if it matches the validated object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: result.data,
+					}
+				}
+
+				return result.data
+			} catch (error) {
+				console.error('Error validating object:', error)
+				this.setError(`validate_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`validate_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Lock object
+		 * @param {object} objectItem - Object to lock
+		 * @param {string} process - Process name (optional)
+		 * @param {number} duration - Duration in seconds (optional)
+		 * @return {Promise<object>} The updated object
+		 */
+		async lockObject(objectItem, process = null, duration = null) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`lock_${objectId}`, true)
+			this.setError(`lock_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/lock`
+
+				const body = {}
+				if (process) body.process = process
+				if (duration) body.duration = duration
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+					headers: Object.keys(body).length > 0 ? { 'Content-Type': 'application/json' } : undefined,
+					body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to lock object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+
+				// Update active object if it matches the locked object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+
+				return updatedObject
+			} catch (error) {
+				console.error('Error locking object:', error)
+				this.setError(`lock_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`lock_${objectId}`, false)
+			}
+		},
+
+		/**
+		 * Unlock object
+		 * @param {object} objectItem - Object to unlock
+		 * @return {Promise<object>} The updated object
+		 */
+		async unlockObject(objectItem) {
+			const objectId = objectItem.id || objectItem['@self']?.id
+			const register = objectItem['@self']?.register || objectItem.register
+			const schema = objectItem['@self']?.schema || objectItem.schema
+
+			if (!objectId || !register || !schema) {
+				throw new Error('Object must have id, register, and schema information')
+			}
+
+			// Extract IDs from register and schema in case they are objects
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+
+			this.setLoading(`unlock_${objectId}`, true)
+			this.setError(`unlock_${objectId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+				})
+
+				if (!response.ok) {
+					throw new Error(`Failed to unlock object: ${response.status} ${response.statusText}`)
+				}
+
+				const updatedObject = await response.json()
+
+				// Update active object if it matches the unlocked object
+				const activePublication = this.activeObjects.publication
+				if (activePublication && (activePublication.id === objectId || activePublication['@self']?.id === objectId)) {
+					this.activeObjects = {
+						...this.activeObjects,
+						publication: updatedObject,
+					}
+				}
+
+				return updatedObject
+			} catch (error) {
+				console.error('Error unlocking object:', error)
+				this.setError(`unlock_${objectId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`unlock_${objectId}`, false)
 			}
 		},
 
@@ -1068,6 +1674,494 @@ export const useObjectStore = defineStore('object', {
 			} finally {
 				this.setLoading(`${type}_${id}_copy`, false)
 			}
+		},
+
+		/**
+		 * Set selected objects
+		 * @param {Array<string>} objects - Array of object IDs
+		 */
+		setSelectedObjects(objects) {
+			this.selectedObjects = objects
+		},
+
+		/**
+		 * Set error for a specific object
+		 * @param {string} objectId - The object ID
+		 * @param {string} error - The error message
+		 */
+		setObjectError(objectId, error) {
+			this.objectErrors[objectId] = error
+		},
+
+		/**
+		 * Clear error for a specific object
+		 * @param {string} objectId - The object ID
+		 */
+		clearObjectError(objectId) {
+			delete this.objectErrors[objectId]
+		},
+
+		/**
+		 * Clear all object errors
+		 */
+		clearAllObjectErrors() {
+			this.objectErrors = {}
+		},
+
+		/**
+		 * Get error for a specific object
+		 * @param {string} objectId - The object ID
+		 * @return {string|null} The error message or null if no error
+		 */
+		getObjectError(objectId) {
+			return this.objectErrors[objectId] || null
+		},
+
+		/**
+		 * Toggle selection of all objects
+		 */
+		toggleSelectAllObjects() {
+			const publicationCollection = this.collections.publication
+			if (!publicationCollection?.results?.length) return
+
+			if (this.isAllSelected) {
+				this.selectedObjects = []
+			} else {
+				this.selectedObjects = publicationCollection.results.map(pub =>
+					pub['@self']?.id || pub.id,
+				)
+			}
+		},
+
+		/**
+		 * Update column filter
+		 * @param {string} id - Column ID
+		 * @param {boolean} enabled - Whether the column is enabled
+		 */
+		updateColumnFilter(id, enabled) {
+			this.columnFilters = {
+				...this.columnFilters,
+				[id]: enabled,
+			}
+
+			// Update metadata or properties based on the column ID
+			if (id.startsWith('meta_')) {
+				const metaKey = id.replace('meta_', '')
+				if (this.metadata[metaKey]) {
+					this.metadata[metaKey].enabled = enabled
+				}
+			} else if (id.startsWith('prop_')) {
+				const propKey = id.replace('prop_', '')
+				if (this.properties[propKey]) {
+					this.properties[propKey].enabled = enabled
+				}
+			}
+		},
+
+		/**
+		 * Initialize properties from schema
+		 * @param {object} schema - Schema object
+		 */
+		initializeProperties(schema) {
+			if (!schema?.properties) {
+				this.properties = {}
+				return
+			}
+
+			const properties = {}
+			Object.entries(schema.properties).forEach(([key, property]) => {
+				properties[key] = {
+					label: property.title || key,
+					key,
+					description: property.description || `Property: ${key}`,
+					enabled: false, // Start with properties disabled
+				}
+			})
+
+			this.properties = properties
+		},
+
+		/**
+		 * Initialize column filters
+		 */
+		initializeColumnFilters() {
+			const filters = {}
+
+			// Initialize metadata filters
+			Object.keys(this.metadata).forEach(key => {
+				filters[`meta_${key}`] = this.metadata[key].enabled
+			})
+
+			// Initialize property filters
+			Object.keys(this.properties).forEach(key => {
+				filters[`prop_${key}`] = this.properties[key].enabled
+			})
+
+			this.columnFilters = filters
+		},
+
+		/**
+		 * Mass delete objects
+		 * @param {Array<object|string>} objects - Array of objects or object IDs to delete
+		 * @param {Function} onProgress - Callback function called after each deletion (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massDeleteObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						// Handle both object and ID inputs
+						const objectId = typeof obj === 'string' ? obj : (obj.id || obj['@self']?.id)
+						const objectToDelete = typeof obj === 'string' ? { id: obj } : obj
+
+						// Use the individual deleteObject method
+						await this.deleteObject(objectToDelete)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to delete object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass publish objects
+		 * @param {Array<object>} objects - Array of objects to publish
+		 * @param {Function} onProgress - Callback function called after each publication (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massPublishObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual publishObject method
+						await this.publishObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to publish object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass depublish objects
+		 * @param {Array<object>} objects - Array of objects to depublish
+		 * @param {Function} onProgress - Callback function called after each depublication (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massDepublishObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual depublishObject method
+						await this.depublishObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to depublish object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass validate objects
+		 * @param {Array<object>} objects - Array of objects to validate
+		 * @param {Function} onProgress - Callback function called after each validation (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massValidateObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual validateObject method
+						await this.validateObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to validate object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass lock objects
+		 * @param {Array<object>} objects - Array of objects to lock
+		 * @param {string} process - Process name (optional)
+		 * @param {number} duration - Duration in seconds (optional)
+		 * @param {Function} onProgress - Callback function called after each lock operation (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massLockObjects(objects, process = null, duration = null, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual lockObject method
+						await this.lockObject(obj, process, duration)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to lock object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass unlock objects
+		 * @param {Array<object>} objects - Array of objects to unlock
+		 * @param {Function} onProgress - Callback function called after each unlock operation (optional)
+		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+		 */
+		async massUnlockObjects(objects, onProgress = null) {
+			// Clear previous object errors
+			this.clearAllObjectErrors()
+
+			const results = await Promise.allSettled(
+				objects.map(async (obj) => {
+					try {
+						const objectId = obj.id || obj['@self']?.id
+
+						// Use the individual unlockObject method
+						await this.unlockObject(obj)
+
+						// Clear any previous error for this object
+						this.clearObjectError(objectId)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, true)
+						}
+
+						return { success: true, id: objectId, object: obj }
+					} catch (error) {
+						const objectId = obj.id || obj['@self']?.id
+						const errorMessage = error.message || 'Unknown error'
+
+						console.error(`Failed to unlock object ${objectId}:`, error)
+
+						// Store object-specific error
+						this.setObjectError(objectId, errorMessage)
+
+						// Call progress callback if provided
+						if (onProgress) {
+							onProgress(obj, false, errorMessage)
+						}
+
+						return { success: false, id: objectId, object: obj, error: errorMessage }
+					}
+				}),
+			)
+
+			// Separate successful and failed operations
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed objects
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
+				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
 		},
 	},
 })

@@ -23,10 +23,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div v-if="objectStore.getState('organization').success === null" class="formContainer">
 				<NcTextField
 					:disabled="objectStore.isLoading('organization')"
-					label="Name"
+					label="Name *"
 					:value.sync="organization.name"
 					:error="!!inputValidation.fieldErrors?.['name']"
 					:helper-text="inputValidation.fieldErrors?.['name']?.[0]" />
+				<NcTextField
+					:disabled="objectStore.isLoading('organization')"
+					label="Website *"
+					:value.sync="organization.website"
+					:error="!!inputValidation.fieldErrors?.['website']"
+					:helper-text="inputValidation.fieldErrors?.['website']?.[0]" />
 				<NcTextField
 					:disabled="objectStore.isLoading('organization')"
 					label="Samenvatting"
@@ -115,6 +121,7 @@ export default {
 			isEdit: !!objectStore.getActiveObject('organization')?.id,
 			organization: {
 				name: '',
+				website: '',
 				summary: '',
 				description: '',
 				oin: '',
@@ -159,6 +166,7 @@ export default {
 			navigationStore.setModal(false)
 			this.organization = {
 				name: '',
+				website: '',
 				summary: '',
 				description: '',
 				oin: '',

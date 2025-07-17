@@ -21,7 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@close="closeModal">
 		<div class="modal__content">
 			<h2>{{ term?.title || 'Glossary Term' }}</h2>
-			
+
 			<div v-if="term" class="glossaryDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
@@ -56,8 +56,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="term.keywords?.length" class="detailSection">
 					<h3>{{ t('opencatalogi', 'Keywords') }}</h3>
 					<div class="keywordsList">
-						<span v-for="keyword in term.keywords" 
-							:key="keyword" 
+						<span v-for="keyword in term.keywords"
+							:key="keyword"
 							class="keywordTag">
 							{{ keyword }}
 						</span>
@@ -266,4 +266,4 @@ export default {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
-</style> 
+</style>

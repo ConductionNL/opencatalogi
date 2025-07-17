@@ -15,6 +15,8 @@ return [
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
+		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
+		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 */		
@@ -38,18 +40,16 @@ return [
 		['name' => 'pages#index', 'url' => '/api/pages', 'verb' => 'GET'],
 		['name' => 'pages#show', 'url' => '/api/pages/{slug}', 'verb' => 'GET', 'requirements' => ['slug' => '.+']],
 		// Directory
-		['name' => 'listings#synchronise', 'url' => '/api/listings/synchronise/{id?}', 'verb' => 'POST'],
-		['name' => 'listings#index', 'url' => '/api/listings', 'verb' => 'GET'],
-		['name' => 'listings#show', 'url' => '/api/listings/{id}', 'verb' => 'GET'],
-		['name' => 'listings#create', 'url' => '/api/listings', 'verb' => 'POST'],
-		['name' => 'listings#update', 'url' => '/api/listings/{id}', 'verb' => 'PUT'],
-		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
-		['name' => 'listings#add', 'url' => '/api/listings/add', 'verb' => 'POST'],
 		['name' => 'directory#index', 'url' => '/api/directory', 'verb' => 'GET'],
-		['name' => 'directory#show', 'url' => '/api/directory/{id}', 'verb' => 'GET'],
 		['name' => 'directory#update', 'url' => '/api/directory', 'verb' => 'POST'],
-		['name' => 'directory#publicationType', 'url' => '/api/directory/publication_types/{id}', 'verb' => 'GET'],
 		// Search
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
+		// Federation
+		['name' => 'federation#publications', 'url' => '/api/federation/publications', 'verb' => 'GET'],
+		['name' => 'federation#publication', 'url' => '/api/federation/publications/{id}', 'verb' => 'GET'],
+		['name' => 'federation#publicationUses', 'url' => '/api/federation/publications/{id}/uses', 'verb' => 'GET'],
+		['name' => 'federation#publicationUsed', 'url' => '/api/federation/publications/{id}/used', 'verb' => 'GET'],
+		['name' => 'federation#publicationAttachments', 'url' => '/api/federation/publications/{id}/attachments', 'verb' => 'GET'],
+		['name' => 'federation#publicationDownload', 'url' => '/api/federation/publications/{id}/download', 'verb' => 'GET'],
 	]
 ];

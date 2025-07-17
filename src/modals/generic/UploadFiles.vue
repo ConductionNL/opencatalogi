@@ -1,24 +1,24 @@
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'uploadFiles'"
+	<NcModal v-if="navigationStore.dialog === 'uploadFiles'"
 		ref="modalRef"
 		label-id="AddAttachmentModal"
-		@close="closeModal()">
+		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
 			<h2>Bijlage toevoegen</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
 					v-model="labelOptions.value"
-					:disabled="loading || tagsLoading"
+					:disabled="loading || retryLoading || tagsLoading"
 					:loading="tagsLoading"
 					:taggable="true"
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
-				<NcCheckboxRadioSwitch :disabled="loading"
+				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
 					label="Automatisch delen"
 					type="switch"
 					:checked.sync="share">
@@ -27,7 +27,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 
 			<div class="container">
-				<div v-if="!labelOptions.value?.length || loading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
+				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
 							<p>Selecteer of maak labels aan of selecteer "Geen label" om bestanden toe te voegen</p>
@@ -49,7 +49,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							</NcNoteCard>
 						</div>
 					</div>
-					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading }">
+					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading || retryLoading }">
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
@@ -63,7 +63,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
-								:disabled="loading || !labelOptions.value?.length"
+								:disabled="loading || retryLoading || !labelOptions.value?.length"
 								type="primary"
 								@click="openFileUpload()">
 								<template #icon>
@@ -74,7 +74,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</div>
 					</div>
 				</div>
-				<div v-if="labelOptions.value?.length && !loading"
+				<div v-if="labelOptions.value?.length && !loading && !retryLoading"
 					ref="dropZoneRef"
 					class="filesListDragDropNotice"
 					:class="'tabPanelFileUpload'">
@@ -116,7 +116,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							</NcNoteCard>
 						</div>
 					</div>
-					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length }">
+					<div class="filesListDragDropNoticeWrapper" :class="{ 'filesListDragDropNoticeWrapper--disabled': !labelOptions.value?.length || loading || retryLoading }">
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
@@ -130,7 +130,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
-								:disabled="loading || !labelOptions.value?.length"
+								:disabled="loading || retryLoading || !labelOptions.value?.length"
 								type="primary"
 								@click="openFileUpload()">
 								<template #icon>
@@ -144,7 +144,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div v-if="!files">
 					Geen bestanden geselecteerd
 				</div>
-
+				<div v-if="files" class="uploadSummaryContainer">
+					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} bestanden geüpload</span>
+					<div class="buttonContainer">
+						<NcButton v-if="failedCount > 0"
+							type="primary"
+							:disabled="loading || retryLoading"
+							@click="retryAllFailed">
+							<template #icon>
+								<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
+							</template>
+							{{ retryLoading ? 'In progress...' : 'Retry all (' + failedCount + ')' }}
+						</NcButton>
+					</div>
+				</div>
 				<table v-if="files" class="files-table">
 					<thead>
 						<tr class="files-table-tr">
@@ -193,7 +206,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<NcSelect
 									v-if="editingTags === file.name"
 									v-model="editedTags"
-									:disabled="loading || tagsLoading"
+									:disabled="loading || retryLoading || tagsLoading"
 									:loading="tagsLoading"
 									:taggable="true"
 									:multiple="true"
@@ -205,7 +218,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									<NcButton
 										v-if="editingTags !== file.name"
 										v-tooltip="'Labels bewerken'"
-										:disabled="editingTags && editingTags !== file.name || loading || file.status === 'too_large' || tagsLoading"
+										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
 										:aria-label="`edit tags for ${file.name}`"
 										type="secondary"
 										class="editTagsButton"
@@ -298,6 +311,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			retryLoading: false,
 			success: null,
 			error: false,
 			share: false,
@@ -312,6 +326,8 @@ export default {
 				multiple: true,
 			},
 			tagsLoading: false,
+			uploadedCount: 0,
+			failedCount: 0,
 		}
 	},
 	computed: {
@@ -348,17 +364,26 @@ export default {
 			},
 			deep: true,
 		},
+		success() {
+			this.updateUploadCounts()
+		},
+		error() {
+			this.updateUploadCounts()
+		},
 	},
 	mounted() {
 		objectStore.setActiveObject('attachment', [])
 		this.getAllTags()
+		this.updateUploadCounts()
 	},
 	methods: {
-		closeModal() {
+		closeDialog() {
+			navigationStore.setDialog(null)
+			objectStore.setActiveObject('publication', objectStore.getActiveObject('publication'))
+			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
 			reset()
-			navigationStore.setModal(false)
 		},
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
@@ -456,7 +481,7 @@ export default {
 		saveTags(file, editedTags) {
 			file.tags = editedTags
 			file.status = 'pending'
-			this.addAttachments()
+			this.addAttachments(file)
 
 			this.editingTags = null
 			this.editedTags = []
@@ -481,14 +506,11 @@ export default {
 			try {
 				let filesToUpload = []
 
-				// only get the specific file if it is passed
 				if (specificFile) {
 					filesToUpload = [specificFile]
 				} else {
-					// filter out successful and pending files
-					filesToUpload = this.files.value.filter(file => file.status !== 'uploaded' && file.status !== 'uploading')
+					filesToUpload = this.files.value.filter(file => file.status !== 'uploaded' && file.status !== 'uploading' && file.status !== 'failed')
 
-					// filter out files too large
 					filesToUpload = filesToUpload.filter(file => !this.getTooBigFiles(file.size))
 				}
 
@@ -497,47 +519,64 @@ export default {
 					return
 				}
 
-				// file calls
-				const calls = filesToUpload.map(async (file) => {
-					// Set status to 'uploading'
+				filesToUpload.forEach(file => {
 					file.status = 'uploading'
-					try {
-						const response = await this.createPublicationAttachment([file], reset, this.share)
-						// Set status to 'uploaded' on success
-						if (response.status === 200) file.status = 'uploaded'
-						else file.status = 'failed'
-
-						return response
-					} catch (error) {
-						// Set status to 'failed' on error
-						file.status = 'failed'
-						throw error
-					}
 				})
 
-				const results = await Promise.allSettled(calls)
+				const uploadPromises = filesToUpload.map(file => {
+					return this.createPublicationAttachment([file], reset, this.share)
+						.then(response => {
+							if (response.status === 200) {
+								file.status = 'uploaded'
+							} else {
+								file.status = 'failed'
+							}
+							this.updateUploadCounts()
+							return response
+						})
+						.catch(error => {
+							file.status = 'failed'
+							this.updateUploadCounts()
+							throw error
+						})
+				})
 
-				this.getAllTags()
+				const results = await Promise.allSettled(uploadPromises)
 
-				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files`)
+				await this.getAllTags()
+
+				const publication = objectStore.getActiveObject('publication')
+				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
 
-				const failed = results.filter(result => result.status === 'rejected')
-
-				if (failed.length > 0) {
-					this.error = failed[0].reason
+				const rejected = results.filter(r => r.status === 'rejected')
+				if (rejected.length > 0) {
+					const firstError = rejected[0].reason
+					this.error = firstError?.response?.data?.error ?? String(firstError)
 				} else {
 					this.success = true
 				}
+
+				this.updateUploadCounts()
 			} catch (err) {
-				// This block generally catches unexpected errors.
 				this.error = err.response?.data?.error ?? err
 			} finally {
 				this.loading = false
 			}
 		},
 
+		// Utility method to get register and schema IDs from publication object
+		getRegisterSchemaIds(publication) {
+			const registerId = typeof publication['@self'].register === 'object'
+				? publication['@self'].register?.id || publication['@self'].register?.uuid
+				: publication['@self'].register
+			const schemaId = typeof publication['@self'].schema === 'object'
+				? publication['@self'].schema?.id || publication['@self'].schema?.uuid
+				: publication['@self'].schema
+			return { registerId, schemaId }
+		},
 		async createPublicationAttachment(files, reset, share = false) {
 			if (!files) {
 				throw Error('No files to import')
@@ -561,11 +600,15 @@ export default {
 				if (file.tags) {
 					formData.append('tags[]', file.tags.join(','))
 				}
-				formData.append('share', share.toString())
 			})
 
+			formData.append('share', share.toString())
+
+			const publication = objectStore.getActiveObject('publication')
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+
 			return await axios.post(
-				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/filesMultipart`,
+				`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/filesMultipart`,
 				formData,
 				{
 					headers: {
@@ -581,6 +624,42 @@ export default {
 					console.error('Error importing files:', err)
 					throw err
 				})
+		},
+		async retryAllFailed() {
+			this.retryLoading = true
+			const uploadPromises = this.files.value.filter(file => file.status === 'failed').map(file => {
+				file.status = 'uploading'
+				return this.createPublicationAttachment([file], reset, this.share)
+					.then(response => {
+						if (response.status === 200) {
+							file.status = 'uploaded'
+						} else {
+							file.status = 'failed'
+						}
+						this.updateUploadCounts()
+						return response
+					})
+					.catch(error => {
+						file.status = 'failed'
+						this.updateUploadCounts()
+						throw error
+					})
+			})
+
+			await Promise.allSettled(uploadPromises)
+
+			this.updateUploadCounts()
+			this.retryLoading = false
+		},
+		updateUploadCounts() {
+			if (!this.files || !this.files.value) {
+				this.uploadedCount = 0
+				this.failedCount = 0
+				return
+			}
+			const filesArr = this.files.value
+			this.uploadedCount = filesArr.filter(f => f.status === 'uploaded').length
+			this.failedCount = filesArr.filter(f => f.status === 'failed').length
 		},
 	},
 }
@@ -763,5 +842,29 @@ div[class='modal-container']:has(.TestMappingMainModal) {
 .buttonContainer {
     display: flex;
     gap: 10px;
+}
+
+.uploadSummaryContainer{
+	margin-block-end: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.uploadSummary{
+	font-weight: bold;
+}
+
+.loadingIcon {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }
 </style>

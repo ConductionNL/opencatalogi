@@ -89,9 +89,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					:details="publication?.status"
 					@click="toggleActive(publication)">
 					<template #icon>
-						<ListBoxOutline v-if="publication['@self']?.published" :size="44" />
-						<Pencil v-if="!publication['@self']?.published && !publication['@self']?.depublished" :size="44" />
-						<AlertOutline v-if="publication['@self']?.depublished" :size="44" />
+						<PublishedIcon :object="publication" :size="44" />
 					</template>
 					<template #subname>
 						{{ publication?.summary }}
@@ -156,15 +154,15 @@ import { NcListItem, NcActionButton, NcAppContentList, NcTextField, NcLoadingIco
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+
+import PublishedIcon from '../../components/PublishedIcon.vue'
 
 export default {
 	name: 'PublicationList',
@@ -173,7 +171,6 @@ export default {
 		NcActionButton,
 		NcAppContentList,
 		NcTextField,
-		ListBoxOutline,
 		Magnify,
 		NcLoadingIcon,
 		NcActionRadio,
@@ -187,10 +184,11 @@ export default {
 		Plus,
 		FilePlusOutline,
 		ContentCopy,
-		AlertOutline,
 		Pencil,
 		Publish,
 		HelpCircleOutline,
+		// Components
+		PublishedIcon,
 	},
 	data() {
 		return {

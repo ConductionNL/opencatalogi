@@ -105,18 +105,40 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<div v-for="listing in paginatedListings" :key="listing.id" class="card">
 							<div class="cardHeader">
 								<h2 v-tooltip.bottom="listing.summary">
-									<LayersOutline :size="20" />
+									<component :is="getStatusIcon(listing)"
+										:size="20"
+										:class="getStatusClass(listing)" />
 									{{ listing.name || listing.title }}
+									<span v-if="listing.default" class="defaultBadge">
+										<Star :size="14" />
+										Default
+									</span>
+									<span v-if="!listing.available" class="errorBadge">
+										<CloseCircle :size="14" />
+										Disabled
+									</span>
 								</h2>
 								<NcActions :primary="true" menu-name="Actions">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('listing', listing); navigationStore.setModal('viewDirectory')">
+									<NcActionButton close-after-click @click="refreshDirectory(listing)">
 										<template #icon>
-											<Eye :size="20" />
+											<Refresh :size="20" />
 										</template>
-										View
+										Sync Directory
+									</NcActionButton>
+									<NcActionButton close-after-click @click="toggleIntegrationLevel(listing)">
+										<template #icon>
+											<component :is="listing.integrationLevel === 'search' ? 'CloseCircle' : 'CheckCircle'" :size="20" />
+										</template>
+										{{ listing.integrationLevel === 'search' ? 'Disable' : 'Enable' }}
+									</NcActionButton>
+									<NcActionButton close-after-click @click="toggleDefault(listing)">
+										<template #icon>
+											<component :is="listing.default ? 'Star' : 'StarOutline'" :size="20" />
+										</template>
+										{{ listing.default ? 'Remove as Default' : 'Set as Default' }}
 									</NcActionButton>
 								</NcActions>
 							</div>
@@ -126,26 +148,74 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									<tr>
 										<th>{{ t('opencatalogi', 'Property') }}</th>
 										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr v-if="listing.organization">
 										<td>{{ t('opencatalogi', 'Organization') }}</td>
 										<td>{{ listing.organization.title || listing.organization }}</td>
-										<td>{{ 'Available' }}</td>
 									</tr>
 									<tr v-if="listing.summary">
 										<td>{{ t('opencatalogi', 'Summary') }}</td>
 										<td class="truncatedText">
 											{{ listing.summary }}
 										</td>
-										<td>{{ 'Available' }}</td>
 									</tr>
 									<tr>
-										<td>{{ t('opencatalogi', 'Publication Types') }}</td>
-										<td>{{ listing.publicationTypes?.length || 0 }}</td>
-										<td>{{ listing.publicationTypes?.length > 0 ? 'Configured' : 'Empty' }}</td>
+										<td>{{ t('opencatalogi', 'Integration Level') }}</td>
+										<td>{{ _.upperFirst(listing.integrationLevel) || '-' }}</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Version') }}</td>
+										<td>{{ listing.version || '-' }}</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Schemas') }}</td>
+										<td>{{ listing.schemaCount || listing.schemas?.length || 0 }}</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Last Sync') }}</td>
+										<td>{{ formatDate(listing.lastSync) }}</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
+										<td :class="listing.available ? 'status-success' : 'status-error'">
+											{{ listing.available ? 'Yes' : 'No' }}
+										</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Status') }}</td>
+										<td>{{ getStatusText(listing) }}</td>
+									</tr>
+									<tr>
+										<td>{{ t('opencatalogi', 'Default Directory') }}</td>
+										<td :class="listing.default ? 'status-success' : (listing.available ? '' : 'status-error')">
+											{{ listing.default ? 'Yes' : (listing.available ? 'No' : 'Disabled') }}
+										</td>
+									</tr>
+									<tr v-if="listing.directory">
+										<td>{{ t('opencatalogi', 'Directory URL') }}</td>
+										<td class="urlCell">
+											<a :href="listing.directory" target="_blank" class="urlLink">
+												{{ listing.directory }}
+											</a>
+										</td>
+									</tr>
+									<tr v-if="listing.publications">
+										<td>{{ t('opencatalogi', 'Publications URL') }}</td>
+										<td class="urlCell">
+											<a :href="listing.publications" target="_blank" class="urlLink">
+												{{ listing.publications }}
+											</a>
+										</td>
+									</tr>
+									<tr v-if="listing.search">
+										<td>{{ t('opencatalogi', 'Search URL') }}</td>
+										<td class="urlCell">
+											<a :href="listing.search" target="_blank" class="urlLink">
+												{{ listing.search }}
+											</a>
+										</td>
 									</tr>
 								</tbody>
 							</table>
@@ -165,7 +235,13 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</th>
 									<th>{{ t('opencatalogi', 'Name') }}</th>
 									<th>{{ t('opencatalogi', 'Organization') }}</th>
-									<th>{{ t('opencatalogi', 'Publication Types') }}</th>
+									<th>{{ t('opencatalogi', 'Schemas') }}</th>
+
+									<th>{{ t('opencatalogi', 'Publications URL') }}</th>
+									<th>{{ t('opencatalogi', 'Search URL') }}</th>
+									<th>{{ t('opencatalogi', 'Directory URL') }}</th>
+									<th>{{ t('opencatalogi', 'Last Sync') }}</th>
+									<th>{{ t('opencatalogi', 'Status') }}</th>
 									<th class="tableColumnActions">
 										{{ t('opencatalogi', 'Actions') }}
 									</th>
@@ -183,7 +259,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</td>
 									<td class="tableColumnTitle">
 										<div class="titleContent">
+											<component :is="getStatusIcon(listing)"
+												:size="16"
+												:class="getStatusClass(listing)"
+												style="margin-right: 8px;" />
 											<strong>{{ listing.name || listing.title }}</strong>
+											<span v-if="listing.default" class="defaultBadge">
+												<Star :size="12" />
+												Default
+											</span>
+											<span v-if="!listing.available" class="errorBadge">
+												<CloseCircle :size="12" />
+												Disabled
+											</span>
 											<span v-if="listing.summary" class="textDescription textEllipsis">{{ listing.summary }}</span>
 										</div>
 									</td>
@@ -191,17 +279,60 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<span v-if="listing.organization">{{ listing.organization.title || listing.organization }}</span>
 										<span v-else>-</span>
 									</td>
-									<td>{{ listing.publicationTypes?.length || 0 }}</td>
+									<td>{{ listing.schemaCount || listing.schemas?.length || 0 }}</td>
+									<td class="tableColumnUrl">
+										<a v-if="listing.publications"
+											:href="listing.publications"
+											target="_blank"
+											class="urlLink">
+											{{ truncateUrl(listing.publications) }}
+										</a>
+										<span v-else>-</span>
+									</td>
+									<td class="tableColumnUrl">
+										<a v-if="listing.search"
+											:href="listing.search"
+											target="_blank"
+											class="urlLink">
+											{{ truncateUrl(listing.search) }}
+										</a>
+										<span v-else>-</span>
+									</td>
+									<td class="tableColumnUrl">
+										<a v-if="listing.directory"
+											:href="listing.directory"
+											target="_blank"
+											class="urlLink">
+											{{ truncateUrl(listing.directory) }}
+										</a>
+										<span v-else>-</span>
+									</td>
+									<td>{{ formatDate(listing.lastSync) }}</td>
+									<td :class="getStatusClass(listing)">
+										{{ getStatusLabel(listing) }}
+									</td>
 									<td class="tableColumnActions">
 										<NcActions :primary="false">
 											<template #icon>
 												<DotsHorizontal :size="20" />
 											</template>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('listing', listing); navigationStore.setModal('viewDirectory')">
+											<NcActionButton close-after-click @click="refreshDirectory(listing)">
 												<template #icon>
-													<Eye :size="20" />
+													<Refresh :size="20" />
 												</template>
-												View
+												Sync Directory
+											</NcActionButton>
+											<NcActionButton close-after-click @click="toggleIntegrationLevel(listing)">
+												<template #icon>
+													<component :is="listing.integrationLevel === 'search' ? 'CloseCircle' : 'CheckCircle'" :size="20" />
+												</template>
+												{{ listing.integrationLevel === 'search' ? 'Disable' : 'Enable' }}
+											</NcActionButton>
+											<NcActionButton close-after-click @click="toggleDefault(listing)">
+												<template #icon>
+													<component :is="listing.default ? 'Star' : 'StarOutline'" :size="20" />
+												</template>
+												{{ listing.default ? 'Remove as Default' : 'Set as Default' }}
 											</NcActionButton>
 										</NcActions>
 									</td>
@@ -227,12 +358,20 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 <script>
 import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcCheckboxRadioSwitch, NcButton } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
+import _ from 'lodash'
 import LayersOutline from 'vue-material-design-icons/LayersOutline.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 
 import PaginationComponent from '../../components/PaginationComponent.vue'
 
@@ -252,6 +391,12 @@ export default {
 		Plus,
 		Eye,
 		HelpCircleOutline,
+		TrashCanOutline,
+		CheckCircle,
+		AlertCircle,
+		CloseCircle,
+		Star,
+		StarOutline,
 		PaginationComponent,
 	},
 	data() {
@@ -329,6 +474,201 @@ export default {
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+		getStatusIcon(listing) {
+			const statusCode = listing.statusCode || listing.status
+			if (statusCode >= 200 && statusCode < 300) {
+				return CheckCircle
+			} else if (!statusCode || statusCode === 0) {
+				return AlertCircle
+			} else {
+				return CloseCircle
+			}
+		},
+		getStatusClass(listing) {
+			const statusCode = listing.statusCode || listing.status
+			if (statusCode >= 200 && statusCode < 300) {
+				return 'status-success'
+			} else if (!statusCode || statusCode === 0) {
+				return 'status-warning'
+			} else {
+				return 'status-error'
+			}
+		},
+		getStatusText(listing) {
+			const statusCode = listing.statusCode || listing.status
+			if (statusCode) {
+				return `HTTP ${statusCode}`
+			}
+			return 'Unknown'
+		},
+		getStatusLabel(listing) {
+			const statusCode = listing.statusCode || listing.status
+			if (statusCode >= 200 && statusCode < 300) {
+				return 'Online'
+			} else if (!statusCode || statusCode === 0) {
+				return 'Unknown'
+			} else {
+				return 'Error'
+			}
+		},
+		formatDate(dateString) {
+			if (!dateString) return 'Never'
+
+			try {
+				const date = new Date(dateString)
+				if (isNaN(date.getTime())) return 'Invalid'
+
+				const now = new Date()
+				const diffMs = now - date
+				const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+				const diffDays = Math.floor(diffHours / 24)
+
+				if (diffHours < 1) {
+					return 'Just now'
+				} else if (diffHours < 24) {
+					return `${diffHours} hours ago`
+				} else if (diffDays < 7) {
+					return `${diffDays} days ago`
+				} else {
+					return date.toLocaleDateString('nl-NL', {
+						year: 'numeric',
+						month: 'short',
+						day: 'numeric',
+					})
+				}
+			} catch (e) {
+				return 'Invalid'
+			}
+		},
+		async refreshDirectory(listing) {
+			try {
+				// Show loading state
+				this.$set(listing, 'syncing', true)
+
+				// Call the directory sync endpoint
+				const response = await fetch(generateUrl('/apps/opencatalogi/api/directory'), {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						directory: listing.directory,
+					}),
+				})
+
+				const result = await response.json()
+
+				if (response.ok) {
+					// Refresh the listings collection to show updated data
+					await objectStore.fetchCollection('listing')
+
+					// Show success notification
+					OC.Notification.showMessage(
+						`Directory "${listing.title || listing.name}" synced successfully`,
+						{ type: 'success' },
+					)
+				} else {
+					throw new Error(result.message || 'Sync failed')
+				}
+			} catch (error) {
+				console.error('Failed to sync directory:', error)
+				OC.Notification.showMessage(
+					`Failed to sync directory: ${error.message}`,
+					{ type: 'error' },
+				)
+			} finally {
+				// Remove loading state
+				this.$delete(listing, 'syncing')
+			}
+		},
+		async toggleIntegrationLevel(listing) {
+			try {
+				// Update the listing locally first for immediate UI feedback
+				const newIntegrationLevel = (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection'
+				this.$set(listing, 'integrationLevel', newIntegrationLevel)
+
+				// Update the listing on the server
+				const updatedData = {
+					...listing,
+					integrationLevel: newIntegrationLevel,
+				}
+
+				await objectStore.updateObject('listing', listing.id, updatedData)
+
+				// Show success notification
+				OC.Notification.showMessage(
+					`Directory "${listing.title || listing.name}" ${newIntegrationLevel ? 'enabled' : 'disabled'}`,
+					{ type: 'success' },
+				)
+			} catch (error) {
+				// Revert the local change on error
+				this.$set(listing, 'integrationLevel', (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection')
+
+				console.error('Failed to toggle integration level:', error)
+				OC.Notification.showMessage(
+					`Failed to update directory: ${error.message}`,
+					{ type: 'error' },
+				)
+			}
+		},
+		async toggleDefault(listing) {
+			try {
+				const newDefaultState = !listing.default
+
+				// If setting as default, first remove default from all other listings
+				if (newDefaultState) {
+					const allListings = this.filteredListings
+					for (const otherListing of allListings) {
+						if (otherListing.id !== listing.id && otherListing.default) {
+							this.$set(otherListing, 'default', false)
+							try {
+								await objectStore.updateObject('listing', otherListing.id, {
+									...otherListing,
+									default: false,
+								})
+							} catch (error) {
+								console.warn('Failed to remove default from other listing:', error)
+							}
+						}
+					}
+				}
+
+				// Update the current listing
+				this.$set(listing, 'default', newDefaultState)
+
+				const updatedData = {
+					...listing,
+					default: newDefaultState,
+				}
+
+				await objectStore.updateObject('listing', listing.id, updatedData)
+
+				// Show success notification
+				OC.Notification.showMessage(
+					`Directory "${listing.title || listing.name}" ${newDefaultState ? 'set as default' : 'removed as default'}`,
+					{ type: 'success' },
+				)
+			} catch (error) {
+				// Revert the local change on error
+				this.$set(listing, 'default', !listing.default)
+
+				console.error('Failed to toggle default state:', error)
+				OC.Notification.showMessage(
+					`Failed to update directory: ${error.message}`,
+					{ type: 'error' },
+				)
+			}
+		},
+		truncateUrl(url) {
+			if (!url) return ''
+			// Remove protocol and www
+			const cleanUrl = url.replace(/^https?:\/\/(www\.)?/, '')
+			// If still too long, truncate and add ellipsis
+			if (cleanUrl.length > 35) {
+				return cleanUrl.substring(0, 32) + '...'
+			}
+			return cleanUrl
+		},
 	},
 }
 </script>
@@ -340,5 +680,90 @@ export default {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	display: inline-block;
+}
+
+/* Status styling */
+.status-success {
+	color: var(--color-success);
+}
+
+.status-warning {
+	color: var(--color-warning);
+}
+
+.status-error {
+	color: var(--color-error);
+}
+
+/* Default badge styling */
+.defaultBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--color-primary);
+	color: white;
+	font-size: 0.7em;
+	font-weight: bold;
+	padding: 2px 6px;
+	border-radius: 12px;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+/* Error badge styling */
+.errorBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--color-error);
+	color: white;
+	font-size: 0.7em;
+	font-weight: bold;
+	padding: 2px 6px;
+	border-radius: 12px;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+/* Card header adjustments */
+.cardHeader h2 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Table title content adjustments */
+.titleContent {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.titleContent .defaultBadge,
+.titleContent .errorBadge {
+	margin-left: 4px;
+	margin-right: 0;
+}
+
+/* URL column styling */
+.tableColumnUrl {
+	max-width: 200px;
+}
+
+.urlCell {
+	max-width: 300px;
+	word-break: break-all;
+}
+
+.urlLink {
+	color: var(--color-primary);
+	text-decoration: none;
+	font-size: 0.9em;
+}
+
+.urlLink:hover {
+	text-decoration: underline;
+	color: var(--color-primary-hover, var(--color-primary));
 }
 </style>

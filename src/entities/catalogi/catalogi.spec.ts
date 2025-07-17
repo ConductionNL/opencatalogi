@@ -44,6 +44,7 @@ describe('Catalogi Store', () => {
 			registers: [],
 			schemas: [],
 			filters: {},
+			status: 'development',
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)

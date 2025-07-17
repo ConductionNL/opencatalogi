@@ -5,7 +5,7 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 <template>
 	<NcAppNavigation>
 		<NcAppNavigationList>
-			<NcAppNavigationNew text="Publicatie Aanmaken" @click="navigationStore.setModal('objectModal'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
+			<NcAppNavigationNew text="Publicatie Aanmaken" @click="navigationStore.setModal('viewObject'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
 				<template #icon>
 					<Plus :size="20" />
 				</template>

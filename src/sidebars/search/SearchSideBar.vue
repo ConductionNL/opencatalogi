@@ -1,579 +1,545 @@
 <script setup>
+import { ref, computed, onMounted, watch } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'
+import { navigationStore } from '../../store/store.js'
+import { t } from '@nextcloud/l10n'
+import {
+	NcAppSidebar,
+	NcAppSidebarTab,
+	NcTextField,
+	NcButton,
+	NcSelect,
+	NcNoteCard,
+} from '@nextcloud/vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
+import Close from 'vue-material-design-icons/Close.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
+import ViewGrid from 'vue-material-design-icons/ViewGrid.vue'
+import FormatListBulletedSquare from 'vue-material-design-icons/FormatListBulletedSquare.vue'
+import FacetComponent from '../../components/FacetComponent.vue'
+
+// Define props for sidebar control
+const props = defineProps({
+	open: {
+		type: Boolean,
+		default: false,
+	},
+})
+
+// Define emits
+const emit = defineEmits(['update:open'])
+
+// Store
+const searchStore = useSearchStore()
+
+// Local state
+const searchTerm = ref('')
+const searchTimeout = ref(null)
+
+// Computed properties
+const sidebarOpen = computed({
+	get: () => props.open,
+	set: (value) => emit('update:open', value),
+})
+
+const currentSortOption = computed(() => {
+	const ordering = searchStore.getOrdering
+	const firstOrder = Object.entries(ordering)[0]
+
+	if (!firstOrder) return null
+
+	const [field, direction] = firstOrder
+	return sortOptions.value.find(option =>
+		option.field === field && option.direction === direction,
+	)
+})
+
+const sortOptions = computed(() => [
+	{ value: 'relevance', label: t('opencatalogi', 'Relevance'), field: null, direction: null },
+	{ value: 'title-asc', label: t('opencatalogi', 'Title A-Z'), field: 'title', direction: 'ASC' },
+	{ value: 'title-desc', label: t('opencatalogi', 'Title Z-A'), field: 'title', direction: 'DESC' },
+	{ value: 'modified-desc', label: t('opencatalogi', 'Recently Modified'), field: '@self.updated', direction: 'DESC' },
+	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest First'), field: '@self.updated', direction: 'ASC' },
+	{ value: 'created-desc', label: t('opencatalogi', 'Recently Created'), field: '@self.created', direction: 'DESC' },
+	{ value: 'created-asc', label: t('opencatalogi', 'Oldest Created'), field: '@self.created', direction: 'ASC' },
+])
+
+const hasActiveFilters = computed(() => {
+	return Object.keys(searchStore.getFilters).length > 0
+})
+
+// Directory information is now handled via facets instead of separate sources
+
+// Methods
+const updateSidebarOpen = (open) => {
+	emit('update:open', open)
+}
+
+// Search input is now handled by the watcher above
+
+const clearSearch = () => {
+	searchTerm.value = ''
+	searchStore.setSearchTerm('')
+	searchStore.searchPublications()
+}
+
+const handleSortChange = (option) => {
+	// Clear existing ordering
+	searchStore.clearOrdering()
+
+	if (option && option.field) {
+		searchStore.setOrdering(option.field, option.direction)
+	}
+
+	// Trigger new search with updated ordering
+	searchStore.searchPublications()
+}
+
+const clearAllFilters = () => {
+	searchStore.clearAllFilters()
+	searchStore.searchPublications()
+}
+
+const refreshFacets = async () => {
+	await searchStore.discoverFacetableFields()
+}
+
+const formatFilterKey = (key) => {
+	// Format filter keys for display
+	if (key.startsWith('@self.')) {
+		return key.replace('@self.', '').replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+	}
+	return key.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const formatFilterValue = (value) => {
+	// Format filter values for display
+	if (Array.isArray(value)) {
+		return value.join(', ')
+	}
+	return String(value)
+}
+
+const getFieldDisplayName = (fieldName) => {
+	// Format field names nicely for display
+	return fieldName
+		.replace(/[@._]/g, ' ')
+		.replace(/\b\w/g, l => l.toUpperCase())
+		.trim()
+}
+
+const getFacetOptions = (facetResult) => {
+	// Convert facet buckets to dropdown options
+	if (!facetResult || (!facetResult.buckets && !Array.isArray(facetResult))) {
+		return []
+	}
+
+	const buckets = facetResult.buckets || facetResult
+	return buckets.map(bucket => ({
+		value: bucket._id || bucket.key || bucket.value,
+		label: `${bucket._id || bucket.key || bucket.value} (${bucket.count || bucket.results || bucket.doc_count || 0})`,
+	}))
+}
+
+const getSelectedFilterValue = (fieldName) => {
+	// Get the currently selected filter value for this field
+	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
+	const currentValue = searchStore.getFilters[filterKey]
+
+	console.log('getSelectedFilterValue:', { fieldName, filterKey, currentValue, allFilters: searchStore.getFilters })
+
+	if (!currentValue) return null
+
+	// Find the option that matches the current filter value
+	const facetResult = searchStore.currentFacets[fieldName]
+	const options = getFacetOptions(facetResult)
+	const selectedOption = options.find(option => option.value === currentValue) || null
+
+	console.log('Selected option found:', selectedOption, 'from options:', options)
+	return selectedOption
+}
+
+const handleFilterSelect = (fieldName, option) => {
+	// Handle filter selection from dropdown
+	console.log('handleFilterSelect called:', { fieldName, option })
+	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
+
+	if (option && option.value) {
+		// Set the selected filter
+		console.log('Setting filter:', { [filterKey]: option.value })
+		searchStore.setFilters({ [filterKey]: option.value })
+	} else {
+		// Clear the filter if option is null (clearable)
+		console.log('Clearing filter:', filterKey)
+		searchStore.clearFilter(filterKey)
+	}
+
+	// Trigger search with new filter
+	console.log('Triggering search with filters:', searchStore.getFilters)
+	searchStore.searchPublications()
+}
+
+// Watchers
+watch(() => searchStore.getSearchTerm, (newTerm) => {
+	if (newTerm !== searchTerm.value) {
+		searchTerm.value = typeof newTerm === 'string' ? newTerm : String(newTerm || '')
+	}
+})
+
+// Watch for changes to searchTerm and debounce the search
+watch(searchTerm, (newValue) => {
+	// Ensure we have a string value, not an event object
+	const searchValue = typeof newValue === 'string' ? newValue : String(newValue || '')
+
+	// Debounce search input
+	if (searchTimeout.value) {
+		clearTimeout(searchTimeout.value)
+	}
+
+	searchTimeout.value = setTimeout(() => {
+		searchStore.setSearchTerm(searchValue)
+		searchStore.searchPublications()
+	}, 800)
+})
+
+// Lifecycle
+onMounted(async () => {
+	// Initialize search term from store
+	searchTerm.value = searchStore.getSearchTerm
+
+	// Always load initial results and discover facets when component mounts
+	try {
+		console.log('SearchSideBar: Component mounted, loading initial search results...')
+		console.log('SearchSideBar: isSearchPage check:', navigationStore?.selected === 'search')
+		console.log('SearchSideBar: Props open:', props.open)
+		await searchStore.loadInitialResults()
+		console.log('SearchSideBar: Initial results loaded successfully')
+		console.log('SearchSideBar: Results count:', searchStore.getSearchResults.length)
+		console.log('SearchSideBar: Facetable fields:', Object.keys(searchStore.getFacetable))
+	} catch (error) {
+		console.error('SearchSideBar: Failed to load initial results:', error)
+	}
+})
 </script>
 
 <template>
-	<div class="searchSideBar">
-		<div class="searchSideBar-header">
-			<h2>{{ t('opencatalogi', 'Search Filters') }}</h2>
-		</div>
-		<div class="searchSideBar-content">
-			<!-- Search Input -->
-			<div class="searchSideBar-content-item">
-				<h3>{{ t('opencatalogi', 'Search Term') }}</h3>
-				<NcTextField
-					:value="searchStore.getSearchTerm"
-					:label="t('opencatalogi', 'Search publications...')"
-					trailing-button-icon="close"
-					:show-trailing-button="searchStore.getSearchTerm !== ''"
-					@update:value="onSearchTermChange"
-					@trailing-button-click="clearSearch"
-					@keydown.enter="performSearch">
-					<template #leading-icon>
-						<Magnify :size="20" />
-					</template>
-				</NcTextField>
-			</div>
+	<NcAppSidebar
+		ref="sidebar"
+		name="Search Publications"
+		subtitle="Filter and explore publications"
+		subname="Across all federated catalogs"
+		:open="sidebarOpen"
+		@update:open="(e) => updateSidebarOpen(e)">
+		<NcAppSidebarTab id="search-tab" name="Search" :order="1">
+			<template #icon>
+				<Magnify :size="20" />
+			</template>
 
-			<!-- Search Actions -->
-			<div class="searchSideBar-content-item">
-				<div class="searchActions">
+			<!-- Search Section -->
+			<div class="search-section">
+				<h3>{{ t('opencatalogi', 'Search Publications') }}</h3>
+
+				<!-- Search input -->
+				<div class="search-group">
+					<input
+						v-model="searchTerm"
+						type="search"
+						placeholder="Type to search publications..."
+						class="search-input"
+						:aria-label="t('opencatalogi', 'Search publications')">
+
 					<NcButton
-						type="primary"
-						:disabled="searchStore.isLoading"
-						@click="performSearch">
-						<template #icon>
-							<Magnify :size="20" />
-						</template>
-						{{ t('opencatalogi', 'Search') }}
-					</NcButton>
-					<NcButton
-						type="secondary"
+						v-if="searchTerm"
+						type="tertiary"
+						:aria-label="t('opencatalogi', 'Clear search')"
 						@click="clearSearch">
 						<template #icon>
-							<Close :size="20" />
+							<Close :size="16" />
 						</template>
 						{{ t('opencatalogi', 'Clear') }}
 					</NcButton>
 				</div>
-			</div>
 
-			<!-- Ordering Section -->
-			<div class="searchSideBar-content-item">
-				<h3>{{ t('opencatalogi', 'Sort Results') }}</h3>
-				
-				<!-- Current ordering display -->
-				<div v-if="Object.keys(searchStore.getOrdering).length > 0" class="currentOrdering">
-					<h4>{{ t('opencatalogi', 'Current Sorting') }}</h4>
-					<div v-for="(direction, field) in searchStore.getOrdering" :key="field" class="orderingItem">
-						<span class="orderingField">{{ formatOrderingLabel(field) }}</span>
-						<span class="orderingDirection">{{ direction }}</span>
-						<NcButton
-							type="tertiary-no-background"
-							:aria-label="t('opencatalogi', 'Remove sorting')"
-							@click="removeOrdering(field)">
-							<template #icon>
-								<Close :size="16" />
-							</template>
-						</NcButton>
+				<!-- Filter Results Section -->
+				<div v-if="searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0" class="filter-results-section">
+					<h4>{{ t('opencatalogi', 'Filter Results') }}</h4>
+
+					<div class="filter-results-list">
+						<div v-for="(facetResult, fieldName) in searchStore.currentFacets"
+							:key="`filter-${fieldName}`"
+							class="filter-result-item">
+							<label>{{ getFieldDisplayName(fieldName.replace('@self.', '').replace('@self', 'metadata')) }}</label>
+							<NcSelect
+								:value="getSelectedFilterValue(fieldName)"
+								:options="getFacetOptions(facetResult)"
+								label="label"
+								:placeholder="t('opencatalogi', 'Select a filter...')"
+								:clearable="true"
+								@option:selected="(option) => handleFilterSelect(fieldName, option)"
+								@option:deselected="() => handleFilterSelect(fieldName, null)" />
+						</div>
+					</div>
+				</div>
+
+				<!-- Quick filters -->
+				<div class="quick-filters">
+					<h4>{{ t('opencatalogi', 'Quick Filters') }}</h4>
+
+					<!-- Sort options -->
+					<div class="filter-group">
+						<label>{{ t('opencatalogi', 'Sort by') }}</label>
+						<NcSelect
+							:value="currentSortOption"
+							:options="sortOptions"
+							label="label"
+							:label-outside="true"
+							:placeholder="t('opencatalogi', 'Choose sorting')"
+							@update:value="handleSortChange" />
+					</div>
+
+					<!-- View mode toggle -->
+					<div class="filter-group">
+						<label>{{ t('opencatalogi', 'View Mode') }}</label>
+						<div class="view-mode-toggle">
+							<NcButton
+								:type="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
+								:aria-label="t('opencatalogi', 'Card view')"
+								@click="searchStore.setViewMode('cards')">
+								<template #icon>
+									<ViewGrid :size="16" />
+								</template>
+								{{ t('opencatalogi', 'Cards') }}
+							</NcButton>
+							<NcButton
+								:type="searchStore.getViewMode === 'table' ? 'primary' : 'tertiary'"
+								:aria-label="t('opencatalogi', 'Table view')"
+								@click="searchStore.setViewMode('table')">
+								<template #icon>
+									<FormatListBulletedSquare :size="16" />
+								</template>
+								{{ t('opencatalogi', 'Table') }}
+							</NcButton>
+						</div>
+					</div>
+				</div>
+
+				<!-- Active filters display -->
+				<div v-if="hasActiveFilters" class="active-filters">
+					<h4>{{ t('opencatalogi', 'Active Filters') }}</h4>
+					<div class="active-filters-list">
+						<div v-for="(value, key) in searchStore.getFilters"
+							:key="`filter-${key}`"
+							class="active-filter-item">
+							<span class="filter-key">{{ formatFilterKey(key) }}:</span>
+							<span class="filter-value">{{ formatFilterValue(value) }}</span>
+							<NcButton
+								type="tertiary-no-background"
+								:aria-label="t('opencatalogi', 'Remove filter')"
+								@click="searchStore.clearFilter(key)">
+								<template #icon>
+									<Close :size="14" />
+								</template>
+							</NcButton>
+						</div>
 					</div>
 					<NcButton
-						type="secondary"
-						size="small"
-						@click="clearAllOrdering">
-						{{ t('opencatalogi', 'Clear all sorting') }}
+						type="tertiary"
+						:aria-label="t('opencatalogi', 'Clear all filters')"
+						@click="clearAllFilters">
+						{{ t('opencatalogi', 'Clear All Filters') }}
 					</NcButton>
 				</div>
 
-				<!-- Add new ordering -->
-				<div class="addOrdering">
-					<h4>{{ t('opencatalogi', 'Add Sorting') }}</h4>
-					<div class="orderingControls">
-						<NcSelect
-							v-model="selectedOrderField"
-							:options="orderingOptions"
-							:placeholder="t('opencatalogi', 'Select field to sort by')"
-							label="title"
-							track-by="value"
-							:allow-empty="false"
-							:searchable="true">
-						</NcSelect>
-						<div class="orderingDirectionButtons">
-							<NcButton
-								:type="'secondary'"
-								size="small"
-								:disabled="!selectedOrderField"
-								@click="addOrdering('ASC')">
-								<template #icon>
-									<ArrowUp :size="16" />
-								</template>
-								{{ t('opencatalogi', 'ASC') }}
-							</NcButton>
-							<NcButton
-								:type="'secondary'"
-								size="small"
-								:disabled="!selectedOrderField"
-								@click="addOrdering('DESC')">
-								<template #icon>
-									<ArrowDown :size="16" />
-								</template>
-								{{ t('opencatalogi', 'DESC') }}
-							</NcButton>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Dynamic Filters from Facetable Data -->
-			<div v-if="availableFilters.length > 0" class="searchSideBar-content-item">
-				<h3>{{ t('opencatalogi', 'Filters') }}</h3>
-				<div class="searchSideBar-content-item-filters">
-					<!-- System Metadata Filters -->
-					<div v-for="filter in systemFilters" :key="filter.key" class="searchSideBar-content-item-filters-item">
-						<h4>{{ filter.label }}</h4>
-						<div v-for="option in filter.options" :key="option.value" class="filterOption">
-							<NcCheckboxRadioSwitch
-								:checked="searchStore.getFilters[filter.key] === option.value"
-								@update:checked="(checked) => toggleFilter(filter.key, option.value, checked)">
-								{{ option.label }} ({{ option.count }})
-							</NcCheckboxRadioSwitch>
-						</div>
+				<!-- Faceted Filtering Section -->
+				<div class="facets-section">
+					<div class="facets-header">
+						<h3>{{ t('opencatalogi', 'Faceted Filtering') }}</h3>
+						<NcButton
+							type="tertiary"
+							:disabled="searchStore.isFacetsLoading"
+							:aria-label="t('opencatalogi', 'Refresh facets')"
+							@click="refreshFacets">
+							<template #icon>
+								<Refresh :size="16" />
+							</template>
+							{{ t('opencatalogi', 'Refresh') }}
+						</NcButton>
 					</div>
 
-					<!-- Object Field Filters -->
-					<div v-for="filter in objectFieldFilters" :key="filter.key" class="searchSideBar-content-item-filters-item">
-						<h4>{{ filter.label }}</h4>
-						<div v-if="filter.type === 'categorical'" class="filterOptions">
-							<div v-for="option in filter.options" :key="option.value" class="filterOption">
-								<NcCheckboxRadioSwitch
-									:checked="searchStore.getFilters[filter.key] === option.value"
-									@update:checked="(checked) => toggleFilter(filter.key, option.value, checked)">
-									{{ option.value }} ({{ option.count || 'N/A' }})
-								</NcCheckboxRadioSwitch>
-							</div>
-						</div>
-						<div v-else-if="filter.type === 'boolean'" class="filterOptions">
-							<NcCheckboxRadioSwitch
-								:checked="searchStore.getFilters[filter.key] === 'true'"
-								@update:checked="(checked) => toggleFilter(filter.key, 'true', checked)">
-								{{ t('opencatalogi', 'Yes') }}
-							</NcCheckboxRadioSwitch>
-							<NcCheckboxRadioSwitch
-								:checked="searchStore.getFilters[filter.key] === 'false'"
-								@update:checked="(checked) => toggleFilter(filter.key, 'false', checked)">
-								{{ t('opencatalogi', 'No') }}
-							</NcCheckboxRadioSwitch>
-						</div>
-					</div>
-				</div>
-			</div>
+					<NcNoteCard type="info" class="facets-info">
+						{{ t('opencatalogi', 'Facets help you filter results by different criteria. Enable facets below to see available filter options.') }}
+					</NcNoteCard>
 
-			<!-- Legacy Facets (fallback) -->
-			<div v-else-if="Object.keys(searchStore.getFacets).length > 0" class="searchSideBar-content-item">
-				<h3>{{ t('opencatalogi', 'Filters') }}</h3>
-				<div class="searchSideBar-content-item-filters">
-					<div v-for="(facet, key) in searchStore.getFacets" :key="key" class="searchSideBar-content-item-filters-item">
-						<h4>{{ key }}</h4>
-						<div v-for="(count, value) in facet" :key="value" class="filterOption">
-							<NcCheckboxRadioSwitch
-								:checked="searchStore.getFilters[key] === value"
-								@update:checked="(checked) => toggleFilter(key, value, checked)">
-								{{ value }} ({{ count }})
-							</NcCheckboxRadioSwitch>
-						</div>
-					</div>
+					<!-- Facet component -->
+					<FacetComponent />
 				</div>
 			</div>
-
-			<!-- Search Statistics -->
-			<div v-if="searchStore.getSearchTerm || searchStore.getPagination.total > 0" class="searchSideBar-content-item">
-				<h3>{{ t('opencatalogi', 'Search Results') }}</h3>
-				<div class="searchStats">
-					<p v-if="searchStore.getSearchTerm">
-						<strong>{{ t('opencatalogi', 'Search term:') }}</strong> "{{ searchStore.getSearchTerm }}"
-					</p>
-					<p v-if="searchStore.getPagination.total > 0">
-						<strong>{{ t('opencatalogi', 'Results:') }}</strong> {{ searchStore.getPagination.total }} {{ t('opencatalogi', 'publications found') }}
-					</p>
-					<p v-if="Object.keys(searchStore.getOrdering).length > 0">
-						<strong>{{ t('opencatalogi', 'Sorted by:') }}</strong> {{ Object.keys(searchStore.getOrdering).length }} {{ t('opencatalogi', 'field(s)') }}
-					</p>
-					<p v-if="searchStore.isLoading">
-						<em>{{ t('opencatalogi', 'Searching...') }}</em>
-					</p>
-				</div>
-			</div>
-		</div>
-	</div>
+		</NcAppSidebarTab>
+	</NcAppSidebar>
 </template>
 
-<script>
-import { NcTextField, NcButton, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
-import Close from 'vue-material-design-icons/Close.vue'
-import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
-import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
-
-export default {
-	name: 'SearchSideBar',
-	components: {
-		NcTextField,
-		NcButton,
-		NcCheckboxRadioSwitch,
-		NcSelect,
-		Magnify,
-		Close,
-		ArrowUp,
-		ArrowDown,
-	},
-	data() {
-		return {
-			searchStore: useSearchStore(),
-			searchTimeout: null,
-			selectedOrderField: null,
-		}
-	},
-	computed: {
-		/**
-		 * Get available filters from facetable data
-		 */
-		availableFilters() {
-			const facetable = this.searchStore.getFacetable
-			if (!facetable || (!facetable['@self'] && !facetable.object_fields)) {
-				return []
-			}
-			
-			const filters = []
-			
-			// Add system metadata filters
-			if (facetable['@self']) {
-				Object.entries(facetable['@self']).forEach(([key, config]) => {
-					if (config.sample_values && config.sample_values.length > 0) {
-						filters.push({
-							key: key, // Use the key directly without @self. prefix to avoid URL encoding issues
-							label: this.formatFilterLabel(key),
-							type: config.type,
-							options: config.sample_values,
-							category: 'system'
-						})
-					}
-				})
-			}
-			
-			// Add object field filters
-			if (facetable.object_fields) {
-				Object.entries(facetable.object_fields).forEach(([key, config]) => {
-					if (config.sample_values && config.sample_values.length > 0 && this.shouldShowFilter(key, config)) {
-						filters.push({
-							key,
-							label: this.formatFilterLabel(key),
-							type: config.type,
-							options: config.sample_values.map(value => ({ value, count: 'N/A' })),
-							category: 'object'
-						})
-					}
-				})
-			}
-			
-			return filters
-		},
-		
-		/**
-		 * Get system metadata filters
-		 */
-		systemFilters() {
-			return this.availableFilters.filter(f => f.category === 'system')
-		},
-		
-		/**
-		 * Get object field filters
-		 */
-		objectFieldFilters() {
-			return this.availableFilters.filter(f => f.category === 'object')
-		},
-		
-		/**
-		 * Get available fields for ordering
-		 */
-		orderingOptions() {
-			const options = []
-			const facetable = this.searchStore.getFacetable
-			
-			// Add system metadata fields (with @self. prefix for ordering)
-			if (facetable['@self']) {
-				Object.entries(facetable['@self']).forEach(([key, config]) => {
-					options.push({
-						value: `@self.${key}`,
-						title: `${this.formatFilterLabel(key)} (System)`,
-						category: 'system'
-					})
-				})
-			}
-			
-			// Add object fields that are suitable for ordering
-			if (facetable.object_fields) {
-				Object.entries(facetable.object_fields).forEach(([key, config]) => {
-					if (this.shouldShowForOrdering(key, config)) {
-						options.push({
-							value: key,
-							title: `${this.formatFilterLabel(key)} (Object)`,
-							category: 'object'
-						})
-					}
-				})
-			}
-			
-			// Sort options by category and title
-			return options.sort((a, b) => {
-				if (a.category !== b.category) {
-					return a.category === 'system' ? -1 : 1
-				}
-				return a.title.localeCompare(b.title)
-			})
-		},
-	},
-	mounted() {
-		console.info('SearchSideBar mounted')
-		// Only perform search if there's already a search term
-		// Initial results loading is handled by SearchIndex
-		if (this.searchStore.getSearchTerm) {
-			this.performSearch()
-		}
-	},
-	methods: {
-		onSearchTermChange(value) {
-			this.searchStore.setSearchTerm(value)
-			
-			// Clear existing timeout
-			if (this.searchTimeout) {
-				clearTimeout(this.searchTimeout)
-			}
-			
-			// Set new timeout for real-time search
-			this.searchTimeout = setTimeout(() => {
-				this.performSearch()
-			}, 500) // 500ms delay for real-time search
-		},
-		async performSearch() {
-			console.info('Performing search from sidebar with term:', this.searchStore.getSearchTerm)
-			await this.searchStore.searchPublications()
-		},
-		clearSearch() {
-			console.info('Clearing search from sidebar')
-			if (this.searchTimeout) {
-				clearTimeout(this.searchTimeout)
-			}
-			this.searchStore.clearSearch()
-		},
-		toggleFilter(key, value, checked) {
-			if (checked) {
-				this.searchStore.setFilters({ [key]: value })
-			} else {
-				this.searchStore.clearFilter(key)
-			}
-			// Automatically search when filters change
-			this.performSearch()
-		},
-		
-		/**
-		 * Add ordering for the selected field
-		 */
-		addOrdering(direction) {
-			if (this.selectedOrderField) {
-				this.searchStore.setOrdering(this.selectedOrderField.value, direction)
-				this.selectedOrderField = null // Reset selection
-				this.performSearch()
-			}
-		},
-		
-		/**
-		 * Remove ordering for a field
-		 */
-		removeOrdering(field) {
-			this.searchStore.removeOrdering(field)
-			this.performSearch()
-		},
-		
-		/**
-		 * Clear all ordering
-		 */
-		clearAllOrdering() {
-			this.searchStore.clearOrdering()
-			this.performSearch()
-		},
-		
-		/**
-		 * Format filter label for display
-		 */
-		formatFilterLabel(key) {
-			// Convert camelCase and snake_case to readable labels
-			return key
-				.replace(/([A-Z])/g, ' $1')
-				.replace(/_/g, ' ')
-				.replace(/\b\w/g, l => l.toUpperCase())
-				.trim()
-		},
-		
-		/**
-		 * Format ordering label for display
-		 */
-		formatOrderingLabel(field) {
-			// Remove @self. prefix for display
-			const cleanField = field.replace('@self.', '')
-			return this.formatFilterLabel(cleanField)
-		},
-		
-		/**
-		 * Determine if a filter should be shown
-		 */
-		shouldShowFilter(key, config) {
-			// Skip filters with empty values or very high cardinality
-			if (!config.sample_values || config.sample_values.length === 0) {
-				return false
-			}
-			
-			// Skip fields that are likely not useful for filtering
-			const skipFields = ['id', 'extend', 'attachments.endpoint', 'attachments.filename']
-			if (skipFields.includes(key)) {
-				return false
-			}
-			
-			// Skip fields with only empty values
-			if (config.sample_values.every(val => val === '' || val === null)) {
-				return false
-			}
-			
-			// Show categorical and boolean fields
-			if (config.type === 'boolean' || config.type === 'categorical') {
-				return true
-			}
-			
-			// Show string fields with low cardinality
-			if (config.type === 'string' && config.cardinality === 'low') {
-				return true
-			}
-			
-			return false
-		},
-		
-		/**
-		 * Determine if a field should be available for ordering
-		 */
-		shouldShowForOrdering(key, config) {
-			// Skip fields that are not useful for ordering
-			const skipFields = ['id', 'extend', 'attachments.endpoint', 'attachments.filename']
-			if (skipFields.includes(key)) {
-				return false
-			}
-			
-			// Show date, numeric, and string fields
-			if (['date', 'numeric', 'numeric_string', 'string', 'integer'].includes(config.type)) {
-				return true
-			}
-			
-			return false
-		},
-	},
-}
-</script>
-
 <style scoped>
-.searchSideBar {
-	padding: 1rem;
-	height: 100%;
-	overflow-y: auto;
+.search-section {
+	padding: 16px 0;
 }
 
-.searchSideBar-header {
-	margin-bottom: 1rem;
-}
-
-.searchSideBar-content-item {
-	margin-bottom: 1.5rem;
-}
-
-.searchSideBar-content-item-filters-item {
-	margin-bottom: 1rem;
-}
-
-.searchActions {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.filterOption {
-	margin-bottom: 0.5rem;
-}
-
-.filterOptions {
-	max-height: 200px;
-	overflow-y: auto;
-}
-
-/* Ordering Styles */
-.currentOrdering {
-	margin-bottom: 1rem;
-	padding: 0.75rem;
-	background-color: var(--color-background-hover);
-	border-radius: var(--border-radius);
-}
-
-.orderingItem {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-bottom: 0.5rem;
-	padding: 0.25rem;
-	background-color: var(--color-main-background);
-	border-radius: var(--border-radius);
-}
-
-.orderingField {
-	flex: 1;
-	font-weight: 500;
-}
-
-.orderingDirection {
-	padding: 0.125rem 0.5rem;
-	background-color: var(--color-primary-element);
-	color: var(--color-primary-element-text);
-	border-radius: var(--border-radius);
-	font-size: 0.8em;
-	font-weight: bold;
-}
-
-.addOrdering {
-	margin-top: 1rem;
-}
-
-.orderingControls {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.orderingDirectionButtons {
-	display: flex;
-	gap: 0.5rem;
-}
-
-.searchStats {
-	background-color: var(--color-background-hover);
-	padding: 0.75rem;
-	border-radius: var(--border-radius);
-	font-size: 0.9em;
-}
-
-.searchStats p {
-	margin: 0.25rem 0;
-}
-
-h2 {
-	margin: 0;
-	font-size: 1.2em;
-}
-
-h3 {
-	margin: 0 0 0.5rem 0;
-	font-size: 1.1em;
+.search-section h3,
+.facets-section h3 {
+	margin: 0 0 16px 0;
+	font-size: 16px;
 	font-weight: 600;
+	color: var(--color-main-text);
 }
 
-h4 {
-	margin: 0 0 0.5rem 0;
-	font-size: 1em;
+.filter-results-section {
+	margin: 20px 0;
+	padding: 16px 0;
+	border-top: 1px solid var(--color-border);
+}
+
+.filter-results-section h4 {
+	margin: 0 0 16px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-main-text);
+}
+
+.filter-results-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.filter-result-item {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.filter-result-item label {
+	font-size: 13px;
 	font-weight: 500;
 	color: var(--color-text-maxcontrast);
+}
+
+.search-group {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.search-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background-color: var(--color-main-background);
+	color: var(--color-main-text);
+	font-size: 14px;
+}
+
+.quick-filters {
+	border-top: 1px solid var(--color-border);
+	padding-top: 16px;
+	margin-bottom: 20px;
+}
+
+.quick-filters h4 {
+	margin: 0 0 12px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-text-maxcontrast);
+}
+
+.filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.filter-group label {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	font-weight: 500;
+}
+
+.view-mode-toggle {
+	display: flex;
+	gap: 8px;
+}
+
+.active-filters {
+	border-top: 1px solid var(--color-border);
+	padding-top: 16px;
+}
+
+.active-filters h4 {
+	margin: 0 0 12px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-text-maxcontrast);
+}
+
+.active-filters-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.active-filter-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 12px;
+	background: var(--color-background-hover);
+	border-radius: 6px;
+	font-size: 13px;
+}
+
+.filter-key {
+	font-weight: 500;
+	color: var(--color-text-maxcontrast);
+}
+
+.filter-value {
+	flex: 1;
+	color: var(--color-main-text);
+}
+
+.facets-section {
+	border-top: 1px solid var(--color-border);
+	margin-top: 20px;
+	padding-top: 20px;
+}
+
+.facets-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.facets-info {
+	margin-bottom: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.search-section,
+	.facets-section {
+		padding: 12px 0;
+	}
+
+	.search-section h3,
+	.facets-section h3 {
+		font-size: 14px;
+	}
+
+	.view-mode-toggle {
+		flex-direction: column;
+	}
 }
 </style>

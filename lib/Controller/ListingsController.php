@@ -70,7 +70,6 @@ class ListingsController extends Controller
      * @return JSONResponse JSON response containing the list of listings and total count
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @PublicPage
      * @NoAdminRequired
      * @NoCSRFRequired
      */

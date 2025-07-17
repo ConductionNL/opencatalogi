@@ -102,24 +102,54 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Fetch publications for the active catalog
+		 * @param {object} params - Optional parameters for pagination and filtering
+		 * @param {number} params.page - Page number (default: 1)
+		 * @param {number} params.limit - Items per page (default: 20)
 		 * @return {Promise<void>}
 		 */
-		async fetchPublications() {
+		async fetchPublications(params = {}) {
 			if (!this.activeCatalog) {
 				return
 			}
 
 			this.loading = true
-
 			objectStore.setLoading('publication', true)
 
+			// Build query parameters for pagination
+			const searchParams = {
+				_page: params.page || this.pagination.page || 1,
+				_limit: params.limit || this.pagination.limit || 20,
+				_extend: '@self.schema,@self.register', // Always include schema and register info
+			}
+
+			// Add any additional parameters (excluding page and limit to avoid duplication)
+			Object.keys(params).forEach(key => {
+				if (key !== 'page' && key !== 'limit') {
+					searchParams[key] = params[key]
+				}
+			})
+
+			const queryParams = new URLSearchParams(searchParams)
+
 			try {
-				const response = await fetch(`/index.php/apps/opencatalogi/api/catalogi/${this.activeCatalog.id}`)
+				const url = `/index.php/apps/opencatalogi/api/catalogi/${this.activeCatalog.id}?${queryParams}`
+				console.log('Fetching publications from:', url)
+				const response = await fetch(url)
 				const data = await response.json()
 
 				this.publications = {
-					...data,
 					results: data.results || [],
+					total: data.total || 0,
+					page: data.page || 1,
+					pages: data.pages || 0,
+					limit: data.limit || 20,
+					offset: data.offset || 0,
+				}
+
+				// Update internal pagination state
+				this.pagination = {
+					page: data.page || 1,
+					limit: data.limit || 20,
 				}
 
 				// Process each publication to register its type in the object store
@@ -148,8 +178,6 @@ export const useCatalogStore = defineStore('catalog', {
 					limit: 20,
 					offset: 0,
 				}
-				this.loading = false
-				objectStore.setLoading('publication', false)
 			} finally {
 				this.loading = false
 				objectStore.setLoading('publication', false)
@@ -246,6 +274,21 @@ export const useCatalogStore = defineStore('catalog', {
 		 */
 		getPublications: (state) => {
 			return state.publications || null
+		},
+
+		/**
+		 * Get pagination info for publications
+		 * @param {object} state - The store state
+		 * @return {object} The pagination info
+		 */
+		publicationPagination: (state) => {
+			return {
+				page: state.publications.page || 1,
+				pages: state.publications.pages || 0,
+				total: state.publications.total || 0,
+				limit: state.publications.limit || 20,
+				offset: state.publications.offset || 0,
+			}
 		},
 	},
 })

@@ -29,9 +29,9 @@ import { useSearchStore } from '../../store/modules/search.ts'
 			<div class="viewActionsBar">
 				<div class="viewInfo">
 					<span class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} publications', { 
-							showing: searchStore.getSearchResults.length, 
-							total: searchStore.getPagination.total || searchStore.getSearchResults.length 
+						{{ t('opencatalogi', 'Showing {showing} of {total} publications', {
+							showing: searchStore.getSearchResults.length,
+							total: searchStore.getPagination.total || searchStore.getSearchResults.length
 						}) }}
 					</span>
 					<span v-if="searchStore.getSelectedPublications.length > 0" class="viewIndicator">
@@ -198,6 +198,16 @@ import { useSearchStore } from '../../store/modules/search.ts'
 										<td>{{ formatDate(publication.modified) }}</td>
 										<td>{{ 'Available' }}</td>
 									</tr>
+									<tr v-if="formatCatalogs(publication) !== '-'">
+										<td>{{ t('opencatalogi', 'Catalogs') }}</td>
+										<td>{{ formatCatalogs(publication) }}</td>
+										<td>{{ 'Available' }}</td>
+									</tr>
+									<tr v-if="formatSchema(publication) !== '-'">
+										<td>{{ t('opencatalogi', 'Schema') }}</td>
+										<td>{{ formatSchema(publication) }}</td>
+										<td>{{ 'Available' }}</td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
@@ -218,6 +228,8 @@ import { useSearchStore } from '../../store/modules/search.ts'
 									<th>{{ t('opencatalogi', 'Status') }}</th>
 									<th>{{ t('opencatalogi', 'License') }}</th>
 									<th>{{ t('opencatalogi', 'Version') }}</th>
+									<th>{{ t('opencatalogi', 'Catalogs') }}</th>
+									<th>{{ t('opencatalogi', 'Schema') }}</th>
 									<th>{{ t('opencatalogi', 'Modified') }}</th>
 									<th class="tableColumnActions">
 										{{ t('opencatalogi', 'Actions') }}
@@ -245,6 +257,8 @@ import { useSearchStore } from '../../store/modules/search.ts'
 									<td>{{ publication.status || 'Unknown' }}</td>
 									<td>{{ publication.license || '-' }}</td>
 									<td>{{ publication.version || '-' }}</td>
+									<td>{{ formatCatalogs(publication) }}</td>
+									<td>{{ formatSchema(publication) }}</td>
 									<td class="tableColumnConstrained">
 										<span v-if="publication.modified">{{ formatDate(publication.modified) }}</span>
 										<span v-else>-</span>
@@ -302,14 +316,14 @@ import { useSearchStore } from '../../store/modules/search.ts'
 </template>
 
 <script>
-import { 
-	NcAppContent, 
-	NcEmptyContent, 
-	NcLoadingIcon, 
-	NcActions, 
-	NcActionButton, 
-	NcCheckboxRadioSwitch, 
-	NcButton
+import {
+	NcAppContent,
+	NcEmptyContent,
+	NcLoadingIcon,
+	NcActions,
+	NcActionButton,
+	NcCheckboxRadioSwitch,
+	NcButton,
 } from '@nextcloud/vue'
 
 // Icons
@@ -357,8 +371,8 @@ export default {
 	},
 	computed: {
 		allSelected() {
-			return this.searchStore.getSearchResults.length > 0 && 
-				   this.searchStore.getSearchResults.every(pub => this.searchStore.getSelectedPublications.includes(pub.id))
+			return this.searchStore.getSearchResults.length > 0
+				   && this.searchStore.getSearchResults.every(pub => this.searchStore.getSelectedPublications.includes(pub.id))
 		},
 		someSelected() {
 			return this.searchStore.getSelectedPublications.length > 0 && !this.allSelected
@@ -421,8 +435,8 @@ export default {
 		},
 		downloadPublication(publication) {
 			console.info('Downloading publication:', publication)
-			// Open download URL in new tab
-			window.open(`/index.php/apps/opencatalogi/api/search/${publication.id}/download`, '_blank')
+			// Use federation endpoint for download
+			window.open(`/index.php/apps/opencatalogi/api/federation/publications/${publication.id}/download`, '_blank')
 		},
 		formatDate(dateString) {
 			if (!dateString) return '-'
@@ -434,6 +448,14 @@ export default {
 		},
 		openLink(url, type = '') {
 			window.open(url, type)
+		},
+		formatCatalogs(publication) {
+			if (!publication['@self'] || !publication['@self'].catalogs || !Array.isArray(publication['@self'].catalogs)) return '-'
+			return publication['@self'].catalogs.map(catalog => catalog.title || catalog.name || 'Unknown').join(', ')
+		},
+		formatSchema(publication) {
+			if (!publication['@self'] || !publication['@self'].schema) return '-'
+			return publication['@self'].schema.title || publication['@self'].schema.name || 'Unknown'
 		},
 	},
 }

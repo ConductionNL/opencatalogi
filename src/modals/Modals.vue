@@ -30,6 +30,20 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<DeleteMenuItemModal v-if="navigationStore.modal === 'deleteMenuItem'" />
 		<UploadFilesModal v-if="navigationStore.modal === 'uploadFiles'" />
 		<ObjectModal v-if="navigationStore.modal === 'objectModal'" />
+		<!-- Object Modals -->
+		<ViewObject v-if="navigationStore.modal === 'viewObject'" />
+
+		<DeleteObject />
+		<MergeObject v-if="navigationStore.modal === 'mergeObject'" />
+		<UploadObject v-if="navigationStore.modal === 'uploadObject'" />
+		<DownloadObject />
+		<LockObject />
+		<MigrationObject v-if="navigationStore.modal === 'migrationObject'" />
+		<!-- Mass Action Modals -->
+		<MassDeleteObject v-if="navigationStore.dialog === 'massDeleteObject'" />
+		<MassPublishObjects v-if="navigationStore.dialog === 'massPublishObjects'" />
+		<MassDepublishObjects v-if="navigationStore.dialog === 'massDepublishObjects'" />
+		<MassValidateObjects v-if="navigationStore.dialog === 'massValidateObjects'" />
 	</div>
 </template>
 
@@ -60,6 +74,19 @@ import MenuModal from './menu/MenuModal.vue'
 import MenuItemForm from './menuItem/MenuItemForm.vue'
 import DeleteMenuItemModal from './menuItem/DeleteMenuItemModal.vue'
 import ObjectModal from './object/ObjectModal.vue'
+// Object Modals
+import ViewObject from './object/ViewObject.vue'
+
+import DeleteObject from './object/DeleteObject.vue'
+import MergeObject from './object/MergeObject.vue'
+import UploadObject from './object/UploadObject.vue'
+import DownloadObject from './object/DownloadObject.vue'
+import LockObject from './object/LockObject.vue'
+import MigrationObject from './object/MigrationObject.vue'
+import MassDeleteObject from './object/MassDeleteObject.vue'
+import MassPublishObjects from './object/MassPublishObjects.vue'
+import MassDepublishObjects from './object/MassDepublishObjects.vue'
+import MassValidateObjects from './object/MassValidateObjects.vue'
 // Publication
 import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
 /**
@@ -90,6 +117,18 @@ export default {
 		DeleteMenuItemModal,
 		UploadFilesModal,
 		ObjectModal,
+		// Object Modals
+		ViewObject,
+		DeleteObject,
+		MergeObject,
+		UploadObject,
+		DownloadObject,
+		LockObject,
+		MigrationObject,
+		MassDeleteObject,
+		MassPublishObjects,
+		MassDepublishObjects,
+		MassValidateObjects,
 		AddPublicationThemeModal,
 	},
 }

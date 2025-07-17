@@ -14,21 +14,15 @@
 import { computed, ref } from 'vue'
 import { objectStore, navigationStore } from '../store/store.js'
 import SearchSideBar from './search/SearchSideBar.vue'
-
-// Reactive state for sidebar visibility
-const isSidebarOpen = ref(true)
 </script>
 
 <template>
 	<div class="sidebars">
 		<!-- Search Sidebar -->
-		<NcAppSidebar 
-			v-if="isSearchPage" 
-			:name="t('opencatalogi', 'Search Publications')"
+		<SearchSideBar
+			v-if="isSearchPage"
 			:open="isSidebarOpen"
-			@update:open="(e) => isSidebarOpen = e">
-			<SearchSideBar />
-		</NcAppSidebar>
+			@update:open="(e) => isSidebarOpen = e" />
 
 		<!-- Directory Sidebar -->
 		<NcAppSidebar v-if="directory" :title="directory.title">
@@ -65,6 +59,9 @@ const isSidebarOpen = ref(true)
 <script>
 import { NcAppSidebar, NcButton } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+
+// Reactive state for sidebar visibility
+const isSidebarOpen = ref(true)
 
 /**
  * Get the active directory from the store

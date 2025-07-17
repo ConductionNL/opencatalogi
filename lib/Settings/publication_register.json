@@ -57,7 +57,7 @@
       "catalog": {
         "slug": "catalog",
         "title": "Catalog",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
         "icon": null,
@@ -110,6 +110,16 @@
             "type": "object",
             "description": "Custom filters for the catalog",
             "additionalProperties": true
+          },
+          "status": {
+            "type": "string",
+            "description": "The Lifecycle status of the catalog",
+            "enum": [
+                "development",
+                "beta",
+                "stable",
+                "obsolete"
+            ]
           }
         },
         "hardValidation": true
@@ -117,7 +127,7 @@
       "listing": {
         "slug": "listing",
         "title": "Listing",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "summary": "A filtered view of publications within a catalog",
         "description": "A listing provides a customizable view of publications within a catalog. It allows for the creation of specific publication collections based on filters, sorting, and presentation preferences. Listings can be used to create featured sections, topic-based collections, or any other organized view of publications.",
         "icon": null,
@@ -146,6 +156,11 @@
             "description": "Search URL for the listing",
             "format": "url"
           },
+          "publications": {
+            "type": "string",
+            "description": "Publications API endpoint URL for the listing",
+            "format": "url"
+          },
           "directory": {
             "type": "string",
             "description": "Directory URL for the listing",
@@ -160,8 +175,18 @@
           },
           "status": {
             "type": "string",
-            "description": "Current status of the listing"
+            "description": "Current status of the listing",
+		    "enum": [
+				"development",
+				"beta",
+				"stable",
+				"obsolete"
+			]
           },
+		  "statusMessage": {
+			"type": "string",
+			"description": "Message of the latest status test"
+		  },
           "statusCode": {
             "type": "number",
             "description": "HTTP status code of the listing",
@@ -172,9 +197,14 @@
             "description": "Timestamp of the last synchronization",
             "format": "date-time"
           },
-          "available": {
-            "type": "boolean",
-            "description": "Whether the listing is available"
+          "integrationLevel": {
+            "type": "string",
+            "description": "The level of integration the listing is used in",
+		    "enum": [
+			  "none",
+			  "connection",
+			  "search"
+			]
           },
           "default": {
             "type": "boolean",
@@ -187,14 +217,18 @@
           "schemas": {
             "type": "array",
             "description": "Types of publications in this listing"
-          }
+          },
+            "version": {
+                "type": "string",
+                "description": "The version of OpenCatalogi the source of the listing runs"
+            }
         },
         "hardValidation": true
       },
       "organization": {
         "slug": "organization",
         "title": "Organization",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "summary": "An organization that publishes or manages catalogs",
         "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
         "icon": null,

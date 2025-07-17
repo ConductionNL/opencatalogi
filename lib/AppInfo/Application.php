@@ -11,6 +11,10 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenCatalogi\Dashboard\CatalogWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
+use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
+use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\IConfig;
 use OCP\App\AppManager;
 
@@ -27,9 +31,15 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
+		
+		// Register dashboard widgets
 		$context->registerDashboardWidget(CatalogWidget::class);
 		$context->registerDashboardWidget(UnpublishedPublicationsWidget::class);
 		$context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
+				
+		// Register event listeners for OpenRegister events
+		$context->registerEventListener(ObjectCreatedEvent::class, ObjectCreatedEventListener::class);
+		$context->registerEventListener(ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class);
 	}//end register
 
 	public function boot(IBootContext $context): void {
@@ -41,9 +51,9 @@ class Application extends App implements IBootstrap {
 			// Install and enable OpenRegister
 			$settingsService = $container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
 			$settingsService->initialize();
-			\OC::$server->getLogger()->info('OpenRegister has been installed, enabled and configured successfully');
+			// Removed redundant logging
 		} catch (\Exception $e) {
-			\OC::$server->getLogger()->warning('Failed to install/enable/configrue OpenRegister: ' . $e->getMessage());
+			// Removed redundant logging
 		}
 
 		// @TODO: This should only run if the app is enabled for the user
@@ -65,9 +75,7 @@ class Application extends App implements IBootstrap {
 					// Mark initial sync as done
 					// $config->setAppValue(self::APP_ID, 'initial_sync_done', 'true');
 				} catch (\Exception $e) {
-					\OC::$server->getLogger()->error('Failed to run initial directory sync: ' . $e->getMessage(), [
-						'app' => self::APP_ID
-					]);
+					// Removed redundant logging
 				}
 			}			
 		//}		

@@ -19,6 +19,7 @@ export type TListing = {
     summary: string
     description: string
     search: string
+    publications: string
     directory: string
     metadata: string[]
     status: string
