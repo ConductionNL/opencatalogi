@@ -446,7 +446,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															v-tooltip="getPropertyWarningMessage(key, value)"
 															class="validation-icon warning-icon"
 															:size="16" />
-														<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new' || getPropertyValidationClass(key, value) === 'property-required-empty'"
+														<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
 															:v-tooltip="getPropertyValidationClass(key, value) === 'property-required-empty' ? getPropertyRequiredMessage(key) : getPropertyNewMessage(key)"
 															class="validation-icon new-icon"
 															:size="16" />
@@ -914,7 +914,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					</template>
 					Delete
 				</NcButton>
-				<NcButton type="primary" :disabled="isSaving || (isNewObject && (!selectedCatalog || !selectedSchema)) || !areAllRequiredPropertiesFilled" @click="saveObject">
+				<NcButton type="primary" :disabled="isSaving || (isNewObject && (!selectedCatalog || !selectedSchema))" @click="saveObject">
 					<template #icon>
 						<NcLoadingIcon v-if="isSaving" :size="20" />
 						<ContentSave v-else :size="20" />
