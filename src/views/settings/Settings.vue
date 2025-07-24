@@ -147,7 +147,6 @@ import {
 	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
-import Download from 'vue-material-design-icons/Download.vue'
 
 /**
  * @class Settings
@@ -172,7 +171,6 @@ export default defineComponent({
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
 		Save,
-		Download,
 	},
 
 	/**

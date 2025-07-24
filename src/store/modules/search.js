@@ -4,13 +4,13 @@
  * This store handles search operations for publications across local and federated sources.
  * It provides read-only access to publication data through federation endpoints.
  *
- * @category Store
- * @package
+ * @module Store
+ * @package opencatalogi
  * @author   Ruben van der Linde
  * @copyright 2024
  * @license  AGPL-3.0-or-later
  * @version  1.0.0
- * @link     https://github.com/opencatalogi/opencatalogi
+ * @see     {@link https://github.com/opencatalogi/opencatalogi}
  */
 
 import { defineStore } from 'pinia'
@@ -63,77 +63,77 @@ export const useSearchStore = defineStore('search', {
 	getters: {
 		/**
 		 * Get current search results
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {Array} Array of search results
 		 */
 		getSearchResults: (state) => state.searchResults,
 
 		/**
 		 * Get current search term
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {string} Current search term
 		 */
 		getSearchTerm: (state) => state.searchTerm,
 
 		/**
 		 * Get loading state
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {boolean} Whether search is currently loading
 		 */
 		isSearchLoading: (state) => state.isLoading,
 
 		/**
 		 * Get error state
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {string|null} Current error message or null
 		 */
 		getError: (state) => state.error,
 
 		/**
 		 * Get pagination information
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {object} Pagination object with page, limit, total, etc.
 		 */
 		getPagination: (state) => state.pagination,
 
 		/**
 		 * Get current filters
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {object} Current filter settings
 		 */
 		getFilters: (state) => state.filters,
 
 		/**
 		 * Get current facets
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {object} Current facet data
 		 */
 		getFacets: (state) => state.facets,
 
 		/**
 		 * Get facetable metadata
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {object} Facetable metadata for dynamic filters
 		 */
 		getFacetable: (state) => state.facetable,
 
 		/**
 		 * Get current ordering
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {object} Current ordering settings
 		 */
 		getOrdering: (state) => state.ordering,
 
 		/**
 		 * Get current view mode
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {string} Current view mode ('cards' or 'table')
 		 */
 		getViewMode: (state) => state.viewMode,
 
 		/**
 		 * Get selected publications
-		 * @param state
+		 * @param {object} state - The store state
 		 * @return {Array} Array of selected publication IDs
 		 */
 		getSelectedPublications: (state) => state.selectedPublications,

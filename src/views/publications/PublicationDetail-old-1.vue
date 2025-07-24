@@ -641,16 +641,16 @@ import { catalogiStore, publicationTypeStore, navigationStore, publicationStore,
 				</BTabs>
 			</div>
 		</div>
-		<DeleteMultipleAttachmentsDialog
+		<!-- <DeleteMultipleAttachmentsDialog
 			v-if="navigationStore.dialog === 'deleteMultipleAttachments'"
 			:attachments-to-delete="selectedAttachmentsEntities"
 			@done="onBulkDeleteAttachmentsDone"
-			@cancel="onBulkDeleteAttachmentsCancel" />
-		<DeleteMultiplePublicationDataDialog
+			@cancel="onBulkDeleteAttachmentsCancel" /> -->
+		<!-- <DeleteMultiplePublicationDataDialog
 			v-if="navigationStore.dialog === 'deleteMultiplePublicationData'"
 			:keys-to-delete="selectedPublicationData"
 			@done="onBulkDeletePublicationDataDone"
-			@cancel="onBulkDeletePublicationDataCancel" />
+			@cancel="onBulkDeletePublicationDataCancel" /> -->
 		<DeleteMultipleThemesDialog
 			v-if="navigationStore.dialog === 'deleteMultipleThemes'"
 			:themes-to-delete="selectedThemesEntities"
@@ -664,9 +664,9 @@ import { catalogiStore, publicationTypeStore, navigationStore, publicationStore,
 import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcNoteCard, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTab, BTabs, BPagination } from 'bootstrap-vue'
 import VueApexCharts from 'vue-apexcharts'
-import DeleteMultipleAttachmentsDialog from '../../dialogs/attachment/DeleteMultipleAttachmentsDialog.vue'
-import DeleteMultiplePublicationDataDialog from '../../dialogs/publicationData/DeleteMultiplePublicationDataDialog.vue'
-import DeleteMultipleThemesDialog from '../../dialogs/publicationTheme/DeleteMultiplePublicationThemeDialog.vue'
+// import DeleteMultipleAttachmentsDialog from '../../dialogs/attachment/DeleteMultipleAttachmentsDialog.vue'
+// import DeleteMultiplePublicationDataDialog from '../../dialogs/publicationData/DeleteMultiplePublicationDataDialog.vue'
+import DeleteMultipleThemesDialog from '../../dialogs/theme/DeleteMultipleThemesDialog.vue'
 
 // Icons
 import ArchivePlusOutline from 'vue-material-design-icons/ArchivePlusOutline.vue'
@@ -699,7 +699,7 @@ import { Publication } from '../../entities/index.js'
 import { getTheme } from '../../services/getTheme.js'
 
 export default {
-	name: 'PublicationDetail',
+	name: 'PublicationDetailOld1',
 	components: {
 		// Components
 		NcLoadingIcon,
@@ -711,11 +711,11 @@ export default {
 		NcNoteCard,
 		NcActionLink,
 		NcCheckboxRadioSwitch,
-		DeleteMultipleAttachmentsDialog,
+		// DeleteMultipleAttachmentsDialog,
 		BTab,
 		BTabs,
 		apexchart: VueApexCharts,
-		DeleteMultiplePublicationDataDialog,
+		// DeleteMultiplePublicationDataDialog,
 		DeleteMultipleThemesDialog,
 	},
 	props: {

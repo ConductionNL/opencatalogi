@@ -154,7 +154,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useSearchStore } from '../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
 import {
@@ -171,7 +170,7 @@ const searchStore = useSearchStore()
 
 // Methods
 const isActiveFacet = (fieldName) => {
-	return searchStore.getActiveFacets.hasOwnProperty(fieldName)
+	return Object.prototype.hasOwnProperty.call(searchStore.getActiveFacets, fieldName)
 }
 
 const getActiveFacetType = (fieldName) => {
@@ -185,8 +184,6 @@ const getActiveFacetInterval = (fieldName) => {
 }
 
 const toggleFacet = (fieldName, fieldInfo, enabled) => {
-	console.log('FacetComponent: toggleFacet called with:', { fieldName, fieldInfo, enabled })
-
 	if (enabled) {
 		// Determine default facet type
 		const defaultType = fieldInfo.facet_types?.[0] || 'terms'
@@ -197,10 +194,8 @@ const toggleFacet = (fieldName, fieldInfo, enabled) => {
 			config.interval = fieldInfo.intervals?.[0] || 'month'
 		}
 
-		console.log('FacetComponent: Calling toggleActiveFacet with:', { fieldName, defaultType, enabled: true, config })
 		searchStore.toggleActiveFacet(fieldName, defaultType, true, config)
 	} else {
-		console.log('FacetComponent: Calling toggleActiveFacet to disable:', { fieldName })
 		searchStore.toggleActiveFacet(fieldName, '', false)
 	}
 
@@ -208,8 +203,6 @@ const toggleFacet = (fieldName, fieldInfo, enabled) => {
 }
 
 const updateFacetType = (fieldName, newType, fieldInfo) => {
-	console.log('FacetComponent: updateFacetType called with:', { fieldName, newType, fieldInfo })
-
 	const config = {}
 
 	// Add type-specific configuration
@@ -217,19 +210,15 @@ const updateFacetType = (fieldName, newType, fieldInfo) => {
 		config.interval = fieldInfo.intervals?.[0] || 'month'
 	}
 
-	console.log('FacetComponent: Calling toggleActiveFacet with new type:', { fieldName, newType, config })
 	searchStore.toggleActiveFacet(fieldName, newType, true, config)
 
 	// Don't trigger search here - the store method already does it
 }
 
 const updateFacetInterval = (fieldName, interval) => {
-	console.log('FacetComponent: updateFacetInterval called with:', { fieldName, interval })
-
 	const currentConfig = searchStore.getActiveFacets[fieldName]
 	if (currentConfig) {
 		const newConfig = { ...currentConfig.config, interval }
-		console.log('FacetComponent: Updating facet interval:', { fieldName, newConfig })
 		searchStore.toggleActiveFacet(fieldName, currentConfig.type, true, newConfig)
 
 		// Don't trigger search here - the store method already does it
@@ -237,14 +226,12 @@ const updateFacetInterval = (fieldName, interval) => {
 }
 
 const removeFacet = (fieldName) => {
-	console.log('FacetComponent: removeFacet called with:', { fieldName })
 	searchStore.toggleActiveFacet(fieldName, '', false)
 
 	// Don't trigger search here - the store method already does it
 }
 
 const clearAllFacets = () => {
-	console.log('FacetComponent: clearAllFacets called')
 	searchStore.clearAllActiveFacets()
 
 	// Don't trigger search here - the store method already does it

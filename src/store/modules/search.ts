@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { defineStore } from 'pinia'
+import { TPublication } from '../../entities/publication/publication.types'
 
 // Type definitions for faceting
 interface FacetFieldInfo {
@@ -7,7 +8,7 @@ interface FacetFieldInfo {
 	description: string
 	facet_types: string[]
 	has_labels?: boolean
-	sample_values?: Array<{ value: any, label: string, count: number }>
+	sample_values?: Array<{ value: string | number | boolean, label: string, count: number }>
 	appearance_rate?: number
 	cardinality?: string
 	intervals?: string[]
@@ -21,17 +22,17 @@ interface FacetableFields {
 
 interface ActiveFacetConfig {
 	type: string
-	config: Record<string, any>
+	config: Record<string, string | number | boolean>
 }
 
 interface SearchState {
 	// Search parameters
 	searchTerm: string
-	filters: Record<string, any>
+	filters: Record<string, string | number | boolean>
 	ordering: Record<string, 'ASC' | 'DESC'>
 
 	// Results and pagination
-	searchResults: any[]
+	searchResults: TPublication[]
 	pagination: {
 		page: number
 		pages: number
@@ -39,7 +40,7 @@ interface SearchState {
 		limit: number
 		offset: number
 	}
-	facets: Record<string, any>
+	facets: Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>>
 	facetable: FacetableFields
 
 	// Facet management
@@ -90,13 +91,13 @@ export const useSearchStore = defineStore('search', {
 	getters: {
 		// Search state getters
 		getSearchTerm: (state): string => state.searchTerm,
-		getFilters: (state): Record<string, any> => state.filters,
+		getFilters: (state): Record<string, string | number | boolean> => state.filters,
 		getOrdering: (state): Record<string, 'ASC' | 'DESC'> => state.ordering,
 
 		// Results getters
-		getSearchResults: (state): any[] => state.searchResults,
+		getSearchResults: (state): TPublication[] => state.searchResults,
 		getPagination: (state) => state.pagination,
-		getFacets: (state): Record<string, any> => state.facets,
+		getFacets: (state): Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>> => state.facets,
 		getFacetable: (state): FacetableFields => state.facetable,
 
 		// Loading state getters
@@ -158,7 +159,7 @@ export const useSearchStore = defineStore('search', {
 			return count > 0
 		},
 
-		currentFacets: (state): Record<string, any> => {
+		currentFacets: (state): Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>> => {
 			return state.facets
 		},
 
@@ -195,7 +196,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param filterKey The key of the filter to clear
 		 */
 		clearFilter(filterKey: string) {
-			const { [filterKey]: removed, ...remainingFilters } = this.filters
+			const { [filterKey]: _removed, ...remainingFilters } = this.filters
 			this.filters = remainingFilters
 			console.log('Filter cleared:', filterKey, 'Remaining filters:', this.filters)
 		},
@@ -225,7 +226,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param field The field to remove ordering from
 		 */
 		removeOrdering(field: string) {
-			const { [field]: removed, ...remainingOrdering } = this.ordering
+			const { [field]: _removed, ...remainingOrdering } = this.ordering
 			this.ordering = remainingOrdering
 			console.log('Ordering removed for field:', field, 'Remaining ordering:', this.ordering)
 		},
@@ -268,7 +269,7 @@ export const useSearchStore = defineStore('search', {
 		 * Select all publications
 		 */
 		selectAllPublications() {
-			this.selectedPublications = this.searchResults.map((pub: any) => pub.id)
+			this.selectedPublications = this.searchResults.map((pub: TPublication) => pub.id)
 		},
 
 		/**
@@ -283,7 +284,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param params Optional parameters for facetable discovery
 		 */
-		async discoverFacetableFields(params: Record<string, any> = {}) {
+		async discoverFacetableFields(params: Record<string, string | number | boolean> = {}) {
 			this.facetsLoading = true
 
 			try {
@@ -343,7 +344,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param enabled Whether to enable or disable the facet
 		 * @param config Optional configuration for the facet
 		 */
-		toggleActiveFacet(fieldName: string, facetType: string, enabled: boolean, config: Record<string, any> = {}) {
+		toggleActiveFacet(fieldName: string, facetType: string, enabled: boolean, config: Record<string, string | number | boolean> = {}) {
 			console.log('🔧 toggleActiveFacet called with:', {
 				fieldName: typeof fieldName === 'string' ? `"${fieldName}"` : fieldName,
 				facetType: typeof facetType === 'string' ? `"${facetType}"` : facetType,
@@ -360,7 +361,7 @@ export const useSearchStore = defineStore('search', {
 				}
 				console.log('✅ Added active facet:', fieldName, '=', this.activeFacets[fieldName])
 			} else {
-				const { [fieldName]: removed, ...remainingFacets } = this.activeFacets
+				const { [fieldName]: _removed, ...remainingFacets } = this.activeFacets
 				this.activeFacets = remainingFacets
 				console.log('❌ Removed active facet:', fieldName)
 			}
@@ -385,16 +386,16 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Build facet query configuration from active facets
 		 *
-		 * @return Facet query configuration object
+		 * @return {Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>>} Facet query configuration object
 		 */
 		buildFacetQuery() {
 			console.log('🏗️ buildFacetQuery() - Building from active facets:', this.activeFacets)
 
-			const facetQuery: Record<string, any> = {
+			const facetQuery: Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>> = {
 				'@self': {},
 			}
 
-			Object.entries(this.activeFacets).forEach(([fieldName, facetConfig]: [string, any]) => {
+			Object.entries(this.activeFacets).forEach(([fieldName, facetConfig]: [string, ActiveFacetConfig]) => {
 				console.log(`🔨 Processing field: "${fieldName}", config:`, facetConfig)
 
 				if (fieldName.startsWith('@self.')) {
@@ -437,7 +438,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param params Optional search parameters
 		 */
-		async searchPublications(params: Record<string, any> = {}) {
+		async searchPublications(params: Record<string, string | number | boolean> = {}) {
 			this.loading = true
 			this.error = null
 
@@ -487,7 +488,7 @@ export const useSearchStore = defineStore('search', {
 						if (typeof facets === 'object' && facets !== null) {
 							if (category === '@self') {
 								// Handle @self metadata facets
-								Object.entries(facets as Record<string, any>).forEach(([field, config]) => {
+								Object.entries(facets as Record<string, ActiveFacetConfig>).forEach(([field, config]) => {
 									console.log(`🎛️ Processing @self field: "${field}", config:`, config)
 
 									// Add the type parameter
@@ -510,7 +511,7 @@ export const useSearchStore = defineStore('search', {
 								// Handle object field facets - category is the field name
 								console.log(`🎛️ Processing object field: "${category}", config:`, facets)
 
-								const facetConfig = facets as Record<string, any>
+								const facetConfig = facets as ActiveFacetConfig
 
 								// Add the type parameter - use category as the field name
 								const paramKey = `_facets[${category}][type]`
@@ -637,7 +638,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication
 		 * @param params Optional search parameters
 		 */
-		async getPublicationUses(publicationId: string, params: Record<string, any> = {}) {
+		async getPublicationUses(publicationId: string, params: Record<string, string | number | boolean> = {}) {
 			try {
 				const searchParams = new URLSearchParams(params as Record<string, string>)
 				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/uses?${searchParams.toString()}`, {
@@ -667,7 +668,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication
 		 * @param params Optional search parameters
 		 */
-		async getPublicationUsed(publicationId: string, params: Record<string, any> = {}) {
+		async getPublicationUsed(publicationId: string, params: Record<string, string | number | boolean> = {}) {
 			try {
 				const searchParams = new URLSearchParams(params as Record<string, string>)
 				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/used?${searchParams.toString()}`, {

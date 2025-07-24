@@ -89,7 +89,7 @@ export class Organization implements TOrganization {
 
 	/**
 	 * Validates the organization data
-	 * @return SafeParseReturnType containing validation results
+	 * @return {SafeParseReturnType<TOrganization, unknown>} SafeParseReturnType containing validation results
 	 */
 	public validate(): SafeParseReturnType<TOrganization, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/ewlydzkylhygj-create-organization

@@ -37,7 +37,6 @@ import { ref, onMounted, computed } from 'vue'
 </template>
 
 <script>
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import PublicationList from './PublicationList.vue'
