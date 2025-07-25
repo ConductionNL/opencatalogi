@@ -28,6 +28,21 @@ class CatalogiController extends Controller
 {
 
     /**
+     * @var string Allowed CORS methods
+     */
+    private string $corsMethods;
+
+    /**
+     * @var string Allowed CORS headers
+     */
+    private string $corsAllowedHeaders;
+
+    /**
+     * @var int CORS max age
+     */
+    private int $corsMaxAge;
+
+    /**
      * CatalogiController constructor.
      *
      * @param string             $appName            The name of the app
@@ -36,6 +51,9 @@ class CatalogiController extends Controller
      * @param IAppConfig         $config             App configuration interface
      * @param ContainerInterface $container          Server container for dependency injection
      * @param IAppManager        $appManager         App manager for checking installed apps
+     * @param string             $corsMethods        Allowed CORS methods
+     * @param string             $corsAllowedHeaders Allowed CORS headers
+     * @param int                $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -43,9 +61,15 @@ class CatalogiController extends Controller
         private readonly CatalogiService $catalogiService,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager
+        private readonly IAppManager $appManager,
+        string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+        string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+        int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
+        $this->corsMethods = $corsMethods;
+        $this->corsAllowedHeaders = $corsAllowedHeaders;
+        $this->corsMaxAge = $corsMaxAge;
 
     }//end __construct()
 
@@ -84,6 +108,32 @@ class CatalogiController extends Controller
         ];
 
     }//end getCatalogConfiguration()
+
+
+    /**
+     * Implements a preflighted CORS response for OPTIONS requests.
+     *
+     * @return \OCP\AppFramework\Http\Response The CORS response
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     */
+    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    {
+        // Determine the origin
+        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+
+        // Create and configure the response
+        $response = new \OCP\AppFramework\Http\Response();
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+        return $response;
+    }
 
 
     /**
@@ -127,7 +177,14 @@ class CatalogiController extends Controller
             'total' => count($result ?? [])
         ];
 
-        return new JSONResponse($data);
+        // Add CORS headers for public API access
+        $response = new JSONResponse($data);
+        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+
+        return $response;
 
     }//end index()
 
@@ -141,13 +198,20 @@ class CatalogiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @PublicPage
      */
     public function show(string | int $id): JSONResponse
     {
         // Get all objects using the catalog's registers and schemas as filters
-        $objects = $this->catalogiService->index($id);
+        $response = $this->catalogiService->index($id);
 
-        return $objects;
+        // Add CORS headers for public API access
+        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+
+        return $response;
 
     }//end show()
 

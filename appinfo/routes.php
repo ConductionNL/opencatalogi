@@ -18,6 +18,33 @@ return [
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		/**
+		 * CORS preflight OPTIONS routes for public endpoints
+		 */
+		// Publications CORS
+		['name' => 'publications#preflightedCors', 'url' => '/api/publications', 'verb' => 'OPTIONS'],
+		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/uses', 'verb' => 'OPTIONS'],
+		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/used', 'verb' => 'OPTIONS'],
+		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/attachments', 'verb' => 'OPTIONS'],
+		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/download', 'verb' => 'OPTIONS'],
+		// Catalogi CORS
+		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
+		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
+		// Glossary CORS
+		['name' => 'glossary#preflightedCors', 'url' => '/api/glossary', 'verb' => 'OPTIONS'],
+		['name' => 'glossary#preflightedCors', 'url' => '/api/glossary/{id}', 'verb' => 'OPTIONS'],
+		// Themes CORS
+		['name' => 'themes#preflightedCors', 'url' => '/api/themes', 'verb' => 'OPTIONS'],
+		['name' => 'themes#preflightedCors', 'url' => '/api/themes/{id}', 'verb' => 'OPTIONS'],
+		// Menus CORS
+		['name' => 'menus#preflightedCors', 'url' => '/api/menus', 'verb' => 'OPTIONS'],
+		['name' => 'menus#preflightedCors', 'url' => '/api/menus/{id}', 'verb' => 'OPTIONS'],
+		// Pages CORS
+		['name' => 'pages#preflightedCors', 'url' => '/api/pages', 'verb' => 'OPTIONS'],
+		['name' => 'pages#preflightedCors', 'url' => '/api/pages/{slug}', 'verb' => 'OPTIONS', 'requirements' => ['slug' => '.+']],
+		// Directory CORS
+		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
+		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 */		
 		// Publications
