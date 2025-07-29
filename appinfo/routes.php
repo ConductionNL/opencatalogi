@@ -17,6 +17,8 @@ return [
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
+		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
+		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */

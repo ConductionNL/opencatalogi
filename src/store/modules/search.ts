@@ -386,12 +386,12 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Build facet query configuration from active facets
 		 *
-		 * @return {Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>>} Facet query configuration object
+		 * @return {Record<string, Record<string, ActiveFacetConfig> | ActiveFacetConfig>} Facet query configuration object
 		 */
 		buildFacetQuery() {
 			console.log('🏗️ buildFacetQuery() - Building from active facets:', this.activeFacets)
 
-			const facetQuery: Record<string, Record<string, { buckets: Array<{ key: string, doc_count: number }> }>> = {
+			const facetQuery: Record<string, Record<string, ActiveFacetConfig> | ActiveFacetConfig> = {
 				'@self': {},
 			}
 
@@ -402,16 +402,16 @@ export const useSearchStore = defineStore('search', {
 					// Metadata facet
 					const metaField = fieldName.replace('@self.', '')
 					console.log(`📊 Adding metadata facet: "${metaField}" from field "${fieldName}"`)
-					facetQuery['@self'][metaField] = {
+					;(facetQuery['@self'] as Record<string, ActiveFacetConfig>)[metaField] = {
 						type: facetConfig.type,
-						...facetConfig.config,
+						config: facetConfig.config,
 					}
 				} else {
 					// Object field facet
 					console.log(`📦 Adding object field facet: "${fieldName}"`)
 					facetQuery[fieldName] = {
 						type: facetConfig.type,
-						...facetConfig.config,
+						config: facetConfig.config,
 					}
 				}
 			})

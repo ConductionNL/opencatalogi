@@ -16,7 +16,7 @@ use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\IConfig;
-use OCP\App\AppManager;
+use OCP\App\IAppManager;
 
 /**
  * Main Application class for OpenCatalogi
@@ -45,15 +45,22 @@ class Application extends App implements IBootstrap {
 	public function boot(IBootContext $context): void {
 		$container = $context->getServerContainer();
 
-		// @TODO: We should look into performance here, since its acalled on every call to the app and right now i can so a compte update goind on. Perhaps we should see if our app version is higher that the config version or something (Tis adds 15ms ot every call)
-		// Install and enable OpenRegister
+		// Check if initialization is needed based on version
 		try {
-			// Install and enable OpenRegister
-			$settingsService = $container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
-			$settingsService->initialize();
-			// Removed redundant logging
+			$config = $container->get(IConfig::class);
+			$currentAppVersion = $container->get(IAppManager::class)->getAppVersion(self::APP_ID);
+			$lastInitializedVersion = $config->getAppValue(self::APP_ID, 'last_initialized_version', '');
+			
+			// Only initialize if we haven't initialized this version yet
+			if ($lastInitializedVersion !== $currentAppVersion) {
+				$settingsService = $container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
+				$settingsService->initialize();
+				
+				// Mark this version as initialized
+				$config->setAppValue(self::APP_ID, 'last_initialized_version', $currentAppVersion);
+			}
 		} catch (\Exception $e) {
-			// Removed redundant logging
+			// Log error but don't fail the boot process
 		}
 
 		// @TODO: This should only run if the app is enabled for the user
@@ -62,7 +69,7 @@ class Application extends App implements IBootstrap {
 		//if($appManager->isEnabledForUser('opencatalogi')){
 			// Get app config to check if initial sync has been done
 			$config = $container->get(IConfig::class);
-			$initialSyncDone = $config->getAppValue(self::APP_ID, 'initial_sync_done', 'false');
+					$initialSyncDone = $config->getAppValue(self::APP_ID, 'initial_sync_done', 'false');
 			
 			// Only run if initial sync hasn't been done
 			if ($initialSyncDone === 'false') {
