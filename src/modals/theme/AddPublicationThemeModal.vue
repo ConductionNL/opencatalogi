@@ -46,7 +46,6 @@ import { navigationStore, objectStore } from '../../store/store.js'
   </template>
 
 <script>
-import { navigationStore, objectStore } from '../../store/store.js'
 import {
   NcModal,
   NcSelect,

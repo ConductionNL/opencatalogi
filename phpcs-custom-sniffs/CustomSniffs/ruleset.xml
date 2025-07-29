@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<ruleset name="CustomSniffs">
+    <description>Custom PHPCS sniffs for OpenCatalogi</description>
+    
+    <rule ref="CustomSniffs.Functions.NamedParameters"/>
+</ruleset> 

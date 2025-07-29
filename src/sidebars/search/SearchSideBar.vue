@@ -6,7 +6,6 @@ import { t } from '@nextcloud/l10n'
 import {
 	NcAppSidebar,
 	NcAppSidebarTab,
-	NcTextField,
 	NcButton,
 	NcSelect,
 	NcNoteCard,
@@ -146,8 +145,6 @@ const getSelectedFilterValue = (fieldName) => {
 	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
 	const currentValue = searchStore.getFilters[filterKey]
 
-	console.log('getSelectedFilterValue:', { fieldName, filterKey, currentValue, allFilters: searchStore.getFilters })
-
 	if (!currentValue) return null
 
 	// Find the option that matches the current filter value
@@ -155,27 +152,22 @@ const getSelectedFilterValue = (fieldName) => {
 	const options = getFacetOptions(facetResult)
 	const selectedOption = options.find(option => option.value === currentValue) || null
 
-	console.log('Selected option found:', selectedOption, 'from options:', options)
 	return selectedOption
 }
 
 const handleFilterSelect = (fieldName, option) => {
 	// Handle filter selection from dropdown
-	console.log('handleFilterSelect called:', { fieldName, option })
 	const filterKey = fieldName.startsWith('@self.') ? fieldName : fieldName
 
 	if (option && option.value) {
 		// Set the selected filter
-		console.log('Setting filter:', { [filterKey]: option.value })
 		searchStore.setFilters({ [filterKey]: option.value })
 	} else {
 		// Clear the filter if option is null (clearable)
-		console.log('Clearing filter:', filterKey)
 		searchStore.clearFilter(filterKey)
 	}
 
 	// Trigger search with new filter
-	console.log('Triggering search with filters:', searchStore.getFilters)
 	searchStore.searchPublications()
 }
 
@@ -209,13 +201,7 @@ onMounted(async () => {
 
 	// Always load initial results and discover facets when component mounts
 	try {
-		console.log('SearchSideBar: Component mounted, loading initial search results...')
-		console.log('SearchSideBar: isSearchPage check:', navigationStore?.selected === 'search')
-		console.log('SearchSideBar: Props open:', props.open)
 		await searchStore.loadInitialResults()
-		console.log('SearchSideBar: Initial results loaded successfully')
-		console.log('SearchSideBar: Results count:', searchStore.getSearchResults.length)
-		console.log('SearchSideBar: Facetable fields:', Object.keys(searchStore.getFacetable))
 	} catch (error) {
 		console.error('SearchSideBar: Failed to load initial results:', error)
 	}

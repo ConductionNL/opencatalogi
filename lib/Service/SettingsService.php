@@ -24,6 +24,7 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCP\AppFramework\Http\JSONResponse;
 use OC_App;
+use OCA\OpenCatalogi\AppInfo\Application;
 
 /**
  * Service for handling settings-related operations.
@@ -239,9 +240,13 @@ class SettingsService
                 $results['autoConfigured'] = true;
             }
 
-            // Load settings from file.
-            $this->loadSettings();
-            $results['settingsLoaded'] = true;
+            // Load settings from file only if needed.
+            if ($this->shouldLoadSettings()) {
+                $this->loadSettings();
+                $results['settingsLoaded'] = true;
+            } else {
+                $results['settingsLoaded'] = true; // Already up to date
+            }
         } catch (\Exception $e) {
             $results['errors'][] = $e->getMessage();
         }//end try
@@ -443,10 +448,12 @@ class SettingsService
     /**
      * Load settings from the publication_register.json file.
      *
+     * @param bool $force Whether to force the import regardless of version checks.
+     *
      * @return array The loaded settings configuration.
      * @throws \RuntimeException If settings loading fails.
      */
-    public function loadSettings(): array
+    public function loadSettings(bool $force = false): array
     {
         // Read the settings from the publication_register.json file.
         $settingsFilePath = __DIR__.'/../Settings/publication_register.json';
@@ -469,16 +476,144 @@ class SettingsService
                 throw new \Exception('Error decoding JSON: '.json_last_error_msg());
             }
 
-            $includeObjects = false;
-
             // Get the configuration service and import the settings.
             $configurationService = $this->getConfigurationService();
-            return $configurationService->importFromJson($settings, $includeObjects);
+            
+            // Get the current app version dynamically
+            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+            
+            return $configurationService->importFromJson(
+                data: $settings,
+                owner: null,
+                appId: Application::APP_ID,
+                version: $currentAppVersion,
+                force: $force
+            );
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to load settings: '.$e->getMessage());
         }//end try
 
     }//end loadSettings()
+
+
+    /**
+     * Check if settings should be loaded based on version comparison.
+     *
+     * This method compares the current app version with the stored configuration
+     * version to determine if a settings import is needed.
+     *
+     * @return bool True if settings should be loaded, false otherwise.
+     * @throws \RuntimeException If version checking fails.
+     */
+    private function shouldLoadSettings(): bool
+    {
+        try {
+            // Get the current app version
+            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+            
+            // Get the configuration service to check stored version
+            $configurationService = $this->getConfigurationService();
+            $storedVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+            
+            // If no stored version exists, we need to load settings
+            if ($storedVersion === null) {
+                return true;
+            }
+            
+            // Compare versions using semantic versioning
+            // Load settings if current version is newer than stored version
+            return version_compare($currentAppVersion, $storedVersion, '>');
+            
+        } catch (\Exception $e) {
+            // If we can't determine versions, err on the side of loading settings
+            return true;
+        }
+    }//end shouldLoadSettings()
+
+
+    /**
+     * Get version information for the app and configuration.
+     *
+     * This method returns version information including the current app version
+     * and the stored configuration version in OpenRegister.
+     *
+     * @return array Version information with app and configuration versions.
+     * @throws \RuntimeException If version retrieval fails.
+     */
+    public function getVersionInfo(): array
+    {
+        try {
+            // Get the current app version
+            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+            
+            // Get the configuration service to check stored version
+            $configurationService = $this->getConfigurationService();
+            $storedConfigVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+            
+            // Determine if versions match
+            $versionsMatch = $storedConfigVersion !== null && 
+                           version_compare($currentAppVersion, $storedConfigVersion, '=');
+            
+            return [
+                'appName' => 'OpenCatalogi',
+                'appVersion' => $currentAppVersion,
+                'configuredVersion' => $storedConfigVersion,
+                'versionsMatch' => $versionsMatch,
+                'needsUpdate' => $storedConfigVersion === null || 
+                               version_compare($currentAppVersion, $storedConfigVersion, '>')
+            ];
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to get version information: ' . $e->getMessage());
+        }
+    }//end getVersionInfo()
+
+
+    /**
+     * Manually trigger configuration import from JSON.
+     *
+     * This method allows system administrators to manually trigger the import
+     * process, bypassing version checks.
+     *
+     * @param bool $forceImport Whether to force import regardless of version.
+     *
+     * @return array The import results with success/error information.
+     */
+    public function manualImport(bool $forceImport = false): array
+    {
+        try {
+            // Get version info first
+            $versionInfo = $this->getVersionInfo();
+            
+            // Check if import is needed (unless forced)
+            if (!$forceImport && $versionInfo['versionsMatch']) {
+                return [
+                    'success' => false,
+                    'message' => 'Configuration is already up to date. Use force import if you want to reimport.',
+                    'versionInfo' => $versionInfo
+                ];
+            }
+            
+            // Perform the import
+            $importResult = $this->loadSettings($forceImport);
+            
+            // Get updated version info
+            $updatedVersionInfo = $this->getVersionInfo();
+            
+            return [
+                'success' => true,
+                'message' => 'Configuration imported successfully.',
+                'importResult' => $importResult,
+                'versionInfo' => $updatedVersionInfo
+            ];
+            
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Import failed: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ];
+        }
+    }//end manualImport()
 
 
 }//end class
