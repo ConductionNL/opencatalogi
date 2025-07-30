@@ -486,7 +486,127 @@
     "jobs": [],
     "synchronizations": [],
     "rules": [],
-    "objects": []
+    "objects": [
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.0.0"
+        },
+        "title": "Home",
+        "slug": "home",
+        "name": "home",
+        "contents": [
+          {
+            "type": "text",
+            "id": "welcome",
+            "data": {
+              "text": "Welcome to OpenCatalogi",
+              "html": "<h1>Welcome to OpenCatalogi</h1><p>This is the default home page for your catalog website. You can customize this content through the admin interface.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "version": "1.0.0"
+        },
+        "title": "Main Navigation",
+        "name": "main-navigation",
+        "position": 1,
+        "items": [
+          {
+            "name": "Home",
+            "slug": "home",
+            "link": "/",
+            "description": "Homepage",
+            "icon": "home"
+          },
+          {
+            "name": "Catalogs",
+            "slug": "catalogs",
+            "link": "/catalogs",
+            "description": "Browse available catalogs",
+            "icon": "catalog"
+          },
+          {
+            "name": "Publications",
+            "slug": "publications",
+            "link": "/publications",
+            "description": "Browse all publications",
+            "icon": "publication"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "catalog",
+          "version": "1.0.0"
+        },
+        "title": "Default Catalog",
+        "name": "default-catalog",
+        "summary": "The default catalog for OpenCatalogi",
+        "description": "This is the default catalog created during initial setup. It contains sample content to help you get started with OpenCatalogi.",
+        "image": "",
+        "listed": true,
+        "organization": "",
+        "registers": [],
+        "schemas": [],
+        "filters": {},
+        "status": "development"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "version": "1.0.0"
+        },
+        "title": "Welcome Publication",
+        "name": "welcome-publication",
+        "summary": "A sample publication to demonstrate OpenCatalogi functionality",
+        "description": "This is a sample publication created during the initial setup of OpenCatalogi. It demonstrates how publications work within the catalog system and can be used as a template for creating your own content.",
+        "organization": "",
+        "themes": []
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "organization",
+          "version": "1.0.0"
+        },
+        "name": "Default Organization",
+        "summary": "The default organization for this OpenCatalogi instance",
+        "description": "This is the default organization created during initial setup. You can modify this organization or create additional organizations through the admin interface."
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "theme",
+          "version": "1.0.0"
+        },
+        "title": "General",
+        "name": "general-theme",
+        "summary": "General theme for uncategorized content",
+        "description": "This is a default theme for general content that doesn't fit into specific categories. You can create additional themes to better organize your publications.",
+        "image": ""
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "glossary",
+          "version": "1.0.0"
+        },
+        "title": "Catalog",
+        "name": "catalog-glossary",
+        "summary": "A collection of publications organized by theme and schema",
+        "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface.",
+        "externalLink": "",
+        "keywords": ["catalog", "collection", "publications", "organization", "content management"]
+      }
+    ]
   },
   "info": {
     "id": 21,
