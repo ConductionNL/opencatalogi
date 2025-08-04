@@ -3,7 +3,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog v-if="navigationStore.dialog === 'deleteObject'"
+	<NcDialog v-if="false"
 		:name="'Delete ' + (objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id || 'Publication')"
 		size="normal"
 		:can-close="false">
@@ -93,6 +93,7 @@ export default {
 				this.error = error.message || 'An error occurred while deleting the publication'
 			} finally {
 				this.loading = false
+				objectStore.fetchCollection(objectStore.objectItem['@self'].type)
 			}
 		},
 	},

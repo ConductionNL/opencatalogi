@@ -143,17 +143,19 @@ export default {
 					})
 
 			} else {
-				const activeObject = objectStore.getActiveObject(this.dialogProperties.objectType)
+				const activeObject = objectStore.getActiveObject(this.objectType)
 				if (!activeObject?.id) return
 
-				const publicationData = this.objectType === 'publication'
-					? {
-						schema: activeObject.schema,
-						register: activeObject.register,
-					}
-					: null
+				const publicationData = {
+					schema: activeObject['@self']?.schema,
+					register: activeObject['@self']?.register,
+				}
 
-				objectStore.deleteObject(this.dialogProperties.objectType, activeObject.id, publicationData)
+				objectStore.deleteObject({
+					type: this.dialogProperties.objectType,
+					id: activeObject.id,
+					...publicationData,
+				})
 					.catch(err => {
 						if (
 							this.objectType === 'publication'
@@ -183,6 +185,11 @@ export default {
 			case 'publication':
 				catalogStore.fetchPublications()
 				break
+			case 'theme':
+				objectStore.fetchCollection('theme')
+				break
+			default:
+				objectStore.fetchCollection(objectType)
 			}
 		},
 		closeDialog() {
