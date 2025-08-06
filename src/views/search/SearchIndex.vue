@@ -334,8 +334,6 @@ import Download from 'vue-material-design-icons/Download.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
-import Close from 'vue-material-design-icons/Close.vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 
@@ -358,8 +356,6 @@ export default {
 		LinkVariant,
 		LinkVariantOff,
 		Refresh,
-		Close,
-		Magnify,
 		HelpCircleOutline,
 		AlertCircleOutline,
 		PaginationComponent,

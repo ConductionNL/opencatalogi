@@ -28,22 +28,46 @@ class PagesController extends Controller
 {
 
     /**
+     * @var string Allowed CORS methods
+     */
+    private string $corsMethods;
+
+    /**
+     * @var string Allowed CORS headers
+     */
+    private string $corsAllowedHeaders;
+
+    /**
+     * @var int CORS max age
+     */
+    private int $corsMaxAge;
+
+    /**
      * PagesController constructor.
      *
-     * @param string             $appName       The name of the app
-     * @param IRequest           $request       The request object  
-     * @param IAppConfig         $config        App configuration interface
-     * @param ContainerInterface $container     Server container for dependency injection
-     * @param IAppManager        $appManager    App manager for checking installed apps
+     * @param string             $appName            The name of the app
+     * @param IRequest           $request            The request object  
+     * @param IAppConfig         $config             App configuration interface
+     * @param ContainerInterface $container          Server container for dependency injection
+     * @param IAppManager        $appManager         App manager for checking installed apps
+     * @param string             $corsMethods        Allowed CORS methods
+     * @param string             $corsAllowedHeaders Allowed CORS headers
+     * @param int                $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
         IRequest $request,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager
+        private readonly IAppManager $appManager,
+        string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+        string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+        int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
+        $this->corsMethods = $corsMethods;
+        $this->corsAllowedHeaders = $corsAllowedHeaders;
+        $this->corsMaxAge = $corsMaxAge;
 
     }//end __construct()
 
@@ -82,6 +106,32 @@ class PagesController extends Controller
         ];
 
     }//end getPageConfiguration()
+
+
+    /**
+     * Implements a preflighted CORS response for OPTIONS requests.
+     *
+     * @return \OCP\AppFramework\Http\Response The CORS response
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     */
+    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    {
+        // Determine the origin
+        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+
+        // Create and configure the response
+        $response = new \OCP\AppFramework\Http\Response();
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+        return $response;
+    }
 
 
     /**
@@ -125,7 +175,14 @@ class PagesController extends Controller
             'total' => count($result ?? [])
         ];
 
-        return new JSONResponse($data);
+        // Add CORS headers for public API access
+        $response = new JSONResponse($data);
+        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+
+        return $response;
 
     }//end index()
 
@@ -167,13 +224,20 @@ class PagesController extends Controller
         $pages = $this->getObjectService()->findAll($config);
         
         if (empty($pages)) {
-            return new JSONResponse(['error' => 'Page not found'], 404);
+            $response = new JSONResponse(['error' => 'Page not found'], 404);
+        } else {
+            // Return the first matching page
+            $page = $pages[0] instanceof \OCP\AppFramework\Db\Entity ? $pages[0]->jsonSerialize() : $pages[0];
+            $response = new JSONResponse($page);
         }
-
-        // Return the first matching page
-        $page = $pages[0] instanceof \OCP\AppFramework\Db\Entity ? $pages[0]->jsonSerialize() : $pages[0];
         
-        return new JSONResponse($page);
+        // Add CORS headers for public API access
+        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+
+        return $response;
 
     }//end show()
 

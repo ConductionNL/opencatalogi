@@ -133,7 +133,6 @@ export const useCatalogStore = defineStore('catalog', {
 
 			try {
 				const url = `/index.php/apps/opencatalogi/api/catalogi/${this.activeCatalog.id}?${queryParams}`
-				console.log('Fetching publications from:', url)
 				const response = await fetch(url)
 				const data = await response.json()
 
@@ -255,8 +254,8 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Get the active publication
-		 * @param {ObjectState} state - Store state
-		 * @return {ObjectEntity|null} The active publication
+		 * @param {object} state - Store state
+		 * @return {object|null} The active publication
 		 */
 		getActivePublication: (state) => state.activePublication,
 

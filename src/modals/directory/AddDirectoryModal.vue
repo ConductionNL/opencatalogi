@@ -66,9 +66,9 @@ import { navigationStore } from '../../store/store.js'
 						<div v-if="syncResults.errors && syncResults.errors.length > 0" class="sync-errors">
 							<h5>Fouten tijdens synchronisatie:</h5>
 							<ul>
-								<li v-for="(error, index) in syncResults.errors" :key="index" class="error-item">
-									{{ error }}
-								</li>
+															<li v-for="(syncError, index) in syncResults.errors" :key="index" class="error-item">
+								{{ syncError }}
+							</li>
 							</ul>
 						</div>
 

@@ -70,7 +70,7 @@ export class Listing implements TListing {
 
 	/**
 	 * Validates the listing data
-	 * @return SafeParseReturnType containing validation results
+	 * @return {SafeParseReturnType<TListing, unknown>} SafeParseReturnType containing validation results
 	 */
 	public validate(): SafeParseReturnType<TListing, unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/8azwyic71djee-create-listing
