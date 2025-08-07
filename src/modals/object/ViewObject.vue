@@ -79,7 +79,114 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					</div>
 
 					<!-- For new objects with schema selected, show properties table -->
-					<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="viewTableContainer">
+					<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="viewTableContainer viewTableContainerNewObject">
+						<!-- Catalog and Schema Info Blocks -->
+						<div class="catalog-schema-info">
+							<div class="info-block">
+								<div class="info-block-icon">
+									<DatabaseOutline :size="20" />
+								</div>
+								<div class="info-block-content">
+									<div v-if="editingCatalog" class="info-block-edit">
+										<NcSelect
+											v-model="selectedCatalog"
+											:options="catalogOptions"
+											input-label="Catalog"
+											placeholder="Select a catalog..."
+											:disabled="catalogStore.isLoading"
+											@update:modelValue="onCatalogChange" />
+									</div>
+									<div v-else class="info-block-display">
+										<span class="info-label">Catalog:</span>
+										<span class="info-value">{{ selectedCatalog?.label || 'Not selected' }}</span>
+									</div>
+								</div>
+								<div v-if="isNewObject && !editingCatalog" class="info-block-action">
+									<NcButton
+										v-tooltip="'Edit catalog'"
+										type="tertiary-no-background"
+										size="small"
+										@click="editingCatalog = true">
+										<template #icon>
+											<Pencil :size="16" />
+										</template>
+									</NcButton>
+								</div>
+								<div v-else-if="editingCatalog" class="info-block-actions">
+									<NcButton
+										v-tooltip="'Save'"
+										type="primary"
+										size="small"
+										@click="editingCatalog = false">
+										<template #icon>
+											<ContentSave :size="16" />
+										</template>
+									</NcButton>
+									<NcButton
+										v-tooltip="'Cancel'"
+										type="secondary"
+										size="small"
+										@click="cancelCatalogEdit">
+										<template #icon>
+											<Cancel :size="16" />
+										</template>
+									</NcButton>
+								</div>
+							</div>
+
+							<div class="info-block">
+								<div class="info-block-icon">
+									<FileTreeOutline :size="20" />
+								</div>
+								<div class="info-block-content">
+									<div v-if="editingSchema" class="info-block-edit">
+										<NcSelect
+											v-model="selectedSchema"
+											:options="schemaOptions"
+											input-label="Schema"
+											placeholder="Select a schema..."
+											:disabled="catalogStore.isLoading"
+											@update:modelValue="onSchemaChange" />
+									</div>
+									<div v-else class="info-block-display">
+										<span class="info-label">Schema:</span>
+										<span class="info-value">{{ selectedSchema?.label || 'Not selected' }}</span>
+									</div>
+								</div>
+								<div v-if="isNewObject && !editingSchema" class="info-block-action">
+									<NcButton
+										v-tooltip="'Edit schema'"
+										type="tertiary-no-background"
+										size="small"
+										@click="editingSchema = true">
+										<template #icon>
+											<Pencil :size="16" />
+										</template>
+									</NcButton>
+								</div>
+								<div v-else-if="editingSchema" class="info-block-actions">
+									<NcButton
+										v-tooltip="'Save'"
+										type="primary"
+										size="small"
+										@click="editingSchema = false">
+										<template #icon>
+											<ContentSave :size="16" />
+										</template>
+									</NcButton>
+									<NcButton
+										v-tooltip="'Cancel'"
+										type="secondary"
+										size="small"
+										@click="cancelSchemaEdit">
+										<template #icon>
+											<Cancel :size="16" />
+										</template>
+									</NcButton>
+								</div>
+							</div>
+						</div>
+
 						<table class="viewTable">
 							<thead>
 								<tr class="viewTableRow">
@@ -128,8 +235,8 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												v-tooltip="getPropertyWarningMessage(key, value)"
 												class="validation-icon warning-icon"
 												:size="16" />
-											<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-												v-tooltip="getPropertyNewMessage(key)"
+											<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new' || getPropertyValidationClass(key, value) === 'property-required-empty'"
+												:v-tooltip="getPropertyValidationClass(key, value) === 'property-required-empty' ? getPropertyRequiredMessage(key) : getPropertyNewMessage(key)"
 												class="validation-icon new-icon"
 												:size="16" />
 											<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
@@ -139,6 +246,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 											<span
 												v-tooltip="getPropertyTooltip(key)">
 												{{ getPropertyDisplayName(key) }}
+												<span v-if="getPropertyValidationClass(key, value) === 'property-required-empty'"
+													v-tooltip="getPropertyRequiredMessage(key)"
+													class="required-asterisk">*</span>
 											</span>
 										</div>
 									</td>
@@ -337,7 +447,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 															class="validation-icon warning-icon"
 															:size="16" />
 														<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-															v-tooltip="getPropertyNewMessage(key)"
+															:v-tooltip="getPropertyValidationClass(key, value) === 'property-required-empty' ? getPropertyRequiredMessage(key) : getPropertyNewMessage(key)"
 															class="validation-icon new-icon"
 															:size="16" />
 														<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
@@ -347,6 +457,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														<span
 															v-tooltip="getPropertyTooltip(key)">
 															{{ getPropertyDisplayName(key) }}
+															<span v-if="getPropertyValidationClass(key, value) === 'property-required-empty'"
+																v-tooltip="getPropertyRequiredMessage(key)"
+																class="required-asterisk">*</span>
 														</span>
 													</div>
 												</td>
@@ -801,7 +914,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					</template>
 					Delete
 				</NcButton>
-				<NcButton type="primary" :disabled="isSaving" @click="saveObject">
+				<NcButton type="primary" :disabled="isSaving || (isNewObject && (!selectedCatalog || !selectedSchema))" @click="saveObject">
 					<template #icon>
 						<NcLoadingIcon v-if="isSaving" :size="20" />
 						<ContentSave v-else :size="20" />
@@ -860,6 +973,8 @@ import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
+import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 
 export default {
 	name: 'ViewObject',
@@ -906,6 +1021,8 @@ export default {
 		PaginationComponent,
 		PublishedIcon,
 		InformationOutline,
+		FileTreeOutline,
+		DatabaseOutline,
 	},
 	data() {
 		return {
@@ -957,6 +1074,8 @@ export default {
 				options: [],
 			},
 			tagsLoading: false,
+			editingCatalog: false,
+			editingSchema: false,
 		}
 	},
 	computed: {
@@ -1320,6 +1439,40 @@ export default {
 				const themeIds = selectedThemes.map(theme => typeof theme === 'object' ? theme.id : theme)
 				this.$set(this.formData, 'themes', themeIds)
 			},
+		},
+		areAllRequiredPropertiesFilled() {
+			const schemaProperties = this.getSchemaProperties()
+
+			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
+				if (!schemaProperty.required) {
+					continue
+				}
+
+				let currentValue
+				if (this.formData[key] !== undefined) {
+					currentValue = this.formData[key]
+				} else if (this.currentObject && this.currentObject[key] !== undefined) {
+					currentValue = this.currentObject[key]
+				} else {
+					currentValue = null
+				}
+
+				if (currentValue === null || currentValue === undefined || currentValue === '') {
+					return false
+				}
+
+				if (Array.isArray(currentValue) && currentValue.length === 0) {
+					return false
+				}
+
+				if (typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
+					if (Object.keys(currentValue).length === 0) {
+						return false
+					}
+				}
+			}
+
+			return true
 		},
 	},
 	watch: {
@@ -1741,6 +1894,36 @@ export default {
 				return ''
 			}
 
+			// Check if property is required and empty
+			if (schemaProperty.required) {
+				// Get current value (from formData or original object)
+				let currentValue
+				if (this.formData[key] !== undefined) {
+					currentValue = this.formData[key]
+				} else if (this.currentObject && this.currentObject[key] !== undefined) {
+					currentValue = this.currentObject[key]
+				} else {
+					currentValue = null
+				}
+
+				// Check if required field is empty
+				if (currentValue === null || currentValue === undefined || currentValue === '') {
+					return 'property-required-empty'
+				}
+
+				// For arrays, check if empty
+				if (Array.isArray(currentValue) && currentValue.length === 0) {
+					return 'property-required-empty'
+				}
+
+				// For objects, check if empty
+				if (typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
+					if (Object.keys(currentValue).length === 0) {
+						return 'property-required-empty'
+					}
+				}
+			}
+
 			if (!existsInObject) {
 				// Property exists in schema but not in object yet - neutral (no special class)
 				return 'property-new'
@@ -1794,6 +1977,9 @@ export default {
 		},
 		getPropertyNewMessage(key) {
 			return `Property '${key}' is defined in the schema but doesn't have a value yet. Click to add a value.`
+		},
+		getPropertyRequiredMessage(key) {
+			return `Property '${this.getPropertyDisplayName(key)}' is required and must have a value. This field cannot be empty.`
 		},
 		isPropertyEditable(key, value) {
 			const schemaProperties = this.getSchemaProperties()
@@ -3349,6 +3535,28 @@ export default {
 				return true // Unknown type, assume valid
 			}
 		},
+		onCatalogChange(newCatalog) {
+			this.selectedCatalog = newCatalog
+			this.editingCatalog = false
+			// Reset register and schema when catalog changes
+			this.selectedRegister = null
+			this.selectedSchema = null
+			this.formData = {}
+		},
+		cancelCatalogEdit() {
+			// Don't change the catalog, just exit edit mode
+			this.editingCatalog = false
+		},
+		onSchemaChange(newSchema) {
+			this.selectedSchema = newSchema
+			this.editingSchema = false
+			// Clear form data when schema changes to refresh properties
+			this.formData = {}
+		},
+		cancelSchemaEdit() {
+			// Don't change the schema, just exit edit mode
+			this.editingSchema = false
+		},
 	},
 }
 </script>
@@ -3894,5 +4102,87 @@ export default {
 .viewObjectDialog .viewTable th.table-row-title,
 .viewObjectDialog .viewTable td.table-row-title {
     width: 100%;
+}
+
+.catalog-schema-info {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.info-block {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1rem;
+	background-color: var(--color-background-hover);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+	flex: 1;
+}
+
+.info-block-icon {
+	flex-shrink: 0;
+	color: var(--color-primary-element);
+}
+
+.info-block-content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	flex: 1;
+}
+
+.info-block-display {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.info-label {
+	font-weight: 600;
+	color: var(--color-text-maxcontrast);
+	font-size: 0.875rem;
+}
+
+.info-value {
+	color: var(--color-main-text);
+	font-size: 1rem;
+}
+
+.info-block-edit {
+	width: 100%;
+}
+
+.info-block-action {
+	flex-shrink: 0;
+}
+
+.info-block-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-shrink: 0;
+}
+
+.required-icon {
+	color: var(--color-error);
+}
+
+.viewTableRow.property-new {
+	background-color: var(--color-primary-element-light);
+	border-left: 4px solid var(--color-primary-element);
+}
+
+.viewTableRow.property-required-empty {
+	background-color: var(--color-error-light);
+	border-left: 4px solid var(--color-error);
+}
+
+.viewTableRow.property-valid {
+	border-left: 4px solid var(--color-success);
+}
+
+.required-asterisk {
+	color: var(--color-error);
 }
 </style>

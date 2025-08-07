@@ -459,6 +459,14 @@
   box-shadow: 0 2px 4px var(--color-box-shadow);
 }
 
+.viewTableContainerNewObject {
+  box-shadow: none;
+}
+
+.viewTableContainerNewObject .viewTable {
+  box-shadow: 0 2px 4px var(--color-box-shadow);
+}
+
 .viewTable {
   width: 100%;
   border-collapse: collapse;
