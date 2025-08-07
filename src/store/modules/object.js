@@ -1107,8 +1107,8 @@ export const useObjectStore = defineStore('object', {
 			}
 
 			// Extract IDs from register and schema in case they are objects
-			const registerId = typeof register === 'string' ? register : this.extractId(register)
-			const schemaId = typeof schema === 'string' ? schema : this.extractId(schema)
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
 
 			if (!registerId || !schemaId) {
 				throw new Error('Could not extract register or schema ID')

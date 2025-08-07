@@ -185,9 +185,6 @@ export default {
 			case 'publication':
 				catalogStore.fetchPublications()
 				break
-			case 'theme':
-				objectStore.fetchCollection('theme')
-				break
 			default:
 				objectStore.fetchCollection(objectType)
 			}
