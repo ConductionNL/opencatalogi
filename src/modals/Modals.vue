@@ -44,6 +44,7 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<MassPublishObjects v-if="navigationStore.dialog === 'massPublishObjects'" />
 		<MassDepublishObjects v-if="navigationStore.dialog === 'massDepublishObjects'" />
 		<MassValidateObjects v-if="navigationStore.dialog === 'massValidateObjects'" />
+		<MassAttachmentModal v-if="navigationStore.dialog === 'massAttachment'" />
 	</div>
 </template>
 
@@ -87,6 +88,7 @@ import MassDeleteObject from './object/MassDeleteObject.vue'
 import MassPublishObjects from './object/MassPublishObjects.vue'
 import MassDepublishObjects from './object/MassDepublishObjects.vue'
 import MassValidateObjects from './object/MassValidateObjects.vue'
+import MassAttachmentModal from '../dialogs/attachment/MassAttachmentModal.vue'
 // Publication
 import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
 /**
@@ -130,6 +132,7 @@ export default {
 		MassDepublishObjects,
 		MassValidateObjects,
 		AddPublicationThemeModal,
+		MassAttachmentModal,
 	},
 }
 </script>
