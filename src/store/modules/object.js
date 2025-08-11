@@ -64,6 +64,8 @@ export const useObjectStore = defineStore('object', {
 		objectTypeRegistry: {},
 		/** @type {Array<string>} */
 		selectedObjects: [],
+		/** @type {Array<string>} */
+		selectedAttachments: [],
 		/** @type {{[key: string]: string}} */
 		objectErrors: {},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
@@ -1685,6 +1687,14 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Set selected attachments
+		 * @param {Array<string>} attachments - Array of attachment IDs
+		 */
+		setSelectedAttachments(attachments) {
+			this.selectedAttachments = attachments
+		},
+
+		/**
 		 * Set error for a specific object
 		 * @param {string} objectId - The object ID
 		 * @param {string} error - The error message
@@ -2159,6 +2169,169 @@ export const useObjectStore = defineStore('object', {
 				const successfulIds = successful.map(r => r.id)
 				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
 				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Refresh files (attachments) for the active publication
+		 * @return {Promise<void>}
+		 */
+		async refreshActivePublicationFiles() {
+			const activePublication = this.activeObjects?.publication
+			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+				return
+			}
+			const publicationData = {
+				source: 'openregister',
+				schema: this.extractId(activePublication['@self'].schema),
+				register: this.extractId(activePublication['@self'].register),
+			}
+			await this.fetchRelatedData('publication', activePublication.id, 'files', {}, publicationData)
+		},
+
+		/**
+		 * Publish a single attachment (file) for the active publication
+		 * @param {string|number} fileId - Attachment ID
+		 * @return {Promise<void>}
+		 */
+		async publishAttachment(fileId) {
+			const activePublication = this.activeObjects?.publication
+			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+				throw new Error('Active publication is not set or missing register/schema')
+			}
+
+			const registerId = this.extractId(activePublication['@self'].register)
+			const schemaId = this.extractId(activePublication['@self'].schema)
+			const publicationId = activePublication.id
+
+			this.setLoading(`publish_file_${fileId}`, true)
+			this.setError(`publish_file_${fileId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/publish`
+				const response = await fetch(endpoint, { method: 'POST' })
+				if (!response.ok) {
+					throw new Error(`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`)
+				}
+				// Refresh files list for active publication
+				await this.refreshActivePublicationFiles()
+				return true
+			} catch (error) {
+				console.error('Error publishing attachment:', error)
+				this.setError(`publish_file_${fileId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`publish_file_${fileId}`, false)
+			}
+		},
+
+		/**
+		 * Depublish a single attachment (file) for the active publication
+		 * @param {string|number} fileId - Attachment ID
+		 * @return {Promise<void>}
+		 */
+		async depublishAttachment(fileId) {
+			const activePublication = this.activeObjects?.publication
+			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+				throw new Error('Active publication is not set or missing register/schema')
+			}
+
+			const registerId = this.extractId(activePublication['@self'].register)
+			const schemaId = this.extractId(activePublication['@self'].schema)
+			const publicationId = activePublication.id
+
+			this.setLoading(`depublish_file_${fileId}`, true)
+			this.setError(`depublish_file_${fileId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/depublish`
+				const response = await fetch(endpoint, { method: 'POST' })
+				if (!response.ok) {
+					throw new Error(`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`)
+				}
+				// Refresh files list for active publication
+				await this.refreshActivePublicationFiles()
+				return true
+			} catch (error) {
+				console.error('Error depublishing attachment:', error)
+				this.setError(`depublish_file_${fileId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`depublish_file_${fileId}`, false)
+			}
+		},
+
+		/**
+		 * Mass publish attachments for the active publication
+		 * @param {Array<string|number>} fileIds - List of attachment IDs
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @return {Promise<{successful: Array, failed: Array}>}
+		 */
+		async massPublishAttachments(fileIds, onProgress = null) {
+			if (!Array.isArray(fileIds) || fileIds.length === 0) {
+				return { successful: [], failed: [] }
+			}
+
+			const results = await Promise.allSettled(
+				fileIds.map(async (fileId) => {
+					try {
+						await this.publishAttachment(fileId)
+						if (onProgress) onProgress(fileId, true)
+						return { success: true, id: fileId }
+					} catch (error) {
+						if (onProgress) onProgress(fileId, false, error.message)
+						return { success: false, id: fileId, error: error.message }
+					}
+				}),
+			)
+
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed attachments
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				this.setSelectedAttachments(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass depublish attachments for the active publication
+		 * @param {Array<string|number>} fileIds - List of attachment IDs
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @return {Promise<{successful: Array, failed: Array}>}
+		 */
+		async massDepublishAttachments(fileIds, onProgress = null) {
+			if (!Array.isArray(fileIds) || fileIds.length === 0) {
+				return { successful: [], failed: [] }
+			}
+
+			const results = await Promise.allSettled(
+				fileIds.map(async (fileId) => {
+					try {
+						await this.depublishAttachment(fileId)
+						if (onProgress) onProgress(fileId, true)
+						return { success: true, id: fileId }
+					} catch (error) {
+						if (onProgress) onProgress(fileId, false, error.message)
+						return { success: false, id: fileId, error: error.message }
+					}
+				}),
+			)
+
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed attachments
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				this.setSelectedAttachments(remainingSelected)
 			}
 
 			return { successful, failed }

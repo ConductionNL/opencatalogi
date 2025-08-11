@@ -111,23 +111,54 @@ export default {
 		 * @return {Array<object>} Array of publication objects
 		 */
 		selectedObjects() {
-			return this.objects || objectStore.selectedObjects || []
+			// If explicit objects are provided via props, prefer them.
+			if (this.objects && Array.isArray(this.objects)) {
+				return this.objects
+			}
+
+			// Try to resolve selected attachments (IDs) to full attachment objects
+			const selectedAttachmentIds = objectStore.selectedAttachments || []
+			if (Array.isArray(selectedAttachmentIds) && selectedAttachmentIds.length > 0) {
+				// Prefer reading from collections maintained in the store
+				const attachmentsCollection = (objectStore.collections && objectStore.collections.publicationAttachments)
+					? objectStore.collections.publicationAttachments
+					: (typeof objectStore.getCollection === 'function' ? objectStore.getCollection('publicationAttachments') : null)
+
+				const attachments = attachmentsCollection?.results || attachmentsCollection || []
+				if (Array.isArray(attachments) && attachments.length > 0) {
+					return attachments.filter(att => selectedAttachmentIds.includes(att.id))
+				}
+			}
+
+			// Fall back to object selections if they exist and non-empty
+			if (Array.isArray(objectStore.selectedObjects) && objectStore.selectedObjects.length > 0) {
+				return objectStore.selectedObjects
+			}
+
+			return []
 		},
 	},
 	methods: {
 		/**
 		 * Remove object from selected objects in the store
-		 * @param {string} objectId - The object ID to remove
+		 * @param {string|number} objectId - The object ID to remove
 		 */
 		removeObject(objectId) {
 			// Always remove from store - the store is the source of truth
-			const currentSelected = [...objectStore.selectedObjects]
-			const index = currentSelected.findIndex(obj =>
-				(obj.id || obj['@self']?.id) === objectId,
-			)
-			if (index > -1) {
-				currentSelected.splice(index, 1)
-				objectStore.setSelectedObjects(currentSelected)
+			// 1) Remove from selectedObjects (objects flow)
+			if (Array.isArray(objectStore.selectedObjects) && objectStore.selectedObjects.length > 0) {
+				const currentSelected = [...objectStore.selectedObjects]
+				const index = currentSelected.findIndex(obj => (obj.id || obj['@self']?.id) === objectId)
+				if (index > -1) {
+					currentSelected.splice(index, 1)
+					objectStore.setSelectedObjects(currentSelected)
+				}
+			}
+
+			// 2) Remove from selectedAttachments (attachments flow)
+			if (Array.isArray(objectStore.selectedAttachments) && objectStore.selectedAttachments.length > 0) {
+				const remaining = objectStore.selectedAttachments.filter(id => id !== objectId)
+				objectStore.setSelectedAttachments(remaining)
 			}
 		},
 
