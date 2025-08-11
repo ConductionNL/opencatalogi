@@ -14,7 +14,7 @@
 						<strong>Application:</strong> {{ versionInfo.appName }} v{{ versionInfo.appVersion }}
 					</div>
 					<div class="version-item">
-						<strong>Configured Version:</strong> 
+						<strong>Configured Version:</strong>
 						<span v-if="versionInfo.configuredVersion">{{ versionInfo.configuredVersion }}</span>
 						<span v-else class="no-version">Not configured</span>
 					</div>
@@ -39,7 +39,7 @@
 							</template>
 							{{ versionInfo.needsUpdate ? 'Update Configuration' : 'Reimport Configuration' }}
 						</NcButton>
-						
+
 						<NcButton
 							v-if="!versionInfo.versionsMatch"
 							type="primary"
@@ -55,13 +55,13 @@
 
 					<!-- Import Results -->
 					<div v-if="importResult" class="import-result">
-						<NcNoteCard 
-							v-if="importResult.success" 
+						<NcNoteCard
+							v-if="importResult.success"
 							type="success">
 							{{ importResult.message }}
 						</NcNoteCard>
-						<NcNoteCard 
-							v-else 
+						<NcNoteCard
+							v-else
 							type="error">
 							{{ importResult.message }}
 						</NcNoteCard>
@@ -330,7 +330,7 @@ export default defineComponent({
 	async created() {
 		await Promise.all([
 			this.loadSettings(),
-			this.loadVersionInfo()
+			this.loadVersionInfo(),
 		])
 	},
 
@@ -724,7 +724,7 @@ export default defineComponent({
 				if (result.success) {
 					await Promise.all([
 						this.loadVersionInfo(),
-						this.loadSettings()
+						this.loadSettings(),
 					])
 				}
 			} catch (error) {

@@ -29,13 +29,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Refresh :size="20" />
 					</template>
-					Ververs
+					Refresh
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setModal('addDirectory')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					Directory inlezen
+					Read directory
 				</NcActionButton>
 			</NcActions>
 		</div>
@@ -45,7 +45,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				:key="`${listing}${i}`"
 				:name="listing.name ?? listing.title"
 				:active="objectStore.getActiveObject('listing')?.id === listing?.id"
-				:details="listing.organization?.title || 'Geen organisatie'"
+				:details="listing.organization?.title || 'No organization'"
 				:counter-number="listing.publicationTypes?.length || '0'"
 				:force-display-actions="true"
 				@click="objectStore.getActiveObject('listing')?.id === listing?.id ? objectStore.clearActiveObject('listing') : objectStore.setActiveObject('listing', listing)">
@@ -69,8 +69,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		<NcEmptyContent
 			v-if="!objectStore.getCollection('listing').results.length && !objectStore.isLoading('listing')"
 			class="detailContainer"
-			name="Geen Listings"
-			description="Je directory of zoek opdracht bevat nog geen listings, wil je een externe directory toevoegen?">
+			name="No listings"
+			description="Your directory or search query contains no listings, would you like to add an external directory?">
 			<template #icon>
 				<LayersOutline />
 			</template>
@@ -79,13 +79,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					Directory inlezen
+					Read directory
 				</NcButton>
 				<NcButton @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/directory', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
-					Meer informatie over de directory
+					More information about the directory
 				</NcButton>
 			</template>
 		</NcEmptyContent>

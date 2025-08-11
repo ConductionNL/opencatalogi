@@ -13,7 +13,7 @@ import { EventBus } from '../../eventBus.js'
 
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
-					<p>Menu item succesvol {{ isEdit ? 'bewerkt' : 'toegevoegd' }}</p>
+					<p>Menu item successfully {{ isEdit ? 'edited' : 'added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('menu').error" type="error">
 					<p>{{ objectStore.getState('menu').error }}</p>
@@ -23,7 +23,7 @@ import { EventBus } from '../../eventBus.js'
 			<div v-if="objectStore.getState('menu').success === null" class="form-container">
 				<NcTextField
 					:disabled="objectStore.isLoading('menu')"
-					label="Naam"
+					label="Name"
 					:value.sync="menuItem.name"
 					:error="!!inputValidation.getError(`items.${index}.name`)"
 					:helper-text="inputValidation.getError(`items.${index}.name`)" />
@@ -65,7 +65,7 @@ import { EventBus } from '../../eventBus.js'
 					<ContentSaveOutline v-if="!objectStore.isLoading('menu') && isEdit" :size="20" />
 					<Plus v-if="!objectStore.isLoading('menu') && !isEdit" :size="20" />
 				</template>
-				{{ isEdit ? 'Opslaan' : 'Toevoegen' }}
+				{{ isEdit ? 'Save' : 'Add' }}
 			</NcButton>
 		</div>
 	</NcModal>

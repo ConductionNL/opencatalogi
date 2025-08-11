@@ -55,7 +55,7 @@ export default {
 			loading: false,
 			itemMenu: {
 				show: {
-					text: 'Catalogus bekijken',
+					text: 'View catalog',
 					icon: 'icon-open-in-app',
 				},
 			},

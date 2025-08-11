@@ -5,14 +5,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteCategory'"
-		name="Categorie verwijderen"
+		name="Delete Category"
 		:can-close="false">
 		<div v-if="objectStore.getState('category').success !== null || objectStore.getState('category').error">
 			<NcNoteCard v-if="objectStore.getState('category').success" type="success">
-				<p>Categorie succesvol verwijderd</p>
+				<p>Category successfully deleted</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('category').success" type="error">
-				<p>Er is iets fout gegaan bij het verwijderen van categorie</p>
+				<p>Something went wrong while deleting the category</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('category').error" type="error">
 				<p>{{ objectStore.getState('category').error }}</p>
@@ -20,10 +20,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('category')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Categorie wordt verwijderd...</span>
+			<span>Category is being deleted...</span>
 		</div>
 		<p v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')">
-			Wil je <b>{{ objectStore.getActiveObject('category')?.name }}</b> definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+			Do you want to delete <b>{{ objectStore.getActiveObject('category')?.name }}</b>? This action cannot be undone.
 		</p>
 		<template v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')" #actions>
 			<NcButton
@@ -33,7 +33,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Annuleer
+				Cancel
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Verwijderen
+				Delete
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -53,7 +53,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				Close
 			</NcButton>
 		</template>
 	</NcDialog>

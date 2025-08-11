@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('glossary')"
-					label="Zoeken"
+					label="Search"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('glossary') !== ''"
 					@update:value="(value) => objectStore.setSearchTerm('glossary', value)"
@@ -29,7 +29,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcTextField>
 				<NcActions>
 					<NcActionButton
-						title="Bekijk de documentatie over glossaries"
+						title="View the documentation about glossaries"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/glossaries', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
@@ -42,13 +42,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.clearActiveObject('glossary'); navigationStore.setModal('glossary')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Term toevoegen
+						Add term
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -57,7 +57,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<NcListItem v-for="(glossary, i) in objectStore.getCollection('glossary').results"
 					:key="`${glossary}${i}`"
 					:name="glossary.title"
-					:details="glossary.published ? 'Publiek vindbaar' : 'Niet publiek vindbaar'"
+					:details="glossary.published ? 'Publicly available' : 'Not publicly available'"
 					:active="objectStore.getActiveObject('glossary')?.id === glossary?.id"
 					:counter-number="glossary.relatedTerms?.length || '0'"
 					:force-display-actions="true"
@@ -75,19 +75,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', glossary); navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term'})">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Kopiëren
+							Copy
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', glossary); navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term'})">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Verwijder
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -100,7 +100,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				name="Termen aan het laden" />
 
 			<div v-if="!objectStore.getCollection('glossary').results.length" class="emptyListHeader">
-				Er zijn nog geen termen gedefinieerd.
+				There are no terms defined.
 			</div>
 		</ul>
 	</NcAppContentList>

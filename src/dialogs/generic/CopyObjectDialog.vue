@@ -61,10 +61,10 @@ const closeDialog = () => {
 		:can-close="false">
 		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
 			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} succesvol gekopieerd</p>
+				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} successfully copied</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState(objectType).success" type="error">
-				<p>Er is iets fout gegaan bij het kopiëren van {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
+				<p>Something went wrong while copying {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -76,10 +76,10 @@ const closeDialog = () => {
 		</div>
 		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
 			<template v-if="isMultiple">
-				Wil je de geselecteerde {{ dialogTitle.toLowerCase() }}s kopiëren?
+				Do you want to copy the selected {{ dialogTitle.toLowerCase() }}s?
 			</template>
 			<template v-else>
-				Wil je <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b> kopiëren?
+				Do you want to copy <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b>?
 			</template>
 		</p>
 		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
@@ -90,7 +90,7 @@ const closeDialog = () => {
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Annuleer
+				Cancel
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
@@ -100,7 +100,7 @@ const closeDialog = () => {
 				<template #icon>
 					<ContentCopy :size="20" />
 				</template>
-				Kopiëren
+				Copy
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -110,7 +110,7 @@ const closeDialog = () => {
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				Close
 			</NcButton>
 		</template>
 	</NcDialog>

@@ -20,14 +20,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:label-id="isEdit ? 'editMenuModal' : 'addMenuModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Menu {{ isEdit ? 'bewerken' : 'toevoegen' }}</h2>
+			<h2>{{ isEdit ? 'Edit' : 'Add' }} menu</h2>
 
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
-					<p>{{ isEdit ? 'Menu succesvol bewerkt' : 'Menu succesvol toegevoegd' }}</p>
+					<p>{{ isEdit ? 'Menu successfully edited' : 'Menu successfully added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('menu').success" type="error">
-					<p>{{ isEdit ? 'Er is iets fout gegaan bij het bewerken van het menu' : 'Er is iets fout gegaan bij het toevoegen van het menu' }}</p>
+					<p>{{ isEdit ? 'Something went wrong while editing the menu' : 'Something went wrong while adding the menu' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('menu').error" type="error">
 					<p>{{ objectStore.getState('menu').error }}</p>
@@ -35,7 +35,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 			<div v-if="objectStore.getState('menu').success === null && !objectStore.isLoading('menu')" class="form-group">
 				<NcTextField :disabled="objectStore.isLoading('menu')"
-					label="Titel*"
+					label="Title*"
 					maxlength="255"
 					:value.sync="menu.title"
 					:error="!!inputValidation.fieldErrors?.['title']"
@@ -47,25 +47,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:error="!!inputValidation.fieldErrors?.['slug']"
 					:helper-text="inputValidation.fieldErrors?.['slug']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('menu')"
-					label="Link*"
+					label="Link"
 					maxlength="255"
 					:value.sync="menu.link"
 					:error="!!inputValidation.fieldErrors?.['link']"
 					:helper-text="inputValidation.fieldErrors?.['link']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('menu')"
-					label="Beschrijving"
+					label="Description"
 					maxlength="255"
 					:value.sync="menu.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('menu')"
-					label="Icoon"
+					label="Icon"
 					maxlength="255"
 					:value.sync="menu.icon"
 					:error="!!inputValidation.fieldErrors?.['icon']"
 					:helper-text="inputValidation.fieldErrors?.['icon']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('menu')"
-					label="Positie*"
+					label="Position"
 					type="number"
 					min="0"
 					:value="menu.position"
@@ -73,14 +73,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:helper-text="inputValidation.fieldErrors?.['position']?.[0]"
 					@update:value="handlePositionUpdate" />
 				<div class="position-info">
-					<p>0 - rechts boven</p>
-					<p>1 - navigatiebalk</p>
+					<p>0 - top right</p>
+					<p>1 - navigation bar</p>
 					<p>2 - footer</p>
 				</div>
 			</div>
 			<div v-if="objectStore.isLoading('menu')" class="loading-status">
 				<NcLoadingIcon :size="20" />
-				<span>{{ isEdit ? 'Menu wordt bewerkt...' : 'Menu wordt toegevoegd...' }}</span>
+				<span>{{ isEdit ? 'Menu is being edited...' : 'Menu is being added...' }}</span>
 			</div>
 			<NcButton v-if="objectStore.getState('menu').success === null && !objectStore.isLoading('menu')"
 				v-tooltip="inputValidation.errorMessages?.[0]"
@@ -91,7 +91,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<ContentSaveOutline :size="20" />
 				</template>
-				{{ isEdit ? 'Opslaan' : 'Toevoegen' }}
+				{{ isEdit ? 'Save' : 'Add' }}
 			</NcButton>
 		</div>
 	</NcModal>
