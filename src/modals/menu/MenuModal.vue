@@ -77,6 +77,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<p>1 - navigatiebalk</p>
 					<p>2 - footer</p>
 				</div>
+				<label>Rendered Markdown</label>
+				<v-md-editor
+					v-model="menu.description"
+					:disabled="objectStore.isLoading('menu')"
+					height="300px"
+					mode="edit" />
+				<div v-if="inputValidation.fieldErrors?.['description']" class="field-error">
+					{{ inputValidation.fieldErrors?.['description']?.[0] }}
+				</div>
 			</div>
 			<div v-if="objectStore.isLoading('menu')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -222,6 +231,20 @@ export default {
     margin-top: -0.5rem;
     margin-bottom: 0.5rem;
 }
+
+.field-error {
+    color: var(--color-error);
+    text-align: left;
+    font-size: 0.85em;
+}
+
+.editor-debug {
+    background: #f0f0f0;
+    padding: 8px;
+    border: 1px solid #ccc;
+    margin: 8px 0;
+    font-size: 12px;
+}
 </style>
 
 <style scoped>
@@ -229,5 +252,18 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: var(--OC-margin-10);
+}
+:deep(.v-md-editor) {
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+}
+
+:deep(.v-md-editor__toolbar) {
+	background-color: var(--color-background-hover);
+	border-bottom: 1px solid var(--color-border);
+}
+
+:deep(.v-md-editor__editor) {
+	background-color: var(--color-main-background);
 }
 </style>
