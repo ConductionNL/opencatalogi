@@ -5,10 +5,7 @@
  */
 export type TPage = {
 	id: string
-	uuid: string
 	title: string
-	contents: { type: string; id: string; data: Record<string, any> }[]
+    contents: { type: string; id: string; data: Record<string, any> }[] | null
 	slug: string
-	createdAt: string
-	updatedAt: string
 }
