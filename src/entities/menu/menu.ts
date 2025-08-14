@@ -57,15 +57,15 @@ export class Menu implements TMenu {
 			items: z.array(z.object({
 				title: z.string().min(1, 'title is verplicht'),
 				slug: z.string().min(1, 'slug is verplicht'),
-				link: z.string(),
-				description: z.string(),
-				icon: z.string(),
+				link: z.string().optional(),
+				description: z.string().optional(),
+				icon: z.string().optional(),
 				items: z.array(z.object({
 					title: z.string().min(1, 'title is verplicht'),
 					slug: z.string().min(1, 'slug is verplicht'),
-					link: z.string(),
-					description: z.string(),
-					icon: z.string(),
+					link: z.string().optional(),
+					description: z.string().optional(),
+					icon: z.string().optional(),
 				})),
 			})), // At least '[]'
 		})

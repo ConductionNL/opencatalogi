@@ -24,9 +24,9 @@ import { EventBus } from '../../eventBus.js'
 				<NcTextField
 					:disabled="objectStore.isLoading('menu')"
 					label="Naam"
-					:value.sync="menuItem.name"
-					:error="!!inputValidation.getError(`items.${index}.name`)"
-					:helper-text="inputValidation.getError(`items.${index}.name`)" />
+					:value.sync="menuItem.title"
+					:error="!!inputValidation.getError(`items.${index}.title`)"
+					:helper-text="inputValidation.getError(`items.${index}.title`)" />
 
 				<NcTextField
 					:disabled="objectStore.isLoading('menu')"
@@ -104,7 +104,7 @@ export default {
 			isEdit: !!objectStore.getActiveObject('menuItem'),
 			index: objectStore.getActiveObject('menuItem')?.index ?? objectStore.getActiveObject('menu').items.length,
 			menuItem: {
-				name: '',
+				title: '',
 				slug: '',
 				link: '',
 				description: '',
