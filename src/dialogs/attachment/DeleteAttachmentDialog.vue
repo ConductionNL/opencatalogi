@@ -6,10 +6,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 	<NcDialog name="Bijlage verwijderen"
 		:can-close="false">
 		<p v-if="!succes">
-			Wil je <b>{{ objectStore.getActiveObject('publicationAttachment')?.title }}</b> definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+			Do you want to delete <b>{{ objectStore.getActiveObject('publicationAttachment')?.title }}</b>? This action cannot be undone.
 		</p>
 		<NcNoteCard v-if="succes" type="success">
-			<p>Bijlage succesvol verwijderd</p>
+			<p>Attachment successfully deleted</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -22,7 +22,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ succes ? 'Sluiten' : 'Annuleer' }}
+				{{ succes ? 'Close' : 'Cancel' }}
 			</NcButton>
 			<NcButton
 				v-if="!succes"
@@ -34,7 +34,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Delete v-if="!loading" :size="20" />
 				</template>
-				Verwijderen
+				Delete
 			</NcButton>
 		</template>
 	</NcDialog>

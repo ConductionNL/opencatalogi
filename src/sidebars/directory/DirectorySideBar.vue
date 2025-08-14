@@ -18,13 +18,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					Directory inlezen
+					Read directory
 				</NcButton>
 				<NcButton @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/directory', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
-					Meer informatie over de directory
+					More information about the directory
 				</NcButton>
 			</template>
 		</NcEmptyContent>
@@ -38,14 +38,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="container">
 				<div v-if="objectStore.getActiveObject('listing').organization">
 					<CertificateOutline class="orgCertIcon" :size="20" />
-					<p>Deze organisatie is niet gevalideerd met een certificaat.</p>
+					<p>This organization is not validated with a certificate.</p>
 				</div>
 				<div v-if="!objectStore.getActiveObject('listing').organization">
 					<CertificateOutline class="orgCertIcon" :size="20" />
-					<p>Deze listing heeft geen organisatie.</p>
+					<p>This listing has no organization.</p>
 				</div>
 				<div>
-					<b>Samenvatting:</b>
+					<b>Summary:</b>
 					<span>{{ objectStore.getActiveObject('listing')?.summary }}</span>
 				</div>
 				<div>
@@ -61,27 +61,27 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<span>{{ objectStore.getActiveObject('listing')?.directory }}</span>
 				</div>
 				<div>
-					<b>Zoeken:</b>
+					<b>Search:</b>
 					<span>{{ objectStore.getActiveObject('listing')?.search }}</span>
 				</div>
 				<div>
-					<b>Beschrijving:</b>
+					<b>Description:</b>
 					<span>{{ objectStore.getActiveObject('listing')?.description }}</span>
 				</div>
 			</div>
 		</NcAppSidebarTab>
 		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
 			id="settings-tab"
-			name="Configuratie"
+			name="Configuration"
 			:order="2">
 			<template #icon>
 				<CogOutline :size="20" />
 			</template>
 			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').available" type="switch">
-				Beschikbaar maken voor mijn zoekopdrachten
+				Make available for my searches
 			</NcCheckboxRadioSwitch>
 			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').default" type="switch">
-				Standaard mee nemen in de beantwoording van mijn zoekopdrachten
+				Take part in answering my searches
 			</NcCheckboxRadioSwitch>
 
 			<NcButton
@@ -94,7 +94,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 					<DatabaseSyncOutline v-if="!syncLoading" :size="20" />
 				</template>
-				Synchroniseren
+				Synchronize
 			</NcButton>
 		</NcAppSidebarTab>
 		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
@@ -104,7 +104,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<template #icon>
 				<FileTreeOutline :size="20" />
 			</template>
-			Welke publicatietype zou u uit deze catalogus willen overnemen?
+			Which publication type would you like to take from this catalog?
 			<div v-if="!loading">
 				<template v-for="(publicationType, i) in objectStore.getActiveObject('listing').publicationTypes">
 					<div v-if="publicationType.owner" :key="`${publicationType}${i}`" class="publication-type-item">

@@ -9,10 +9,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		:can-close="false">
 		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
 			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} succesvol verwijderd</p>
+				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} successfully deleted</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState(objectType).success && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
-				<p>Er is iets fout gegaan bij het verwijderen van {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
+				<p>Something went wrong while deleting {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -20,14 +20,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'worden' : 'wordt' }} verwijderd...</span>
+			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'are' : 'is' }} being deleted...</span>
 		</div>
 		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
 			<template v-if="isMultiple">
-				Wil je de geselecteerde {{ dialogTitle.toLowerCase() }}s definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+				Do you want to delete the selected {{ dialogTitle.toLowerCase() }}s? This action cannot be undone.
 			</template>
 			<template v-else>
-				Wil je <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b> definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+				Do you want to delete <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b>? This action cannot be undone.
 			</template>
 		</p>
 		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
@@ -38,7 +38,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Annuleer
+				Cancel
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
@@ -48,7 +48,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Verwijderen
+				Delete
 			</NcButton>
 		</template>
 		<template v-else #actions>

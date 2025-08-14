@@ -23,26 +23,26 @@ import { EventBus } from '../../eventBus.js'
 		label-id="deleteMenuItemModal"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Menu item verwijderen</h2>
+			<h2>Delete menu item</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Menu item succesvol verwijderd</p>
+					<p>Menu item successfully deleted</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het verwijderen van menu item</p>
+					<p>Something went wrong while deleting the menu item</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Weet je zeker dat je het menu item '{{ menuItem.title }}' wilt verwijderen?</p>
+				<p>Are you sure you want to delete the menu item '{{ menuItem.title }}'?</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="handleCancel">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -54,7 +54,7 @@ import { EventBus } from '../../eventBus.js'
 							<Delete v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Verwijderen
+					Delete
 				</NcButton>
 			</span>
 		</div>

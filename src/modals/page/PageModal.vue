@@ -20,13 +20,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:label-id="isEdit ? 'editPageModal' : 'addPageModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Pagina {{ isEdit ? 'bewerken' : 'toevoegen' }}</h2>
+			<h2>{{ isEdit ? 'Edit' : 'Add' }} page</h2>
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
-					<p>{{ isEdit ? 'Pagina succesvol bewerkt' : 'Pagina succesvol toegevoegd' }}</p>
+					<p>{{ isEdit ? 'Page successfully edited' : 'Page successfully added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('page').success" type="error">
-					<p>{{ isEdit ? 'Er is iets fout gegaan bij het bewerken van de pagina' : 'Er is iets fout gegaan bij het toevoegen van pagina' }}</p>
+					<p>{{ isEdit ? 'Something went wrong while editing the page' : 'Something went wrong while adding the page' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('page').error" type="error">
 					<p>{{ objectStore.getState('page').error }}</p>
@@ -35,7 +35,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div v-if="objectStore.getState('page').success === null" class="formContainer">
 				<NcTextField
 					:disabled="objectStore.isLoading('page')"
-					label="Titel"
+					label="Title"
 					:value.sync="page.title"
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
@@ -55,7 +55,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
 					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
 				</template>
-				{{ isEdit ? 'Opslaan' : 'Toevoegen' }}
+				{{ isEdit ? 'Save' : 'Add' }}
 			</NcButton>
 		</div>
 	</NcModal>

@@ -10,18 +10,18 @@ import { EventBus } from '../../eventBus.js'
 		@close="closeModal">
 		<div class="modal__content">
 			<h2 v-if="!isEdit">
-				Content toevoegen aan {{ pageItem.name }}
+				Add content to {{ pageItem.name }}
 			</h2>
 			<h2 v-else>
-				{{ _.upperFirst(contentsItem.type) }} content bewerken van {{ pageItem.name }}
+				{{ _.upperFirst(contentsItem.type) }} content edit of {{ pageItem.name }}
 			</h2>
 
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
-					<p>Content succesvol toegevoegd</p>
+					<p>Content successfully added</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('page').success" type="error">
-					<p>Er is iets fout gegaan bij het toevoegen van Content</p>
+					<p>Something went wrong while adding content</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('page').error" type="error">
 					<p>{{ objectStore.getState('page').error }}</p>
@@ -30,7 +30,7 @@ import { EventBus } from '../../eventBus.js'
 
 			<div v-if="objectStore.getState('page').success === null" class="form-group">
 				<p>
-					De volgorde waarin je contents toevoegt maakt uit, let goed op de volgorde.
+					The order in which you add contents makes a difference, so pay attention to the order.
 				</p>
 
 				<NcSelect
@@ -69,7 +69,7 @@ import { EventBus } from '../../eventBus.js'
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
 					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
 				</template>
-				{{ isEdit ? 'Bewerken' : 'Toevoegen' }}
+				{{ isEdit ? 'Edit' : 'Add' }}
 			</NcButton>
 		</div>
 	</NcModal>
