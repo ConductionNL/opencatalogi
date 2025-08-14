@@ -12,6 +12,7 @@
 
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
+import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </script>
 
 <template>
@@ -45,6 +46,54 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:value.sync="page.slug"
 					:error="!!inputValidation.fieldErrors?.['slug']"
 					:helper-text="inputValidation.fieldErrors?.['slug']?.[0]" />
+
+				<!-- Groups Access Control -->
+				<div class="groups-section">
+					<label class="groups-label">Groups Access</label>
+					<NcNoteCard type="info">
+						<p>When you add groups to a page, it will only be accessible if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.</p>
+					</NcNoteCard>
+					<select 
+						v-model="page.groups"
+						:disabled="objectStore.isLoading('page') || groupsOptions.loading"
+						multiple
+						class="groups-select">
+						<option 
+							v-for="group in groupsOptions.options" 
+							:key="group.value" 
+							:value="group.value">
+							{{ group.label }}
+						</option>
+					</select>
+					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
+				</div>
+
+				<!-- Groups Refresh Button -->
+				<div class="groups-refresh">
+					<NcButton 
+						:disabled="groupsOptions.loading"
+						type="secondary"
+						size="small"
+						@click="fetchGroups">
+						<template #icon>
+							<Refresh v-if="!groupsOptions.loading" :size="16" />
+							<NcLoadingIcon v-else :size="16" />
+						</template>
+						{{ groupsOptions.loading ? 'Loading...' : 'Refresh Groups' }}
+					</NcButton>
+				</div>
+
+				<!-- Hide After Login -->
+				<div class="hide-after-login">
+					<NcCheckboxRadioSwitch
+						:checked.sync="page.hideAfterInlog"
+						:disabled="objectStore.isLoading('page')">
+						Verberg na inloggen
+					</NcCheckboxRadioSwitch>
+					<NcNoteCard type="info">
+						<p>When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.</p>
+					</NcNoteCard>
+				</div>
 			</div>
 			<NcButton v-if="objectStore.getState('page').success === null"
 				v-tooltip="inputValidation.errorMessages?.[0]"
@@ -69,9 +118,11 @@ import {
 	NcModal,
 	NcNoteCard,
 	NcTextField,
+	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 
 import { Page } from '../../entities/index.js'
 
@@ -83,16 +134,24 @@ export default {
 		NcButton,
 		NcLoadingIcon,
 		NcNoteCard,
+		NcCheckboxRadioSwitch,
 		// Icons
 		Plus,
+		Refresh,
 	},
 	data() {
 		return {
 			page: {
 				title: '',
 				slug: '',
+				groups: [],
+				hideAfterInlog: false,
 			},
 			hasUpdated: false,
+			groupsOptions: {
+				options: [],
+				loading: false,
+			},
 		}
 	},
 	computed: {
@@ -113,11 +172,19 @@ export default {
 			}
 		},
 	},
+	mounted() {
+		// Fetch groups for the dropdown
+		this.fetchGroups()
+	},
 	updated() {
 		if (navigationStore.modal === 'page' && !this.hasUpdated) {
 			if (this.isEdit) {
 				const activePage = objectStore.getActiveObject('page')
-				this.page = { ...activePage }
+				this.page = { 
+					...activePage,
+					groups: activePage.groups || [],
+					hideAfterInlog: activePage.hideAfterInlog || false,
+				}
 			}
 			this.hasUpdated = true
 		}
@@ -129,6 +196,8 @@ export default {
 			this.page = {
 				title: '',
 				slug: '',
+				groups: [],
+				hideAfterInlog: false,
 			}
 			// Reset the object store state
 			objectStore.setState('page', { success: null, error: null })
@@ -158,6 +227,19 @@ export default {
 					})
 			}
 		},
+		fetchGroups() {
+			this.groupsOptions.loading = true;
+			getNextcloudGroups()
+				.then((groups) => {
+					this.groupsOptions.options = groups;
+				})
+				.catch(error => {
+					console.error('Error fetching groups:', error);
+				})
+				.finally(() => {
+					this.groupsOptions.loading = false;
+				});
+		}
 	},
 }
 </script>
@@ -175,5 +257,36 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 5px;
+}
+
+.groups-section {
+	margin-top: 10px;
+}
+
+.groups-label {
+	font-weight: bold;
+	margin-bottom: 5px;
+}
+
+.groups-select {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background-color: #f9f9f9;
+}
+
+.groups-loading {
+	color: #666;
+	font-style: italic;
+	margin-top: 5px;
+}
+
+.groups-refresh {
+	margin-top: 10px;
+}
+
+.hide-after-login {
+	margin-top: 10px;
 }
 </style>

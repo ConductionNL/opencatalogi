@@ -66,41 +66,28 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					:disabled="objectStore.isLoading('menu')" />
 
 				<div class="groups-section">
-					<label class="groups-label">Groups</label>
+					<label class="groups-label">Security</label>
+					<NcNoteCard type="info">
+						<p>When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.</p>
+					</NcNoteCard>
 					<NcSelect
 						v-model="groupsOptions.value"
+						:options="groupsOptions.options"
 						:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
-						multiple
-						:options="groupsOptions.options" />
-					<p v-if="groupsOptions.loading" class="groups-loading">
-						Loading groups...
-					</p>
-				</div>
-
-				<div class="groups-refresh">
-					<NcButton
-						:disabled="groupsOptions.loading"
-						type="secondary"
-						size="small"
-						@click="fetchGroups">
-						<template #icon>
-							<Refresh v-if="!groupsOptions.loading" :size="16" />
-							<NcLoadingIcon v-else :size="16" />
-						</template>
-						{{ groupsOptions.loading ? 'Loading...' : 'Refresh Groups' }}
-					</NcButton>
+						input-label="Select Groups"
+						multiple />
+					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
 				</div>
 
 				<div class="hide-after-login">
+					<NcNoteCard type="info">
+						<p>When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.</p>
+					</NcNoteCard>
 					<NcCheckboxRadioSwitch
 						:checked.sync="menuItem.hideAfterInlog"
 						:disabled="objectStore.isLoading('menu')">
-						Hide after login
+						Verberg na inloggen
 					</NcCheckboxRadioSwitch>
-					<p class="help-text">
-						When checked, this menu item will be hidden after a user is logged in.
-						This is useful for menu items that should only be visible to guests.
-					</p>
 				</div>
 			</div>
 
@@ -133,7 +120,6 @@ import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
 
 export default {
 	name: 'MenuItemForm',
@@ -148,7 +134,6 @@ export default {
 		// Icons
 		ContentSaveOutline,
 		Plus,
-		Refresh,
 	},
 	data() {
 		return {
@@ -383,43 +368,14 @@ export default {
 	color: var(--color-text);
 }
 
-.groups-select {
-	width: 100%;
-	min-height: 100px;
-	padding: var(--OC-margin-10);
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius);
-	background-color: var(--color-background);
-	color: var(--color-text);
-	font-size: 14px;
-}
-
-.groups-select:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
 .groups-loading {
 	margin-top: var(--OC-margin-10);
 	font-style: italic;
 	color: var(--color-text-maxcontrast);
 }
 
-.groups-refresh {
-	margin-top: var(--OC-margin-20);
-}
-
-.groups-refresh .nc-button {
-	width: 100%;
-	justify-content: center;
-}
-
 .hide-after-login {
 	margin-top: var(--OC-margin-20);
-	padding: var(--OC-margin-15);
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius);
-	background-color: var(--color-background-hover);
 }
 
 .help-text {
