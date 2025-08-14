@@ -8,7 +8,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
-			<h2>Bijlage toevoegen</h2>
+			<h2>Add attachment</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					label="Automatisch delen"
+					label="Automatically share"
 					type="switch"
 					:checked.sync="share">
-					Automatisch delen
+					Automatically share
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -30,22 +30,22 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Selecteer of maak labels aan of selecteer "Geen label" om bestanden toe te voegen</p>
+							<p>Select or create labels or select "No label" to add files</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
-							<p>Bestanden succesvol toegevoegd</p>
+							<p>Files added successfully</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Er is iets fout gegaan bij het toevoegen van bestanden</p>
+							<p>Something went wrong when adding files</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Selecteer bestanden met de juiste extensie</p>
+								<p>Select files with the correct extension</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -53,12 +53,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Sleep een bestand of bestanden hierheen
+								Drag a file or files here
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Of
+							Or
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -69,7 +69,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Een bestand of bestanden toevoegen
+								Add a file or files
 							</NcButton>
 						</div>
 					</div>
@@ -80,13 +80,13 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Selecteer of maak labels aan of selecteer "Geen label" om bestanden toe te voegen</p>
+							<p>Select or create labels or select "No label" to add files</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="checkForTooBigFiles(files)">
 						<NcNoteCard type="warning">
 							<p class="folderLink">
-								Als je bestanden groter of gelijk aan 512MB wilt toevoegen, ga dan naar de
+								If you want to add files larger than or equal to 512MB, go to the
 								<NcButton type="secondary"
 									class="folderLinkButton"
 									aria-label="Open map"
@@ -96,23 +96,23 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</template>
 									map
 								</NcButton>
-								en voeg de bestanden daar toe.
+								and add the files there.
 							</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
-							<p>Bestanden succesvol toegevoegd</p>
+							<p>Files added successfully</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Er is iets fout gegaan bij het toevoegen van bestanden</p>
+							<p>Something went wrong when adding files</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Selecteer bestanden met de juiste extensie</p>
+								<p>Select files with the correct extension</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -120,12 +120,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Sleep een bestand of bestanden hierheen
+								Drag a file or files here
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Of
+							Or
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -136,16 +136,16 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Een bestand of bestanden toevoegen
+								Add a file or files
 							</NcButton>
 						</div>
 					</div>
 				</div>
 				<div v-if="!files">
-					Geen bestanden geselecteerd
+					No files selected
 				</div>
 				<div v-if="files" class="uploadSummaryContainer">
-					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} bestanden geüpload</span>
+					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} files uploaded</span>
 					<div class="buttonContainer">
 						<NcButton v-if="failedCount > 0"
 							type="primary"
@@ -163,10 +163,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<tr class="files-table-tr">
 							<th class="files-table-td-status" />
 							<th>
-								Bestandsnaam
+								File name
 							</th>
 							<th>
-								Grootte
+								Size
 							</th>
 							<th>
 								Labels
@@ -200,7 +200,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 										</li>
 									</ul>
 									<span v-if="!file.tags || file.tags.length === 0">
-										Geen labels
+										No labels
 									</span>
 								</span>
 								<NcSelect
@@ -217,7 +217,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<!-- Tags Buttons -->
 									<NcButton
 										v-if="editingTags !== file.name"
-										v-tooltip="'Labels bewerken'"
+										v-tooltip="'Edit labels'"
 										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
 										:aria-label="`edit tags for ${file.name}`"
 										type="secondary"
@@ -229,7 +229,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="'Labels opslaan'"
+										v-tooltip="'Save labels'"
 										type="primary"
 										:aria-label="`save tags for ${file.name}`"
 										class="editTagsButton"
@@ -241,7 +241,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
-										v-tooltip="'Opnieuw uploaden'"
+										v-tooltip="'Retry upload'"
 										type="primary"
 										@click="addAttachments(file)">
 										<template #icon>
@@ -250,7 +250,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
-										v-tooltip="'Verwijder uit lijst'"
+										v-tooltip="'Remove from list'"
 										type="primary"
 										@click="removeFile(file.name)">
 										<template #icon>
@@ -419,17 +419,17 @@ export default {
 		},
 
 		isSelectable(option) {
-			if (this.labelOptions.value?.includes('Geen label') && option !== 'Geen label') {
+			if (this.labelOptions.value?.includes('No label') && option !== 'No label') {
 				return false
 			}
-			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('Geen label') && option === 'Geen label') {
+			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('No label') && option === 'No label') {
 				return false
 			}
 			return true
 		},
 
 		getLabels() {
-			if (this.labelOptions.value?.includes('Geen label')) {
+			if (this.labelOptions.value?.includes('No label')) {
 				return null
 			} else {
 				return this.labelOptions.value
@@ -446,7 +446,7 @@ export default {
 			const newLabelOptions = []
 			const newLabelOptionsEdit = []
 
-			newLabelOptions.push('Geen label')
+			newLabelOptions.push('No label')
 
 			const tags = data.map((tag) => tag)
 

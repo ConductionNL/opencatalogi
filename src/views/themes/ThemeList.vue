@@ -8,7 +8,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('theme')"
-					label="Zoeken"
+					label="Search"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('theme') !== ''"
 					@update:value="(value) => objectStore.setSearchTerm('theme', value)"
@@ -17,7 +17,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcTextField>
 				<NcActions>
 					<NcActionButton
-						title="Bekijk de documentatie over themas"
+						title="View the documentation about themes"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/themas', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
@@ -30,13 +30,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton close-after-click @click="openAddThemeModal">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Thema toevoegen
+						Add theme
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -60,19 +60,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', theme); navigationStore.setDialog('copyObject', { objectType: 'theme', dialogTitle: 'Theme'})">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Kopiëren
+							Copy
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', theme); navigationStore.setDialog('deleteObject', { objectType: 'theme', dialogTitle: 'Theme'})">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -82,10 +82,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				:size="64"
 				class="loadingIcon"
 				appearance="dark"
-				name="Themas aan het laden" />
+				name="Themes are loading" />
 
 			<div v-if="!objectStore.getCollection('theme').results.length" class="emptyListHeader">
-				Er zijn nog geen thema's gedefinieerd.
+				There are no themes defined.
 			</div>
 		</ul>
 	</NcAppContentList>

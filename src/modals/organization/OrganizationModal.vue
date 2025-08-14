@@ -7,14 +7,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:label-id="isEdit ? 'editOrganizationModal' : 'addOrganizationModal'"
 		@close="closeModal()">
 		<div class="modal__content">
-			<h2>Organisatie {{ isEdit ? 'bewerken' : 'toevoegen' }}</h2>
+			<h2>{{ isEdit ? 'Edit' : 'Add' }} organization</h2>
 
 			<div v-if="objectStore.getState('organization').success !== null || objectStore.getState('organization').error">
 				<NcNoteCard v-if="objectStore.getState('organization').success" type="success">
-					<p>Organisatie succesvol {{ isEdit ? 'bewerkt' : 'toegevoegd' }}</p>
+					<p>Organization successfully {{ isEdit ? 'edited' : 'added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('organization').success" type="error">
-					<p>Er is iets fout gegaan bij het {{ isEdit ? 'bewerken' : 'toevoegen' }} van Organisatie</p>
+					<p>Something went wrong while {{ isEdit ? 'editing' : 'adding' }} organization</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('organization').error" type="error">
 					<p>{{ objectStore.getState('organization').error }}</p>
@@ -35,20 +35,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:helper-text="inputValidation.fieldErrors?.['website']?.[0]" />
 				<NcTextField
 					:disabled="objectStore.isLoading('organization')"
-					label="Samenvatting"
+					label="Summary"
 					:value.sync="organization.summary"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextArea
 					:disabled="objectStore.isLoading('organization')"
-					label="Beschrijving"
+					label="Description"
 					:value.sync="organization.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]"
 					resize="vertical" />
 				<NcTextField
 					:disabled="objectStore.isLoading('organization')"
-					label="OIN (organisatie-identificatienummer)"
+					label="OIN (organization identification number)"
 					:value.sync="organization.oin"
 					:error="!!inputValidation.fieldErrors?.['oin']"
 					:helper-text="inputValidation.fieldErrors?.['oin']?.[0]" />
@@ -72,7 +72,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:helper-text="inputValidation.fieldErrors?.['pki']?.[0]" />
 				<NcTextField
 					:disabled="objectStore.isLoading('organization')"
-					label="Afbeelding (url)"
+					label="Image (url)"
 					:value.sync="organization.image"
 					:error="!!inputValidation.fieldErrors?.['image']"
 					:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
@@ -86,7 +86,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="objectStore.isLoading('organization')" :size="20" />
 					<Plus v-if="!objectStore.isLoading('organization')" :size="20" />
 				</template>
-				{{ isEdit ? 'Bewerken' : 'Toevoegen' }}
+				{{ isEdit ? 'Edit' : 'Add' }}
 			</NcButton>
 		</div>
 	</NcModal>

@@ -5,7 +5,7 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 <template>
 	<NcAppNavigation>
 		<NcAppNavigationList>
-			<NcAppNavigationNew text="Publicatie Aanmaken" @click="navigationStore.setModal('viewObject'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
+			<NcAppNavigationNew text="Create Publication" @click="navigationStore.setModal('viewObject'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -24,12 +24,12 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 					<DatabaseEyeOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'search'" name="Zoeken" @click="navigationStore.setSelected('search')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'search'" name="Search" @click="navigationStore.setSelected('search')">
 				<template #icon>
 					<LayersSearchOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem name="Documentatie" @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers', '_blank')">
+			<NcAppNavigationItem name="Documentation" @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers', '_blank')">
 				<template #icon>
 					<BookOpenVariantOutline :size="20" />
 				</template>
@@ -37,12 +37,12 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 		</NcAppNavigationList>
 
 		<NcAppNavigationSettings>
-			<NcAppNavigationItem :active="navigationStore.selected === 'organizations'" name="Organisaties" @click="navigationStore.setSelected('organizations')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'organizations'" name="Organizations" @click="navigationStore.setSelected('organizations')">
 				<template #icon>
 					<OfficeBuildingOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'catalogi'" name="Catalogi" @click="navigationStore.setSelected('catalogi')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'catalogi'" name="Catalogs" @click="navigationStore.setSelected('catalogi')">
 				<template #icon>
 					<DatabaseCogOutline :size="20" />
 				</template>
@@ -52,17 +52,17 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 					<FormatListBulleted :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'themes'" name="Thema's" @click="navigationStore.setSelected('themes')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'themes'" name="Themes" @click="navigationStore.setSelected('themes')">
 				<template #icon>
 					<ShapeOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'pages'" name="Page's" @click="navigationStore.setSelected('pages')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'pages'" name="Pages" @click="navigationStore.setSelected('pages')">
 				<template #icon>
 					<Web :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'menus'" name="Menu's" @click="navigationStore.setSelected('menus')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'menus'" name="Menus" @click="navigationStore.setSelected('menus')">
 				<template #icon>
 					<MenuClose :size="20" />
 				</template>

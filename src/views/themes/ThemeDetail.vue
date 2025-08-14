@@ -24,9 +24,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcActions
 				:disabled="objectStore.isLoading('theme')"
 				:primary="true"
-				:menu-name="objectStore.isLoading('theme') ? 'Laden...' : 'Acties'"
+				:menu-name="objectStore.isLoading('theme') ? 'Loading...' : 'Actions'"
 				:inline="1"
-				title="Acties die je kan uitvoeren op deze publicatie">
+				title="Actions you can perform on this theme">
 				<template #icon>
 					<span>
 						<NcLoadingIcon v-if="objectStore.isLoading('theme')"
@@ -36,7 +36,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</span>
 				</template>
 				<NcActionButton
-					title="Bekijk de documentatie over themas"
+					title="View the documentation about themes"
 					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/themas')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
@@ -47,33 +47,33 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('copyObject', { objectType: 'theme', dialogTitle: 'Theme'})">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
-					Kopiëren
+					Copy
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('deleteObject', { objectType: 'theme', dialogTitle: 'Theme'})">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					Verwijderen
+					Delete
 				</NcActionButton>
 			</NcActions>
 		</div>
 		<div class="detailDataContainer">
 			<div>
-				<b>Samenvatting:</b>
+				<b>Summary:</b>
 				<span>{{ theme.summary }}</span>
 			</div>
 			<div>
-				<b>Beschrijving:</b>
+				<b>Description:</b>
 				<span>{{ theme.description }}</span>
 			</div>
 			<div>
-				<b>Afbeelding:</b>
+				<b>Image:</b>
 				<span>{{ theme.image }}</span>
 			</div>
 		</div>

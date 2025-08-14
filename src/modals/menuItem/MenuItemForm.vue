@@ -14,7 +14,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
-					<p>Menu item succesvol {{ isEdit ? 'bewerkt' : 'toegevoegd' }}</p>
+					<p>Menu item successfully {{ isEdit ? 'edited' : 'added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('menu').error" type="error">
 					<p>{{ objectStore.getState('menu').error }}</p>
