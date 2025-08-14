@@ -29,11 +29,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					min="0"
 					:value.sync="menuItem.order"
 					:error="!!inputValidation.getError(`items.${index}.order`)"
-					:helper-text="inputValidation.getError(`items.${index}.order`)" />
+					:helper-text="inputValidation.getError(`items.${index}.order`)"
+					@update:value="handleOrderUpdate" />
 
 				<NcTextField
 					:disabled="objectStore.isLoading('menu')"
-					label="Naam"
+					label="Name"
 					:value.sync="menuItem.name"
 					:error="!!inputValidation.getError(`items.${index}.name`)"
 					:helper-text="inputValidation.getError(`items.${index}.name`)" />
@@ -219,7 +220,8 @@ export default {
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
-				groups: this.groupsOptions.value || [],
+				groups: this.normalizeGroups(this.groupsOptions.value),
+				order: Number(this.menuItem.order) || 0,
 			}
 
 			// Determine the new items array based on whether we're editing or adding
@@ -305,7 +307,8 @@ export default {
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
-				groups: this.groupsOptions.value || [],
+				groups: this.normalizeGroups(this.groupsOptions.value),
+				order: Number(this.menuItem.order) || 0,
 			}
 
 			if (this.isEdit) {
@@ -340,6 +343,18 @@ export default {
 				.finally(() => {
 					objectStore.setState('menu', { loading: false })
 				})
+		},
+		handleOrderUpdate(value) {
+			const numeric = parseInt(value, 10)
+			this.menuItem.order = Number.isNaN(numeric) ? 0 : numeric
+		},
+		normalizeGroups(selected) {
+			if (!Array.isArray(selected)) return []
+			return selected.map(item => {
+				if (typeof item === 'string') return item
+				if (item && typeof item === 'object') return item.value ?? String(item.label ?? '')
+				return ''
+			}).filter(Boolean)
 		},
 	},
 }

@@ -107,8 +107,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<div v-if="item.groups && item.groups.length > 0" class="menuItemGroups">
 								<strong>Groups:</strong> {{ item.groups.join(', ') }}
 							</div>
-							<div v-if="item.hideAfterInlog" class="menuItemHideAfterLogin">
-								<strong>🔒 Hide After Login:</strong> Yes
+							<div v-if="item.hideAfterInlog !== undefined" class="menuItemHideAfterLogin">
+								<strong>Hide After Login:</strong> {{ item.hideAfterInlog ? 'Yes' : 'No' }}
 							</div>
 							<div v-if="item.type" class="menuItemType">
 								<strong>Type:</strong> {{ item.type }}
