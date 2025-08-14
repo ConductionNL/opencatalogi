@@ -7,11 +7,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcModal ref="modalRef"
+		:name="isEdit ? 'Edit Menu Item' : 'Add Menu Item'"
 		:label-id="isEdit ? 'editMenuItem' : 'addMenuItem'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ isEdit ? 'Edit Menu Item' : 'Add Menu Item' }}</h2>
-
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
 					<p>Menu item successfully {{ isEdit ? 'edited' : 'added' }}</p>
@@ -76,7 +75,9 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 						:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
 						input-label="Select Groups"
 						multiple />
-					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
+					<p v-if="groupsOptions.loading" class="groups-loading">
+						Loading groups...
+					</p>
 				</div>
 
 				<div class="hide-after-login">
@@ -91,19 +92,26 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 				</div>
 			</div>
 
-			<NcButton v-if="objectStore.getState('menu').success === null"
-				v-tooltip="inputValidation.flatErrorMessages[0]"
-				:disabled="objectStore.isLoading('menu') || !inputValidation.success"
-				type="primary"
-				class="singleModalAction"
-				@click="saveMenuItem">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
-					<ContentSaveOutline v-if="!objectStore.isLoading('menu') && isEdit" :size="20" />
-					<Plus v-if="!objectStore.isLoading('menu') && !isEdit" :size="20" />
-				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('menu').success === null"
+					v-tooltip="inputValidation.flatErrorMessages[0]"
+					:disabled="objectStore.isLoading('menu') || !inputValidation.success"
+					type="primary"
+					@click="saveMenuItem">
+					<template #icon>
+						<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
+						<ContentSaveOutline v-if="!objectStore.isLoading('menu') && isEdit" :size="20" />
+						<Plus v-if="!objectStore.isLoading('menu') && !isEdit" :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -120,6 +128,7 @@ import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'MenuItemForm',
@@ -134,6 +143,7 @@ export default {
 		// Icons
 		ContentSaveOutline,
 		Plus,
+		Cancel,
 	},
 	data() {
 		return {

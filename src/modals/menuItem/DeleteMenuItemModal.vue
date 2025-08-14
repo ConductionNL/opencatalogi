@@ -21,9 +21,9 @@ import { EventBus } from '../../eventBus.js'
 		ref="modalRef"
 		class="deleteMenuItemModal"
 		label-id="deleteMenuItemModal"
+		:name="'Delete menu item'"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Delete menu item</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
 					<p>Menu item successfully deleted</p>
@@ -39,9 +39,13 @@ import { EventBus } from '../../eventBus.js'
 				<p>Are you sure you want to delete the menu item '{{ menuItem.title || menuItem.name }}'?</p>
 			</div>
 
-			<span class="buttonContainer">
+			<div class="modalActions">
 				<NcButton
+					class="modalCloseButton"
 					@click="handleCancel">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
 					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
@@ -56,7 +60,7 @@ import { EventBus } from '../../eventBus.js'
 					</template>
 					Delete
 				</NcButton>
-			</span>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -72,6 +76,7 @@ import { Menu } from '../../entities/index.js'
 
 // icons
 import Delete from 'vue-material-design-icons/Delete.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 /**
  * Loading state for the component
@@ -142,6 +147,7 @@ export default {
 		NcButton,
 		NcNoteCard,
 		NcLoadingIcon,
+		Cancel,
 	},
 	data() {
 		return {

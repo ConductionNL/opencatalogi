@@ -5,10 +5,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'theme'"
 		ref="modalRef"
+		:name="isEdit ? 'Edit theme' : 'Add theme'"
 		:label-id="isEdit ? 'editThemeModal' : 'addThemeModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ isEdit ? 'Edit' : 'Add' }} theme</h2>
 			<div v-if="objectStore.getState('theme').success !== null || objectStore.getState('theme').error">
 				<NcNoteCard v-if="objectStore.getState('theme').success" type="success">
 					<p>{{ isEdit ? 'Theme successfully edited' : 'Theme successfully added' }}</p>
@@ -48,17 +48,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
 				</div>
 			</div>
-			<NcButton v-if="objectStore.getState('theme').success === null"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('theme')"
-				type="primary"
-				@click="saveTheme">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('theme')" :size="20" />
-					<ContentSaveOutline v-if="!objectStore.isLoading('theme')" :size="20" />
-				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('theme').success === null"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('theme')"
+					type="primary"
+					@click="saveTheme">
+					<template #icon>
+						<NcLoadingIcon v-if="objectStore.isLoading('theme')" :size="20" />
+						<ContentSaveOutline v-if="!objectStore.isLoading('theme')" :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -73,6 +81,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { Theme } from '../../entities/index.js'
 import _ from 'lodash'
 
@@ -87,6 +96,7 @@ export default {
 		NcNoteCard,
 		// Icons
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {

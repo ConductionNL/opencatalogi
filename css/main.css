@@ -347,6 +347,11 @@
   margin-top: var(--OC-margin-20);
 }
 
+.modalCloseButton {
+  margin-left: auto;
+  height: 34px !important;
+}
+
 .singleModalAction {
   margin-top: 1rem;
   margin-left: auto;
