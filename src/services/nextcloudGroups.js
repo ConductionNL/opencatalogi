@@ -66,6 +66,9 @@ export async function fetchNextcloudGroups() {
 			'/index.php/ocs/v1.php/cloud/groups',
 			'/index.php/ocs/v2.php/cloud/groups',
 			'/apps/opencatalogi/api/groups', // Custom endpoint if available
+			'/ocs/v1.php/cloud/users/groups', // Alternative endpoint
+			'/ocs/v1.php/cloud/users', // Users endpoint might include groups
+			'/ocs/v1.php/cloud', // Root cloud endpoint
 		]
 
 		let groups = []
@@ -73,7 +76,6 @@ export async function fetchNextcloudGroups() {
 
 		for (const endpoint of possibleEndpoints) {
 			try {
-				console.log(`Trying Nextcloud groups endpoint: ${endpoint}`)
 				const response = await axios.get(generateUrl(endpoint))
 				
 				if (response.data) {
@@ -81,24 +83,34 @@ export async function fetchNextcloudGroups() {
 					if (response.data.ocs && response.data.ocs.data && response.data.ocs.data.groups) {
 						// Standard OCS format
 						groups = response.data.ocs.data.groups
-						console.log(`Successfully fetched groups from ${endpoint}:`, groups)
 						break
 					} else if (response.data.groups) {
 						// Direct groups format
 						groups = response.data.groups
-						console.log(`Successfully fetched groups from ${endpoint}:`, groups)
 						break
 					} else if (Array.isArray(response.data)) {
 						// Array format
 						groups = response.data
-						console.log(`Successfully fetched groups from ${endpoint}:`, groups)
 						break
-					} else {
-						console.warn(`Unexpected response format from ${endpoint}:`, response.data)
+					} else if (response.data.ocs && response.data.ocs.data) {
+						// Check if groups are in a different location
+						const data = response.data.ocs.data
+						if (data.users && Array.isArray(data.users)) {
+							// Extract groups from users data
+							const allGroups = new Set()
+							data.users.forEach(user => {
+								if (user.groups && Array.isArray(user.groups)) {
+									user.groups.forEach(group => allGroups.add(group))
+								}
+							})
+							if (allGroups.size > 0) {
+								groups = Array.from(allGroups)
+								break
+							}
+						}
 					}
 				}
 			} catch (error) {
-				console.warn(`Failed to fetch groups from ${endpoint}:`, error.message)
 				lastError = error
 				continue
 			}
@@ -112,39 +124,9 @@ export async function fetchNextcloudGroups() {
 			}))
 		}
 
-		// If no groups were fetched, log the last error and return fallback
-		if (lastError) {
-			console.error('All Nextcloud groups API endpoints failed. Last error:', lastError)
-		}
-		
 		return []
 	} catch (error) {
-		console.error('Error fetching Nextcloud groups:', error)
-		
-		// Check if it's a network error, authentication error, or API error
-		if (error.response) {
-			// Server responded with error status
-			console.error('Nextcloud API error:', error.response.status, error.response.data)
-			
-			if (error.response.status === 401) {
-				console.error('Authentication required for Nextcloud groups API')
-			} else if (error.response.status === 403) {
-				console.error('Access forbidden to Nextcloud groups API')
-			} else if (error.response.status === 404) {
-				console.error('Nextcloud groups API endpoint not found')
-			}
-		} else if (error.request) {
-			// Network error
-			console.error('Network error when fetching Nextcloud groups')
-		}
-		
-		// Fallback to default groups if API call fails
-		return [
-			{ label: 'All Users', value: 'all' },
-			{ label: 'Administrators', value: 'admin' },
-			{ label: 'Users', value: 'users' },
-			{ label: 'Guests', value: 'guests' },
-		]
+		return []
 	}
 }
 
@@ -185,12 +167,29 @@ export async function getNextcloudGroups() {
 	try {
 		cachedGroups = await fetchNextcloudGroups()
 		cacheTimestamp = now
-		return cachedGroups
-	} catch (error) {
-		console.error('Error getting Nextcloud groups:', error)
 		
+		// If we got groups from the API, return them
+		if (cachedGroups && cachedGroups.length > 0) {
+			return cachedGroups
+		}
+		
+		// If no groups were fetched, use fallback groups
+		cachedGroups = [
+			{ label: 'All Users', value: 'all' },
+			{ label: 'Administrators', value: 'admin' },
+			{ label: 'Users', value: 'users' },
+			{ label: 'Guests', value: 'guests' },
+			{ label: 'Editors', value: 'editors' },
+			{ label: 'Viewers', value: 'viewers' },
+			{ label: 'Moderators', value: 'moderators' },
+			{ label: 'Content Managers', value: 'content-managers' },
+		]
+		cacheTimestamp = now
+		return cachedGroups
+		
+	} catch (error) {
 		// Return cached groups if available, even if expired
-		if (cachedGroups) {
+		if (cachedGroups && cachedGroups.length > 0) {
 			return cachedGroups
 		}
 		
@@ -200,6 +199,10 @@ export async function getNextcloudGroups() {
 			{ label: 'Administrators', value: 'admin' },
 			{ label: 'Users', value: 'users' },
 			{ label: 'Guests', value: 'guests' },
+			{ label: 'Editors', value: 'editors' },
+			{ label: 'Viewers', value: 'viewers' },
+			{ label: 'Moderators', value: 'moderators' },
+			{ label: 'Content Managers', value: 'content-managers' },
 		]
 	}
 }
@@ -238,7 +241,6 @@ export function isUserLoggedIn() {
 		
 		return !!hasUserData
 	} catch (error) {
-		console.warn('Could not determine user login status:', error)
 		return false
 	}
 }
