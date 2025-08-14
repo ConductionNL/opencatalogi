@@ -59,6 +59,7 @@ import { EventBus } from '../../eventBus.js'
 				v-tooltip="inputValidation.flatErrorMessages[0]"
 				:disabled="objectStore.isLoading('menu') || !inputValidation.success"
 				type="primary"
+				class="singleModalAction"
 				@click="saveMenuItem">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
@@ -265,10 +266,6 @@ export default {
 </script>
 
 <style scoped>
-.modal__content {
-	margin: var(--OC-margin-50);
-	text-align: center;
-}
 
 .form-container {
 	display: flex;

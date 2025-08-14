@@ -1,7 +1,8 @@
 :root {
-  --OR-margin-10: 10px;
-  --OR-margin-20: 20px;
-  --OR-margin-50: 50px;
+  --OC-margin-10: 10px;
+  --OC-margin-15: 15px;
+  --OC-margin-20: 20px;
+  --OC-margin-50: 50px;
 }
 
 /* Card Components */
@@ -331,9 +332,24 @@
 }
 
 /* Modals */
-.modalContent {
-  margin: var(--OR-margin-50);
+.modal__content {
+  padding: 15px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--OC-margin-10);
+  margin-top: var(--OC-margin-20);
+}
+
+.singleModalAction {
+  margin-top: 1rem;
+  margin-left: auto;
 }
 
 .form-group > * {
@@ -353,6 +369,11 @@
 }
 .errorMessage {
   color: var(--color-error);
+}
+
+/* Dialogs */
+.dialog__content {
+  padding: var(--OC-margin-15);
 }
 
 /* File drag and drop */

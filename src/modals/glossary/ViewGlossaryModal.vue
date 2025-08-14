@@ -153,7 +153,6 @@ export default {
 
 <style scoped>
 .modal__content {
-	margin: var(--OC-margin-50);
 	text-align: left;
 	max-width: 80vw;
 	max-height: 80vh;

@@ -13,7 +13,7 @@ import { EventBus } from '../../eventBus.js'
 				Add content to {{ pageItem.name }}
 			</h2>
 			<h2 v-else>
-				{{ _.upperFirst(contentsItem.type) }} content edit of {{ pageItem.name }}
+				Content edit of {{ _.upperFirst(contentsItem.type) }} ({{ pageItem.name }})
 			</h2>
 
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
@@ -63,7 +63,7 @@ import { EventBus } from '../../eventBus.js'
 			<NcButton v-if="objectStore.getState('page').success === null"
 				:disabled="!contentsItem.type || objectStore.isLoading('page')"
 				type="primary"
-				class="addButton"
+				class="singleModalAction"
 				@click="addPageContent">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
@@ -251,11 +251,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
     margin-inline-start: var(--OC-margin-20);

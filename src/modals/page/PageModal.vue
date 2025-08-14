@@ -50,6 +50,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				v-tooltip="inputValidation.errorMessages?.[0]"
 				:disabled="!inputValidation.success || objectStore.isLoading('page')"
 				type="primary"
+				class="singleModalAction"
 				@click="savePage">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
@@ -162,11 +163,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-  margin: var(--OC-margin-50);
-  text-align: center;
-}
-
 .formContainer > * {
   margin-block-end: 10px;
 }

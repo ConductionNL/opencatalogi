@@ -64,6 +64,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<span v-if="content.type" class="contentItemType">
 									{{ content.type }}
 								</span>
+								<div class="contentItemActions">
+									<NcButton type="secondary" @click="editContent(content)">
+										<template #icon>
+											<Pencil :size="18" />
+										</template>
+										{{ t('opencatalogi', 'Edit') }}
+									</NcButton>
+									<NcButton type="error" @click="deleteContent(content)">
+										<template #icon>
+											<Delete :size="18" />
+										</template>
+										{{ t('opencatalogi', 'Delete') }}
+									</NcButton>
+								</div>
 							</div>
 							<div v-if="content.description" class="contentItemDescription">
 								{{ content.description }}
@@ -125,6 +139,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
 	name: 'ViewPageModal',
@@ -133,6 +148,7 @@ export default {
 		NcButton,
 		Pencil,
 		Plus,
+		Delete,
 	},
 	computed: {
 		/**
@@ -166,13 +182,28 @@ export default {
 		openAddContentModal() {
 			navigationStore.setModal('pageContentForm')
 		},
+		/**
+		 * Open edit modal for a specific content item
+		 * @param {object} content
+		 */
+		editContent(content) {
+			objectStore.setActiveObject('pageContent', content)
+			navigationStore.setModal('pageContentForm')
+		},
+		/**
+		 * Open delete confirmation dialog for a specific content item
+		 * @param {object} content
+		 */
+		deleteContent(content) {
+			objectStore.setActiveObject('pageContent', content)
+			navigationStore.setDialog('deletePageContent')
+		},
 	},
 }
 </script>
 
 <style scoped>
 .modal__content {
-	margin: var(--OC-margin-50);
 	text-align: left;
 	max-width: 80vw;
 	max-height: 80vh;
@@ -250,6 +281,11 @@ export default {
 	background-color: var(--color-background-dark);
 	padding: var(--OC-margin-5);
 	border-radius: var(--border-radius);
+}
+
+.contentItemActions {
+	display: flex;
+	gap: var(--OC-margin-10);
 }
 
 .contentItemDescription {

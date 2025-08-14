@@ -188,11 +188,7 @@ export default {
 
 <style scoped>
 .modal__content {
-	margin: var(--OC-margin-50);
 	text-align: left;
-	max-width: 80vw;
-	max-height: 80vh;
-	overflow-y: auto;
 }
 
 .menuDetails {
@@ -332,15 +328,6 @@ export default {
 	text-align: center;
 	padding: var(--OC-margin-50);
 	color: var(--color-text-lighter);
-}
-
-.modalActions {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--OC-margin-10);
-	margin-top: var(--OC-margin-20);
-	padding-top: var(--OC-margin-20);
-	border-top: 1px solid var(--color-border);
 }
 
 @media (min-width: 768px) {

@@ -172,11 +172,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-  margin: var(--OC-margin-50);
-  text-align: center;
-}
-
 .formContainer > * {
   margin-block-end: 10px;
 }
