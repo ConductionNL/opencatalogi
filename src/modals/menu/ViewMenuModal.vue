@@ -17,11 +17,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'viewMenu'"
 		ref="modalRef"
+		:name="menu?.title || 'Menu'"
 		label-id="viewMenuModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ menu?.title || 'Menu' }}</h2>
-
 			<div v-if="menu" class="menuDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>

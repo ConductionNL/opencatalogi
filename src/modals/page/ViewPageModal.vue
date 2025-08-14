@@ -17,11 +17,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'viewPage'"
 		ref="modalRef"
+		:name="page?.title || 'Page'"
 		label-id="viewPageModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ page?.title || 'Page' }}</h2>
-
 			<div v-if="page" class="pageDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>

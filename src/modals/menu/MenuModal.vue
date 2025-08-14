@@ -17,11 +17,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal
 		ref="modalRef"
+		:name="isEdit ? 'Edit menu' : 'Add menu'"
 		:label-id="isEdit ? 'editMenuModal' : 'addMenuModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ isEdit ? 'Edit' : 'Add' }} menu</h2>
-
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
 					<p>{{ isEdit ? 'Menu successfully edited' : 'Menu successfully added' }}</p>
@@ -91,17 +90,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<NcLoadingIcon :size="20" />
 				<span>{{ isEdit ? 'Menu is being edited...' : 'Menu is being added...' }}</span>
 			</div>
-			<NcButton v-if="objectStore.getState('menu').success === null && !objectStore.isLoading('menu')"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
-				type="primary"
-				class="singleModalAction"
-				@click="saveMenu">
-				<template #icon>
-					<ContentSaveOutline :size="20" />
-				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton type="tertiary" class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('menu').success === null && !objectStore.isLoading('menu')"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('menu')"
+					type="primary"
+					@click="saveMenu">
+					<template #icon>
+						<ContentSaveOutline :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -113,6 +119,7 @@ import _ from 'lodash'
 
 // Icons
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'MenuModal',
@@ -123,6 +130,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {

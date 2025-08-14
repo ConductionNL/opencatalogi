@@ -18,10 +18,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 <template>
 	<NcModal
 		ref="modalRef"
+		:name="isEdit ? 'Edit page' : 'Add page'"
 		:label-id="isEdit ? 'editPageModal' : 'addPageModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ isEdit ? 'Edit' : 'Add' }} page</h2>
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
 					<p>{{ isEdit ? 'Page successfully edited' : 'Page successfully added' }}</p>
@@ -53,24 +53,26 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<NcNoteCard type="info">
 						<p>When you add groups to a page, it will only be accessible if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.</p>
 					</NcNoteCard>
-					<select 
+					<select
 						v-model="page.groups"
 						:disabled="objectStore.isLoading('page') || groupsOptions.loading"
 						multiple
 						class="groups-select">
-						<option 
-							v-for="group in groupsOptions.options" 
-							:key="group.value" 
+						<option
+							v-for="group in groupsOptions.options"
+							:key="group.value"
 							:value="group.value">
 							{{ group.label }}
 						</option>
 					</select>
-					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
+					<p v-if="groupsOptions.loading" class="groups-loading">
+						Loading groups...
+					</p>
 				</div>
 
 				<!-- Groups Refresh Button -->
 				<div class="groups-refresh">
-					<NcButton 
+					<NcButton
 						:disabled="groupsOptions.loading"
 						type="secondary"
 						size="small"
@@ -95,18 +97,25 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					</NcNoteCard>
 				</div>
 			</div>
-			<NcButton v-if="objectStore.getState('page').success === null"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('page')"
-				type="primary"
-				class="singleModalAction"
-				@click="savePage">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
-					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
-				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('page').success === null"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('page')"
+					type="primary"
+					@click="savePage">
+					<template #icon>
+						<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
+						<Plus v-if="!objectStore.isLoading('page')" :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -123,6 +132,7 @@ import {
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 import { Page } from '../../entities/index.js'
 
@@ -138,6 +148,7 @@ export default {
 		// Icons
 		Plus,
 		Refresh,
+		Cancel,
 	},
 	data() {
 		return {
@@ -180,7 +191,7 @@ export default {
 		if (navigationStore.modal === 'page' && !this.hasUpdated) {
 			if (this.isEdit) {
 				const activePage = objectStore.getActiveObject('page')
-				this.page = { 
+				this.page = {
 					...activePage,
 					groups: activePage.groups || [],
 					hideAfterInlog: activePage.hideAfterInlog || false,
@@ -228,18 +239,18 @@ export default {
 			}
 		},
 		fetchGroups() {
-			this.groupsOptions.loading = true;
+			this.groupsOptions.loading = true
 			getNextcloudGroups()
 				.then((groups) => {
-					this.groupsOptions.options = groups;
+					this.groupsOptions.options = groups
 				})
 				.catch(error => {
-					console.error('Error fetching groups:', error);
+					console.error('Error fetching groups:', error)
 				})
 				.finally(() => {
-					this.groupsOptions.loading = false;
-				});
-		}
+					this.groupsOptions.loading = false
+				})
+		},
 	},
 }
 </script>

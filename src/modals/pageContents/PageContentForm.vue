@@ -7,16 +7,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcModal ref="modalRef"
+		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.name}`"
 		label-id="addPageContents"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2 v-if="!isEdit">
-				Add content to {{ pageItem.name }}
-			</h2>
-			<h2 v-else>
-				Content edit of {{ _.upperFirst(contentsItem.type) }} ({{ pageItem.name }})
-			</h2>
-
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
 					<p>Content successfully added</p>
@@ -82,7 +76,9 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 						:disabled="objectStore.isLoading('page') || groupsOptions.loading"
 						input-label="Select Groups"
 						multiple />
-					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
+					<p v-if="groupsOptions.loading" class="groups-loading">
+						Loading groups...
+					</p>
 				</div>
 
 				<!-- Hide After Login -->
@@ -93,21 +89,28 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<NcCheckboxRadioSwitch
 						:checked.sync="contentsItem.hideAfterInlog"
 						:disabled="objectStore.isLoading('page')">
-						Verberg na inloggen
+						Hide after login
 					</NcCheckboxRadioSwitch>
 				</div>
 			</div>
-			<NcButton v-if="objectStore.getState('page').success === null"
-				:disabled="!contentsItem.type || objectStore.isLoading('page')"
-				type="primary"
-				class="singleModalAction"
-				@click="addPageContent">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
-					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
-				</template>
-				{{ isEdit ? 'Edit' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('page').success === null"
+					:disabled="!contentsItem.type || objectStore.isLoading('page')"
+					type="primary"
+					@click="addPageContent">
+					<template #icon>
+						<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
+						<Plus v-if="!objectStore.isLoading('page')" :size="20" />
+					</template>
+					{{ isEdit ? 'Edit' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -119,6 +122,7 @@ import _ from 'lodash'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 import { Page } from '../../entities/index.js'
 
@@ -137,6 +141,7 @@ export default {
 		// Icons
 		Plus,
 		Drag,
+		Cancel,
 	},
 	data() {
 		return {
@@ -203,7 +208,7 @@ export default {
 	mounted() {
 		// Fetch groups for the dropdown
 		this.fetchGroups()
-		
+
 		if (this.isEdit) {
 			const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
 
@@ -305,18 +310,18 @@ export default {
 				})
 		},
 		fetchGroups() {
-			this.groupsOptions.loading = true;
+			this.groupsOptions.loading = true
 			getNextcloudGroups()
 				.then((groups) => {
-					this.groupsOptions.options = groups;
+					this.groupsOptions.options = groups
 				})
 				.catch((err) => {
-					console.error('Error fetching groups:', err);
+					console.error('Error fetching groups:', err)
 				})
 				.finally(() => {
-					this.groupsOptions.loading = false;
-				});
-		}
+					this.groupsOptions.loading = false
+				})
+		},
 	},
 }
 </script>
