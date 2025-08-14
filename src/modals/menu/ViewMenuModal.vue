@@ -77,6 +77,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<span v-if="item.order !== undefined" class="menuItemOrder">
 									Order: {{ item.order }}
 								</span>
+								<div class="menuItemActions">
+									<NcButton type="secondary" @click="editItem(item, index)">
+										<template #icon>
+											<Pencil :size="18" />
+										</template>
+										{{ t('opencatalogi', 'Edit') }}
+									</NcButton>
+									<NcButton type="error" @click="deleteItem(item)">
+										<template #icon>
+											<Delete :size="18" />
+										</template>
+										{{ t('opencatalogi', 'Delete') }}
+									</NcButton>
+								</div>
 							</div>
 							<div v-if="item.description" class="menuItemDescription">
 								{{ item.description }}
@@ -93,8 +107,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<div v-if="item.groups && item.groups.length > 0" class="menuItemGroups">
 								<strong>Groups:</strong> {{ item.groups.join(', ') }}
 							</div>
-							<div v-if="item.hideAfterInlog" class="menuItemHideAfterLogin">
-								<strong>🔒 Hide After Login:</strong> Yes
+							<div v-if="item.hideAfterInlog !== undefined" class="menuItemHideAfterLogin">
+								<strong>Hide After Login:</strong> {{ item.hideAfterInlog ? 'Yes' : 'No' }}
 							</div>
 							<div v-if="item.type" class="menuItemType">
 								<strong>Type:</strong> {{ item.type }}
@@ -147,6 +161,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
 	name: 'ViewMenuModal',
@@ -155,6 +170,7 @@ export default {
 		NcButton,
 		Pencil,
 		Plus,
+		Delete,
 	},
 	computed: {
 		/**
@@ -188,17 +204,30 @@ export default {
 		openAddItemModal() {
 			navigationStore.setModal('menuItemForm')
 		},
+		/**
+		 * Open the edit modal for a specific menu item
+		 * @param {object} item
+		 * @param {number} index
+		 */
+		editItem(item, index) {
+			objectStore.setActiveObject('menuItem', { ...item, index })
+			navigationStore.setModal('menuItemForm')
+		},
+		/**
+		 * Open the delete modal for a specific menu item
+		 * @param {object} item
+		 */
+		deleteItem(item) {
+			objectStore.setActiveObject('menuItem', item)
+			navigationStore.setModal('deleteMenuItem')
+		},
 	},
 }
 </script>
 
 <style scoped>
 .modal__content {
-	margin: var(--OC-margin-50);
 	text-align: left;
-	max-width: 80vw;
-	max-height: 80vh;
-	overflow-y: auto;
 }
 
 .menuDetails {
@@ -273,6 +302,11 @@ export default {
 .menuItemHeader strong {
 	color: var(--color-main-text);
 	font-size: 1em;
+}
+
+.menuItemActions {
+	display: flex;
+	gap: var(--OC-margin-10);
 }
 
 .menuItemOrder {
@@ -358,15 +392,6 @@ export default {
 	text-align: center;
 	padding: var(--OC-margin-50);
 	color: var(--color-text-lighter);
-}
-
-.modalActions {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--OC-margin-10);
-	margin-top: var(--OC-margin-20);
-	padding-top: var(--OC-margin-20);
-	border-top: 1px solid var(--color-border);
 }
 
 @media (min-width: 768px) {

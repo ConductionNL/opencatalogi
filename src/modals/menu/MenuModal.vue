@@ -95,7 +95,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				v-tooltip="inputValidation.errorMessages?.[0]"
 				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
 				type="primary"
-				class="menu-submit-button"
+				class="singleModalAction"
 				@click="saveMenu">
 				<template #icon>
 					<ContentSaveOutline :size="20" />
@@ -206,15 +206,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
-.menu-submit-button {
-    margin-block-start: 1rem;
-}
-
 .loading-status {
     display: flex;
     align-items: center;

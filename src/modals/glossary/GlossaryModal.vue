@@ -71,7 +71,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				v-tooltip="inputValidation.errorMessages?.[0]"
 				:disabled="!inputValidation.success || objectStore.isLoading('glossary')"
 				type="primary"
-				class="glossary-submit-button"
+				class="singleModalAction"
 				@click="saveGlossary">
 				<template #icon>
 					<ContentSaveOutline :size="20" />
@@ -174,15 +174,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
-.glossary-submit-button {
-    margin-block-start: 1rem;
-}
-
 .loading-status {
     display: flex;
     align-items: center;

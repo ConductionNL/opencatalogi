@@ -72,7 +72,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				v-tooltip="inputValidation.errorMessages?.[0]"
 				:disabled="!inputValidation.success || objectStore.isLoading('catalog')"
 				type="primary"
-				class="catalog-submit-button"
+				class="singleModalAction"
 				@click="saveCatalog">
 				<template #icon>
 					<ContentSaveOutline :size="20" />
@@ -278,10 +278,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
 
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
@@ -291,10 +287,6 @@ export default {
 
 .success {
     color: green;
-}
-
-.catalog-submit-button {
-    margin-block-start: 1rem;
 }
 
 .loading-status {

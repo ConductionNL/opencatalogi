@@ -30,7 +30,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				v-if="successState === null"
 				type="primary"
 				:disabled="!selectedTheme || isSaving"
-				class="save-button"
+				class="singleModalAction"
 				@click="saveTheme">
 				<template #icon>
 					<NcLoadingIcon v-if="isSaving" :size="20" />
@@ -122,21 +122,8 @@ export default {
 </script>
 
 <style>
-.modal__content {
-  margin: var(--OC-margin-50);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
 .selectWrapper {
   display: flex;
   justify-content: center;
-}
-</style>
-
-<style scoped>
-.save-button {
-  margin-left: auto;
 }
 </style>
