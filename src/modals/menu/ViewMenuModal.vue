@@ -77,6 +77,20 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<span v-if="item.order !== undefined" class="menuItemOrder">
 									Order: {{ item.order }}
 								</span>
+								<div class="menuItemActions">
+									<NcButton type="secondary" @click="editItem(item, index)">
+										<template #icon>
+											<Pencil :size="18" />
+										</template>
+										{{ t('opencatalogi', 'Edit') }}
+									</NcButton>
+									<NcButton type="error" @click="deleteItem(item)">
+										<template #icon>
+											<Delete :size="18" />
+										</template>
+										{{ t('opencatalogi', 'Delete') }}
+									</NcButton>
+								</div>
 							</div>
 							<div v-if="item.description" class="menuItemDescription">
 								{{ item.description }}
@@ -141,6 +155,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
 	name: 'ViewMenuModal',
@@ -149,6 +164,7 @@ export default {
 		NcButton,
 		Pencil,
 		Plus,
+		Delete,
 	},
 	computed: {
 		/**
@@ -181,6 +197,23 @@ export default {
 		 */
 		openAddItemModal() {
 			navigationStore.setModal('menuItemForm')
+		},
+		/**
+		 * Open the edit modal for a specific menu item
+		 * @param {object} item
+		 * @param {number} index
+		 */
+		editItem(item, index) {
+			objectStore.setActiveObject('menuItem', { ...item, index })
+			navigationStore.setModal('menuItemForm')
+		},
+		/**
+		 * Open the delete modal for a specific menu item
+		 * @param {object} item
+		 */
+		deleteItem(item) {
+			objectStore.setActiveObject('menuItem', item)
+			navigationStore.setModal('deleteMenuItem')
 		},
 	},
 }
@@ -263,6 +296,11 @@ export default {
 .menuItemHeader strong {
 	color: var(--color-main-text);
 	font-size: 1em;
+}
+
+.menuItemActions {
+	display: flex;
+	gap: var(--OC-margin-10);
 }
 
 .menuItemOrder {

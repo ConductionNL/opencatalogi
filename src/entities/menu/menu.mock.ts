@@ -15,7 +15,7 @@ import { TMenuItem, TMenu } from './menu.types'
  * Mock menu item data
  */
 export const mockMenuItem: TMenuItem = {
-	title: 'Home',
+	name: 'Home',
 	slug: 'home',
 	link: '/',
 	description: 'Home page',
