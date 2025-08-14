@@ -66,23 +66,18 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 				<div class="groups-section">
 					<label class="groups-label">Groups</label>
-					<select 
+					<NcSelect
 						v-model="groupsOptions.value"
 						:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
 						multiple
-						class="groups-select">
-						<option 
-							v-for="group in groupsOptions.options" 
-							:key="group.value" 
-							:value="group.value">
-							{{ group.label }}
-						</option>
-					</select>
-					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
+						:options="groupsOptions.options" />
+					<p v-if="groupsOptions.loading" class="groups-loading">
+						Loading groups...
+					</p>
 				</div>
 
 				<div class="groups-refresh">
-					<NcButton 
+					<NcButton
 						:disabled="groupsOptions.loading"
 						type="secondary"
 						size="small"
@@ -99,25 +94,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<NcCheckboxRadioSwitch
 						:checked.sync="menuItem.hideAfterInlog"
 						:disabled="objectStore.isLoading('menu')">
-						Verberg na inloggen
+						Hide after login
 					</NcCheckboxRadioSwitch>
 					<p class="help-text">
-						Wanneer aangevinkt, wordt dit menu-item verborgen nadat een gebruiker is ingelogd.
-						Dit is handig voor menu-items die alleen voor gasten zichtbaar moeten zijn.
+						When checked, this menu item will be hidden after a user is logged in.
+						This is useful for menu items that should only be visible to guests.
 					</p>
-				</div>
-
-				<div class="form-actions">
-					<NcButton 
-						:disabled="!inputValidation.success || objectStore.isLoading('menu')"
-						:loading="objectStore.isLoading('menu')"
-						type="primary"
-						@click="saveMenuItem">
-						<template #icon>
-							<ContentSaveOutline :size="16" />
-						</template>
-						{{ isEdit ? 'Update' : 'Toevoegen' }}
-					</NcButton>
 				</div>
 			</div>
 
@@ -242,34 +224,36 @@ export default {
 
 			// Determine the new items array based on whether we're editing or adding
 			const updatedItems = this.isEdit
-				? this.menuObject.items.map(item => 
-					item.id === objectStore.getActiveObject('menuItem').id 
-						? updatedMenuItem 
-						: item
+				? this.menuObject.items.map(item =>
+					item.id === objectStore.getActiveObject('menuItem').id
+						? updatedMenuItem
+						: item,
 				)
 				: [...this.menuObject.items, updatedMenuItem]
 
 			// Create a temporary menu object for validation
 			const tempMenu = {
 				...this.menuObject,
-				items: updatedItems
+				items: updatedItems,
 			}
 
-			return createZodErrorHandler(tempMenu, 'menu')
+			const menuEntity = new Menu(tempMenu)
+			const result = menuEntity.validate()
+			return createZodErrorHandler(result)
 		},
 	},
 	mounted() {
 		this.fetchGroups()
-		
+
 		if (this.isEdit) {
 			const menuItem = objectStore.getActiveObject('menuItem')
 			this.menuItem = { ...menuItem }
-			
+
 			// Set the icon dropdown value
 			if (menuItem.icon) {
 				this.iconOptions.value = this.iconOptions.options.find(option => option.value === menuItem.icon)
 			}
-			
+
 			// Set the groups dropdown value
 			if (menuItem.groups && menuItem.groups.length > 0) {
 				this.groupsOptions.value = menuItem.groups
@@ -288,17 +272,17 @@ export default {
 			try {
 				const groups = await getNextcloudGroups()
 				this.groupsOptions.options = groups
-				
+
 				// If we're editing and have groups, update the selected values
 				if (this.isEdit && this.menuItem.groups && this.menuItem.groups.length > 0) {
 					this.groupsOptions.value = this.menuItem.groups
 				}
 			} catch (error) {
 				// Show user-friendly error message
-				objectStore.setState('menu', { 
-					error: 'Could not load Nextcloud groups. Using fallback groups instead.' 
+				objectStore.setState('menu', {
+					error: 'Could not load Nextcloud groups. Using fallback groups instead.',
 				})
-				
+
 				// Clear error after 5 seconds
 				setTimeout(() => {
 					objectStore.setState('menu', { error: null })
