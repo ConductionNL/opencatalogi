@@ -90,6 +90,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<div v-if="item.icon" class="menuItemIcon">
 								<strong>Icon:</strong> {{ item.icon }}
 							</div>
+							<div v-if="item.groups && item.groups.length > 0" class="menuItemGroups">
+								<strong>Groups:</strong> {{ item.groups.join(', ') }}
+							</div>
+							<div v-if="item.hideAfterInlog" class="menuItemHideAfterLogin">
+								<strong>🔒 Hide After Login:</strong> Yes
+							</div>
 							<div v-if="item.type" class="menuItemType">
 								<strong>Type:</strong> {{ item.type }}
 							</div>
@@ -303,6 +309,26 @@ export default {
 
 .menuItemLink a:hover {
 	text-decoration: underline;
+}
+
+.menuItemGroups {
+	margin-bottom: var(--OC-margin-5);
+	font-size: 0.85em;
+	color: var(--color-text-lighter);
+}
+
+.menuItemGroups strong {
+	color: var(--color-text-maxcontrast);
+}
+
+.menuItemHideAfterLogin {
+	margin-bottom: var(--OC-margin-5);
+	font-size: 0.85em;
+	color: var(--color-text-lighter);
+}
+
+.menuItemHideAfterLogin strong {
+	color: var(--color-text-maxcontrast);
 }
 
 .emptyMenuItems {

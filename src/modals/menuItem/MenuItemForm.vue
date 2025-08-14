@@ -2,6 +2,7 @@
 import { objectStore, navigationStore } from '../../store/store.js'
 import { createZodErrorHandler } from '../../services/formatZodErrors.js'
 import { EventBus } from '../../eventBus.js'
+import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </script>
 
 <template>
@@ -23,10 +24,19 @@ import { EventBus } from '../../eventBus.js'
 			<div v-if="objectStore.getState('menu').success === null" class="form-container">
 				<NcTextField
 					:disabled="objectStore.isLoading('menu')"
+					label="Order"
+					type="number"
+					min="0"
+					:value.sync="menuItem.order"
+					:error="!!inputValidation.getError(`items.${index}.order`)"
+					:helper-text="inputValidation.getError(`items.${index}.order`)" />
+
+				<NcTextField
+					:disabled="objectStore.isLoading('menu')"
 					label="Naam"
-					:value.sync="menuItem.title"
-					:error="!!inputValidation.getError(`items.${index}.title`)"
-					:helper-text="inputValidation.getError(`items.${index}.title`)" />
+					:value.sync="menuItem.name"
+					:error="!!inputValidation.getError(`items.${index}.name`)"
+					:helper-text="inputValidation.getError(`items.${index}.name`)" />
 
 				<NcTextField
 					:disabled="objectStore.isLoading('menu')"
@@ -53,6 +63,41 @@ import { EventBus } from '../../eventBus.js'
 					v-model="iconOptions.value"
 					input-label="Icon"
 					:disabled="objectStore.isLoading('menu')" />
+
+				<NcSelect 
+					:options="groupsOptions.options"
+					v-model="groupsOptions.value"
+					input-label="Groups"
+					:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
+					:placeholder="groupsOptions.loading ? 'Loading groups...' : 'Select groups'"
+					multiple />
+
+				<div class="groups-refresh">
+					<NcButton 
+						:disabled="groupsOptions.loading"
+						type="secondary"
+						size="small"
+						@click="fetchGroups">
+						<template #icon>
+							<Refresh v-if="!groupsOptions.loading" :size="16" />
+							<NcLoadingIcon v-else :size="16" />
+						</template>
+						{{ groupsOptions.loading ? 'Loading...' : 'Refresh Groups' }}
+					</NcButton>
+				</div>
+
+				<div class="hide-after-login">
+					<NcCheckboxRadioSwitch
+						:checked.sync="menuItem.hideAfterInlog"
+						type="switch"
+						name="hideAfterInlog">
+						Verberg na inloggen
+					</NcCheckboxRadioSwitch>
+					<p class="help-text">
+						Deze menu item wordt verborgen nadat gebruikers zijn ingelogd. 
+						Handig voor login/register links die niet meer nodig zijn na authenticatie.
+					</p>
+				</div>
 			</div>
 
 			<NcButton v-if="objectStore.getState('menu').success === null"
@@ -79,12 +124,14 @@ import {
 	NcNoteCard,
 	NcTextField,
 	NcSelect,
+	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
 import { Menu } from '../../entities/index.js'
 import _ from 'lodash'
 
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 
 export default {
 	name: 'MenuItemForm',
@@ -95,20 +142,25 @@ export default {
 		NcNoteCard,
 		NcTextField,
 		NcSelect,
+		NcCheckboxRadioSwitch,
 		// Icons
 		ContentSaveOutline,
 		Plus,
+		Refresh,
 	},
 	data() {
 		return {
 			isEdit: !!objectStore.getActiveObject('menuItem'),
 			index: objectStore.getActiveObject('menuItem')?.index ?? objectStore.getActiveObject('menu').items.length,
 			menuItem: {
-				title: '',
+				order: 0,
+				name: '',
 				slug: '',
 				link: '',
 				description: '',
 				icon: '',
+				groups: [],
+				hideAfterInlog: false,
 				items: [],
 			},
 			iconOptions: {
@@ -150,6 +202,13 @@ export default {
 				],
 				value: '',
 			},
+			// TODO: In a real implementation, these groups should be fetched from the Nextcloud instance
+			// via the Nextcloud API to get the actual groups available on the system
+			groupsOptions: {
+				options: [],
+				value: [],
+				loading: false,
+			},
 			closeModalTimeout: null,
 		}
 	},
@@ -158,19 +217,20 @@ export default {
 			return objectStore.getActiveObject('menu')
 		},
 		inputValidation() {
-			// Create the updated menu item with icon
+			// Create the updated menu item with icon and groups
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
+				groups: this.groupsOptions.value?.map(option => option.value) || [],
 			}
 
 			// Determine the new items array based on whether we're editing or adding
 			const updatedItems = this.isEdit
-				? [
-					...this.menuObject.items.slice(0, this.index),
-					updatedMenuItem,
-					...this.menuObject.items.slice(this.index + 1),
-				]
+				? this.menuObject.items.map(item => 
+					item.id === objectStore.getActiveObject('menuItem').id 
+						? updatedMenuItem 
+						: item
+				  )
 				: [...this.menuObject.items, updatedMenuItem]
 
 			const menuItem = new Menu({
@@ -183,7 +243,20 @@ export default {
 			return createZodErrorHandler(result)
 		},
 	},
+	watch: {
+		// Watch for modal visibility changes to refresh groups if needed
+		'$route': {
+			handler() {
+				// Refresh groups when route changes (modal opens/closes)
+				this.fetchGroups()
+			},
+			immediate: false
+		}
+	},
 	mounted() {
+		// Fetch Nextcloud groups when component mounts
+		this.fetchGroups()
+		
 		if (this.isEdit) {
 			const activeMenuItem = objectStore.getActiveObject('menuItem')
 			const menuItem = this.menuObject.items.find(item => item.id === activeMenuItem.id)
@@ -195,10 +268,56 @@ export default {
 				}
 
 				this.iconOptions.value = this.iconOptions.options.find(option => option.value === menuItem.icon)
+				
+				// Set the groups dropdown value
+				if (menuItem.groups && menuItem.groups.length > 0) {
+					this.groupsOptions.value = this.groupsOptions.options.filter(option => 
+						menuItem.groups.includes(option.value)
+					)
+				} else {
+					this.groupsOptions.value = []
+				}
 			}
 		}
 	},
 	methods: {
+		/**
+		 * Fetch Nextcloud groups from the API
+		 * @return {Promise<void>}
+		 */
+		async fetchGroups() {
+			this.groupsOptions.loading = true
+			try {
+				const groups = await getNextcloudGroups()
+				this.groupsOptions.options = groups
+				
+				// If we're editing and have groups, update the selected values
+				if (this.isEdit && this.menuItem.groups && this.menuItem.groups.length > 0) {
+					this.groupsOptions.value = this.groupsOptions.options.filter(option => 
+						this.menuItem.groups.includes(option.value)
+					)
+				}
+				
+				// Show success message if groups were fetched successfully
+				if (groups.length > 0) {
+					console.log(`Successfully loaded ${groups.length} Nextcloud groups`)
+				}
+			} catch (error) {
+				console.error('Error fetching groups:', error)
+				
+				// Show user-friendly error message
+				objectStore.setState('menu', { 
+					error: 'Could not load Nextcloud groups. Using fallback groups instead.' 
+				})
+				
+				// Clear error after 5 seconds
+				setTimeout(() => {
+					objectStore.setState('menu', { error: null })
+				}, 5000)
+			} finally {
+				this.groupsOptions.loading = false
+			}
+		},
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('menuItem')
@@ -213,10 +332,11 @@ export default {
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
+				groups: this.groupsOptions.value?.map(option => option.value) || [],
 			}
 
 			if (this.isEdit) {
-				// Find the index of the item we're editing
+				// Find the item we're editing by ID
 				const itemIndex = menuClone.items.findIndex(item => item.id === objectStore.getActiveObject('menuItem').id)
 				if (itemIndex !== -1) {
 					// Replace the existing item while preserving its ID
@@ -226,11 +346,11 @@ export default {
 					}
 				}
 			} else {
-				// Add new item with a new ID
-				menuClone.items.push({
-					...updatedMenuItem,
-					id: Math.random().toString(36).substring(2, 12),
-				})
+				// Add new item without ID - let the backend handle ID generation
+				// Set the order to the next available order number
+				const maxOrder = Math.max(0, ...menuClone.items.map(item => item.order || 0))
+				updatedMenuItem.order = maxOrder + 1
+				menuClone.items.push(updatedMenuItem)
 			}
 
 			const newMenu = new Menu(menuClone)
@@ -273,5 +393,42 @@ export default {
 .form-container {
 	display: flex;
 	flex-direction: column;
+}
+
+.form-container > * {
+	margin-bottom: var(--OC-margin-20);
+}
+
+.form-container > *:last-child {
+	margin-bottom: 0;
+}
+
+.groups-refresh {
+	margin-top: var(--OC-margin-20);
+}
+
+.groups-refresh .nc-button {
+	width: 100%;
+	justify-content: center;
+}
+
+.hide-after-login {
+	margin-top: var(--OC-margin-20);
+	padding: var(--OC-margin-15);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background-color: var(--color-background-hover);
+}
+
+.hide-after-login .help-text {
+	margin: var(--OC-margin-10) 0 0 0;
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+}
+
+/* Style for groups dropdown when loading */
+.form-container .nc-select[disabled] {
+	opacity: 0.6;
 }
 </style>

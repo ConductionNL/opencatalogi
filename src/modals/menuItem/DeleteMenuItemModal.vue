@@ -36,7 +36,7 @@ import { EventBus } from '../../eventBus.js'
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Weet je zeker dat je het menu item '{{ menuItem.title }}' wilt verwijderen?</p>
+				<p>Weet je zeker dat je het menu item '{{ menuItem.name }}' wilt verwijderen?</p>
 			</div>
 
 			<span class="buttonContainer">

@@ -125,11 +125,17 @@ import { getTheme } from '../../services/getTheme.js'
 							<div v-for="(menuItem, i) in menuItems" :key="i" :class="`draggable-list-item ${getTheme()}`">
 								<!-- show a drag handle and NcListItem -->
 								<Drag class="drag-handle" :size="40" />
-								<NcListItem :name="menuItem.title"
+								<NcListItem :name="menuItem.name"
 									:bold="false"
 									:force-display-actions="true">
 									<template #subname>
 										{{ menuItem.description }}
+										<span v-if="menuItem.groups && menuItem.groups.length > 0" class="menu-item-groups">
+											<br><small>Groups: {{ menuItem.groups.join(', ') }}</small>
+										</span>
+										<span v-if="menuItem.hideAfterInlog" class="menu-item-hide-after-login">
+											<br><small>🔒 Verborgen na inloggen</small>
+										</span>
 									</template>
 									<template #actions>
 										<NcActionButton close-after-click
@@ -395,5 +401,23 @@ h4 {
 }
 .draggable-list-item.light {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+.menu-item-groups {
+    color: var(--color-text-maxcontrast);
+    font-style: italic;
+}
+
+.menu-item-groups small {
+    opacity: 0.8;
+}
+
+.menu-item-hide-after-login {
+	color: var(--color-warning);
+	font-style: italic;
+}
+
+.menu-item-hide-after-login small {
+	opacity: 0.9;
 }
 </style>
