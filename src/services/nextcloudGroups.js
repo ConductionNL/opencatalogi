@@ -59,66 +59,14 @@ import { generateUrl } from '@nextcloud/router'
  */
 export async function fetchNextcloudGroups() {
 	try {
-		// Try multiple possible Nextcloud API endpoints for groups
-		const possibleEndpoints = [
-			'/ocs/v1.php/cloud/groups',
-			'/ocs/v2.php/cloud/groups',
-			'/index.php/ocs/v1.php/cloud/groups',
-			'/index.php/ocs/v2.php/cloud/groups',
-			'/apps/opencatalogi/api/groups', // Custom endpoint if available
-			'/ocs/v1.php/cloud/users/groups', // Alternative endpoint
-			'/ocs/v1.php/cloud/users', // Users endpoint might include groups
-			'/ocs/v1.php/cloud', // Root cloud endpoint
-		]
-
-		let groups = []
-		let lastError = null
-
-		for (const endpoint of possibleEndpoints) {
-			try {
-				const response = await axios.get(generateUrl(endpoint))
-				
-				if (response.data) {
-					// Handle different response formats
-					if (response.data.ocs && response.data.ocs.data && response.data.ocs.data.groups) {
-						// Standard OCS format
-						groups = response.data.ocs.data.groups
-						break
-					} else if (response.data.groups) {
-						// Direct groups format
-						groups = response.data.groups
-						break
-					} else if (Array.isArray(response.data)) {
-						// Array format
-						groups = response.data
-						break
-					} else if (response.data.ocs && response.data.ocs.data) {
-						// Check if groups are in a different location
-						const data = response.data.ocs.data
-						if (data.users && Array.isArray(data.users)) {
-							// Extract groups from users data
-							const allGroups = new Set()
-							data.users.forEach(user => {
-								if (user.groups && Array.isArray(user.groups)) {
-									user.groups.forEach(group => allGroups.add(group))
-								}
-							})
-							if (allGroups.size > 0) {
-								groups = Array.from(allGroups)
-								break
-							}
-						}
-					}
-				}
-			} catch (error) {
-				lastError = error
-				continue
-			}
-		}
-
-		if (groups.length > 0) {
+		// Use the working endpoint from Open Registers implementation
+		const workingEndpoint = '/ocs/v1.php/cloud/groups?format=json'
+		
+		const response = await axios.get(generateUrl(workingEndpoint))
+		
+		if (response.data && response.data.ocs && response.data.ocs.data && response.data.ocs.data.groups) {
 			// Transform the groups into the format expected by the dropdown
-			return groups.map(group => ({
+			return response.data.ocs.data.groups.map(group => ({
 				label: group,
 				value: group
 			}))
@@ -126,6 +74,7 @@ export async function fetchNextcloudGroups() {
 
 		return []
 	} catch (error) {
+		console.warn('Failed to fetch groups from Nextcloud API:', error.message)
 		return []
 	}
 }
@@ -177,12 +126,15 @@ export async function getNextcloudGroups() {
 		cachedGroups = [
 			{ label: 'All Users', value: 'all' },
 			{ label: 'Administrators', value: 'admin' },
-			{ label: 'Users', value: 'users' },
-			{ label: 'Guests', value: 'guests' },
+			{ label: 'Functioneel-beheerder', value: 'Functioneel-beheerder' },
+			{ label: 'Gebruik-beheerder', value: 'Gebruik-beheerder' },
+			{ label: 'Gebruik-raadpleger', value: 'Gebruik-raadpleger' },
+			{ label: 'Organisatie-beheerder', value: 'Organisatie-beheerder' },
+			{ label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
 			{ label: 'Editors', value: 'editors' },
 			{ label: 'Viewers', value: 'viewers' },
-			{ label: 'Moderators', value: 'moderators' },
-			{ label: 'Content Managers', value: 'content-managers' },
+			{ label: 'Staff', value: 'staff' },
+			{ label: 'Managers', value: 'managers' },
 		]
 		cacheTimestamp = now
 		return cachedGroups
@@ -197,12 +149,15 @@ export async function getNextcloudGroups() {
 		return [
 			{ label: 'All Users', value: 'all' },
 			{ label: 'Administrators', value: 'admin' },
-			{ label: 'Users', value: 'users' },
-			{ label: 'Guests', value: 'guests' },
+			{ label: 'Functioneel-beheerder', value: 'Functioneel-beheerder' },
+			{ label: 'Gebruik-beheerder', value: 'Gebruik-beheerder' },
+			{ label: 'Gebruik-raadpleger', value: 'Gebruik-raadpleger' },
+			{ label: 'Organisatie-beheerder', value: 'Organisatie-beheerder' },
+			{ label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
 			{ label: 'Editors', value: 'editors' },
 			{ label: 'Viewers', value: 'viewers' },
-			{ label: 'Moderators', value: 'moderators' },
-			{ label: 'Content Managers', value: 'content-managers' },
+			{ label: 'Staff', value: 'staff' },
+			{ label: 'Managers', value: 'managers' },
 		]
 	}
 }

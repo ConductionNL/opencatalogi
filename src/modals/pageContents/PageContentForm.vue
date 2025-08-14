@@ -2,6 +2,7 @@
 import { objectStore, navigationStore } from '../../store/store.js'
 import { getTheme } from '../../services/getTheme.js'
 import { EventBus } from '../../eventBus.js'
+import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </script>
 
 <template>
@@ -40,6 +41,15 @@ import { EventBus } from '../../eventBus.js'
 					input-label="Content type"
 					required />
 
+				<!-- Order -->
+				<NcTextField
+					:disabled="objectStore.isLoading('page')"
+					label="Order"
+					type="number"
+					min="0"
+					:value.sync="contentsItem.order"
+					required />
+
 				<!-- RichText -->
 				<NcTextArea v-if="contentsItem.type === 'RichText'"
 					:value.sync="contentsItem.richTextData"
@@ -59,6 +69,33 @@ import { EventBus } from '../../eventBus.js'
 						</div>
 					</VueDraggable>
 				</div>
+
+				<!-- Security Section -->
+				<div class="groups-section">
+					<label class="groups-label">Security</label>
+					<NcNoteCard type="info">
+						<p>When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.</p>
+					</NcNoteCard>
+					<NcSelect
+						v-model="contentsItem.groups"
+						:options="groupsOptions.options"
+						:disabled="objectStore.isLoading('page') || groupsOptions.loading"
+						input-label="Select Groups"
+						multiple />
+					<p v-if="groupsOptions.loading" class="groups-loading">Loading groups...</p>
+				</div>
+
+				<!-- Hide After Login -->
+				<div class="hide-after-login">
+					<NcNoteCard type="info">
+						<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
+					</NcNoteCard>
+					<NcCheckboxRadioSwitch
+						:checked.sync="contentsItem.hideAfterInlog"
+						:disabled="objectStore.isLoading('page')">
+						Verberg na inloggen
+					</NcCheckboxRadioSwitch>
+				</div>
 			</div>
 			<NcButton v-if="objectStore.getState('page').success === null"
 				:disabled="!contentsItem.type || objectStore.isLoading('page')"
@@ -76,7 +113,7 @@ import { EventBus } from '../../eventBus.js'
 </template>
 
 <script>
-import { NcButton, NcModal, NcLoadingIcon, NcNoteCard, NcSelect, NcTextArea, NcTextField } from '@nextcloud/vue'
+import { NcButton, NcModal, NcLoadingIcon, NcNoteCard, NcSelect, NcTextArea, NcTextField, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import _ from 'lodash'
 
@@ -96,14 +133,17 @@ export default {
 		NcTextArea,
 		VueDraggable,
 		NcTextField,
+		NcCheckboxRadioSwitch,
 		// Icons
 		Plus,
+		Drag,
 	},
 	data() {
 		return {
 			isEdit: !!objectStore.getActiveObject('pageContent')?.id,
 			contentsItem: {
 				type: '',
+				order: 0,
 				richTextData: '',
 				id: Math.random().toString(36).substring(2, 12),
 				faqData: [
@@ -113,6 +153,8 @@ export default {
 						answer: '',
 					},
 				],
+				groups: [],
+				hideAfterInlog: false,
 			},
 			typeOptions: {
 				options: ['RichText', 'Faq'],
@@ -121,6 +163,10 @@ export default {
 			error: false,
 			errorCode: '',
 			hasUpdated: false,
+			groupsOptions: {
+				options: [],
+				loading: false,
+			},
 		}
 	},
 	computed: {
@@ -155,6 +201,9 @@ export default {
 		},
 	},
 	mounted() {
+		// Fetch groups for the dropdown
+		this.fetchGroups()
+		
 		if (this.isEdit) {
 			const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
 
@@ -162,8 +211,11 @@ export default {
 			this.contentsItem = {
 				...this.contentsItem,
 				type: contentItem.type,
+				order: contentItem.order || 0,
 				richTextData: contentItem.data.content || '',
 				id: contentItem.id,
+				groups: contentItem.groups || [],
+				hideAfterInlog: contentItem.hideAfterInlog || false,
 			}
 
 			// if faqs are present, prepend them to the contentsItem
@@ -193,14 +245,18 @@ export default {
 			if (this.contentsItem.type === 'RichText') {
 				contentItem = {
 					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						content: this.contentsItem.richTextData,
+						groups: this.contentsItem.groups,
+						hideAfterInlog: this.contentsItem.hideAfterInlog,
 					},
 				}
 			} else if (this.contentsItem.type === 'Faq') {
 				contentItem = {
 					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						// remove the last item since it's a placeholder and is always empty no matter what
@@ -208,6 +264,8 @@ export default {
 							question: faq.question,
 							answer: faq.answer,
 						})),
+						groups: this.contentsItem.groups,
+						hideAfterInlog: this.contentsItem.hideAfterInlog,
 					},
 				}
 			}
@@ -246,6 +304,19 @@ export default {
 					objectStore.setState('page', { loading: false })
 				})
 		},
+		fetchGroups() {
+			this.groupsOptions.loading = true;
+			getNextcloudGroups()
+				.then((groups) => {
+					this.groupsOptions.options = groups;
+				})
+				.catch((err) => {
+					console.error('Error fetching groups:', err);
+				})
+				.finally(() => {
+					this.groupsOptions.loading = false;
+				});
+		}
 	},
 }
 </script>
@@ -289,5 +360,26 @@ export default {
 
 .draggable-item-container:last-child .drag-handle {
     cursor: not-allowed;
+}
+
+.groups-section {
+    margin-block-start: var(--OC-margin-20);
+    margin-block-end: var(--OC-margin-20);
+}
+
+.groups-label {
+    display: block;
+    margin-block-end: var(--OC-margin-10);
+    font-weight: bold;
+}
+
+.groups-loading {
+	margin-block-start: var(--OC-margin-10);
+	font-size: 12px;
+	color: var(--OC-text-color-light);
+}
+
+.hide-after-login {
+	margin-block-start: var(--OC-margin-20);
 }
 </style>
