@@ -15,11 +15,15 @@ import { TMenuItem, TMenu } from './menu.types'
  * Mock menu item data
  */
 export const mockMenuItem: TMenuItem = {
+	id: '1',
+	order: 0,
 	name: 'Home',
 	slug: 'home',
 	link: '/',
 	description: 'Home page',
 	icon: 'home',
+	groups: ['admin', 'users'],
+	hideAfterInlog: false,
 	items: [],
 }
 

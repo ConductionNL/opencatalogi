@@ -9,12 +9,9 @@ import { TPage } from './page.types'
 export class Page implements TPage {
 
 	public id: string
-	public uuid: string
 	public title: string
 	public slug: string
-	public contents: { type: string; id: string; data: Record<string, any> }[]
-	public createdAt: string
-	public updatedAt: string
+	public contents: { type: string; id: string; data: Record<string, any> }[] | null
 
 	/**
 	 * Creates a new Page instance
@@ -31,12 +28,10 @@ export class Page implements TPage {
 	 */
 	private hydrate(data: TPage) {
 		this.id = data?.id?.toString() || ''
-		this.uuid = data?.uuid || ''
 		this.title = data?.title || ''
 		this.slug = data?.slug || ''
-		this.contents = data?.contents || []
-		this.createdAt = data?.createdAt || ''
-		this.updatedAt = data?.updatedAt || ''
+		this.contents = Array.isArray(data?.contents) && data.contents.length > 0 ? data.contents : null
+		// created/updated timestamps are not tracked on the entity level
 	}
 
 	/* istanbul ignore next */
@@ -57,7 +52,7 @@ export class Page implements TPage {
 					id: z.string(),
 					data: z.record(z.string(), z.any()),
 				}),
-			),
+			).nullable(),
 		})
 
 		const result = schema.safeParse({

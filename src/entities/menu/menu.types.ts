@@ -1,18 +1,26 @@
 export type TMenuSubItem = {
-	name: string
-	slug: string
-	link: string
-	description?: string
-	icon?: string
+    id?: string
+    order: number
+    name: string
+    slug: string
+    link: string
+    description?: string
+    icon?: string
+    groups?: string[]
+    hideAfterInlog?: boolean
 }
 
 export type TMenuItem = {
-	name: string
-	slug: string
-	link: string
-	description?: string
-	icon?: string
-	items?: TMenuSubItem[]
+    id?: string
+    order: number
+    name: string
+    slug: string
+    link: string
+    description?: string
+    icon?: string
+    groups?: string[]
+    hideAfterInlog?: boolean
+    items?: TMenuSubItem[]
 }
 
 /**
