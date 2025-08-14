@@ -17,10 +17,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'glossary'"
 		ref="modalRef"
+		:name="isEdit ? 'Edit term' : 'Add term'"
 		:label-id="isEdit ? 'editGlossaryModal' : 'addGlossaryModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ isEdit ? 'Edit term' : 'Add term' }}</h2>
 			<div v-if="objectStore.getState('glossary').success !== null || objectStore.getState('glossary').error">
 				<NcNoteCard v-if="objectStore.getState('glossary').success" type="success">
 					<p>{{ isEdit ? 'Term successfully edited' : 'Term successfully added' }}</p>
@@ -67,17 +67,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<NcLoadingIcon :size="20" />
 				<span>{{ isEdit ? 'Term is being edited...' : 'Term is being added...' }}</span>
 			</div>
-			<NcButton v-if="objectStore.getState('glossary').success === null && !objectStore.isLoading('glossary')"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('glossary')"
-				type="primary"
-				class="glossary-submit-button"
-				@click="saveGlossary">
-				<template #icon>
-					<ContentSaveOutline :size="20" />
-				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('glossary').success === null && !objectStore.isLoading('glossary')"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('glossary')"
+					type="primary"
+					@click="saveGlossary">
+					<template #icon>
+						<ContentSaveOutline :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -85,7 +92,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import { NcButton, NcModal, NcTextField, NcLoadingIcon, NcNoteCard, NcSelectTags } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { Glossary } from '../../entities/index.js'
 
 export default {
@@ -98,6 +105,7 @@ export default {
 		NcNoteCard,
 		NcSelectTags,
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {
@@ -174,15 +182,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
-.glossary-submit-button {
-    margin-block-start: 1rem;
-}
-
 .loading-status {
     display: flex;
     align-items: center;

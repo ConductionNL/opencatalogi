@@ -17,11 +17,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'viewTheme'"
 		ref="modalRef"
+		:name="theme?.title || 'Theme'"
 		label-id="viewThemeModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ theme?.title || 'Theme' }}</h2>
-
 			<div v-if="theme" class="themeDetails">
 				<div class="detailSection">
 					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
@@ -139,6 +138,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					{{ t('opencatalogi', 'Edit Theme') }}
 				</NcButton>
 				<NcButton @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Close') }}
 				</NcButton>
 			</div>
@@ -149,6 +151,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'ViewThemeModal',
@@ -156,6 +159,7 @@ export default {
 		NcModal,
 		NcButton,
 		Pencil,
+		Cancel,
 	},
 	computed: {
 		/**
@@ -188,7 +192,6 @@ export default {
 
 <style scoped>
 .modal__content {
-	margin: var(--OC-margin-50);
 	text-align: left;
 	max-width: 80vw;
 	max-height: 80vh;

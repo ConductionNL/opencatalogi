@@ -4,11 +4,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcModal ref="modalRef"
+		:name="isEdit ? 'Edit organization' : 'Add organization'"
 		:label-id="isEdit ? 'editOrganizationModal' : 'addOrganizationModal'"
 		@close="closeModal()">
 		<div class="modal__content">
-			<h2>{{ isEdit ? 'Edit' : 'Add' }} organization</h2>
-
 			<div v-if="objectStore.getState('organization').success !== null || objectStore.getState('organization').error">
 				<NcNoteCard v-if="objectStore.getState('organization').success" type="success">
 					<p>Organization successfully {{ isEdit ? 'edited' : 'added' }}</p>
@@ -77,17 +76,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:error="!!inputValidation.fieldErrors?.['image']"
 					:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
 			</div>
-			<NcButton v-if="objectStore.getState('organization').success === null"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('organization')"
-				type="primary"
-				@click="saveOrganization()">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('organization')" :size="20" />
-					<Plus v-if="!objectStore.isLoading('organization')" :size="20" />
-				</template>
-				{{ isEdit ? 'Edit' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('organization').success === null"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('organization')"
+					type="primary"
+					@click="saveOrganization()">
+					<template #icon>
+						<NcLoadingIcon v-if="objectStore.isLoading('organization')" :size="20" />
+						<Plus v-if="!objectStore.isLoading('organization')" :size="20" />
+					</template>
+					{{ isEdit ? 'Edit' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -102,6 +109,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { Organization } from '../../entities/index.js'
 import _ from 'lodash'
 export default {
@@ -115,6 +123,7 @@ export default {
 		NcNoteCard,
 		// Icons
 		Plus,
+		Cancel,
 	},
 	data() {
 		return {
@@ -209,11 +218,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
 .formContainer > * {
     margin-block-end: 10px;
 }

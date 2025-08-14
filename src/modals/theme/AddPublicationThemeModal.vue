@@ -6,11 +6,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcModal
 		v-if="navigationStore.modal === 'addPublicationTheme'"
 		ref="modalRef"
+		name="Add publication theme"
 		label-id="addPublicationThemeModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Add publication theme</h2>
-
 			<NcNoteCard v-if="successState" type="success">
 				<p>Theme successfully saved</p>
 			</NcNoteCard>
@@ -30,7 +29,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				v-if="successState === null"
 				type="primary"
 				:disabled="!selectedTheme || isSaving"
-				class="save-button"
+				class="singleModalAction"
 				@click="saveTheme">
 				<template #icon>
 					<NcLoadingIcon v-if="isSaving" :size="20" />
@@ -122,21 +121,8 @@ export default {
 </script>
 
 <style>
-.modal__content {
-  margin: var(--OC-margin-50);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
 .selectWrapper {
   display: flex;
   justify-content: center;
-}
-</style>
-
-<style scoped>
-.save-button {
-  margin-left: auto;
 }
 </style>

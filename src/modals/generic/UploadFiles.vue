@@ -669,10 +669,6 @@ export default {
 div[class='modal-container']:has(.TestMappingMainModal) {
     width: clamp(1000px, 100%, 1200px) !important;
 }
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
 </style>
 
 <style scoped>

@@ -21,9 +21,9 @@ import { EventBus } from '../../eventBus.js'
 		ref="modalRef"
 		class="deleteMenuItemModal"
 		label-id="deleteMenuItemModal"
+		:name="'Delete menu item'"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Delete menu item</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
 					<p>Menu item successfully deleted</p>
@@ -36,12 +36,16 @@ import { EventBus } from '../../eventBus.js'
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Are you sure you want to delete the menu item '{{ menuItem.title }}'?</p>
+				<p>Are you sure you want to delete the menu item '{{ menuItem.title || menuItem.name }}'?</p>
 			</div>
 
-			<span class="buttonContainer">
+			<div class="modalActions">
 				<NcButton
+					class="modalCloseButton"
 					@click="handleCancel">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
 					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
@@ -56,7 +60,7 @@ import { EventBus } from '../../eventBus.js'
 					</template>
 					Delete
 				</NcButton>
-			</span>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -68,9 +72,11 @@ import {
 	NcNoteCard,
 	NcLoadingIcon,
 } from '@nextcloud/vue'
+import { Menu } from '../../entities/index.js'
 
 // icons
 import Delete from 'vue-material-design-icons/Delete.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 /**
  * Loading state for the component
@@ -94,23 +100,32 @@ const error = ref(null)
  * Get the active menu item from the store
  * @return {object | null}
  */
-const menuItem = computed(() => objectStore.getActiveObject('menuItem'))
+const menuItem = computed(() => objectStore.getActiveObject('menuItem') || {})
 
 /**
  * Handle delete action
+ * Remove the item from the active menu and update the menu object
  * @return {Promise<void>}
  */
 const handleDelete = async () => {
 	loading.value = true
 	try {
-		await objectStore.deleteObject('menuItem', menuItem.value.id)
-		success.value = true
+		const menu = objectStore.getActiveObject('menu')
+		if (!menu?.id) throw new Error('No active menu')
+
+		const updatedItems = (menu.items || []).filter(i => i.id !== menuItem.value.id)
+		const newMenu = new Menu({ ...menu, items: updatedItems })
+		await objectStore.updateObject('menu', newMenu.id, newMenu)
 		success.value = true
 		EventBus.$emit('delete-menu-item-item-success')
-	} catch (error) {
-		console.error('Error deleting menu item:', error)
+		setTimeout(() => {
+			navigationStore.setModal(false)
+			objectStore.clearActiveObject('menuItem')
+		}, 2000)
+	} catch (e) {
+		console.error('Error deleting menu item:', e)
 		success.value = false
-		error.value = error.message
+		error.value = e.message
 	} finally {
 		loading.value = false
 	}
@@ -122,6 +137,7 @@ const handleDelete = async () => {
  */
 const handleCancel = () => {
 	navigationStore.setModal(false)
+	objectStore.clearActiveObject('menuItem')
 }
 
 export default {
@@ -131,6 +147,7 @@ export default {
 		NcButton,
 		NcNoteCard,
 		NcLoadingIcon,
+		Cancel,
 	},
 	data() {
 		return {

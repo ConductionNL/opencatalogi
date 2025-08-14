@@ -5,10 +5,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'catalog'"
 		ref="modalRef"
+		:name="isEdit ? 'Catalog edit' : 'Add Catalog'"
 		:label-id="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Catalog {{ isEdit ? 'edit' : 'add' }}</h2>
 			<div v-if="objectStore.getState('catalog').success !== null || objectStore.getState('catalog').error">
 				<NcNoteCard v-if="objectStore.getState('catalog').success" type="success">
 					<p>{{ isEdit ? 'Catalog successfully edited' : 'Catalog successfully added' }}</p>
@@ -68,17 +68,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<NcLoadingIcon :size="20" />
 				<span>{{ isEdit ? 'Catalog is being edited...' : 'Catalog is being added...' }}</span>
 			</div>
-			<NcButton v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('catalog')"
-				type="primary"
-				class="catalog-submit-button"
-				@click="saveCatalog">
-				<template #icon>
-					<ContentSaveOutline :size="20" />
-				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('catalog')"
+					type="primary"
+					@click="saveCatalog">
+					<template #icon>
+						<ContentSaveOutline :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -87,6 +94,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcModal, NcTextField, NcLoadingIcon, NcNoteCard, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import { Catalogi } from '../../entities/index.js'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'CatalogModal',
@@ -100,6 +108,7 @@ export default {
 		NcSelect,
 		// Icons
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {
@@ -278,10 +287,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
 
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
@@ -291,10 +296,6 @@ export default {
 
 .success {
     color: green;
-}
-
-.catalog-submit-button {
-    margin-block-start: 1rem;
 }
 
 .loading-status {
