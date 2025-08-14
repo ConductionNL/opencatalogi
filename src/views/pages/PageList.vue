@@ -150,14 +150,14 @@ export default {
 			objectStore.getActiveObject('page')?.id === page?.id ? objectStore.clearActiveObject('page') : objectStore.setActiveObject('page', page)
 		},
 		openAddPageModal() {
-			navigationStore.setModal('page')
+			navigationStore.setModal('viewPage')
 			objectStore.clearActiveObject('page')
 		},
 		onActionButtonClick(page, action) {
 			objectStore.setActiveObject('page', page)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('page')
+				navigationStore.setModal('viewPage')
 				break
 			case 'addContent':
 				navigationStore.setModal('pageContentForm')

@@ -10,9 +10,7 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<OrganizationModal v-if="navigationStore.modal === 'organization'" />
 		<ThemeModal v-if="navigationStore.modal === 'theme'" />
 		<AddPublicationThemeModal v-if="navigationStore.modal === 'addPublicationTheme'" />
-		<PageModal v-if="navigationStore.modal === 'page'" />
 		<GlossaryModal />
-		<MenuModal v-if="navigationStore.modal === 'menu'" />
 		<!--View Modals-->
 		<ViewDirectoryModal />
 		<ViewGlossaryModal />
@@ -54,7 +52,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 import CatalogModal from './catalog/CatalogModal.vue'
 import OrganizationModal from './organization/OrganizationModal.vue'
 import ThemeModal from './theme/ThemeModal.vue'
-import PageModal from './page/PageModal.vue'
 import GlossaryModal from './glossary/GlossaryModal.vue'
 import UploadFilesModal from './generic/UploadFiles.vue'
 // View Modals
@@ -71,7 +68,6 @@ import AddDirectoryModal from './directory/AddDirectoryModal.vue'
 import EditListingModal from './directory/EditListingModal.vue'
 import PageContentForm from './pageContents/PageContentForm.vue'
 // menu
-import MenuModal from './menu/MenuModal.vue'
 import MenuItemForm from './menuItem/MenuItemForm.vue'
 import DeleteMenuItemModal from './menuItem/DeleteMenuItemModal.vue'
 import ObjectModal from './object/ObjectModal.vue'
@@ -104,8 +100,6 @@ export default {
 		EditListingModal,
 		OrganizationModal,
 		ThemeModal,
-		PageModal,
-		MenuModal,
 		GlossaryModal,
 		// View Modals
 		ViewDirectoryModal,

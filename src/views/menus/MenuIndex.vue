@@ -68,7 +68,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<NcActionButton
 							:primary="true"
 							close-after-click
-							@click="objectStore.clearActiveObject('menu'); navigationStore.setModal('menu')">
+							@click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
@@ -104,9 +104,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<MenuIcon v-else :size="64" />
 				</template>
 				<template v-if="!objectStore.isLoading('menu') && !objectStore.getCollection('menu')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('menu')">
-						{{ t('opencatalogi', 'Add menu') }}
-					</NcButton>
+									<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
+					{{ t('opencatalogi', 'Add menu') }}
+				</NcButton>
 				</template>
 			</NcEmptyContent>
 
@@ -130,7 +130,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</template>
 										View
 									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('menu')">
+									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu')">
 										<template #icon>
 											<Pencil :size="20" />
 										</template>
@@ -181,10 +181,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									<tr>
 										<td>{{ t('opencatalogi', 'Position') }}</td>
 										<td>
-											<span v-if="menu.position === 0">Header</span>
-											<span v-else-if="menu.position === 1">Navigation</span>
-											<span v-else-if="menu.position === 2">Footer</span>
-											<span v-else>{{ menu.position }}</span>
+											{{ menu.position }}
 										</td>
 										<td>{{ 'Configured' }}</td>
 									</tr>
@@ -240,10 +237,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</div>
 									</td>
 									<td>
-										<span v-if="menu.position === 0">Header</span>
-										<span v-else-if="menu.position === 1">Navigation</span>
-										<span v-else-if="menu.position === 2">Footer</span>
-										<span v-else>{{ menu.position }}</span>
+										{{ menu.position }}
 									</td>
 									<td>{{ menu.items?.length || 0 }}</td>
 									<td class="tableColumnConstrained">
@@ -261,7 +255,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 												</template>
 												View
 											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('menu')">
+											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu')">
 												<template #icon>
 													<Pencil :size="20" />
 												</template>

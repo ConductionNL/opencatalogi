@@ -68,7 +68,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<NcActionButton
 							:primary="true"
 							close-after-click
-							@click="objectStore.clearActiveObject('page'); navigationStore.setModal('page')">
+							@click="objectStore.clearActiveObject('page'); navigationStore.setModal('viewPage')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
@@ -104,9 +104,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<Web v-else :size="64" />
 				</template>
 				<template v-if="!objectStore.isLoading('page') && !objectStore.getCollection('page')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('page'); navigationStore.setModal('page')">
-						{{ t('opencatalogi', 'Add page') }}
-					</NcButton>
+									<NcButton type="primary" @click="objectStore.clearActiveObject('page'); navigationStore.setModal('viewPage')">
+					{{ t('opencatalogi', 'Add page') }}
+				</NcButton>
 				</template>
 			</NcEmptyContent>
 
@@ -130,7 +130,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</template>
 										View
 									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('page')">
+									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
 										<template #icon>
 											<Pencil :size="20" />
 										</template>
@@ -246,7 +246,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 												</template>
 												View
 											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('page')">
+											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
 												<template #icon>
 													<Pencil :size="20" />
 												</template>

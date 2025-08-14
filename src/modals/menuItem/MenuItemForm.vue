@@ -6,11 +6,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </script>
 
 <template>
-	<NcModal ref="modalRef"
+	<NcDialog
 		:name="isEdit ? 'Edit Menu Item' : 'Add Menu Item'"
-		:label-id="isEdit ? 'editMenuItem' : 'addMenuItem'"
-		@close="closeModal">
-		<div class="modal__content">
+		size="large"
+		:can-close="true"
+		@update:open="handleDialogClose">
+		<div class="dialog__content">
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
 					<p>Menu item successfully {{ isEdit ? 'edited' : 'added' }}</p>
@@ -20,130 +21,134 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 				</NcNoteCard>
 			</div>
 
-			<div v-if="objectStore.getState('menu').success === null" class="form-container">
-				<NcTextField
-					:disabled="objectStore.isLoading('menu')"
-					label="Order"
-					type="number"
-					min="0"
-					:value.sync="menuItem.order"
-					:error="!!inputValidation.getError(`items.${index}.order`)"
-					:helper-text="inputValidation.getError(`items.${index}.order`)"
-					@update:value="handleOrderUpdate" />
+			<div v-if="objectStore.getState('menu').success === null" class="tabContainer">
+				<BTabs content-class="mt-3" justified>
+					<!-- Configuration Tab -->
+					<BTab title="Configuration" active>
+						<div class="form-container">
+							<NcTextField
+								:disabled="objectStore.isLoading('menu')"
+								label="Order"
+								type="number"
+								min="0"
+								:value.sync="menuItem.order"
+								:error="!!inputValidation.getError(`items.${index}.order`)"
+								:helper-text="inputValidation.getError(`items.${index}.order`)"
+								@update:value="handleOrderUpdate" />
 
-				<NcTextField
-					:disabled="objectStore.isLoading('menu')"
-					label="Name"
-					:value.sync="menuItem.name"
-					:error="!!inputValidation.getError(`items.${index}.name`)"
-					:helper-text="inputValidation.getError(`items.${index}.name`)" />
+							<NcTextField
+								:disabled="objectStore.isLoading('menu')"
+								label="Name"
+								:value.sync="menuItem.name"
+								:error="!!inputValidation.getError(`items.${index}.name`)"
+								:helper-text="inputValidation.getError(`items.${index}.name`)" />
 
-				<NcTextField
-					:disabled="objectStore.isLoading('menu')"
-					label="Description"
-					:value.sync="menuItem.description"
-					:error="!!inputValidation.getError(`items.${index}.description`)"
-					:helper-text="inputValidation.getError(`items.${index}.description`)" />
+							<NcTextField
+								:disabled="objectStore.isLoading('menu')"
+								label="Description"
+								:value.sync="menuItem.description"
+								:error="!!inputValidation.getError(`items.${index}.description`)"
+								:helper-text="inputValidation.getError(`items.${index}.description`)" />
 
-				<NcTextField
-					:disabled="objectStore.isLoading('menu')"
-					label="Slug"
-					:value.sync="menuItem.slug"
-					:error="!!inputValidation.getError(`items.${index}.slug`)"
-					:helper-text="inputValidation.getError(`items.${index}.slug`)" />
+							<NcTextField
+								:disabled="objectStore.isLoading('menu')"
+								label="Slug"
+								:value.sync="menuItem.slug"
+								:error="!!inputValidation.getError(`items.${index}.slug`)"
+								:helper-text="inputValidation.getError(`items.${index}.slug`)" />
 
-				<NcTextField
-					:disabled="objectStore.isLoading('menu')"
-					label="Link"
-					:value.sync="menuItem.link"
-					:error="!!inputValidation.getError(`items.${index}.link`)"
-					:helper-text="inputValidation.getError(`items.${index}.link`)" />
+							<NcTextField
+								:disabled="objectStore.isLoading('menu')"
+								label="Link"
+								:value.sync="menuItem.link"
+								:error="!!inputValidation.getError(`items.${index}.link`)"
+								:helper-text="inputValidation.getError(`items.${index}.link`)" />
 
-				<NcSelect v-bind="iconOptions"
-					v-model="iconOptions.value"
-					input-label="Icon"
-					:disabled="objectStore.isLoading('menu')" />
+							<NcSelect v-bind="iconOptions"
+								v-model="iconOptions.value"
+								input-label="Icon"
+								:disabled="objectStore.isLoading('menu')" />
+						</div>
+					</BTab>
 
-				<div class="groups-section">
-					<label class="groups-label">Security</label>
-					<NcNoteCard type="info">
-						<p>When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.</p>
-					</NcNoteCard>
-					<NcSelect
-						v-model="groupsOptions.value"
-						:options="groupsOptions.options"
-						:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
-						input-label="Select Groups"
-						multiple />
-					<p v-if="groupsOptions.loading" class="groups-loading">
-						Loading groups...
-					</p>
-				</div>
+					<!-- Security Tab -->
+					<BTab title="Security">
+						<div class="form-container">
+							<div class="groups-section">
+								<label class="groups-label">Groups Access</label>
+								<NcNoteCard type="info">
+									<p>When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.</p>
+								</NcNoteCard>
+								<NcSelect
+									v-model="groupsOptions.value"
+									:options="groupsOptions.options"
+									:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
+									input-label="Select Groups"
+									multiple />
+								<p v-if="groupsOptions.loading" class="groups-loading">
+									Loading groups...
+								</p>
+							</div>
 
-				<div class="hide-after-login">
-					<NcNoteCard type="info">
-						<p>When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.</p>
-					</NcNoteCard>
-					<NcCheckboxRadioSwitch
-						:checked.sync="menuItem.hideAfterInlog"
-						:disabled="objectStore.isLoading('menu')">
-						Verberg na inloggen
-					</NcCheckboxRadioSwitch>
-				</div>
-			</div>
-
-			<div class="modalActions">
-				<NcButton class="modalCloseButton" @click="closeModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					{{ isEdit ? 'Close' : 'Cancel' }}
-				</NcButton>
-				<NcButton v-if="objectStore.getState('menu').success === null"
-					v-tooltip="inputValidation.flatErrorMessages[0]"
-					:disabled="objectStore.isLoading('menu') || !inputValidation.success"
-					type="primary"
-					@click="saveMenuItem">
-					<template #icon>
-						<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
-						<ContentSaveOutline v-if="!objectStore.isLoading('menu') && isEdit" :size="20" />
-						<Plus v-if="!objectStore.isLoading('menu') && !isEdit" :size="20" />
-					</template>
-					{{ isEdit ? 'Save' : 'Add' }}
-				</NcButton>
+							<div class="hide-after-login">
+								<NcNoteCard type="info">
+									<p>When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.</p>
+								</NcNoteCard>
+								<NcCheckboxRadioSwitch
+									:checked.sync="menuItem.hideAfterInlog"
+									:disabled="objectStore.isLoading('menu')">
+									Verberg na inloggen
+								</NcCheckboxRadioSwitch>
+							</div>
+						</div>
+					</BTab>
+				</BTabs>
 			</div>
 		</div>
-	</NcModal>
+
+		<template #actions>
+			<NcButton @click="closeModal">
+				{{ isEdit ? 'Close' : 'Cancel' }}
+			</NcButton>
+			<NcButton v-if="objectStore.getState('menu').success === null"
+				v-tooltip="inputValidation.flatErrorMessages[0]"
+				:disabled="objectStore.isLoading('menu') || !inputValidation.success"
+				type="primary"
+				@click="saveMenuItem">
+				<template #icon>
+					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
+					<ContentSaveOutline v-if="!objectStore.isLoading('menu') && isEdit" :size="20" />
+					<Plus v-if="!objectStore.isLoading('menu') && !isEdit" :size="20" />
+				</template>
+				{{ isEdit ? 'Save' : 'Add' }}
+			</NcButton>
+		</template>
+	</NcDialog>
 </template>
 
 <script>
 import _ from 'lodash'
 import { Menu } from '../../entities/menu/menu.ts'
-import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcTextField, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { BTabs, BTab } from 'bootstrap-vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'MenuItemForm',
 	components: {
-		NcModal,
+		NcDialog,
 		NcButton,
 		NcLoadingIcon,
 		NcNoteCard,
 		NcTextField,
 		NcSelect,
 		NcCheckboxRadioSwitch,
+		BTabs,
+		BTab,
 		// Icons
 		ContentSaveOutline,
 		Plus,
-		Cancel,
 	},
 	data() {
 		return {
@@ -288,16 +293,37 @@ export default {
 				this.groupsOptions.loading = false
 			}
 		},
+		/**
+		 * Handle dialog close event
+		 * @param {boolean} isOpen - Whether the dialog is open
+		 * @return {void}
+		 */
+		handleDialogClose(isOpen) {
+			if (!isOpen) {
+				this.closeModal()
+			}
+		},
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('menuItem')
 			objectStore.setState('menu', { success: null, error: null })
 			clearTimeout(this.closeModalTimeout)
 		},
+		/**
+		 * Save the menu item (either create new or update existing)
+		 * @return {Promise<void>}
+		 */
 		async saveMenuItem() {
 			objectStore.setState('menu', { success: null, error: null, loading: true })
 
 			const menuClone = _.cloneDeep(this.menuObject)
+			const activeMenuItem = objectStore.getActiveObject('menuItem')
+
+			// Debug logging
+			console.log('=== DEBUG: saveMenuItem ===')
+			console.log('Active menu item:', activeMenuItem)
+			console.log('Menu object items:', menuClone.items)
+			console.log('Current form data:', this.menuItem)
 
 			const updatedMenuItem = {
 				...this.menuItem,
@@ -306,30 +332,74 @@ export default {
 				order: Number(this.menuItem.order) || 0,
 			}
 
-			if (this.isEdit) {
-				// Find the item we're editing by ID
-				const itemIndex = menuClone.items.findIndex(item => item.id === objectStore.getActiveObject('menuItem').id)
-				if (itemIndex !== -1) {
+			if (this.isEdit && activeMenuItem) {
+				console.log('=== EDITING MODE ===')
+
+				// Strategy 1: If we have a reliable index, use it first (most reliable for array-based items)
+				let itemIndex = -1
+				if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menuClone.items.length) {
+					console.log('Using provided index directly:', activeMenuItem.index)
+					itemIndex = activeMenuItem.index
+				} else {
+					// Strategy 2: Try to find by exact ID match (only if ID is actually defined)
+					if (activeMenuItem.id && activeMenuItem.id !== null && activeMenuItem.id !== undefined) {
+						itemIndex = menuClone.items.findIndex(item => item.id === activeMenuItem.id)
+						console.log('Found by ID match at index:', itemIndex)
+					}
+
+					// Strategy 3: If ID match fails, try to find by name and order (fallback)
+					if (itemIndex === -1) {
+						console.log('ID match failed, trying name/order match')
+						itemIndex = menuClone.items.findIndex(item =>
+							item.name === activeMenuItem.name
+							&& item.order === activeMenuItem.order,
+						)
+						console.log('Found by name/order match at index:', itemIndex)
+					}
+				}
+
+				if (itemIndex !== -1 && itemIndex < menuClone.items.length) {
+					console.log('Successfully found item at index:', itemIndex)
+					console.log('Original item:', menuClone.items[itemIndex])
+
 					// Replace the existing item while preserving its ID
 					menuClone.items[itemIndex] = {
 						...updatedMenuItem,
-						id: objectStore.getActiveObject('menuItem').id,
+						id: activeMenuItem.id || menuClone.items[itemIndex].id,
 					}
+
+					console.log('Updated item:', menuClone.items[itemIndex])
+				} else {
+					console.error('Could not find menu item to edit')
+					console.error('Active menu item:', activeMenuItem)
+					console.error('Available items:', menuClone.items)
+
+					objectStore.setState('menu', { error: 'Could not find the menu item to edit' })
+					objectStore.setState('menu', { loading: false })
+					return
 				}
 			} else {
+				console.log('=== ADDING NEW ITEM ===')
 				// Add new item without ID - let the backend handle ID generation
 				// Set the order to the next available order number
 				const maxOrder = Math.max(0, ...menuClone.items.map(item => item.order || 0))
 				updatedMenuItem.order = maxOrder + 1
 				menuClone.items.push(updatedMenuItem)
+				console.log('Added new item with order:', updatedMenuItem.order)
 			}
+
+			console.log('Final menu items:', menuClone.items)
+			console.log('=== END DEBUG ===')
 
 			const newMenu = new Menu(menuClone)
 
 			objectStore.updateObject('menu', this.menuObject.id, newMenu)
 				.then(() => {
 					objectStore.setState('menu', { success: true })
-					this.closeModalTimeout = setTimeout(this.closeModal, 2000)
+					// Wait for the user to read the feedback then return to parent dialog
+					this.closeModalTimeout = setTimeout(() => {
+						navigationStore.setModal('viewMenu')
+					}, 2000)
 					EventBus.$emit('edit-menu-item-success')
 				})
 				.catch((error) => {
@@ -356,6 +426,10 @@ export default {
 </script>
 
 <style scoped>
+
+.tabContainer {
+	margin-top: var(--OC-margin-20);
+}
 
 .form-container > * {
 	margin-top: var(--OC-margin-20);

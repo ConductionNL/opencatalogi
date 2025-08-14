@@ -94,10 +94,7 @@ import { getTheme } from '../../services/getTheme.js'
 				</div>
 				<div>
 					<b>Position:</b>
-					<span v-if="menu.position === 0">{{ menu.position }} - right above</span>
-					<span v-else-if="menu.position === 1">{{ menu.position }} - navigation bar</span>
-					<span v-else-if="menu.position === 2">{{ menu.position }} - footer</span>
-					<span v-else>{{ menu.position }} - not defined</span>
+					<span>{{ menu.position }}</span>
 				</div>
 				<div>
 					<b>Last updated:</b>
@@ -297,7 +294,7 @@ export default {
 			objectStore.setActiveObject('menu', menu)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('menu')
+				navigationStore.setModal('viewMenu')
 				break
 			case 'addContent':
 				navigationStore.setModal('menuItemForm')

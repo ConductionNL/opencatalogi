@@ -147,14 +147,14 @@ export default {
 			objectStore.getActiveObject('menu')?.id === menu?.id ? objectStore.clearActiveObject('menu') : objectStore.setActiveObject('menu', menu)
 		},
 		openAddMenuModal() {
-			navigationStore.setModal('menu')
+			navigationStore.setModal('viewMenu')
 			objectStore.clearActiveObject('menu')
 		},
 		onActionButtonClick(menu, action) {
 			objectStore.setActiveObject('menu', menu)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('menu')
+				navigationStore.setModal('viewMenu')
 				break
 			case 'addMenuItem':
 				navigationStore.setModal('menuItemForm')

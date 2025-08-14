@@ -6,11 +6,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </script>
 
 <template>
-	<NcModal ref="modalRef"
+	<NcDialog
 		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.name}`"
-		label-id="addPageContents"
-		@close="closeModal">
-		<div class="modal__content">
+		size="large"
+		:can-close="true"
+		@update:open="handleDialogClose">
+		<div class="dialog__content">
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
 					<p>Content successfully added</p>
@@ -23,102 +24,117 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 				</NcNoteCard>
 			</div>
 
-			<div v-if="objectStore.getState('page').success === null" class="form-group">
-				<p>
-					The order in which you add contents makes a difference, so pay attention to the order.
-				</p>
+			<div v-if="objectStore.getState('page').success === null" class="tabContainer">
+				<BTabs content-class="mt-3" justified>
+					<!-- Configuration Tab -->
+					<BTab title="Configuration" active>
+						<div class="form-group">
+							<p>
+								The order in which you add contents makes a difference, so pay attention to the order.
+							</p>
 
-				<NcSelect
-					v-if="!isEdit"
-					v-bind="typeOptions"
-					v-model="contentsItem.type"
-					input-label="Content type"
-					required />
+							<NcSelect
+								v-if="!isEdit"
+								v-bind="typeOptions"
+								v-model="contentsItem.type"
+								input-label="Content type"
+								required />
 
-				<!-- Order -->
-				<NcTextField
-					:disabled="objectStore.isLoading('page')"
-					label="Order"
-					type="number"
-					min="0"
-					:value.sync="contentsItem.order"
-					required />
+							<!-- Order -->
+							<NcTextField
+								:disabled="objectStore.isLoading('page')"
+								label="Order"
+								type="number"
+								min="0"
+								:value.sync="contentsItem.order"
+								required />
 
-				<!-- RichText -->
-				<NcTextArea v-if="contentsItem.type === 'RichText'"
-					:value.sync="contentsItem.richTextData"
-					label="RichText"
-					required
-					resize="vertical" />
+							<!-- RichText -->
+							<div v-if="contentsItem.type === 'RichText'">
+								<label>Rich Text Content</label>
+								<v-md-editor
+									v-model="contentsItem.richTextData"
+									:disabled="objectStore.isLoading('page')"
+									height="300px"
+									mode="edit" />
+							</div>
 
-				<!-- Faq -->
-				<div v-if="contentsItem.type === 'Faq'">
-					<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
-						<div v-for="item in contentsItem.faqData" :key="item.id" class="draggable-item-container">
-							<div :class="`draggable-form-item ${getTheme()}`">
-								<Drag class="drag-handle" :size="40" />
-								<NcTextField label="Vraag" :value.sync="item.question" />
-								<NcTextField label="Antwoord" :value.sync="item.answer" />
+							<!-- Faq -->
+							<div v-if="contentsItem.type === 'Faq'">
+								<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
+									<div v-for="item in contentsItem.faqData" :key="item.id" class="draggable-item-container">
+										<div :class="`draggable-form-item ${getTheme()}`">
+											<Drag class="drag-handle" :size="40" />
+											<NcTextField label="Vraag" :value.sync="item.question" />
+											<NcTextField label="Antwoord" :value.sync="item.answer" />
+										</div>
+									</div>
+								</VueDraggable>
 							</div>
 						</div>
-					</VueDraggable>
-				</div>
+					</BTab>
 
-				<!-- Security Section -->
-				<div class="groups-section">
-					<label class="groups-label">Security</label>
-					<NcNoteCard type="info">
-						<p>When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.</p>
-					</NcNoteCard>
-					<NcSelect
-						v-model="contentsItem.groups"
-						:options="groupsOptions.options"
-						:disabled="objectStore.isLoading('page') || groupsOptions.loading"
-						input-label="Select Groups"
-						multiple />
-					<p v-if="groupsOptions.loading" class="groups-loading">
-						Loading groups...
-					</p>
-				</div>
+					<!-- Security Tab -->
+					<BTab title="Security">
+						<div class="form-group">
+							<!-- Security Section -->
+							<div class="groups-section">
+								<label class="groups-label">Groups Access</label>
+								<NcNoteCard type="info">
+									<p>When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.</p>
+								</NcNoteCard>
+								<NcSelect
+									v-model="contentsItem.groups"
+									:options="groupsOptions.options"
+									:disabled="objectStore.isLoading('page') || groupsOptions.loading"
+									input-label="Select Groups"
+									multiple />
+								<p v-if="groupsOptions.loading" class="groups-loading">
+									Loading groups...
+								</p>
+							</div>
 
-				<!-- Hide After Login -->
-				<div class="hide-after-login">
-					<NcNoteCard type="info">
-						<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
-					</NcNoteCard>
-					<NcCheckboxRadioSwitch
-						:checked.sync="contentsItem.hideAfterInlog"
-						:disabled="objectStore.isLoading('page')">
-						Hide after login
-					</NcCheckboxRadioSwitch>
-				</div>
-			</div>
-			<div class="modalActions">
-				<NcButton class="modalCloseButton" @click="closeModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					{{ isEdit ? 'Close' : 'Cancel' }}
-				</NcButton>
-				<NcButton v-if="objectStore.getState('page').success === null"
-					:disabled="!contentsItem.type || objectStore.isLoading('page')"
-					type="primary"
-					@click="addPageContent">
-					<template #icon>
-						<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
-						<Plus v-if="!objectStore.isLoading('page')" :size="20" />
-					</template>
-					{{ isEdit ? 'Edit' : 'Add' }}
-				</NcButton>
+							<!-- Hide After Login -->
+							<div class="hide-after-login">
+								<NcNoteCard type="info">
+									<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
+								</NcNoteCard>
+								<NcCheckboxRadioSwitch
+									:checked.sync="contentsItem.hideAfterInlog"
+									:disabled="objectStore.isLoading('page')">
+									Hide after login
+								</NcCheckboxRadioSwitch>
+							</div>
+						</div>
+					</BTab>
+				</BTabs>
 			</div>
 		</div>
-	</NcModal>
+
+		<template #actions>
+			<NcButton @click="closeModal">
+				{{ isEdit ? 'Close' : 'Cancel' }}
+			</NcButton>
+			<NcButton v-if="objectStore.getState('page').success === null"
+				:disabled="!contentsItem.type || objectStore.isLoading('page')"
+				type="primary"
+				@click="addPageContent">
+				<template #icon>
+					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
+					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
+				</template>
+				{{ isEdit ? 'Edit' : 'Add' }}
+			</NcButton>
+		</template>
+	</NcDialog>
 </template>
 
 <script>
-import { NcButton, NcModal, NcLoadingIcon, NcNoteCard, NcSelect, NcTextArea, NcTextField, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { BTabs, BTab } from 'bootstrap-vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import _ from 'lodash'
+import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
@@ -129,19 +145,20 @@ import { Page } from '../../entities/index.js'
 export default {
 	name: 'PageContentForm',
 	components: {
-		NcModal,
+		NcDialog,
 		NcButton,
 		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
-		NcTextArea,
+		BTabs,
+		BTab,
 		VueDraggable,
 		NcTextField,
 		NcCheckboxRadioSwitch,
+		vMdEditor,
 		// Icons
 		Plus,
 		Drag,
-		Cancel,
 	},
 	data() {
 		return {
@@ -234,6 +251,16 @@ export default {
 		}
 	},
 	methods: {
+		/**
+		 * Handle dialog close event
+		 * @param {boolean} isOpen - Whether the dialog is open
+		 * @return {void}
+		 */
+		handleDialogClose(isOpen) {
+			if (!isOpen) {
+				this.closeModal()
+			}
+		},
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('pageContent')
@@ -294,8 +321,10 @@ export default {
 			objectStore.updateObject('page', this.pageItem.id, newPageItem)
 				.then(() => {
 					objectStore.setState('page', { success: true })
-					// Wait for the user to read the feedback then close the model
-					setTimeout(this.closeModal, 2000)
+					// Wait for the user to read the feedback then return to parent dialog
+					setTimeout(() => {
+						navigationStore.setModal('viewPage')
+					}, 2000)
 
 					EventBus.$emit('edit-page-content-success')
 
@@ -339,6 +368,10 @@ export default {
 </style>
 
 <style scoped>
+.tabContainer {
+	margin-top: var(--OC-margin-20);
+}
+
 .draggable-form-item {
     display: flex;
     align-items: center;
@@ -386,5 +419,20 @@ export default {
 
 .hide-after-login {
 	margin-block-start: var(--OC-margin-20);
+}
+
+/* Markdown Editor Styles */
+:deep(.v-md-editor) {
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+}
+
+:deep(.v-md-editor__toolbar) {
+	background-color: var(--color-background-hover);
+	border-bottom: 1px solid var(--color-border);
+}
+
+:deep(.v-md-editor__editor) {
+	background-color: var(--color-main-background);
 }
 </style>

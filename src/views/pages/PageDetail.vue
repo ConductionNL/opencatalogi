@@ -264,7 +264,7 @@ export default {
 			objectStore.setActiveObject('page', page)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('page')
+				navigationStore.setModal('viewPage')
 				break
 			case 'addContent':
 				navigationStore.setModal('pageContentForm')
