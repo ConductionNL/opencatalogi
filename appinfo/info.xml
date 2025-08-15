@@ -23,7 +23,7 @@ Create a [bug report](https://github.com/OpenCatalogi/.github/issues/new/choose)
 
 Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/choose)
     ]]></description>
-	<version>0.7.5-beta.6</version>
+	<version>0.7.2</version>
 	<licence>agpl</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -74,3 +74,4 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 		<admin-section>OCA\OpenCatalogi\Sections\OpenCatalogiAdmin</admin-section>
 	</settings>
 </info>
+
