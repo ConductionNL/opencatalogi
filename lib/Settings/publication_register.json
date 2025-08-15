@@ -483,7 +483,8 @@
         "@self": {
           "register": "publication",
           "schema": "page",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "home"
         },
         "title": "Home",
         "slug": "home",
@@ -503,7 +504,8 @@
         "@self": {
           "register": "publication",
           "schema": "menu",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "main-navigation"
         },
         "title": "Main Navigation",
         "name": "main-navigation",
@@ -536,7 +538,8 @@
         "@self": {
           "register": "publication",
           "schema": "catalog",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "default-catalog"
         },
         "title": "Default Catalog",
         "name": "default-catalog",
@@ -554,7 +557,8 @@
         "@self": {
           "register": "publication",
           "schema": "publication",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "welcome-publication"
         },
         "title": "Welcome Publication",
         "name": "welcome-publication",
@@ -567,7 +571,8 @@
         "@self": {
           "register": "publication",
           "schema": "organization",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "default-organization"
         },
         "name": "Default Organization",
         "summary": "The default organization for this OpenCatalogi instance",
@@ -577,7 +582,8 @@
         "@self": {
           "register": "publication",
           "schema": "theme",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "general-theme"
         },
         "title": "General",
         "name": "general-theme",
@@ -589,7 +595,8 @@
         "@self": {
           "register": "publication",
           "schema": "glossary",
-          "version": "1.0.0"
+          "version": "1.1.0",
+          "slug": "catalog-glossary"
         },
         "title": "Catalog",
         "name": "catalog-glossary",
