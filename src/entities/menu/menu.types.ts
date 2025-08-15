@@ -2,7 +2,6 @@ export type TMenuSubItem = {
     id?: string
     order: number
     name: string
-    slug: string
     link: string
     description?: string
     icon?: string
@@ -14,7 +13,6 @@ export type TMenuItem = {
     id?: string
     order: number
     name: string
-    slug: string
     link: string
     description?: string
     icon?: string

@@ -16,7 +16,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'viewPage'"
-		:name="getModalTitle()"
+		:name="isAddMode ? 'Add Page' : getModalTitle()"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
@@ -24,19 +24,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="pageDetails">
 				<!-- Content Items Tab -->
 				<div class="tabContainer">
-					<BTabs content-class="mt-3" justified>
-						<BTab :title="`Content Items (${page.contents?.length || 0})`" active>
-							<div v-if="page.contents?.length">
-								<div class="contentItemsList">
-									<div v-for="(content, index) in page.contents"
-										:key="content.id || index"
-										class="contentItem">
-										<div class="contentItemHeader">
-											<strong>{{ content.title || content.name || `Content ${index + 1}` }}</strong>
-											<span v-if="content.type" class="contentItemType">
-												{{ content.type }}
-											</span>
-											<div class="contentItemActions">
+					<BTabs v-model="tabIndex" content-class="mt-3" justified>
+						<BTab v-if="!isAddMode" :title="`Content Items (${page.contents?.length || 0})`" active>
+							<!-- Content Items tab only in edit mode -->
+							<div v-if="page.contents && page.contents.length">
+								<div class="contentItemsSection">
+									<h4 class="section-title">
+										Content Items ({{ page.contents?.length || 0 }})
+									</h4>
+									<div v-if="page.contents?.length" class="attached-list">
+										<div v-for="(content, index) in page.contents"
+											:key="content.id || index"
+											class="attached-list-item">
+											<div class="object-info">
+												<strong>{{ content.title || content.name || `Content ${index + 1}` }}</strong>
+												<span v-if="content.type" class="object-type">{{ content.type }}</span>
+												<span v-if="content.order !== undefined" class="object-order">Order: {{ content.order }}</span>
+											</div>
+											<div class="object-actions">
 												<NcButton type="secondary" @click="editContent(content)">
 													<template #icon>
 														<Pencil :size="18" />
@@ -51,18 +56,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 												</NcButton>
 											</div>
 										</div>
-										<div v-if="content.description" class="contentItemDescription">
-											{{ content.description }}
-										</div>
-										<div v-if="content.content" class="contentItemContent">
-											<strong>Content:</strong>
-											<div class="contentPreview">
-												{{ content.content.substring(0, 200) }}{{ content.content.length > 200 ? '...' : '' }}
-											</div>
-										</div>
-										<div v-if="content.order !== undefined" class="contentItemOrder">
-											<strong>Order:</strong> {{ content.order }}
-										</div>
+									</div>
+									<div v-else class="emptyContentItems">
+										<p>{{ t('opencatalogi', 'No content items configured') }}</p>
 									</div>
 								</div>
 							</div>
@@ -116,7 +112,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<div class="groups-section">
 									<label class="groups-label">Groups Access</label>
 									<NcNoteCard type="info">
-										<p>When you add groups to a page, it will only be accessible if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.</p>
+										<p>When you add groups to a page, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.</p>
 									</NcNoteCard>
 									<NcSelect
 										v-model="editForm.groups"
@@ -128,24 +124,30 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										Loading groups...
 									</p>
 								</div>
-
-								<!-- Hide After Login -->
 								<div class="hide-after-login">
-									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideAfterInlog"
-										:disabled="objectStore.isLoading('page')">
-										Verberg na inloggen
-									</NcCheckboxRadioSwitch>
 									<NcNoteCard type="info">
 										<p>When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.</p>
 									</NcNoteCard>
+									<NcCheckboxRadioSwitch
+										:checked.sync="editForm.hideAfterInlog"
+										:disabled="editForm.showAfterLogin || objectStore.isLoading('page')">
+										Hide after login
+									</NcCheckboxRadioSwitch>
+									<NcCheckboxRadioSwitch
+										:checked.sync="editForm.showAfterLogin"
+										:disabled="editForm.hideAfterInlog || objectStore.isLoading('page')">
+										Show after login
+									</NcCheckboxRadioSwitch>
+									<p v-if="editForm.hideAfterInlog && editForm.showAfterLogin" class="field-error">
+										'Show after login' and 'Hide after login' cannot both be selected.
+									</p>
 								</div>
 							</div>
 						</BTab>
 					</BTabs>
 				</div>
 
-				<div v-if="page.metadata">
+				<div v-if="page && page.metadata">
 					<div class="metadataContainer">
 						<pre>{{ JSON.stringify(page.metadata, null, 2) }}</pre>
 					</div>
@@ -154,7 +156,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcButton type="secondary" @click="openAddContentModal">
+			<NcButton v-if="!isAddMode" type="secondary" @click="openAddContentModal">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -163,7 +165,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton type="error" @click="deletePage">
+			<NcButton v-if="!isAddMode" type="error" @click="deletePage">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
@@ -184,7 +186,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcDialog, NcTextField, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcTextField, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -202,6 +204,7 @@ export default {
 		NcCheckboxRadioSwitch,
 		NcNoteCard,
 		NcLoadingIcon,
+		NcSelect,
 		BTabs,
 		BTab,
 		Pencil,
@@ -216,12 +219,14 @@ export default {
 				slug: '',
 				groups: [],
 				hideAfterInlog: false,
+				showAfterLogin: false,
 			},
 			hasUpdated: false,
 			groupsOptions: {
 				options: [],
 				loading: false,
 			},
+			tabIndex: 1, // 1 = Configuration by default for add, 0 = Content Items
 		}
 	},
 	computed: {
@@ -238,6 +243,13 @@ export default {
 		 */
 		isEdit() {
 			return !!this.page
+		},
+		/**
+		 * Check if we're in add mode
+		 * @return {boolean} True if adding a new page
+		 */
+		isAddMode() {
+			return !(this.page && this.page.id)
 		},
 		/**
 		 * Get the page state from the store
@@ -272,13 +284,19 @@ export default {
 		 */
 		page: {
 			handler(newPage) {
-				if (newPage && this.isEdit) {
+				if (newPage && !this.isAddMode) {
 					// Initialize editForm with existing page data
 					this.editForm = {
 						title: newPage.title || '',
 						slug: newPage.slug || '',
 						groups: newPage.groups || [],
 						hideAfterInlog: newPage.hideAfterInlog || false,
+						showAfterLogin: newPage.showAfterLogin || false,
+					}
+				} else if (this.isAddMode) {
+					// Reset form for add mode
+					this.editForm = {
+						title: '', slug: '', groups: [], hideAfterInlog: false, showAfterLogin: false,
 					}
 				}
 			},
@@ -331,7 +349,7 @@ export default {
 		},
 		/**
 		 * Open edit modal for a specific content item
-		 * @param {object} content
+		 * @param {object} content - The content item to edit
 		 */
 		editContent(content) {
 			objectStore.setActiveObject('pageContent', content)
@@ -339,7 +357,7 @@ export default {
 		},
 		/**
 		 * Open delete confirmation dialog for a specific content item
-		 * @param {object} content
+		 * @param {object} content - The content item to delete
 		 */
 		deleteContent(content) {
 			objectStore.setActiveObject('pageContent', content)
@@ -383,10 +401,8 @@ export default {
 			} else {
 				objectStore.createObject('page', pageItem)
 					.then(() => {
-						// Wait for the user to read the feedback then close the modal
-						setTimeout(() => {
-							this.closeModal()
-						}, 2000)
+						this.tabIndex = 0 // Switch to Content Items tab
+						// Optionally show a success message
 					})
 			}
 		},
@@ -457,40 +473,42 @@ export default {
 	color: var(--color-main-text);
 }
 
-.contentItemsList {
-	display: flex;
-	flex-direction: column;
-	gap: var(--OC-margin-15);
+.contentItemsSection {
+	margin-bottom: var(--OC-margin-20);
 }
-
-.contentItem {
-	padding: var(--OC-margin-15);
-	background-color: var(--color-background-hover);
-	border-radius: var(--border-radius);
-	border-left: 3px solid var(--color-primary);
+.section-title {
+	margin: 0 0 8px 0;
+	color: var(--color-primary);
+	font-weight: bold;
 }
-
-.contentItemHeader {
+.attached-list {
+	border: 1px solid var(--color-border);
+	border-radius: 4px;
+	overflow: hidden;
+}
+.attached-list-item {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: var(--OC-margin-5);
+	padding: 12px;
+	border-bottom: 1px solid var(--color-border);
+	background-color: var(--color-background-hover);
 }
-
-.contentItemHeader strong {
+.attached-list-item:last-child {
+	border-bottom: none;
+}
+.object-info strong {
+	display: block;
+	margin-bottom: 4px;
 	color: var(--color-main-text);
-	font-size: 1em;
 }
-
-.contentItemType {
-	font-size: 0.85em;
+.object-type, .object-order {
+	display: inline-block;
+	margin-right: 12px;
 	color: var(--color-text-lighter);
-	background-color: var(--color-background-dark);
-	padding: var(--OC-margin-5);
-	border-radius: var(--border-radius);
+	font-size: 0.9em;
 }
-
-.contentItemActions {
+.object-actions {
 	display: flex;
 	gap: var(--OC-margin-10);
 }
@@ -594,6 +612,12 @@ export default {
 	text-align: center;
 	padding: var(--OC-margin-50);
 	color: var(--color-text-lighter);
+}
+
+.field-error {
+	color: var(--OC-text-color-error);
+	font-size: 0.85em;
+	margin-top: var(--OC-margin-10);
 }
 
 @media (min-width: 768px) {

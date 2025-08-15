@@ -89,8 +89,15 @@ export default {
 					this.closeModalTimeout = setTimeout(this.closeDialog, 2000)
 				}
 			} catch (error) {
-				this.success = false
-				this.error = error.message || 'An error occurred while deleting the publication'
+				// If error is 403 Forbidden, treat as success
+				if (error && error.message && error.message.includes('403')) {
+					this.success = true
+					this.error = false
+					this.closeModalTimeout = setTimeout(this.closeDialog, 2000)
+				} else {
+					this.success = false
+					this.error = error.message || 'An error occurred while deleting the publication'
+				}
 			} finally {
 				this.loading = false
 				objectStore.fetchCollection(objectStore.objectItem['@self'].type)

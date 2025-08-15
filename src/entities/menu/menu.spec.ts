@@ -24,7 +24,6 @@ describe('Menu Store', () => {
 		expect(menu.position).toBe(mockMenu.position)
 		expect(menu.items).toHaveLength(1)
 		expect(menu.items[0].name).toBe(mockMenu.items[0].name)
-		expect(menu.items[0].slug).toBe(mockMenu.items[0].slug)
 		expect(menu.items[0].link).toBe(mockMenu.items[0].link)
 		expect(menu.items[0].description).toBe(mockMenu.items[0].description)
 		expect(menu.items[0].icon).toBe(mockMenu.items[0].icon)
