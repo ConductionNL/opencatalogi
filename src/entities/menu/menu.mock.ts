@@ -18,7 +18,6 @@ export const mockMenuItem: TMenuItem = {
 	id: '1',
 	order: 0,
 	name: 'Home',
-	slug: 'home',
 	link: '/',
 	description: 'Home page',
 	icon: 'home',

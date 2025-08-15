@@ -126,12 +126,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									</template>
 									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
 										<template #icon>
-											<Eye :size="20" />
-										</template>
-										View
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
-										<template #icon>
 											<Pencil :size="20" />
 										</template>
 										Edit
@@ -240,12 +234,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 											<template #icon>
 												<DotsHorizontal :size="20" />
 											</template>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
-												<template #icon>
-													<Eye :size="20" />
-												</template>
-												View
-											</NcActionButton>
 											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
 												<template #icon>
 													<Pencil :size="20" />

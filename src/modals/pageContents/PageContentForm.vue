@@ -77,7 +77,6 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<!-- Security Tab -->
 					<BTab title="Security">
 						<div class="form-group">
-							<!-- Security Section -->
 							<div class="groups-section">
 								<label class="groups-label">Groups Access</label>
 								<NcNoteCard type="info">
@@ -93,17 +92,23 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									Loading groups...
 								</p>
 							</div>
-
-							<!-- Hide After Login -->
 							<div class="hide-after-login">
 								<NcNoteCard type="info">
 									<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideAfterInlog"
-									:disabled="objectStore.isLoading('page')">
+									:disabled="contentsItem.showAfterLogin || objectStore.isLoading('page')">
 									Hide after login
 								</NcCheckboxRadioSwitch>
+								<NcCheckboxRadioSwitch
+									:checked.sync="contentsItem.showAfterLogin"
+									:disabled="contentsItem.hideAfterInlog || objectStore.isLoading('page')">
+									Show after login
+								</NcCheckboxRadioSwitch>
+								<p v-if="contentsItem.hideAfterInlog && contentsItem.showAfterLogin" class="field-error">
+									'Show after login' and 'Hide after login' cannot both be selected.
+								</p>
 							</div>
 						</div>
 					</BTab>
@@ -177,6 +182,7 @@ export default {
 				],
 				groups: [],
 				hideAfterInlog: false,
+				showAfterLogin: false,
 			},
 			typeOptions: {
 				options: ['RichText', 'Faq'],
@@ -238,6 +244,7 @@ export default {
 				id: contentItem.id,
 				groups: contentItem.groups || [],
 				hideAfterInlog: contentItem.hideAfterInlog || false,
+				showAfterLogin: contentItem.showAfterLogin || false,
 			}
 
 			// if faqs are present, prepend them to the contentsItem
@@ -283,6 +290,7 @@ export default {
 						content: this.contentsItem.richTextData,
 						groups: this.contentsItem.groups,
 						hideAfterInlog: this.contentsItem.hideAfterInlog,
+						showAfterLogin: this.contentsItem.showAfterLogin,
 					},
 				}
 			} else if (this.contentsItem.type === 'Faq') {
@@ -298,6 +306,7 @@ export default {
 						})),
 						groups: this.contentsItem.groups,
 						hideAfterInlog: this.contentsItem.hideAfterInlog,
+						showAfterLogin: this.contentsItem.showAfterLogin,
 					},
 				}
 			}

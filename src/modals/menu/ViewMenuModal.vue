@@ -16,32 +16,34 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'viewMenu'"
-		:name="getModalTitle()"
+		:name="isAddMode ? 'Add Menu' : getModalTitle()"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
 		<div class="modal__content">
-			<div v-if="menu" class="menuDetails">
+			<div v-if="menu || isAddMode" class="menuDetails">
 				<!-- Menu Items Tab -->
 				<div class="tabContainer">
-					<BTabs content-class="mt-3" justified>
-						<BTab :title="`Menu Items (${menu.items?.length || 0})`" active>
-							<div v-if="menu.items?.length">
-								<div class="menuItemsList">
-									<div v-for="(item, index) in menu.items"
-										:key="item.id || index"
-										class="menuItem">
-										<div class="menuItemHeader">
-											<strong>{{ item.title || item.name || `Item ${index + 1}` }}</strong>
-											<span v-if="item.order !== undefined" class="menuItemOrder">
-												Order: {{ item.order }}
-											</span>
-											<div class="menuItemActions">
+					<BTabs v-model="tabIndex" content-class="mt-3" justified>
+						<BTab v-if="!isAddMode" :title="`Menu Items (${editForm.items?.length || 0})`" active>
+							<div v-if="editForm.items && editForm.items.length">
+								<div class="menuItemsSection">
+									<div v-if="editForm.items?.length" class="attached-list">
+										<div v-for="(item, index) in editForm.items"
+											:key="item.id || index"
+											class="attached-list-item">
+											<div class="object-info">
+												<strong>{{ item.title || item.name || `Item ${index + 1}` }}</strong>
+												<span v-if="item.order !== undefined" class="object-order">Order: {{ item.order }}</span>
+												<span v-if="item.groups && item.groups.length > 0" class="object-groups">Groups: {{ item.groups.join(', ') }}</span>
+												<span v-if="item.hideAfterInlog !== undefined" class="object-hide-after-login">Hide After Login: {{ item.hideAfterInlog ? 'Yes' : 'No' }}</span>
+											</div>
+											<div class="object-actions">
 												<NcButton type="secondary" @click="editItem(item, index)">
 													<template #icon>
 														<Pencil :size="18" />
 													</template>
-													{{ t('opencatalogi', 'Edit') }}
+													{{ t('opencatalogi', 'Edit') }},
 												</NcButton>
 												<NcButton type="error" @click="deleteItem(item)">
 													<template #icon>
@@ -51,27 +53,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 												</NcButton>
 											</div>
 										</div>
-										<div v-if="item.description" class="menuItemDescription">
-											{{ item.description }}
-										</div>
-										<div v-if="item.url || item.link" class="menuItemLink">
-											<strong>Link:</strong>
-											<a :href="item.url || item.link" target="_blank" rel="noopener noreferrer">
-												{{ item.url || item.link }}
-											</a>
-										</div>
-										<div v-if="item.icon" class="menuItemIcon">
-											<strong>Icon:</strong> {{ item.icon }}
-										</div>
-										<div v-if="item.groups && item.groups.length > 0" class="menuItemGroups">
-											<strong>Groups:</strong> {{ item.groups.join(', ') }}
-										</div>
-										<div v-if="item.hideAfterInlog !== undefined" class="menuItemHideAfterLogin">
-											<strong>Hide After Login:</strong> {{ item.hideAfterInlog ? 'Yes' : 'No' }}
-										</div>
-										<div v-if="item.type" class="menuItemType">
-											<strong>Type:</strong> {{ item.type }}
-										</div>
+									</div>
+									<div v-else class="emptyMenuItems">
+										<p>{{ t('opencatalogi', 'No menu items configured') }}</p>
 									</div>
 								</div>
 							</div>
@@ -107,20 +91,6 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										:value.sync="editForm.title"
 										:error="!!inputValidation.fieldErrors?.['title']"
 										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
-
-									<NcTextField :disabled="objectStore.isLoading('menu')"
-										label="Slug*"
-										maxlength="255"
-										:value.sync="editForm.slug"
-										:error="!!inputValidation.fieldErrors?.['slug']"
-										:helper-text="inputValidation.fieldErrors?.['slug']?.[0]" />
-
-									<NcTextField :disabled="objectStore.isLoading('menu')"
-										label="Link"
-										maxlength="255"
-										:value.sync="editForm.link"
-										:error="!!inputValidation.fieldErrors?.['link']"
-										:helper-text="inputValidation.fieldErrors?.['link']?.[0]" />
 
 									<NcTextField :disabled="objectStore.isLoading('menu')"
 										label="Description"
@@ -166,50 +136,46 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<!-- Security Tab -->
 						<BTab title="Security">
 							<div>
-								<!-- Published Status -->
-								<div class="security-section">
-									<label class="security-label">Published Status</label>
+								<!-- Groups Access Control -->
+								<div class="groups-section">
+									<label class="groups-label">Groups Access</label>
 									<NcNoteCard type="info">
-										<p>Control whether this menu is visible to users. Unpublished menus are only visible to administrators.</p>
+										<p>When you add groups to a menu, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the menu will be visible to all users.</p>
 									</NcNoteCard>
-									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.published"
-										:disabled="objectStore.isLoading('menu')">
-										Published
-									</NcCheckboxRadioSwitch>
+									<NcSelect
+										v-model="editForm.groups"
+										:options="groupsOptions?.options || []"
+										:disabled="objectStore.isLoading('menu') || groupsOptions?.loading"
+										input-label="Select Groups"
+										multiple />
+									<p v-if="groupsOptions?.loading" class="groups-loading">
+										Loading groups...
+									</p>
 								</div>
-
-								<!-- Access Control -->
-								<div class="security-section">
-									<label class="security-label">Access Control</label>
+								<div class="hide-after-login">
 									<NcNoteCard type="info">
-										<p>Control who can see and interact with this menu. By default, menus are visible to all authenticated users.</p>
+										<p>When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.adminOnly"
-										:disabled="objectStore.isLoading('menu')">
-										Admin Only
+										:checked.sync="editForm.hideAfterInlog"
+										:disabled="editForm.showAfterLogin || objectStore.isLoading('menu')">
+										Hide after login
 									</NcCheckboxRadioSwitch>
-								</div>
-
-								<!-- Menu Visibility -->
-								<div class="security-section">
-									<label class="security-label">Menu Visibility</label>
-									<NcNoteCard type="info">
-										<p>Control when this menu should be displayed. Hidden menus are not visible in the navigation.</p>
-									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hidden"
-										:disabled="objectStore.isLoading('menu')">
-										Hidden
+										:checked.sync="editForm.showAfterLogin"
+										:disabled="editForm.hideAfterInlog || objectStore.isLoading('menu')">
+										Show after login
 									</NcCheckboxRadioSwitch>
+									<p v-if="editForm.hideAfterInlog && editForm.showAfterLogin" class="field-error">
+										'Show after login' and 'Hide after login' cannot both be selected.
+									</p>
 								</div>
 							</div>
 						</BTab>
 					</BTabs>
 				</div>
 
-				<div v-if="menu.metadata">
+				<div v-if="menu && menu.metadata">
 					<div class="metadataContainer">
 						<pre>{{ JSON.stringify(menu.metadata, null, 2) }}</pre>
 					</div>
@@ -222,7 +188,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcButton type="secondary" @click="openAddItemModal">
+			<NcButton v-if="!isAddMode" type="secondary" @click="openAddItemModal">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -231,13 +197,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton type="error" @click="deleteMenu">
+			<NcButton v-if="!isAddMode" type="error" @click="deleteMenu">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 			<NcButton
+				v-if="isAddMode"
+				type="primary"
+				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
+				@click="saveMenu">
+				<template #icon>
+					<Plus :size="20" />
+				</template>
+				Create
+			</NcButton>
+			<NcButton
+				v-else
 				type="primary"
 				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
 				@click="saveMenu">
@@ -245,14 +222,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				{{ t('opencatalogi', 'Save') }}
+				Save
 			</NcButton>
 		</template>
 	</NcDialog>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcTextField, NcNoteCard, NcLoadingIcon, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcTextField, NcNoteCard, NcLoadingIcon, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -270,6 +247,7 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
+		NcSelect,
 		BTabs,
 		BTab,
 		Pencil,
@@ -287,11 +265,16 @@ export default {
 				icon: '',
 				position: 0,
 				items: [],
-				published: true,
-				adminOnly: false,
-				hidden: false,
+				groups: [],
+				hideAfterInlog: false,
+				showAfterLogin: false,
 			},
 			hasUpdated: false,
+			groupsOptions: {
+				options: [],
+				loading: false,
+			},
+			tabIndex: 1, // 1 = Configuration by default for add, 0 = Menu Items
 		}
 	},
 	computed: {
@@ -308,6 +291,13 @@ export default {
 		 */
 		isEdit() {
 			return !!this.menu
+		},
+		/**
+		 * Check if we're in add mode
+		 * @return {boolean} True if adding a new menu
+		 */
+		isAddMode() {
+			return !(this.menu && this.menu.id)
 		},
 		/**
 		 * Get the menu state from the store
@@ -338,10 +328,15 @@ export default {
 		 */
 		menu: {
 			handler(newMenu) {
-				if (newMenu && this.isEdit) {
+				if (newMenu && !this.isAddMode) {
 					this.editForm = {
 						...this.editForm,
 						..._.cloneDeep(newMenu),
+					}
+				} else if (this.isAddMode) {
+					// Reset form for add mode
+					this.editForm = {
+						title: '', slug: '', link: '', description: '', icon: '', position: 0, items: [], groups: [], hideAfterInlog: false, showAfterLogin: false,
 					}
 				}
 			},
@@ -350,6 +345,8 @@ export default {
 	},
 	mounted() {
 		// Initialize form when component mounts
+		// Fetch groups for the dropdown
+		this.fetchGroups && this.fetchGroups()
 	},
 	methods: {
 		/**
@@ -389,12 +386,13 @@ export default {
 		 * @return {void}
 		 */
 		openAddItemModal() {
+			objectStore.setState('menu', { success: null, error: null })
 			navigationStore.setModal('menuItemForm')
 		},
 		/**
 		 * Open the edit modal for a specific menu item
-		 * @param {object} item
-		 * @param {number} index
+		 * @param {object} item - The menu item to edit
+		 * @param {number} index - The index of the menu item
 		 */
 		editItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
@@ -402,7 +400,7 @@ export default {
 		},
 		/**
 		 * Open the delete modal for a specific menu item
-		 * @param {object} item
+		 * @param {object} item - The menu item to delete
 		 */
 		deleteItem(item) {
 			objectStore.setActiveObject('menuItem', item)
@@ -435,10 +433,8 @@ export default {
 			} else {
 				objectStore.createObject('menu', menuItem)
 					.then(() => {
-						const self = this
-						setTimeout(function() {
-							self.closeModal()
-						}, 2000)
+						this.tabIndex = 0 // Switch to Menu Items tab
+						// Optionally show a success message
 					})
 			}
 		},
@@ -456,6 +452,21 @@ export default {
 						console.error('Error deleting menu:', error)
 					})
 			}
+		},
+		fetchGroups() {
+			this.groupsOptions.loading = true
+			import('../../services/nextcloudGroups.js').then(({ getNextcloudGroups }) => {
+				getNextcloudGroups()
+					.then((groups) => {
+						this.groupsOptions.options = groups
+					})
+					.catch((err) => {
+						console.error('Error fetching groups:', err)
+					})
+					.finally(() => {
+						this.groupsOptions.loading = false
+					})
+			})
 		},
 	},
 }
@@ -690,6 +701,67 @@ export default {
 	text-align: center;
 	padding: var(--OC-margin-50);
 	color: var(--color-text-lighter);
+}
+
+.menuItemsSection {
+	margin-bottom: var(--OC-margin-20);
+}
+.section-title {
+	margin: 0 0 8px 0;
+	color: var(--color-primary);
+	font-weight: bold;
+}
+.attached-list {
+	border: 1px solid var(--color-border);
+	border-radius: 4px;
+	overflow: hidden;
+}
+.attached-list-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px;
+	border-bottom: 1px solid var(--color-border);
+	background-color: var(--color-background-hover);
+}
+.attached-list-item:last-child {
+	border-bottom: none;
+}
+.object-info strong {
+	display: block;
+	margin-bottom: 4px;
+	color: var(--color-main-text);
+}
+.object-order, .object-groups, .object-hide-after-login {
+	display: inline-block;
+	margin-right: 12px;
+	color: var(--color-text-lighter);
+	font-size: 0.9em;
+}
+.object-actions {
+	display: flex;
+	gap: var(--OC-margin-10);
+}
+
+.groups-section {
+	margin-block-start: var(--OC-margin-20);
+	margin-block-end: var(--OC-margin-20);
+}
+.groups-label {
+	display: block;
+	margin-block-end: var(--OC-margin-10);
+	font-weight: bold;
+}
+.groups-loading {
+	text-align: center;
+	color: var(--color-text-lighter);
+	font-size: 0.9em;
+	margin-top: 0.5rem;
+}
+
+.hide-after-login {
+	margin-block-start: var(--OC-margin-20);
+	margin-block-end: var(--OC-margin-20);
 }
 
 @media (min-width: 768px) {

@@ -38,10 +38,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<NcTextField
 								:disabled="objectStore.isLoading('menu')"
-								label="Name"
+								label="Name*"
 								:value.sync="menuItem.name"
 								:error="!!inputValidation.getError(`items.${index}.name`)"
-								:helper-text="inputValidation.getError(`items.${index}.name`)" />
+								:helper-text="inputValidation.getError(`items.${index}.name`) || 'Name is required.'" />
 
 							<NcTextField
 								:disabled="objectStore.isLoading('menu')"
@@ -52,17 +52,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<NcTextField
 								:disabled="objectStore.isLoading('menu')"
-								label="Slug"
-								:value.sync="menuItem.slug"
-								:error="!!inputValidation.getError(`items.${index}.slug`)"
-								:helper-text="inputValidation.getError(`items.${index}.slug`)" />
-
-							<NcTextField
-								:disabled="objectStore.isLoading('menu')"
-								label="Link"
+								label="Link*"
+								:helper-text="inputValidation.getError(`items.${index}.link`) || 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.'"
 								:value.sync="menuItem.link"
-								:error="!!inputValidation.getError(`items.${index}.link`)"
-								:helper-text="inputValidation.getError(`items.${index}.link`)" />
+								:error="!!inputValidation.getError(`items.${index}.link`)" />
 
 							<NcSelect v-bind="iconOptions"
 								v-model="iconOptions.value"
@@ -96,9 +89,17 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideAfterInlog"
-									:disabled="objectStore.isLoading('menu')">
+									:disabled="menuItem.showAfterLogin || objectStore.isLoading('menu')">
 									Verberg na inloggen
 								</NcCheckboxRadioSwitch>
+								<NcCheckboxRadioSwitch
+									:checked.sync="menuItem.showAfterLogin"
+									:disabled="menuItem.hideAfterInlog || objectStore.isLoading('menu')">
+									Toon na inloggen
+								</NcCheckboxRadioSwitch>
+								<p v-if="menuItem.hideAfterInlog && menuItem.showAfterLogin" class="field-error">
+									'Show after login' and 'Hide after login' cannot both be selected.
+								</p>
 							</div>
 						</div>
 					</BTab>
@@ -157,12 +158,12 @@ export default {
 			menuItem: {
 				order: 0,
 				name: '',
-				slug: '',
 				link: '',
 				description: '',
 				icon: '',
 				groups: [],
 				hideAfterInlog: false,
+				showAfterLogin: false,
 				items: [],
 			},
 			iconOptions: {
@@ -245,6 +246,7 @@ export default {
 		},
 	},
 	mounted() {
+		objectStore.setState('menu', { success: null, error: null })
 		this.fetchGroups()
 
 		if (this.isEdit) {
@@ -319,12 +321,6 @@ export default {
 			const menuClone = _.cloneDeep(this.menuObject)
 			const activeMenuItem = objectStore.getActiveObject('menuItem')
 
-			// Debug logging
-			console.log('=== DEBUG: saveMenuItem ===')
-			console.log('Active menu item:', activeMenuItem)
-			console.log('Menu object items:', menuClone.items)
-			console.log('Current form data:', this.menuItem)
-
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
@@ -333,63 +329,37 @@ export default {
 			}
 
 			if (this.isEdit && activeMenuItem) {
-				console.log('=== EDITING MODE ===')
-
-				// Strategy 1: If we have a reliable index, use it first (most reliable for array-based items)
 				let itemIndex = -1
 				if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menuClone.items.length) {
-					console.log('Using provided index directly:', activeMenuItem.index)
 					itemIndex = activeMenuItem.index
 				} else {
-					// Strategy 2: Try to find by exact ID match (only if ID is actually defined)
 					if (activeMenuItem.id && activeMenuItem.id !== null && activeMenuItem.id !== undefined) {
 						itemIndex = menuClone.items.findIndex(item => item.id === activeMenuItem.id)
-						console.log('Found by ID match at index:', itemIndex)
 					}
 
-					// Strategy 3: If ID match fails, try to find by name and order (fallback)
 					if (itemIndex === -1) {
-						console.log('ID match failed, trying name/order match')
 						itemIndex = menuClone.items.findIndex(item =>
 							item.name === activeMenuItem.name
 							&& item.order === activeMenuItem.order,
 						)
-						console.log('Found by name/order match at index:', itemIndex)
 					}
 				}
 
 				if (itemIndex !== -1 && itemIndex < menuClone.items.length) {
-					console.log('Successfully found item at index:', itemIndex)
-					console.log('Original item:', menuClone.items[itemIndex])
-
-					// Replace the existing item while preserving its ID
 					menuClone.items[itemIndex] = {
 						...updatedMenuItem,
 						id: activeMenuItem.id || menuClone.items[itemIndex].id,
 					}
-
-					console.log('Updated item:', menuClone.items[itemIndex])
 				} else {
-					console.error('Could not find menu item to edit')
-					console.error('Active menu item:', activeMenuItem)
-					console.error('Available items:', menuClone.items)
-
-					objectStore.setState('menu', { error: 'Could not find the menu item to edit' })
+					objectStore.setState('menu', { error: 'Could not find menu item to edit' })
 					objectStore.setState('menu', { loading: false })
 					return
 				}
 			} else {
-				console.log('=== ADDING NEW ITEM ===')
-				// Add new item without ID - let the backend handle ID generation
-				// Set the order to the next available order number
 				const maxOrder = Math.max(0, ...menuClone.items.map(item => item.order || 0))
 				updatedMenuItem.order = maxOrder + 1
 				menuClone.items.push(updatedMenuItem)
-				console.log('Added new item with order:', updatedMenuItem.order)
 			}
-
-			console.log('Final menu items:', menuClone.items)
-			console.log('=== END DEBUG ===')
 
 			const newMenu = new Menu(menuClone)
 
@@ -460,6 +430,13 @@ export default {
 
 .hide-after-login {
 	margin-top: var(--OC-margin-20);
+}
+
+.field-error {
+	margin-top: var(--OC-margin-10);
+	font-size: 0.9em;
+	color: var(--color-error);
+	font-style: italic;
 }
 
 .help-text {
