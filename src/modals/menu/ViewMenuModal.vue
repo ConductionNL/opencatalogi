@@ -158,16 +158,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideAfterInlog"
-										:disabled="editForm.showAfterLogin || objectStore.isLoading('menu')">
+										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('menu')">
 										Hide after login
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.showAfterLogin"
+										:checked.sync="editForm.hideBeforeLogin"
 										:disabled="editForm.hideAfterInlog || objectStore.isLoading('menu')">
-										Show after login
+										Hide before login
 									</NcCheckboxRadioSwitch>
-									<p v-if="editForm.hideAfterInlog && editForm.showAfterLogin" class="field-error">
-										'Show after login' and 'Hide after login' cannot both be selected.
+									<p v-if="editForm.hideAfterInlog && editForm.hideBeforeLogin" class="field-error">
+										'Hide before login' and 'Hide after login' cannot both be selected.
 									</p>
 								</div>
 							</div>
@@ -267,7 +267,7 @@ export default {
 				items: [],
 				groups: [],
 				hideAfterInlog: false,
-				showAfterLogin: false,
+				hideBeforeLogin: false,
 			},
 			hasUpdated: false,
 			groupsOptions: {
@@ -336,7 +336,7 @@ export default {
 				} else if (this.isAddMode) {
 					// Reset form for add mode
 					this.editForm = {
-						title: '', slug: '', link: '', description: '', icon: '', position: 0, items: [], groups: [], hideAfterInlog: false, showAfterLogin: false,
+						title: '', slug: '', link: '', description: '', icon: '', position: 0, items: [], groups: [], hideAfterInlog: false, hideBeforeLogin: false,
 					}
 				}
 			},

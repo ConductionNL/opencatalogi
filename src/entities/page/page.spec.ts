@@ -12,6 +12,9 @@ describe('Page Store', () => {
 		expect(page.title).toBe(mockPage()[0].title)
 		expect(page.slug).toBe(mockPage()[0].slug)
 		expect(page.contents).toEqual(mockPage()[0].contents)
+		expect(page.groups).toEqual(mockPage()[0].groups)
+		expect(page.hideAfterInlog).toBe(mockPage()[0].hideAfterInlog)
+		expect(page.hideBeforeLogin).toBe(mockPage()[0].hideBeforeLogin)
 		// created/updated are not tracked on the entity
 
 		expect(page.validate().success).toBe(true)

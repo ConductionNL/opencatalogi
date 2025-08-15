@@ -11,9 +11,12 @@ export const mockPageData = (): TPage[] => [
 		title: 'Test Page',
 		slug: 'test-page',
 		contents: [
-			{ type: 'text', id: '1', data: { text: 'Test content' } },
-			{ type: 'image', id: '2', data: { url: 'https://example.com/image.jpg' } },
+			{ type: 'text', id: '1', data: { text: 'Test content' }, groups: ['admin'], hideAfterInlog: false, hideBeforeLogin: false },
+			{ type: 'image', id: '2', data: { url: 'https://example.com/image.jpg' }, groups: [], hideAfterInlog: true, hideBeforeLogin: false },
 		],
+		groups: ['users'],
+		hideAfterInlog: false,
+		hideBeforeLogin: true,
 	},
 	// @ts-expect-error -- expected missing contents
 	{ // partial data

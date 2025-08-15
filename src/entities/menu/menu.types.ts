@@ -7,6 +7,12 @@ export type TMenuSubItem = {
     icon?: string
     groups?: string[]
     hideAfterInlog?: boolean
+    /**
+     * If true, this menu item is hidden before login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideBeforeLogin?: boolean
 }
 
 export type TMenuItem = {
@@ -18,6 +24,12 @@ export type TMenuItem = {
     icon?: string
     groups?: string[]
     hideAfterInlog?: boolean
+    /**
+     * If true, this menu item is hidden before login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideBeforeLogin?: boolean
     items?: TMenuSubItem[]
 }
 
@@ -33,4 +45,22 @@ export type TMenu = {
 	items: TMenuItem[] // Array of menu items
 	createdAt: string // Creation timestamp
 	updatedAt: string // Last update timestamp
+    /**
+     * Nextcloud groups that have access to this menu
+     * @phpstan-var string[]|null
+     * @psalm-var string[]|null
+     */
+    groups?: string[]
+    /**
+     * Whether to hide this menu after user login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideAfterInlog?: boolean
+    /**
+     * Whether to hide this menu before user login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideBeforeLogin?: boolean
 }
