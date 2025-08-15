@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SafeParseReturnType, z } from 'zod'
-import { TPage } from './page.types'
+import { TPage, TPageContent } from './page.types'
 
 /**
  * Page class representing a page entity with validation
@@ -11,7 +11,10 @@ export class Page implements TPage {
 	public id: string
 	public title: string
 	public slug: string
-	public contents: { type: string; id: string; data: Record<string, any> }[] | null
+	public contents: TPageContent[] | null
+	public groups?: string[]
+	public hideAfterInlog?: boolean
+	public hideBeforeLogin?: boolean
 
 	/**
 	 * Creates a new Page instance
@@ -31,6 +34,9 @@ export class Page implements TPage {
 		this.title = data?.title || ''
 		this.slug = data?.slug || ''
 		this.contents = Array.isArray(data?.contents) && data.contents.length > 0 ? data.contents : null
+		this.groups = data?.groups || []
+		this.hideAfterInlog = data?.hideAfterInlog || false
+		this.hideBeforeLogin = data?.hideBeforeLogin || false
 		// created/updated timestamps are not tracked on the entity level
 	}
 
@@ -51,8 +57,14 @@ export class Page implements TPage {
 					type: z.string().min(1, 'type is verplicht'),
 					id: z.string(),
 					data: z.record(z.string(), z.any()),
+					groups: z.array(z.string()).optional(),
+					hideAfterInlog: z.boolean().optional(),
+					hideBeforeLogin: z.boolean().optional(),
 				}),
 			).nullable(),
+			groups: z.array(z.string()).optional(),
+			hideAfterInlog: z.boolean().optional(),
+			hideBeforeLogin: z.boolean().optional(),
 		})
 
 		const result = schema.safeParse({

@@ -14,6 +14,9 @@ export class Menu implements TMenu {
 	public items: TMenuItem[] // Array of menu items
 	public createdAt: string
 	public updatedAt: string
+	public groups?: string[]
+	public hideAfterInlog?: boolean
+	public hideBeforeLogin?: boolean
 
 	/**
 	 * Creates a new Menu instance
@@ -41,6 +44,9 @@ export class Menu implements TMenu {
 		this.items = items
 		this.createdAt = data?.createdAt || ''
 		this.updatedAt = data?.updatedAt || ''
+		this.groups = data?.groups || []
+		this.hideAfterInlog = data?.hideAfterInlog || false
+		this.hideBeforeLogin = data?.hideBeforeLogin || false
 	}
 
 	/* istanbul ignore next */
@@ -62,6 +68,7 @@ export class Menu implements TMenu {
 				icon: z.string().optional(),
 				groups: z.array(z.string()).optional(),
 				hideAfterInlog: z.boolean().optional(),
+				hideBeforeLogin: z.boolean().optional(),
 				items: z.array(z.object({
 					id: z.string().optional(),
 					order: z.number().min(0, 'order moet 0 of hoger zijn'),
@@ -71,8 +78,12 @@ export class Menu implements TMenu {
 					icon: z.string().optional(),
 					groups: z.array(z.string()).optional(),
 					hideAfterInlog: z.boolean().optional(),
+					hideBeforeLogin: z.boolean().optional(),
 				})),
 			})), // At least '[]'
+			groups: z.array(z.string()).optional(),
+			hideAfterInlog: z.boolean().optional(),
+			hideBeforeLogin: z.boolean().optional(),
 		})
 
 		const result = schema.safeParse({

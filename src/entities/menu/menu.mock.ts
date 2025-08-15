@@ -23,6 +23,7 @@ export const mockMenuItem: TMenuItem = {
 	icon: 'home',
 	groups: ['admin', 'users'],
 	hideAfterInlog: false,
+	hideBeforeLogin: false,
 	items: [],
 }
 
@@ -37,6 +38,9 @@ export const mockMenu: TMenu = {
 	items: [mockMenuItem],
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
+	groups: ['admin'],
+	hideAfterInlog: false,
+	hideBeforeLogin: true,
 }
 
 /**
@@ -50,4 +54,7 @@ export const mockMinimalMenu: TMenu = {
 	items: [],
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
+	groups: [],
+	hideAfterInlog: false,
+	hideBeforeLogin: false,
 }

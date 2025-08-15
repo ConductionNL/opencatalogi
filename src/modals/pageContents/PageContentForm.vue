@@ -98,16 +98,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideAfterInlog"
-									:disabled="contentsItem.showAfterLogin || objectStore.isLoading('page')">
+									:disabled="contentsItem.hideBeforeLogin || objectStore.isLoading('page')">
 									Hide after login
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									:checked.sync="contentsItem.showAfterLogin"
+									:checked.sync="contentsItem.hideBeforeLogin"
 									:disabled="contentsItem.hideAfterInlog || objectStore.isLoading('page')">
-									Show after login
+									Hide before login
 								</NcCheckboxRadioSwitch>
-								<p v-if="contentsItem.hideAfterInlog && contentsItem.showAfterLogin" class="field-error">
-									'Show after login' and 'Hide after login' cannot both be selected.
+								<p v-if="contentsItem.hideAfterInlog && contentsItem.hideBeforeLogin" class="field-error">
+									'Hide before login' and 'Hide after login' cannot both be selected.
 								</p>
 							</div>
 						</div>
@@ -182,7 +182,7 @@ export default {
 				],
 				groups: [],
 				hideAfterInlog: false,
-				showAfterLogin: false,
+				hideBeforeLogin: false,
 			},
 			typeOptions: {
 				options: ['RichText', 'Faq'],
@@ -244,7 +244,7 @@ export default {
 				id: contentItem.id,
 				groups: contentItem.groups || [],
 				hideAfterInlog: contentItem.hideAfterInlog || false,
-				showAfterLogin: contentItem.showAfterLogin || false,
+				hideBeforeLogin: contentItem.hideBeforeLogin || false,
 			}
 
 			// if faqs are present, prepend them to the contentsItem
@@ -288,9 +288,9 @@ export default {
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						content: this.contentsItem.richTextData,
-						groups: this.contentsItem.groups,
+						groups: this.normalizeGroups(this.contentsItem.groups),
 						hideAfterInlog: this.contentsItem.hideAfterInlog,
-						showAfterLogin: this.contentsItem.showAfterLogin,
+						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 					},
 				}
 			} else if (this.contentsItem.type === 'Faq') {
@@ -304,9 +304,9 @@ export default {
 							question: faq.question,
 							answer: faq.answer,
 						})),
-						groups: this.contentsItem.groups,
+						groups: this.normalizeGroups(this.contentsItem.groups),
 						hideAfterInlog: this.contentsItem.hideAfterInlog,
-						showAfterLogin: this.contentsItem.showAfterLogin,
+						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 					},
 				}
 			}
@@ -359,6 +359,19 @@ export default {
 				.finally(() => {
 					this.groupsOptions.loading = false
 				})
+		},
+		/**
+		 * Normalize groups array to ensure consistent format
+		 * @param {Array} selected - Selected groups from NcSelect
+		 * @return {Array} Normalized groups array
+		 */
+		normalizeGroups(selected) {
+			if (!Array.isArray(selected)) return []
+			return selected.map(item => {
+				if (typeof item === 'string') return item
+				if (item && typeof item === 'object') return item.value ?? String(item.label ?? '')
+				return ''
+			}).filter(Boolean)
 		},
 	},
 }

@@ -130,16 +130,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideAfterInlog"
-										:disabled="editForm.showAfterLogin || objectStore.isLoading('page')">
+										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('page')">
 										Hide after login
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.showAfterLogin"
+										:checked.sync="editForm.hideBeforeLogin"
 										:disabled="editForm.hideAfterInlog || objectStore.isLoading('page')">
-										Show after login
+										Hide before login
 									</NcCheckboxRadioSwitch>
-									<p v-if="editForm.hideAfterInlog && editForm.showAfterLogin" class="field-error">
-										'Show after login' and 'Hide after login' cannot both be selected.
+									<p v-if="editForm.hideAfterInlog && editForm.hideBeforeLogin" class="field-error">
+										'Hide before login' and 'Hide after login' cannot both be selected.
 									</p>
 								</div>
 							</div>
@@ -219,7 +219,7 @@ export default {
 				slug: '',
 				groups: [],
 				hideAfterInlog: false,
-				showAfterLogin: false,
+				hideBeforeLogin: false,
 			},
 			hasUpdated: false,
 			groupsOptions: {
@@ -291,12 +291,12 @@ export default {
 						slug: newPage.slug || '',
 						groups: newPage.groups || [],
 						hideAfterInlog: newPage.hideAfterInlog || false,
-						showAfterLogin: newPage.showAfterLogin || false,
+						hideBeforeLogin: newPage.hideBeforeLogin || false,
 					}
 				} else if (this.isAddMode) {
 					// Reset form for add mode
 					this.editForm = {
-						title: '', slug: '', groups: [], hideAfterInlog: false, showAfterLogin: false,
+						title: '', slug: '', groups: [], hideAfterInlog: false, hideBeforeLogin: false,
 					}
 				}
 			},
@@ -388,6 +388,7 @@ export default {
 			const pageItem = new Page({
 				...this.page,
 				...this.editForm,
+				groups: this.normalizeGroups(this.editForm.groups),
 			})
 
 			if (this.isEdit) {
@@ -420,6 +421,19 @@ export default {
 						console.error('Error deleting page:', error)
 					})
 			}
+		},
+		/**
+		 * Normalize groups array to ensure consistent format
+		 * @param {Array} selected - Selected groups from NcSelect
+		 * @return {Array} Normalized groups array
+		 */
+		normalizeGroups(selected) {
+			if (!Array.isArray(selected)) return []
+			return selected.map(item => {
+				if (typeof item === 'string') return item
+				if (item && typeof item === 'object') return item.value ?? String(item.label ?? '')
+				return ''
+			}).filter(Boolean)
 		},
 	},
 }

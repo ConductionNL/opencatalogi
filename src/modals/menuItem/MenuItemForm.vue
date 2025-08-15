@@ -89,16 +89,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideAfterInlog"
-									:disabled="menuItem.showAfterLogin || objectStore.isLoading('menu')">
+									:disabled="menuItem.hideBeforeLogin || objectStore.isLoading('menu')">
 									Verberg na inloggen
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									:checked.sync="menuItem.showAfterLogin"
+									:checked.sync="menuItem.hideBeforeLogin"
 									:disabled="menuItem.hideAfterInlog || objectStore.isLoading('menu')">
-									Toon na inloggen
+									Verberg voor inloggen
 								</NcCheckboxRadioSwitch>
-								<p v-if="menuItem.hideAfterInlog && menuItem.showAfterLogin" class="field-error">
-									'Show after login' and 'Hide after login' cannot both be selected.
+								<p v-if="menuItem.hideAfterInlog && menuItem.hideBeforeLogin" class="field-error">
+									'Hide before login' and 'Hide after login' cannot both be selected.
 								</p>
 							</div>
 						</div>
@@ -163,7 +163,7 @@ export default {
 				icon: '',
 				groups: [],
 				hideAfterInlog: false,
-				showAfterLogin: false,
+				hideBeforeLogin: false,
 				items: [],
 			},
 			iconOptions: {
@@ -223,6 +223,7 @@ export default {
 				icon: this.iconOptions.value?.value || '',
 				groups: this.normalizeGroups(this.groupsOptions.value),
 				order: Number(this.menuItem.order) || 0,
+				hideBeforeLogin: this.menuItem.hideBeforeLogin,
 			}
 
 			// Determine the new items array based on whether we're editing or adding
@@ -326,6 +327,7 @@ export default {
 				icon: this.iconOptions.value?.value || '',
 				groups: this.normalizeGroups(this.groupsOptions.value),
 				order: Number(this.menuItem.order) || 0,
+				hideBeforeLogin: this.menuItem.hideBeforeLogin,
 			}
 
 			if (this.isEdit && activeMenuItem) {
