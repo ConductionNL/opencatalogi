@@ -97,16 +97,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
-									:checked.sync="contentsItem.hideAfterInlog"
+									:checked.sync="contentsItem.hideAfterLogin"
 									:disabled="contentsItem.hideBeforeLogin || objectStore.isLoading('page')">
 									Hide after login
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideBeforeLogin"
-									:disabled="contentsItem.hideAfterInlog || objectStore.isLoading('page')">
+									:disabled="contentsItem.hideAfterLogin || objectStore.isLoading('page')">
 									Hide before login
 								</NcCheckboxRadioSwitch>
-								<p v-if="contentsItem.hideAfterInlog && contentsItem.hideBeforeLogin" class="field-error">
+								<p v-if="contentsItem.hideAfterLogin && contentsItem.hideBeforeLogin" class="field-error">
 									'Hide before login' and 'Hide after login' cannot both be selected.
 								</p>
 							</div>
@@ -181,7 +181,7 @@ export default {
 					},
 				],
 				groups: [],
-				hideAfterInlog: false,
+				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
 			typeOptions: {
@@ -243,7 +243,7 @@ export default {
 				richTextData: contentItem.data.content || '',
 				id: contentItem.id,
 				groups: contentItem.groups || [],
-				hideAfterInlog: contentItem.hideAfterInlog || false,
+				hideAfterLogin: contentItem.hideAfterLogin || false,
 				hideBeforeLogin: contentItem.hideBeforeLogin || false,
 			}
 
@@ -289,7 +289,7 @@ export default {
 					data: {
 						content: this.contentsItem.richTextData,
 						groups: this.normalizeGroups(this.contentsItem.groups),
-						hideAfterInlog: this.contentsItem.hideAfterInlog,
+						hideAfterLogin: this.contentsItem.hideAfterLogin,
 						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 					},
 				}
@@ -305,7 +305,7 @@ export default {
 							answer: faq.answer,
 						})),
 						groups: this.normalizeGroups(this.contentsItem.groups),
-						hideAfterInlog: this.contentsItem.hideAfterInlog,
+						hideAfterLogin: this.contentsItem.hideAfterLogin,
 						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 					},
 				}

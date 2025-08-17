@@ -13,7 +13,8 @@ export class Page implements TPage {
 	public slug: string
 	public contents: TPageContent[] | null
 	public groups?: string[]
-	public hideAfterInlog?: boolean
+
+	public hideAfterLogin?: boolean
 	public hideBeforeLogin?: boolean
 
 	/**
@@ -35,7 +36,8 @@ export class Page implements TPage {
 		this.slug = data?.slug || ''
 		this.contents = Array.isArray(data?.contents) && data.contents.length > 0 ? data.contents : null
 		this.groups = data?.groups || []
-		this.hideAfterInlog = data?.hideAfterInlog || false
+
+		this.hideAfterLogin = data?.hideAfterLogin || false
 		this.hideBeforeLogin = data?.hideBeforeLogin || false
 		// created/updated timestamps are not tracked on the entity level
 	}
@@ -58,12 +60,12 @@ export class Page implements TPage {
 					id: z.string(),
 					data: z.record(z.string(), z.any()),
 					groups: z.array(z.string()).optional(),
-					hideAfterInlog: z.boolean().optional(),
+					hideAfterLogin: z.boolean().optional(),
 					hideBeforeLogin: z.boolean().optional(),
 				}),
 			).nullable(),
 			groups: z.array(z.string()).optional(),
-			hideAfterInlog: z.boolean().optional(),
+			hideAfterLogin: z.boolean().optional(),
 			hideBeforeLogin: z.boolean().optional(),
 		})
 

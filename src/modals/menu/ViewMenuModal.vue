@@ -36,7 +36,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 												<strong>{{ item.title || item.name || `Item ${index + 1}` }}</strong>
 												<span v-if="item.order !== undefined" class="object-order">Order: {{ item.order }}</span>
 												<span v-if="item.groups && item.groups.length > 0" class="object-groups">Groups: {{ item.groups.join(', ') }}</span>
-												<span v-if="item.hideAfterInlog !== undefined" class="object-hide-after-login">Hide After Login: {{ item.hideAfterInlog ? 'Yes' : 'No' }}</span>
+												<span v-if="item.hideAfterLogin !== undefined" class="object-hide-after-login">Hide After Login: {{ item.hideAfterLogin ? 'Yes' : 'No' }}</span>
 											</div>
 											<div class="object-actions">
 												<NcButton type="secondary" @click="editItem(item, index)">
@@ -157,16 +157,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										<p>When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideAfterInlog"
+										:checked.sync="editForm.hideAfterLogin"
 										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('menu')">
 										Hide after login
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideBeforeLogin"
-										:disabled="editForm.hideAfterInlog || objectStore.isLoading('menu')">
+										:disabled="editForm.hideAfterLogin || objectStore.isLoading('menu')">
 										Hide before login
 									</NcCheckboxRadioSwitch>
-									<p v-if="editForm.hideAfterInlog && editForm.hideBeforeLogin" class="field-error">
+									<p v-if="editForm.hideAfterLogin && editForm.hideBeforeLogin" class="field-error">
 										'Hide before login' and 'Hide after login' cannot both be selected.
 									</p>
 								</div>
@@ -266,7 +266,7 @@ export default {
 				position: 0,
 				items: [],
 				groups: [],
-				hideAfterInlog: false,
+				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
 			hasUpdated: false,
@@ -336,7 +336,7 @@ export default {
 				} else if (this.isAddMode) {
 					// Reset form for add mode
 					this.editForm = {
-						title: '', slug: '', link: '', description: '', icon: '', position: 0, items: [], groups: [], hideAfterInlog: false, hideBeforeLogin: false,
+						title: '', slug: '', link: '', description: '', icon: '', position: 0, items: [], groups: [], hideAfterLogin: false, hideBeforeLogin: false,
 					}
 				}
 			},

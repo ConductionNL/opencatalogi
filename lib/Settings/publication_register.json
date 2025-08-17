@@ -322,7 +322,8 @@
                     "type": "string"
                   }
                 },
-                "hideAfterInlog": {
+
+                "hideAfterLogin": {
                   "type": "boolean",
                   "description": "Whether to hide this content block after user login"
                 },
@@ -341,7 +342,8 @@
               "type": "string"
             }
           },
-          "hideAfterInlog": {
+
+          "hideAfterLogin": {
             "type": "boolean",
             "description": "Whether to hide this page after user login"
           },
@@ -413,7 +415,8 @@
                 "description": { "type": "string", "description": "Description of the menu item" },
                 "icon": { "type": "string", "description": "Icon for the menu item" },
                 "groups": { "type": "array", "description": "Nextcloud groups that have access to this menu item", "items": { "type": "string" } },
-                "hideAfterInlog": { "type": "boolean", "description": "Whether to hide this menu item after user login" },
+
+                "hideAfterLogin": { "type": "boolean", "description": "Whether to hide this menu item after user login" },
                 "hideBeforeLogin": { "type": "boolean", "description": "Whether to hide this menu item before user login" },
                 "items": {
                   "type": "array",
@@ -427,7 +430,8 @@
                       "description": { "type": "string", "description": "Description of the submenu item" },
                       "icon": { "type": "string", "description": "Icon for the submenu item" },
                       "groups": { "type": "array", "description": "Nextcloud groups that have access to this submenu item", "items": { "type": "string" } },
-                      "hideAfterInlog": { "type": "boolean", "description": "Whether to hide this submenu item after user login" },
+
+                      "hideAfterLogin": { "type": "boolean", "description": "Whether to hide this submenu item after user login" },
                       "hideBeforeLogin": { "type": "boolean", "description": "Whether to hide this submenu item before user login" }
                     },
                     "required": ["order", "name", "link"]
@@ -444,10 +448,7 @@
               "type": "string"
             }
           },
-          "hideAfterInlog": {
-            "type": "boolean",
-            "description": "Whether to hide this menu after user login"
-          },
+
           "hideBeforeLogin": {
             "type": "boolean",
             "description": "Whether to hide this menu before user login"
@@ -629,6 +630,356 @@
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface.",
         "externalLink": "",
         "keywords": ["catalog", "collection", "publications", "organization", "content management"]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "about-us"
+        },
+        "title": "About Us",
+        "slug": "about-us",
+        "contents": [
+          {
+            "type": "text",
+            "id": "about-content",
+            "data": {
+              "text": "About Us",
+              "html": "<h1>About Us</h1><p>Learn more about our organization and mission.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "accessibility"
+        },
+        "title": "Accessibility",
+        "slug": "accessibility",
+        "contents": [
+          {
+            "type": "text",
+            "id": "accessibility-content",
+            "data": {
+              "text": "Accessibility",
+              "html": "<h1>Accessibility</h1><p>Information about our commitment to accessibility and how to report accessibility issues.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "contact"
+        },
+        "title": "Contact",
+        "slug": "contact",
+        "contents": [
+          {
+            "type": "text",
+            "id": "contact-content",
+            "data": {
+              "text": "Contact",
+              "html": "<h1>Contact</h1><p>Get in touch with us through the following channels.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "faq"
+        },
+        "title": "FAQ",
+        "slug": "faq",
+        "contents": [
+          {
+            "type": "text",
+            "id": "faq-content",
+            "data": {
+              "text": "Frequently Asked Questions",
+              "html": "<h1>Frequently Asked Questions</h1><p>Find answers to commonly asked questions.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "cookies"
+        },
+        "title": "Cookies",
+        "slug": "cookies",
+        "contents": [
+          {
+            "type": "text",
+            "id": "cookies-content",
+            "data": {
+              "text": "Cookie Policy",
+              "html": "<h1>Cookie Policy</h1><p>Information about how we use cookies on this website.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "privacy"
+        },
+        "title": "Privacy",
+        "slug": "privacy",
+        "contents": [
+          {
+            "type": "text",
+            "id": "privacy-content",
+            "data": {
+              "text": "Privacy Policy",
+              "html": "<h1>Privacy Policy</h1><p>Our privacy policy explains how we collect, use, and protect your personal information.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "disclaimer"
+        },
+        "title": "Disclaimer",
+        "slug": "disclaimer",
+        "contents": [
+          {
+            "type": "text",
+            "id": "disclaimer-content",
+            "data": {
+              "text": "Disclaimer",
+              "html": "<h1>Disclaimer</h1><p>Important legal disclaimers and limitations of liability.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "page",
+          "version": "1.1.0",
+          "slug": "website"
+        },
+        "title": "Website",
+        "slug": "website",
+        "contents": [
+          {
+            "type": "text",
+            "id": "website-content",
+            "data": {
+              "text": "Website Information",
+              "html": "<h1>Website Information</h1><p>Information about this website, its purpose, and technical details.</p>"
+            }
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "version": "1.1.0",
+          "slug": "user-menu"
+        },
+        "title": "User Menu",
+        "position": 1,
+        "items": [
+          {
+            "order": 1,
+            "name": "Profile",
+            "link": "/profile",
+            "description": "User profile page",
+            "icon": "user",
+            "hideBeforeLogin": true
+          },
+          {
+            "order": 2,
+            "name": "Settings",
+            "link": "/settings",
+            "description": "User settings",
+            "icon": "settings",
+            "hideBeforeLogin": true
+          },
+          {
+            "order": 3,
+            "name": "Logout",
+            "link": "/logout",
+            "description": "Sign out",
+            "icon": "logout",
+            "hideBeforeLogin": true
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "version": "1.1.0",
+          "slug": "admin-menu"
+        },
+        "title": "Admin Menu",
+        "position": 1,
+        "groups": ["admin"],
+        "items": [
+          {
+            "order": 1,
+            "name": "Dashboard",
+            "link": "/admin",
+            "description": "Admin dashboard",
+            "icon": "dashboard"
+          },
+          {
+            "order": 2,
+            "name": "Users",
+            "link": "/admin/users",
+            "description": "Manage users",
+            "icon": "users"
+          },
+          {
+            "order": 3,
+            "name": "Content",
+            "link": "/admin/content",
+            "description": "Manage content",
+            "icon": "content"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "version": "1.1.0",
+          "slug": "main-pages"
+        },
+        "title": "Main Pages",
+        "position": 2,
+        "items": [
+          {
+            "order": 1,
+            "name": "Home",
+            "link": "/",
+            "description": "Homepage",
+            "icon": "home"
+          },
+          {
+            "order": 2,
+            "name": "About Us",
+            "link": "/about-us",
+            "description": "About our organization",
+            "icon": "info"
+          },
+          {
+            "order": 3,
+            "name": "Accessibility",
+            "link": "/accessibility",
+            "description": "Accessibility information",
+            "icon": "accessibility"
+          },
+          {
+            "order": 4,
+            "name": "Contact",
+            "link": "/contact",
+            "description": "Contact information",
+            "icon": "contact"
+          },
+          {
+            "order": 5,
+            "name": "FAQ",
+            "link": "/faq",
+            "description": "Frequently asked questions",
+            "icon": "help"
+          },
+          {
+            "order": 6,
+            "name": "Website",
+            "link": "/website",
+            "description": "Website information",
+            "icon": "web"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "version": "1.1.0",
+          "slug": "about-menu"
+        },
+        "title": "About",
+        "position": 3,
+        "items": [
+          {
+            "order": 1,
+            "name": "Contact",
+            "link": "/contact",
+            "description": "Contact information",
+            "icon": "contact"
+          },
+          {
+            "order": 2,
+            "name": "FAQ",
+            "link": "/faq",
+            "description": "Frequently asked questions",
+            "icon": "help"
+          },
+          {
+            "order": 3,
+            "name": "Website",
+            "link": "/website",
+            "description": "Website information",
+            "icon": "web"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "menu",
+          "version": "1.1.0",
+          "slug": "legal-menu"
+        },
+        "title": "Legal",
+        "position": 6,
+        "items": [
+          {
+            "order": 1,
+            "name": "Cookies",
+            "link": "/cookies",
+            "description": "Cookie policy",
+            "icon": "cookie"
+          },
+          {
+            "order": 2,
+            "name": "Privacy",
+            "link": "/privacy",
+            "description": "Privacy policy",
+            "icon": "privacy"
+          },
+          {
+            "order": 3,
+            "name": "Disclaimer",
+            "link": "/disclaimer",
+            "description": "Legal disclaimer",
+            "icon": "legal"
+          }
+        ]
       }
     ]
   },
