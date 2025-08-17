@@ -129,16 +129,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										<p>When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideAfterInlog"
+										:checked.sync="editForm.hideAfterLogin"
 										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('page')">
 										Hide after login
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideBeforeLogin"
-										:disabled="editForm.hideAfterInlog || objectStore.isLoading('page')">
+										:disabled="editForm.hideAfterLogin || objectStore.isLoading('page')">
 										Hide before login
 									</NcCheckboxRadioSwitch>
-									<p v-if="editForm.hideAfterInlog && editForm.hideBeforeLogin" class="field-error">
+									<p v-if="editForm.hideAfterLogin && editForm.hideBeforeLogin" class="field-error">
 										'Hide before login' and 'Hide after login' cannot both be selected.
 									</p>
 								</div>
@@ -218,7 +218,7 @@ export default {
 				title: '',
 				slug: '',
 				groups: [],
-				hideAfterInlog: false,
+				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
 			hasUpdated: false,
@@ -290,13 +290,13 @@ export default {
 						title: newPage.title || '',
 						slug: newPage.slug || '',
 						groups: newPage.groups || [],
-						hideAfterInlog: newPage.hideAfterInlog || false,
+						hideAfterLogin: newPage.hideAfterLogin || false,
 						hideBeforeLogin: newPage.hideBeforeLogin || false,
 					}
 				} else if (this.isAddMode) {
 					// Reset form for add mode
 					this.editForm = {
-						title: '', slug: '', groups: [], hideAfterInlog: false, hideBeforeLogin: false,
+						title: '', slug: '', groups: [], hideAfterLogin: false, hideBeforeLogin: false,
 					}
 				}
 			},

@@ -88,16 +88,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									<p>When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
-									:checked.sync="menuItem.hideAfterInlog"
+									:checked.sync="menuItem.hideAfterLogin"
 									:disabled="menuItem.hideBeforeLogin || objectStore.isLoading('menu')">
 									Verberg na inloggen
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideBeforeLogin"
-									:disabled="menuItem.hideAfterInlog || objectStore.isLoading('menu')">
+									:disabled="menuItem.hideAfterLogin || objectStore.isLoading('menu')">
 									Verberg voor inloggen
 								</NcCheckboxRadioSwitch>
-								<p v-if="menuItem.hideAfterInlog && menuItem.hideBeforeLogin" class="field-error">
+								<p v-if="menuItem.hideAfterLogin && menuItem.hideBeforeLogin" class="field-error">
 									'Hide before login' and 'Hide after login' cannot both be selected.
 								</p>
 							</div>
@@ -162,7 +162,7 @@ export default {
 				description: '',
 				icon: '',
 				groups: [],
-				hideAfterInlog: false,
+				hideAfterLogin: false,
 				hideBeforeLogin: false,
 				items: [],
 			},

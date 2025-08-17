@@ -19,7 +19,13 @@ export type TPageContent = {
      * @phpstan-var bool|null
      * @psalm-var bool|null
      */
-    hideAfterInlog?: boolean
+
+    /**
+     * Whether to hide this content block after user login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideAfterLogin?: boolean
     /**
      * Whether to hide this content block before user login
      * @phpstan-var bool|null
@@ -48,7 +54,13 @@ export type TPage = {
      * @phpstan-var bool|null
      * @psalm-var bool|null
      */
-    hideAfterInlog?: boolean
+
+    /**
+     * Whether to hide this page after user login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideAfterLogin?: boolean
     /**
      * Whether to hide this page before user login
      * @phpstan-var bool|null

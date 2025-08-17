@@ -15,7 +15,8 @@ export class Menu implements TMenu {
 	public createdAt: string
 	public updatedAt: string
 	public groups?: string[]
-	public hideAfterInlog?: boolean
+
+	public hideAfterLogin?: boolean
 	public hideBeforeLogin?: boolean
 
 	/**
@@ -45,7 +46,8 @@ export class Menu implements TMenu {
 		this.createdAt = data?.createdAt || ''
 		this.updatedAt = data?.updatedAt || ''
 		this.groups = data?.groups || []
-		this.hideAfterInlog = data?.hideAfterInlog || false
+
+		this.hideAfterLogin = data?.hideAfterLogin || false
 		this.hideBeforeLogin = data?.hideBeforeLogin || false
 	}
 
@@ -67,7 +69,7 @@ export class Menu implements TMenu {
 				description: z.string().optional(),
 				icon: z.string().optional(),
 				groups: z.array(z.string()).optional(),
-				hideAfterInlog: z.boolean().optional(),
+
 				hideBeforeLogin: z.boolean().optional(),
 				items: z.array(z.object({
 					id: z.string().optional(),
@@ -77,12 +79,12 @@ export class Menu implements TMenu {
 					description: z.string().optional(),
 					icon: z.string().optional(),
 					groups: z.array(z.string()).optional(),
-					hideAfterInlog: z.boolean().optional(),
+					hideAfterLogin: z.boolean().optional(),
 					hideBeforeLogin: z.boolean().optional(),
 				})),
 			})), // At least '[]'
 			groups: z.array(z.string()).optional(),
-			hideAfterInlog: z.boolean().optional(),
+			hideAfterLogin: z.boolean().optional(),
 			hideBeforeLogin: z.boolean().optional(),
 		})
 

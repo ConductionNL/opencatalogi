@@ -37,9 +37,9 @@
  * const isLoggedIn = isUserLoggedIn()
  * const userGroups = await getCurrentUserGroups()
  * 
- * // Filter menu items based on login status and hideAfterInlog property
+ * // Filter menu items based on login status and hideAfterLogin property
  * const visibleMenuItems = menuItems.filter(item => {
- *   if (item.hideAfterInlog && isLoggedIn) {
+ *   if (item.hideAfterLogin && isLoggedIn) {
  *     return false // Hide item if user is logged in and item should be hidden
  *   }
  *   return true

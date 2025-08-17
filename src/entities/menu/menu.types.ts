@@ -6,7 +6,12 @@ export type TMenuSubItem = {
     description?: string
     icon?: string
     groups?: string[]
-    hideAfterInlog?: boolean
+    /**
+     * If true, this menu item is hidden after login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideAfterLogin?: boolean
     /**
      * If true, this menu item is hidden before login
      * @phpstan-var bool|null
@@ -23,7 +28,12 @@ export type TMenuItem = {
     description?: string
     icon?: string
     groups?: string[]
-    hideAfterInlog?: boolean
+    /**
+     * If true, this menu item is hidden after login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideAfterLogin?: boolean
     /**
      * If true, this menu item is hidden before login
      * @phpstan-var bool|null
@@ -56,7 +66,13 @@ export type TMenu = {
      * @phpstan-var bool|null
      * @psalm-var bool|null
      */
-    hideAfterInlog?: boolean
+
+    /**
+     * Whether to hide this menu after user login
+     * @phpstan-var bool|null
+     * @psalm-var bool|null
+     */
+    hideAfterLogin?: boolean
     /**
      * Whether to hide this menu before user login
      * @phpstan-var bool|null

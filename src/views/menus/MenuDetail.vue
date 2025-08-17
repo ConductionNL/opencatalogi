@@ -130,7 +130,7 @@ import { getTheme } from '../../services/getTheme.js'
 										<span v-if="menuItem.groups && menuItem.groups.length > 0" class="menu-item-groups">
 											<br><small>Groups: {{ menuItem.groups.join(', ') }}</small>
 										</span>
-										<span v-if="menuItem.hideAfterInlog" class="menu-item-hide-after-login">
+										<span v-if="menuItem.hideAfterLogin" class="menu-item-hide-after-login">
 											<br><small>🔒 Verborgen na inloggen</small>
 										</span>
 									</template>
