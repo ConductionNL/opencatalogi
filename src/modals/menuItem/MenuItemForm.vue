@@ -57,10 +57,22 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:value.sync="menuItem.link"
 								:error="!!inputValidation.getError(`items.${index}.link`)" />
 
-							<NcSelect v-bind="iconOptions"
-								v-model="iconOptions.value"
+							<!-- Debug Info -->
+							<p>Debug: Current value = {{ iconOptions.value ? iconOptions.value.label : 'None' }}</p>
+							<p>Debug: Options count = {{ iconOptions.options.length }}</p>
+
+							<!-- Icon Preview -->
+							<div v-if="iconOptions.value" class="selected-icon-preview">
+								<p>Selected: <FontAwesomeIcon :icon="['fas', iconOptions.value.value]" /> {{ iconOptions.value.label }}</p>
+							</div>
+
+							<NcSelect 
+								:value="iconOptions.value"
+								:options="iconOptions.options"
+								label="label"
 								input-label="Icon"
-								:disabled="objectStore.isLoading('menu')" />
+								:disabled="objectStore.isLoading('menu')"
+								@option:selected="handleIconSelect" />
 						</div>
 					</BTab>
 
@@ -135,6 +147,7 @@ import { BTabs, BTab } from 'bootstrap-vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 
+
 export default {
 	name: 'MenuItemForm',
 	components: {
@@ -168,42 +181,125 @@ export default {
 			},
 			iconOptions: {
 				options: [
-					{ label: 'arrow right', value: 'ARROW_RIGHT' },
-					{ label: 'chevron right', value: 'CHEVRON_RIGHT' },
-					{ label: 'chevron left', value: 'CHEVRON_LEFT' },
-					{ label: 'close', value: 'CLOSE' },
-					{ label: 'close small', value: 'CLOSE_SMALL' },
-					{ label: 'contact', value: 'CONTACT' },
-					{ label: 'document', value: 'DOCUMENT' },
-					{ label: 'ellipse', value: 'ELLIPSE' },
-					{ label: 'external link', value: 'EXTERNAL_LINK' },
-					{ label: 'external link blue', value: 'EXTERNAL_LINK_BLUE' },
-					{ label: 'external link pink', value: 'EXTERNAL_LINK_PINK' },
-					{ label: 'filter', value: 'FILTER' },
-					{ label: 'info', value: 'INFO' },
-					{ label: 'info blue', value: 'INFO_BLUE' },
-					{ label: 'list', value: 'LIST' },
-					{ label: 'list blue', value: 'LIST_BLUE' },
-					{ label: 'logo', value: 'LOGO' },
-					{ label: 'menu', value: 'MENU' },
-					{ label: 'question mark', value: 'QUESTION_MARK' },
-					{ label: 'question mark vng', value: 'QUESTION_MARK_VNG' },
-					{ label: 'search', value: 'SEARCH' },
-					{ label: 'github', value: 'GITHUB' },
-					{ label: 'common ground', value: 'COMMON_GROUND' },
-					{ label: 'key', value: 'KEY' },
-					{ label: 'person add', value: 'PERSON_ADD' },
-					{ label: 'world', value: 'WORLD' },
-					{ label: 'user', value: 'USER' },
-					{ label: 'users', value: 'USERS' },
-					{ label: 'building', value: 'BUILDING' },
-					{ label: 'truck', value: 'TRUCK' },
-					{ label: 'cube', value: 'CUBE' },
-					{ label: 'hand holding', value: 'HAND_HOLDING' },
-					{ label: 'house', value: 'HOUSE' },
-					{ label: 'phone', value: 'PHONE' },
+					{ label: '🏠 Home', value: 'house' },
+					{ label: '👤 User', value: 'user' },
+					{ label: '👥 Users', value: 'users' },
+					{ label: '⚙️ Settings', value: 'gear' },
+					{ label: '🔍 Search', value: 'magnifying-glass' },
+					{ label: '📊 Dashboard', value: 'chart-line' },
+					{ label: 'ℹ️ Info', value: 'info' },
+					{ label: '❓ Question', value: 'question' },
+					{ label: '❓ Help', value: 'circle-question' },
+					{ label: '📞 Phone', value: 'phone' },
+					{ label: '📧 Email', value: 'envelope' },
+					{ label: '📇 Contact', value: 'address-book' },
+					{ label: '🏢 Building', value: 'building' },
+					{ label: '🌍 Globe', value: 'globe' },
+					{ label: '🗺️ Map', value: 'map' },
+					{ label: '📍 Location', value: 'location-dot' },
+					{ label: '🔑 Key', value: 'key' },
+					{ label: '🔒 Lock', value: 'lock' },
+					{ label: '🔓 Unlock', value: 'unlock' },
+					{ label: '🛡️ Shield', value: 'shield' },
+					{ label: '📄 Document', value: 'file' },
+					{ label: '📝 File Text', value: 'file-lines' },
+					{ label: '📁 Folder', value: 'folder' },
+					{ label: '📖 Book', value: 'book' },
+					{ label: '🔖 Bookmark', value: 'bookmark' },
+					{ label: '🏷️ Tag', value: 'tag' },
+					{ label: '🏷️ Tags', value: 'tags' },
+					{ label: '⭐ Star', value: 'star' },
+					{ label: '❤️ Heart', value: 'heart' },
+					{ label: '➕ Plus', value: 'plus' },
+					{ label: '➖ Minus', value: 'minus' },
+					{ label: '✅ Check', value: 'check' },
+					{ label: '❌ Times', value: 'xmark' },
+					{ label: '➡️ Arrow Right', value: 'arrow-right' },
+					{ label: '⬅️ Arrow Left', value: 'arrow-left' },
+					{ label: '⬆️ Arrow Up', value: 'arrow-up' },
+					{ label: '⬇️ Arrow Down', value: 'arrow-down' },
+					{ label: '▶️ Chevron Right', value: 'chevron-right' },
+					{ label: '◀️ Chevron Left', value: 'chevron-left' },
+					{ label: '🔼 Chevron Up', value: 'chevron-up' },
+					{ label: '🔽 Chevron Down', value: 'chevron-down' },
+					{ label: '☰ Menu', value: 'bars' },
+					{ label: '⚏ Grid', value: 'table-cells' },
+					{ label: '📋 List', value: 'list' },
+					{ label: '📅 Calendar', value: 'calendar' },
+					{ label: '🕐 Clock', value: 'clock' },
+					{ label: '🛒 Shopping Cart', value: 'shopping-cart' },
+					{ label: '💳 Credit Card', value: 'credit-card' },
+					{ label: '💲 Money', value: 'dollar-sign' },
+					{ label: '🔔 Bell', value: 'bell' },
+					{ label: '🚩 Flag', value: 'flag' },
+					{ label: '📷 Camera', value: 'camera' },
+					{ label: '🖼️ Image', value: 'image' },
+					{ label: '🎥 Video', value: 'video' },
+					{ label: '🎵 Music', value: 'music' },
+					{ label: '🎧 Headphones', value: 'headphones' },
+					{ label: '🎤 Microphone', value: 'microphone' },
+					{ label: '🔊 Volume Up', value: 'volume-up' },
+					{ label: '🔉 Volume Down', value: 'volume-down' },
+					{ label: '🔇 Volume Mute', value: 'volume-xmark' },
+					{ label: '📶 WiFi', value: 'wifi' },
+					{ label: '📶 Signal', value: 'signal' },
+					{ label: '🔋 Battery', value: 'battery-three-quarters' },
+					{ label: '⚡ Power', value: 'power-off' },
+					{ label: '🖨️ Printer', value: 'print' },
+					{ label: '⬇️ Download', value: 'download' },
+					{ label: '⬆️ Upload', value: 'upload' },
+					{ label: '🔗 Share', value: 'share' },
+					{ label: '🔗 External Link', value: 'external-link' },
+					{ label: '🔗 Link', value: 'link' },
+					{ label: '💥 Chain Broken', value: 'link-slash' },
+					{ label: '📋 Copy', value: 'copy' },
+					{ label: '📋 Paste', value: 'paste' },
+					{ label: '✂️ Cut', value: 'scissors' },
+					{ label: '💾 Save', value: 'floppy-disk' },
+					{ label: '✏️ Edit', value: 'pen' },
+					{ label: '🗑️ Trash', value: 'trash' },
+					{ label: '🔄 Refresh', value: 'arrows-rotate' },
+					{ label: '🔄 Sync', value: 'rotate' },
+					{ label: '🔍 Filter', value: 'filter' },
+					{ label: '🔤 Sort', value: 'sort' },
+					{ label: '🔼 Sort Up', value: 'sort-up' },
+					{ label: '🔽 Sort Down', value: 'sort-down' },
+					{ label: '🔍 Expand', value: 'expand' },
+					{ label: '🗜️ Compress', value: 'compress' },
+					{ label: '👁️ Eye', value: 'eye' },
+					{ label: '👁️‍🗨️ Eye Slash', value: 'eye-slash' },
+					{ label: '🔛 Toggle On', value: 'toggle-on' },
+					{ label: '🔘 Toggle Off', value: 'toggle-off' },
+					{ label: '💡 Lightbulb', value: 'lightbulb' },
+					{ label: '🔧 Tools', value: 'tools' },
+					{ label: '🔧 Wrench', value: 'wrench' },
+					{ label: '🔨 Hammer', value: 'hammer' },
+					{ label: '⚙️ Cog', value: 'cog' },
+					{ label: '🗄️ Database', value: 'database' },
+					{ label: '🖥️ Server', value: 'server' },
+					{ label: '☁️ Cloud', value: 'cloud' },
+					{ label: '🚛 Truck', value: 'truck' },
+					{ label: '🚗 Car', value: 'car' },
+					{ label: '✈️ Plane', value: 'plane' },
+					{ label: '🚢 Ship', value: 'ship' },
+					{ label: '🚂 Train', value: 'train' },
+					{ label: '🚲 Bicycle', value: 'bicycle' },
+					{ label: '🚶 Walking', value: 'person-walking' },
+					{ label: '🏃 Running', value: 'person-running' },
+					{ label: '🤝 Handshake', value: 'handshake' },
+					{ label: '👍 Thumbs Up', value: 'thumbs-up' },
+					{ label: '👎 Thumbs Down', value: 'thumbs-down' },
+					{ label: '🔥 Fire', value: 'fire' },
+					{ label: '⚡ Bolt', value: 'bolt' },
+					{ label: '☀️ Sun', value: 'sun' },
+					{ label: '🌙 Moon', value: 'moon' },
+					{ label: '❄️ Snowflake', value: 'snowflake' },
+					{ label: '🍃 Leaf', value: 'leaf' },
+					{ label: '🌳 Tree', value: 'tree' },
+					{ label: '⛰️ Mountain', value: 'mountain' },
+					{ label: '💧 Water', value: 'water' }
 				],
-				value: '',
+				value: null,
 			},
 			groupsOptions: {
 				options: [],
@@ -256,7 +352,9 @@ export default {
 
 			// Set the icon dropdown value
 			if (menuItem.icon) {
-				this.iconOptions.value = this.iconOptions.options.find(option => option.value === menuItem.icon)
+				this.iconOptions.value = this.iconOptions.options.find(option => option.value === menuItem.icon) || null
+			} else {
+				this.iconOptions.value = null
 			}
 
 			// Set the groups dropdown value
@@ -385,6 +483,10 @@ export default {
 			const numeric = parseInt(value, 10)
 			this.menuItem.order = Number.isNaN(numeric) ? 0 : numeric
 		},
+		handleIconSelect(selectedOption) {
+			console.log('Icon selected:', selectedOption)
+			this.iconOptions.value = selectedOption
+		},
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {
@@ -446,5 +548,17 @@ export default {
 	font-size: 0.9em;
 	color: var(--color-text-maxcontrast);
 	font-style: italic;
+}
+
+.icon-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.icon-preview {
+	width: 16px;
+	height: 16px;
+	color: var(--color-text-light);
 }
 </style>
