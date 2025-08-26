@@ -62,6 +62,16 @@ class DirectoryService
     private array $uniqueDirectories = [];
 
     /**
+     * @var array|null Cached unique directories to avoid repeated database queries
+     */
+    private ?array $cachedUniqueDirectories = null;
+
+    /**
+     * @var int Cache timestamp to determine if cache is still valid (5 minute TTL)
+     */
+    private int $cacheTimestamp = 0;
+
+    /**
      * Constructor for DirectoryService
      *
      * Initializes the DirectoryService with required dependencies for managing
@@ -178,7 +188,11 @@ class DirectoryService
      */
     public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
     {
-        // Removed redundant logging
+        // Check cache validity (5 minute TTL)
+        $currentTime = time();
+        if ($this->cachedUniqueDirectories !== null && ($currentTime - $this->cacheTimestamp) < 300) {
+            return $this->cachedUniqueDirectories;
+        }
 
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
@@ -261,7 +275,13 @@ class DirectoryService
         }
 
         // Return just the unique URLs as an indexed array
-        return array_values($uniqueDirectoryUrls);
+        $result = array_values($uniqueDirectoryUrls);
+        
+        // Cache the result with current timestamp
+        $this->cachedUniqueDirectories = $result;
+        $this->cacheTimestamp = $currentTime;
+        
+        return $result;
     }
 
     /**
@@ -712,8 +732,8 @@ class DirectoryService
 
         // Prepare Guzzle client
 		$defaultGuzzleConfig = [
-			RequestOptions::TIMEOUT => 30,
-			RequestOptions::CONNECT_TIMEOUT => 10,
+			RequestOptions::TIMEOUT => 5,
+			RequestOptions::CONNECT_TIMEOUT => 2,
 			RequestOptions::HEADERS => [
 				'Accept' => 'application/json',
 				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
@@ -1243,8 +1263,8 @@ class DirectoryService
 
         // Prepare Guzzle client
         $defaultGuzzleConfig = [
-            RequestOptions::TIMEOUT => 30,
-            RequestOptions::CONNECT_TIMEOUT => 10,
+            RequestOptions::TIMEOUT => 5,
+            RequestOptions::CONNECT_TIMEOUT => 2,
             RequestOptions::HEADERS => [
                 'Accept' => 'application/json',
                 'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
@@ -1371,8 +1391,8 @@ class DirectoryService
 
         // Prepare Guzzle client
         $defaultGuzzleConfig = [
-            RequestOptions::TIMEOUT => 30,
-            RequestOptions::CONNECT_TIMEOUT => 10,
+            RequestOptions::TIMEOUT => 5,
+            RequestOptions::CONNECT_TIMEOUT => 2,
             RequestOptions::HEADERS => [
                 'Accept' => 'application/json',
                 'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
