@@ -1427,7 +1427,7 @@ class PublicationService
      */
     private function getLocalPublicationsUltraFast(array $queryParams, array $requestParams, string $baseUrl, float $startTime): array
     {
-        $timings = ['setup' => 0, 'objectservice' => 0, 'response' => 0];
+        $timings = ['setup' => 0, 'catalog_context' => 0, 'objectservice' => 0, 'response' => 0];
         
         // Setup timing
         $setupStart = microtime(true);
@@ -1443,18 +1443,83 @@ class PublicationService
         
         $timings['setup'] = (microtime(true) - $setupStart) * 1000;
         
-        // ObjectService timing
-        $objectServiceStart = microtime(true);
+        // Catalog context timing  
+        $catalogContextStart = microtime(true);
         
-        // Build search query directly for ObjectService
+        // Build search query properly - preserve all original parameters
         $searchQuery = $queryParams;
-        $searchQuery['@self']['register'] = [$register];
-        $searchQuery['@self']['schema'] = [$schema]; 
+        
+        // Get the proper catalog context (use cached version)
+        $cacheKey = 'all';
+        if (!isset($this->cachedCatalogFilters[$cacheKey])) {
+            // Quick catalog context setup without full getCatalogFilters overhead
+            $config = [
+                'filters' => [
+                    'register' => $register,
+                    'schema' => $schema
+                ]
+            ];
+            
+            try {
+                $catalogs = $this->getObjectService()->findAll($config);
+                $uniqueRegisters = [];
+                $uniqueSchemas = [];
+                
+                foreach ($catalogs as $catalog) {
+                    $catalog = $catalog->jsonSerialize();
+                    if (isset($catalog['registers']) && is_array($catalog['registers'])) {
+                        $uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
+                    }
+                    if (isset($catalog['schemas']) && is_array($catalog['schemas'])) {
+                        $uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
+                    }
+                }
+                
+                $this->availableRegisters = array_unique($uniqueRegisters);
+                $this->availableSchemas = array_unique($uniqueSchemas);
+                
+                $catalogContext = [
+                    'registers' => array_values($this->availableRegisters),
+                    'schemas' => array_values($this->availableSchemas),
+                ];
+                
+                $this->cachedCatalogFilters[$cacheKey] = [
+                    'result' => $catalogContext,
+                    'availableRegisters' => $this->availableRegisters,
+                    'availableSchemas' => $this->availableSchemas,
+                ];
+            } catch (\Exception $e) {
+                // Fallback to defaults
+                $this->availableRegisters = [$register];
+                $this->availableSchemas = [$schema];
+                $catalogContext = [
+                    'registers' => [$register],
+                    'schemas' => [$schema],
+                ];
+            }
+        } else {
+            $cached = $this->cachedCatalogFilters[$cacheKey];
+            $this->availableRegisters = $cached['availableRegisters'];
+            $this->availableSchemas = $cached['availableSchemas'];
+            $catalogContext = $cached['result'];
+        }
+        
+        // Set up the search query properly (preserve original logic from searchPublications)
+        if (!isset($searchQuery['@self'])) {
+            $searchQuery['@self'] = [];
+        }
+        $searchQuery['@self']['register'] = $catalogContext['registers'];
+        $searchQuery['@self']['schema'] = $catalogContext['schemas'];
         $searchQuery['_published'] = true;
         $searchQuery['_includeDeleted'] = false;
         
-        // Remove route cleanup
+        // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
+        
+        $timings['catalog_context'] = (microtime(true) - $catalogContextStart) * 1000;
+        
+        // ObjectService timing
+        $objectServiceStart = microtime(true);
         
         // Call ObjectService directly - bypass all middleware
         $objectService = $this->getObjectService();
@@ -1464,6 +1529,20 @@ class PublicationService
         
         // Response building timing
         $responseStart = microtime(true);
+        
+        // Handle virtual field facet processing if needed (before unwrapping)
+        $requestedDirectoryFacets = isset($queryParams['_facets']['@self']['directory']);
+        $requestedCatalogFacets = isset($queryParams['_facets']['@self']['catalogs']);
+        
+        if (isset($result['facets']) && ($requestedDirectoryFacets || $requestedCatalogFacets)) {
+            // Need to unwrap facets first, then add virtual fields, then the unwrapping logic will handle it consistently
+            $facetsForProcessing = $result['facets'];
+            if (isset($facetsForProcessing['facets']) && is_array($facetsForProcessing['facets'])) {
+                $facetsForProcessing = $facetsForProcessing['facets'];
+            }
+            $facetsForProcessing = $this->addVirtualFieldFacets($facetsForProcessing, $requestedDirectoryFacets, $requestedCatalogFacets);
+            $result['facets'] = $facetsForProcessing;
+        }
         
         // Skip filtering for maximum performance if requested
         $skipFiltering = isset($queryParams['_skip_filtering']) && $queryParams['_skip_filtering'] !== 'false';
@@ -1502,9 +1581,17 @@ class PublicationService
             $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
         }
         
-        // Add facets if present (but minimal processing)
+        // Add facets if present (already processed and unwrapped above if needed)
         if (isset($result['facets'])) {
-            $responseData['facets'] = $result['facets'];
+            $facetsData = $result['facets'];
+            // Only unwrap if virtual field processing didn't already handle it
+            if (!($requestedDirectoryFacets || $requestedCatalogFacets)) {
+                // Check if facets are nested and unwrap if needed (same logic as original)
+                if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                    $facetsData = $facetsData['facets'];
+                }
+            }
+            $responseData['facets'] = $facetsData;
         }
         if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
@@ -1522,6 +1609,8 @@ class PublicationService
             'cached_catalogs' => false,
             'bypassed_middleware' => true,
             'skipped_filtering' => $skipFiltering,
+            'processed_virtual_facets' => $requestedDirectoryFacets || $requestedCatalogFacets,
+            'cached_catalog_filters' => isset($this->cachedCatalogFilters['all']),
             'timings' => $timings,
         ];
         
