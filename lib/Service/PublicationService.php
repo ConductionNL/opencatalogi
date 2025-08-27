@@ -1427,7 +1427,8 @@ class PublicationService
      */
     private function getLocalPublicationsUltraFast(array $queryParams, array $requestParams, string $baseUrl, float $startTime): array
     {
-        $timings = ['setup' => 0, 'catalog_context' => 0, 'objectservice' => 0, 'response' => 0];
+
+        $timings = ['setup' => 0, 'objectservice' => 0, 'response' => 0];
         
         // Setup timing
         $setupStart = microtime(true);
@@ -1521,6 +1522,7 @@ class PublicationService
         // ObjectService timing
         $objectServiceStart = microtime(true);
         
+
         // Call ObjectService directly - bypass all middleware
         $objectService = $this->getObjectService();
         $result = $objectService->searchObjectsPaginated($searchQuery);
@@ -1530,6 +1532,7 @@ class PublicationService
         // Response building timing
         $responseStart = microtime(true);
         
+
         // Handle virtual field facet processing if needed (before unwrapping)
         $requestedDirectoryFacets = isset($queryParams['_facets']['@self']['directory']);
         $requestedCatalogFacets = isset($queryParams['_facets']['@self']['catalogs']);
@@ -1544,6 +1547,7 @@ class PublicationService
             $result['facets'] = $facetsForProcessing;
         }
         
+
         // Skip filtering for maximum performance if requested
         $skipFiltering = isset($queryParams['_skip_filtering']) && $queryParams['_skip_filtering'] !== 'false';
         
@@ -1592,6 +1596,7 @@ class PublicationService
                 }
             }
             $responseData['facets'] = $facetsData;
+
         }
         if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
@@ -1611,6 +1616,7 @@ class PublicationService
             'skipped_filtering' => $skipFiltering,
             'processed_virtual_facets' => $requestedDirectoryFacets || $requestedCatalogFacets,
             'cached_catalog_filters' => isset($this->cachedCatalogFilters['all']),
+
             'timings' => $timings,
         ];
         
