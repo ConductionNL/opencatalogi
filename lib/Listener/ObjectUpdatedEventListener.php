@@ -54,12 +54,17 @@ class ObjectUpdatedEventListener implements IEventListener
      */
     public function handle(Event $event): void
     {
-
+        // TEST LOGGING TO SEE IF OPENCATALOGI LISTENER WORKS
+        error_log("OPENCATALOGI_EVENT_LISTENER_CALLED_AT_" . date('Y-m-d_H:i:s'));
+        error_log("OPENCATALOGI_EVENT_CLASS: " . get_class($event));
 
         // Verify this is the correct event type.
         if ($event instanceof ObjectUpdatedEvent === false) {
+            error_log("OPENCATALOGI_NOT_OBJECTUPDATEDEVENT_SKIPPING");
             return;
         }
+        
+        error_log("OPENCATALOGI_CONFIRMED_OBJECTUPDATEDEVENT_PROCESSING");
 
         try {
             // Get services from the server container
