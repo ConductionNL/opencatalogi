@@ -169,7 +169,7 @@ class ThemesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false);
         
         // Build paginated response structure
         $responseData = [
