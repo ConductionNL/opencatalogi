@@ -2735,7 +2735,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/publish`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}/publish`
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
@@ -2764,7 +2764,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/depublish`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}/depublish`
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
@@ -2793,7 +2793,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}`
 
 				const response = await fetch(endpoint, {
 					method: 'DELETE',
@@ -2850,7 +2850,7 @@ export default {
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 
 				// Update file tags using the same approach as PublicationDetail.vue
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}`
 
 				const response = await fetch(endpoint, {
 					method: 'PUT',
