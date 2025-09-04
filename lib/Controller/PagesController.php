@@ -135,7 +135,7 @@ class PagesController extends Controller
 
 
     /**
-     * Get all pages.
+     * Get all pages - OPTIMIZED with searchObjectsPaginated.
      *
      * @return JSONResponse The JSON response containing the list of pages
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -148,35 +148,62 @@ class PagesController extends Controller
     {
         // Get page configuration from settings
         $pageConfig = $this->getPageConfiguration();
-
-
-        // Build config for findAll to get pages
-        $config = [
-            'filters' => []
-        ];
-
-        // Add schema filter if configured
-        if (!empty($pageConfig['schema'])) {
-            $config['filters']['schema'] = $pageConfig['schema'];
-        }
-
-        // Add register filter if configured
-        if (!empty($pageConfig['register'])) {
-            $config['filters']['register'] = $pageConfig['register'];
-        }
-
-        $result = $this->getObjectService()->findAll($config);
         
-        // Convert objects to arrays
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+        // Get query parameters from request
+        $queryParams = $this->request->getParams();
+        
+        // Build search query
+        $searchQuery = $queryParams;
+        
+        // Clean up unwanted parameters
+        unset($searchQuery['id'], $searchQuery['_route']);
+
+        // Add schema filter if configured - use proper OpenRegister syntax
+        if (!empty($pageConfig['schema'])) {
+            $searchQuery['@self']['schema'	] = $pageConfig['schema'];
+        }
+
+        // Add register filter if configured - use proper OpenRegister syntax
+        if (!empty($pageConfig['register'])) {
+            $searchQuery['@self']['register'] = $pageConfig['register'];
+        }
+
+        // Use searchObjectsPaginated for better performance and pagination support
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        
+        // Build paginated response structure
+        $responseData = [
+            'results' => $result['results'] ?? [],
+            'total' => $result['total'] ?? 0,
+            'limit' => $result['limit'] ?? 20,
+            'offset' => $result['offset'] ?? 0,
+            'page' => $result['page'] ?? 1,
+            'pages' => $result['pages'] ?? 1
         ];
+        
+        // Add pagination links if present
+        if (isset($result['next'])) {
+            $responseData['next'] = $result['next'];
+        }
+        if (isset($result['prev'])) {
+            $responseData['prev'] = $result['prev'];
+        }
+        
+        // Add facets if present
+        if (isset($result['facets'])) {
+            $facetsData = $result['facets'];
+            // Unwrap nested facets if needed
+            if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                $facetsData = $facetsData['facets'];
+            }
+            $responseData['facets'] = $facetsData;
+        }
+        if (isset($result['facetable'])) {
+            $responseData['facetable'] = $result['facetable'];
+        }
 
         // Add CORS headers for public API access
-        $response = new JSONResponse($data);
+        $response = new JSONResponse($responseData);
         $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -188,7 +215,7 @@ class PagesController extends Controller
 
 
     /**
-     * Get a specific page by its slug.
+     * Get a specific page by its slug - OPTIMIZED with searchObjectsPaginated.
      *
      * @param string $slug The slug of the page to retrieve
      *
@@ -204,30 +231,30 @@ class PagesController extends Controller
         // Get page configuration from settings
         $pageConfig = $this->getPageConfiguration();
 
-        // Build config to find page by slug
-        $config = [
-            'filters' => [
-                'slug' => $slug
-            ]
+        // Build search query to find page by slug
+        $searchQuery = [
+            'slug' => $slug,
+            '_limit' => 1  // We only need one result
         ];
 
-        // Add schema filter if configured
+        // Add schema filter if configured - use proper OpenRegister syntax
         if (!empty($pageConfig['schema'])) {
-            $config['filters']['schema'] = $pageConfig['schema'];
+            $searchQuery['@self']['schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured
+        // Add register filter if configured - use proper OpenRegister syntax
         if (!empty($pageConfig['register'])) {
-            $config['filters']['register'] = $pageConfig['register'];
+            $searchQuery['@self']['register'] = $pageConfig['register'];
         }
 
-        $pages = $this->getObjectService()->findAll($config);
+        // Use searchObjectsPaginated for better performance
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
         
-        if (empty($pages)) {
+        if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
         } else {
             // Return the first matching page
-            $page = $pages[0] instanceof \OCP\AppFramework\Db\Entity ? $pages[0]->jsonSerialize() : $pages[0];
+            $page = $result['results'][0];
             $response = new JSONResponse($page);
         }
         
