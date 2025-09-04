@@ -163,19 +163,9 @@ class PublicationsController extends Controller
             
             // DIRECT ObjectService call - NO FILTERING, NO VALIDATION
             $result = $objectService->searchObjectsPaginated($searchQuery);
-            
-            // Use pagination directly from ObjectService (it's already paginated!)
-            $responseData = [
-                'results' => $result['results'] ?? [],
-                'total' => $result['total'] ?? 0,
-                'limit' => $result['limit'] ?? 20,
-                'offset' => $result['offset'] ?? 0,
-                'page' => $result['page'] ?? 1,
-                'pages' => $result['pages'] ?? 1
-            ];
-            
+                     
             // Add CORS headers for public API access
-            $response = new JSONResponse($responseData, 200);
+            $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
