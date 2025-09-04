@@ -174,27 +174,6 @@ class PublicationsController extends Controller
                 'pages' => $result['pages'] ?? 1
             ];
             
-            // Add pagination links if present
-            if (isset($result['next'])) {
-                $responseData['next'] = $result['next'];
-            }
-            if (isset($result['prev'])) {
-                $responseData['prev'] = $result['prev'];
-            }
-            
-            // Add facets if present (direct passthrough)
-            if (isset($result['facets'])) {
-                $facetsData = $result['facets'];
-                // Unwrap nested facets if needed
-                if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
-                    $facetsData = $facetsData['facets'];
-                }
-                $responseData['facets'] = $facetsData;
-            }
-            if (isset($result['facetable'])) {
-                $responseData['facetable'] = $result['facetable'];
-            }
-            
             // Add CORS headers for public API access
             $response = new JSONResponse($responseData, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
