@@ -81,6 +81,9 @@ class ObjectCreatedEventListener implements IEventListener
             // Convert ObjectEntity to array format expected by EventService.
             $objectData = $this->convertObjectEntityToArray($objectEntity);
             
+            // Check if this is a catalog object and invalidate cache if needed
+            $this->handleCatalogCacheInvalidation($objectData);
+            
             // Process the object creation event through EventService.
             $result = $eventService->handleObjectCreateEvents([$objectData]);
             
@@ -109,6 +112,51 @@ class ObjectCreatedEventListener implements IEventListener
 
     }//end handle()
 
+    /**
+     * Handles catalog cache invalidation when a catalog object is created.
+     *
+     * Checks if the created object is a catalog by comparing its schema and register
+     * against the configured catalog schema and register. If it matches, invalidates
+     * the catalog cache to ensure fresh data is used.
+     *
+     * @param array<string, mixed> $objectData The object data array
+     * @return void
+     */
+    private function handleCatalogCacheInvalidation(array $objectData): void
+    {
+        try {
+            // Get the catalog configuration to identify catalog objects
+            $config = \OC::$server->get(\OCP\IAppConfig::class);
+            $catalogSchema = $config->getValueString('opencatalogi', 'catalog_schema', '');
+            $catalogRegister = $config->getValueString('opencatalogi', 'catalog_register', '');
+            
+            // Check if both catalog schema and register are configured
+            if (empty($catalogSchema) || empty($catalogRegister)) {
+                return; // No catalog configuration, nothing to invalidate
+            }
+            
+            // Get the object's schema and register from @self metadata
+            $objectSchema = $objectData['@self']['schema'] ?? '';
+            $objectRegister = $objectData['@self']['register'] ?? '';
+            
+            // Check if this object is a catalog
+            if ($objectSchema === $catalogSchema && $objectRegister === $catalogRegister) {
+                // This is a catalog object - invalidate the cache
+                $catalogiService = \OC::$server->get(\OCA\OpenCatalogi\Service\CatalogiService::class);
+                $invalidated = $catalogiService->invalidateCatalogCache();
+                
+                if ($invalidated) {
+                    error_log('OpenCatalogi: Invalidated catalog cache due to catalog creation: ' . ($objectData['@self']['id'] ?? 'unknown'));
+                } else {
+                    error_log('OpenCatalogi: Failed to invalidate catalog cache for catalog creation: ' . ($objectData['@self']['id'] ?? 'unknown'));
+                }
+            }
+            
+        } catch (\Exception $e) {
+            // Log error but don't fail the event processing
+            error_log('OpenCatalogi: Exception during catalog cache invalidation: ' . $e->getMessage());
+        }
+    }
 
     /**
      * Convert ObjectEntity to array format for EventService.

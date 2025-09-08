@@ -4,6 +4,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -52,6 +53,7 @@ class PublicationsController extends Controller
      * @param IRequest           $request            The request object
      * @param PublicationService $publicationService The publication service
      * @param DirectoryService   $directoryService   The directory service
+     * @param CatalogiService    $catalogiService    The catalogi service for cached catalog filters
      * @param IAppConfig         $config             The app configuration
      * @param ContainerInterface $container          The container for dependency injection
      * @param IAppManager        $appManager         The app manager
@@ -64,6 +66,7 @@ class PublicationsController extends Controller
         IRequest $request,
         private readonly PublicationService $publicationService,
         private readonly DirectoryService $directoryService,
+        private readonly CatalogiService $catalogiService,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
@@ -90,6 +93,45 @@ class PublicationsController extends Controller
         }
 
         throw new \RuntimeException('OpenRegister service is not available.');
+    }
+
+    /**
+     * Adds cached catalog filters to the search query for performance.
+     *
+     * This method retrieves cached catalog registers and schemas without database queries
+     * and adds them as filters to the search query to implement catalog-based filtering.
+     *
+     * @param array<string, mixed> &$searchQuery The search query array to modify (passed by reference)
+     * @return void
+     */
+    private function addCachedCatalogFilters(array &$searchQuery): void
+    {
+        try {
+            // Get cached catalog filters (no database queries - uses IAppConfig cache)
+            $catalogFilters = $this->catalogiService->getCatalogFilters();
+            
+            // Check if we have valid catalog filters
+            if (!empty($catalogFilters['registers']) || !empty($catalogFilters['schemas'])) {
+                // Initialize @self filter if not exists
+                if (!isset($searchQuery['@self'])) {
+                    $searchQuery['@self'] = [];
+                }
+                
+                // Add register filter if we have registers
+                if (!empty($catalogFilters['registers'])) {
+                    $searchQuery['@self']['register'] = $catalogFilters['registers'];
+                }
+                
+                // Add schema filter if we have schemas
+                if (!empty($catalogFilters['schemas'])) {
+                    $searchQuery['@self']['schema'] = $catalogFilters['schemas'];
+                }
+            }
+            
+        } catch (\Exception $e) {
+            // Log error but don't fail the request - catalog filtering is optional
+            error_log('OpenCatalogi: Failed to add cached catalog filters: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -138,10 +180,13 @@ class PublicationsController extends Controller
             // Get query parameters and prepare for direct ObjectService call
             $queryParams = $this->request->getParams();
             
-            // Build minimal search query - ONLY filter on published
+            // Build minimal search query - filter on published and add cached catalog filters
             $searchQuery = $queryParams;
             $searchQuery['_published'] = true;
             $searchQuery['_includeDeleted'] = false;
+            
+            // Add cached catalog filters for performance (no database queries)
+            $this->addCachedCatalogFilters($searchQuery);
             
             // Clean up unwanted parameters
             unset($searchQuery['id'], $searchQuery['_route']);
@@ -325,6 +370,9 @@ class PublicationsController extends Controller
                 $searchQuery['_published'] = true;
                 $searchQuery['_includeDeleted'] = false;
                 
+                // Add cached catalog filters for performance (no database queries)
+                $this->addCachedCatalogFilters($searchQuery);
+                
                 // Clean up unwanted parameters
                 unset($searchQuery['id'], $searchQuery['_route']);
                 
@@ -441,6 +489,9 @@ class PublicationsController extends Controller
                 $searchQuery['_ids'] = $relations; // Search for objects with these IDs
                 $searchQuery['_published'] = true;
                 $searchQuery['_includeDeleted'] = false;
+                
+                // Add cached catalog filters for performance (no database queries)
+                $this->addCachedCatalogFilters($searchQuery);
                 
                 // Clean up unwanted parameters
                 unset($searchQuery['id'], $searchQuery['_route']);

@@ -112,16 +112,229 @@ class CatalogiService
 
 
     /**
-     * Get register and schema combinations from catalogs.
+     * Warms up the catalog cache by aggregating all catalog registers and schemas.
      *
-     * This method retrieves all catalogs (or a specific one if ID is provided),
-     * extracts their registers and schemas, and stores them as general variables.
+     * This method fetches all catalogs from the database, aggregates their registers
+     * and schemas, and stores the result in IAppConfig for fast retrieval.
+     * Should be called during app initialization and when catalogs are modified.
+     *
+     * @return array<string, mixed> Array containing cache statistics and results
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * 
+     * @psalm-return array{success: bool, registers: array<string>, schemas: array<string>, timestamp: int, catalogCount: int}
+     * @phpstan-return array{success: bool, registers: array<string>, schemas: array<string>, timestamp: int, catalogCount: int}
+     */
+    public function warmupCatalogCache(): array
+    {
+        try {
+            // Get catalog configuration from settings
+            $catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            if (empty($catalogSchema) || empty($catalogRegister)) {
+                // No catalog configuration, store empty arrays
+                $this->config->setValueString($this->appName, 'cached_catalog_registers', json_encode([]));
+                $this->config->setValueString($this->appName, 'cached_catalog_schemas', json_encode([]));
+                $this->config->setValueInt($this->appName, 'catalog_cache_timestamp', time());
+                
+                return [
+                    'success' => true,
+                    'registers' => [],
+                    'schemas' => [],
+                    'timestamp' => time(),
+                    'catalogCount' => 0
+                ];
+            }
+
+            // Setup config for finding all catalogs
+            $config = [
+                'filters' => [
+                    'schema' => $catalogSchema,
+                    'register' => $catalogRegister,
+                ]
+            ];
+
+            // Get all catalogs using ObjectService
+            $objectService = $this->getObjectService();
+            $catalogs = $objectService->findAll($config);
+
+            // Initialize arrays to store unique registers and schemas
+            $uniqueRegisters = [];
+            $uniqueSchemas = [];
+
+            // Iterate over each catalog to extract registers and schemas
+            foreach ($catalogs as $catalog) {
+                $catalogData = $catalog->jsonSerialize();
+                
+                // Check if 'registers' is an array and merge unique values
+                if (isset($catalogData['registers']) && is_array($catalogData['registers'])) {
+                    $uniqueRegisters = array_merge($uniqueRegisters, $catalogData['registers']);
+                }
+
+                // Check if 'schemas' is an array and merge unique values
+                if (isset($catalogData['schemas']) && is_array($catalogData['schemas'])) {
+                    $uniqueSchemas = array_merge($uniqueSchemas, $catalogData['schemas']);
+                }
+            }
+
+            // Remove duplicate values
+            $uniqueRegisters = array_unique($uniqueRegisters);
+            $uniqueSchemas = array_unique($uniqueSchemas);
+
+            // Store aggregated data in IAppConfig as JSON
+            $this->config->setValueString($this->appName, 'cached_catalog_registers', json_encode(array_values($uniqueRegisters)));
+            $this->config->setValueString($this->appName, 'cached_catalog_schemas', json_encode(array_values($uniqueSchemas)));
+            $this->config->setValueInt($this->appName, 'catalog_cache_timestamp', time());
+
+            return [
+                'success' => true,
+                'registers' => array_values($uniqueRegisters),
+                'schemas' => array_values($uniqueSchemas),
+                'timestamp' => time(),
+                'catalogCount' => count($catalogs)
+            ];
+
+        } catch (\Exception $e) {
+            // On error, store empty arrays to prevent repeated failures
+            $this->config->setValueString($this->appName, 'cached_catalog_registers', json_encode([]));
+            $this->config->setValueString($this->appName, 'cached_catalog_schemas', json_encode([]));
+            $this->config->setValueInt($this->appName, 'catalog_cache_timestamp', time());
+            
+            return [
+                'success' => false,
+                'registers' => [],
+                'schemas' => [],
+                'timestamp' => time(),
+                'catalogCount' => 0,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Retrieves cached catalog filters from IAppConfig.
+     *
+     * Returns the aggregated registers and schemas from the cache if available,
+     * otherwise returns null to indicate cache miss.
+     *
+     * @return array<string, array<string>>|null Array containing registers and schemas, or null if cache miss
+     * 
+     * @psalm-return array{registers: array<string>, schemas: array<string>, timestamp: int}|null
+     * @phpstan-return array{registers: array<string>, schemas: array<string>, timestamp: int}|null
+     */
+    public function getCachedCatalogFilters(): ?array
+    {
+        try {
+            // Get cached data from IAppConfig
+            $cachedRegistersJson = $this->config->getValueString($this->appName, 'cached_catalog_registers', '');
+            $cachedSchemasJson = $this->config->getValueString($this->appName, 'cached_catalog_schemas', '');
+            $cacheTimestamp = $this->config->getValueInt($this->appName, 'catalog_cache_timestamp', 0);
+
+            // Check if we have valid cached data
+            if (empty($cachedRegistersJson) || empty($cachedSchemasJson) || $cacheTimestamp === 0) {
+                return null; // Cache miss
+            }
+
+            // Decode JSON data
+            $registers = json_decode($cachedRegistersJson, true);
+            $schemas = json_decode($cachedSchemasJson, true);
+
+            // Validate decoded data
+            if (!is_array($registers) || !is_array($schemas)) {
+                return null; // Invalid cached data
+            }
+
+            return [
+                'registers' => $registers,
+                'schemas' => $schemas,
+                'timestamp' => $cacheTimestamp
+            ];
+
+        } catch (\Exception $e) {
+            return null; // Error reading cache
+        }
+    }
+
+    /**
+     * Invalidates the catalog cache by removing cached values.
+     *
+     * This method clears all cached catalog aggregation data and should be called
+     * when catalog objects are created, updated, or deleted.
+     *
+     * @return bool True if cache was successfully invalidated
+     */
+    public function invalidateCatalogCache(): bool
+    {
+        try {
+            $this->config->deleteKey($this->appName, 'cached_catalog_registers');
+            $this->config->deleteKey($this->appName, 'cached_catalog_schemas');
+            $this->config->deleteKey($this->appName, 'catalog_cache_timestamp');
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get register and schema combinations from catalogs with caching.
+     *
+     * This method first tries to retrieve filters from cache, and falls back to
+     * database queries if cache is not available. Uses warmup strategy for performance.
      *
      * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * 
+     * @psalm-return array{registers: array<string>, schemas: array<string>}
+     * @phpstan-return array{registers: array<string>, schemas: array<string>}
      */
     public function getCatalogFilters(null|string|int $catalogId = null): array
+    {
+        // For specific catalog requests, bypass cache and query directly
+        if ($catalogId !== null) {
+            return $this->getCatalogFiltersFromDatabase($catalogId);
+        }
+
+        // Try to get data from cache first
+        $cachedData = $this->getCachedCatalogFilters();
+        if ($cachedData !== null) {
+            // Update class properties for backward compatibility
+            $this->availableRegisters = $cachedData['registers'];
+            $this->availableSchemas = $cachedData['schemas'];
+            
+            return [
+                'registers' => $cachedData['registers'],
+                'schemas' => $cachedData['schemas']
+            ];
+        }
+
+        // Cache miss - warmup cache and return results
+        $warmupResult = $this->warmupCatalogCache();
+        
+        // Update class properties for backward compatibility
+        $this->availableRegisters = $warmupResult['registers'];
+        $this->availableSchemas = $warmupResult['schemas'];
+        
+        return [
+            'registers' => $warmupResult['registers'],
+            'schemas' => $warmupResult['schemas']
+        ];
+    }
+
+    /**
+     * Get register and schema combinations from catalogs by querying database directly.
+     *
+     * This method is used as fallback when cache is not available or for specific catalog requests.
+     * Contains the original database query logic.
+     *
+     * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @return array<string, array<string>> Array containing available registers and schemas
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * 
+     * @psalm-return array{registers: array<string>, schemas: array<string>}
+     * @phpstan-return array{registers: array<string>, schemas: array<string>}
+     */
+    private function getCatalogFiltersFromDatabase(null|string|int $catalogId = null): array
     {
         // Establish the default schema and register
         $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
