@@ -542,21 +542,24 @@
             "slug": "home",
             "link": "/",
             "description": "Homepage",
-            "icon": "home"
+            "icon": "home",
+            "order": "0"
           },
           {
             "name": "Catalogs",
             "slug": "catalogs",
             "link": "/catalogs",
             "description": "Browse available catalogs",
-            "icon": "catalog"
+            "icon": "catalog",
+            "order": "1"
           },
           {
             "name": "Publications",
             "slug": "publications",
             "link": "/publications",
             "description": "Browse all publications",
-            "icon": "publication"
+            "icon": "publication",
+            "order": "2"
           }
         ]
       },
