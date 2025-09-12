@@ -381,7 +381,7 @@ export default {
 					{ label: 'Mountain', value: 'mountain' },
 					{ label: 'Water', value: 'water' },
 				],
-				value: { label: 'Geen Icon', value: '' },
+				value: { label: 'No Icon', value: '' },
 			},
 			iconMode: 'standard',
 			customIcon: '',
