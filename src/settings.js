@@ -12,9 +12,11 @@ import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { fas } from '@fortawesome/free-solid-svg-icons'
+import { fab } from '@fortawesome/free-brands-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
 
 // Add all Font Awesome solid icons to the library
-library.add(fas)
+library.add(fas, fab, far)
 
 // Register FontAwesome component globally for settings
 Vue.component('FontAwesomeIcon', FontAwesomeIcon)
