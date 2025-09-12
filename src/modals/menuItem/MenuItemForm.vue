@@ -110,14 +110,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:disabled="objectStore.isLoading('menu')">
 								<template #option="{ label, value }">
 									<span class="icon-option">
-										<FontAwesomeIcon :icon="['fas', value]" class="icon-preview" />
+										<FontAwesomeIcon v-if="value" :icon="['fas', value]" class="icon-preview" />
 										{{ label }}
 									</span>
 								</template>
 
 								<template #selected-option="{ label, value }">
 									<span class="icon-option">
-										<FontAwesomeIcon :icon="['fas', value]" class="icon-preview" />
+										<FontAwesomeIcon v-if="value" :icon="['fas', value]" class="icon-preview" />
 										{{ label }}
 									</span>
 								</template>
@@ -262,6 +262,7 @@ export default {
 			},
 			iconOptions: {
 				options: [
+					{ label: 'No Icon', value: '' },
 					{ label: 'Home', value: 'house' },
 					{ label: 'User', value: 'user' },
 					{ label: 'Users', value: 'users' },
@@ -380,7 +381,7 @@ export default {
 					{ label: 'Mountain', value: 'mountain' },
 					{ label: 'Water', value: 'water' },
 				],
-				value: null,
+				value: { label: 'Geen Icon', value: '' },
 			},
 			iconMode: 'standard',
 			customIcon: '',
@@ -440,28 +441,24 @@ export default {
 			const raw = objectStore.getActiveObject('menuItem')
 			this.menuItem = { ...this.menuItem, ...this.normalizeMenuItemFields(raw) }
 
-			// icon placement select
+			// 1) load mode and custom svg from saved data
+			this.iconMode = this.menuItem.iconMode || 'standard'
+			this.customIcon = this.menuItem.customIcon || ''
+
+			// 2) icon placement
 			this.iconPlacementOptions.value
 				= this.iconPlacementOptions.options.find(o => o.value === this.menuItem.iconPlacement)
 				|| this.iconPlacementOptions.options[0]
 
-			// icon select vs custom
-			const match = this.iconOptions.options.find(o => o.value === this.menuItem.icon)
-			if (match) {
-				this.iconOptions.value = match
-				this.iconMode = 'standard'
-				this.customIcon = ''
-			} else if (this.menuItem.customIcon) {
-				this.iconOptions.value = null
-				this.iconMode = 'custom'
-				this.customIcon = this.menuItem.customIcon
+			// 3) select icon only if we're in standard mode
+			if (this.iconMode === 'standard') {
+				const match = this.iconOptions.options.find(o => o.value === this.menuItem.icon)
+				this.iconOptions.value = match || this.iconOptions.options[0] || null
 			} else {
 				this.iconOptions.value = null
-				this.iconMode = 'standard'
-				this.customIcon = ''
 			}
 
-			// Set the groups dropdown value
+			// 4) groups
 			if (this.menuItem.groups && this.menuItem.groups.length > 0) {
 				this.groupsOptions.value = this.menuItem.groups
 			} else {
