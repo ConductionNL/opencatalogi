@@ -57,22 +57,93 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:value.sync="menuItem.link"
 								:error="!!inputValidation.getError(`items.${index}.link`)" />
 
-							<!-- Debug Info -->
-							<p>Debug: Current value = {{ iconOptions.value ? iconOptions.value.label : 'None' }}</p>
-							<p>Debug: Options count = {{ iconOptions.options.length }}</p>
+							<NcTextField
+								:disabled="objectStore.isLoading('menu')"
+								label="Aria Label"
+								:helper-text="inputValidation.getError(`items.${index}.ariaLabel`) || 'This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.'"
+								:value.sync="menuItem.ariaLabel"
+								:error="!!inputValidation.getError(`items.${index}.ariaLabel`)" />
 
-							<!-- Icon Preview -->
-							<div v-if="iconOptions.value" class="selected-icon-preview">
-								<p>Selected: <FontAwesomeIcon :icon="['fas', iconOptions.value.value]" /> {{ iconOptions.value.label }}</p>
+							<div class="viewModeSwitchContainer">
+								<NcCheckboxRadioSwitch
+									v-tooltip="'Use a standard icon'"
+									:checked="iconMode === 'standard'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': iconMode === 'standard' }"
+									value="standard"
+									name="icon_source"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setIconMode('standard')">
+									Icon
+								</NcCheckboxRadioSwitch>
+								<NcCheckboxRadioSwitch
+									v-model="iconMode"
+									v-tooltip="'Use a custom icon'"
+									:checked="iconMode === 'custom'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': iconMode === 'custom' }"
+									value="custom"
+									name="icon_source"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setIconMode('custom')">
+									Custom
+								</NcCheckboxRadioSwitch>
 							</div>
 
-							<NcSelect 
-								:value="iconOptions.value"
+							<NcSelect
+								v-model="iconPlacementOptions.value"
+								:options="iconPlacementOptions.options"
+								label="label"
+								input-label="Icon Placement"
+								track-by="value"
+								:disabled="objectStore.isLoading('menu')" />
+
+							<NcSelect
+								v-if="iconMode === 'standard'"
+								v-model="iconOptions.value"
 								:options="iconOptions.options"
 								label="label"
 								input-label="Icon"
-								:disabled="objectStore.isLoading('menu')"
-								@option:selected="handleIconSelect" />
+								track-by="value"
+								:disabled="objectStore.isLoading('menu')">
+								<template #option="{ label, value }">
+									<span class="icon-option">
+										<FontAwesomeIcon :icon="['fas', value]" class="icon-preview" />
+										{{ label }}
+									</span>
+								</template>
+
+								<template #selected-option="{ label, value }">
+									<span class="icon-option">
+										<FontAwesomeIcon :icon="['fas', value]" class="icon-preview" />
+										{{ label }}
+									</span>
+								</template>
+							</NcSelect>
+
+							<div v-if="iconMode === 'custom'" class="json-editor">
+								<label>Custom Icon (SVG)</label>
+								<div :class="`codeMirrorContainer ${getTheme()}`">
+									<CodeMirror
+										v-model="customIcon"
+										:basic="true"
+										placeholder="<svg xmlns='http://www.w3.org/2000/svg' ...></svg>"
+										:dark="getTheme() === 'dark'"
+										:lang="xml()"
+										:extensions="[xml()]"
+										:tab-size="2"
+										style="height: 400px" />
+									<NcButton
+										class="format-json-button"
+										type="secondary"
+										size="small"
+										@click="formatSVG">
+										Format SVG
+									</NcButton>
+								</div>
+							</div>
 						</div>
 					</BTab>
 
@@ -144,9 +215,12 @@ import _ from 'lodash'
 import { Menu } from '../../entities/menu/menu.ts'
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcTextField, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
+import { getTheme } from '../../services/getTheme.js'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { xml } from '@codemirror/lang-xml'
+import CodeMirror from 'vue-codemirror6'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-
 
 export default {
 	name: 'MenuItemForm',
@@ -158,8 +232,10 @@ export default {
 		NcTextField,
 		NcSelect,
 		NcCheckboxRadioSwitch,
+		CodeMirror,
 		BTabs,
 		BTab,
+		FontAwesomeIcon,
 		// Icons
 		ContentSaveOutline,
 		Plus,
@@ -174,6 +250,11 @@ export default {
 				link: '',
 				description: '',
 				icon: '',
+				iconPrefix: '',
+				iconMode: '',
+				iconPlacement: '',
+				customIcon: '',
+				ariaLabel: '',
 				groups: [],
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
@@ -181,125 +262,134 @@ export default {
 			},
 			iconOptions: {
 				options: [
-					{ label: '🏠 Home', value: 'house' },
-					{ label: '👤 User', value: 'user' },
-					{ label: '👥 Users', value: 'users' },
-					{ label: '⚙️ Settings', value: 'gear' },
-					{ label: '🔍 Search', value: 'magnifying-glass' },
-					{ label: '📊 Dashboard', value: 'chart-line' },
-					{ label: 'ℹ️ Info', value: 'info' },
-					{ label: '❓ Question', value: 'question' },
-					{ label: '❓ Help', value: 'circle-question' },
-					{ label: '📞 Phone', value: 'phone' },
-					{ label: '📧 Email', value: 'envelope' },
-					{ label: '📇 Contact', value: 'address-book' },
-					{ label: '🏢 Building', value: 'building' },
-					{ label: '🌍 Globe', value: 'globe' },
-					{ label: '🗺️ Map', value: 'map' },
-					{ label: '📍 Location', value: 'location-dot' },
-					{ label: '🔑 Key', value: 'key' },
-					{ label: '🔒 Lock', value: 'lock' },
-					{ label: '🔓 Unlock', value: 'unlock' },
-					{ label: '🛡️ Shield', value: 'shield' },
-					{ label: '📄 Document', value: 'file' },
-					{ label: '📝 File Text', value: 'file-lines' },
-					{ label: '📁 Folder', value: 'folder' },
-					{ label: '📖 Book', value: 'book' },
-					{ label: '🔖 Bookmark', value: 'bookmark' },
-					{ label: '🏷️ Tag', value: 'tag' },
-					{ label: '🏷️ Tags', value: 'tags' },
-					{ label: '⭐ Star', value: 'star' },
-					{ label: '❤️ Heart', value: 'heart' },
-					{ label: '➕ Plus', value: 'plus' },
-					{ label: '➖ Minus', value: 'minus' },
-					{ label: '✅ Check', value: 'check' },
-					{ label: '❌ Times', value: 'xmark' },
-					{ label: '➡️ Arrow Right', value: 'arrow-right' },
-					{ label: '⬅️ Arrow Left', value: 'arrow-left' },
-					{ label: '⬆️ Arrow Up', value: 'arrow-up' },
-					{ label: '⬇️ Arrow Down', value: 'arrow-down' },
-					{ label: '▶️ Chevron Right', value: 'chevron-right' },
-					{ label: '◀️ Chevron Left', value: 'chevron-left' },
-					{ label: '🔼 Chevron Up', value: 'chevron-up' },
-					{ label: '🔽 Chevron Down', value: 'chevron-down' },
-					{ label: '☰ Menu', value: 'bars' },
-					{ label: '⚏ Grid', value: 'table-cells' },
-					{ label: '📋 List', value: 'list' },
-					{ label: '📅 Calendar', value: 'calendar' },
-					{ label: '🕐 Clock', value: 'clock' },
-					{ label: '🛒 Shopping Cart', value: 'shopping-cart' },
-					{ label: '💳 Credit Card', value: 'credit-card' },
-					{ label: '💲 Money', value: 'dollar-sign' },
-					{ label: '🔔 Bell', value: 'bell' },
-					{ label: '🚩 Flag', value: 'flag' },
-					{ label: '📷 Camera', value: 'camera' },
-					{ label: '🖼️ Image', value: 'image' },
-					{ label: '🎥 Video', value: 'video' },
-					{ label: '🎵 Music', value: 'music' },
-					{ label: '🎧 Headphones', value: 'headphones' },
-					{ label: '🎤 Microphone', value: 'microphone' },
-					{ label: '🔊 Volume Up', value: 'volume-up' },
-					{ label: '🔉 Volume Down', value: 'volume-down' },
-					{ label: '🔇 Volume Mute', value: 'volume-xmark' },
-					{ label: '📶 WiFi', value: 'wifi' },
-					{ label: '📶 Signal', value: 'signal' },
-					{ label: '🔋 Battery', value: 'battery-three-quarters' },
-					{ label: '⚡ Power', value: 'power-off' },
-					{ label: '🖨️ Printer', value: 'print' },
-					{ label: '⬇️ Download', value: 'download' },
-					{ label: '⬆️ Upload', value: 'upload' },
-					{ label: '🔗 Share', value: 'share' },
-					{ label: '🔗 External Link', value: 'external-link' },
-					{ label: '🔗 Link', value: 'link' },
-					{ label: '💥 Chain Broken', value: 'link-slash' },
-					{ label: '📋 Copy', value: 'copy' },
-					{ label: '📋 Paste', value: 'paste' },
-					{ label: '✂️ Cut', value: 'scissors' },
-					{ label: '💾 Save', value: 'floppy-disk' },
-					{ label: '✏️ Edit', value: 'pen' },
-					{ label: '🗑️ Trash', value: 'trash' },
-					{ label: '🔄 Refresh', value: 'arrows-rotate' },
-					{ label: '🔄 Sync', value: 'rotate' },
-					{ label: '🔍 Filter', value: 'filter' },
-					{ label: '🔤 Sort', value: 'sort' },
-					{ label: '🔼 Sort Up', value: 'sort-up' },
-					{ label: '🔽 Sort Down', value: 'sort-down' },
-					{ label: '🔍 Expand', value: 'expand' },
-					{ label: '🗜️ Compress', value: 'compress' },
-					{ label: '👁️ Eye', value: 'eye' },
-					{ label: '👁️‍🗨️ Eye Slash', value: 'eye-slash' },
-					{ label: '🔛 Toggle On', value: 'toggle-on' },
-					{ label: '🔘 Toggle Off', value: 'toggle-off' },
-					{ label: '💡 Lightbulb', value: 'lightbulb' },
-					{ label: '🔧 Tools', value: 'tools' },
-					{ label: '🔧 Wrench', value: 'wrench' },
-					{ label: '🔨 Hammer', value: 'hammer' },
-					{ label: '⚙️ Cog', value: 'cog' },
-					{ label: '🗄️ Database', value: 'database' },
-					{ label: '🖥️ Server', value: 'server' },
-					{ label: '☁️ Cloud', value: 'cloud' },
-					{ label: '🚛 Truck', value: 'truck' },
-					{ label: '🚗 Car', value: 'car' },
-					{ label: '✈️ Plane', value: 'plane' },
-					{ label: '🚢 Ship', value: 'ship' },
-					{ label: '🚂 Train', value: 'train' },
-					{ label: '🚲 Bicycle', value: 'bicycle' },
-					{ label: '🚶 Walking', value: 'person-walking' },
-					{ label: '🏃 Running', value: 'person-running' },
-					{ label: '🤝 Handshake', value: 'handshake' },
-					{ label: '👍 Thumbs Up', value: 'thumbs-up' },
-					{ label: '👎 Thumbs Down', value: 'thumbs-down' },
-					{ label: '🔥 Fire', value: 'fire' },
-					{ label: '⚡ Bolt', value: 'bolt' },
-					{ label: '☀️ Sun', value: 'sun' },
-					{ label: '🌙 Moon', value: 'moon' },
-					{ label: '❄️ Snowflake', value: 'snowflake' },
-					{ label: '🍃 Leaf', value: 'leaf' },
-					{ label: '🌳 Tree', value: 'tree' },
-					{ label: '⛰️ Mountain', value: 'mountain' },
-					{ label: '💧 Water', value: 'water' }
+					{ label: 'Home', value: 'house' },
+					{ label: 'User', value: 'user' },
+					{ label: 'Users', value: 'users' },
+					{ label: 'Settings', value: 'gear' },
+					{ label: 'Search', value: 'magnifying-glass' },
+					{ label: 'Dashboard', value: 'chart-line' },
+					{ label: 'Info', value: 'info' },
+					{ label: 'Question', value: 'question' },
+					{ label: 'Help', value: 'circle-question' },
+					{ label: 'Phone', value: 'phone' },
+					{ label: 'Email', value: 'envelope' },
+					{ label: 'Contact', value: 'address-book' },
+					{ label: 'Building', value: 'building' },
+					{ label: 'Globe', value: 'globe' },
+					{ label: 'Map', value: 'map' },
+					{ label: 'Location', value: 'location-dot' },
+					{ label: 'Key', value: 'key' },
+					{ label: 'Lock', value: 'lock' },
+					{ label: 'Unlock', value: 'unlock' },
+					{ label: 'Shield', value: 'shield' },
+					{ label: 'Document', value: 'file' },
+					{ label: 'File Text', value: 'file-lines' },
+					{ label: 'Folder', value: 'folder' },
+					{ label: 'Book', value: 'book' },
+					{ label: 'Bookmark', value: 'bookmark' },
+					{ label: 'Tag', value: 'tag' },
+					{ label: 'Tags', value: 'tags' },
+					{ label: 'Star', value: 'star' },
+					{ label: 'Heart', value: 'heart' },
+					{ label: 'Plus', value: 'plus' },
+					{ label: 'Minus', value: 'minus' },
+					{ label: 'Check', value: 'check' },
+					{ label: 'Times', value: 'xmark' },
+					{ label: 'Arrow Right', value: 'arrow-right' },
+					{ label: 'Arrow Left', value: 'arrow-left' },
+					{ label: 'Arrow Up', value: 'arrow-up' },
+					{ label: 'Arrow Down', value: 'arrow-down' },
+					{ label: 'Chevron Right', value: 'chevron-right' },
+					{ label: 'Chevron Left', value: 'chevron-left' },
+					{ label: 'Chevron Up', value: 'chevron-up' },
+					{ label: 'Chevron Down', value: 'chevron-down' },
+					{ label: 'Menu', value: 'bars' },
+					{ label: 'Grid', value: 'table-cells' },
+					{ label: 'List', value: 'list' },
+					{ label: 'Calendar', value: 'calendar' },
+					{ label: 'Clock', value: 'clock' },
+					{ label: 'Shopping Cart', value: 'shopping-cart' },
+					{ label: 'Credit Card', value: 'credit-card' },
+					{ label: 'Money', value: 'dollar-sign' },
+					{ label: 'Bell', value: 'bell' },
+					{ label: 'Flag', value: 'flag' },
+					{ label: 'Camera', value: 'camera' },
+					{ label: 'Image', value: 'image' },
+					{ label: 'Video', value: 'video' },
+					{ label: 'Music', value: 'music' },
+					{ label: 'Headphones', value: 'headphones' },
+					{ label: 'Microphone', value: 'microphone' },
+					{ label: 'Volume Up', value: 'volume-up' },
+					{ label: 'Volume Down', value: 'volume-down' },
+					{ label: 'Volume Mute', value: 'volume-xmark' },
+					{ label: 'WiFi', value: 'wifi' },
+					{ label: 'Signal', value: 'signal' },
+					{ label: 'Battery', value: 'battery-three-quarters' },
+					{ label: 'Power', value: 'power-off' },
+					{ label: 'Printer', value: 'print' },
+					{ label: 'Download', value: 'download' },
+					{ label: 'Upload', value: 'upload' },
+					{ label: 'Share', value: 'share' },
+					{ label: 'External Link', value: 'external-link' },
+					{ label: 'Link', value: 'link' },
+					{ label: 'Chain Broken', value: 'link-slash' },
+					{ label: 'Copy', value: 'copy' },
+					{ label: 'Paste', value: 'paste' },
+					{ label: 'Cut', value: 'scissors' },
+					{ label: 'Save', value: 'floppy-disk' },
+					{ label: 'Edit', value: 'pen' },
+					{ label: 'Trash', value: 'trash' },
+					{ label: 'Refresh', value: 'arrows-rotate' },
+					{ label: 'Sync', value: 'rotate' },
+					{ label: 'Filter', value: 'filter' },
+					{ label: 'Sort', value: 'sort' },
+					{ label: 'Sort Up', value: 'sort-up' },
+					{ label: 'Sort Down', value: 'sort-down' },
+					{ label: 'Expand', value: 'expand' },
+					{ label: 'Compress', value: 'compress' },
+					{ label: 'Eye', value: 'eye' },
+					{ label: 'Eye Slash', value: 'eye-slash' },
+					{ label: 'Toggle On', value: 'toggle-on' },
+					{ label: 'Toggle Off', value: 'toggle-off' },
+					{ label: 'Lightbulb', value: 'lightbulb' },
+					{ label: 'Tools', value: 'tools' },
+					{ label: 'Wrench', value: 'wrench' },
+					{ label: 'Hammer', value: 'hammer' },
+					{ label: 'Cog', value: 'cog' },
+					{ label: 'Database', value: 'database' },
+					{ label: 'Server', value: 'server' },
+					{ label: 'Cloud', value: 'cloud' },
+					{ label: 'Truck', value: 'truck' },
+					{ label: 'Car', value: 'car' },
+					{ label: 'Plane', value: 'plane' },
+					{ label: 'Ship', value: 'ship' },
+					{ label: 'Train', value: 'train' },
+					{ label: 'Bicycle', value: 'bicycle' },
+					{ label: 'Walking', value: 'person-walking' },
+					{ label: 'Running', value: 'person-running' },
+					{ label: 'Handshake', value: 'handshake' },
+					{ label: 'Thumbs Up', value: 'thumbs-up' },
+					{ label: 'Thumbs Down', value: 'thumbs-down' },
+					{ label: 'Fire', value: 'fire' },
+					{ label: 'Bolt', value: 'bolt' },
+					{ label: 'Sun', value: 'sun' },
+					{ label: 'Moon', value: 'moon' },
+					{ label: 'Snowflake', value: 'snowflake' },
+					{ label: 'Leaf', value: 'leaf' },
+					{ label: 'Tree', value: 'tree' },
+					{ label: 'Mountain', value: 'mountain' },
+					{ label: 'Water', value: 'water' },
 				],
 				value: null,
+			},
+			iconMode: 'standard',
+			customIcon: '',
+			iconPlacementOptions: {
+				options: [
+					{ label: 'Left', value: 'left' },
+					{ label: 'Right', value: 'right' },
+				],
+				value: { label: 'Left', value: 'left' },
 			},
 			groupsOptions: {
 				options: [],
@@ -316,7 +406,7 @@ export default {
 		inputValidation() {
 			const updatedMenuItem = {
 				...this.menuItem,
-				icon: this.iconOptions.value?.value || '',
+				icon: this.iconMode === 'standard' ? (this.iconOptions.value?.value || '') : (this.customIcon || ''),
 				groups: this.normalizeGroups(this.groupsOptions.value),
 				order: Number(this.menuItem.order) || 0,
 				hideBeforeLogin: this.menuItem.hideBeforeLogin,
@@ -347,25 +437,57 @@ export default {
 		this.fetchGroups()
 
 		if (this.isEdit) {
-			const menuItem = objectStore.getActiveObject('menuItem')
-			this.menuItem = { ...menuItem }
+			const raw = objectStore.getActiveObject('menuItem')
+			this.menuItem = { ...this.menuItem, ...this.normalizeMenuItemFields(raw) }
 
-			// Set the icon dropdown value
-			if (menuItem.icon) {
-				this.iconOptions.value = this.iconOptions.options.find(option => option.value === menuItem.icon) || null
+			// icon placement select
+			this.iconPlacementOptions.value
+				= this.iconPlacementOptions.options.find(o => o.value === this.menuItem.iconPlacement)
+				|| this.iconPlacementOptions.options[0]
+
+			// icon select vs custom
+			const match = this.iconOptions.options.find(o => o.value === this.menuItem.icon)
+			if (match) {
+				this.iconOptions.value = match
+				this.iconMode = 'standard'
+				this.customIcon = ''
+			} else if (this.menuItem.customIcon) {
+				this.iconOptions.value = null
+				this.iconMode = 'custom'
+				this.customIcon = this.menuItem.customIcon
 			} else {
 				this.iconOptions.value = null
+				this.iconMode = 'standard'
+				this.customIcon = ''
 			}
 
 			// Set the groups dropdown value
-			if (menuItem.groups && menuItem.groups.length > 0) {
-				this.groupsOptions.value = menuItem.groups
+			if (this.menuItem.groups && this.menuItem.groups.length > 0) {
+				this.groupsOptions.value = this.menuItem.groups
 			} else {
 				this.groupsOptions.value = []
 			}
 		}
 	},
 	methods: {
+		normalizeMenuItemFields(item = {}) {
+			return {
+				order: Number(item.order || 0),
+				name: item.name ?? '',
+				link: item.link ?? '',
+				description: item.description ?? '',
+				ariaLabel: item.ariaLabel ?? '',
+				icon: item.icon ?? '',
+				iconPrefix: item.iconPrefix ?? 'fas',
+				iconMode: item.iconMode ?? 'standard',
+				iconPlacement: item.iconPlacement ?? 'left',
+				customIcon: item.customIcon ?? '',
+				groups: Array.isArray(item.groups) ? item.groups : [],
+				hideAfterLogin: !!item.hideAfterLogin,
+				hideBeforeLogin: !!item.hideBeforeLogin,
+				items: Array.isArray(item.items) ? item.items : [],
+			}
+		},
 		/**
 		 * Fetch Nextcloud groups from the API
 		 * @return {Promise<void>}
@@ -410,6 +532,71 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 			clearTimeout(this.closeModalTimeout)
 		},
+		formatSVG() {
+			try {
+				const input = String(this.customIcon || '').trim()
+				const match = input.match(/<svg[\s\S]*?<\/svg>/i)
+				if (!match) {
+					console.error('No <svg> root element found.')
+					return
+				}
+				const svgString = match[0]
+
+				const parser = new DOMParser()
+				const doc = parser.parseFromString(svgString, 'image/svg+xml')
+				if (doc.getElementsByTagName('parsererror').length > 0) {
+					console.error('Error parsing SVG.')
+					return
+				}
+
+				let svgEl = doc.documentElement
+				if (!svgEl || svgEl.nodeName.toLowerCase() !== 'svg') {
+					const found = doc.getElementsByTagName('svg')[0]
+					if (!found) {
+						console.error('No <svg> element found after parsing.')
+						return
+					}
+					svgEl = found
+				}
+
+				this.customIcon = this.prettySvg(svgEl)
+			} catch (error) {
+				console.error('Error formatting SVG:', error)
+			}
+		},
+		prettySvg(root) {
+			const indentUnit = '\t'
+			const indent = d => indentUnit.repeat(d)
+			const serialize = (node, depth) => {
+				if (node.nodeType === 3) {
+					const text = node.nodeValue.trim()
+					if (!text) return ''
+					return indent(depth) + text
+				}
+				if (node.nodeType === 8) {
+					return indent(depth) + `<!--${node.nodeValue}-->`
+				}
+				if (node.nodeType !== 1) return ''
+
+				const tag = node.tagName
+				const attrs = Array.from(node.attributes).map(a => `${a.name}="${a.value}"`).join(' ')
+				const open = attrs ? `<${tag} ${attrs}>` : `<${tag}>`
+				const children = Array.from(node.childNodes).filter(n => !(n.nodeType === 3 && !n.nodeValue.trim()))
+
+				if (children.length === 0) {
+					return indent(depth) + open + '\n' + indent(depth) + `</${tag}>`
+				}
+
+				let out = indent(depth) + open
+				children.forEach(child => {
+					const childStr = serialize(child, depth + 1)
+					if (childStr) out += '\n' + childStr
+				})
+				out += '\n' + indent(depth) + `</${tag}>`
+				return out
+			}
+			return serialize(root, 0)
+		},
 		/**
 		 * Save the menu item (either create new or update existing)
 		 * @return {Promise<void>}
@@ -423,6 +610,11 @@ export default {
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
+				// Prefix is fas for now, will change in the future
+				iconPrefix: 'fas',
+				iconMode: this.iconMode,
+				iconPlacement: this.iconPlacementOptions.value?.value || 'left',
+				customIcon: this.customIcon,
 				groups: this.normalizeGroups(this.groupsOptions.value),
 				order: Number(this.menuItem.order) || 0,
 				hideBeforeLogin: this.menuItem.hideBeforeLogin,
@@ -483,8 +675,10 @@ export default {
 			const numeric = parseInt(value, 10)
 			this.menuItem.order = Number.isNaN(numeric) ? 0 : numeric
 		},
+		setIconMode(mode) {
+			this.iconMode = mode
+		},
 		handleIconSelect(selectedOption) {
-			console.log('Icon selected:', selectedOption)
 			this.iconOptions.value = selectedOption
 		},
 		normalizeGroups(selected) {
@@ -494,6 +688,9 @@ export default {
 				if (item && typeof item === 'object') return item.value ?? String(item.label ?? '')
 				return ''
 			}).filter(Boolean)
+		},
+		getTheme() {
+			return getTheme()
 		},
 	},
 }
@@ -560,5 +757,106 @@ export default {
 	width: 16px;
 	height: 16px;
 	color: var(--color-text-light);
+}
+
+/* CodeMirror */
+.codeMirrorContainer {
+	margin-block-start: 6px;
+}
+
+.codeMirrorContainer :deep(.cm-content) {
+	border-radius: 0 !important;
+	border: none !important;
+}
+.codeMirrorContainer :deep(.cm-editor) {
+	outline: none !important;
+}
+.codeMirrorContainer.light > .vue-codemirror {
+	border: 1px dotted silver;
+}
+.codeMirrorContainer.dark > .vue-codemirror {
+	border: 1px dotted grey;
+}
+
+/* value text color */
+/* string */
+.codeMirrorContainer.light :deep(.ͼe) {
+	color: #448c27;
+}
+.codeMirrorContainer.dark :deep(.ͼe) {
+	color: #88c379;
+}
+
+/* boolean */
+.codeMirrorContainer.light :deep(.ͼc) {
+	color: #221199;
+}
+.codeMirrorContainer.dark :deep(.ͼc) {
+	color: #8d64f7;
+}
+
+/* null */
+.codeMirrorContainer.light :deep(.ͼb) {
+	color: #770088;
+}
+.codeMirrorContainer.dark :deep(.ͼb) {
+	color: #be55cd;
+}
+
+/* number */
+.codeMirrorContainer.light :deep(.ͼd) {
+	color: #d19a66;
+}
+.codeMirrorContainer.dark :deep(.ͼd) {
+	color: #9d6c3a;
+}
+
+/* text cursor */
+.codeMirrorContainer :deep(.cm-content) * {
+	cursor: text !important;
+}
+
+/* selection color */
+.codeMirrorContainer.light :deep(.cm-line)::selection,
+.codeMirrorContainer.light :deep(.cm-line) ::selection {
+	background-color: #d7eaff !important;
+    color: black;
+}
+.codeMirrorContainer.dark :deep(.cm-line)::selection,
+.codeMirrorContainer.dark :deep(.cm-line) ::selection {
+	background-color: #8fb3e6 !important;
+    color: black;
+}
+
+/* string */
+.codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
+    color: #2d770f;
+}
+.codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
+    color: #104e0c;
+}
+
+/* boolean */
+.codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
+	color: #221199;
+}
+.codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
+	color: #4026af;
+}
+
+/* null */
+.codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
+	color: #770088;
+}
+.codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
+	color: #770088;
+}
+
+/* number */
+.codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
+	color: #8c5c2c;
+}
+.codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
+	color: #623907;
 }
 </style>
