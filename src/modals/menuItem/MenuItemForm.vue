@@ -50,12 +50,93 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:error="!!inputValidation.getError(`items.${index}.description`)"
 								:helper-text="inputValidation.getError(`items.${index}.description`)" />
 
+							<div v-if="isFooterPosition" class="viewModeSwitchContainer">
+								<NcCheckboxRadioSwitch
+									v-tooltip="'Use a standard link'"
+									:checked="linkMode === 'link'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': linkMode === 'link' }"
+									value="link"
+									name="link_type"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setLinkMode('link')">
+									Link
+								</NcCheckboxRadioSwitch>
+								<NcCheckboxRadioSwitch
+									v-tooltip="'Use a markdown link'"
+									:checked="linkMode === 'markdown'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': linkMode === 'markdown' }"
+									value="markdown"
+									name="link_type"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setLinkMode('markdown')">
+									Markdown Link
+								</NcCheckboxRadioSwitch>
+							</div>
+
 							<NcTextField
 								:disabled="objectStore.isLoading('menu')"
-								label="Link*"
-								:helper-text="inputValidation.getError(`items.${index}.link`) || 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.'"
+								:label="linkMode === 'markdown' ? 'Markdown Link*' : 'Link*'"
+								:helper-text="inputValidation.getError(`items.${index}.link`) || (linkMode === 'markdown' ? 'Enter a markdown-formatted link (e.g. [Text](https://example.com)) or internal anchor.' : 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.')"
 								:value.sync="menuItem.link"
 								:error="!!inputValidation.getError(`items.${index}.link`)" />
+
+							<div v-if="isFooterPosition" class="viewModeSwitchContainer">
+								<NcCheckboxRadioSwitch
+									v-tooltip="'Use a single-line value'"
+									:checked="valueMode === 'value'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': valueMode === 'value' }"
+									value="value"
+									name="value_type"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setValueMode('value')">
+									Value
+								</NcCheckboxRadioSwitch>
+								<NcCheckboxRadioSwitch
+									v-tooltip="'Use a title (no link)'"
+									:checked="valueMode === 'title'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': valueMode === 'title' }"
+									value="title"
+									name="value_type"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setValueMode('title')">
+									Title
+								</NcCheckboxRadioSwitch>
+								<NcCheckboxRadioSwitch
+									v-tooltip="'Use a multi-row text'"
+									:checked="valueMode === 'multiRow'"
+									:button-variant="true"
+									:class="{ 'checkbox-radio-switch--checked': valueMode === 'multiRow' }"
+									value="multiRow"
+									name="value_type"
+									type="radio"
+									button-variant-grouped="horizontal"
+									@update:checked="() => setValueMode('multiRow')">
+									MultiRow
+								</NcCheckboxRadioSwitch>
+							</div>
+
+							<NcTextArea
+								v-if="isFooterPosition && valueMode === 'multiRow'"
+								:disabled="objectStore.isLoading('menu')"
+								label="Value"
+								:value.sync="menuItem.value"
+								:helper-text="inputValidation.getError(`items.${index}.value`) || 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.'" />
+
+							<NcTextField
+								v-if="isFooterPosition && valueMode !== 'multiRow'"
+								:disabled="objectStore.isLoading('menu')"
+								label="Value"
+								:value.sync="menuItem.value"
+								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.' : 'If no value is set, the name will be used.')"
+								@update:value="onSingleLineValueChange" />
 
 							<NcTextField
 								:disabled="objectStore.isLoading('menu')"
@@ -213,7 +294,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 <script>
 import _ from 'lodash'
 import { Menu } from '../../entities/menu/menu.ts'
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcTextField, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcTextField, NcTextArea, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import { getTheme } from '../../services/getTheme.js'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -230,6 +311,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcTextField,
+		NcTextArea,
 		NcSelect,
 		NcCheckboxRadioSwitch,
 		CodeMirror,
@@ -259,6 +341,9 @@ export default {
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 				items: [],
+				linkMode: 'link',
+				value: '',
+				valueMode: 'value',
 			},
 			iconOptions: {
 				options: [
@@ -270,6 +355,7 @@ export default {
 					{ label: 'Search', value: 'magnifying-glass' },
 					{ label: 'Dashboard', value: 'chart-line' },
 					{ label: 'Info', value: 'info' },
+					{ label: 'Info Circle', value: 'circle-info' },
 					{ label: 'Question', value: 'question' },
 					{ label: 'Help', value: 'circle-question' },
 					{ label: 'Phone', value: 'phone' },
@@ -398,11 +484,18 @@ export default {
 				loading: false,
 			},
 			closeModalTimeout: null,
+			linkMode: 'link',
+			valueMode: 'value',
+			valueMultiRowCache: null,
 		}
 	},
 	computed: {
 		menuObject() {
 			return objectStore.getActiveObject('menu')
+		},
+		isFooterPosition() {
+			const pos = Number(this.menuObject?.position || 0)
+			return pos >= 3 && pos <= 6
 		},
 		inputValidation() {
 			const updatedMenuItem = {
@@ -464,6 +557,17 @@ export default {
 			} else {
 				this.groupsOptions.value = []
 			}
+
+			// initialize linkMode from item if present
+			this.linkMode = this.menuItem.linkMode === 'markdown' ? 'markdown' : 'link'
+			// initialize valueMode from item if present
+			this.valueMode = ['multiRow', 'title'].includes(this.menuItem.valueMode) ? this.menuItem.valueMode : 'value'
+			// decode multiline content for textarea editing
+			if (this.valueMode === 'multiRow' && typeof this.menuItem.value === 'string') {
+				this.menuItem.value = this.decodeMultilineFromStorage(this.menuItem.value)
+				// initialize cache with decoded multiline
+				this.valueMultiRowCache = this.menuItem.value
+			}
 		}
 	},
 	methods: {
@@ -483,6 +587,9 @@ export default {
 				hideAfterLogin: !!item.hideAfterLogin,
 				hideBeforeLogin: !!item.hideBeforeLogin,
 				items: Array.isArray(item.items) ? item.items : [],
+				linkMode: item.linkMode ?? 'link',
+				value: item.value ?? '',
+				valueMode: item.valueMode ?? 'value',
 			}
 		},
 		/**
@@ -604,6 +711,15 @@ export default {
 			const menuClone = _.cloneDeep(this.menuObject)
 			const activeMenuItem = objectStore.getActiveObject('menuItem')
 
+			// prepare value for save
+			let valueForSave = this.menuItem.value
+			if (this.valueMode === 'multiRow') {
+				valueForSave = this.encodeMultilineForStorage(String(valueForSave || ''))
+			} else if (typeof valueForSave === 'string') {
+				// ensure single line for non-multiRow modes
+				valueForSave = String(valueForSave).replace(/\r?\n/g, ' ').replace(/\\n/g, ' ').trim()
+			}
+
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
@@ -615,6 +731,9 @@ export default {
 				groups: this.normalizeGroups(this.groupsOptions.value),
 				order: Number(this.menuItem.order) || 0,
 				hideBeforeLogin: this.menuItem.hideBeforeLogin,
+				linkMode: this.linkMode,
+				valueMode: this.valueMode,
+				value: valueForSave || null,
 			}
 
 			if (this.isEdit && activeMenuItem) {
@@ -677,6 +796,44 @@ export default {
 		},
 		handleIconSelect(selectedOption) {
 			this.iconOptions.value = selectedOption
+		},
+		setLinkMode(mode) {
+			this.linkMode = mode
+		},
+		setValueMode(mode) {
+			const previousMode = this.valueMode
+			this.valueMode = mode
+			if (mode === 'multiRow' && previousMode !== 'multiRow') {
+				// Restore cached multi-row content if available; otherwise decode from storage
+				if (this.valueMultiRowCache !== null && this.valueMultiRowCache !== undefined) {
+					this.menuItem.value = this.valueMultiRowCache
+				} else if (typeof this.menuItem.value === 'string') {
+					this.menuItem.value = this.decodeMultilineFromStorage(this.menuItem.value)
+				}
+			} else if (mode !== 'multiRow' && previousMode === 'multiRow') {
+				// Cache current multi-row content before flattening for single-line input
+				this.valueMultiRowCache = typeof this.menuItem.value === 'string' ? this.menuItem.value : ''
+				if (typeof this.menuItem.value === 'string') {
+					this.menuItem.value = this.menuItem.value.replace(/\r?\n/g, ' ').replace(/\\n/g, ' ').trim()
+				}
+			}
+		},
+		onSingleLineValueChange(newValue) {
+			// User is editing the single-line field: apply value and clear cache
+			this.menuItem.value = newValue
+			this.valueMultiRowCache = null
+		},
+		encodeMultilineForStorage(input) {
+			if (typeof input !== 'string') return ''
+			// Store actual newlines: normalize CRLF, convert literal "\\n" to real newlines
+			return input
+				.replace(/\r\n/g, '\n')
+				.replace(/\r/g, '\n')
+				.replace(/\\n/g, '\n')
+		},
+		decodeMultilineFromStorage(input) {
+			if (typeof input !== 'string') return ''
+			return input.replace(/\\n/g, '\n')
 		},
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []

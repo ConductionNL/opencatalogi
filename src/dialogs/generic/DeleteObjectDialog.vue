@@ -41,12 +41,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				Cancel
 			</NcButton>
 			<NcButton
-				:disabled="objectStore.isLoading(objectType)"
+				:disabled="loading"
 				icon="Delete"
 				type="error"
 				@click="deleteObject">
 				<template #icon>
-					<Delete :size="20" />
+					<NcLoadingIcon v-if="loading" :size="20" />
+
+					<Delete v-if="!loading" :size="20" />
 				</template>
 				Delete
 			</NcButton>
@@ -84,6 +86,7 @@ export default {
 		return {
 			closeTimeout: null,
 			objectType: null,
+			loading: false,
 		}
 	},
 	computed: {
@@ -110,6 +113,7 @@ export default {
 	},
 	methods: {
 		deleteObject() {
+			this.loading = true
 			if (this.isMultiple) {
 				const selectedObjects = objectStore.getSelectedObjects(this.objectType)
 				if (!selectedObjects?.length) return
@@ -134,12 +138,16 @@ export default {
 						this.closeTimeout = setTimeout(() => {
 							this.closeDialog()
 						}, 2000)
+						this.loading = false
 					})
 					.catch(err => {
 						console.error('Error deleting multiple objects:', err)
+						this.loading = false
 					})
 					.finally(() => {
 						this.refreshObjectList(this.objectType)
+						this.closeDialog()
+						this.loading = false
 					})
 
 			} else {
@@ -171,12 +179,16 @@ export default {
 						this.closeTimeout = setTimeout(() => {
 							this.closeDialog()
 						}, 2000)
+						this.loading = false
 					})
 					.catch(err => {
 						console.error('Error deleting one object:', err)
+						this.loading = false
 					})
 					.finally(() => {
 						this.refreshObjectList(this.objectType)
+						this.closeDialog()
+
 					})
 			}
 		},
