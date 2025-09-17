@@ -322,6 +322,13 @@ export default {
 		},
 	},
 	watch: {
+		'menuState.success'(val) {
+			if (val === true) {
+				setTimeout(() => {
+					objectStore.setState('menu', { success: null })
+				}, 2000)
+			}
+		},
 		/**
 		 * Watch for changes in the menu data and update editForm accordingly
 		 * @param {object} newMenu - The new menu data

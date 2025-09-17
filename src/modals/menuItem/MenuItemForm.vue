@@ -27,7 +27,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<BTab title="Configuration" active>
 						<div class="form-container">
 							<NcTextField
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								label="Order"
 								type="number"
 								min="0"
@@ -37,14 +37,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								@update:value="handleOrderUpdate" />
 
 							<NcTextField
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								label="Name*"
 								:value.sync="menuItem.name"
 								:error="!!inputValidation.getError(`items.${index}.name`)"
 								:helper-text="inputValidation.getError(`items.${index}.name`) || 'Name is required.'" />
 
 							<NcTextField
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								label="Description"
 								:value.sync="menuItem.description"
 								:error="!!inputValidation.getError(`items.${index}.description`)"
@@ -78,7 +78,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							</div>
 
 							<NcTextField
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								:label="linkMode === 'markdown' ? 'Markdown Link*' : 'Link*'"
 								:helper-text="inputValidation.getError(`items.${index}.link`) || (linkMode === 'markdown' ? 'Enter a markdown-formatted link (e.g. [Text](https://example.com)) or internal anchor.' : 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.')"
 								:value.sync="menuItem.link"
@@ -125,21 +125,21 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<NcTextArea
 								v-if="isFooterPosition && valueMode === 'multiRow'"
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								label="Value"
 								:value.sync="menuItem.value"
 								:helper-text="inputValidation.getError(`items.${index}.value`) || 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.'" />
 
 							<NcTextField
 								v-if="isFooterPosition && valueMode !== 'multiRow'"
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								label="Value"
 								:value.sync="menuItem.value"
 								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.' : 'If no value is set, the name will be used.')"
 								@update:value="onSingleLineValueChange" />
 
 							<NcTextField
-								:disabled="objectStore.isLoading('menu')"
+								:disabled="loading"
 								label="Aria Label"
 								:helper-text="inputValidation.getError(`items.${index}.ariaLabel`) || 'This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.'"
 								:value.sync="menuItem.ariaLabel"
@@ -174,35 +174,49 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							</div>
 
 							<NcSelect
+								v-if="iconMode === 'standard'"
+								v-model="iconPrefixOptions.value"
+								:options="iconPrefixOptions.options"
+								label="label"
+								input-label="Icon Prefix"
+								track-by="value"
+								:disabled="loading" />
+
+							<NcSelect
 								v-model="iconPlacementOptions.value"
 								:options="iconPlacementOptions.options"
 								label="label"
 								input-label="Icon Placement"
 								track-by="value"
-								:disabled="objectStore.isLoading('menu')" />
+								:disabled="loading" />
 
 							<NcSelect
 								v-if="iconMode === 'standard'"
 								v-model="iconOptions.value"
-								:options="iconOptions.options"
+								:options="filteredLimitedIconOptions"
 								label="label"
 								input-label="Icon"
 								track-by="value"
-								:disabled="objectStore.isLoading('menu')">
+								:disabled="loading"
+								placeholder="Search icons… (more results appear when searching)"
+								@search="iconSearchQuery = $event">
 								<template #option="{ label, value }">
 									<span class="icon-option">
-										<FontAwesomeIcon v-if="value" :icon="['fas', value]" class="icon-preview" />
+										<FontAwesomeIcon v-if="value" :icon="[iconPrefixOptions.value?.value || 'fas', value]" class="icon-preview" />
 										{{ label }}
 									</span>
 								</template>
 
 								<template #selected-option="{ label, value }">
 									<span class="icon-option">
-										<FontAwesomeIcon v-if="value" :icon="['fas', value]" class="icon-preview" />
+										<FontAwesomeIcon v-if="value" :icon="[iconPrefixOptions.value?.value || 'fas', value]" class="icon-preview" />
 										{{ label }}
 									</span>
 								</template>
 							</NcSelect>
+							<p v-if="iconMode === 'standard'" class="help-text">
+								Tip: type to search all icons. More results are shown when searching.
+							</p>
 
 							<div v-if="iconMode === 'custom'" class="json-editor">
 								<label>Custom Icon (SVG)</label>
@@ -239,7 +253,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								<NcSelect
 									v-model="groupsOptions.value"
 									:options="groupsOptions.options"
-									:disabled="objectStore.isLoading('menu') || groupsOptions.loading"
+									:disabled="loading || groupsOptions.loading"
 									input-label="Select Groups"
 									multiple />
 								<p v-if="groupsOptions.loading" class="groups-loading">
@@ -253,12 +267,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideAfterLogin"
-									:disabled="menuItem.hideBeforeLogin || objectStore.isLoading('menu')">
+									:disabled="menuItem.hideBeforeLogin || loading">
 									Verberg na inloggen
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideBeforeLogin"
-									:disabled="menuItem.hideAfterLogin || objectStore.isLoading('menu')">
+									:disabled="menuItem.hideAfterLogin || loading">
 									Verberg voor inloggen
 								</NcCheckboxRadioSwitch>
 								<p v-if="menuItem.hideAfterLogin && menuItem.hideBeforeLogin" class="field-error">
@@ -272,18 +286,18 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 		</div>
 
 		<template #actions>
-			<NcButton @click="closeModal">
+			<NcButton @click="() => closeModal('back')">
 				{{ isEdit ? 'Close' : 'Cancel' }}
 			</NcButton>
 			<NcButton v-if="objectStore.getState('menu').success === null"
 				v-tooltip="inputValidation.flatErrorMessages[0]"
-				:disabled="objectStore.isLoading('menu') || !inputValidation.success"
+				:disabled="loading || !inputValidation.success"
 				type="primary"
 				@click="saveMenuItem">
 				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
-					<ContentSaveOutline v-if="!objectStore.isLoading('menu') && isEdit" :size="20" />
-					<Plus v-if="!objectStore.isLoading('menu') && !isEdit" :size="20" />
+					<NcLoadingIcon v-if="loading" :size="20" />
+					<ContentSaveOutline v-if="!loading && isEdit" :size="20" />
+					<Plus v-if="!loading && !isEdit" :size="20" />
 				</template>
 				{{ isEdit ? 'Save' : 'Add' }}
 			</NcButton>
@@ -302,6 +316,9 @@ import { xml } from '@codemirror/lang-xml'
 import CodeMirror from 'vue-codemirror6'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
+import { fab } from '@fortawesome/free-brands-svg-icons'
 
 export default {
 	name: 'MenuItemForm',
@@ -326,6 +343,7 @@ export default {
 		return {
 			isEdit: !!objectStore.getActiveObject('menuItem'),
 			index: objectStore.getActiveObject('menuItem')?.index ?? objectStore.getActiveObject('menu').items.length,
+			loading: false,
 			menuItem: {
 				order: 0,
 				name: '',
@@ -469,6 +487,16 @@ export default {
 				],
 				value: { label: 'No Icon', value: '' },
 			},
+			allSolidIconOptions: [],
+			regularIconOptions: [],
+			brandIconOptions: [
+				{ label: 'GitHub', value: 'github' },
+				{ label: 'Twitter', value: 'twitter' },
+				{ label: 'Facebook', value: 'facebook' },
+				{ label: 'LinkedIn', value: 'linkedin' },
+				{ label: 'YouTube', value: 'youtube' },
+				{ label: 'Google', value: 'google' },
+			],
 			iconMode: 'standard',
 			customIcon: '',
 			iconPlacementOptions: {
@@ -477,6 +505,14 @@ export default {
 					{ label: 'Right', value: 'right' },
 				],
 				value: { label: 'Left', value: 'left' },
+			},
+			iconPrefixOptions: {
+				options: [
+					{ label: 'FA Solid', value: 'fas' },
+					{ label: 'FA Regular', value: 'far' },
+					{ label: 'FA Brands', value: 'fab' },
+				],
+				value: { label: 'FA Solid', value: 'fas' },
 			},
 			groupsOptions: {
 				options: [],
@@ -487,6 +523,10 @@ export default {
 			linkMode: 'link',
 			valueMode: 'value',
 			valueMultiRowCache: null,
+			// icon search & display limiting
+			iconSearchQuery: '',
+			iconDisplayLimit: 120,
+			iconFullOptions: [],
 		}
 	},
 	computed: {
@@ -497,10 +537,46 @@ export default {
 			const pos = Number(this.menuObject?.position || 0)
 			return pos >= 3 && pos <= 6
 		},
+		currentFullIconList() {
+			const prefix = this.iconPrefixOptions.value?.value || 'fas'
+			if (this.iconFullOptions && this.iconFullOptions.length) return this.iconFullOptions
+			if (prefix === 'fab') return this.brandIconOptions
+			if (prefix === 'far') return this.regularIconOptions?.length ? this.regularIconOptions : this.allSolidIconOptions
+			// default fas: prefer manual list first
+			return this.allSolidIconOptions?.length ? this.allSolidIconOptions : this.iconOptions.options
+		},
+		filteredLimitedIconOptions() {
+			const query = (this.iconSearchQuery || '').toLowerCase().trim()
+			let list = this.currentFullIconList
+			if (query) {
+				list = list.filter(o => String(o.label).toLowerCase().includes(query) || String(o.value).toLowerCase().includes(query))
+			}
+			// Deduplicate by value
+			const seen = new Set()
+			const deduped = []
+			for (const o of list) {
+				if (!o || !o.value) continue
+				if (seen.has(o.value)) continue
+				seen.add(o.value)
+				deduped.push(o)
+			}
+			// When searching, don't limit results
+			if (query) return deduped
+			// Otherwise limit results
+			const limit = this.iconDisplayLimit
+			const sliced = deduped.slice(0, limit)
+			const selected = this.iconOptions.value
+			if (selected && selected.value && !sliced.find(o => o.value === selected.value)) {
+				const fromFull = this.currentFullIconList.find(o => o.value === selected.value)
+				if (fromFull) sliced.push(fromFull)
+			}
+			return sliced
+		},
 		inputValidation() {
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconMode === 'standard' ? (this.iconOptions.value?.value || '') : (this.customIcon || ''),
+				iconPrefix: this.iconPrefixOptions.value?.value || 'fas',
 				groups: this.normalizeGroups(this.groupsOptions.value),
 				order: Number(this.menuItem.order) || 0,
 				hideBeforeLogin: this.menuItem.hideBeforeLogin,
@@ -526,6 +602,45 @@ export default {
 			return createZodErrorHandler(result)
 		},
 	},
+	watch: {
+		'iconPrefixOptions.value'(val) {
+			if (!val || typeof val !== 'object') return
+			this.menuItem.iconPrefix = val.value || 'fas'
+			this.applyIconOptionsForPrefix()
+			this.iconSearchQuery = ''
+		},
+	},
+	created() {
+		// Build lists from imported FA packs by iterating the pack objects
+		try {
+			const toOptionsFromPack = (pack) => Object.values(pack || {})
+				.filter(def => def && typeof def === 'object' && 'iconName' in def)
+				.map(def => ({
+					label: String(def.iconName).replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+					value: String(def.iconName),
+				}))
+				.sort((a, b) => a.label.localeCompare(b.label))
+
+			// Solid (fas) – union manual list with pack list, manual first
+			const solidPack = toOptionsFromPack(fas)
+			const manualSolid = this.iconOptions.options || []
+			this.allSolidIconOptions = this.buildUniqueOptions([manualSolid, solidPack])
+			if (!this.allSolidIconOptions.find(o => o.value === '')) {
+				this.allSolidIconOptions.unshift({ label: 'No Icon', value: '' })
+			}
+
+			// Regular (far)
+			const regularOpts = this.buildUniqueOptions([toOptionsFromPack(far)])
+			this.regularIconOptions = regularOpts.length ? [{ label: 'No Icon', value: '' }, ...regularOpts] : this.allSolidIconOptions
+
+			// Brands (fab)
+			const brandOpts = this.buildUniqueOptions([toOptionsFromPack(fab)])
+			if (brandOpts.length) this.brandIconOptions = [{ label: 'No Icon', value: '' }, ...brandOpts]
+		} catch (e) {
+			// Keep defaults on failure
+		}
+		this.iconSearchQuery = ''
+	},
 	mounted() {
 		objectStore.setState('menu', { success: null, error: null })
 		this.fetchGroups()
@@ -537,11 +652,18 @@ export default {
 			// 1) load mode and custom svg from saved data
 			this.iconMode = this.menuItem.iconMode || 'standard'
 			this.customIcon = this.menuItem.customIcon || ''
+			// icon options will be applied after prefix select value is set below
 
 			// 2) icon placement
 			this.iconPlacementOptions.value
 				= this.iconPlacementOptions.options.find(o => o.value === this.menuItem.iconPlacement)
 				|| this.iconPlacementOptions.options[0]
+
+			// 2b) icon prefix select
+			const prefixValue = this.menuItem.iconPrefix || 'fas'
+			this.iconPrefixOptions.value = this.iconPrefixOptions.options.find(o => o.value === prefixValue) || this.iconPrefixOptions.options[0]
+			this.menuItem.iconPrefix = this.iconPrefixOptions.value.value
+			this.applyIconOptionsForPrefix()
 
 			// 3) select icon only if we're in standard mode
 			if (this.iconMode === 'standard') {
@@ -592,6 +714,21 @@ export default {
 				valueMode: item.valueMode ?? 'value',
 			}
 		},
+		buildUniqueOptions(lists = []) {
+			const seen = new Set()
+			const out = []
+			for (const list of lists) {
+				if (!Array.isArray(list)) continue
+				for (const opt of list) {
+					if (!opt || typeof opt !== 'object') continue
+					const val = String(opt.value ?? '')
+					if (seen.has(val)) continue
+					seen.add(val)
+					out.push({ label: String(opt.label ?? val), value: val })
+				}
+			}
+			return out
+		},
 		/**
 		 * Fetch Nextcloud groups from the API
 		 * @return {Promise<void>}
@@ -627,14 +764,47 @@ export default {
 		 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
-				this.closeModal()
+				this.closeModal('full')
 			}
 		},
-		closeModal() {
-			navigationStore.setModal(false)
+		closeModal(mode = 'full') {
+			if (mode === 'back') {
+				navigationStore.setModal('viewMenu')
+			} else {
+				navigationStore.setModal(false)
+			}
 			objectStore.clearActiveObject('menuItem')
 			objectStore.setState('menu', { success: null, error: null })
 			clearTimeout(this.closeModalTimeout)
+		},
+		applyIconOptionsForPrefix() {
+			const prefix = this.iconPrefixOptions.value?.value || 'fas'
+			// Preserve current selection if possible
+			const currentValue = this.iconOptions.value?.value || this.menuItem.icon || ''
+			if (prefix === 'fab') {
+				this.iconFullOptions = this.brandIconOptions
+			} else if (prefix === 'far') {
+				this.iconFullOptions = this.regularIconOptions && this.regularIconOptions.length
+					? this.regularIconOptions
+					: (this.allSolidIconOptions || this.iconOptions.options)
+			} else {
+				this.iconFullOptions = this.allSolidIconOptions && this.allSolidIconOptions.length
+					? this.allSolidIconOptions
+					: this.iconOptions.options
+				// Ensure 'No Icon' stays on top for fas
+				if (Array.isArray(this.iconFullOptions)) {
+					const noIconIdx = this.iconFullOptions.findIndex(o => o && o.value === '')
+					if (noIconIdx > 0) {
+						const [noIcon] = this.iconFullOptions.splice(noIconIdx, 1)
+						this.iconFullOptions.unshift(noIcon)
+					} else if (noIconIdx === -1) {
+						this.iconFullOptions.unshift({ label: 'No Icon', value: '' })
+					}
+				}
+			}
+			const match = (this.iconFullOptions || []).find(o => o.value === currentValue)
+			this.iconOptions.value = match || (this.iconFullOptions || [])[0] || null
+			this.menuItem.icon = this.iconOptions.value?.value || ''
 		},
 		formatSVG() {
 			try {
@@ -706,6 +876,7 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async saveMenuItem() {
+			this.loading = true
 			objectStore.setState('menu', { success: null, error: null, loading: true })
 
 			const menuClone = _.cloneDeep(this.menuObject)
@@ -723,8 +894,8 @@ export default {
 			const updatedMenuItem = {
 				...this.menuItem,
 				icon: this.iconOptions.value?.value || '',
-				// Prefix is fas for now, will change in the future
-				iconPrefix: 'fas',
+				// Prefix is selected from iconPrefixOptions; default 'fas'
+				iconPrefix: this.iconPrefixOptions.value?.value || 'fas',
 				iconMode: this.iconMode,
 				iconPlacement: this.iconPlacementOptions.value?.value || 'left',
 				customIcon: this.customIcon,
@@ -773,6 +944,7 @@ export default {
 
 			objectStore.updateObject('menu', this.menuObject.id, newMenu)
 				.then(() => {
+					this.loading = false
 					objectStore.setState('menu', { success: true })
 					// Wait for the user to read the feedback then return to parent dialog
 					this.closeModalTimeout = setTimeout(() => {
@@ -781,9 +953,11 @@ export default {
 					EventBus.$emit('edit-menu-item-success')
 				})
 				.catch((error) => {
+					this.loading = false
 					objectStore.setState('menu', { error: error.message || 'An error occurred while saving the menu' })
 				})
 				.finally(() => {
+					this.loading = false
 					objectStore.setState('menu', { loading: false })
 				})
 		},
@@ -799,6 +973,12 @@ export default {
 		},
 		setLinkMode(mode) {
 			this.linkMode = mode
+		},
+		// Keep the selected FA prefix in sync with menuItem and previews
+		updateIconPrefix(prefix) {
+			const selected = this.iconPrefixOptions.options.find(o => o.value === prefix) || this.iconPrefixOptions.options[0]
+			this.iconPrefixOptions.value = selected
+			this.menuItem.iconPrefix = selected.value
 		},
 		setValueMode(mode) {
 			const previousMode = this.valueMode
