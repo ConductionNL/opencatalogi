@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 													<template #icon>
 														<Pencil :size="18" />
 													</template>
-													{{ t('opencatalogi', 'Edit') }},
+													{{ t('opencatalogi', 'Edit') }}
 												</NcButton>
 												<NcButton type="error" @click="deleteItem(item)">
 													<template #icon>
@@ -322,6 +322,13 @@ export default {
 		},
 	},
 	watch: {
+		'menuState.success'(val) {
+			if (val === true) {
+				setTimeout(() => {
+					objectStore.setState('menu', { success: null })
+				}, 2000)
+			}
+		},
 		/**
 		 * Watch for changes in the menu data and update editForm accordingly
 		 * @param {object} newMenu - The new menu data
@@ -333,20 +340,41 @@ export default {
 						...this.editForm,
 						..._.cloneDeep(newMenu),
 					}
+					this.tabIndex = 0 // Menu Items tab for edit mode
 				} else if (this.isAddMode) {
-					// Reset form for add mode
-					this.editForm = {
-						title: '', slug: '', link: '', description: '', icon: '', position: 0, items: [], groups: [], hideAfterLogin: false, hideBeforeLogin: false,
-					}
+					this.resetComponentState()
 				}
 			},
 			immediate: true,
+		},
+
+		// Add watcher for modal state to handle cleanup
+		'navigationStore.modal': {
+			handler(newModal, oldModal) {
+				if (oldModal === 'viewMenu' && newModal !== 'viewMenu') {
+					// Modal was closed, ensure cleanup
+					this.resetComponentState()
+				} else if (newModal === 'viewMenu' && !this.menu) {
+					// Modal opened in add mode
+					this.resetComponentState()
+				}
+			},
 		},
 	},
 	mounted() {
 		// Initialize form when component mounts
 		// Fetch groups for the dropdown
 		this.fetchGroups && this.fetchGroups()
+	},
+	beforeUnmount() {
+		// Clean up any pending timeouts or intervals
+		// Reset component state
+		this.resetComponentState()
+		// Clear any store state if modal is still open
+		if (navigationStore.modal === 'viewMenu') {
+			objectStore.clearActiveObject('menu')
+			objectStore.setState('menu', { success: null, error: null })
+		}
 	},
 	methods: {
 		/**
@@ -365,14 +393,6 @@ export default {
 			if (!isOpen) {
 				this.closeModal()
 			}
-		},
-		/**
-		 * Close the modal and clear the active object
-		 * @return {void}
-		 */
-		closeModal() {
-			navigationStore.setModal(false)
-			objectStore.clearActiveObject('menu')
 		},
 		/**
 		 * Open the edit modal for the current menu
@@ -414,7 +434,46 @@ export default {
 			this.editForm.position = parseInt(value, 10) || 0
 		},
 		/**
-		 * Save the menu
+		 * Reset all component data to initial state
+		 * @return {void}
+		 */
+		resetComponentState() {
+			this.editForm = {
+				title: '',
+				slug: '',
+				link: '',
+				description: '',
+				icon: '',
+				position: 0,
+				items: [],
+				groups: [],
+				hideAfterLogin: false,
+				hideBeforeLogin: false,
+			}
+			this.hasUpdated = false
+			this.tabIndex = this.isAddMode ? 1 : 0 // Configuration tab for add, Menu Items for edit
+			this.groupsOptions = {
+				options: [],
+				loading: false,
+			}
+		},
+
+		/**
+		 * Close the modal and clear all state
+		 * @return {void}
+		 */
+		closeModal() {
+			// Clear store state
+			navigationStore.setModal(false)
+			objectStore.clearActiveObject('menu')
+			objectStore.setState('menu', { success: null, error: null })
+
+			// Reset component state
+			this.resetComponentState()
+		},
+
+		/**
+		 * Save the menu with proper state management
 		 */
 		saveMenu() {
 			const menuItem = new Menu({
@@ -425,16 +484,16 @@ export default {
 			if (this.isEdit) {
 				objectStore.updateObject('menu', menuItem.id, menuItem)
 					.then(() => {
-						const self = this
-						setTimeout(function() {
-							self.closeModal()
+						setTimeout(() => {
+							this.closeModal()
 						}, 2000)
 					})
 			} else {
 				objectStore.createObject('menu', menuItem)
-					.then(() => {
+					.then((createdMenu) => {
+						// Set the newly created menu as active to switch to edit mode
+						objectStore.setActiveObject('menu', createdMenu)
 						this.tabIndex = 0 // Switch to Menu Items tab
-						// Optionally show a success message
 					})
 			}
 		},

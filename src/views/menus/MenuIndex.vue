@@ -104,9 +104,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<MenuIcon v-else :size="64" />
 				</template>
 				<template v-if="!objectStore.isLoading('menu') && !objectStore.getCollection('menu')?.results?.length" #action>
-									<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
-					{{ t('opencatalogi', 'Add menu') }}
-				</NcButton>
+					<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
+						{{ t('opencatalogi', 'Add menu') }}
+					</NcButton>
 				</template>
 			</NcEmptyContent>
 
@@ -297,7 +297,6 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 
@@ -320,7 +319,6 @@ export default {
 		TrashCanOutline,
 		Refresh,
 		Plus,
-		Eye,
 		ContentCopy,
 		HelpCircleOutline,
 		PaginationComponent,
