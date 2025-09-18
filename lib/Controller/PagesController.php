@@ -234,7 +234,8 @@ class PagesController extends Controller
         // Build search query to find page by slug
         $searchQuery = [
             'slug' => $slug,
-            '_limit' => 1  // We only need one result
+            '_limit' => 1  // We only need one result,
+            '_source' => 'database'  // We only need one result, and is should always be true
         ];
 
         // Add schema filter if configured - use proper OpenRegister syntax
