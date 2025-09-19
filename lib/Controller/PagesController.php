@@ -169,7 +169,7 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false);
         
         // Build paginated response structure
         $responseData = [
@@ -249,7 +249,7 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false);
         
         if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
