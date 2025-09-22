@@ -326,11 +326,16 @@ class PublicationsController extends Controller
                 ];
             } else {                
                 
+                // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
+                // After find(), ObjectService is constrained to the object's register/schema
+                // But for /uses endpoint, we want to search across ALL registers/schemas
+                $freshObjectService = $this->getObjectService();
+                
                 // Clean up unwanted parameters and remove register/schema restrictions
                 unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema']);
 
-                // Call ObjectService with ids as named parameter
-                $result = $objectService->searchObjectsPaginated(
+                // Call fresh ObjectService instance with ids as named parameter
+                $result = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery, 
                     rbac: true, 
                     multi: true, 
@@ -341,7 +346,7 @@ class PublicationsController extends Controller
             }
             
             // Add what we're searching for in debugging
-            $result['uses'] = $id;
+            $result['relations'] = $relations;
             
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -383,11 +388,15 @@ class PublicationsController extends Controller
             // Get query parameters once
             $searchQuery = $this->request->getParams();
             
+            // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
+            // For /used endpoint, we want to search across ALL registers/schemas
+            $freshObjectService = $this->getObjectService();
+            
             // Clean up unwanted parameters and remove register/schema restrictions
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema']);
                    
-             // Use ObjectService searchObjectsPaginated directly - pass uses as named parameter
-            $result = $objectService->searchObjectsPaginated(
+             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
+            $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery, 
                 rbac: true, 
                 multi: true, 
