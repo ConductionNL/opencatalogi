@@ -572,21 +572,28 @@ class PublicationService
     public function attachments(string $id): JSONResponse
     {
         $object = $this->getObjectService()->find(id: $id, extend: [])->jsonSerialize();
-        $context = $this->getCatalogFilters(catalogId: null);
+        
+        // Check if the object is published - if so, allow access to attachments regardless of catalog restrictions
+        $isPublished = !empty($object['@self']['published']) && $object['@self']['published'] !== null;
+        
+        if (!$isPublished) {
+            // For unpublished objects, check catalog filters
+            $context = $this->getCatalogFilters(catalogId: null);
 
-        $registerAllowed = is_numeric($context['registers'])
-            ? $object['@self']['register'] == $context['registers']
-            : (is_array($context['registers']) && in_array($object['@self']['register'], $context['registers']));
+            $registerAllowed = is_numeric($context['registers'])
+                ? $object['@self']['register'] == $context['registers']
+                : (is_array($context['registers']) && in_array($object['@self']['register'], $context['registers']));
 
-        $schemaAllowed = is_numeric($context['schemas'])
-            ? $object['@self']['schema'] == $context['schemas']
-            : (is_array($context['schemas']) && in_array($object['@self']['schema'], $context['schemas']));
+            $schemaAllowed = is_numeric($context['schemas'])
+                ? $object['@self']['schema'] == $context['schemas']
+                : (is_array($context['schemas']) && in_array($object['@self']['schema'], $context['schemas']));
 
-        if ($registerAllowed === false || $schemaAllowed === false) {
-            return new JSONResponse(
-                data: ['message' => 'Not allowed to view attachments of this object'],
-                statusCode: 403
-            );
+            if ($registerAllowed === false || $schemaAllowed === false) {
+                return new JSONResponse(
+                    data: ['message' => 'Not allowed to view attachments of this object'],
+                    statusCode: 403
+                );
+            }
         }
 
 		$fileService = $this->getFileService();

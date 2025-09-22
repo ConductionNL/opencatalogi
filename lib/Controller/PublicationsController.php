@@ -150,7 +150,8 @@ class PublicationsController extends Controller
             if (!isset($searchQuery['_extend'])) {
                 $searchQuery['_extend'] = [];
             } elseif (!is_array($searchQuery['_extend'])) {
-                $searchQuery['_extend'] = [$searchQuery['_extend']];
+                // Handle comma-separated strings
+                $searchQuery['_extend'] = array_map('trim', explode(',', $searchQuery['_extend']));
             }
             
             // Ensure @self.schema and @self.register are always included for compatibility
@@ -205,8 +206,12 @@ class PublicationsController extends Controller
             
             // Build extend parameters
             $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
-            // Normalize to array
-            $extend = is_array($extend) ? $extend : [$extend];
+            // Normalize to array - handle comma-separated strings
+            if (is_string($extend)) {
+                $extend = array_map('trim', explode(',', $extend));
+            } elseif (!is_array($extend)) {
+                $extend = [$extend];
+            }
             // Filter only values that start with '@self.'
             $extend = array_filter($extend, fn($val) => is_string($val) && str_starts_with($val, '@self.'));
             
@@ -298,7 +303,7 @@ class PublicationsController extends Controller
             $objectService = $this->getObjectService();
             
             // Get query parameters once
-            $queryParams = $this->request->getParams();
+            $searchQuery = $this->request->getParams();
 
             // Get the relations for the object directly
             $object = $objectService->find(id: $id);
@@ -313,73 +318,39 @@ class PublicationsController extends Controller
                     'total' => 0,
                     'page' => 1,
                     'pages' => 1,
-                    'limit' => (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20),
+                    'limit' => (int) ($searchQuery['_limit'] ?? $searchQuery['limit'] ?? 20),
                     'offset' => 0,
-                    'facets' => []
+                    'facets' => [],
+                    // Add relations being searched for debugging
+                    'relations' => $relations
                 ];
-            } else {
+            } else {                
                 
-                // Build search query for the related objects
-                $searchQuery = $queryParams;
-                $searchQuery['_ids'] = $relations; // Search for objects with these IDs
-                $searchQuery['_published'] = true;
-                $searchQuery['_includeDeleted'] = false;
+                // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
+                // After find(), ObjectService is constrained to the object's register/schema
+                // But for /uses endpoint, we want to search across ALL registers/schemas
+                $freshObjectService = $this->getObjectService();
                 
-                // Clean up unwanted parameters
-                unset($searchQuery['id'], $searchQuery['_route']);
-                
-                // Add schema/register extension if needed
-                if (!isset($searchQuery['_extend'])) {
-                    $searchQuery['_extend'] = [];
-                } elseif (!is_array($searchQuery['_extend'])) {
-                    $searchQuery['_extend'] = [$searchQuery['_extend']];
-                }
-                
-                // Ensure @self.schema and @self.register are always included for compatibility
-                if (!in_array('@self.schema', $searchQuery['_extend'])) {
-                    $searchQuery['_extend'][] = '@self.schema';
-                }
-                if (!in_array('@self.register', $searchQuery['_extend'])) {
-                    $searchQuery['_extend'][] = '@self.register';
-                }
+                // Clean up unwanted parameters and remove register/schema restrictions
+                // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
+                unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
 
-                // DIRECT ObjectService call for related objects
-                $result = $objectService->searchObjectsPaginated($searchQuery);
-                
-                // Use pagination directly from ObjectService
-                $responseData = [
-                    'results' => $result['results'] ?? [],
-                    'total' => $result['total'] ?? 0,
-                    'limit' => $result['limit'] ?? 20,
-                    'offset' => $result['offset'] ?? 0,
-                    'page' => $result['page'] ?? 1,
-                    'pages' => $result['pages'] ?? 1
-                ];
-                
-                // Add pagination links if present
-                if (isset($result['next'])) {
-                    $responseData['next'] = $result['next'];
-                }
-                if (isset($result['prev'])) {
-                    $responseData['prev'] = $result['prev'];
-                }
-                
-                // Add facets if present (direct passthrough)
-                if (isset($result['facets'])) {
-                    $facetsData = $result['facets'];
-                    // Unwrap nested facets if needed
-                    if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
-                        $facetsData = $facetsData['facets'];
-                    }
-                    $responseData['facets'] = $facetsData;
-                }
-                if (isset($result['facetable'])) {
-                    $responseData['facetable'] = $result['facetable'];
-                }
+                // Call fresh ObjectService instance with ids as named parameter
+                $result = $freshObjectService->searchObjectsPaginated(
+                    query: $searchQuery, 
+                    rbac: true, 
+                    multi: true, 
+                    published: true, 
+                    deleted: false,
+                    ids: $relations
+                );                
             }
             
+            // Add what we're searching for in debugging
+            $result['relations'] = $relations;
+            
             // Add CORS headers for public API access
-            $response = new JSONResponse($responseData, 200);
+            $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -416,87 +387,31 @@ class PublicationsController extends Controller
             $objectService = $this->getObjectService();
             
             // Get query parameters once
-            $queryParams = $this->request->getParams();
-
-            // Get objects that have relations pointing to this object
-            $relationsArray = $objectService->findByRelations($id);
-            $relations = array_map(static fn($relation) => $relation->getUuid(), $relationsArray);
-
-            // Check if relations array is empty
-            if (empty($relations)) {
-                // If relations is empty, return empty paginated response
-                $responseData = [
-                    'results' => [],
-                    'total' => 0,
-                    'page' => 1,
-                    'pages' => 1,
-                    'limit' => (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20),
-                    'offset' => 0,
-                    'facets' => []
-                ];
-            } else {
-                
-                // Build search query for the objects that reference this publication
-                $searchQuery = $queryParams;
-                $searchQuery['_ids'] = $relations; // Search for objects with these IDs
-                $searchQuery['_published'] = true;
-                $searchQuery['_includeDeleted'] = false;
-                
-                // Clean up unwanted parameters
-                unset($searchQuery['id'], $searchQuery['_route']);
-                
-                // Add schema/register extension if needed
-                if (!isset($searchQuery['_extend'])) {
-                    $searchQuery['_extend'] = [];
-                } elseif (!is_array($searchQuery['_extend'])) {
-                    $searchQuery['_extend'] = [$searchQuery['_extend']];
-                }
-                
-                // Ensure @self.schema and @self.register are always included for compatibility
-                if (!in_array('@self.schema', $searchQuery['_extend'])) {
-                    $searchQuery['_extend'][] = '@self.schema';
-                }
-                if (!in_array('@self.register', $searchQuery['_extend'])) {
-                    $searchQuery['_extend'][] = '@self.register';
-                }
-
-                // DIRECT ObjectService call for objects that reference this publication
-                $result = $objectService->searchObjectsPaginated($searchQuery);
-                
-                // Use pagination directly from ObjectService
-                $responseData = [
-                    'results' => $result['results'] ?? [],
-                    'total' => $result['total'] ?? 0,
-                    'limit' => $result['limit'] ?? 20,
-                    'offset' => $result['offset'] ?? 0,
-                    'page' => $result['page'] ?? 1,
-                    'pages' => $result['pages'] ?? 1
-                ];
-                
-                // Add pagination links if present
-                if (isset($result['next'])) {
-                    $responseData['next'] = $result['next'];
-                }
-                if (isset($result['prev'])) {
-                    $responseData['prev'] = $result['prev'];
-                }
-                
-                // Add facets if present (direct passthrough)
-                if (isset($result['facets'])) {
-                    $facetsData = $result['facets'];
-                    // Unwrap nested facets if needed
-                    if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
-                        $facetsData = $facetsData['facets'];
-                    }
-                    $responseData['facets'] = $facetsData;
-                }
-                if (isset($result['facetable'])) {
-                    $responseData['facetable'] = $result['facetable'];
-                }
-            }
+            $searchQuery = $this->request->getParams();
+            
+            // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
+            // For /used endpoint, we want to search across ALL registers/schemas
+            $freshObjectService = $this->getObjectService();
+            
+            // Clean up unwanted parameters and remove register/schema restrictions
+            // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
+            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
+                   
+            // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
+            $result = $freshObjectService->searchObjectsPaginated(
+                query: $searchQuery, 
+                rbac: true, 
+                multi: true, 
+                published: true, 
+                deleted: false,
+                uses: $id
+            );
+            
+            // Add relations being searched for debugging
+            $result['used'] = $id;
             
             // Add CORS headers for public API access
-            $response = new JSONResponse($responseData, 200);
+            $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
