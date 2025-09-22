@@ -332,7 +332,8 @@ class PublicationsController extends Controller
                 $freshObjectService = $this->getObjectService();
                 
                 // Clean up unwanted parameters and remove register/schema restrictions
-                unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema']);
+                // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
+                unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
 
                 // Call fresh ObjectService instance with ids as named parameter
                 $result = $freshObjectService->searchObjectsPaginated(
@@ -393,7 +394,8 @@ class PublicationsController extends Controller
             $freshObjectService = $this->getObjectService();
             
             // Clean up unwanted parameters and remove register/schema restrictions
-            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema']);
+            // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
+            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
                    
              // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
             $result = $freshObjectService->searchObjectsPaginated(
