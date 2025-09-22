@@ -397,7 +397,7 @@ class PublicationsController extends Controller
             // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
                    
-             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
+            // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery, 
                 rbac: true, 
