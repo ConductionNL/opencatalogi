@@ -216,9 +216,7 @@ class PublicationsController extends Controller
             } elseif (!is_array($extend)) {
                 $extend = [$extend];
             }
-            // Filter only values that start with '@self.'
-            $extend = array_filter($extend, fn($val) => is_string($val) && str_starts_with($val, '@self.'));
-            
+
             // Ensure @self.schema and @self.register are always included for compatibility
             if (!in_array('@self.schema', $extend)) {
                 $extend[] = '@self.schema';
