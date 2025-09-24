@@ -138,13 +138,12 @@ class PublicationsController extends Controller
             // Get query parameters and prepare for direct ObjectService call
             $queryParams = $this->request->getParams();
             
-            // Build minimal search query - ONLY filter on published
+            // Build minimal search query - published filtering handled via method parameter
             $searchQuery = $queryParams;
-            $searchQuery['_published'] = true;
             $searchQuery['_includeDeleted'] = false;
             
-            // Clean up unwanted parameters
-            unset($searchQuery['id'], $searchQuery['_route']);
+            // Clean up unwanted parameters - published filtering is handled via method parameter, not query
+            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['_published']);
             
             // Add schema/register extension if needed
             if (!isset($searchQuery['_extend'])) {
@@ -162,8 +161,13 @@ class PublicationsController extends Controller
                 $searchQuery['_extend'][] = '@self.register';
             }
             
-            // DIRECT ObjectService call - NO FILTERING, NO VALIDATION
-            $result = $objectService->searchObjectsPaginated($searchQuery);
+            // DIRECT ObjectService call - WITH PUBLISHED FILTERING
+            $result = $objectService->searchObjectsPaginated(
+                query: $searchQuery, 
+                rbac: true, 
+                multi: true, 
+                published: true
+            );
                      
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
