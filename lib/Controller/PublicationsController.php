@@ -161,11 +161,15 @@ class PublicationsController extends Controller
                 $searchQuery['_extend'][] = '@self.register';
             }
             
+            // Force use of SOLR index for better performance on public endpoints
+            $searchQuery['_source'] = 'index';
+            
             // DIRECT ObjectService call - WITH PUBLISHED FILTERING
+            // Set rbac=false, multi=false, published=true for public publication access
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery, 
-                rbac: true, 
-                multi: true, 
+                rbac: false, 
+                multi: false, 
                 published: true
             );
                      
@@ -227,8 +231,20 @@ class PublicationsController extends Controller
                 $extend[] = '@self.register';
             }
             
-            // DIRECT ObjectService call - NO FILTERING, NO VALIDATION
-            $result = $objectService->find(id: $id, extend: $extend);
+            // Use searchObjectsPaginated to find single publication with published=true filter
+            $searchQuery = [
+                '_ids' => [$id],
+                '_limit' => 1,
+                '_extend' => $extend,
+                '_source' => 'index'  // Force use of SOLR index for better performance
+            ];
+            $searchResult = $objectService->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+            
+            if (empty($searchResult['results'])) {
+                return new JSONResponse(['error' => 'Publication not found'], 404);
+            }
+            
+            $result = $searchResult['results'][0];
             
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -309,8 +325,19 @@ class PublicationsController extends Controller
             // Get query parameters once
             $searchQuery = $this->request->getParams();
 
-            // Get the relations for the object directly
-            $object = $objectService->find(id: $id);
+            // Get the relations for the object directly using published filter
+            $searchQuery = [
+                '_ids' => [$id],
+                '_limit' => 1,
+                '_source' => 'index'  // Force use of SOLR index for better performance
+            ];
+            $searchResult = $objectService->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+            
+            if (empty($searchResult['results'])) {
+                return new JSONResponse(['error' => 'Publication not found'], 404);
+            }
+            
+            $object = $searchResult['results'][0];
             $relationsArray = $object->getRelations();
             $relations = array_values($relationsArray);
 
@@ -339,11 +366,15 @@ class PublicationsController extends Controller
                 // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
                 unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
 
+                // Force use of SOLR index for better performance on public endpoints
+                $searchQuery['_source'] = 'index';
+
                 // Call fresh ObjectService instance with ids as named parameter
+                // Set rbac=false, multi=false, published=true for public publication access
                 $result = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery, 
-                    rbac: true, 
-                    multi: true, 
+                    rbac: false, 
+                    multi: false, 
                     published: true, 
                     deleted: false,
                     ids: $relations
@@ -400,12 +431,16 @@ class PublicationsController extends Controller
             // Clean up unwanted parameters and remove register/schema restrictions
             // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
+            
+            // Force use of SOLR index for better performance on public endpoints
+            $searchQuery['_source'] = 'index';
                    
             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
+            // Set rbac=false, multi=false, published=true for public publication access
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery, 
-                rbac: true, 
-                multi: true, 
+                rbac: false, 
+                multi: false, 
                 published: true, 
                 deleted: false,
                 uses: $id

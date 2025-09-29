@@ -168,8 +168,12 @@ class PagesController extends Controller
             $searchQuery['@self']['register'] = $pageConfig['register'];
         }
 
+        // Force use of SOLR index for better performance on public endpoints
+        $searchQuery['_source'] = 'index';
+
         // Use searchObjectsPaginated for better performance and pagination support
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        // Set rbac=false, multi=false, published=true for public page access
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
         
         // Build paginated response structure
         $responseData = [
@@ -235,7 +239,7 @@ class PagesController extends Controller
         $searchQuery = [
             'slug' => $slug,
             '_limit' => 1,  // We only need one result
-            '_source' => 'database'  // We only need one result, and is should always be true
+            '_source' => 'index'  // Force use of SOLR index for better performance
         ];
 
         // Add schema filter if configured - use proper OpenRegister syntax
@@ -249,7 +253,8 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        // Set rbac=false, multi=false, published=true for public page access
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
         
         if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);

@@ -168,8 +168,12 @@ class MenusController extends Controller
             $searchQuery['@self']['register'] = $menuConfig['register'];
         }
 
+        // Force use of SOLR index for better performance on public endpoints
+        $searchQuery['_source'] = 'index';
+
         // Use searchObjectsPaginated for better performance and pagination support
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        // Set rbac=false, multi=false, published=true for public menu access
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
         
         // Build paginated response structure
         $responseData = [
@@ -228,7 +232,19 @@ class MenusController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        $menu = $this->getObjectService()->find($id);
+        // Use searchObjectsPaginated to find single menu with published=true filter
+        $searchQuery = [
+            '_ids' => [$id],
+            '_limit' => 1,
+            '_source' => 'index'  // Force use of SOLR index for better performance
+        ];
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+        
+        if (empty($result['results'])) {
+            return new JSONResponse(['error' => 'Menu not found'], 404);
+        }
+        
+        $menu = $result['results'][0];
         
         $data = $menu instanceof \OCP\AppFramework\Db\Entity ? $menu->jsonSerialize() : $menu;
         
