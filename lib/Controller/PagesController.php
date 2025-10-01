@@ -168,14 +168,12 @@ class PagesController extends Controller
             $searchQuery['@self']['register'] = $pageConfig['register'];
         }
 
-        // Force use of SOLR index for better performance on public endpoints
-        $searchQuery['_source'] = 'index';
-
         // Use searchObjectsPaginated for better performance and pagination support
         // Set rbac=false, multi=false, published=true for public page access
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
         
         // Build paginated response structure
+        /*
         $responseData = [
             'results' => $result['results'] ?? [],
             'total' => $result['total'] ?? 0,
@@ -205,9 +203,10 @@ class PagesController extends Controller
         if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
         }
+            */
 
         // Add CORS headers for public API access
-        $response = new JSONResponse($responseData);
+        $response = new JSONResponse($result);
         $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
