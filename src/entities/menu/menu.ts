@@ -14,6 +14,10 @@ export class Menu implements TMenu {
 	public items: TMenuItem[] // Array of menu items
 	public createdAt: string
 	public updatedAt: string
+	public groups?: string[]
+
+	public hideAfterLogin?: boolean
+	public hideBeforeLogin?: boolean
 
 	/**
 	 * Creates a new Menu instance
@@ -29,10 +33,9 @@ export class Menu implements TMenu {
 	 * @param {TMenu} data Menu data to populate the instance
 	 */
 	private hydrate(data: TMenu) {
-		const items = (data?.items || []).map((item, index) => ({
+		const items = (data?.items || []).map((item) => ({
 			...item,
-			// ID gets removed by validate() since passthrough is disabled
-			id: index,
+			// Don't add ID - let the backend handle ID generation for new items
 		}))
 
 		this.id = data?.id?.toString() || ''
@@ -42,6 +45,10 @@ export class Menu implements TMenu {
 		this.items = items
 		this.createdAt = data?.createdAt || ''
 		this.updatedAt = data?.updatedAt || ''
+		this.groups = data?.groups || []
+
+		this.hideAfterLogin = data?.hideAfterLogin || false
+		this.hideBeforeLogin = data?.hideBeforeLogin || false
 	}
 
 	/* istanbul ignore next */
@@ -55,19 +62,30 @@ export class Menu implements TMenu {
 			title: z.string().min(1, 'title is verplicht'),
 			position: z.number().min(0, 'positie moet 0 of hoger zijn'),
 			items: z.array(z.object({
-				title: z.string().min(1, 'title is verplicht'),
-				slug: z.string().min(1, 'slug is verplicht'),
-				link: z.string(),
-				description: z.string(),
-				icon: z.string(),
+				id: z.string().optional(),
+				order: z.number().min(0, 'order moet 0 of hoger zijn'),
+				name: z.string().min(1, 'name is verplicht'),
+				link: z.string().min(1, 'link is verplicht'),
+				description: z.string().optional(),
+				icon: z.string().optional(),
+				groups: z.array(z.string()).optional(),
+
+				hideBeforeLogin: z.boolean().optional(),
 				items: z.array(z.object({
-					title: z.string().min(1, 'title is verplicht'),
-					slug: z.string().min(1, 'slug is verplicht'),
-					link: z.string(),
-					description: z.string(),
-					icon: z.string(),
+					id: z.string().optional(),
+					order: z.number().min(0, 'order moet 0 of hoger zijn'),
+					name: z.string().min(1, 'name is verplicht'),
+					link: z.string().min(1, 'link is verplicht'),
+					description: z.string().optional(),
+					icon: z.string().optional(),
+					groups: z.array(z.string()).optional(),
+					hideAfterLogin: z.boolean().optional(),
+					hideBeforeLogin: z.boolean().optional(),
 				})),
 			})), // At least '[]'
+			groups: z.array(z.string()).optional(),
+			hideAfterLogin: z.boolean().optional(),
+			hideBeforeLogin: z.boolean().optional(),
 		})
 
 		const result = schema.safeParse({

@@ -58,6 +58,16 @@ class PublicationService
     private array $availableSchemas = [];
 
     /**
+     * @var array|null Cached local catalogs to avoid repeated database queries
+     */
+    private ?array $cachedLocalCatalogs = null;
+
+    /**
+     * @var array Cached catalog filters by catalog ID to avoid repeated database queries  
+     */
+    private array $cachedCatalogFilters = [];
+
+    /**
      * Constructor for PublicationService.
      *
      * @param IAppConfig         $config           App configuration interface
@@ -129,6 +139,18 @@ class PublicationService
      */
     public function getCatalogFilters(null|string|int $catalogId = null): array
     {
+        // Create cache key based on catalog ID
+        $cacheKey = $catalogId === null ? 'all' : (string) $catalogId;
+        
+        // Return cached result if available
+        if (isset($this->cachedCatalogFilters[$cacheKey])) {
+            // Restore class properties from cache
+            $cached = $this->cachedCatalogFilters[$cacheKey];
+            $this->availableRegisters = $cached['availableRegisters'];
+            $this->availableSchemas = $cached['availableSchemas'];
+            return $cached['result'];
+        }
+
         // Establish the default schema and register
         $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
@@ -166,10 +188,19 @@ class PublicationService
         $this->availableRegisters = array_unique($uniqueRegisters);
         $this->availableSchemas   = array_unique($uniqueSchemas);
 
-        return [
+        $result = [
             'registers' => array_values($this->availableRegisters),
             'schemas'   => array_values($this->availableSchemas),
         ];
+        
+        // Cache the result and class properties
+        $this->cachedCatalogFilters[$cacheKey] = [
+            'result' => $result,
+            'availableRegisters' => $this->availableRegisters,
+            'availableSchemas' => $this->availableSchemas,
+        ];
+        
+        return $result;
 
     }//end getCatalogFilters()
 
@@ -773,6 +804,12 @@ class PublicationService
      * This method handles both local and aggregated search results when the _aggregate
      * parameter is not set to false. It supports faceting when _facetable parameter is provided.
      *
+     * PERFORMANCE OPTIMIZATIONS:
+     * - Fast path for single catalog scenarios (no federation overhead)
+     * - Optional catalog information via _include_catalogs parameter
+     * - Cached expensive operations to reduce database queries
+     * - Optimized timeouts for better responsiveness
+     *
      * AGGREGATION FEATURES:
      * - Proper pagination: Collects sufficient data from all sources, merges and deduplicates,
      *   then applies pagination to ensure consistent totals and page counts
@@ -789,6 +826,9 @@ class PublicationService
      */
     public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array
     {
+        // Performance monitoring - start timing  
+        $startTime = microtime(true);
+        
         // Extract pagination parameters
         $limit = (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
         $page = (int) ($queryParams['_page'] ?? $queryParams['page'] ?? 1);
@@ -810,6 +850,9 @@ class PublicationService
         $aggregate = $queryParams['_aggregate'] ?? 'true';
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
 
+        // Check if catalog information should be included (performance optimization)
+        $includeCatalogs = isset($queryParams['_include_catalogs']) && $queryParams['_include_catalogs'] !== 'false';
+
         // Check if faceting is requested
         $facetable = $queryParams['_facetable'] ?? null;
         $shouldIncludeFacets = ($facetable === 'true' || $facetable === true);
@@ -817,6 +860,42 @@ class PublicationService
         // Check if virtual field facets were specifically requested
         $requestedDirectoryFacets = isset($queryParams['_facets']['@self']['directory']);
         $requestedCatalogFacets = isset($queryParams['_facets']['@self']['catalogs']);
+
+        // PERFORMANCE OPTIMIZATION: Ultra-fast path for basic requests
+        // Use ultra-fast path when no special processing is needed
+        $useUltraFast = !$includeCatalogs && !$requestedDirectoryFacets && !$requestedCatalogFacets;
+        
+        // Allow explicit control via query parameter  
+        if (isset($queryParams['_ultra_fast'])) {
+            $useUltraFast = $queryParams['_ultra_fast'] !== 'false' && $queryParams['_ultra_fast'] !== '0';
+        }
+        
+        // If aggregation is disabled, use optimized paths
+        if (!$shouldAggregate) {
+            if ($useUltraFast) {
+                return $this->getLocalPublicationsUltraFast($queryParams, $requestParams, $baseUrl, microtime(true));
+            }
+            return $this->getLocalPublicationsFast($queryParams, $requestParams, $baseUrl, $includeCatalogs, $requestedDirectoryFacets, $requestedCatalogFacets);
+        }
+
+        // Check if we have any federated directories to aggregate from
+        try {
+            $federatedDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
+            
+            // If no federated directories available, use optimized paths
+            if (empty($federatedDirectories)) {
+                if ($useUltraFast) {
+                    return $this->getLocalPublicationsUltraFast($queryParams, $requestParams, $baseUrl, microtime(true));
+                }
+                return $this->getLocalPublicationsFast($queryParams, $requestParams, $baseUrl, $includeCatalogs, $requestedDirectoryFacets, $requestedCatalogFacets);
+            }
+        } catch (\Exception $e) {
+            // If we can't get directories info, fall back to optimized local paths
+            if ($useUltraFast) {
+                return $this->getLocalPublicationsUltraFast($queryParams, $requestParams, $baseUrl, microtime(true));
+            }
+            return $this->getLocalPublicationsFast($queryParams, $requestParams, $baseUrl, $includeCatalogs, $requestedDirectoryFacets, $requestedCatalogFacets);
+        }
 
         // Always add _extend parameters for schema and register information
         if (!isset($queryParams['_extend'])) {
@@ -1128,13 +1207,420 @@ class PublicationService
             } elseif ($shouldIncludeFacets) {
                 $responseData['facetable'] = $this->mergeFacetableData([], []);
             }
+            
+            // Performance monitoring for aggregated results
+            $executionTime = (microtime(true) - $startTime) * 1000; // Convert to milliseconds
+            $responseData['_performance'] = [
+                'execution_time_ms' => round($executionTime, 2),
+                'fast_path' => false,
+                'federation' => true,
+                'cached_catalogs' => $this->cachedLocalCatalogs !== null,
+                'cached_filters' => !empty($this->cachedCatalogFilters),
+            ];
 
             return $responseData;
 
         } catch (\Exception $e) {
             // If aggregation fails, return local results only
+            // Performance monitoring for fallback case
+            $executionTime = (microtime(true) - $startTime) * 1000;
+            $responseData['_performance'] = [
+                'execution_time_ms' => round($executionTime, 2),
+                'fast_path' => false,
+                'federation' => false,
+                'error' => 'Federation failed, returned local only',
+                'cached_catalogs' => $this->cachedLocalCatalogs !== null,
+                'cached_filters' => !empty($this->cachedCatalogFilters),
+            ];
             return $responseData;
         }
+    }
+
+    /**
+     * Get local publications without federation overhead (performance optimized)
+     *
+     * This is a fast path method that skips expensive federation operations when:
+     * - Aggregation is disabled (_aggregate=false)  
+     * - No federated directories are available
+     * - Only local catalog data is needed
+     *
+     * Optimizations applied:
+     * - Single database query for publications
+     * - Optional catalog information (controlled via _include_catalogs parameter)
+     * - Minimal virtual field facet processing
+     * - Direct pagination without aggregation logic
+     *
+     * @param array $queryParams Query parameters for filtering, pagination, ordering, etc.
+     * @param array $requestParams Original request parameters for building pagination links  
+     * @param string $baseUrl Base URL for building pagination links
+     * @param bool $includeCatalogs Whether to include catalog information in @self
+     * @param bool $requestedDirectoryFacets Whether directory facets were requested
+     * @param bool $requestedCatalogFacets Whether catalog facets were requested
+     * @return array Response data containing publications, pagination info, and optionally facets
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getLocalPublicationsFast(array $queryParams, array $requestParams, string $baseUrl, bool $includeCatalogs, bool $requestedDirectoryFacets, bool $requestedCatalogFacets): array
+    {
+        // Performance monitoring - start timing
+        $startTime = microtime(true);
+        $timings = ['setup' => 0, 'query' => 0, 'processing' => 0];
+        
+        // Setup timing start
+        $setupStart = microtime(true);
+        
+        // Always add _extend parameters for schema and register information
+        if (!isset($queryParams['_extend'])) {
+            $queryParams['_extend'] = [];
+        } elseif (!is_array($queryParams['_extend'])) {
+            $queryParams['_extend'] = [$queryParams['_extend']];
+        }
+
+        // Ensure @self.schema and @self.register are always included
+        if (!in_array('@self.schema', $queryParams['_extend'])) {
+            $queryParams['_extend'][] = '@self.schema';
+        }
+        if (!in_array('@self.register', $queryParams['_extend'])) {
+            $queryParams['_extend'][] = '@self.register';
+        }
+        
+        $timings['setup'] = (microtime(true) - $setupStart) * 1000;
+
+        // ULTRA-FAST PATH: Skip all middleware and call ObjectService directly
+        if (!$includeCatalogs && !$requestedDirectoryFacets && !$requestedCatalogFacets) {
+            return $this->getLocalPublicationsUltraFast($queryParams, $requestParams, $baseUrl, $startTime);
+        }
+
+        // Query timing start
+        $queryStart = microtime(true);
+        
+        // Get local publications with a single optimized query
+        $localResponse = $this->index(null, $queryParams);
+        $localData = json_decode($localResponse->render(), true);
+        
+        $timings['query'] = (microtime(true) - $queryStart) * 1000;
+
+        // Extract pagination parameters for response structure
+        $limit = (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
+        $page = (int) ($queryParams['_page'] ?? $queryParams['page'] ?? 1);
+        $offset = (int) ($queryParams['offset'] ?? (($page - 1) * $limit));
+
+        // Get local results
+        $localResults = $localData['results'] ?? [];
+        
+        // Add catalog and directory information only if requested or needed for faceting
+        if (($includeCatalogs || $requestedDirectoryFacets || $requestedCatalogFacets) && !empty($localResults)) {
+            // Get local catalogs only if needed
+            $localCatalogs = $includeCatalogs ? $this->getLocalCatalogs() : [];
+            
+            foreach ($localResults as &$publication) {
+                if (isset($publication['@self']) && is_array($publication['@self'])) {
+                    // Add directory information for faceting
+                    if ($requestedDirectoryFacets) {
+                        $publication['@self']['directory'] = 'local';
+                    }
+
+                    // Add catalog information only if requested
+                    if ($includeCatalogs && !empty($localCatalogs)) {
+                        $publication['@self']['catalogs'] = $localCatalogs;
+                    }
+                } else {
+                    // Ensure @self exists with minimal required information
+                    $publication['@self'] = [];
+                    if ($requestedDirectoryFacets) {
+                        $publication['@self']['directory'] = 'local';
+                    }
+                    if ($includeCatalogs && !empty($localCatalogs)) {
+                        $publication['@self']['catalogs'] = $localCatalogs;
+                    }
+                }
+            }
+            unset($publication); // Break the reference
+        }
+
+        // Calculate pagination info
+        $totalResults = ($localData['total'] ?? 0);
+        $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
+
+        // Build response structure with pagination
+        $responseData = [
+            'results' => $localResults,
+            'total' => $totalResults,
+            'limit' => $limit,
+            'offset' => $offset,
+            'page' => $page,
+            'pages' => $totalPages
+        ];
+
+        // Add pagination links
+        if ($page < $totalPages) {
+            $nextParams = $requestParams;
+            $nextParams['_page'] = $page + 1;
+            $responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
+        }
+
+        if ($page > 1) {
+            $prevParams = $requestParams;
+            $prevParams['_page'] = $page - 1;
+            $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
+        }
+
+        // Add facets from local service if present
+        if (isset($localData['facets'])) {
+            // Check if facets are nested (unwrap if needed)
+            $facetsData = $localData['facets'];
+            if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                $facetsData = $facetsData['facets'];
+            }
+
+            // Add virtual field facets only if they were requested
+            if ($requestedDirectoryFacets || $requestedCatalogFacets) {
+                $facetsData = $this->addVirtualFieldFacets($facetsData, $requestedDirectoryFacets, $requestedCatalogFacets);
+            }
+
+            $responseData['facets'] = $facetsData;
+        } elseif ($requestedDirectoryFacets || $requestedCatalogFacets) {
+            // If virtual field facets were requested but no other facets exist, create them
+            $responseData['facets'] = $this->addVirtualFieldFacets([], $requestedDirectoryFacets, $requestedCatalogFacets);
+        }
+
+        // Add facetable metadata if present in local response
+        if (isset($localData['facetable'])) {
+            $responseData['facetable'] = $localData['facetable'];
+        }
+
+        // Processing timing start
+        $processingStart = microtime(true);
+        $timings['processing'] = (microtime(true) - $processingStart) * 1000;
+
+        // Performance monitoring - calculate execution time
+        $executionTime = (microtime(true) - $startTime) * 1000; // Convert to milliseconds
+        $responseData['_performance'] = [
+            'execution_time_ms' => round($executionTime, 2),
+            'fast_path' => true,
+            'ultra_fast_path' => false,
+            'include_catalogs' => $includeCatalogs,
+            'cached_catalogs' => $this->cachedLocalCatalogs !== null,
+            'timings' => $timings,
+        ];
+
+        return $responseData;
+    }
+
+    /**
+     * Get local publications with ultra-fast path (minimal overhead)
+     *
+     * This method bypasses ALL middleware overhead and calls ObjectService directly.
+     * Use when no catalog info, facets, or additional processing is needed.
+     *
+     * Optimizations:
+     * - Direct ObjectService call (no searchPublications() overhead)
+     * - Skip catalog filter validation
+     * - Skip virtual field processing
+     * - Minimal response structure building
+     *
+     * @param array $queryParams Query parameters
+     * @param array $requestParams Original request parameters for pagination links
+     * @param string $baseUrl Base URL for building pagination links
+     * @param float $startTime Start time for performance monitoring
+     * @return array Minimal response with publications and pagination
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function getLocalPublicationsUltraFast(array $queryParams, array $requestParams, string $baseUrl, float $startTime): array
+    {
+
+        $timings = ['setup' => 0, 'objectservice' => 0, 'response' => 0];
+        
+        // Setup timing
+        $setupStart = microtime(true);
+        
+        // Extract pagination parameters
+        $limit = (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
+        $page = (int) ($queryParams['_page'] ?? $queryParams['page'] ?? 1);
+        $offset = (int) ($queryParams['offset'] ?? (($page - 1) * $limit));
+        
+        // Get minimal required config from cache or defaults
+        $schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+        $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+        
+        $timings['setup'] = (microtime(true) - $setupStart) * 1000;
+        
+        // Catalog context timing  
+        $catalogContextStart = microtime(true);
+        
+        // Build search query properly - preserve all original parameters
+        $searchQuery = $queryParams;
+        
+        // Get the proper catalog context (use cached version)
+        $cacheKey = 'all';
+        if (!isset($this->cachedCatalogFilters[$cacheKey])) {
+            // Quick catalog context setup without full getCatalogFilters overhead
+            $config = [
+                'filters' => [
+                    'register' => $register,
+                    'schema' => $schema
+                ]
+            ];
+            
+            try {
+                $catalogs = $this->getObjectService()->findAll($config);
+                $uniqueRegisters = [];
+                $uniqueSchemas = [];
+                
+                foreach ($catalogs as $catalog) {
+                    $catalog = $catalog->jsonSerialize();
+                    if (isset($catalog['registers']) && is_array($catalog['registers'])) {
+                        $uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
+                    }
+                    if (isset($catalog['schemas']) && is_array($catalog['schemas'])) {
+                        $uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
+                    }
+                }
+                
+                $this->availableRegisters = array_unique($uniqueRegisters);
+                $this->availableSchemas = array_unique($uniqueSchemas);
+                
+                $catalogContext = [
+                    'registers' => array_values($this->availableRegisters),
+                    'schemas' => array_values($this->availableSchemas),
+                ];
+                
+                $this->cachedCatalogFilters[$cacheKey] = [
+                    'result' => $catalogContext,
+                    'availableRegisters' => $this->availableRegisters,
+                    'availableSchemas' => $this->availableSchemas,
+                ];
+            } catch (\Exception $e) {
+                // Fallback to defaults
+                $this->availableRegisters = [$register];
+                $this->availableSchemas = [$schema];
+                $catalogContext = [
+                    'registers' => [$register],
+                    'schemas' => [$schema],
+                ];
+            }
+        } else {
+            $cached = $this->cachedCatalogFilters[$cacheKey];
+            $this->availableRegisters = $cached['availableRegisters'];
+            $this->availableSchemas = $cached['availableSchemas'];
+            $catalogContext = $cached['result'];
+        }
+        
+        // Set up the search query properly (preserve original logic from searchPublications)
+        if (!isset($searchQuery['@self'])) {
+            $searchQuery['@self'] = [];
+        }
+        $searchQuery['@self']['register'] = $catalogContext['registers'];
+        $searchQuery['@self']['schema'] = $catalogContext['schemas'];
+        $searchQuery['_published'] = true;
+        $searchQuery['_includeDeleted'] = false;
+        
+        // Clean up unwanted parameters
+        unset($searchQuery['id'], $searchQuery['_route']);
+        
+        $timings['catalog_context'] = (microtime(true) - $catalogContextStart) * 1000;
+        
+        // ObjectService timing
+        $objectServiceStart = microtime(true);
+        
+
+        // Call ObjectService directly - bypass all middleware
+        $objectService = $this->getObjectService();
+        $result = $objectService->searchObjectsPaginated($searchQuery);
+        
+        $timings['objectservice'] = (microtime(true) - $objectServiceStart) * 1000;
+        
+        // Response building timing
+        $responseStart = microtime(true);
+        
+
+        // Handle virtual field facet processing if needed (before unwrapping)
+        $requestedDirectoryFacets = isset($queryParams['_facets']['@self']['directory']);
+        $requestedCatalogFacets = isset($queryParams['_facets']['@self']['catalogs']);
+        
+        if (isset($result['facets']) && ($requestedDirectoryFacets || $requestedCatalogFacets)) {
+            // Need to unwrap facets first, then add virtual fields, then the unwrapping logic will handle it consistently
+            $facetsForProcessing = $result['facets'];
+            if (isset($facetsForProcessing['facets']) && is_array($facetsForProcessing['facets'])) {
+                $facetsForProcessing = $facetsForProcessing['facets'];
+            }
+            $facetsForProcessing = $this->addVirtualFieldFacets($facetsForProcessing, $requestedDirectoryFacets, $requestedCatalogFacets);
+            $result['facets'] = $facetsForProcessing;
+        }
+        
+
+        // Skip filtering for maximum performance if requested
+        $skipFiltering = isset($queryParams['_skip_filtering']) && $queryParams['_skip_filtering'] !== 'false';
+        
+        if ($skipFiltering) {
+            $filteredResults = $result['results'] ?? [];
+        } else {
+            // Filter unwanted properties from results (minimal processing)
+            $filteredResults = $this->filterUnwantedProperties($result['results'] ?? []);
+        }
+        
+        // Calculate pagination info
+        $totalResults = ($result['total'] ?? 0);
+        $totalPages = $limit > 0 ? max(1, ceil($totalResults / $limit)) : 1;
+        
+        // Build minimal response structure
+        $responseData = [
+            'results' => $filteredResults,
+            'total' => $totalResults,
+            'limit' => $limit,
+            'offset' => $offset,
+            'page' => $page,
+            'pages' => $totalPages
+        ];
+        
+        // Add pagination links only if needed
+        if ($page < $totalPages) {
+            $nextParams = $requestParams;
+            $nextParams['_page'] = $page + 1;
+            $responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
+        }
+        
+        if ($page > 1) {
+            $prevParams = $requestParams;
+            $prevParams['_page'] = $page - 1;
+            $responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
+        }
+        
+        // Add facets if present (already processed and unwrapped above if needed)
+        if (isset($result['facets'])) {
+            $facetsData = $result['facets'];
+            // Only unwrap if virtual field processing didn't already handle it
+            if (!($requestedDirectoryFacets || $requestedCatalogFacets)) {
+                // Check if facets are nested and unwrap if needed (same logic as original)
+                if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                    $facetsData = $facetsData['facets'];
+                }
+            }
+            $responseData['facets'] = $facetsData;
+
+        }
+        if (isset($result['facetable'])) {
+            $responseData['facetable'] = $result['facetable'];
+        }
+        
+        $timings['response'] = (microtime(true) - $responseStart) * 1000;
+        
+        // Performance monitoring
+        $executionTime = (microtime(true) - $startTime) * 1000;
+        $responseData['_performance'] = [
+            'execution_time_ms' => round($executionTime, 2),
+            'fast_path' => true,
+            'ultra_fast_path' => true,
+            'include_catalogs' => false,
+            'cached_catalogs' => false,
+            'bypassed_middleware' => true,
+            'skipped_filtering' => $skipFiltering,
+            'processed_virtual_facets' => $requestedDirectoryFacets || $requestedCatalogFacets,
+            'cached_catalog_filters' => isset($this->cachedCatalogFilters['all']),
+
+            'timings' => $timings,
+        ];
+        
+        return $responseData;
     }
 
     /**
@@ -1143,15 +1629,18 @@ class PublicationService
      * This method retrieves all local catalogs that are available in the current instance.
      * It returns an array of catalog objects with their basic information.
      *
-     * @todo Adding catalog information to publications adds ~200ms performance overhead.
-     *       Consider making this optional via query parameter (e.g., _include_catalogs=true)
-     *       to improve response times when catalog info is not needed.
+     * PERFORMANCE OPTIMIZATION: Results are cached to avoid repeated database queries
+     * that were adding ~200ms overhead per call. Cache is invalidated on object destruction.
      *
      * @return array Array of catalog objects with id, title, summary, description, etc.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
     private function getLocalCatalogs(): array
     {
+        // Return cached result if available
+        if ($this->cachedLocalCatalogs !== null) {
+            return $this->cachedLocalCatalogs;
+        }
         try {
             // Get catalog configuration from settings
             $catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
@@ -1196,10 +1685,13 @@ class PublicationService
                 }
             }
 
+            // Cache the result before returning
+            $this->cachedLocalCatalogs = $catalogArray;
             return $catalogArray;
 
         } catch (\Exception $e) {
-            // If we can't get catalog information, return empty array
+            // If we can't get catalog information, return empty array and cache it
+            $this->cachedLocalCatalogs = [];
             return [];
         }
     }

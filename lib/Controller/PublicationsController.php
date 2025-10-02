@@ -6,6 +6,7 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
@@ -117,10 +118,10 @@ class PublicationsController extends Controller
     }
 
     /**
-     * Retrieve all publications from this catalog and optionally from federated catalogs.
+     * Retrieve all publications from this catalog - DIRECT OBJECTSERVICE HACK
      *
-     * This method handles both local and aggregated search results when the _aggregate
-     * parameter is not set to false. It supports faceting when _facetable parameter is provided.
+     * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
+     * Filters only on published=true, no schema/register filtering.
      * 
      * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
      *
@@ -130,42 +131,41 @@ class PublicationsController extends Controller
      */
     public function index(): JSONResponse
     {
-        //@todo this is a temporary fix to map the parameters to _extend format
-        // Define parameters that should be mapped to _extend format
-        $parametersToMap = ['extend', 'fields', 'facets','order','page','limit'];
-        
-        // Get all current query parameters
-        $queryParams = $this->request->getParams();
-        
-        // Map specified parameters to _extend format and unset originals
-        foreach ($parametersToMap as $param) {
-            if (isset($queryParams[$param])) {
-                // Map the parameter to _extend format
-                $queryParams['_extend'] = $queryParams[$param];
-                // Unset the original parameter to prevent conflicts
-                unset($queryParams[$param]);
-            }
-        }
-        
-        // Build base URL for pagination links
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        $baseUrl = $protocol . '://' . $host . strtok($uri, '?');
-        
         try {
-            // Use the service method to get aggregated publications
-            $responseData = $this->publicationService->getAggregatedPublications(
-                $queryParams, 
-                $this->request->getParams(), 
-                $baseUrl
-            );
+            // Get ObjectService directly - bypass all PublicationService overhead
+            $objectService = $this->getObjectService();
             
-            // Set appropriate HTTP status based on results
-            $statusCode = 200;
+            // Get query parameters and prepare for direct ObjectService call
+            $queryParams = $this->request->getParams();
             
+            // Build minimal search query - ONLY filter on published
+            $searchQuery = $queryParams;
+            $searchQuery['_published'] = true;
+            $searchQuery['_includeDeleted'] = false;
+            
+            // Clean up unwanted parameters
+            unset($searchQuery['id'], $searchQuery['_route']);
+            
+            // Add schema/register extension if needed
+            if (!isset($searchQuery['_extend'])) {
+                $searchQuery['_extend'] = [];
+            } elseif (!is_array($searchQuery['_extend'])) {
+                $searchQuery['_extend'] = [$searchQuery['_extend']];
+            }
+            
+            // Ensure @self.schema and @self.register are always included for compatibility
+            if (!in_array('@self.schema', $searchQuery['_extend'])) {
+                $searchQuery['_extend'][] = '@self.schema';
+            }
+            if (!in_array('@self.register', $searchQuery['_extend'])) {
+                $searchQuery['_extend'][] = '@self.register';
+            }
+            
+            // DIRECT ObjectService call - NO FILTERING, NO VALIDATION
+            $result = $objectService->searchObjectsPaginated($searchQuery);
+                     
             // Add CORS headers for public API access
-            $response = new JSONResponse($responseData, $statusCode);
+            $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -181,11 +181,10 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieve a specific publication by its ID.
+     * Retrieve a specific publication by its ID - DIRECT OBJECTSERVICE HACK
      *
-     * This method searches for a publication in the local catalog first,
-     * and optionally in federated catalogs if _aggregate parameter is not
-     * set to false and the publication is not found locally.
+     * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
+     * No schema/register validation, just direct object lookup.
      *
      * @param  string $id The ID of the publication to retrieve
      * @return JSONResponse JSON response containing the requested publication
@@ -198,11 +197,32 @@ class PublicationsController extends Controller
     public function show(string $id): JSONResponse
     {
         try {
-            // Use the service method to get the publication with federation support
-            $result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
+            // Get ObjectService directly - bypass all PublicationService overhead
+            $objectService = $this->getObjectService();
+            
+            // Get request parameters for extensions
+            $requestParams = $this->request->getParams();
+            
+            // Build extend parameters
+            $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
+            // Normalize to array
+            $extend = is_array($extend) ? $extend : [$extend];
+            // Filter only values that start with '@self.'
+            $extend = array_filter($extend, fn($val) => is_string($val) && str_starts_with($val, '@self.'));
+            
+            // Ensure @self.schema and @self.register are always included for compatibility
+            if (!in_array('@self.schema', $extend)) {
+                $extend[] = '@self.schema';
+            }
+            if (!in_array('@self.register', $extend)) {
+                $extend[] = '@self.register';
+            }
+            
+            // DIRECT ObjectService call - NO FILTERING, NO VALIDATION
+            $result = $objectService->find(id: $id, extend: $extend);
             
             // Add CORS headers for public API access
-            $response = new JSONResponse($result['data'], $result['status']);
+            $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -210,6 +230,8 @@ class PublicationsController extends Controller
             
             return $response;
             
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(['error' => 'Publication not found'], 404);
         } catch (\Exception $e) {
             return new JSONResponse(['error' => 'Failed to retrieve publication: ' . $e->getMessage()], 500);
         }
@@ -256,10 +278,10 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieves all objects that this publication references
+     * Retrieves all objects that this publication references - DIRECT OBJECTSERVICE HACK
      *
      * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
-     * When aggregation is enabled, it also searches federated catalogs.
+     * Bypasses ALL middleware and calls ObjectService directly for maximum performance.
      *
      * @param string $id The ID of the publication to retrieve relations for
      * @return JSONResponse A JSON response containing the related objects
@@ -272,11 +294,92 @@ class PublicationsController extends Controller
     public function uses(string $id): JSONResponse
     {
         try {
-            // Use the service method to get the publication uses with federation support
-            $result = $this->publicationService->getFederatedUses($id, $this->request->getParams());
+            // Get ObjectService directly - bypass all PublicationService overhead
+            $objectService = $this->getObjectService();
+            
+            // Get query parameters once
+            $queryParams = $this->request->getParams();
+
+            // Get the relations for the object directly
+            $object = $objectService->find(id: $id);
+            $relationsArray = $object->getRelations();
+            $relations = array_values($relationsArray);
+
+            // Check if relations array is empty
+            if (empty($relations)) {
+                // If relations is empty, return empty paginated response
+                $responseData = [
+                    'results' => [],
+                    'total' => 0,
+                    'page' => 1,
+                    'pages' => 1,
+                    'limit' => (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20),
+                    'offset' => 0,
+                    'facets' => []
+                ];
+            } else {
+                
+                // Build search query for the related objects
+                $searchQuery = $queryParams;
+                $searchQuery['_ids'] = $relations; // Search for objects with these IDs
+                $searchQuery['_published'] = true;
+                $searchQuery['_includeDeleted'] = false;
+                
+                // Clean up unwanted parameters
+                unset($searchQuery['id'], $searchQuery['_route']);
+                
+                // Add schema/register extension if needed
+                if (!isset($searchQuery['_extend'])) {
+                    $searchQuery['_extend'] = [];
+                } elseif (!is_array($searchQuery['_extend'])) {
+                    $searchQuery['_extend'] = [$searchQuery['_extend']];
+                }
+                
+                // Ensure @self.schema and @self.register are always included for compatibility
+                if (!in_array('@self.schema', $searchQuery['_extend'])) {
+                    $searchQuery['_extend'][] = '@self.schema';
+                }
+                if (!in_array('@self.register', $searchQuery['_extend'])) {
+                    $searchQuery['_extend'][] = '@self.register';
+                }
+
+                // DIRECT ObjectService call for related objects
+                $result = $objectService->searchObjectsPaginated($searchQuery);
+                
+                // Use pagination directly from ObjectService
+                $responseData = [
+                    'results' => $result['results'] ?? [],
+                    'total' => $result['total'] ?? 0,
+                    'limit' => $result['limit'] ?? 20,
+                    'offset' => $result['offset'] ?? 0,
+                    'page' => $result['page'] ?? 1,
+                    'pages' => $result['pages'] ?? 1
+                ];
+                
+                // Add pagination links if present
+                if (isset($result['next'])) {
+                    $responseData['next'] = $result['next'];
+                }
+                if (isset($result['prev'])) {
+                    $responseData['prev'] = $result['prev'];
+                }
+                
+                // Add facets if present (direct passthrough)
+                if (isset($result['facets'])) {
+                    $facetsData = $result['facets'];
+                    // Unwrap nested facets if needed
+                    if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                        $facetsData = $facetsData['facets'];
+                    }
+                    $responseData['facets'] = $facetsData;
+                }
+                if (isset($result['facetable'])) {
+                    $responseData['facetable'] = $result['facetable'];
+                }
+            }
             
             // Add CORS headers for public API access
-            $response = new JSONResponse($result['data'], $result['status']);
+            $response = new JSONResponse($responseData, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -284,6 +387,8 @@ class PublicationsController extends Controller
             
             return $response;
             
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(['error' => 'Publication not found'], 404);
         } catch (\Exception $e) {
             return new JSONResponse(['error' => 'Failed to retrieve publication uses: ' . $e->getMessage()], 500);
         }
@@ -291,10 +396,10 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieves all objects that use this publication
+     * Retrieves all objects that use this publication - DIRECT OBJECTSERVICE HACK
      *
      * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
-     * When aggregation is enabled, it also searches federated catalogs.
+     * Bypasses ALL middleware and calls ObjectService directly for maximum performance.
      *
      * @param string $id The ID of the publication to retrieve uses for
      * @return JSONResponse A JSON response containing the referenced objects
@@ -307,11 +412,91 @@ class PublicationsController extends Controller
     public function used(string $id): JSONResponse
     {
         try {
-            // Use the service method to get the publication used with federation support
-            $result = $this->publicationService->getFederatedUsed($id, $this->request->getParams());
+            // Get ObjectService directly - bypass all PublicationService overhead
+            $objectService = $this->getObjectService();
+            
+            // Get query parameters once
+            $queryParams = $this->request->getParams();
+
+            // Get objects that have relations pointing to this object
+            $relationsArray = $objectService->findByRelations($id);
+            $relations = array_map(static fn($relation) => $relation->getUuid(), $relationsArray);
+
+            // Check if relations array is empty
+            if (empty($relations)) {
+                // If relations is empty, return empty paginated response
+                $responseData = [
+                    'results' => [],
+                    'total' => 0,
+                    'page' => 1,
+                    'pages' => 1,
+                    'limit' => (int) ($queryParams['_limit'] ?? $queryParams['limit'] ?? 20),
+                    'offset' => 0,
+                    'facets' => []
+                ];
+            } else {
+                
+                // Build search query for the objects that reference this publication
+                $searchQuery = $queryParams;
+                $searchQuery['_ids'] = $relations; // Search for objects with these IDs
+                $searchQuery['_published'] = true;
+                $searchQuery['_includeDeleted'] = false;
+                
+                // Clean up unwanted parameters
+                unset($searchQuery['id'], $searchQuery['_route']);
+                
+                // Add schema/register extension if needed
+                if (!isset($searchQuery['_extend'])) {
+                    $searchQuery['_extend'] = [];
+                } elseif (!is_array($searchQuery['_extend'])) {
+                    $searchQuery['_extend'] = [$searchQuery['_extend']];
+                }
+                
+                // Ensure @self.schema and @self.register are always included for compatibility
+                if (!in_array('@self.schema', $searchQuery['_extend'])) {
+                    $searchQuery['_extend'][] = '@self.schema';
+                }
+                if (!in_array('@self.register', $searchQuery['_extend'])) {
+                    $searchQuery['_extend'][] = '@self.register';
+                }
+
+                // DIRECT ObjectService call for objects that reference this publication
+                $result = $objectService->searchObjectsPaginated($searchQuery);
+                
+                // Use pagination directly from ObjectService
+                $responseData = [
+                    'results' => $result['results'] ?? [],
+                    'total' => $result['total'] ?? 0,
+                    'limit' => $result['limit'] ?? 20,
+                    'offset' => $result['offset'] ?? 0,
+                    'page' => $result['page'] ?? 1,
+                    'pages' => $result['pages'] ?? 1
+                ];
+                
+                // Add pagination links if present
+                if (isset($result['next'])) {
+                    $responseData['next'] = $result['next'];
+                }
+                if (isset($result['prev'])) {
+                    $responseData['prev'] = $result['prev'];
+                }
+                
+                // Add facets if present (direct passthrough)
+                if (isset($result['facets'])) {
+                    $facetsData = $result['facets'];
+                    // Unwrap nested facets if needed
+                    if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                        $facetsData = $facetsData['facets'];
+                    }
+                    $responseData['facets'] = $facetsData;
+                }
+                if (isset($result['facetable'])) {
+                    $responseData['facetable'] = $result['facetable'];
+                }
+            }
             
             // Add CORS headers for public API access
-            $response = new JSONResponse($result['data'], $result['status']);
+            $response = new JSONResponse($responseData, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -319,6 +504,8 @@ class PublicationsController extends Controller
             
             return $response;
             
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(['error' => 'Publication not found'], 404);
         } catch (\Exception $e) {
             return new JSONResponse(['error' => 'Failed to retrieve publication used: ' . $e->getMessage()], 500);
         }

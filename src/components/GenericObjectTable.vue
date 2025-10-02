@@ -65,8 +65,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 							v-tooltip="`See ${objectTypePlural} as cards`"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
-							value="cards"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							:name="`${objectType}_view_mode`"
+							value="cards"
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => setViewMode('cards')">
@@ -76,8 +77,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 							v-tooltip="`See ${objectTypePlural} as a table`"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
-							value="table"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							:name="`${objectType}_view_mode`"
+							value="table"
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => setViewMode('table')">

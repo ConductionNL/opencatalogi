@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('page')"
-					label="Zoeken"
+					label="Search"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('page') !== ''"
 					@update:value="(value) => objectStore.setSearchTerm('page', value)"
@@ -29,7 +29,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcTextField>
 				<NcActions>
 					<NcActionButton
-						title="Bekijk de documentatie over pagina's"
+						title="View the documentation about pages"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/pages', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
@@ -42,13 +42,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton close-after-click @click="openAddPageModal">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Pagina toevoegen
+						Add page
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -76,25 +76,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton close-after-click @click="onActionButtonClick(page, 'addContent')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Content toevoegen
+							Add content
 						</NcActionButton>
 						<NcActionButton close-after-click @click="onActionButtonClick(page, 'copyObject')">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Kopiëren
+							Copy
 						</NcActionButton>
 						<NcActionButton close-after-click @click="onActionButtonClick(page, 'deleteObject')">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Verwijder
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -104,10 +104,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				class="loadingIcon"
 				:size="64"
 				appearance="dark"
-				name="Pagina's aan het laden" />
+				name="Pages are loading" />
 
 			<div v-if="!objectStore.getCollection('page').results.length" class="emptyListHeader">
-				Er zijn nog geen pagina's gedefinieerd.
+				There are no pages defined.
 			</div>
 		</ul>
 	</NcAppContentList>
@@ -150,14 +150,14 @@ export default {
 			objectStore.getActiveObject('page')?.id === page?.id ? objectStore.clearActiveObject('page') : objectStore.setActiveObject('page', page)
 		},
 		openAddPageModal() {
-			navigationStore.setModal('page')
+			navigationStore.setModal('viewPage')
 			objectStore.clearActiveObject('page')
 		},
 		onActionButtonClick(page, action) {
 			objectStore.setActiveObject('page', page)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('page')
+				navigationStore.setModal('viewPage')
 				break
 			case 'addContent':
 				navigationStore.setModal('pageContentForm')

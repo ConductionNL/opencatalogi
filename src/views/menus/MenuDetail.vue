@@ -25,9 +25,9 @@ import { getTheme } from '../../services/getTheme.js'
 			<NcActions
 				:disabled="objectStore.isLoading('menu')"
 				:primary="true"
-				:menu-name="objectStore.isLoading('menu') ? 'Laden...' : 'Acties'"
+				:menu-name="objectStore.isLoading('menu') ? 'Loading...' : 'Actions'"
 				:inline="1"
-				title="Acties die je kan uitvoeren op deze pagina">
+				title="Actions you can perform on this page">
 				<template #icon>
 					<span>
 						<NcLoadingIcon v-if="objectStore.isLoading('menu')"
@@ -37,7 +37,7 @@ import { getTheme } from '../../services/getTheme.js'
 					</span>
 				</template>
 				<NcActionButton
-					title="Bekijk de documentatie over paginas"
+					title="View the documentation about pages"
 					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/paginas')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
@@ -48,32 +48,32 @@ import { getTheme } from '../../services/getTheme.js'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcActionButton>
 				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'addContent')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					Menu item toevoegen
+					Add menu item
 				</NcActionButton>
 				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'copyObject')">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
-					Kopiëren
+					Copy
 				</NcActionButton>
 				<NcActionButton close-after-click @click="onActionButtonClick(menu, 'deleteObject')">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					Verwijderen
+					Delete
 				</NcActionButton>
 			</NcActions>
 		</div>
 		<div class="container">
 			<div class="detailGrid">
 				<div>
-					<b>Titel:</b>
+					<b>Title:</b>
 					<span>{{ menu.title }}</span>
 				</div>
 				<div>
@@ -85,22 +85,19 @@ import { getTheme } from '../../services/getTheme.js'
 					<span>{{ menu.link }}</span>
 				</div>
 				<div>
-					<b>Beschrijving:</b>
+					<b>Description:</b>
 					<span>{{ menu.description }}</span>
 				</div>
 				<div>
-					<b>Icoon:</b>
+					<b>Icon:</b>
 					<span>{{ menu.icon }}</span>
 				</div>
 				<div>
-					<b>Positie:</b>
-					<span v-if="menu.position === 0">{{ menu.position }} - rechts boven</span>
-					<span v-else-if="menu.position === 1">{{ menu.position }} - navigatiebalk</span>
-					<span v-else-if="menu.position === 2">{{ menu.position }} - footer</span>
-					<span v-else>{{ menu.position }} - niet gedefinieerd</span>
+					<b>Position:</b>
+					<span>{{ menu.position }}</span>
 				</div>
 				<div>
-					<b>Laatst bijgewerkt:</b>
+					<b>Last updated:</b>
 					<span>{{ menu.updatedAt }}</span>
 				</div>
 			</div>
@@ -111,7 +108,7 @@ import { getTheme } from '../../services/getTheme.js'
 				<BTab active>
 					<template #title>
 						<div class="tabTitleLoadingContainer">
-							<p>Menu items</p>
+							<p>Menu items:</p>
 							<NcLoadingIcon v-if="safeItemsLoading" class="tabTitleIcon" :size="24" />
 							<CheckCircleOutline v-if="safeItemsLoadingSuccess" class="tabTitleIcon" :size="24" />
 						</div>
@@ -125,11 +122,17 @@ import { getTheme } from '../../services/getTheme.js'
 							<div v-for="(menuItem, i) in menuItems" :key="i" :class="`draggable-list-item ${getTheme()}`">
 								<!-- show a drag handle and NcListItem -->
 								<Drag class="drag-handle" :size="40" />
-								<NcListItem :name="menuItem.title"
+								<NcListItem :name="menuItem.name"
 									:bold="false"
 									:force-display-actions="true">
 									<template #subname>
 										{{ menuItem.description }}
+										<span v-if="menuItem.groups && menuItem.groups.length > 0" class="menu-item-groups">
+											<br><small>Groups: {{ menuItem.groups.join(', ') }}</small>
+										</span>
+										<span v-if="menuItem.hideAfterLogin" class="menu-item-hide-after-login">
+											<br><small>🔒 Verborgen na inloggen</small>
+										</span>
 									</template>
 									<template #actions>
 										<NcActionButton close-after-click
@@ -138,7 +141,7 @@ import { getTheme } from '../../services/getTheme.js'
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Bewerk menu item
+											Edit menu item
 										</NcActionButton>
 										<NcActionButton close-after-click
 											:disabled="safeItemsLoading"
@@ -146,7 +149,7 @@ import { getTheme } from '../../services/getTheme.js'
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Verwijder menu item
+											Delete menu item
 										</NcActionButton>
 									</template>
 								</NcListItem>
@@ -155,11 +158,11 @@ import { getTheme } from '../../services/getTheme.js'
 
 						<NcButton :disabled="(JSON.stringify(menu.items) === JSON.stringify(menuItems)) || safeItemsLoading"
 							@click="saveMenuItems">
-							Opslaan
+							Save
 						</NcButton>
 					</div>
 					<div v-else>
-						Geen menu items gevonden
+						No menu items found
 					</div>
 				</BTab>
 			</BTabs>
@@ -291,7 +294,7 @@ export default {
 			objectStore.setActiveObject('menu', menu)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('menu')
+				navigationStore.setModal('viewMenu')
 				break
 			case 'addContent':
 				navigationStore.setModal('menuItemForm')
@@ -395,5 +398,23 @@ h4 {
 }
 .draggable-list-item.light {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+.menu-item-groups {
+    color: var(--color-text-maxcontrast);
+    font-style: italic;
+}
+
+.menu-item-groups small {
+    opacity: 0.8;
+}
+
+.menu-item-hide-after-login {
+	color: var(--color-warning);
+	font-style: italic;
+}
+
+.menu-item-hide-after-login small {
+	opacity: 0.9;
 }
 </style>

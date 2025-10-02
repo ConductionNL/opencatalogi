@@ -5,16 +5,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'theme'"
 		ref="modalRef"
+		:name="isEdit ? 'Edit theme' : 'Add theme'"
 		:label-id="isEdit ? 'editThemeModal' : 'addThemeModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Thema {{ isEdit ? 'bewerken' : 'toevoegen' }}</h2>
 			<div v-if="objectStore.getState('theme').success !== null || objectStore.getState('theme').error">
 				<NcNoteCard v-if="objectStore.getState('theme').success" type="success">
-					<p>{{ isEdit ? 'Thema succesvol bewerkt' : 'Thema succesvol toegevoegd' }}</p>
+					<p>{{ isEdit ? 'Theme successfully edited' : 'Theme successfully added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('theme').success" type="error">
-					<p>{{ isEdit ? 'Er is iets fout gegaan bij het bewerken van het thema' : 'Er is iets fout gegaan bij het toevoegen van thema' }}</p>
+					<p>{{ isEdit ? 'Something went wrong while editing the theme' : 'Something went wrong while adding the theme' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('theme').error" type="error">
 					<p>{{ objectStore.getState('theme').error }}</p>
@@ -24,41 +24,49 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div class="form-group">
 					<NcTextField
 						:disabled="objectStore.isLoading('theme')"
-						label="Titel"
+						label="Title"
 						:value.sync="theme.title"
 						:error="!!inputValidation.fieldErrors?.['title']"
 						:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 					<NcTextField
 						:disabled="objectStore.isLoading('theme')"
-						label="Samenvatting"
+						label="Summary"
 						:value.sync="theme.summary"
 						:error="!!inputValidation.fieldErrors?.['summary']"
 						:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
 					<NcTextArea
 						:disabled="objectStore.isLoading('theme')"
-						label="Beschrijving"
+						label="Description"
 						:value.sync="theme.description"
 						:error="!!inputValidation.fieldErrors?.['description']"
 						:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 					<NcTextField
 						:disabled="objectStore.isLoading('theme')"
-						label="Image"
+						label="Image (url)"
 						:value.sync="theme.image"
 						:error="!!inputValidation.fieldErrors?.['image']"
 						:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
 				</div>
 			</div>
-			<NcButton v-if="objectStore.getState('theme').success === null"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('theme')"
-				type="primary"
-				@click="saveTheme">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('theme')" :size="20" />
-					<ContentSaveOutline v-if="!objectStore.isLoading('theme')" :size="20" />
-				</template>
-				{{ isEdit ? 'Opslaan' : 'Toevoegen' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('theme').success === null"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('theme')"
+					type="primary"
+					@click="saveTheme">
+					<template #icon>
+						<NcLoadingIcon v-if="objectStore.isLoading('theme')" :size="20" />
+						<ContentSaveOutline v-if="!objectStore.isLoading('theme')" :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -73,6 +81,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { Theme } from '../../entities/index.js'
 import _ from 'lodash'
 
@@ -87,6 +96,7 @@ export default {
 		NcNoteCard,
 		// Icons
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {
@@ -172,11 +182,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-  margin: var(--OC-margin-50);
-  text-align: center;
-}
-
 .formContainer > * {
   margin-block-end: 10px;
 }

@@ -15,11 +15,16 @@ import { TMenuItem, TMenu } from './menu.types'
  * Mock menu item data
  */
 export const mockMenuItem: TMenuItem = {
-	title: 'Home',
-	slug: 'home',
+	id: '1',
+	order: 0,
+	name: 'Home',
 	link: '/',
 	description: 'Home page',
 	icon: 'home',
+	groups: ['admin', 'users'],
+
+	hideAfterLogin: false,
+	hideBeforeLogin: false,
 	items: [],
 }
 
@@ -34,6 +39,9 @@ export const mockMenu: TMenu = {
 	items: [mockMenuItem],
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
+	groups: ['admin'],
+
+	hideBeforeLogin: true,
 }
 
 /**
@@ -47,4 +55,8 @@ export const mockMinimalMenu: TMenu = {
 	items: [],
 	createdAt: new Date().toISOString(),
 	updatedAt: new Date().toISOString(),
+	groups: [],
+
+	hideAfterLogin: false,
+	hideBeforeLogin: false,
 }

@@ -24,9 +24,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcActions
 				:disabled="objectStore.isLoading('glossary')"
 				:primary="true"
-				:menu-name="objectStore.isLoading('glossary') ? 'Laden...' : 'Acties'"
+				:menu-name="objectStore.isLoading('glossary') ? 'Loading...' : 'Actions'"
 				:inline="1"
-				title="Acties die je kan uitvoeren op deze term">
+				title="Actions you can perform on this term">
 				<template #icon>
 					<span>
 						<NcLoadingIcon v-if="objectStore.isLoading('glossary')"
@@ -36,7 +36,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</span>
 				</template>
 				<NcActionButton
-					title="Bekijk de documentatie over termen"
+					title="View the documentation about terms"
 					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/termen')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
@@ -47,42 +47,42 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' })">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
-					Kopiëren
+					Copy
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' })">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					Verwijderen
+					Delete
 				</NcActionButton>
 			</NcActions>
 		</div>
 		<div class="container">
 			<div class="detailGrid">
 				<div>
-					<b>Samenvatting:</b>
+					<b>Summary:</b>
 					<span>{{ glossary.summary || '-' }}</span>
 				</div>
 				<div>
-					<b>Beschrijving:</b>
+					<b>Description:</b>
 					<span>{{ glossary.description || '-' }}</span>
 				</div>
 				<div>
-					<b>Externe link:</b>
+					<b>External link:</b>
 					<span>{{ glossary.externalLink || '-' }}</span>
 				</div>
 				<div>
-					<b>Trefwoorden:</b>
+					<b>Keywords:</b>
 					<span>{{ glossary.keywords?.join(', ') || '-' }}</span>
 				</div>
 				<div v-if="glossary.relatedTerms?.length">
-					<b>Gerelateerde termen:</b>
+					<b>Related terms:</b>
 					<div class="related-terms">
 						<NcButton v-for="term in glossary.relatedTerms"
 							:key="term.id"
