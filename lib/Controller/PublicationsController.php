@@ -206,9 +206,6 @@ class PublicationsController extends Controller
      */
     public function show(string $id): JSONResponse
     {
-        var_dump($id);
-        die();
-        
         try {
             // Get ObjectService directly
             $objectService = $this->getObjectService();

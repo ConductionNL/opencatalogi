@@ -146,8 +146,6 @@ class MenusController extends Controller
      */
     public function index(): JSONResponse
     {
-        die;
-        
         // Get menu configuration from settings
         $menuConfig = $this->getMenuConfiguration();
         
