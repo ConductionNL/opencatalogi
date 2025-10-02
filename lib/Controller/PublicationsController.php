@@ -191,10 +191,10 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieve a specific publication by its ID
+     * Retrieve a specific publication by its ID - DIRECT OBJECTSERVICE HACK
      *
-     * This method directly fetches the object by ID and checks if it's published.
-     * Returns 404 if object doesn't exist or isn't published.
+     * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
+     * No schema/register validation, just direct object lookup.
      *
      * @param  string $id The ID of the publication to retrieve
      * @return JSONResponse JSON response containing the requested publication
@@ -206,6 +206,9 @@ class PublicationsController extends Controller
      */
     public function show(string $id): JSONResponse
     {
+        var_dump($id);
+        die();
+        
         try {
             // Get ObjectService directly
             $objectService = $this->getObjectService();
@@ -248,10 +251,13 @@ class PublicationsController extends Controller
             
             // Check if object is published (since SOLR filtering is disabled)
             $published = $object->getPublished();
+            
+            // For publications API, we require explicit published dates
+            // Objects with published=null are not considered published for public API
             if ($published === null) {
                 return new JSONResponse(['error' => 'Publication not published'], 404);
-            }
-            
+            }            
+
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
