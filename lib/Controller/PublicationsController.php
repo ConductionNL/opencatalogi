@@ -165,6 +165,7 @@ class PublicationsController extends Controller
             $searchQuery['_source'] = 'index';
             
             // DIRECT ObjectService call - WITH PUBLISHED FILTERING
+            // Note: Published filtering is temporarily disabled in GuzzleSolrService as hotfix
             // Set rbac=false, multi=false, published=true for public publication access
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery, 
