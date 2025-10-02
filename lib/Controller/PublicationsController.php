@@ -191,10 +191,10 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieve a specific publication by its ID - DIRECT OBJECTSERVICE HACK
+     * Retrieve a specific publication by its ID
      *
-     * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
-     * No schema/register validation, just direct object lookup.
+     * This method directly fetches the object by ID and checks if it's published.
+     * Returns 404 if object doesn't exist or isn't published.
      *
      * @param  string $id The ID of the publication to retrieve
      * @return JSONResponse JSON response containing the requested publication
@@ -207,7 +207,7 @@ class PublicationsController extends Controller
     public function show(string $id): JSONResponse
     {
         try {
-            // Get ObjectService directly - bypass all PublicationService overhead
+            // Get ObjectService directly
             $objectService = $this->getObjectService();
             
             // Get request parameters for extensions
@@ -230,20 +230,51 @@ class PublicationsController extends Controller
                 $extend[] = '@self.register';
             }
             
-            // Use searchObjectsPaginated to find single publication with published=true filter
-            $searchQuery = [
-                '_ids' => [$id],
-                '_limit' => 1,
-                '_extend' => $extend,
-                '_source' => 'index'  // Force use of SOLR index for better performance
-            ];
-            $searchResult = $objectService->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+            // DIRECT OBJECT FETCH: Use find() method to get object by ID
+            // Set rbac=false, multi=false for public access
+            $object = $objectService->find(
+                id: $id,
+                extend: $extend,
+                files: false,
+                register: null,
+                schema: null,
+                rbac: false,
+                multi: false
+            );
             
-            if (empty($searchResult['results'])) {
+            if ($object === null) {
                 return new JSONResponse(['error' => 'Publication not found'], 404);
             }
             
-            $result = $searchResult['results'][0];
+            // Check if object is published (since SOLR filtering is disabled)
+            $published = $object->getPublished();
+            if ($published === null) {
+                return new JSONResponse(['error' => 'Publication not published'], 404);
+            }
+            
+            // Check if publication date is in the past
+            $now = new \DateTime();
+            if ($published > $now) {
+                return new JSONResponse(['error' => 'Publication not yet published'], 404);
+            }
+            
+            // Check if object is not depublished
+            $depublished = $object->getDepublished();
+            if ($depublished !== null && $depublished <= $now) {
+                return new JSONResponse(['error' => 'Publication depublished'], 404);
+            }
+            
+            // Render the object with extensions
+            $result = $objectService->renderEntity(
+                entity: $object,
+                extend: $extend,
+                depth: 0,
+                filter: [],
+                fields: [],
+                unset: [],
+                rbac: false,
+                multi: false
+            );
             
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -318,25 +349,45 @@ class PublicationsController extends Controller
     public function uses(string $id): JSONResponse
     {
         try {
-            // Get ObjectService directly - bypass all PublicationService overhead
+            // Get ObjectService directly
             $objectService = $this->getObjectService();
             
             // Get query parameters once
             $searchQuery = $this->request->getParams();
 
-            // Get the relations for the object directly using published filter
-            $searchQuery = [
-                '_ids' => [$id],
-                '_limit' => 1,
-                '_source' => 'index'  // Force use of SOLR index for better performance
-            ];
-            $searchResult = $objectService->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+            // DIRECT OBJECT FETCH: Get the publication object directly by ID
+            $object = $objectService->find(
+                id: $id,
+                extend: [],
+                files: false,
+                register: null,
+                schema: null,
+                rbac: false,
+                multi: false
+            );
             
-            if (empty($searchResult['results'])) {
+            if ($object === null) {
                 return new JSONResponse(['error' => 'Publication not found'], 404);
             }
             
-            $object = $searchResult['results'][0];
+            // Check if object is published (since SOLR filtering is disabled)
+            $published = $object->getPublished();
+            if ($published === null) {
+                return new JSONResponse(['error' => 'Publication not found'], 404);
+            }
+            
+            // Check if publication date is in the past
+            $now = new \DateTime();
+            if ($published > $now) {
+                return new JSONResponse(['error' => 'Publication not found'], 404);
+            }
+            
+            // Check if object is not depublished
+            $depublished = $object->getDepublished();
+            if ($depublished !== null && $depublished <= $now) {
+                return new JSONResponse(['error' => 'Publication not found'], 404);
+            }
+            
             $relationsArray = $object->getRelations();
             $relations = array_values($relationsArray);
 
@@ -369,12 +420,12 @@ class PublicationsController extends Controller
                 $searchQuery['_source'] = 'index';
 
                 // Call fresh ObjectService instance with ids as named parameter
-                // Set rbac=false, multi=false, published=true for public publication access
+                // Note: Published filtering is disabled in SOLR service, so we don't need published=true
                 $result = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery, 
                     rbac: false, 
                     multi: false, 
-                    published: true, 
+                    published: false, 
                     deleted: false,
                     ids: $relations
                 );                
@@ -435,12 +486,12 @@ class PublicationsController extends Controller
             $searchQuery['_source'] = 'index';
                    
             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
-            // Set rbac=false, multi=false, published=true for public publication access
+            // Note: Published filtering is disabled in SOLR service, so we don't need published=true
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery, 
                 rbac: false, 
                 multi: false, 
-                published: true, 
+                published: false, 
                 deleted: false,
                 uses: $id
             );
