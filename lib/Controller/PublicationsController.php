@@ -170,7 +170,7 @@ class PublicationsController extends Controller
                 query: $searchQuery, 
                 rbac: false, 
                 multi: false, 
-                published: true
+                published: false
             );
                      
             // Add CORS headers for public API access
