@@ -1,0 +1,110 @@
+name: Stable Menu Release
+
+on:
+  push:
+    branches:
+      - Oude-Ijsselstreek
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: v0.7.4-menu-alpha-0.1
+      RELEASE_VERSION: 0.7.4-menu-alpha-0.1
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set app env
+        run: |
+          echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+
+      - name: Install npm dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Set up PHP and install extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: zip, gd
+
+      - run: npm ci
+      - run: npm run build
+      - run: composer install --no-dev
+
+      - name: Prepare Signing Certificate and Key
+        run: |
+          echo "${{ secrets.NEXTCLOUD_SIGNING_CERT }}" > signing-cert.crt
+          echo "${{ secrets.NEXTCLOUD_SIGNING_KEY }}" > signing-key.key
+
+      - name: Copy the package files into the package
+        run: |
+          mkdir -p package/${{ env.APP_NAME }}
+          rsync -av --progress \
+            --exclude='package' \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.vscode' \
+            --exclude='docker' \
+            --exclude='docs' \
+            --exclude='website' \
+            --exclude='node_modules' \
+            --exclude='/src' \
+            --exclude='test' \
+            --exclude='package-lock.json' \
+            --exclude='composer.lock' \
+            --exclude='composer-setup.php' \
+            --exclude='.phpunit.result.cache' \
+            --exclude='phpmd.xml' \
+            --exclude='signing-key.key' \
+            --exclude='package.json' \
+            --exclude='composer.json' \
+            --exclude='coverage.txt' \
+            --exclude='signing-cert.crt' \
+            --exclude='docker-compose.yml' \
+            --exclude='webpack.config.js' \
+            --exclude='.prettierrc' \
+            --exclude='psalm.xml' \
+            --exclude='phpunit.xml' \
+            --exclude='tsconfig.json' \
+            --exclude='changelog-ci-config.json' \
+            --exclude='jest.config.js' \
+            --exclude='.gitattributes' \
+            --exclude='.php-cs-fixer.dist.php' \
+            --exclude='.gitignore' \
+            --exclude='.eslintrc.js' \
+            --exclude='stylelint.config.js' \
+            --exclude='.babelrc' \
+            --exclude='.nvmrc' \
+            ./ package/${{ env.APP_NAME }}/
+
+      - name: Create Tarball
+        run: |
+          cd package && tar -czf ../nextcloud-release.tar.gz ${{ env.APP_NAME }}
+
+      - name: Sign the TAR.GZ file with OpenSSL
+        run: |
+          openssl dgst -sha512 -sign signing-key.key nextcloud-release.tar.gz | openssl base64 -out nextcloud-release.signature
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          tag: ${{ env.RELEASE_TAG }}
+          name: Menu update on Stable
+          draft: false
+          prerelease: false
+
+      - name: Attach tarball to GitHub release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: nextcloud-release.tar.gz
+          asset_name: ${{ env.APP_NAME }}-${{ env.RELEASE_VERSION }}.tar.gz
+          tag: ${{ env.RELEASE_TAG }}
+          overwrite: true
+
+
