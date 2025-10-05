@@ -727,8 +727,8 @@ export const useObjectStore = defineStore('object', {
 				...params,
 			})
 
-			// Remove source, schema, and register from query params as they're now in the URL
-			queryParams.delete('_source')
+			// Remove schema and register from query params as they're now in the URL
+			// Note: Keep _source parameter as it's needed for database queries
 			queryParams.delete('_schema')
 			queryParams.delete('_register')
 			// Remove the old extend parameter to avoid duplication
@@ -759,6 +759,13 @@ export const useObjectStore = defineStore('object', {
 				const queryParams = {
 					...params,
 					_extend: params._extend || params.extend || '@self.schema',
+				}
+
+				// Add _source=database for types that aren't indexed in Solr
+				// This includes: menu, page, glossary, theme, organization, listing, catalog, audit-trails, uses, used, files
+				const nonIndexedTypes = ['menu', 'page', 'glossary', 'theme', 'organization', 'listing', 'catalog', 'audit-trails', 'uses', 'used', 'files']
+				if (nonIndexedTypes.includes(type) && !params._source && !params.source) {
+					queryParams._source = 'database'
 				}
 
 				const response = await fetch(this._constructApiUrl(type, null, null, queryParams))
