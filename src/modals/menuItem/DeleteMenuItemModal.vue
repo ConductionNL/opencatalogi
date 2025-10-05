@@ -113,7 +113,35 @@ const handleDelete = async () => {
 		const menu = objectStore.getActiveObject('menu')
 		if (!menu?.id) throw new Error('No active menu')
 
-		const updatedItems = (menu.items || []).filter(i => i.id !== menuItem.value.id)
+		// Use the same logic as MenuItemForm.vue to find and remove the correct item
+		const activeMenuItem = menuItem.value
+		let itemIndex = -1
+		
+		// Try to find by index first (most reliable)
+		if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menu.items.length) {
+			itemIndex = activeMenuItem.index
+		} else {
+			// Try to find by id
+			if (activeMenuItem.id && activeMenuItem.id !== null && activeMenuItem.id !== undefined) {
+				itemIndex = menu.items.findIndex(item => item.id === activeMenuItem.id)
+			}
+			
+			// If still not found, try by name and order
+			if (itemIndex === -1) {
+				itemIndex = menu.items.findIndex(item =>
+					item.name === activeMenuItem.name
+					&& item.order === activeMenuItem.order
+				)
+			}
+		}
+		
+		// Create updated items array by removing the item at the found index
+		const updatedItems = [...(menu.items || [])]
+		if (itemIndex !== -1 && itemIndex < updatedItems.length) {
+			updatedItems.splice(itemIndex, 1)
+		} else {
+			throw new Error('Could not find menu item to delete')
+		}
 		const newMenu = new Menu({ ...menu, items: updatedItems })
 		await objectStore.updateObject('menu', newMenu.id, newMenu)
 		success.value = true

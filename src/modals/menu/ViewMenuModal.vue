@@ -45,7 +45,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 													</template>
 													{{ t('opencatalogi', 'Edit') }}
 												</NcButton>
-												<NcButton type="error" @click="deleteItem(item)">
+												<NcButton type="error" @click="deleteItem(item, index)">
 													<template #icon>
 														<Delete :size="18" />
 													</template>
@@ -422,8 +422,8 @@ export default {
 		 * Open the delete modal for a specific menu item
 		 * @param {object} item - The menu item to delete
 		 */
-		deleteItem(item) {
-			objectStore.setActiveObject('menuItem', item)
+		deleteItem(item, index) {
+			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('deleteMenuItem')
 		},
 		/**

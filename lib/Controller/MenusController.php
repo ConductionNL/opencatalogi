@@ -169,8 +169,8 @@ class MenusController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support
-        // Set rbac=false, multi=false, published=true for public menu access
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+        // Set rbac=false, multi=false, published=false to get all menus regardless of published status
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
         
         // Build paginated response structure
         /*
@@ -237,7 +237,7 @@ class MenusController extends Controller
             '_limit' => 1,
             '_source' => 'index'  // Force use of SOLR index for better performance
         ];
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
         
         if (empty($result['results'])) {
             return new JSONResponse(['error' => 'Menu not found'], 404);
