@@ -27,7 +27,7 @@
             "publication": {
                 "slug": "publication",
                 "title": "Publication",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "summary": "A single publication entry within the catalog",
                 "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
                 "icon": null,
@@ -39,29 +39,37 @@
                         "type": "string",
                         "description": "The title of the publication",
                         "maxLength": 255,
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "summary": {
                         "type": "string",
                         "description": "Brief description of the publication",
-                        "maxLength": 255
+                        "maxLength": 255,
+                        "facetable": false
                     },
                     "description": {
                         "type": "string",
                         "description": "Detailed description of the publication",
-                        "maxLength": 2555
+                        "maxLength": 2555,
+                        "facetable": false
                     },
                     "organization": {
                         "type": "string",
-                        "description": "Reference to the organization that owns this publication"
+                        "description": "Reference to the organization that owns this publication",
+                        "facetable": false
                     },
                     "themes": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "List of themes associated with this publication"
+                        "description": "List of themes associated with this publication",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": false,
                 "searchable": true
@@ -69,7 +77,7 @@
             "catalog": {
                 "slug": "catalog",
                 "title": "Catalog",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "summary": "A collection of publications organized by theme and schema",
                 "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
                 "icon": null,
@@ -81,49 +89,58 @@
                         "type": "string",
                         "description": "The title of the catalog",
                         "maxLength": 255,
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "summary": {
                         "type": "string",
                         "description": "Brief description of the catalog",
-                        "maxLength": 255
+                        "maxLength": 255,
+                        "facetable": false
                     },
                     "description": {
                         "type": "string",
                         "description": "Detailed description of the catalog",
-                        "maxLength": 2555
+                        "maxLength": 2555,
+                        "facetable": false
                     },
                     "image": {
                         "type": "string",
                         "description": "URL to the catalog's image",
-                        "maxLength": 255
+                        "maxLength": 255,
+                        "facetable": false
                     },
                     "listed": {
                         "type": "boolean",
-                        "description": "Whether the catalog is publicly listed"
+                        "description": "Whether the catalog is publicly listed",
+                        "facetable": false
                     },
                     "organization": {
                         "type": "string",
-                        "description": "Reference to the organization that owns this catalog"
+                        "description": "Reference to the organization that owns this catalog",
+                        "facetable": false
                     },
                     "registers": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "List of register IDs associated with this catalog"
+                        "description": "List of register IDs associated with this catalog",
+                        "facetable": false
                     },
                     "schemas": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "List of schema IDs associated with this catalog"
+                        "description": "List of schema IDs associated with this catalog",
+                        "facetable": false
                     },
                     "filters": {
                         "type": "object",
                         "description": "Custom filters for the catalog",
-                        "additionalProperties": true
+                        "additionalProperties": true,
+                        "facetable": false
                     },
                     "status": {
                         "type": "string",
@@ -133,8 +150,12 @@
                             "beta",
                             "stable",
                             "obsolete"
-                        ]
+                        ],
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true
@@ -142,7 +163,7 @@
             "listing": {
                 "slug": "listing",
                 "title": "Listing",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "summary": "A filtered view of publications within a catalog",
                 "description": "A listing provides a customizable view of publications within a catalog. It allows for the creation of specific publication collections based on filters, sorting, and presentation preferences. Listings can be used to create featured sections, topic-based collections, or any other organized view of publications.",
                 "icon": null,
@@ -154,43 +175,51 @@
                 "properties": {
                     "catalogusId": {
                         "type": "string",
-                        "description": "ID of the catalog this listing belongs to"
+                        "description": "ID of the catalog this listing belongs to",
+                        "facetable": false
                     },
                     "title": {
                         "type": "string",
                         "description": "The title of the listing",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "summary": {
                         "type": "string",
                         "description": "Brief description of the listing",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "description": {
                         "type": "string",
-                        "description": "Detailed description of the listing"
+                        "description": "Detailed description of the listing",
+                        "facetable": false
                     },
                     "search": {
                         "type": "string",
                         "description": "Search URL for the listing",
-                        "format": "url"
+                        "format": "url",
+                        "facetable": false
                     },
                     "publications": {
                         "type": "string",
                         "description": "Publications API endpoint URL for the listing",
-                        "format": "url"
+                        "format": "url",
+                        "facetable": false
                     },
                     "directory": {
                         "type": "string",
                         "description": "Directory URL for the listing",
-                        "format": "url"
+                        "format": "url",
+                        "facetable": false
                     },
                     "metadata": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "Metadata fields for the listing"
+                        "description": "Metadata fields for the listing",
+                        "facetable": false
                     },
                     "status": {
                         "type": "string",
@@ -200,21 +229,25 @@
                             "beta",
                             "stable",
                             "obsolete"
-                        ]
+                        ],
+                        "facetable": false
                     },
                     "statusMessage": {
                         "type": "string",
-                        "description": "Message of the latest status test"
+                        "description": "Message of the latest status test",
+                        "facetable": false
                     },
                     "statusCode": {
                         "type": "number",
                         "description": "HTTP status code of the listing",
-                        "minimum": 200
+                        "minimum": 200,
+                        "facetable": false
                     },
                     "lastSync": {
                         "type": "string",
                         "description": "Timestamp of the last synchronization",
-                        "format": "date-time"
+                        "format": "date-time",
+                        "facetable": false
                     },
                     "integrationLevel": {
                         "type": "string",
@@ -223,24 +256,32 @@
                             "none",
                             "connection",
                             "search"
-                        ]
+                        ],
+                        "facetable": false
                     },
                     "default": {
                         "type": "boolean",
-                        "description": "Whether this is the default listing"
+                        "description": "Whether this is the default listing",
+                        "facetable": false
                     },
                     "organization": {
                         "type": "object",
-                        "description": "An organization object"
+                        "description": "An organization object",
+                        "facetable": false
                     },
                     "schemas": {
                         "type": "array",
-                        "description": "Types of publications in this listing"
+                        "description": "Types of publications in this listing",
+                        "facetable": false
                     },
                     "version": {
                         "type": "string",
-                        "description": "The version of OpenCatalogi the source of the listing runs"
+                        "description": "The version of OpenCatalogi the source of the listing runs",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true
@@ -248,7 +289,7 @@
             "organization": {
                 "slug": "organization",
                 "title": "Organization",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "summary": "An organization that publishes or manages catalogs",
                 "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
                 "icon": null,
@@ -260,41 +301,52 @@
                     "name": {
                         "type": "string",
                         "description": "The name of the organization",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "summary": {
                         "type": "string",
                         "description": "Brief description of the organization",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "description": {
                         "type": "string",
-                        "description": "Detailed description of the organization"
+                        "description": "Detailed description of the organization",
+                        "facetable": false
                     },
                     "oin": {
                         "type": "string",
                         "description": "Organization Identification Number (OIN)",
-                        "pattern": "^0000000\\d{10}000$"
+                        "pattern": "^0000000\\d{10}000$",
+                        "facetable": false
                     },
                     "tooi": {
                         "type": "string",
                         "description": "TOOI identifier for the organization",
-                        "pattern": "^\\w{2,}\\d{4}$"
+                        "pattern": "^\\w{2,}\\d{4}$",
+                        "facetable": false
                     },
                     "rsin": {
                         "type": "string",
                         "description": "RSIN number for tax identification",
-                        "pattern": "^\\d{9}$"
+                        "pattern": "^\\d{9}$",
+                        "facetable": false
                     },
                     "pki": {
                         "type": "string",
                         "description": "PKI certificate information",
-                        "pattern": "^\\d{1,}$"
+                        "pattern": "^\\d{1,}$",
+                        "facetable": false
                     },
                     "image": {
                         "type": "string",
-                        "description": "URL to the organization's logo or image"
+                        "description": "URL to the organization's logo or image",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true
@@ -302,7 +354,7 @@
             "page": {
                 "slug": "page",
                 "title": "Page",
-                "version": "0.0.2",
+                "version": "0.0.3",
                 "summary": "A content page for static information",
                 "description": "Pages are used to create static content within the catalog website. They can contain information about how to use the catalog, contact information, about pages, or any other static content that needs to be accessible through the website. Pages are accessible through their unique slugs and can be organized in the navigation menu.",
                 "icon": null,
@@ -314,17 +366,20 @@
                     "title": {
                         "type": "string",
                         "description": "The title of the page",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "slug": {
                         "type": "string",
                         "description": "URL-friendly version of the page name",
                         "pattern": "^[a-z0-9-]+$",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "contents": {
                         "type": "array",
                         "description": "Content blocks of the page",
+                        "facetable": false,
                         "items": {
                             "type": "object",
                             "properties": {
@@ -368,16 +423,22 @@
                         "description": "Nextcloud groups that have access to this page",
                         "items": {
                             "type": "string"
-                        }
+                        },
+                        "facetable": false
                     },
                     "hideAfterLogin": {
                         "type": "boolean",
-                        "description": "Whether to hide this page after user login"
+                        "description": "Whether to hide this page after user login",
+                        "facetable": false
                     },
                     "hideBeforeLogin": {
                         "type": "boolean",
-                        "description": "Whether to hide this page before user login"
+                        "description": "Whether to hide this page before user login",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true
@@ -385,7 +446,7 @@
             "theme": {
                 "slug": "theme",
                 "title": "Theme",
-                "version": "0.0.2",
+                "version": "0.0.3",
                 "summary": "A category for organizing publications",
                 "description": "Themes are used to categorize publications within catalogs. They provide a way to group related publications together, making it easier for users to find content they're interested in. Themes can be hierarchical and can be used for navigation and filtering purposes.",
                 "icon": null,
@@ -397,21 +458,28 @@
                     "title": {
                         "type": "string",
                         "description": "The name of the theme",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "summary": {
                         "type": "string",
                         "description": "Brief description of the theme",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "description": {
                         "type": "string",
-                        "description": "Detailed description of the theme"
+                        "description": "Detailed description of the theme",
+                        "facetable": false
                     },
                     "image": {
                         "type": "string",
-                        "description": "URL to the theme's image"
+                        "description": "URL to the theme's image",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true
@@ -419,7 +487,7 @@
             "menu": {
                 "slug": "menu",
                 "title": "Menu",
-                "version": "0.0.2",
+                "version": "0.0.3",
                 "summary": "Navigation structure for the catalog website",
                 "description": "Menus define the navigation structure of the catalog website. They allow administrators to organize pages, listings, and other content into a hierarchical navigation system. Multiple menus can be created for different purposes, such as main navigation, footer links, or specialized content groupings.",
                 "icon": null,
@@ -430,16 +498,19 @@
                     "title": {
                         "type": "string",
                         "description": "The name of the menu",
-                        "minLength": 1
+                        "minLength": 1,
+                        "facetable": false
                     },
                     "position": {
                         "type": "number",
                         "description": "Order position of the menu",
-                        "minimum": 0
+                        "minimum": 0,
+                        "facetable": false
                     },
                     "items": {
                         "type": "array",
                         "description": "Menu items and their structure",
+                        "facetable": false,
                         "items": {
                             "type": "object",
                             "properties": {
@@ -546,12 +617,17 @@
                         "description": "Nextcloud groups that have access to this menu",
                         "items": {
                             "type": "string"
-                        }
+                        },
+                        "facetable": false
                     },
                     "hideBeforeLogin": {
                         "type": "boolean",
-                        "description": "Whether to hide this menu before user login"
+                        "description": "Whether to hide this menu before user login",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true
@@ -559,7 +635,7 @@
             "glossary": {
                 "slug": "glossary",
                 "title": "Glossary",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "summary": "Definitions and explanations of terms used in the catalog",
                 "description": "The glossary provides definitions and explanations for terms used throughout the catalog. It helps users understand specialized terminology, acronyms, and concepts. Each glossary entry can include detailed explanations, external references, and related keywords to help users find and understand relevant information.",
                 "icon": null,
@@ -571,31 +647,39 @@
                         "type": "string",
                         "description": "The term being defined",
                         "minLength": 1,
-                        "maxLength": 255
+                        "maxLength": 255,
+                        "facetable": false
                     },
                     "summary": {
                         "type": "string",
                         "description": "Brief definition of the term",
-                        "maxLength": 255
+                        "maxLength": 255,
+                        "facetable": false
                     },
                     "description": {
                         "type": "string",
                         "description": "Detailed explanation of the term",
-                        "maxLength": 2555
+                        "maxLength": 2555,
+                        "facetable": false
                     },
                     "externalLink": {
                         "type": "string",
                         "description": "URL to external reference or documentation",
                         "format": "url",
-                        "maxLength": 255
+                        "maxLength": 255,
+                        "facetable": false
                     },
                     "keywords": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
-                        "description": "Related search terms and synonyms"
+                        "description": "Related search terms and synonyms",
+                        "facetable": false
                     }
+                },
+                "configuration": {
+                    "autoPublish": false
                 },
                 "hardValidation": true,
                 "searchable": true

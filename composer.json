@@ -56,7 +56,6 @@
 		"symfony/uid": "^6.4"
 	},
 	"require-dev": {
-		"nextcloud/ocp": "dev-stable29",
 		"roave/security-advisories": "dev-latest",
 		"squizlabs/php_codesniffer": "^3.9.0",
 		"phpstan/phpstan": "^1.10",
