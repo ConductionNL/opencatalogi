@@ -252,19 +252,22 @@ class PublicationsController extends Controller
             // For publications API, we require explicit published dates
             // Objects with published=null are not considered published for public API
             if ($published === null) {
-                return new JSONResponse(['error' => 'Publication not published'], 404);
+                //@todo: remove this very dirty hotfix/hack
+                //return new JSONResponse(['error' => 'Publication not published'], 404);
             }            
 
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
-                return new JSONResponse(['error' => 'Publication not yet published'], 404);
+                //@todo: remove this very dirty hotfix/hack
+                //return new JSONResponse(['error' => 'Publication not yet published'], 404);
             }
             
             // Check if object is not depublished
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
-                return new JSONResponse(['error' => 'Publication depublished'], 404);
+                //@todo: remove this very dirty hotfix/hack
+                //return new JSONResponse(['error' => 'Publication depublished'], 404);
             }
             
             // Render the object with extensions
