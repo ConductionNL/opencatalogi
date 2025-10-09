@@ -379,19 +379,22 @@ class PublicationsController extends Controller
             // Check if object is published (since SOLR filtering is disabled)
             $published = $object->getPublished();
             if ($published === null) {
-                return new JSONResponse(['error' => 'Publication not found'], 404);
+                //@todo: remove this very dirty hotfix/hack
+                //return new JSONResponse(['error' => 'Publication not found'], 404);
             }
             
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
-                return new JSONResponse(['error' => 'Publication not found'], 404);
+                //@todo: remove this very dirty hotfix/hack
+                //return new JSONResponse(['error' => 'Publication not found'], 404);
             }
             
             // Check if object is not depublished
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
-                return new JSONResponse(['error' => 'Publication not found'], 404);
+                //@todo: remove this very dirty hotfix/hack
+                //return new JSONResponse(['error' => 'Publication not found'], 404);
             }
             
             $relationsArray = $object->getRelations();
