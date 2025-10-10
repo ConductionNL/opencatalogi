@@ -41,7 +41,6 @@
 						</NcButton>
 
 						<NcButton
-							v-if="!versionInfo.versionsMatch"
 							type="primary"
 							:disabled="importing"
 							@click="manualImport(true)">
