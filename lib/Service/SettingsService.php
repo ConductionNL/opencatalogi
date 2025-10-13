@@ -171,6 +171,8 @@ class SettingsService
             $objectService = $this->getObjectService();
             $registers     = $objectService->getRegisters();
 
+            $registerSlug = 'publication';
+
             if (empty($registers) === true) {
                 return [];
             }
@@ -180,7 +182,7 @@ class SettingsService
                 // Try to find a register with a matching name.
                 $matchingRegister = null;
                 foreach ($registers as $register) {
-                    if (stripos($register['title'], $type) !== false) {
+                    if (stripos($register['slug'], $registerSlug) !== false) {
                         $matchingRegister = $register;
                         break;
                     }
