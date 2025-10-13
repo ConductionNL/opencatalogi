@@ -434,7 +434,7 @@ class PublicationsController extends Controller
                     query: $searchQuery, 
                     rbac: false, 
                     multi: false, 
-                    published: false, 
+                    published: true, 
                     deleted: false,
                     ids: $relations
                 );                
@@ -500,7 +500,7 @@ class PublicationsController extends Controller
                 query: $searchQuery, 
                 rbac: false, 
                 multi: false, 
-                published: false, 
+                published: true, 
                 deleted: false,
                 uses: $id
             );
