@@ -428,6 +428,9 @@ class PublicationsController extends Controller
                 // Force use of SOLR index for better performance on public endpoints
                 $searchQuery['_source'] = 'index';
 
+                // Lets set the limit to 1000 to make sure we catch all relations
+                $searchQuery['_limit'] = 1000;
+
                 // Call fresh ObjectService instance with ids as named parameter
                 // Note: Published filtering is disabled in SOLR service, so we don't need published=true
                 $result = $freshObjectService->searchObjectsPaginated(
@@ -493,6 +496,9 @@ class PublicationsController extends Controller
             
             // Force use of SOLR index for better performance on public endpoints
             $searchQuery['_source'] = 'index';
+
+            // Lets set the limit to 1000 to make sure we catch all relations
+            $searchQuery['_limit'] = 1000;
                    
             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
             // Note: Published filtering is disabled in SOLR service, so we don't need published=true
