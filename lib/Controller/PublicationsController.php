@@ -426,7 +426,7 @@ class PublicationsController extends Controller
                 unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
 
                 // Force use of SOLR index for better performance on public endpoints
-                $searchQuery['_source'] = 'index';
+                $searchQuery['_source'] = 'database';
 
                 // Lets set the limit to 1000 to make sure we catch all relations
                 $searchQuery['_limit'] = 1000;
@@ -495,7 +495,7 @@ class PublicationsController extends Controller
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
             
             // Force use of SOLR index for better performance on public endpoints
-            $searchQuery['_source'] = 'index';
+            $searchQuery['_source'] = 'database';
 
             // Lets set the limit to 1000 to make sure we catch all relations
             $searchQuery['_limit'] = 1000;
