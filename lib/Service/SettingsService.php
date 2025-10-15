@@ -194,7 +194,7 @@ class SettingsService
                     // Try to find a matching schema.
                     if (empty($matchingRegister['schemas']) === false) {
                         foreach ($matchingRegister['schemas'] as $schema) {
-                            if(is_array($schema) === true) {
+                            if (is_array($schema) === true) {
                                 continue;
                             }
                             if (stripos($schema['title'], $type) !== false) {
@@ -489,7 +489,6 @@ class SettingsService
 
             return $configurationService->importFromJson(
                 data: $settings,
-                owner: null,
                 appId: Application::APP_ID,
                 version: $currentAppVersion,
                 force: $force
