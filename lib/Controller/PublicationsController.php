@@ -361,6 +361,14 @@ class PublicationsController extends Controller
             // Get query parameters once
             $searchQuery = $this->request->getParams();
 
+            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
+
+            // Force use of SOLR index for better performance on public endpoints
+            $searchQuery['_source'] = 'database';
+
+            // Lets set the limit to 1000 to make sure we catch all relations
+            $searchQuery['_limit'] = 1000;
+
             // DIRECT OBJECT FETCH: Get the publication object directly by ID
             $object = $objectService->find(
                 id: $id,
@@ -398,12 +406,16 @@ class PublicationsController extends Controller
             }
             
             $relationsArray = $object->getRelations();
-            $relations = array_values($relationsArray);
+            // Filter relations, we only want uuids
+            $relations = array_values(array_filter($relationsArray, function ($value) {
+                // Accept only strings that look like uuids
+                return is_string($value) && preg_match('/^[0-9a-fA-F\-]{32,36}$/', $value);
+            }));
 
             // Check if relations array is empty
             if (empty($relations)) {
                 // If relations is empty, return empty paginated response
-                $responseData = [
+                $result = [
                     'results' => [],
                     'total' => 0,
                     'page' => 1,
@@ -411,8 +423,14 @@ class PublicationsController extends Controller
                     'limit' => (int) ($searchQuery['_limit'] ?? $searchQuery['limit'] ?? 20),
                     'offset' => 0,
                     'facets' => [],
-                    // Add relations being searched for debugging
-                    'relations' => $relations
+                    '@self' => [
+                        'source' => 'database',
+                        'query' => $searchQuery,
+                        'rbac' => false,
+                        'multi' => false,
+                        'published' => false,
+                        'deleted' => false
+                    ]
                 ];
             } else {                
                 
@@ -420,16 +438,7 @@ class PublicationsController extends Controller
                 // After find(), ObjectService is constrained to the object's register/schema
                 // But for /uses endpoint, we want to search across ALL registers/schemas
                 $freshObjectService = $this->getObjectService();
-                
-                // Clean up unwanted parameters and remove register/schema restrictions
-                // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
-                unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
-
-                // Force use of SOLR index for better performance on public endpoints
-                //$searchQuery['_source'] = 'database';
-
-                // Lets set the limit to 1000 to make sure we catch all relations
-                //$searchQuery['_limit'] = 1000;
+                              
 
                 // Call fresh ObjectService instance with ids as named parameter
                 // Note: Published filtering is disabled in SOLR service, so we don't need published=true
@@ -444,7 +453,7 @@ class PublicationsController extends Controller
             }
             
             // Add what we're searching for in debugging
-            $result['relations'] = $relations;
+            $result["@self"]['ids'] = $relations;
             
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -495,10 +504,10 @@ class PublicationsController extends Controller
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
             
             // Force use of SOLR index for better performance on public endpoints
-            //$searchQuery['_source'] = 'database';
+            $searchQuery['_source'] = 'database';
 
             // Lets set the limit to 1000 to make sure we catch all relations
-            //$searchQuery['_limit'] = 1000;
+            $searchQuery['_limit'] = 1000;
                    
             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
             // Note: Published filtering is disabled in SOLR service, so we don't need published=true
@@ -512,7 +521,7 @@ class PublicationsController extends Controller
             );
             
             // Add relations being searched for debugging
-            $result['used'] = $id;
+            $result['@self']['used'] = $id;
             
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
