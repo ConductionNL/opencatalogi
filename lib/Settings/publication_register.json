@@ -77,7 +77,7 @@
             "catalog": {
                 "slug": "catalog",
                 "title": "Catalog",
-                "version": "0.0.5",
+                "version": "0.0.6",
                 "summary": "A collection of publications organized by theme and schema",
                 "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
                 "icon": null,
@@ -123,7 +123,14 @@
                     "registers": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "oneOf": [
+                                {
+                                    "type": "integer"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
                         },
                         "description": "List of register IDs associated with this catalog",
                         "facetable": false
@@ -131,7 +138,14 @@
                     "schemas": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "oneOf": [
+                                {
+                                    "type": "integer"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
                         },
                         "description": "List of schema IDs associated with this catalog",
                         "facetable": false
