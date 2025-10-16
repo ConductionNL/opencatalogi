@@ -160,10 +160,7 @@ class PublicationsController extends Controller
             if (!in_array('@self.register', $searchQuery['_extend'])) {
                 $searchQuery['_extend'][] = '@self.register';
             }
-            
-            // Force use of SOLR index for better performance on public endpoints
-            $searchQuery['_source'] = 'index';
-            
+                        
             // DIRECT ObjectService call - WITH PUBLISHED FILTERING
             // Note: Published filtering is temporarily disabled in GuzzleSolrService as hotfix
             // Set rbac=false, multi=false, published=true for public publication access
