@@ -374,7 +374,8 @@ class PublicationsController extends Controller
                 register: null,
                 schema: null,
                 rbac: false,
-                multi: false
+                multi: false,
+                published: true
             );
             
             if ($object === null) {
@@ -425,7 +426,7 @@ class PublicationsController extends Controller
                         'query' => $searchQuery,
                         'rbac' => false,
                         'multi' => false,
-                        'published' => false,
+                        'published' => true,
                         'deleted' => false
                     ]
                 ];
@@ -512,7 +513,7 @@ class PublicationsController extends Controller
                 query: $searchQuery, 
                 rbac: false, 
                 multi: false, 
-                published: false, 
+                published: true, 
                 deleted: false,
                 uses: $id
             );
