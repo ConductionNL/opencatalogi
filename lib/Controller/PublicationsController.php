@@ -168,7 +168,7 @@ class PublicationsController extends Controller
                 query: $searchQuery, 
                 rbac: false, 
                 multi: false, 
-                published: false
+                published: true
             );
                      
             // Add CORS headers for public API access
@@ -276,7 +276,7 @@ class PublicationsController extends Controller
                 fields: [],
                 unset: [],
                 rbac: false,
-                multi: false
+                multi: false,
             );
             
             // Add CORS headers for public API access
