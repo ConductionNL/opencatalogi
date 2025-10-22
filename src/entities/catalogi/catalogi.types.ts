@@ -22,4 +22,5 @@ export type TCatalogi = {
     schemas: string[]
     filters: Record<string, unknown>
     status: CatalogStatus
+    slug: string
 }

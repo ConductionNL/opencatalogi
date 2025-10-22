@@ -39,6 +39,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:value.sync="catalogi.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+				<NcTextField :disabled="objectStore.isLoading('catalog')"
+					label="Slug*"
+					maxlength="255"
+					:value.sync="catalogi.slug"
+					:error="!!inputValidation.fieldErrors?.['slug']"
+					:helper-text="inputValidation.fieldErrors?.['slug']?.[0] || 'URL-friendly identifier (e.g., publications, datasets)'"
+					placeholder="publications" />
 				<NcCheckboxRadioSwitch :disabled="objectStore.isLoading('catalog')"
 					label="Publicly available"
 					:checked.sync="catalogi.listed">
@@ -116,6 +123,7 @@ export default {
 				title: '',
 				summary: '',
 				description: '',
+				slug: '',
 				listed: false,
 				registers: [],
 				schemas: [],
@@ -235,6 +243,7 @@ export default {
 				title: '',
 				summary: '',
 				description: '',
+				slug: '',
 				listed: false,
 				registers: [],
 				schemas: [],

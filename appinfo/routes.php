@@ -22,13 +22,13 @@ return [
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
-		// Publications CORS
-		['name' => 'publications#preflightedCors', 'url' => '/api/publications', 'verb' => 'OPTIONS'],
-		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}', 'verb' => 'OPTIONS'],
-		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/uses', 'verb' => 'OPTIONS'],
-		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/used', 'verb' => 'OPTIONS'],
-		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/attachments', 'verb' => 'OPTIONS'],
-		['name' => 'publications#preflightedCors', 'url' => '/api/publications/{id}/download', 'verb' => 'OPTIONS'],
+		// Publications CORS (wildcard catalog-based endpoints)
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Catalogi CORS
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
@@ -49,14 +49,13 @@ return [
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 */		
-		// Publications
-		['name' => 'publications#index', 'url' => '/api/publications', 'verb' => 'GET'],
-		//['name' => 'publications#show', 'url' => '/api/publications/{id}', 'verb' => 'GET'],
-		['name' => 'publications#show', 'url' => '/api/publications/{id}', 'verb' => 'GET'],
-		['name' => 'publications#uses', 'url' => '/api/publications/{id}/uses', 'verb' => 'GET'],
-		['name' => 'publications#used', 'url' => '/api/publications/{id}/used', 'verb' => 'GET'],
-		['name' => 'publications#attachments', 'url' => '/api/publications/{id}/attachments', 'verb' => 'GET'],
-		['name' => 'publications#download', 'url' => '/api/publications/{id}/download', 'verb' => 'GET'],
+		// Publications (wildcard catalog-based endpoints)
+		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Glossary
 		['name' => 'glossary#index', 'url' => '/api/glossary', 'verb' => 'GET'],
 		['name' => 'glossary#show', 'url' => '/api/glossary/{id}', 'verb' => 'GET'],

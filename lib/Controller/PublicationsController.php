@@ -4,6 +4,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -52,6 +53,7 @@ class PublicationsController extends Controller
      * @param IRequest           $request            The request object
      * @param PublicationService $publicationService The publication service
      * @param DirectoryService   $directoryService   The directory service
+     * @param CatalogiService    $catalogiService    The catalogi service
      * @param IAppConfig         $config             The app configuration
      * @param ContainerInterface $container          The container for dependency injection
      * @param IAppManager        $appManager         The app manager
@@ -64,6 +66,7 @@ class PublicationsController extends Controller
         IRequest $request,
         private readonly PublicationService $publicationService,
         private readonly DirectoryService $directoryService,
+        private readonly CatalogiService $catalogiService,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
@@ -118,32 +121,46 @@ class PublicationsController extends Controller
     }
 
     /**
-     * Retrieve all publications from this catalog - DIRECT OBJECTSERVICE HACK
+     * Retrieve all publications from this catalog - DIRECT OBJECTSERVICE HACK with catalog filtering
      *
      * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
-     * Filters only on published=true, no schema/register filtering.
+     * Filters by catalog's schemas and registers as well as published=true.
      * 
+     * @param string $catalogSlug The slug of the catalog to retrieve publications from
      * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function index(): JSONResponse
+    public function index(string $catalogSlug): JSONResponse
     {
         try {
+            // Get the catalog from cache or database
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
+            
+            if ($catalogData === null) {
+                return new JSONResponse(['error' => 'Catalog not found'], 404);
+            }
+            
+            // Convert ObjectEntity to array if needed (cache may return array directly)
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+            
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
             
-            // Get query parameters and prepare for direct ObjectService call
+            // Get query parameters - ObjectService::buildSearchQuery() handles PHP's dot-to-underscore conversion
             $queryParams = $this->request->getParams();
             
-            // Build minimal search query - published filtering handled via method parameter
-            $searchQuery = $queryParams;
+            // Use ObjectService's centralized query builder which handles:
+            // - PHP dot-to-underscore conversion (@self.register → @self_register)
+            // - Nested property conversion (person.address.street → person_address_street)
+            // - System parameter extraction (removes id, _route, rbac, multi, published, deleted)
+            $searchQuery = $objectService->buildSearchQuery($queryParams);
             $searchQuery['_includeDeleted'] = false;
             
-            // Clean up unwanted parameters - published filtering is handled via method parameter, not query
-            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['_published']);
+            // Clean up catalog-specific parameters
+            unset($searchQuery['catalogSlug'], $searchQuery['fq']);
             
             // Add schema/register extension if needed
             if (!isset($searchQuery['_extend'])) {
@@ -160,9 +177,32 @@ class PublicationsController extends Controller
             if (!in_array('@self.register', $searchQuery['_extend'])) {
                 $searchQuery['_extend'][] = '@self.register';
             }
+            
+            // DATABASE-LEVEL FILTERING: Use new [or] operator for efficient filtering
+            // Apply catalog's schema and register filters using dot notation and OR logic
+            // Structure as nested array: @self => [schema => [or => "1,2,3"]]
+            if (!empty($catalog['schemas']) || !empty($catalog['registers'])) {
+                if (!isset($searchQuery['@self'])) {
+                    $searchQuery['@self'] = [];
+                }
+            }
+            
+            if (!empty($catalog['schemas'])) {
+                // Use nested array structure for OR filtering across multiple schemas
+                $searchQuery['@self']['schema'] = [
+                    'or' => implode(',', array_map('intval', $catalog['schemas']))
+                ];
+            }
+            
+            if (!empty($catalog['registers'])) {
+                // Use nested array structure for OR filtering across multiple registers
+                $searchQuery['@self']['register'] = [
+                    'or' => implode(',', array_map('intval', $catalog['registers']))
+                ];
+            }
                         
-            // DIRECT ObjectService call - WITH PUBLISHED FILTERING
-            // Note: Published filtering is temporarily disabled in GuzzleSolrService as hotfix
+            // DIRECT ObjectService call - WITH PUBLISHED FILTERING AND CATALOG FILTERING
+            // Filtering is now done at database/Solr level for maximum performance
             // Set rbac=false, multi=false, published=true for public publication access
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery, 
@@ -170,6 +210,14 @@ class PublicationsController extends Controller
                 multi: false, 
                 published: true
             );
+            
+            // Add catalog information to the response
+            $result['@catalog'] = [
+                'slug' => $catalogSlug,
+                'title' => $catalog['title'] ?? '',
+                'schemas' => $catalog['schemas'] ?? [],
+                'registers' => $catalog['registers'] ?? [],
+            ];
                      
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -188,11 +236,12 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieve a specific publication by its ID - DIRECT OBJECTSERVICE HACK
+     * Retrieve a specific publication by its ID - DIRECT OBJECTSERVICE HACK with catalog validation
      *
      * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
-     * No schema/register validation, just direct object lookup.
+     * Validates that the object belongs to the specified catalog's schemas and registers.
      *
+     * @param  string $catalogSlug The slug of the catalog
      * @param  string $id The ID of the publication to retrieve
      * @return JSONResponse JSON response containing the requested publication
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -201,9 +250,19 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function show(string $id): JSONResponse
+    public function show(string $catalogSlug, string $id): JSONResponse
     {
         try {
+            // Get the catalog from cache or database
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
+            
+            if ($catalogData === null) {
+                return new JSONResponse(['error' => 'Catalog not found'], 404);
+            }
+            
+            // Convert ObjectEntity to array if needed (cache may return array directly)
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+            
             // Get ObjectService directly
             $objectService = $this->getObjectService();
             
@@ -241,6 +300,18 @@ class PublicationsController extends Controller
             
             if ($object === null) {
                 return new JSONResponse(['error' => 'Publication not found'], 404);
+            }
+            
+            // Validate that the object belongs to the catalog's schemas and registers
+            $objectData = $object->jsonSerialize();
+            $objectSchema = $objectData['@self']['schema'] ?? null;
+            $objectRegister = $objectData['@self']['register'] ?? null;
+            
+            $schemaMatches = empty($catalog['schemas']) || in_array($objectSchema, $catalog['schemas']);
+            $registerMatches = empty($catalog['registers']) || in_array($objectRegister, $catalog['registers']);
+            
+            if (!$schemaMatches || !$registerMatches) {
+                return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
             }
             
             // Check if object is published (since SOLR filtering is disabled)
@@ -300,6 +371,7 @@ class PublicationsController extends Controller
     /**
      * Retrieve attachments/files of a publication.
      *
+     * @param  string $catalogSlug The slug of the catalog
      * @param  string $id Id of publication
      *
      * @return JSONResponse JSON response containing the requested attachments/files.
@@ -309,16 +381,18 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function attachments(string $id): JSONResponse
+    public function attachments(string $catalogSlug, string $id): JSONResponse
     {
+        // @todo: Add catalog validation here if needed
         return $this->publicationService->attachments(id: $id);
 
-    }//end show()
+    }//end attachments()
 
 
     /**
-     * Retrieve attachments/files of a publication.
+     * Download a publication file.
      *
+     * @param  string $catalogSlug The slug of the catalog
      * @param  string $id Id of publication
      *
      * @return JSONResponse JSON response containing the requested attachments/files.
@@ -328,11 +402,12 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function download(string $id): JSONResponse
+    public function download(string $catalogSlug, string $id): JSONResponse
     {
+        // @todo: Add catalog validation here if needed
         return $this->publicationService->download(id: $id);
 
-    }//end show()
+    }//end download()
 
 
     /**
@@ -341,6 +416,7 @@ class PublicationsController extends Controller
      * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
      * Bypasses ALL middleware and calls ObjectService directly for maximum performance.
      *
+     * @param string $catalogSlug The slug of the catalog
      * @param string $id The ID of the publication to retrieve relations for
      * @return JSONResponse A JSON response containing the related objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -349,7 +425,7 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function uses(string $id): JSONResponse
+    public function uses(string $catalogSlug, string $id): JSONResponse
     {
         try {
             // Get ObjectService directly
@@ -476,6 +552,7 @@ class PublicationsController extends Controller
      * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
      * Bypasses ALL middleware and calls ObjectService directly for maximum performance.
      *
+     * @param string $catalogSlug The slug of the catalog
      * @param string $id The ID of the publication to retrieve uses for
      * @return JSONResponse A JSON response containing the referenced objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -484,7 +561,7 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function used(string $id): JSONResponse
+    public function used(string $catalogSlug, string $id): JSONResponse
     {
         try {
             // Get ObjectService directly - bypass all PublicationService overhead

@@ -5,7 +5,7 @@
             "publication": {
                 "slug": "publication",
                 "title": "Publication",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
                 "schemas": [
                     "catalog",
@@ -19,7 +19,7 @@
                 ],
                 "tablePrefix": "",
                 "folder": "Open Registers/Publication Register",
-                "updated": "2025-04-17T14:05:34+00:00",
+                "updated": "2025-10-20T12:00:00+00:00",
                 "created": "2025-04-14T15:13:10+00:00"
             }
         },
@@ -165,6 +165,19 @@
                             "stable",
                             "obsolete"
                         ],
+                        "facetable": false
+                    },
+                    "view": {
+                        "type": "integer",
+                        "description": "Reference to the view or filter set ID in OpenRegister that defines additional filtering for this catalog",
+                        "facetable": false
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "URL-friendly identifier for the catalog, used in publication endpoints (e.g., 'publications', 'datasets')",
+                        "pattern": "^[a-z0-9-]+$",
+                        "minLength": 1,
+                        "maxLength": 255,
                         "facetable": false
                     }
                 },
@@ -768,7 +781,7 @@
                 "@self": {
                     "register": "publication",
                     "schema": "catalog",
-                    "version": "1.1.1",
+                    "version": "0.0.6",
                     "slug": "default-catalog"
                 },
                 "title": "Default Catalog",
@@ -781,7 +794,8 @@
                 "registers": [],
                 "schemas": [],
                 "filters": [],
-                "status": "development"
+                "status": "development",
+                "slug": "publications"
             },
             {
                 "@self": {

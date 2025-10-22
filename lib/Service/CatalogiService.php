@@ -30,6 +30,9 @@ use Psr\Container\NotFoundExceptionInterface;
 use OCP\AppFramework\Http\JSONResponse;
 use Exception;
 use OCP\Common\Exception\NotFoundException;
+use OCP\ICache;
+use OCP\ICacheFactory;
+use Psr\Log\LoggerInterface;
 
 /**
  * Service for handling publication-related operations.
@@ -55,21 +58,32 @@ class CatalogiService
      */
     private array $availableSchemas = [];
 
+    /**
+     * @var ICache Cache instance for storing catalog data
+     */
+    private ICache $cache;
+
 
     /**
      * Constructor for PublicationService.
      *
-     * @param IAppConfig       $config    App configuration interface
-     * @param IRequest         $request   Request interface
-     * @param IServerContainer $container Server container for dependency injection
+     * @param IAppConfig       $config       App configuration interface
+     * @param IRequest         $request      Request interface
+     * @param ContainerInterface $container  Server container for dependency injection
+     * @param IAppManager      $appManager   App manager for checking installed apps
+     * @param ICacheFactory    $cacheFactory Cache factory for creating cache instances
+     * @param LoggerInterface  $logger       Logger for logging errors and debug information
      */
     public function __construct(
         private readonly IAppConfig $config,
         private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
+        private readonly ICacheFactory $cacheFactory,
+        private readonly LoggerInterface $logger,
     ) {
         $this->appName = 'opencatalogi';
+        $this->cache = $cacheFactory->createDistributed('opencatalogi_catalogs');
 
     }//end __construct()
 
@@ -340,6 +354,166 @@ class CatalogiService
         ];
 
     }//end getConfig()
+
+
+    /**
+     * Get a catalog by its slug from cache or database.
+     *
+     * This method first attempts to retrieve the catalog from cache. If not found in cache,
+     * it queries the database and stores the result in cache for future requests.
+     *
+     * @param string $slug The slug of the catalog to retrieve
+     *
+     * @return array|null The catalog data as an array, or null if not found
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    public function getCatalogBySlug(string $slug): ?array
+    {
+        // Step 1: Try to get from cache
+        $cacheKey = 'catalog_slug_' . $slug;
+        $cachedCatalog = $this->cache->get($cacheKey);
+
+        if ($cachedCatalog !== null) {
+            $this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
+            return $cachedCatalog;
+        }
+
+        // Step 2: Not in cache, query the database
+        $this->logger->debug('Catalog not in cache, querying database', ['slug' => $slug]);
+
+        try {
+            // Get catalog schema and register from config
+            $schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            $config = [
+                'filters' => [
+                    'register' => $register,
+                    'schema' => $schema,
+                    'slug' => $slug,
+                ],
+                'limit' => 1,
+            ];
+
+            $catalogs = $this->getObjectService()->findAll($config);
+
+            if (empty($catalogs)) {
+                $this->logger->warning('Catalog not found', ['slug' => $slug]);
+                return null;
+            }
+
+            $catalog = $catalogs[0]->jsonSerialize();
+
+            // Step 3: Store in cache (TTL: 1 hour = 3600 seconds)
+            $this->cache->set($cacheKey, $catalog, 3600);
+            $this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+
+            return $catalog;
+        } catch (Exception $e) {
+            $this->logger->error('Error retrieving catalog', [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+
+    }//end getCatalogBySlug()
+
+
+    /**
+     * Invalidate the cache for a specific catalog.
+     *
+     * This method removes the catalog from cache, forcing the next request
+     * to fetch fresh data from the database.
+     *
+     * @param string $slug The slug of the catalog to invalidate
+     *
+     * @return void
+     */
+    public function invalidateCatalogCache(string $slug): void
+    {
+        $cacheKey = 'catalog_slug_' . $slug;
+        $this->cache->remove($cacheKey);
+        $this->logger->debug('Catalog cache invalidated', ['slug' => $slug]);
+
+    }//end invalidateCatalogCache()
+
+
+    /**
+     * Invalidate cache for a catalog by its ID.
+     *
+     * This method retrieves the catalog by ID to get its slug, then invalidates the cache.
+     *
+     * @param int|string $catalogId The ID of the catalog
+     *
+     * @return void
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    public function invalidateCatalogCacheById(int|string $catalogId): void
+    {
+        try {
+            $catalog = $this->getObjectService()->find($catalogId);
+            $catalogData = $catalog->jsonSerialize();
+
+            if (isset($catalogData['slug'])) {
+                $this->invalidateCatalogCache($catalogData['slug']);
+            }
+        } catch (Exception $e) {
+            $this->logger->error('Error invalidating catalog cache', [
+                'catalogId' => $catalogId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+    }//end invalidateCatalogCacheById()
+
+
+    /**
+     * Warm up the cache for a specific catalog.
+     *
+     * This method pre-loads the catalog into cache to improve performance
+     * for subsequent requests.
+     *
+     * @param string $slug The slug of the catalog to warm up
+     *
+     * @return void
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    public function warmupCatalogCache(string $slug): void
+    {
+        // Force a fresh load from database and store in cache
+        $this->invalidateCatalogCache($slug);
+        $this->getCatalogBySlug($slug);
+        $this->logger->debug('Catalog cache warmed up', ['slug' => $slug]);
+
+    }//end warmupCatalogCache()
+
+
+    /**
+     * Warm up cache for a catalog by its ID.
+     *
+     * @param int|string $catalogId The ID of the catalog
+     *
+     * @return void
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    public function warmupCatalogCacheById(int|string $catalogId): void
+    {
+        try {
+            $catalog = $this->getObjectService()->find($catalogId);
+            $catalogData = $catalog->jsonSerialize();
+
+            if (isset($catalogData['slug'])) {
+                $this->warmupCatalogCache($catalogData['slug']);
+            }
+        } catch (Exception $e) {
+            $this->logger->error('Error warming up catalog cache', [
+                'catalogId' => $catalogId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+    }//end warmupCatalogCacheById()
 
 
     /**
