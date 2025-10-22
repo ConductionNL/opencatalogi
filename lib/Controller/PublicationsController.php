@@ -137,24 +137,30 @@ class PublicationsController extends Controller
     {
         try {
             // Get the catalog from cache or database
-            $catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
             
-            if ($catalog === null) {
+            if ($catalogData === null) {
                 return new JSONResponse(['error' => 'Catalog not found'], 404);
             }
+            
+            // Convert ObjectEntity to array if needed (cache may return array directly)
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
             
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
             
-            // Get query parameters and prepare for direct ObjectService call
+            // Get query parameters - ObjectService::buildSearchQuery() handles PHP's dot-to-underscore conversion
             $queryParams = $this->request->getParams();
             
-            // Build minimal search query - published filtering handled via method parameter
-            $searchQuery = $queryParams;
+            // Use ObjectService's centralized query builder which handles:
+            // - PHP dot-to-underscore conversion (@self.register → @self_register)
+            // - Nested property conversion (person.address.street → person_address_street)
+            // - System parameter extraction (removes id, _route, rbac, multi, published, deleted)
+            $searchQuery = $objectService->buildSearchQuery($queryParams);
             $searchQuery['_includeDeleted'] = false;
             
-            // Clean up unwanted parameters - published filtering is handled via method parameter, not query
-            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['_published'], $searchQuery['catalogSlug'], $searchQuery['fq']);
+            // Clean up catalog-specific parameters
+            unset($searchQuery['catalogSlug'], $searchQuery['fq']);
             
             // Add schema/register extension if needed
             if (!isset($searchQuery['_extend'])) {
@@ -171,9 +177,32 @@ class PublicationsController extends Controller
             if (!in_array('@self.register', $searchQuery['_extend'])) {
                 $searchQuery['_extend'][] = '@self.register';
             }
+            
+            // DATABASE-LEVEL FILTERING: Use new [or] operator for efficient filtering
+            // Apply catalog's schema and register filters using dot notation and OR logic
+            // Structure as nested array: @self => [schema => [or => "1,2,3"]]
+            if (!empty($catalog['schemas']) || !empty($catalog['registers'])) {
+                if (!isset($searchQuery['@self'])) {
+                    $searchQuery['@self'] = [];
+                }
+            }
+            
+            if (!empty($catalog['schemas'])) {
+                // Use nested array structure for OR filtering across multiple schemas
+                $searchQuery['@self']['schema'] = [
+                    'or' => implode(',', array_map('intval', $catalog['schemas']))
+                ];
+            }
+            
+            if (!empty($catalog['registers'])) {
+                // Use nested array structure for OR filtering across multiple registers
+                $searchQuery['@self']['register'] = [
+                    'or' => implode(',', array_map('intval', $catalog['registers']))
+                ];
+            }
                         
-            // DIRECT ObjectService call - WITH PUBLISHED FILTERING
-            // Note: Published filtering is temporarily disabled in GuzzleSolrService as hotfix
+            // DIRECT ObjectService call - WITH PUBLISHED FILTERING AND CATALOG FILTERING
+            // Filtering is now done at database/Solr level for maximum performance
             // Set rbac=false, multi=false, published=true for public publication access
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery, 
@@ -182,39 +211,7 @@ class PublicationsController extends Controller
                 published: true
             );
             
-            // POST-FILTER: Apply catalog-based filtering on results
-            // This is done post-search because direct Solr filter queries aren't supported yet
-            if (!empty($catalog['schemas']) || !empty($catalog['registers'])) {
-                $filteredResults = [];
-                $catalogSchemas = !empty($catalog['schemas']) ? array_map('intval', $catalog['schemas']) : null;
-                $catalogRegisters = !empty($catalog['registers']) ? array_map('intval', $catalog['registers']) : null;
-                
-                foreach ($result['results'] as $publication) {
-                    $pubSchema = isset($publication['@self']['schema']) ? (int)$publication['@self']['schema'] : null;
-                    $pubRegister = isset($publication['@self']['register']) ? (int)$publication['@self']['register'] : null;
-                    
-                    // Check schema match (if catalog has schema filter)
-                    $schemaMatches = $catalogSchemas === null || in_array($pubSchema, $catalogSchemas, true);
-                    
-                    // Check register match (if catalog has register filter)
-                    $registerMatches = $catalogRegisters === null || in_array($pubRegister, $catalogRegisters, true);
-                    
-                    // Include only if both conditions match
-                    if ($schemaMatches && $registerMatches) {
-                        $filteredResults[] = $publication;
-                    }
-                }
-                
-                // Update results and total count
-                $result['results'] = $filteredResults;
-                $result['total'] = count($filteredResults);
-                
-                // Recalculate pagination
-                $limit = $result['limit'] ?? 20;
-                $result['pages'] = $limit > 0 ? ceil($result['total'] / $limit) : 0;
-            }
-            
-            // Add catalog information to the response for debugging
+            // Add catalog information to the response
             $result['@catalog'] = [
                 'slug' => $catalogSlug,
                 'title' => $catalog['title'] ?? '',
@@ -257,11 +254,14 @@ class PublicationsController extends Controller
     {
         try {
             // Get the catalog from cache or database
-            $catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
             
-            if ($catalog === null) {
+            if ($catalogData === null) {
                 return new JSONResponse(['error' => 'Catalog not found'], 404);
             }
+            
+            // Convert ObjectEntity to array if needed (cache may return array directly)
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
             
             // Get ObjectService directly
             $objectService = $this->getObjectService();
