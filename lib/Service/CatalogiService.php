@@ -574,7 +574,7 @@ class CatalogiService
         //]);
 
         // Return paginated results
-        return new JSONResponse($this->paginate(results: $filteredObjects, total: $total, limit: $config['limit'], offset: $config['offset'], page: $config['page'], facets: $facets));
+        return new JSONResponse($this->paginate(results: $filteredObjects, total: $total, limit: $config['limit'], offset: $config['offset'], page: $config['page']));
     }//end index()
 
 }//end class
