@@ -302,17 +302,18 @@ class PublicationsController extends Controller
                 return new JSONResponse(['error' => 'Publication not found'], 404);
             }
             
+            // @todo: Catalog validation disabled for now
             // Validate that the object belongs to the catalog's schemas and registers
-            $objectData = $object->jsonSerialize();
-            $objectSchema = $objectData['@self']['schema'] ?? null;
-            $objectRegister = $objectData['@self']['register'] ?? null;
-            
-            $schemaMatches = empty($catalog['schemas']) || in_array($objectSchema, $catalog['schemas']);
-            $registerMatches = empty($catalog['registers']) || in_array($objectRegister, $catalog['registers']);
-            
-            if (!$schemaMatches || !$registerMatches) {
-                return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
-            }
+            // $objectData = $object->jsonSerialize();
+            // $objectSchema = $objectData['@self']['schema'] ?? null;
+            // $objectRegister = $objectData['@self']['register'] ?? null;
+            // 
+            // $schemaMatches = empty($catalog['schemas']) || in_array($objectSchema, $catalog['schemas']);
+            // $registerMatches = empty($catalog['registers']) || in_array($objectRegister, $catalog['registers']);
+            // 
+            // if (!$schemaMatches || !$registerMatches) {
+            //     return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
+            // }
             
             // Check if object is published (since SOLR filtering is disabled)
             $published = $object->getPublished();
