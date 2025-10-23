@@ -443,15 +443,18 @@ export default {
 			)
 			const data = await response.json()
 
-			const newLabelOptions = []
-			const newLabelOptionsEdit = []
+			const tagSet = new Set(Array.isArray(data) ? data : [])
+			const attachmentsCollection = objectStore.getCollection('publicationAttachments')?.results || []
+			for (const att of attachmentsCollection) {
+				if (Array.isArray(att?.labels)) {
+					for (const label of att.labels) tagSet.add(label)
+				}
+			}
 
-			newLabelOptions.push('No label')
+			const tags = Array.from(tagSet).sort()
 
-			const tags = data.map((tag) => tag)
-
-			newLabelOptions.push(...tags)
-			newLabelOptionsEdit.push(...tags)
+			const newLabelOptions = ['No label', ...tags]
+			const newLabelOptionsEdit = [...tags]
 
 			this.labelOptions.options = newLabelOptions
 			this.labelOptionsEdit.options = newLabelOptionsEdit
@@ -550,6 +553,8 @@ export default {
 				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
+
+				catalogStore.fetchPublications()
 
 				const rejected = results.filter(r => r.status === 'rejected')
 				if (rejected.length > 0) {
