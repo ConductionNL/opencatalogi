@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore, catalogStore } from '../store/store.js'
+import { navigationStore, objectStore } from '../store/store.js'
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 					<Plus :size="20" />
 				</template>
 			</NcAppNavigationNew>
-			<NcAppNavigationItem :active="navigationStore.selected === 'dashboard'" name="Dashboard" @click="navigationStore.setSelected('dashboard')">
+			<NcAppNavigationItem :active="$route.path === '/'" name="Dashboard" @click="handleNavigate('/')">
 				<template #icon>
 					<Finance :size="20" />
 				</template>
@@ -18,13 +18,13 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 			<NcAppNavigationItem v-for="(catalogus, i) in objectStore.getCollection('catalog').results"
 				:key="`${catalogus}${i}`"
 				:name="catalogus?.title"
-				:active="catalogus?.id?.toString() === objectStore.getActiveObject('catalog')?.id?.toString() && navigationStore.selected === 'publication'"
-				@click="switchCatalogus(catalogus)">
+				:active="$route.path.startsWith('/publications/') && catalogus?.slug?.toString() === $route.params.catalogSlug"
+				@click="handleNavigate(`/publications/${catalogus.slug}`)">
 				<template #icon>
 					<DatabaseEyeOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'search'" name="Search" @click="navigationStore.setSelected('search')">
+			<NcAppNavigationItem :active="$route.path === '/search'" name="Search" @click="handleNavigate('/search')">
 				<template #icon>
 					<LayersSearchOutline :size="20" />
 				</template>
@@ -37,37 +37,37 @@ import { navigationStore, objectStore, catalogStore } from '../store/store.js'
 		</NcAppNavigationList>
 
 		<NcAppNavigationSettings>
-			<NcAppNavigationItem :active="navigationStore.selected === 'organizations'" name="Organizations" @click="navigationStore.setSelected('organizations')">
+			<NcAppNavigationItem :active="$route.path === '/organizations'" name="Organizations" @click="handleNavigate('/organizations')">
 				<template #icon>
 					<OfficeBuildingOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'catalogi'" name="Catalogs" @click="navigationStore.setSelected('catalogi')">
+			<NcAppNavigationItem :active="$route.path === '/catalogi'" name="Catalogs" @click="handleNavigate('/catalogi')">
 				<template #icon>
 					<DatabaseCogOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'glossary'" name="Glossary" @click="navigationStore.setSelected('glossary')">
+			<NcAppNavigationItem :active="$route.path === '/glossary'" name="Glossary" @click="handleNavigate('/glossary')">
 				<template #icon>
 					<FormatListBulleted :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'themes'" name="Themes" @click="navigationStore.setSelected('themes')">
+			<NcAppNavigationItem :active="$route.path === '/themes'" name="Themes" @click="handleNavigate('/themes')">
 				<template #icon>
 					<ShapeOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'pages'" name="Pages" @click="navigationStore.setSelected('pages')">
+			<NcAppNavigationItem :active="$route.path === '/pages'" name="Pages" @click="handleNavigate('/pages')">
 				<template #icon>
 					<Web :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'menus'" name="Menus" @click="navigationStore.setSelected('menus')">
+			<NcAppNavigationItem :active="$route.path === '/menus'" name="Menus" @click="handleNavigate('/menus')">
 				<template #icon>
 					<MenuClose :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'directory'" name="Directory" @click="navigationStore.setSelected('directory')">
+			<NcAppNavigationItem :active="$route.path === '/directory'" name="Directory" @click="handleNavigate('/directory')">
 				<template #icon>
 					<LayersOutline :size="20" />
 				</template>
@@ -160,11 +160,8 @@ export default {
 		}
 	},
 	methods: {
-		switchCatalogus(catalogus) {
-			if (catalogus.id !== navigationStore.selectedCatalogus) objectStore.clearActiveObject('publication') // for when you switch catalogus
-			navigationStore.setSelected('publication')
-			objectStore.setActiveObject('catalog', catalogus)
-			catalogStore.setActiveCatalog(catalogus)
+		handleNavigate(path) {
+			this.$router.push(path)
 		},
 		openLink(url, type = '') {
 			window.open(url, type)
