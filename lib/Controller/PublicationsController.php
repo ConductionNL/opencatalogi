@@ -125,7 +125,7 @@ class PublicationsController extends Controller
      *
      * This method bypasses ALL middleware and calls ObjectService directly for maximum performance.
      * Filters by catalog's schemas and registers as well as published=true.
-     * 
+     *
      * @param string $catalogSlug The slug of the catalog to retrieve publications from
      * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
      *
@@ -138,30 +138,30 @@ class PublicationsController extends Controller
         try {
             // Get the catalog from cache or database
             $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
-            
+
             if ($catalogData === null) {
                 return new JSONResponse(['error' => 'Catalog not found'], 404);
             }
-            
+
             // Convert ObjectEntity to array if needed (cache may return array directly)
             $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
-            
+
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
-            
+
             // Get query parameters - ObjectService::buildSearchQuery() handles PHP's dot-to-underscore conversion
             $queryParams = $this->request->getParams();
-            
+
             // Use ObjectService's centralized query builder which handles:
             // - PHP dot-to-underscore conversion (@self.register → @self_register)
             // - Nested property conversion (person.address.street → person_address_street)
             // - System parameter extraction (removes id, _route, rbac, multi, published, deleted)
             $searchQuery = $objectService->buildSearchQuery($queryParams);
             $searchQuery['_includeDeleted'] = false;
-            
+
             // Clean up catalog-specific parameters
             unset($searchQuery['catalogSlug'], $searchQuery['fq']);
-            
+
             // Add schema/register extension if needed
             if (!isset($searchQuery['_extend'])) {
                 $searchQuery['_extend'] = [];
@@ -169,7 +169,7 @@ class PublicationsController extends Controller
                 // Handle comma-separated strings
                 $searchQuery['_extend'] = array_map('trim', explode(',', $searchQuery['_extend']));
             }
-            
+
             // Ensure @self.schema and @self.register are always included for compatibility
             if (!in_array('@self.schema', $searchQuery['_extend'])) {
                 $searchQuery['_extend'][] = '@self.schema';
@@ -177,7 +177,7 @@ class PublicationsController extends Controller
             if (!in_array('@self.register', $searchQuery['_extend'])) {
                 $searchQuery['_extend'][] = '@self.register';
             }
-            
+
             // DATABASE-LEVEL FILTERING: Use new [or] operator for efficient filtering
             // Apply catalog's schema and register filters using dot notation and OR logic
             // Structure as nested array: @self => [schema => [or => "1,2,3"]]
@@ -186,31 +186,31 @@ class PublicationsController extends Controller
                     $searchQuery['@self'] = [];
                 }
             }
-            
+
             if (!empty($catalog['schemas'])) {
                 // Use nested array structure for OR filtering across multiple schemas
                 $searchQuery['@self']['schema'] = [
                     'or' => implode(',', array_map('intval', $catalog['schemas']))
                 ];
             }
-            
+
             if (!empty($catalog['registers'])) {
                 // Use nested array structure for OR filtering across multiple registers
                 $searchQuery['@self']['register'] = [
                     'or' => implode(',', array_map('intval', $catalog['registers']))
                 ];
             }
-                        
+
             // DIRECT ObjectService call - WITH PUBLISHED FILTERING AND CATALOG FILTERING
             // Filtering is now done at database/Solr level for maximum performance
             // Set rbac=false, multi=false, published=true for public publication access
             $result = $objectService->searchObjectsPaginated(
-                query: $searchQuery, 
-                rbac: false, 
-                multi: false, 
+                query: $searchQuery,
+                rbac: false,
+                multi: false,
                 published: true
             );
-            
+
             // Add catalog information to the response
             $result['@catalog'] = [
                 'slug' => $catalogSlug,
@@ -218,16 +218,16 @@ class PublicationsController extends Controller
                 'schemas' => $catalog['schemas'] ?? [],
                 'registers' => $catalog['registers'] ?? [],
             ];
-                     
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
+
         } catch (\Exception $e) {
             return new JSONResponse(['error' => 'Failed to retrieve publications: ' . $e->getMessage()], 500);
         }
@@ -255,20 +255,20 @@ class PublicationsController extends Controller
         try {
             // Get the catalog from cache or database
             $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
-            
+
             if ($catalogData === null) {
                 return new JSONResponse(['error' => 'Catalog not found'], 404);
             }
-            
+
             // Convert ObjectEntity to array if needed (cache may return array directly)
             $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
-            
+
             // Get ObjectService directly
             $objectService = $this->getObjectService();
-            
+
             // Get request parameters for extensions
             $requestParams = $this->request->getParams();
-            
+
             // Build extend parameters
             $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
             // Normalize to array - handle comma-separated strings
@@ -285,7 +285,7 @@ class PublicationsController extends Controller
             if (!in_array('@self.register', $extend)) {
                 $extend[] = '@self.register';
             }
-            
+
             // DIRECT OBJECT FETCH: Use find() method to get object by ID
             // Set rbac=false, multi=false for public access
             $object = $objectService->find(
@@ -297,48 +297,48 @@ class PublicationsController extends Controller
                 rbac: false,
                 multi: false
             );
-            
+
             if ($object === null) {
                 return new JSONResponse(['error' => 'Publication not found'], 404);
             }
-            
+
             // @todo: Catalog validation disabled for now
             // Validate that the object belongs to the catalog's schemas and registers
             // $objectData = $object->jsonSerialize();
             // $objectSchema = $objectData['@self']['schema'] ?? null;
             // $objectRegister = $objectData['@self']['register'] ?? null;
-            // 
+            //
             // $schemaMatches = empty($catalog['schemas']) || in_array($objectSchema, $catalog['schemas']);
             // $registerMatches = empty($catalog['registers']) || in_array($objectRegister, $catalog['registers']);
-            // 
+            //
             // if (!$schemaMatches || !$registerMatches) {
             //     return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
             // }
-            
+
             // Check if object is published (since SOLR filtering is disabled)
             $published = $object->getPublished();
-            
+
             // For publications API, we require explicit published dates
             // Objects with published=null are not considered published for public API
             if ($published === null) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication not published'], 404);
-            }            
+                return new JSONResponse(['error' => 'Publication not published'], 404);
+            }
 
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication not yet published'], 404);
+                return new JSONResponse(['error' => 'Publication not published'], 404);
             }
-            
+
             // Check if object is not depublished
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication depublished'], 404);
+                return new JSONResponse(['error' => 'Publication depublished'], 404);
             }
-            
+
             // Render the object with extensions
             $result = $objectService->renderEntity(
                 entity: $object,
@@ -350,16 +350,16 @@ class PublicationsController extends Controller
                 rbac: false,
                 multi: false,
             );
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
+
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Publication not found'], 404);
         } catch (\Exception $e) {
@@ -431,7 +431,7 @@ class PublicationsController extends Controller
         try {
             // Get ObjectService directly
             $objectService = $this->getObjectService();
-            
+
             // Get query parameters once
             $searchQuery = $this->request->getParams();
 
@@ -454,32 +454,32 @@ class PublicationsController extends Controller
                 multi: false,
                 published: true
             );
-            
+
             if ($object === null) {
                 return new JSONResponse(['error' => 'Publication not found'], 404);
             }
-            
+
             // Check if object is published (since SOLR filtering is disabled)
             $published = $object->getPublished();
             if ($published === null) {
                 //@todo: remove this very dirty hotfix/hack
                 //return new JSONResponse(['error' => 'Publication not found'], 404);
             }
-            
+
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
                 //@todo: remove this very dirty hotfix/hack
                 //return new JSONResponse(['error' => 'Publication not found'], 404);
             }
-            
+
             // Check if object is not depublished
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
                 //@todo: remove this very dirty hotfix/hack
                 //return new JSONResponse(['error' => 'Publication not found'], 404);
             }
-            
+
             $relationsArray = $object->getRelations();
             // Filter relations, we only want uuids
             $relations = array_values(array_filter($relationsArray, function ($value) {
@@ -507,38 +507,38 @@ class PublicationsController extends Controller
                         'deleted' => false
                     ]
                 ];
-            } else {                
-                
+            } else {
+
                 // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
                 // After find(), ObjectService is constrained to the object's register/schema
                 // But for /uses endpoint, we want to search across ALL registers/schemas
                 $freshObjectService = $this->getObjectService();
-                              
+
 
                 // Call fresh ObjectService instance with ids as named parameter
                 // Note: Published filtering is disabled in SOLR service, so we don't need published=true
                 $result = $freshObjectService->searchObjectsPaginated(
-                    query: $searchQuery, 
-                    rbac: false, 
-                    multi: false, 
-                    published: false, 
+                    query: $searchQuery,
+                    rbac: false,
+                    multi: false,
+                    published: false,
                     deleted: false,
                     ids: $relations
-                );                
+                );
             }
-            
+
             // Add what we're searching for in debugging
             $result["@self"]['ids'] = $relations;
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
+
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Publication not found'], 404);
         } catch (\Exception $e) {
@@ -567,47 +567,47 @@ class PublicationsController extends Controller
         try {
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
-            
+
             // Get query parameters once
             $searchQuery = $this->request->getParams();
-            
+
             // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
             // For /used endpoint, we want to search across ALL registers/schemas
             $freshObjectService = $this->getObjectService();
-            
+
             // Clean up unwanted parameters and remove register/schema restrictions
             // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
-            
+
             // Force use of SOLR index for better performance on public endpoints
             $searchQuery['_source'] = 'database';
 
             // Lets set the limit to 1000 to make sure we catch all relations
             $searchQuery['_limit'] = 1000;
-                   
+
             // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
             // Note: Published filtering is disabled in SOLR service, so we don't need published=true
             $result = $freshObjectService->searchObjectsPaginated(
-                query: $searchQuery, 
-                rbac: false, 
-                multi: false, 
-                published: true, 
+                query: $searchQuery,
+                rbac: false,
+                multi: false,
+                published: true,
                 deleted: false,
                 uses: $id
             );
-            
+
             // Add relations being searched for debugging
             $result['@self']['used'] = $id;
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
             $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
+
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Publication not found'], 404);
         } catch (\Exception $e) {
