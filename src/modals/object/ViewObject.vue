@@ -2830,6 +2830,21 @@ export default {
 			this.editingTags = null
 			this.editedTags = []
 		},
+		addNewTag(newTag) {
+			if (!newTag) return
+			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+				this.labelOptionsEdit.options = []
+			}
+			if (!this.labelOptionsEdit.options.includes(newTag)) {
+				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+			}
+			if (!this.editedTags || !Array.isArray(this.editedTags)) {
+				this.editedTags = []
+			}
+			if (!this.editedTags.includes(newTag)) {
+				this.editedTags = [...this.editedTags, newTag]
+			}
+		},
 		async getAllTags() {
 			this.tagsLoading = true
 			try {

@@ -419,17 +419,17 @@ export default {
 		},
 
 		isSelectable(option) {
-			if (this.labelOptions.value?.includes('No label') && option !== 'No label') {
+			if (this.labelOptions.value?.includes('Geen Label') && option !== 'Geen Label') {
 				return false
 			}
-			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('No label') && option === 'No label') {
+			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('Geen Label') && option === 'Geen Label') {
 				return false
 			}
 			return true
 		},
 
 		getLabels() {
-			if (this.labelOptions.value?.includes('No label')) {
+			if (this.labelOptions.value?.includes('Geen Label')) {
 				return null
 			} else {
 				return this.labelOptions.value
@@ -437,29 +437,33 @@ export default {
 		},
 		async getAllTags() {
 			this.tagsLoading = true
-			const response = await fetch(
-				'/index.php/apps/openregister/api/tags',
-				{ method: 'get' },
-			)
-			const data = await response.json()
+			try {
+				const response = await fetch(
+					'/index.php/apps/openregister/api/tags',
+					{ method: 'get' },
+				)
+				const data = await response.json().catch(() => [])
 
-			const tagSet = new Set(Array.isArray(data) ? data : [])
-			const attachmentsCollection = objectStore.getCollection('publicationAttachments')?.results || []
-			for (const att of attachmentsCollection) {
-				if (Array.isArray(att?.labels)) {
-					for (const label of att.labels) tagSet.add(label)
+				const tagSet = new Set(Array.isArray(data) ? data : [])
+				const attachmentsCollection = objectStore.getCollection('publicationAttachments')?.results || []
+				for (const att of attachmentsCollection) {
+					if (Array.isArray(att?.labels)) {
+						for (const label of att.labels) tagSet.add(label)
+					}
 				}
+
+				const tags = Array.from(tagSet).sort()
+
+				const newLabelOptions = ['Geen Label', ...tags]
+				const newLabelOptionsEdit = [...tags]
+
+				this.labelOptions.options = newLabelOptions
+				this.labelOptionsEdit.options = newLabelOptionsEdit
+			} catch (e) {
+				console.error('Failed to fetch tags', e)
+			} finally {
+				this.tagsLoading = false
 			}
-
-			const tags = Array.from(tagSet).sort()
-
-			const newLabelOptions = ['No label', ...tags]
-			const newLabelOptionsEdit = [...tags]
-
-			this.labelOptions.options = newLabelOptions
-			this.labelOptionsEdit.options = newLabelOptionsEdit
-
-			this.tagsLoading = false
 		},
 
 		/**
@@ -569,6 +573,7 @@ export default {
 				this.error = err.response?.data?.error ?? err
 			} finally {
 				this.loading = false
+				this.tagsLoading = false
 			}
 		},
 
