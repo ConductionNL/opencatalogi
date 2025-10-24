@@ -419,17 +419,17 @@ export default {
 		},
 
 		isSelectable(option) {
-			if (this.labelOptions.value?.includes('Geen Label') && option !== 'Geen Label') {
+			if (this.labelOptions.value?.includes('No label') && option !== 'No label') {
 				return false
 			}
-			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('Geen Label') && option === 'Geen Label') {
+			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('No label') && option === 'No label') {
 				return false
 			}
 			return true
 		},
 
 		getLabels() {
-			if (this.labelOptions.value?.includes('Geen Label')) {
+			if (this.labelOptions.value?.includes('No label')) {
 				return null
 			} else {
 				return this.labelOptions.value
@@ -454,7 +454,7 @@ export default {
 
 				const tags = Array.from(tagSet).sort()
 
-				const newLabelOptions = ['Geen Label', ...tags]
+				const newLabelOptions = ['No label', ...tags]
 				const newLabelOptionsEdit = [...tags]
 
 				this.labelOptions.options = newLabelOptions
