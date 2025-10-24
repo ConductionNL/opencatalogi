@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -71,9 +71,9 @@ export default {
 		 * @return {void}
 		 */
 		onShow(item) {
-			navigationStore.setSelected('publication')
-			navigationStore.setSelectedCatalogus(item.id)
-			window.open('/index.php/apps/opencatalogi', '_self')
+			// navigationStore.setSelected('publication')
+			// navigationStore.setSelectedCatalogus(item.id)
+			// window.open('/index.php/apps/opencatalogi', '_self')
 		},
 		/**
 		 * Fetch the publication data

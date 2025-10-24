@@ -67,7 +67,7 @@ const listing = computed(() => objectStore.getActiveObject('listing'))
  * Check if we're on the search page
  * @return {boolean}
  */
-const isSearchPage = computed(() => navigationStore.selected === 'search')
+const isSearchPage = computed(() => this.$route.path !== '/search')
 
 export default {
 	name: 'SideBars',

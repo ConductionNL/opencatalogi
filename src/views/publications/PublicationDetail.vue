@@ -511,7 +511,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										{{ value.summary }}
 									</template>
 									<template #actions>
-										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); navigationStore.setSelected('themes')">
+										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); $router.push('/themes')">
 											<template #icon>
 												<OpenInApp :size="20" />
 											</template>
@@ -550,7 +550,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											{{ value.summary }}
 										</template>
 										<template #actions>
-											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setSelected('themes')">
+											<NcActionButton @click="themeStore.setThemeItem(value); $router.push('/themes')">
 												<template #icon>
 													<OpenInApp :size="20" />
 												</template>

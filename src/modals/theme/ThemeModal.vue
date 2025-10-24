@@ -166,7 +166,7 @@ export default {
 					objectStore.setLoading('theme', false)
 					this.success = objectStore.getState('theme').success
 
-					navigationStore.setSelected('themes')
+					this.$router.push('/themes')
 					// Wait for the user to read the feedback then close the model
 					this.closeTimeout = setTimeout(() => {
 						this.closeModal()
