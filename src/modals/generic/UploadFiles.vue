@@ -437,26 +437,33 @@ export default {
 		},
 		async getAllTags() {
 			this.tagsLoading = true
-			const response = await fetch(
-				'/index.php/apps/openregister/api/tags',
-				{ method: 'get' },
-			)
-			const data = await response.json()
+			try {
+				const response = await fetch(
+					'/index.php/apps/openregister/api/tags',
+					{ method: 'get' },
+				)
+				const data = await response.json().catch(() => [])
 
-			const newLabelOptions = []
-			const newLabelOptionsEdit = []
+				const tagSet = new Set(Array.isArray(data) ? data : [])
+				const attachmentsCollection = objectStore.getCollection('publicationAttachments')?.results || []
+				for (const att of attachmentsCollection) {
+					if (Array.isArray(att?.labels)) {
+						for (const label of att.labels) tagSet.add(label)
+					}
+				}
 
-			newLabelOptions.push('No label')
+				const tags = Array.from(tagSet).sort()
 
-			const tags = data.map((tag) => tag)
+				const newLabelOptions = ['No label', ...tags]
+				const newLabelOptionsEdit = [...tags]
 
-			newLabelOptions.push(...tags)
-			newLabelOptionsEdit.push(...tags)
-
-			this.labelOptions.options = newLabelOptions
-			this.labelOptionsEdit.options = newLabelOptionsEdit
-
-			this.tagsLoading = false
+				this.labelOptions.options = newLabelOptions
+				this.labelOptionsEdit.options = newLabelOptionsEdit
+			} catch (e) {
+				console.error('Failed to fetch tags', e)
+			} finally {
+				this.tagsLoading = false
+			}
 		},
 
 		/**
@@ -551,6 +558,8 @@ export default {
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
 
+				catalogStore.fetchPublications()
+
 				const rejected = results.filter(r => r.status === 'rejected')
 				if (rejected.length > 0) {
 					const firstError = rejected[0].reason
@@ -564,6 +573,7 @@ export default {
 				this.error = err.response?.data?.error ?? err
 			} finally {
 				this.loading = false
+				this.tagsLoading = false
 			}
 		},
 

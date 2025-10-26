@@ -171,6 +171,8 @@ class SettingsService
             $objectService = $this->getObjectService();
             $registers     = $objectService->getRegisters();
 
+            $registerSlug = 'publication';
+
             if (empty($registers) === true) {
                 return [];
             }
@@ -180,7 +182,7 @@ class SettingsService
                 // Try to find a register with a matching name.
                 $matchingRegister = null;
                 foreach ($registers as $register) {
-                    if (stripos($register['title'], $type) !== false) {
+                    if (stripos($register['slug'], $registerSlug) !== false) {
                         $matchingRegister = $register;
                         break;
                     }
@@ -192,6 +194,9 @@ class SettingsService
                     // Try to find a matching schema.
                     if (empty($matchingRegister['schemas']) === false) {
                         foreach ($matchingRegister['schemas'] as $schema) {
+                            if (is_array($schema) === true) {
+                                continue;
+                            }
                             if (stripos($schema['title'], $type) !== false) {
                                 $configuration["{$type}_schema"] = $schema['id'];
                                 break;
@@ -478,13 +483,12 @@ class SettingsService
 
             // Get the configuration service and import the settings.
             $configurationService = $this->getConfigurationService();
-            
+
             // Get the current app version dynamically
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-            
+
             return $configurationService->importFromJson(
                 data: $settings,
-                owner: null,
                 appId: Application::APP_ID,
                 version: $currentAppVersion,
                 force: $force
@@ -510,20 +514,20 @@ class SettingsService
         try {
             // Get the current app version
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-            
+
             // Get the configuration service to check stored version
             $configurationService = $this->getConfigurationService();
             $storedVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
-            
+
             // If no stored version exists, we need to load settings
             if ($storedVersion === null) {
                 return true;
             }
-            
+
             // Compare versions using semantic versioning
             // Load settings if current version is newer than stored version
             return version_compare($currentAppVersion, $storedVersion, '>');
-            
+
         } catch (\Exception $e) {
             // If we can't determine versions, err on the side of loading settings
             return true;
@@ -545,21 +549,21 @@ class SettingsService
         try {
             // Get the current app version
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-            
+
             // Get the configuration service to check stored version
             $configurationService = $this->getConfigurationService();
             $storedConfigVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
-            
+
             // Determine if versions match
-            $versionsMatch = $storedConfigVersion !== null && 
+            $versionsMatch = $storedConfigVersion !== null &&
                            version_compare($currentAppVersion, $storedConfigVersion, '=');
-            
+
             return [
                 'appName' => 'OpenCatalogi',
                 'appVersion' => $currentAppVersion,
                 'configuredVersion' => $storedConfigVersion,
                 'versionsMatch' => $versionsMatch,
-                'needsUpdate' => $storedConfigVersion === null || 
+                'needsUpdate' => $storedConfigVersion === null ||
                                version_compare($currentAppVersion, $storedConfigVersion, '>')
             ];
         } catch (\Exception $e) {
@@ -583,7 +587,7 @@ class SettingsService
         try {
             // Get version info first
             $versionInfo = $this->getVersionInfo();
-            
+
             // Check if import is needed (unless forced)
             if (!$forceImport && $versionInfo['versionsMatch']) {
                 return [
@@ -592,20 +596,20 @@ class SettingsService
                     'versionInfo' => $versionInfo
                 ];
             }
-            
+
             // Perform the import
             $importResult = $this->loadSettings($forceImport);
-            
+
             // Get updated version info
             $updatedVersionInfo = $this->getVersionInfo();
-            
+
             return [
                 'success' => true,
                 'message' => 'Configuration imported successfully.',
                 'importResult' => $importResult,
                 'versionInfo' => $updatedVersionInfo
             ];
-            
+
         } catch (\Exception $e) {
             return [
                 'success' => false,

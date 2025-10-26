@@ -136,7 +136,7 @@ export function useFileSelection(options) {
 	}
 
 	// Setup dropzone and file dialog composables
-	const { isOverDropZone } = useDropZone(dropzone, { dataTypes: '*', onDrop })
+	const { isOverDropZone } = useDropZone(dropzone, { dataTypes: null, onDrop })
 	const { onChange, open } = useFileDialog({
 		accept: accept.value,
 		multiple: allowMultiple,

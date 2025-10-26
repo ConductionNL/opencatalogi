@@ -275,7 +275,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 												:taggable="true"
 												:multiple="true"
 												:aria-label-combobox="labelOptionsEdit.inputLabel"
-												:options="labelOptionsEdit.options" />
+												:options="labelOptionsEdit.options"
+												@tag="addNewTag" />
 											<NcButton
 												v-tooltip="'Labels opslaan'"
 												class="editTagsButton"
@@ -836,6 +837,18 @@ export default {
 			this.editingTags = attachment.title
 			this.editedTags = attachment.labels
 		},
+		addNewTag(newTag) {
+			if (!newTag) return
+			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+				this.labelOptionsEdit.options = []
+			}
+			if (!this.labelOptionsEdit.options.includes(newTag)) {
+				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+			}
+			if (!this.editedTags?.includes(newTag)) {
+				this.editedTags = [...(this.editedTags || []), newTag]
+			}
+		},
 		async getTags() {
 			const response = await fetch(
 				'/index.php/apps/openregister/api/tags',
@@ -857,7 +870,7 @@ export default {
 				formData.append('tags[]', tag)
 			})
 
-			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.title}`, {
+			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.id}`, {
 				method: 'PUT',
 				body: JSON.stringify({
 					tags: this.editedTags,
@@ -913,7 +926,7 @@ export default {
 			this.publishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
-			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.title}/publish`, {
+			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/publish`, {
 				method: 'POST',
 			}).catch((error) => {
 				console.error('Error publishing file:', error)
@@ -922,13 +935,14 @@ export default {
 					this.publishLoading.splice(this.publishLoading.indexOf(attachment.id), 1)
 					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
 				})
+				catalogStore.fetchPublications()
 			})
 		},
 		depublishFile(attachment) {
 			this.depublishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
-			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.title}/depublish`, {
+			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/depublish`, {
 				method: 'POST',
 			}).catch((error) => {
 				console.error('Error depublishing file:', error)
@@ -937,6 +951,7 @@ export default {
 					this.depublishLoading.splice(this.depublishLoading.indexOf(attachment.id), 1)
 					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
 				})
+				catalogStore.fetchPublications()
 			})
 		},
 		deleteFile(attachment) {

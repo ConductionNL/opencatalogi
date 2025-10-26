@@ -123,7 +123,14 @@
                     "registers": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "oneOf": [
+                                {
+                                    "type": "integer"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
                         },
                         "description": "List of register IDs associated with this catalog",
                         "facetable": false
@@ -131,7 +138,14 @@
                     "schemas": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "oneOf": [
+                                {
+                                    "type": "integer"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
                         },
                         "description": "List of schema IDs associated with this catalog",
                         "facetable": false
