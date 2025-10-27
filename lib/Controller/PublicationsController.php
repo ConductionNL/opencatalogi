@@ -451,8 +451,7 @@ class PublicationsController extends Controller
                 register: null,
                 schema: null,
                 rbac: false,
-                multi: false,
-                published: true
+                multi: false
             );
 
             if ($object === null) {
