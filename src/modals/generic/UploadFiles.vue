@@ -765,6 +765,14 @@ export default {
 <style>
 div[class='modal-container']:has(.TestMappingMainModal) {
     width: clamp(1000px, 100%, 1200px) !important;
+    z-index: 13000 !important;
+}
+div[class='modal-container']:has(.TestMappingMainModal) .modal-mask {
+    z-index: 12999 !important;
+}
+div[class='modal-container']:has(.TestMappingMainModal) .modal,
+div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
+    z-index: 13000 !important;
 }
 </style>
 
