@@ -273,6 +273,7 @@ import { useFileSelection } from './../../composables/UseFileSelection.js'
 import axios from 'axios'
 import { ref, isRef } from 'vue'
 import { Attachment } from '../../entities/index.js'
+import { EventBus } from '../../eventBus.js'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
@@ -328,6 +329,9 @@ export default {
 			tagsLoading: false,
 			uploadedCount: 0,
 			failedCount: 0,
+			initialTags: [],
+			latestTags: [],
+			newTags: [],
 		}
 	},
 	computed: {
@@ -375,15 +379,47 @@ export default {
 		objectStore.setActiveObject('attachment', [])
 		this.getAllTags()
 		this.updateUploadCounts()
+		// watch for dialog open/close toggles to fire every time
+		if (this._uploadFilesDialogUnwatch) this._uploadFilesDialogUnwatch()
+		this._uploadFilesDialogUnwatch = this.$watch(() => navigationStore.dialog, (newVal, oldVal) => {
+			if (newVal === 'uploadFiles' && oldVal !== 'uploadFiles') {
+				this.onOpenModal()
+			}
+			if (oldVal === 'uploadFiles' && newVal !== 'uploadFiles') {
+				this.onExternalClose()
+			}
+		}, { immediate: true })
+	},
+	destroyed() {
+		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
 	},
 	methods: {
 		closeDialog() {
+			// mark internal close to avoid duplicate external watcher emission
+			this.__uploadFilesClosingInternally = true
+			// compute safe tags to emit
+			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			if (tagsToEmit.length === 0) {
+				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
+			}
+			// ensure latest tags are saved globally
+			try { objectStore.setCollection('tags', tagsToEmit) } catch (e) {}
+			// emit closed and tags-updated once
+			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags })
+			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags })
+			}
 			navigationStore.setDialog(null)
 			objectStore.setActiveObject('publication', objectStore.getActiveObject('publication'))
 			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
 			reset()
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
+			setTimeout(() => { this.__uploadFilesClosingInternally = false }, 0)
 		},
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
@@ -445,12 +481,26 @@ export default {
 				const data = await response.json().catch(() => [])
 
 				const tagSet = new Set(Array.isArray(data) ? data : [])
-				const attachmentsCollection = objectStore.getCollection('publicationAttachments')?.results || []
+				// merge with tags from current publication attachments (if collection exists and is array)
+				let attachmentsCollection = []
+				try {
+					const attCol = objectStore.getCollection && objectStore.getCollection('publicationAttachments')
+					attachmentsCollection = Array.isArray(attCol?.results) ? attCol.results : []
+				} catch (_) {
+					attachmentsCollection = []
+				}
 				for (const att of attachmentsCollection) {
 					if (Array.isArray(att?.labels)) {
 						for (const label of att.labels) tagSet.add(label)
 					}
 				}
+				// also merge with previously stored tags in store, if present
+				try {
+					const storedTags = objectStore.getCollection && objectStore.getCollection('tags')
+					if (Array.isArray(storedTags)) {
+						for (const t of storedTags) tagSet.add(t)
+					}
+				} catch (_) {}
 
 				const tags = Array.from(tagSet).sort()
 
@@ -459,11 +509,48 @@ export default {
 
 				this.labelOptions.options = newLabelOptions
 				this.labelOptionsEdit.options = newLabelOptionsEdit
+
+				if (this.initialTags.length === 0) {
+					this.initialTags = [...newLabelOptionsEdit]
+				}
+				this.latestTags = [...newLabelOptionsEdit]
+				this.newTags = this.latestTags.filter(t => !this.initialTags.includes(t))
+				// save globally so other views may pull
+				try { objectStore.setCollection('tags', this.latestTags) } catch (e) {}
+				// notify listeners about fresh tags
+				EventBus.$emit('upload-files:tags-fetched', { tags: this.latestTags, newTags: this.newTags })
 			} catch (e) {
 				console.error('Failed to fetch tags', e)
 			} finally {
 				this.tagsLoading = false
 			}
+		},
+		onOpenModal() {
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
+			EventBus.$emit('upload-files:opened')
+			this.getAllTags()
+		},
+		onExternalClose() {
+			if (this.__uploadFilesClosingInternally) {
+				this.__uploadFilesClosingInternally = false
+				return
+			}
+			// compute safe tags source
+			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			if (tagsToEmit.length === 0) {
+				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
+			}
+			// mirror close behavior when dialog is toggled from outside
+			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags || [] })
+			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags || [] })
+			}
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
 		},
 
 		/**
