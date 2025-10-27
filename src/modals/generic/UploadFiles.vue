@@ -238,6 +238,15 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 											<ContentSaveOutline :size="20" />
 										</template>
 									</NcButton>
+									<NcButton
+										v-if="editingTags === file.name"
+										v-tooltip="'Cancel'"
+										type="secondary"
+										@click="cancelFileLabelEditing">
+										<template #icon>
+											<Cancel :size="20" />
+										</template>
+									</NcButton>
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
@@ -285,6 +294,7 @@ import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Exclamation from 'vue-material-design-icons/Exclamation.vue'
 import Minus from 'vue-material-design-icons/Minus.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 const dropZoneRef = ref()
 
@@ -301,6 +311,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
+		Cancel,
 	},
 	props: {
 		dropFiles: {
@@ -572,11 +583,50 @@ export default {
 			window.open(nextcloudUrl, '_blank')
 		},
 
-		saveTags(file, editedTags) {
-			file.tags = editedTags
-			file.status = 'pending'
-			this.addAttachments(file)
+		async saveTags(file, editedTags) {
+			try {
+				if (file && file.id) {
+					const publication = objectStore.getActiveObject('publication')
+					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
+					const response = await fetch(endpoint, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ tags: editedTags }),
+					})
+
+					if (!response.ok) {
+						throw new Error(`Failed to update file tags: ${response.statusText}`)
+					}
+
+					try { file.tags = Array.isArray(editedTags) ? [...editedTags] : [] } catch (_) {}
+
+					const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+					const attachments = await getAttachments.json().catch(() => null)
+					try { objectStore.setCollection('publicationAttachments', attachments) } catch (_) {}
+					catalogStore.fetchPublications()
+
+					this.success = 'File labels updated successfully'
+					setTimeout(() => { this.success = null }, 3000)
+				} else {
+					file.tags = editedTags
+					file.status = 'pending'
+					const idMap = await this.addAttachments(file)
+					const newId = idMap && (idMap[file.name] || idMap[file.title] || null)
+					try { if (newId) file.id = newId } catch (_) {}
+				}
+			} catch (error) {
+				console.error('Error saving tags:', error)
+				this.error = 'Failed to save file labels: ' + (error?.message || error)
+				setTimeout(() => { this.error = null }, 5000)
+			} finally {
+				this.editingTags = null
+				this.editedTags = []
+			}
+		},
+
+		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
 		},
@@ -599,6 +649,7 @@ export default {
 
 			try {
 				let filesToUpload = []
+				const idMap = {}
 
 				if (specificFile) {
 					filesToUpload = [specificFile]
@@ -622,6 +673,14 @@ export default {
 						.then(response => {
 							if (response.status === 200) {
 								file.status = 'uploaded'
+								try {
+									const payload = Array.isArray(response?.data) ? response.data : []
+									const created = payload && payload[0]
+									if (created && created.id) {
+										file.id = created.id
+										idMap[file.name] = created.id
+									}
+								} catch (_) {}
 							} else {
 								file.status = 'failed'
 							}
@@ -656,6 +715,7 @@ export default {
 				}
 
 				this.updateUploadCounts()
+				if (specificFile) return idMap
 			} catch (err) {
 				this.error = err.response?.data?.error ?? err
 			} finally {
@@ -773,6 +833,14 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal-mask {
 div[class='modal-container']:has(.TestMappingMainModal) .modal,
 div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
     z-index: 13000 !important;
+}
+.modal-mask[aria-labelledby='AddAttachmentModal'] {
+    z-index: 13020 !important;
+}
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal-container,
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal,
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal__content {
+    z-index: 13021 !important;
 }
 </style>
 
