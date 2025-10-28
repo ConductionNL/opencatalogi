@@ -25,6 +25,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use OCP\AppFramework\Http\JSONResponse;
+use Psr\Log\LoggerInterface;
 use Exception;
 
 /**
@@ -54,13 +55,15 @@ class EventService
      * @param ContainerInterface $container        Container for dependency injection.
      * @param IAppManager        $appManager       App manager interface.
      * @param SettingsService    $settingsService  Settings service for configuration access.
+     * @param LoggerInterface    $logger           PSR-3 logger.
      */
     public function __construct(
         private readonly IAppConfig $config,
         private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        private readonly SettingsService $settingsService
+        private readonly SettingsService $settingsService,
+        private readonly LoggerInterface $logger
     ) {
         // Set the application name for identification and configuration purposes.
         $this->appName = 'opencatalogi';
@@ -291,12 +294,12 @@ class EventService
             $catalogSchema = $settings['configuration']['catalog_schema'] ?? null;
             
             if ($catalogRegister && $catalogSchema) {
-                // Get all catalog objects using findAll with proper filters.
-                $catalogObjects = $objectService->findAll([
-                    'filters' => [
+                // Get all catalog objects using searchObjects with proper filters.
+                $catalogObjects = $objectService->searchObjects([
+                    '@self' => [
                         'register' => $catalogRegister,
-                        'schema' => $catalogSchema
-                    ]
+                        'schema' => $catalogSchema,
+                    ],
                 ]);
                 
                 // Check each catalog to see if it includes our object's register and schema.
@@ -319,7 +322,7 @@ class EventService
             return false;
         } catch (\Exception $e) {
             // Log error but don't fail the process.
-            error_log('OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: ' . $e->getMessage());
+            $this->logger->error('OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: ' . $e->getMessage(), ['exception' => $e]);
             return false;
         }
 

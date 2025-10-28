@@ -82,44 +82,39 @@ class ListingsController extends Controller
         $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
         $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
 
-        // Build config for findAll
-        $config = [
-            'filters' => []
-        ];
-
-        // Add schema filter if configured
-        if (!empty($listingSchema)) {
-            $config['filters']['schema'] = $listingSchema;
-        }
-
-        // Add register filter if configured
-        if (!empty($listingRegister)) {
-            $config['filters']['register'] = $listingRegister;
+        // Build query for searchObjectsPaginated
+        $query = [];
+        
+        // Add metadata filters
+        if (!empty($listingSchema) || !empty($listingRegister)) {
+            $query['@self'] = [];
+            if (!empty($listingSchema)) {
+                $query['@self']['schema'] = $listingSchema;
+            }
+            if (!empty($listingRegister)) {
+                $query['@self']['register'] = $listingRegister;
+            }
         }
         
         // Add any additional filters from request params
         if (isset($requestParams['filters'])) {
-            $config['filters'] = array_merge($config['filters'], $requestParams['filters']);
+            foreach ($requestParams['filters'] as $key => $value) {
+                if (!in_array($key, ['schema', 'register'])) {
+                    $query[$key] = $value;
+                }
+            }
         }
         
         // Add pagination and other params
         if (isset($requestParams['limit'])) {
-            $config['limit'] = (int) $requestParams['limit'];
+            $query['_limit'] = (int) $requestParams['limit'];
         }
         if (isset($requestParams['offset'])) {
-            $config['offset'] = (int) $requestParams['offset'];
+            $query['_offset'] = (int) $requestParams['offset'];
         }
 
-        // Fetch listing objects based on filters and order
-        $result = $this->getObjectService()->findAll($config);
-        
-        // Convert objects to arrays
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result['results'] ?? []),
-            'total' => $result['total'] ?? count($result['results'] ?? [])
-        ];
+        // Fetch listing objects using searchObjectsPaginated (handles pagination internally)
+        $data = $this->getObjectService()->searchObjectsPaginated($query);
 
         // Return JSON response
         return new JSONResponse($data);

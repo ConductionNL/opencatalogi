@@ -655,9 +655,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																	v-model="editedTags"
 																	:disabled="tagsLoading"
 																	:loading="tagsLoading"
+																	:taggable="true"
 																	:multiple="true"
 																	:aria-label-combobox="labelOptionsEdit.inputLabel"
-																	:options="labelOptionsEdit.options" />
+																	:options="labelOptionsEdit.options"
+																	@tag="addNewTag" />
 																<NcButton
 																	v-tooltip="'Save labels'"
 																	type="primary"
@@ -2723,6 +2725,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 
 				// Clear selection - files list is automatically refreshed by the store methods
 				objectStore.selectedAttachments = []
@@ -2738,7 +2741,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}/publish`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/publish`
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
@@ -2755,6 +2758,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error('Failed to publish file:', error)
 			} finally {
@@ -2767,7 +2771,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}/depublish`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/depublish`
 
 				const response = await fetch(endpoint, {
 					method: 'POST',
@@ -2784,6 +2788,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error('Failed to depublish file:', error)
 			} finally {
@@ -2796,7 +2801,7 @@ export default {
 
 				const publication = this.currentObject
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
 				const response = await fetch(endpoint, {
 					method: 'DELETE',
@@ -2813,6 +2818,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error('Failed to delete file:', error)
 			} finally {
@@ -2826,6 +2832,21 @@ export default {
 		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
+		},
+		addNewTag(newTag) {
+			if (!newTag) return
+			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+				this.labelOptionsEdit.options = []
+			}
+			if (!this.labelOptionsEdit.options.includes(newTag)) {
+				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+			}
+			if (!this.editedTags || !Array.isArray(this.editedTags)) {
+				this.editedTags = []
+			}
+			if (!this.editedTags.includes(newTag)) {
+				this.editedTags = [...this.editedTags, newTag]
+			}
 		},
 		async getAllTags() {
 			this.tagsLoading = true
@@ -2853,7 +2874,7 @@ export default {
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 
 				// Update file tags using the same approach as PublicationDetail.vue
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.title}`
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
 				const response = await fetch(endpoint, {
 					method: 'PUT',

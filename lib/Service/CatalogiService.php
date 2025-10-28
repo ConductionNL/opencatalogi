@@ -145,11 +145,15 @@ class CatalogiService
         if ($catalogId !== null) {
             $catalogs = [$this->getObjectService()->find($catalogId)];
         } else {
-            // Setup the config array
-            $config['filters']['register'] = $register;
-            $config['filters']['schema']   = $schema;
-            // Get all catalogs or a specific one if ID is provided
-            $catalogs = $this->getObjectService()->findAll($config);
+            // Setup the query for searchObjects
+            $query = [
+                '@self' => [
+                    'register' => $register,
+                    'schema' => $schema,
+                ],
+            ];
+            // Get all catalogs using searchObjects
+            $catalogs = $this->getObjectService()->searchObjects($query);
         }
 
         // Initialize arrays to store unique registers and schemas
@@ -386,16 +390,16 @@ class CatalogiService
             $schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
-            $config = [
-                'filters' => [
+            $query = [
+                '@self' => [
                     'register' => $register,
                     'schema' => $schema,
-                    'slug' => $slug,
                 ],
-                'limit' => 1,
+                'slug' => $slug,
+                '_limit' => 1,
             ];
 
-            $catalogs = $this->getObjectService()->findAll($config);
+            $catalogs = $this->getObjectService()->searchObjects($query);
 
             if (empty($catalogs)) {
                 $this->logger->warning('Catalog not found', ['slug' => $slug]);
@@ -535,46 +539,70 @@ class CatalogiService
         $config = $this->getConfig();
 
         // Get the context for the catalog
-        $context                       = $this->getCatalogFilters($catalogId);
-        //Vardump the context
-        $config['filters']['register'] = $context['registers'];
-        $config['filters']['schema']   = $context['schemas'];
-
+        $context = $this->getCatalogFilters($catalogId);
+        
         $objectService = $this->getObjectService();
-
-        $objects = $objectService->findAll($config);
+        
+        // Build search query from config
+        $query = [];
+        if (!empty($context['registers']) || !empty($context['schemas'])) {
+            $query['@self'] = [];
+            if (!empty($context['registers'])) {
+                $query['@self']['register'] = $context['registers'];
+            }
+            if (!empty($context['schemas'])) {
+                $query['@self']['schema'] = $context['schemas'];
+            }
+        }
+        
+        // Add other filters from config
+        if (!empty($config['filters'])) {
+            foreach ($config['filters'] as $key => $value) {
+                if (!in_array($key, ['register', 'schema'])) {
+                    $query[$key] = $value;
+                }
+            }
+        }
+        
+        // Add special parameters
+        if (isset($config['limit'])) {
+            $query['_limit'] = $config['limit'];
+        }
+        if (isset($config['offset'])) {
+            $query['_offset'] = $config['offset'];
+        }
+        if (isset($config['page'])) {
+            $query['_page'] = $config['page'];
+        }
+        if (isset($config['queries'])) {
+            $query['_queries'] = $config['queries'];
+        }
+        if (isset($config['order'])) {
+            $query['_order'] = $config['order'];
+        }
+        
+        // Use searchObjectsPaginated which handles pagination internally
+        $result = $objectService->searchObjectsPaginated($query);
         
         // Filter out unwanted properties from the '@self' array in each object
-        $filteredObjects = array_map(function ($object) {
-            // Use jsonSerialize to get an array representation of the object
-            $objectArray = $object->jsonSerialize();
-
+        $filteredResults = array_map(function ($object) {
             //@todo: a loggedin user should be able to see the full object
-            if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
+            if (isset($object['@self']) && is_array($object['@self'])) {
                 $unwantedProperties = [
                     'schemaVersion', 'relations', 'locked', 'owner', 'folder',
                     'application', 'validation', 'retention',
                     'size', 'deleted'
                 ];
                 // Remove unwanted properties from the '@self' array
-                $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                $object['@self'] = array_diff_key($object['@self'], array_flip($unwantedProperties));
             }
-            return $objectArray;
-        }, $objects);
+            return $object;
+        }, $result['results']);
         
-
-        // Get total count for pagination
-        $total = $objectService->count($config);
-
-        //@todo: fix facets currently breaks build
-        //$facets = $objectService->getFacets(filters: [
-        //    'register' => $config['filters']['register'],
-        //    'schema'   => $config['filters']['schema'],
-        //    '_queries' => $config['queries']
-        //]);
+        $result['results'] = $filteredResults;
 
         // Return paginated results
-        return new JSONResponse($this->paginate(results: $filteredObjects, total: $total, limit: $config['limit'], offset: $config['offset'], page: $config['page']));
+        return new JSONResponse($result);
     }//end index()
 
 }//end class

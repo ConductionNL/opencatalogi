@@ -213,13 +213,14 @@ class DirectoryService
         // Get listings if configuration is available
         if (!empty($listingSchema) && !empty($listingRegister)) {
             try {
-                $filters = [
+                $query = [
+                    '@self' => [
                         'register' => $listingRegister,
-                        'schema' => $listingSchema
+                        'schema' => $listingSchema,
+                    ],
                 ];
 
-                $config = ['filters' => $filters];
-                $listings = $objectService->findAll($config);
+                $listings = $objectService->searchObjects($query);
 
                 // Removed redundant logging
 
@@ -589,12 +590,12 @@ class DirectoryService
             $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
 
             // Check if listing already exists to determine action type
-            $existingListings = $objectService->findAll([
-                'filters' => [
+            $existingListings = $objectService->searchObjects([
+                '@self' => [
                     'register' => $listingRegister,
                     'schema' => $listingSchema,
-                    'catalog' => $catalogId
-                ]
+                ],
+                'catalog' => $catalogId,
             ]);
 
             $isUpdate = !empty($existingListings);
@@ -904,12 +905,12 @@ class DirectoryService
     {
         try {
             // Get the existing listing
-            $existingListings = $objectService->findAll([
-                'filters' => [
+            $existingListings = $objectService->searchObjects([
+                '@self' => [
                     'register' => $listingRegister,
                     'schema' => $listingSchema,
-                    'id' => $listingId
-                ]
+                ],
+                'id' => $listingId,
             ]);
 
             if (!empty($existingListings)) {
@@ -1140,12 +1141,12 @@ class DirectoryService
             }
 
             // Find all listings from this directory
-            $existingListings = $objectService->findAll([
-                'filters' => [
+            $existingListings = $objectService->searchObjects([
+                '@self' => [
                     'register' => $listingRegister,
                     'schema' => $listingSchema,
-                    'directory' => $directoryUrl
-                ]
+                ],
+                'directory' => $directoryUrl,
             ]);
 
             // Update each listing with error status
@@ -1522,19 +1523,39 @@ class DirectoryService
 
         // Fetch discovered listings
         if (!empty($listingSchema) && !empty($listingRegister)) {
-            $listingConfig = $baseConfig;
-            $listingConfig['filters']['schema'] = $listingSchema;
-            $listingConfig['filters']['register'] = $listingRegister;
+            $query = [
+                '@self' => [
+                    'schema' => $listingSchema,
+                    'register' => $listingRegister,
+                ],
+            ];
+            
+            // Add filters from base config
+            if (!empty($baseConfig['filters'])) {
+                foreach ($baseConfig['filters'] as $key => $value) {
+                    if (!in_array($key, ['schema', 'register'])) {
+                        $query[$key] = $value;
+                    }
+                }
+            }
+            
+            // Add pagination parameters
+            if (isset($baseConfig['limit'])) {
+                $query['_limit'] = $baseConfig['limit'];
+            }
+            if (isset($baseConfig['offset'])) {
+                $query['_offset'] = $baseConfig['offset'];
+            }
 
             try {
-                $listingResult = $objectService->findAll($listingConfig);
+                $listingResult = $objectService->searchObjects($query);
 
                 // Convert listing objects to arrays and filter out internal properties
                 // Note: Don't expand schemas for listings as they already come with expanded schemas from external directories
                 $listings = array_map(function ($object) {
                     $listingData = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
                     return $this->filterListingProperties($listingData);
-                }, $listingResult['results'] ?? $listingResult ?? []);
+                }, $listingResult);
 
                 $allResults = array_merge($allResults, $listings);
             } catch (\Exception $e) {
@@ -1544,18 +1565,38 @@ class DirectoryService
 
         // Fetch local catalogs and convert them to listing format
         if (!empty($catalogSchema) && !empty($catalogRegister)) {
-            $catalogConfig = $baseConfig;
-            $catalogConfig['filters']['schema'] = $catalogSchema;
-            $catalogConfig['filters']['register'] = $catalogRegister;
+            $query = [
+                '@self' => [
+                    'schema' => $catalogSchema,
+                    'register' => $catalogRegister,
+                ],
+            ];
+            
+            // Add filters from base config
+            if (!empty($baseConfig['filters'])) {
+                foreach ($baseConfig['filters'] as $key => $value) {
+                    if (!in_array($key, ['schema', 'register'])) {
+                        $query[$key] = $value;
+                    }
+                }
+            }
+            
+            // Add pagination parameters
+            if (isset($baseConfig['limit'])) {
+                $query['_limit'] = $baseConfig['limit'];
+            }
+            if (isset($baseConfig['offset'])) {
+                $query['_offset'] = $baseConfig['offset'];
+            }
 
             try {
-                $catalogResult = $objectService->findAll($catalogConfig);
+                $catalogResult = $objectService->searchObjects($query);
 
                 // Convert catalog objects to listing format and expand schemas
                 $catalogsAsListings = array_map(function ($catalogObject) {
                     $listing = $this->convertCatalogToListing($catalogObject);
                     return $this->processSchemaExpansion($listing);
-                }, $catalogResult['results'] ?? $catalogResult ?? []);
+                }, $catalogResult);
 
                 $allResults = array_merge($allResults, $catalogsAsListings);
             } catch (\Exception $e) {
@@ -1789,12 +1830,12 @@ class DirectoryService
             }
 
             // Find listings with this directory URL
-            $listings = $objectService->findAll([
-                'filters' => [
+            $listings = $objectService->searchObjects([
+                '@self' => [
                     'register' => $listingRegister,
                     'schema' => $listingSchema,
-                    'directory' => $directoryUrl
-                ]
+                ],
+                'directory' => $directoryUrl,
             ]);
 
             // Look for the first listing that has a publications URL

@@ -68,7 +68,7 @@ export default {
 		DeleteAttachment() {
 			this.loading = true
 
-			fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${objectStore.getActiveObject('publicationAttachment').title}`, {
+			fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${objectStore.getActiveObject('publicationAttachment').id}`, {
 				method: 'DELETE',
 			})
 				.then((response) => {
