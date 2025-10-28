@@ -286,7 +286,7 @@ export default {
 			const catalogs = objectStore.getCollection('catalogus')?.results || []
 			const matchedCatalog = catalogs.find((c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''))
 			const slug = matchedCatalog?.slug || publication?.catalog?.slug || this.$route?.params?.catalogSlug
-			if (!slug) return
+			if (!slug || !publication?.id) return
 			this.$router.push(`/publications/${slug}/${publication.id}`)
 		},
 		cleanup() {

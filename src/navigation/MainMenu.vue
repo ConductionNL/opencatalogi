@@ -18,8 +18,8 @@ import { navigationStore, objectStore } from '../store/store.js'
 			<NcAppNavigationItem v-for="(catalogus, i) in objectStore.getCollection('catalog').results"
 				:key="`${catalogus}${i}`"
 				:name="catalogus?.title"
-				:active="$route.path.startsWith('/publications/') && catalogus?.slug?.toString() === $route.params.catalogSlug"
-				@click="handleNavigate(`/publications/${catalogus.slug}`)">
+				:active="$route.path.startsWith('/publications/') && catalogus?.slug && catalogus.slug.toString() === $route.params.catalogSlug"
+				@click="catalogus?.slug && handleNavigate(`/publications/${catalogus.slug}`)">
 				<template #icon>
 					<DatabaseEyeOutline :size="20" />
 				</template>

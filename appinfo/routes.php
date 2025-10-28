@@ -7,8 +7,8 @@ return [
 		 */
 		// Dashboard
 		['name' => 'dashboard#index', 'url' => '/index', 'verb' => 'GET'],
-        // this may seem like a duplicate of the UI routes at the bottom, but this is needed
-        ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+		// this may seem like a duplicate of the UI routes at the bottom, but this is needed
+		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
 
 		// Catalogi
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
@@ -86,7 +86,7 @@ return [
 		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 
-        // UI page routes for SPA deep links
+		// UI page routes for SPA deep links
 		['name' => 'ui#dashboard', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'ui#catalogi', 'url' => '/catalogi', 'verb' => 'GET'],
 		['name' => 'ui#publicationsIndex', 'url' => '/publications/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],

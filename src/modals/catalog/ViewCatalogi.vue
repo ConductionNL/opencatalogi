@@ -221,8 +221,12 @@ export default {
 			navigationStore.setModal('catalog')
 		},
 		viewCatalog() {
+			if (!this.activeCatalog?.slug) {
+				console.error('[ViewCatalogi#viewCatalog] Cannot navigate: catalog or slug is missing')
+				return
+			}
 			navigationStore.setModal(false)
-			this.$router.push(`/publications/${this.activeCatalog?.slug}`)
+			this.$router.push(`/publications/${this.activeCatalog.slug}`)
 		},
 		deleteCatalog() {
 			navigationStore.setModal(false)

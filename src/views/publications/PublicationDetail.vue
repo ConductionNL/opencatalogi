@@ -922,7 +922,12 @@ export default {
 				formData.append('tags[]', tag)
 			})
 
-			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.id}`, {
+			const publication = objectStore.getActiveObject('publication')
+			const register = publication['@self'].register
+			const schema = publication['@self'].schema
+			const id = publication.id
+
+			await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files/${attachment.id}`, {
 				method: 'PUT',
 				body: JSON.stringify({
 					tags: this.editedTags,

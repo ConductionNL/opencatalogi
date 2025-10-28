@@ -516,7 +516,9 @@ export default {
 
 	mounted() {
 		console.info('PublicationTable mounted, fetching publications...')
-		catalogStore.fetchPublications()
+
+		catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
+
 		// Initialize column filters for publications
 		objectStore.initializeColumnFilters()
 		// Set default columns: title, published, files, updated

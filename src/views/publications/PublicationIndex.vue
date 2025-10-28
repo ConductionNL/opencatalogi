@@ -1,6 +1,5 @@
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
-import { computed } from 'vue'
 </script>
 
 <template>
@@ -48,10 +47,6 @@ import PublicationDetails from './PublicationDetail.vue'
 import PublicationTable from './PublicationTable.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 
-const showEmptyContent = computed(() => {
-	return !this.$route.params.id
-})
-
 export default {
 	name: 'PublicationIndex',
 	components: {
@@ -69,6 +64,11 @@ export default {
 			useOldStyleView: false,
 			loadingSettings: true,
 		}
+	},
+	computed: {
+		showEmptyContent() {
+			return !this.$route.params.id
+		},
 	},
 	async mounted() {
 		await this.loadPublishingSettings()
