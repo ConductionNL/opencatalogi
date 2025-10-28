@@ -14,6 +14,7 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class PublicationsController
@@ -57,6 +58,7 @@ class PublicationsController extends Controller
      * @param IAppConfig         $config             The app configuration
      * @param ContainerInterface $container          The container for dependency injection
      * @param IAppManager        $appManager         The app manager
+     * @param LoggerInterface    $logger             PSR-3 logger
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
      * @param int                $corsMaxAge         CORS max age
@@ -70,6 +72,7 @@ class PublicationsController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
+        private readonly LoggerInterface $logger,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -93,6 +96,66 @@ class PublicationsController extends Controller
         }
 
         throw new \RuntimeException('OpenRegister service is not available.');
+    }
+
+    /**
+     * Extract filter values from various filter formats
+     * 
+     * Handles:
+     * - Single value: 1
+     * - Simple array: [1, 2, 3]
+     * - OR operator: ['or' => '1,2,3'] or ['or' => [1, 2, 3]]
+     * - AND operator: ['and' => '1,2,3'] or ['and' => [1, 2, 3]]
+     * 
+     * @param mixed $filter The filter value in any supported format
+     * @return array Array of integer values
+     */
+    private function extractFilterValues($filter): array
+    {
+        // Single numeric value
+        if (is_numeric($filter)) {
+            return [(int) $filter];
+        }
+
+        // Array format
+        if (is_array($filter)) {
+            // Check for [or] or [and] operators
+            if (isset($filter['or'])) {
+                $values = $filter['or'];
+            } elseif (isset($filter['and'])) {
+                $values = $filter['and'];
+            } else {
+                // Simple array of values
+                $values = $filter;
+            }
+
+            // Handle comma-separated string
+            if (is_string($values)) {
+                $values = explode(',', $values);
+            }
+
+            // Ensure array and convert to integers
+            if (is_array($values)) {
+                return array_map('intval', array_filter($values, function($v) {
+                    return is_numeric($v) || (is_string($v) && trim($v) !== '');
+                }));
+            }
+
+            // Single value in the operator
+            if (is_numeric($values)) {
+                return [(int) $values];
+            }
+        }
+
+        // String format (comma-separated)
+        if (is_string($filter)) {
+            $values = explode(',', $filter);
+            return array_map('intval', array_filter($values, function($v) {
+                return trim($v) !== '';
+            }));
+        }
+
+        return [];
     }
 
     /**
@@ -178,27 +241,65 @@ class PublicationsController extends Controller
                 $searchQuery['_extend'][] = '@self.register';
             }
 
-            // DATABASE-LEVEL FILTERING: Use new [or] operator for efficient filtering
-            // Apply catalog's schema and register filters using dot notation and OR logic
-            // Structure as nested array: @self => [schema => [or => "1,2,3"]]
-            if (!empty($catalog['schemas']) || !empty($catalog['registers'])) {
-                if (!isset($searchQuery['@self'])) {
-                    $searchQuery['@self'] = [];
+            // DATABASE-LEVEL FILTERING: Handle catalog filtering intelligently
+            // If frontend provides schema/register filters, validate they're within catalog
+            // If no frontend filters, apply catalog's default filters
+            
+            // Initialize @self if needed
+            if (!isset($searchQuery['@self'])) {
+                $searchQuery['@self'] = [];
+            }
+
+            // Handle SCHEMA filtering
+            if (!empty($catalog['schemas'])) {
+                $frontendSchemaFilter = $searchQuery['@self']['schema'] ?? null;
+                
+                if ($frontendSchemaFilter !== null) {
+                    // Frontend provided a schema filter - validate it's within catalog
+                    $requestedSchemas = $this->extractFilterValues($frontendSchemaFilter);
+                    $allowedSchemas = array_map('intval', $catalog['schemas']);
+                    
+                    // Check if all requested schemas are within the catalog
+                    $validSchemas = array_intersect($requestedSchemas, $allowedSchemas);
+                    
+                    if (empty($validSchemas)) {
+                        // None of the requested schemas are in this catalog
+                        return new JSONResponse(['error' => 'Requested schema(s) not available in this catalog'], 403);
+                    }
+                    
+                    // Keep the frontend's filter (it's valid) - don't overwrite
+                } else {
+                    // No frontend filter - apply catalog's default filter
+                    $searchQuery['@self']['schema'] = [
+                        'or' => implode(',', array_map('intval', $catalog['schemas']))
+                    ];
                 }
             }
 
-            if (!empty($catalog['schemas'])) {
-                // Use nested array structure for OR filtering across multiple schemas
-                $searchQuery['@self']['schema'] = [
-                    'or' => implode(',', array_map('intval', $catalog['schemas']))
-                ];
-            }
-
+            // Handle REGISTER filtering
             if (!empty($catalog['registers'])) {
-                // Use nested array structure for OR filtering across multiple registers
-                $searchQuery['@self']['register'] = [
-                    'or' => implode(',', array_map('intval', $catalog['registers']))
-                ];
+                $frontendRegisterFilter = $searchQuery['@self']['register'] ?? null;
+                
+                if ($frontendRegisterFilter !== null) {
+                    // Frontend provided a register filter - validate it's within catalog
+                    $requestedRegisters = $this->extractFilterValues($frontendRegisterFilter);
+                    $allowedRegisters = array_map('intval', $catalog['registers']);
+                    
+                    // Check if all requested registers are within the catalog
+                    $validRegisters = array_intersect($requestedRegisters, $allowedRegisters);
+                    
+                    if (empty($validRegisters)) {
+                        // None of the requested registers are in this catalog
+                        return new JSONResponse(['error' => 'Requested register(s) not available in this catalog'], 403);
+                    }
+                    
+                    // Keep the frontend's filter (it's valid) - don't overwrite
+                } else {
+                    // No frontend filter - apply catalog's default filter
+                    $searchQuery['@self']['register'] = [
+                        'or' => implode(',', array_map('intval', $catalog['registers']))
+                    ];
+                }
             }
 
             // DIRECT ObjectService call - WITH PUBLISHED FILTERING AND CATALOG FILTERING
@@ -456,29 +557,49 @@ class PublicationsController extends Controller
             $published = $object->getPublished();
             if ($published === null) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication not found'], 404);
+                //return new JSONResponse(['error' => 'Publication not published'], 404);
             }
 
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication not found'], 404);
+                //return new JSONResponse(['error' => 'Publication yet published'], 404);
             }
 
             // Check if object is not depublished
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication not found'], 404);
+                //return new JSONResponse(['error' => 'Publication depublished'], 404);
             }
 
             $relationsArray = $object->getRelations();
+            
+            // DEBUG: Log what we got from getRelations()
+            $this->logger->debug('[PublicationsController::uses] Object ID: ' . $id);
+            $this->logger->debug('[PublicationsController::uses] Relations raw: ' . json_encode($relationsArray));
+            $this->logger->debug('[PublicationsController::uses] Relations type: ' . gettype($relationsArray));
+            if (is_array($relationsArray)) {
+                $this->logger->debug('[PublicationsController::uses] Relations count: ' . count($relationsArray));
+                foreach ($relationsArray as $key => $value) {
+                    $this->logger->debug('[PublicationsController::uses] Relation [' . $key . ']: ' . json_encode($value) . ' (type: ' . gettype($value) . ')');
+                }
+            }
+            
             // Filter relations, we only want uuids
-            $relations = array_values(array_filter($relationsArray, function ($value) {
+            $logger = $this->logger; // Capture for use in closure
+            $relations = array_values(array_filter($relationsArray, function ($value) use ($logger) {
                 // Accept only strings that look like uuids
-                return is_string($value) && preg_match('/^[0-9a-fA-F\-]{32,36}$/', $value);
+                $isValid = is_string($value) && preg_match('/^[0-9a-fA-F\-]{32,36}$/', $value);
+                if (!$isValid && is_string($value)) {
+                    $logger->debug('[PublicationsController::uses] Filtered out: ' . $value . ' (length: ' . strlen($value) . ')');
+                }
+                return $isValid;
             }));
+            
+            $this->logger->debug('[PublicationsController::uses] Filtered relations: ' . json_encode($relations));
+            $this->logger->debug('[PublicationsController::uses] Filtered count: ' . count($relations));
 
             // Check if relations array is empty
             if (empty($relations)) {
