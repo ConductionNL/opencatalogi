@@ -446,12 +446,6 @@ class PublicationsController extends Controller
             // DIRECT OBJECT FETCH: Get the publication object directly by ID
             $object = $objectService->find(
                 id: $id,
-                extend: [],
-                files: false,
-                register: null,
-                schema: null,
-                rbac: false,
-                multi: false
             );
 
             if ($object === null) {
