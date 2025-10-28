@@ -559,21 +559,21 @@ class PublicationsController extends Controller
             $published = $object->getPublished();
             if ($published === null) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication not published'], 404);
+                return new JSONResponse(['error' => 'Publication not published'], 404);
             }
 
             // Check if publication date is in the past
             $now = new \DateTime();
             if ($published > $now) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication yet published'], 404);
+                return new JSONResponse(['error' => 'Publication yet published'], 404);
             }
 
             // Check if object is not depublished
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
                 //@todo: remove this very dirty hotfix/hack
-                //return new JSONResponse(['error' => 'Publication depublished'], 404);
+                return new JSONResponse(['error' => 'Publication depublished'], 404);
             }
 
             $relationsArray = $object->getRelations();
