@@ -159,11 +159,15 @@ class PublicationService
         if ($catalogId !== null) {
             $catalogs = [$this->getObjectService()->find($catalogId)];
         } else {
-            // Setup the config array
-            $config['filters']['register'] = $register;
-            $config['filters']['schema']   = $schema;
-            // Get all catalogs or a specific one if ID is provided
-            $catalogs = $this->getObjectService()->findAll($config);
+            // Setup the config array for searchObjects
+            $query = [
+                '@self' => [
+                    'register' => $register,
+                    'schema' => $schema,
+                ],
+            ];
+            // Get all catalogs using searchObjects
+            $catalogs = $this->getObjectService()->searchObjects($query);
         }
 
         // Initialize arrays to store unique registers and schemas
@@ -1461,15 +1465,15 @@ class PublicationService
         $cacheKey = 'all';
         if (!isset($this->cachedCatalogFilters[$cacheKey])) {
             // Quick catalog context setup without full getCatalogFilters overhead
-            $config = [
-                'filters' => [
+            $query = [
+                '@self' => [
                     'register' => $register,
-                    'schema' => $schema
-                ]
+                    'schema' => $schema,
+                ],
             ];
             
             try {
-                $catalogs = $this->getObjectService()->findAll($config);
+                $catalogs = $this->getObjectService()->searchObjects($query);
                 $uniqueRegisters = [];
                 $uniqueSchemas = [];
                 
@@ -1657,17 +1661,17 @@ class PublicationService
                 return [];
             }
 
-            // Setup config for finding catalogs
-            $config = [
-                'filters' => [
+            // Setup query for finding catalogs
+            $query = [
+                '@self' => [
                     'schema' => $catalogSchema,
                     'register' => $catalogRegister,
-                ]
+                ],
             ];
 
             // Get all catalogs using ObjectService
             $objectService = $this->getObjectService();
-            $catalogs = $objectService->findAll($config);
+            $catalogs = $objectService->searchObjects($query);
 
             // Convert catalog objects to arrays and filter for public use
             $catalogArray = [];

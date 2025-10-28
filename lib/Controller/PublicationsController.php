@@ -539,6 +539,8 @@ class PublicationsController extends Controller
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
 
             // Force use of SOLR index for better performance on public endpoints
+            $searchQuery = [];
+            $searchQuery['_extend'] = ['@self.schema'];
             $searchQuery['_source'] = 'database';
 
             // Lets set the limit to 1000 to make sure we catch all relations
@@ -577,9 +579,6 @@ class PublicationsController extends Controller
             $relationsArray = $object->getRelations();
             
             // DEBUG: Log what we got from getRelations()
-            $this->logger->debug('[PublicationsController::uses] Object ID: ' . $id);
-            $this->logger->debug('[PublicationsController::uses] Relations raw: ' . json_encode($relationsArray));
-            $this->logger->debug('[PublicationsController::uses] Relations type: ' . gettype($relationsArray));
             if (is_array($relationsArray)) {
                 $this->logger->debug('[PublicationsController::uses] Relations count: ' . count($relationsArray));
                 foreach ($relationsArray as $key => $value) {
@@ -597,9 +596,6 @@ class PublicationsController extends Controller
                 }
                 return $isValid;
             }));
-            
-            $this->logger->debug('[PublicationsController::uses] Filtered relations: ' . json_encode($relations));
-            $this->logger->debug('[PublicationsController::uses] Filtered count: ' . count($relations));
 
             // Check if relations array is empty
             if (empty($relations)) {
@@ -635,9 +631,9 @@ class PublicationsController extends Controller
                     query: $searchQuery,
                     rbac: false,
                     multi: false,
-                    published: false,
                     deleted: false,
-                    ids: $relations
+                    ids: $relations,
+                    published: true,
                 );
             }
 
@@ -694,7 +690,9 @@ class PublicationsController extends Controller
             unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
 
             // Force use of SOLR index for better performance on public endpoints
+            $searchQuery = [];
             $searchQuery['_source'] = 'database';
+            $searchQuery['_extend'] = ['@self.schema'];
 
             // Lets set the limit to 1000 to make sure we catch all relations
             $searchQuery['_limit'] = 1000;
@@ -705,8 +703,8 @@ class PublicationsController extends Controller
                 query: $searchQuery,
                 rbac: false,
                 multi: false,
-                published: true,
                 deleted: false,
+                published: true,
                 uses: $id
             );
 
