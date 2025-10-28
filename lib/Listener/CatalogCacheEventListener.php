@@ -117,7 +117,11 @@ class CatalogCacheEventListener implements IEventListener
             }
         } catch (\Exception $e) {
             // Log unexpected errors and continue gracefully
-            error_log('OpenCatalogi: Exception in catalog cache event listener: ' . $e->getMessage());
+            // Get logger if not already available
+            if (!isset($logger)) {
+                $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+            }
+            $logger->error('OpenCatalogi: Exception in catalog cache event listener: ' . $e->getMessage(), ['exception' => $e]);
         }
 
     }//end handle()
