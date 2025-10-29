@@ -238,6 +238,15 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 											<ContentSaveOutline :size="20" />
 										</template>
 									</NcButton>
+									<NcButton
+										v-if="editingTags === file.name"
+										v-tooltip="'Cancel'"
+										type="secondary"
+										@click="cancelFileLabelEditing">
+										<template #icon>
+											<Cancel :size="20" />
+										</template>
+									</NcButton>
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
@@ -273,6 +282,7 @@ import { useFileSelection } from './../../composables/UseFileSelection.js'
 import axios from 'axios'
 import { ref, isRef } from 'vue'
 import { Attachment } from '../../entities/index.js'
+import { EventBus } from '../../eventBus.js'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
@@ -284,6 +294,7 @@ import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Exclamation from 'vue-material-design-icons/Exclamation.vue'
 import Minus from 'vue-material-design-icons/Minus.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 const dropZoneRef = ref()
 
@@ -300,6 +311,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
+		Cancel,
 	},
 	props: {
 		dropFiles: {
@@ -328,6 +340,9 @@ export default {
 			tagsLoading: false,
 			uploadedCount: 0,
 			failedCount: 0,
+			initialTags: [],
+			latestTags: [],
+			newTags: [],
 		}
 	},
 	computed: {
@@ -375,15 +390,47 @@ export default {
 		objectStore.setActiveObject('attachment', [])
 		this.getAllTags()
 		this.updateUploadCounts()
+		// watch for dialog open/close toggles to fire every time
+		if (this._uploadFilesDialogUnwatch) this._uploadFilesDialogUnwatch()
+		this._uploadFilesDialogUnwatch = this.$watch(() => navigationStore.dialog, (newVal, oldVal) => {
+			if (newVal === 'uploadFiles' && oldVal !== 'uploadFiles') {
+				this.onOpenModal()
+			}
+			if (oldVal === 'uploadFiles' && newVal !== 'uploadFiles') {
+				this.onExternalClose()
+			}
+		}, { immediate: true })
+	},
+	destroyed() {
+		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
 	},
 	methods: {
 		closeDialog() {
+			// mark internal close to avoid duplicate external watcher emission
+			this.__uploadFilesClosingInternally = true
+			// compute safe tags to emit
+			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			if (tagsToEmit.length === 0) {
+				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
+			}
+			// ensure latest tags are saved globally
+			try { objectStore.setCollection('tags', tagsToEmit) } catch (e) {}
+			// emit closed and tags-updated once
+			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags })
+			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags })
+			}
 			navigationStore.setDialog(null)
 			objectStore.setActiveObject('publication', objectStore.getActiveObject('publication'))
 			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
 			reset()
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
+			setTimeout(() => { this.__uploadFilesClosingInternally = false }, 0)
 		},
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
@@ -445,12 +492,26 @@ export default {
 				const data = await response.json().catch(() => [])
 
 				const tagSet = new Set(Array.isArray(data) ? data : [])
-				const attachmentsCollection = objectStore.getCollection('publicationAttachments')?.results || []
+				// merge with tags from current publication attachments (if collection exists and is array)
+				let attachmentsCollection = []
+				try {
+					const attCol = objectStore.getCollection && objectStore.getCollection('publicationAttachments')
+					attachmentsCollection = Array.isArray(attCol?.results) ? attCol.results : []
+				} catch (_) {
+					attachmentsCollection = []
+				}
 				for (const att of attachmentsCollection) {
 					if (Array.isArray(att?.labels)) {
 						for (const label of att.labels) tagSet.add(label)
 					}
 				}
+				// also merge with previously stored tags in store, if present
+				try {
+					const storedTags = objectStore.getCollection && objectStore.getCollection('tags')
+					if (Array.isArray(storedTags)) {
+						for (const t of storedTags) tagSet.add(t)
+					}
+				} catch (_) {}
 
 				const tags = Array.from(tagSet).sort()
 
@@ -459,11 +520,48 @@ export default {
 
 				this.labelOptions.options = newLabelOptions
 				this.labelOptionsEdit.options = newLabelOptionsEdit
+
+				if (this.initialTags.length === 0) {
+					this.initialTags = [...newLabelOptionsEdit]
+				}
+				this.latestTags = [...newLabelOptionsEdit]
+				this.newTags = this.latestTags.filter(t => !this.initialTags.includes(t))
+				// save globally so other views may pull
+				try { objectStore.setCollection('tags', this.latestTags) } catch (e) {}
+				// notify listeners about fresh tags
+				EventBus.$emit('upload-files:tags-fetched', { tags: this.latestTags, newTags: this.newTags })
 			} catch (e) {
 				console.error('Failed to fetch tags', e)
 			} finally {
 				this.tagsLoading = false
 			}
+		},
+		onOpenModal() {
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
+			EventBus.$emit('upload-files:opened')
+			this.getAllTags()
+		},
+		onExternalClose() {
+			if (this.__uploadFilesClosingInternally) {
+				this.__uploadFilesClosingInternally = false
+				return
+			}
+			// compute safe tags source
+			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			if (tagsToEmit.length === 0) {
+				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
+			}
+			// mirror close behavior when dialog is toggled from outside
+			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags || [] })
+			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags || [] })
+			}
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
 		},
 
 		/**
@@ -485,11 +583,50 @@ export default {
 			window.open(nextcloudUrl, '_blank')
 		},
 
-		saveTags(file, editedTags) {
-			file.tags = editedTags
-			file.status = 'pending'
-			this.addAttachments(file)
+		async saveTags(file, editedTags) {
+			try {
+				if (file && file.id) {
+					const publication = objectStore.getActiveObject('publication')
+					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
+					const response = await fetch(endpoint, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ tags: editedTags }),
+					})
+
+					if (!response.ok) {
+						throw new Error(`Failed to update file tags: ${response.statusText}`)
+					}
+
+					try { file.tags = Array.isArray(editedTags) ? [...editedTags] : [] } catch (_) {}
+
+					const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+					const attachments = await getAttachments.json().catch(() => null)
+					try { objectStore.setCollection('publicationAttachments', attachments) } catch (_) {}
+					catalogStore.fetchPublications()
+
+					this.success = 'File labels updated successfully'
+					setTimeout(() => { this.success = null }, 3000)
+				} else {
+					file.tags = editedTags
+					file.status = 'pending'
+					const idMap = await this.addAttachments(file)
+					const newId = idMap && (idMap[file.name] || idMap[file.title] || null)
+					try { if (newId) file.id = newId } catch (_) {}
+				}
+			} catch (error) {
+				console.error('Error saving tags:', error)
+				this.error = 'Failed to save file labels: ' + (error?.message || error)
+				setTimeout(() => { this.error = null }, 5000)
+			} finally {
+				this.editingTags = null
+				this.editedTags = []
+			}
+		},
+
+		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
 		},
@@ -512,6 +649,7 @@ export default {
 
 			try {
 				let filesToUpload = []
+				const idMap = {}
 
 				if (specificFile) {
 					filesToUpload = [specificFile]
@@ -535,6 +673,14 @@ export default {
 						.then(response => {
 							if (response.status === 200) {
 								file.status = 'uploaded'
+								try {
+									const payload = Array.isArray(response?.data) ? response.data : []
+									const created = payload && payload[0]
+									if (created && created.id) {
+										file.id = created.id
+										idMap[file.name] = created.id
+									}
+								} catch (_) {}
 							} else {
 								file.status = 'failed'
 							}
@@ -569,6 +715,7 @@ export default {
 				}
 
 				this.updateUploadCounts()
+				if (specificFile) return idMap
 			} catch (err) {
 				this.error = err.response?.data?.error ?? err
 			} finally {
@@ -678,6 +825,22 @@ export default {
 <style>
 div[class='modal-container']:has(.TestMappingMainModal) {
     width: clamp(1000px, 100%, 1200px) !important;
+    z-index: 13000 !important;
+}
+div[class='modal-container']:has(.TestMappingMainModal) .modal-mask {
+    z-index: 12999 !important;
+}
+div[class='modal-container']:has(.TestMappingMainModal) .modal,
+div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
+    z-index: 13000 !important;
+}
+.modal-mask[aria-labelledby='AddAttachmentModal'] {
+    z-index: 13020 !important;
+}
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal-container,
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal,
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal__content {
+    z-index: 13021 !important;
 }
 </style>
 
