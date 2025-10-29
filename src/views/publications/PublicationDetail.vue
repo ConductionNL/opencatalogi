@@ -512,7 +512,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										{{ value.summary }}
 									</template>
 									<template #actions>
-										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); navigationStore.setSelected('themes')">
+										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); $router.push('/themes')">
 											<template #icon>
 												<OpenInApp :size="20" />
 											</template>
@@ -551,7 +551,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											{{ value.summary }}
 										</template>
 										<template #actions>
-											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setSelected('themes')">
+											<NcActionButton @click="themeStore.setThemeItem(value); $router.push('/themes')">
 												<template #icon>
 													<OpenInApp :size="20" />
 												</template>
@@ -785,8 +785,13 @@ export default {
 			return unpublished.every(unpubId => this.selectedAttachments.includes(unpubId))
 		},
 	},
+	watch: {
+		// React to route id changes by delegating to a named method
+		'$route.params.id': 'onRouteIdChange',
+	},
 	mounted() {
-		catalogStore.getPublicationAttachments()
+		// Ensure the active publication is loaded based on the router param, then load attachments
+		this.syncWithRoute()
 		this.getTags().then(({ response, data }) => {
 			this.labelOptionsEdit.options = data
 		})
@@ -799,6 +804,53 @@ export default {
 		}
 	},
 	methods: {
+		/**
+		 * Handle route id changes to load a different publication and its attachments
+		 * @param {string} newId - New publication ID from the route
+		 * @param {string} oldId - Previous publication ID from the route
+		 * @return {void}
+		 */
+		onRouteIdChange(newId, oldId) {
+			if (newId && newId !== oldId) {
+				this.syncWithRoute()
+			}
+		},
+
+		/**
+		 * Ensure active publication is loaded from the current route and attachments are fetched
+		 * @return {Promise<void>}
+		 */
+		async syncWithRoute() {
+			const id = this.$route?.params?.id
+			if (!id) return
+
+			await this.ensurePublicationLoadedFromRoute(id)
+			await catalogStore.getPublicationAttachments()
+		},
+
+		/**
+		 * Load publication by id via store and set it as active (includes @self.schema and @self.register)
+		 * @param {string} id - Publication ID
+		 * @return {Promise<void>}
+		 */
+		async ensurePublicationLoadedFromRoute(id) {
+			try {
+				// If already active and matches, skip fetch
+				if (objectStore.getActiveObject('publication')?.id === id) {
+					this.previousPublicationId = id
+					return
+				}
+
+				await objectStore.fetchObject('publication', id, { _extend: '@self.schema,@self.register' })
+				const publication = objectStore.getObject('publication', id)
+				if (publication) {
+					await objectStore.setActiveObject('publication', publication)
+					this.previousPublicationId = id
+				}
+			} catch (e) {
+				console.error('Failed to load publication from route:', e)
+			}
+		},
 		formatFileSize(size) {
 			if (size < 1024) return size + ' bytes'
 			if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB'
@@ -870,7 +922,12 @@ export default {
 				formData.append('tags[]', tag)
 			})
 
-			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.id}`, {
+			const publication = objectStore.getActiveObject('publication')
+			const register = publication['@self'].register
+			const schema = publication['@self'].schema
+			const id = publication.id
+
+			await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files/${attachment.id}`, {
 				method: 'PUT',
 				body: JSON.stringify({
 					tags: this.editedTags,

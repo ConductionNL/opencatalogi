@@ -94,7 +94,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					{{ publication?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setSelected('publication');">
+					<NcActionButton close-after-click @click="handleViewPublication(publication)">
 						<template #icon>
 							<ListBoxOutline :size="20" />
 						</template>
@@ -280,6 +280,15 @@ export default {
 		this.fetchPublicationType()
 	},
 	methods: {
+		handleViewPublication(publication) {
+			objectStore.setActiveObject('publication', publication)
+			const catalogId = publication?.catalog?.id || publication?.catalog
+			const catalogs = objectStore.getCollection('catalogus')?.results || []
+			const matchedCatalog = catalogs.find((c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''))
+			const slug = matchedCatalog?.slug || publication?.catalog?.slug || this.$route?.params?.catalogSlug
+			if (!slug || !publication?.id) return
+			this.$router.push(`/publications/${slug}/${publication.id}`)
+		},
 		cleanup() {
 			if (this.success === true) {
 				this.publicationItem = {

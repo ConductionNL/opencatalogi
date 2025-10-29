@@ -202,7 +202,7 @@ export default {
 					objectStore.setLoading('organization', false)
 					this.success = objectStore.getState('organization').success
 
-					navigationStore.setSelected('organizations')
+					this.$router.push('/organizations')
 					// Wait for the user to read the feedback then close the model
 					this.closeTimeout = setTimeout(() => {
 						this.closeModal()

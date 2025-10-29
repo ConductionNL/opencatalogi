@@ -85,7 +85,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					:name="publication.title || publication.name || publication.titel || publication.naam || publication.id"
 					:bold="false"
 					:force-display-actions="true"
-					:active="objectStore.getActiveObject('publication')?.id === publication.id"
+					:active="$route?.params?.id === publication.id"
 					:details="publication?.status"
 					@click="toggleActive(publication)">
 					<template #icon>
@@ -221,7 +221,8 @@ export default {
 			})
 		},
 		toggleActive(publication) {
-			objectStore.getActiveObject('publication')?.id === publication?.id ? objectStore.clearActiveObject('publication') : objectStore.setActiveObject('publication', publication)
+			objectStore.setActiveObject('publication', publication)
+			this.$router.push(`/publications/${this.$route?.params?.catalogSlug}/${publication.id}`)
 		},
 		handleCheckboxChange(key, event) {
 			const checked = event.target.checked

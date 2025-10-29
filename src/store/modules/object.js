@@ -758,13 +758,13 @@ export const useObjectStore = defineStore('object', {
 				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
-					_extend: params._extend || params.extend || '@self.schema',
+					_extend: params?._extend || params?.extend || '@self.schema',
 				}
 
 				// Add _source=database for types that aren't indexed in Solr
 				// This includes: menu, page, glossary, theme, organization, listing, catalog, audit-trails, uses, used, files
 				const nonIndexedTypes = ['menu', 'page', 'glossary', 'theme', 'organization', 'listing', 'catalog', 'audit-trails', 'uses', 'used', 'files']
-				if (nonIndexedTypes.includes(type) && !params._source && !params.source) {
+				if (nonIndexedTypes.includes(type) && !params?._source && !params?.source) {
 					queryParams._source = 'database'
 				}
 

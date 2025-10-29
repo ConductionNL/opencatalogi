@@ -6,7 +6,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcAppSidebar
 		:name="objectStore.getActiveObject('listing')?.title || 'Geen listing' "
 		:subname="objectStore.getActiveObject('listing')?.organization?.title">
-		<NcEmptyContent v-if="!objectStore.getActiveObject('listing')?.id || navigationStore.selected != 'directory'"
+		<NcEmptyContent v-if="!objectStore.getActiveObject('listing')?.id || $route.path !== '/directory'"
 			class="detailContainer"
 			name="Geen listing"
 			description="Nog geen listing geselecteerd, listings kan je ontdekken via (externe) directories.">
@@ -28,7 +28,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcButton>
 			</template>
 		</NcEmptyContent>
-		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
+		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && $route.path === '/directory'"
 			id="detail-tab"
 			name="Details"
 			:order="1">
@@ -70,7 +70,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</div>
 			</div>
 		</NcAppSidebarTab>
-		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
+		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && $route.path === '/directory'"
 			id="settings-tab"
 			name="Configuration"
 			:order="2">
@@ -97,7 +97,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				Synchronize
 			</NcButton>
 		</NcAppSidebarTab>
-		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && navigationStore.selected === 'directory'"
+		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && $route.path === '/directory'"
 			id="metdata-tab"
 			name="Publicatietype"
 			:order="3">

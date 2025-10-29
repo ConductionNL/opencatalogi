@@ -126,7 +126,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</template>
 										Edit
 									</NcActionButton>
-									<NcActionButton close-after-click @click="navigationStore.setSelected('publication'); navigationStore.setSelectedCatalogus(catalog?.id)">
+									<NcActionButton close-after-click @click="$router.push(`/publications/${catalog?.slug}`)">
 										<template #icon>
 											<OpenInApp :size="20" />
 										</template>
@@ -261,7 +261,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 												</template>
 												Edit
 											</NcActionButton>
-											<NcActionButton close-after-click @click="navigationStore.setSelected('publication'); navigationStore.setSelectedCatalogus(catalog?.id)">
+											<NcActionButton close-after-click @click="$router.push(`/publications/${catalog?.slug}`)">
 												<template #icon>
 													<OpenInApp :size="20" />
 												</template>
