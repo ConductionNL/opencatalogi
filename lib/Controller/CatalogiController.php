@@ -152,32 +152,33 @@ class CatalogiController extends Controller
         // Get catalog configuration from settings
         $catalogConfig = $this->getCatalogConfiguration();
 
-        // Get all catalogs using configuration
-        $config = [
-            'filters' => []
-        ];
+        // Retrieve all request parameters
+        $requestParams = $this->request->getParams();
+
+        // Build search query for searchObjectsPaginated
+        $searchQuery = $this->getObjectService()->buildSearchQuery($requestParams);
 
         // Add schema filter if configured
         if (!empty($catalogConfig['schema'])) {
-            $config['filters']['schema'] = $catalogConfig['schema'];
+            $searchQuery['@self']['schema'] = $catalogConfig['schema'];
         }
 
         // Add register filter if configured
         if (!empty($catalogConfig['register'])) {
-            $config['filters']['register'] = $catalogConfig['register'];
+            $searchQuery['@self']['register'] = $catalogConfig['register'];
         }
-        
-        $result = $this->getObjectService()->findAll($config);
-        
-        // Convert objects to arrays
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
-        ];
+
+        // Fetch catalog objects using searchObjectsPaginated
+        $result = $this->getObjectService()->searchObjectsPaginated(
+            query: $searchQuery,
+            rbac: false,
+            multi: false,
+            published: false,
+            deleted: false
+        );
 
         // Add CORS headers for public API access
+        $response = new JSONResponse($result);
         $response = new JSONResponse($data);
         $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);

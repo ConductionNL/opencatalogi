@@ -54,18 +54,25 @@ class ObjectUpdatedEventListener implements IEventListener
      */
     public function handle(Event $event): void
     {
-
-
-        // Verify this is the correct event type.
-        if ($event instanceof ObjectUpdatedEvent === false) {
-            return;
-        }
-
         try {
+            // Get logger first for all logging
+            $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+            
+            // TEST LOGGING TO SEE IF OPENCATALOGI LISTENER WORKS
+            $logger->debug("OPENCATALOGI_EVENT_LISTENER_CALLED_AT_" . date('Y-m-d_H:i:s'));
+            $logger->debug("OPENCATALOGI_EVENT_CLASS: " . get_class($event));
+
+            // Verify this is the correct event type.
+            if ($event instanceof ObjectUpdatedEvent === false) {
+                $logger->debug("OPENCATALOGI_NOT_OBJECTUPDATEDEVENT_SKIPPING");
+                return;
+            }
+            
+            $logger->debug("OPENCATALOGI_CONFIRMED_OBJECTUPDATEDEVENT_PROCESSING");
+
             // Get services from the server container
             $settingsService = \OC::$server->get(\OCA\OpenCatalogi\Service\SettingsService::class);
             $eventService = \OC::$server->get(\OCA\OpenCatalogi\Service\EventService::class);
-            $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
             
             // Check if any auto-publishing features are enabled before processing.
             $publishingOptions = $settingsService->getPublishingOptions();
@@ -110,7 +117,11 @@ class ObjectUpdatedEventListener implements IEventListener
             }
         } catch (\Exception $e) {
             // Log unexpected errors and continue gracefully.
-            error_log('OpenCatalogi: Exception in object update event listener: ' . $e->getMessage());
+            // Get logger if not already available
+            if (!isset($logger)) {
+                $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+            }
+            $logger->error('OpenCatalogi: Exception in object update event listener: ' . $e->getMessage(), ['exception' => $e]);
         }
 
     }//end handle()

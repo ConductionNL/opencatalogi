@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SafeParseReturnType, z } from 'zod'
-import { TPage } from './page.types'
+import { TPage, TPageContent } from './page.types'
 
 /**
  * Page class representing a page entity with validation
@@ -9,12 +9,13 @@ import { TPage } from './page.types'
 export class Page implements TPage {
 
 	public id: string
-	public uuid: string
 	public title: string
 	public slug: string
-	public contents: { type: string; id: string; data: Record<string, any> }[]
-	public createdAt: string
-	public updatedAt: string
+	public contents: TPageContent[] | null
+	public groups?: string[]
+
+	public hideAfterLogin?: boolean
+	public hideBeforeLogin?: boolean
 
 	/**
 	 * Creates a new Page instance
@@ -31,12 +32,14 @@ export class Page implements TPage {
 	 */
 	private hydrate(data: TPage) {
 		this.id = data?.id?.toString() || ''
-		this.uuid = data?.uuid || ''
 		this.title = data?.title || ''
 		this.slug = data?.slug || ''
-		this.contents = data?.contents || []
-		this.createdAt = data?.createdAt || ''
-		this.updatedAt = data?.updatedAt || ''
+		this.contents = Array.isArray(data?.contents) && data.contents.length > 0 ? data.contents : null
+		this.groups = data?.groups || []
+
+		this.hideAfterLogin = data?.hideAfterLogin || false
+		this.hideBeforeLogin = data?.hideBeforeLogin || false
+		// created/updated timestamps are not tracked on the entity level
 	}
 
 	/* istanbul ignore next */
@@ -56,8 +59,14 @@ export class Page implements TPage {
 					type: z.string().min(1, 'type is verplicht'),
 					id: z.string(),
 					data: z.record(z.string(), z.any()),
+					groups: z.array(z.string()).optional(),
+					hideAfterLogin: z.boolean().optional(),
+					hideBeforeLogin: z.boolean().optional(),
 				}),
-			),
+			).nullable(),
+			groups: z.array(z.string()).optional(),
+			hideAfterLogin: z.boolean().optional(),
+			hideBeforeLogin: z.boolean().optional(),
 		})
 
 		const result = schema.safeParse({

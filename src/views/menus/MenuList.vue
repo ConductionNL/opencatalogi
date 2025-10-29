@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('menu')"
-					label="Zoeken"
+					label="Search"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('menu') !== ''"
 					@update:value="(value) => objectStore.setSearchTerm('menu', value)"
@@ -29,7 +29,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcTextField>
 				<NcActions>
 					<NcActionButton
-						title="Bekijk de documentatie over menu's"
+						title="View the documentation about menus"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/menus', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
@@ -42,13 +42,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton close-after-click @click="openAddMenuModal">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Menu toevoegen
+						Add menu
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -71,25 +71,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton close-after-click @click="onActionButtonClick(menu, 'addMenuItem')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Menu item toevoegen
+							Add menu item
 						</NcActionButton>
 						<NcActionButton close-after-click @click="onActionButtonClick(menu, 'copyObject')">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Kopiëren
+							Copy
 						</NcActionButton>
 						<NcActionButton close-after-click @click="onActionButtonClick(menu, 'deleteObject')">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -102,7 +102,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				name="Menu's aan het laden" />
 
 			<div v-if="!objectStore.getCollection('menu').results.length" class="emptyListHeader">
-				Er zijn nog geen menu's gedefinieerd.
+				There are no menus defined.
 			</div>
 		</ul>
 	</NcAppContentList>
@@ -147,14 +147,14 @@ export default {
 			objectStore.getActiveObject('menu')?.id === menu?.id ? objectStore.clearActiveObject('menu') : objectStore.setActiveObject('menu', menu)
 		},
 		openAddMenuModal() {
-			navigationStore.setModal('menu')
+			navigationStore.setModal('viewMenu')
 			objectStore.clearActiveObject('menu')
 		},
 		onActionButtonClick(menu, action) {
 			objectStore.setActiveObject('menu', menu)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('menu')
+				navigationStore.setModal('viewMenu')
 				break
 			case 'addMenuItem':
 				navigationStore.setModal('menuItemForm')

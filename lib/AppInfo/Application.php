@@ -13,8 +13,10 @@ use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCP\IConfig;
 use OCP\App\IAppManager;
 
@@ -40,6 +42,11 @@ class Application extends App implements IBootstrap {
 		// Register event listeners for OpenRegister events
 		$context->registerEventListener(ObjectCreatedEvent::class, ObjectCreatedEventListener::class);
 		$context->registerEventListener(ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class);
+		
+		// Register catalog cache event listeners
+		$context->registerEventListener(ObjectCreatedEvent::class, CatalogCacheEventListener::class);
+		$context->registerEventListener(ObjectUpdatedEvent::class, CatalogCacheEventListener::class);
+		$context->registerEventListener(ObjectDeletedEvent::class, CatalogCacheEventListener::class);
 	}//end register
 
 	public function boot(IBootContext $context): void {

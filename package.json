@@ -16,13 +16,16 @@
     "test-coverage": "jest --silent --coverage",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css"
   },
-  "browserslist": [
-    "extends @nextcloud/browserslist-config"
-  ],
+  "browserslist": ["extends @nextcloud/browserslist-config"],
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-xml": "^6.0.1",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-brands-svg-icons": "6.6.0",
+    "@fortawesome/free-regular-svg-icons": "6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/vue-fontawesome": "^2.0.10",
+    "@kangc/v-md-editor": "^1.7.12",
     "@nextcloud/axios": "^2.5.0",
     "@nextcloud/dialogs": "^5.3.7",
     "@nextcloud/initial-state": "^2.2.0",
@@ -37,6 +40,7 @@
     "axios": "^1.7.4",
     "bootstrap-vue": "^2.23.1",
     "css-loader": "^6.8.1",
+    "highlight.js": "^11.11.1",
     "lodash": "^4.17.21",
     "pinia": "^2.2.2",
     "remark-cli": "^12.0.1",

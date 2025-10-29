@@ -8,7 +8,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('publication')"
-					label="Zoeken"
+					label="Search"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
 					@update:value="objectStore.setSearchTerm('publication', $event)"
@@ -16,7 +16,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionCaption name="Zoeken" />
+					<NcActionCaption name="Search" />
 					<NcActionCheckbox
 						:checked="conceptChecked"
 						:value="'concept'"
@@ -27,38 +27,38 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						:checked="gepubliceerdChecked"
 						:value="'gepubliceerd'"
 						@change="handleCheckboxChange('gepubliceerd', $event)">
-						Gepubliceerd
+						Published
 					</NcActionCheckbox>
 					<NcActionSeparator />
-					<NcActionCaption name="Sorteren" />
+					<NcActionCaption name="Sort" />
 					<NcActionInput
 						v-model="sortField"
 						type="multiselect"
-						input-label="Eigenschap"
-						:options="['Titel', 'Datum gepubliceerd', 'Datum aangepast']">
+						input-label="Property"
+						:options="['Title', 'Published date', 'Modified date']">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Kies een eigenschap
+						Choose a property
 					</NcActionInput>
 					<NcActionRadio
 						:checked="sortDirection === 'asc'"
 						name="sortDirection"
 						value="asc"
 						@update:checked="updateSortOrder('asc')">
-						Oplopend
+						Ascending
 					</NcActionRadio>
 					<NcActionRadio
 						:checked="sortDirection === 'desc'"
 						name="sortDirection"
 						value="desc"
 						@update:checked="updateSortOrder('desc')">
-						Aflopend
+						Descending
 					</NcActionRadio>
 					<NcActionSeparator />
-					<NcActionCaption name="Acties" />
+					<NcActionCaption name="Actions" />
 					<NcActionButton
-						title="Bekijk de documentatie over publicaties"
+						title="View the documentation about publications"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
@@ -69,13 +69,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.clearActiveObject('publication'); navigationStore.setModal('objectModal')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Publicatie toevoegen
+						Add publication
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -99,37 +99,37 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyPublication')">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Kopiëren
+							Copy
 						</NcActionButton>
 						<NcActionButton v-if="publication['@self'].published === null" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('publish')">
 							<template #icon>
 								<Publish :size="20" />
 							</template>
-							Publiceren
+							Publish
 						</NcActionButton>
 						<NcActionButton v-if="publication['@self'].published" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('depublish')">
 							<template #icon>
 								<PublishOff :size="20" />
 							</template>
-							Depubliceren
+							Depublish
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('AddAttachment')">
 							<template #icon>
 								<FilePlusOutline :size="20" />
 							</template>
-							Bijlage toevoegen
+							Add attachment
 						</NcActionButton>
 						<NcActionButton close-after-click class="publicationsList-actionsDelete" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -139,10 +139,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				:size="64"
 				class="loadingIcon"
 				appearance="dark"
-				name="Publicaties aan het laden" />
+				name="Publications are loading" />
 
 			<div v-if="!publicationsResults?.length" class="emptyListHeader">
-				Er zijn nog geen publicaties gedefinieerd.
+				There are no publications defined.
 			</div>
 		</ul>
 	</NcAppContentList>

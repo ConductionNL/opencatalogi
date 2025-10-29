@@ -8,7 +8,7 @@ description: >-
 
 ***
 
-Deze documentatie richt zich op het gebruik van onze beheerapplicatie, speciaal ontworpen voor het beheren van publicaties en catalogi binnen het federatief netwerk. De OpenCatalogi Nextcloud App is een eenvoudig te installeren:
+Deze documentatie richt zich op het gebruik van onze beheerapplicatie, speciaal ontworpen voor het beheren van publicaties en catalogi binnen het federatief netwerk. De OpenCatalogi Nextcloud App is een eenvoudig te installeren en krachtige oplossing voor publicatiebeheer:
 
 * [**Quickstart**](installatie/instructies.md) voor een test/demo-omgeving
 * [**Quickstart** ](developers/installatie-van-nextcloud-development-omgeving.md)voor een development-omgeving

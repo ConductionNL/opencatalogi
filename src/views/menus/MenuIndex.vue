@@ -41,6 +41,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							v-tooltip="'See menus as cards'"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							value="cards"
 							name="menus_view_mode"
 							type="radio"
@@ -52,6 +53,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							v-tooltip="'See menus as a table'"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							value="table"
 							name="menus_view_mode"
 							type="radio"
@@ -68,7 +70,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<NcActionButton
 							:primary="true"
 							close-after-click
-							@click="objectStore.clearActiveObject('menu'); navigationStore.setModal('menu')">
+							@click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
@@ -104,7 +106,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<MenuIcon v-else :size="64" />
 				</template>
 				<template v-if="!objectStore.isLoading('menu') && !objectStore.getCollection('menu')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('menu')">
+					<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
 						{{ t('opencatalogi', 'Add menu') }}
 					</NcButton>
 				</template>
@@ -125,12 +127,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<DotsHorizontal :size="20" />
 									</template>
 									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu')">
-										<template #icon>
-											<Eye :size="20" />
-										</template>
-										View
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('menu')">
 										<template #icon>
 											<Pencil :size="20" />
 										</template>
@@ -181,10 +177,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									<tr>
 										<td>{{ t('opencatalogi', 'Position') }}</td>
 										<td>
-											<span v-if="menu.position === 0">Header</span>
-											<span v-else-if="menu.position === 1">Navigation</span>
-											<span v-else-if="menu.position === 2">Footer</span>
-											<span v-else>{{ menu.position }}</span>
+											{{ menu.position }}
 										</td>
 										<td>{{ 'Configured' }}</td>
 									</tr>
@@ -240,10 +233,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</div>
 									</td>
 									<td>
-										<span v-if="menu.position === 0">Header</span>
-										<span v-else-if="menu.position === 1">Navigation</span>
-										<span v-else-if="menu.position === 2">Footer</span>
-										<span v-else>{{ menu.position }}</span>
+										{{ menu.position }}
 									</td>
 									<td>{{ menu.items?.length || 0 }}</td>
 									<td class="tableColumnConstrained">
@@ -256,12 +246,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 												<DotsHorizontal :size="20" />
 											</template>
 											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu')">
-												<template #icon>
-													<Eye :size="20" />
-												</template>
-												View
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('menu')">
 												<template #icon>
 													<Pencil :size="20" />
 												</template>
@@ -315,7 +299,6 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 
@@ -338,7 +321,6 @@ export default {
 		TrashCanOutline,
 		Refresh,
 		Plus,
-		Eye,
 		ContentCopy,
 		HelpCircleOutline,
 		PaginationComponent,

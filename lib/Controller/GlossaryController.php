@@ -135,7 +135,7 @@ class GlossaryController extends Controller
 
 
     /**
-     * Get all glossary terms.
+     * Get all glossary terms - OPTIMIZED with searchObjectsPaginated.
      *
      * @return JSONResponse The JSON response containing the list of glossary terms
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -148,33 +148,66 @@ class GlossaryController extends Controller
     {
         // Get glossary configuration from settings
         $glossaryConfig = $this->getGlossaryConfiguration();
-
-        // Build config for findAll to get glossary terms
-        $config = [
-            'filters' => []
-        ];
-
-        // Add schema filter if configured
-        if (!empty($glossaryConfig['schema'])) {
-            $config['filters']['schema'] = $glossaryConfig['schema'];
-        }
-
-        // Add register filter if configured
-        if (!empty($glossaryConfig['register'])) {
-            $config['filters']['register'] = $glossaryConfig['register'];
-        }
-
-        $result = $this->getObjectService()->findAll($config);
         
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+        // Get query parameters from request
+        $queryParams = $this->request->getParams();
+        
+        // Build search query
+        $searchQuery = $queryParams;
+        
+        // Clean up unwanted parameters
+        unset($searchQuery['id'], $searchQuery['_route']);
+
+        // Add schema filter if configured - use proper OpenRegister syntax
+        if (!empty($glossaryConfig['schema'])) {
+            $searchQuery['@self']['schema'] = $glossaryConfig['schema'];
+        }
+
+        // Add register filter if configured - use proper OpenRegister syntax
+        if (!empty($glossaryConfig['register'])) {
+            $searchQuery['@self']['register'] = $glossaryConfig['register'];
+        }
+
+        // Force use of SOLR index for better performance on public endpoints
+        $searchQuery['_source'] = 'index';
+
+        // Use searchObjectsPaginated for better performance and pagination support
+        // Set rbac=false, multi=false, published=true for public glossary access
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+        
+        // Build paginated response structure
+        $responseData = [
+            'results' => $result['results'] ?? [],
+            'total' => $result['total'] ?? 0,
+            'limit' => $result['limit'] ?? 20,
+            'offset' => $result['offset'] ?? 0,
+            'page' => $result['page'] ?? 1,
+            'pages' => $result['pages'] ?? 1
         ];
+        
+        // Add pagination links if present
+        if (isset($result['next'])) {
+            $responseData['next'] = $result['next'];
+        }
+        if (isset($result['prev'])) {
+            $responseData['prev'] = $result['prev'];
+        }
+        
+        // Add facets if present
+        if (isset($result['facets'])) {
+            $facetsData = $result['facets'];
+            // Unwrap nested facets if needed
+            if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
+                $facetsData = $facetsData['facets'];
+            }
+            $responseData['facets'] = $facetsData;
+        }
+        if (isset($result['facetable'])) {
+            $responseData['facetable'] = $result['facetable'];
+        }
 
         // Add CORS headers for public API access
-        $response = new JSONResponse($data);
+        $response = new JSONResponse($responseData);
         $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -199,7 +232,19 @@ class GlossaryController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        $glossaryTerm = $this->getObjectService()->find($id);
+        // Use searchObjectsPaginated to find single glossary term with published=true filter
+        $searchQuery = [
+            '_ids' => [$id],
+            '_limit' => 1,
+            '_source' => 'index'  // Force use of SOLR index for better performance
+        ];
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+        
+        if (empty($result['results'])) {
+            return new JSONResponse(['error' => 'Glossary term not found'], 404);
+        }
+        
+        $glossaryTerm = $result['results'][0];
         
         $data = $glossaryTerm instanceof \OCP\AppFramework\Db\Entity ? $glossaryTerm->jsonSerialize() : $glossaryTerm;
         

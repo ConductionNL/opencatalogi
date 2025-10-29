@@ -26,7 +26,7 @@ import { getTheme } from '../../services/getTheme.js'
 				:primary="true"
 				:menu-name="objectStore.isLoading('page') ? 'Laden...' : 'Acties'"
 				:inline="1"
-				title="Acties die je kan uitvoeren op deze pagina">
+				title="Actions you can perform on this page">
 				<template #icon>
 					<span>
 						<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" appearance="dark" />
@@ -34,7 +34,7 @@ import { getTheme } from '../../services/getTheme.js'
 					</span>
 				</template>
 				<NcActionButton
-					title="Bekijk de documentatie over paginas"
+					title="View the documentation about pages"
 					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/paginas')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
@@ -45,32 +45,32 @@ import { getTheme } from '../../services/getTheme.js'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcActionButton>
 				<NcActionButton close-after-click @click="onActionButtonClick(page, 'addContent')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					Content toevoegen
+					Add content
 				</NcActionButton>
 				<NcActionButton close-after-click @click="onActionButtonClick(page, 'copyObject')">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
-					Kopiëren
+					Copy
 				</NcActionButton>
 				<NcActionButton close-after-click @click="onActionButtonClick(page, 'deleteObject')">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					Verwijderen
+					Delete
 				</NcActionButton>
 			</NcActions>
 		</div>
 		<div class="pageDetailContent">
 			<div class="pageDetailGrid">
 				<div>
-					<b>Titel:</b>
+					<b>Title:</b>
 					<span>{{ page?.title }}</span>
 				</div>
 				<div>
@@ -78,7 +78,7 @@ import { getTheme } from '../../services/getTheme.js'
 					<span>{{ page?.slug }}</span>
 				</div>
 				<div>
-					<b>Laatst bijgewerkt:</b>
+					<b>Last updated:</b>
 					<span>{{ page?.updatedAt ? new Date(page.updatedAt).toLocaleDateString() : '-' }}</span>
 				</div>
 			</div>
@@ -112,7 +112,7 @@ import { getTheme } from '../../services/getTheme.js'
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Bewerken
+											Edit
 										</NcActionButton>
 										<NcActionButton close-after-click
 											:disabled="saveContentsLoading"
@@ -120,7 +120,7 @@ import { getTheme } from '../../services/getTheme.js'
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Verwijderen
+											Delete
 										</NcActionButton>
 									</template>
 								</NcListItem>
@@ -128,11 +128,11 @@ import { getTheme } from '../../services/getTheme.js'
 						</VueDraggable>
 						<NcButton :disabled="(JSON.stringify(page?.contents) === JSON.stringify(pageContents)) || saveContentsLoading"
 							@click="savePageContents">
-							Opslaan
+							Save
 						</NcButton>
 					</div>
 					<div v-else>
-						Geen page content gevonden
+						No page content found
 					</div>
 				</BTab>
 			</BTabs>
@@ -264,7 +264,7 @@ export default {
 			objectStore.setActiveObject('page', page)
 			switch (action) {
 			case 'edit':
-				navigationStore.setModal('page')
+				navigationStore.setModal('viewPage')
 				break
 			case 'addContent':
 				navigationStore.setModal('pageContentForm')

@@ -41,6 +41,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							v-tooltip="'See pages as cards'"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							value="cards"
 							name="pages_view_mode"
 							type="radio"
@@ -52,6 +53,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							v-tooltip="'See pages as a table'"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							value="table"
 							name="pages_view_mode"
 							type="radio"
@@ -68,7 +70,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 						<NcActionButton
 							:primary="true"
 							close-after-click
-							@click="objectStore.clearActiveObject('page'); navigationStore.setModal('page')">
+							@click="objectStore.clearActiveObject('page'); navigationStore.setModal('viewPage')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
@@ -104,7 +106,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<Web v-else :size="64" />
 				</template>
 				<template v-if="!objectStore.isLoading('page') && !objectStore.getCollection('page')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('page'); navigationStore.setModal('page')">
+					<NcButton type="primary" @click="objectStore.clearActiveObject('page'); navigationStore.setModal('viewPage')">
 						{{ t('opencatalogi', 'Add page') }}
 					</NcButton>
 				</template>
@@ -125,12 +127,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<DotsHorizontal :size="20" />
 									</template>
 									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
-										<template #icon>
-											<Eye :size="20" />
-										</template>
-										View
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('page')">
 										<template #icon>
 											<Pencil :size="20" />
 										</template>
@@ -242,12 +238,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 											</template>
 											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
 												<template #icon>
-													<Eye :size="20" />
-												</template>
-												View
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('page')">
-												<template #icon>
 													<Pencil :size="20" />
 												</template>
 												Edit
@@ -300,7 +290,6 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
 
@@ -322,7 +311,6 @@ export default {
 		TrashCanOutline,
 		Refresh,
 		Plus,
-		Eye,
 		ContentCopy,
 		HelpCircleOutline,
 		PaginationComponent,

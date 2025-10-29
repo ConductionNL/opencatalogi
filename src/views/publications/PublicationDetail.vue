@@ -11,9 +11,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 			<NcActions :disabled="objectStore.isLoading('publication')"
 				:primary="true"
-				:menu-name="objectStore.isLoading('publication') ? 'Laden...' : 'Acties'"
+				:menu-name="objectStore.isLoading('publication') ? 'Loading...' : 'Actions'"
 				:inline="1"
-				title="Acties die je kan uitvoeren op deze publicatie">
+				title="Actions you can perform on this publication">
 				<template #icon>
 					<span>
 						<NcLoadingIcon v-if="objectStore.isLoading('publication')" :size="20" appearance="dark" />
@@ -21,7 +21,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					</span>
 				</template>
 				<NcActionButton close-after-click
-					title="Bekijk de documentatie over publicaties"
+					title="View the documentation about publications"
 					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
@@ -32,13 +32,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('copyPublication')">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
-					Kopiëren
+					Copy
 				</NcActionButton>
 				<NcActionButton v-if="objectStore.getActiveObject('publication')['@self']?.published === null"
 					close-after-click
@@ -46,7 +46,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<template #icon>
 						<Publish :size="20" />
 					</template>
-					Publiceren
+					Publish
 				</NcActionButton>
 				<NcActionButton v-if="objectStore.getActiveObject('publication')['@self']?.published"
 					close-after-click
@@ -54,44 +54,44 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<template #icon>
 						<PublishOff :size="20" />
 					</template>
-					Depubliceren
+					Depublish
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('downloadPublication')">
 					<template #icon>
 						<Download :size="20" />
 					</template>
-					Downloaden
+					Download
 				</NcActionButton>
 				<NcActionButton close-after-click disabled>
 					<template #icon>
 						<FolderOutline :size="20" />
 					</template>
-					Bijlage toevoegen
+					Add attachment
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					Verwijderen
+					Delete
 				</NcActionButton>
 			</NcActions>
 		</div>
 		<div class="container">
 			<div class="detailGrid">
 				<div v-if="publication.reference">
-					<b>Referentie:</b>
+					<b>Reference:</b>
 					<span>{{ publication.reference }}</span>
 				</div>
 				<div v-if="publication.summary">
-					<b>Samenvatting:</b>
+					<b>Summary:</b>
 					<span>{{ publication.summary || '-' }}</span>
 				</div>
 				<div v-if="publication.description">
-					<b>Beschrijving:</b>
+					<b>Description:</b>
 					<span>{{ publication.description || '-' }}</span>
 				</div>
 				<div v-if="publication.category">
-					<b>Categorie:</b>
+					<b>Category:</b>
 					<span>{{ publication.category || '-' }}</span>
 				</div>
 				<div v-if="publication.portal">
@@ -100,15 +100,15 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						publication.portal || '-' }}</a></span>
 				</div>
 				<div v-if="publication.image">
-					<b>Afbeelding:</b>
+					<b>Image:</b>
 					<span>{{ publication.image || '-' }}</span>
 				</div>
 				<div v-if="publication.featured">
-					<b>Uitgelicht:</b>
-					<span>{{ publication.featured ? "Ja" : "Nee" }}</span>
+					<b>Featured:</b>
+					<span>{{ publication.featured ? "Yes" : "No" }}</span>
 				</div>
 				<div v-if="publication.license">
-					<b>Licentie:</b>
+					<b>License:</b>
 					<span>{{ publication.license || '-' }}</span>
 				</div>
 				<div v-if="publication.status">
@@ -116,19 +116,19 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<span>{{ publication.status || '-' }}</span>
 				</div>
 				<div v-if="publication.published">
-					<b>Gepubliceerd:</b>
+					<b>Published:</b>
 					<span>{{ new Date(publication.published).toLocaleDateString() || '-' }}</span>
 				</div>
 				<div v-if="publication.modified">
-					<b>Gewijzigd:</b>
+					<b>Modified:</b>
 					<span>{{ publication.modified || '-' }}</span>
 				</div>
 				<div v-if="publication.source">
-					<b>Bron:</b>
+					<b>Source:</b>
 					<span>{{ publication.source || '-' }}</span>
 				</div>
 				<div v-if="publication.catalogi">
-					<b>Catalogi:</b>
+					<b>Catalog:</b>
 					<span v-if="catalogiLoading">Loading...</span>
 					<div v-if="!catalogiLoading" class="buttonLinkContainer">
 						<span>{{ catalogi?.title }}</span>
@@ -170,17 +170,17 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		</div>
 		<div class="tabContainer">
 			<BTabs content-class="mt-3" justified>
-				<BTab title="Bijlagen" active>
+				<BTab title="Attachments" active>
 					<div class="tabPanel">
 						<div class="buttonsContainer">
 							<NcButton type="primary"
 								class="fullWidthButton"
-								aria-label="Bijlage toevoegen"
+								aria-label="Add attachment"
 								@click="addAttachment">
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Bijlage toevoegen
+								Add attachment
 							</NcButton>
 							<NcButton type="secondary"
 								aria-label="Open map"
@@ -194,7 +194,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								class="checkboxListActionButton"
 								:menu-name="objectStore.isLoading('publicationAttachments') ? 'Laden...' : 'Acties'"
 								:inline="0"
-								title="Acties die je kan uitvoeren op deze publicatie">
+								title="Actions you can perform on this publication">
 								<template #icon>
 									<span>
 										<NcLoadingIcon v-if="objectStore.isLoading('publicationAttachments')" :size="20" appearance="dark" />
@@ -206,32 +206,32 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										<SelectAllIcon v-if="!allPublishedSelected" :size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allPublishedSelected ? "Selecteer" : "Deselecteer" }} alle gepubliceerde bijlagen
+									{{ !allPublishedSelected ? "Select" : "Deselect" }} all published attachments
 								</NcActionButton>
 								<NcActionButton close-after-click @click="selectAllAttachments('unpublished')">
 									<template #icon>
 										<SelectAllIcon v-if="!allUnpublishedSelected" :size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allUnpublishedSelected ? "Selecteer" : "Deselecteer" }} alle ongepubliceerde bijlagen
+									{{ !allUnpublishedSelected ? "Select" : "Deselect" }} all unpublished attachments
 								</NcActionButton>
 								<NcActionButton v-if="selectedUnpublishedCount > 0" close-after-click @click="bulkPublish">
 									<template #icon>
 										<Publish :size="20" />
 									</template>
-									Publiceer {{ selectedUnpublishedCount }} bijlage{{ selectedUnpublishedCount > 1 ? 'n' : '' }}
+									Publish {{ selectedUnpublishedCount }} attachment{{ selectedUnpublishedCount > 1 ? 's' : '' }}
 								</NcActionButton>
 								<NcActionButton v-if="selectedPublishedCount > 0" close-after-click @click="bulkDepublish">
 									<template #icon>
 										<PublishOff :size="20" />
 									</template>
-									Depubliceer {{ selectedPublishedCount }} bijlage{{ selectedPublishedCount > 1 ? 'n' : '' }}
+									Depublish {{ selectedPublishedCount }} attachment{{ selectedPublishedCount > 1 ? 's' : '' }}
 								</NcActionButton>
 								<NcActionButton v-if="selectedAttachments.length > 0" close-after-click @click="bulkDeleteAttachments">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									Verwijder {{ selectedAttachmentsEntities.length }} bijlage{{ selectedAttachmentsEntities.length > 1 ? 'n' : '' }}
+									Delete {{ selectedAttachmentsEntities.length }} attachment{{ selectedAttachmentsEntities.length > 1 ? 's' : '' }}
 								</NcActionButton>
 							</NcActions>
 						</div>
@@ -275,7 +275,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 												:taggable="true"
 												:multiple="true"
 												:aria-label-combobox="labelOptionsEdit.inputLabel"
-												:options="labelOptionsEdit.options" />
+												:options="labelOptionsEdit.options"
+												@tag="addNewTag" />
 											<NcButton
 												v-tooltip="'Labels opslaan'"
 												class="editTagsButton"
@@ -290,14 +291,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										</div>
 									</template>
 									<template #subname>
-										{{ attachment?.published ? new Date(attachment?.published).toLocaleDateString() : "Niet gepubliceerd" }} - {{ attachment?.type || 'Geen type' }}
+										{{ attachment?.published ? new Date(attachment?.published).toLocaleDateString() : "Unpublished" }} - {{ attachment?.type || 'No type' }}
 									</template>
 									<template #actions>
 										<NcActionButton close-after-click @click="openFile(attachment)">
 											<template #icon>
 												<OpenInNew :size="20" />
 											</template>
-											Bekijk bestand
+											View file
 										</NcActionButton>
 										<NcActionButton v-if="!attachment.published"
 											close-after-click
@@ -305,7 +306,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<Publish :size="20" />
 											</template>
-											Publiceren
+											Publish
 										</NcActionButton>
 										<NcActionButton v-if="attachment.published"
 											close-after-click
@@ -313,13 +314,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<PublishOff :size="20" />
 											</template>
-											Depubliceren
+											Depublish
 										</NcActionButton>
 										<NcActionButton close-after-click @click="deleteFile(attachment)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Verwijderen
+											Delete
 										</NcActionButton>
 										<NcActionButton v-if="editingTags !== attachment.title"
 											close-after-click
@@ -327,7 +328,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<TagEdit :size="20" />
 											</template>
-											Tags bewerken
+											Edit tags
 										</NcActionButton>
 										<NcActionButton v-if="editingTags === attachment.title"
 											close-after-click
@@ -335,7 +336,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<TagOff :size="20" />
 											</template>
-											Stop tags bewerken
+											Stop editing tags
 										</NcActionButton>
 									</template>
 								</NcListItem>
@@ -344,9 +345,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<div class="paginationContainer">
 								<BPagination v-model="currentPage" :total-rows="publicationAttachments?.total" :per-page="limit" />
 								<div>
-									<span>Aantal per pagina</span>
+									<span>Number of items per page</span>
 									<NcSelect v-model="limit"
-										aria-label-combobox="Aantal per pagina"
+										aria-label-combobox="Number of items per page"
 										class="limitSelect"
 										:options="limitOptions.options"
 										:taggable="true"
@@ -357,7 +358,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 						<div v-if="publicationAttachments?.length === 0">
 							<b class="emptyStateMessage">
-								Nog geen bijlage toegevoegd
+								No attachments added yet
 							</b>
 						</div>
 
@@ -366,7 +367,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<NcLoadingIcon :size="64"
 								class="loadingIcon"
 								appearance="dark"
-								name="Bijlagen aan het laden" />
+								name="Attachments are loading" />
 						</div>
 					</div>
 				</BTab>
@@ -458,19 +459,19 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div class="buttonsContainer">
 							<NcButton type="primary"
 								class="fullWidthButton"
-								aria-label="Thema toevoegen"
+								aria-label="Add theme"
 								@click="navigationStore.setModal('addPublicationTheme')">
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Thema toevoegen
+								Add theme
 							</NcButton>
 							<NcActions :disabled="objectStore.isLoading('themes')"
 								:primary="true"
 								class="checkboxListActionButton"
 								:menu-name="objectStore.isLoading('themes') ? 'Laden...' : 'Acties'"
 								:inline="0"
-								title="Acties die je kan uitvoeren op deze publicatie">
+								title="Actions you can perform on this publication">
 								<template #icon>
 									<span>
 										<NcLoadingIcon v-if="objectStore.isLoading('themes')" :size="20" appearance="dark" />
@@ -482,13 +483,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										<SelectAllIcon v-if="!allThemesSelected" :size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allThemesSelected ? "Selecteer" : "Deselecteer" }} alle thema's
+									{{ !allThemesSelected ? "Select" : "Deselect" }} all themes
 								</NcActionButton>
 								<NcActionButton close-after-click :disabled="selectedThemes.length === 0" @click="bulkDeleteThemes">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									Verwijder {{ selectedThemes.length }} thema{{ selectedThemes.length > 1 || selectedThemes.length === 0 ? "'s" : '' }}
+									Delete {{ selectedThemes.length }} theme{{ selectedThemes.length > 1 || selectedThemes.length === 0 ? "'s" : '' }}
 								</NcActionButton>
 							</NcActions>
 						</div>
@@ -515,13 +516,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<OpenInApp :size="20" />
 											</template>
-											Bekijken
+											View
 										</NcActionButton>
 										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); navigationStore.setDialog('deletePublicationThemeDialog')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Verwijderen
+											Delete
 										</NcActionButton>
 									</template>
 								</NcListItem>
@@ -536,7 +537,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										:size="44" />
 								</template>
 								<template #subname>
-									Thema {{ value }} bestaat niet, het is aan te raden om het te verwijderen van deze publicatie.
+									Theme {{ value }} does not exist, it is recommended to delete it from this publication.
 								</template>
 								<template #actions>
 									<NcActionButton close-after-click :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
@@ -554,13 +555,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 												<template #icon>
 													<OpenInApp :size="20" />
 												</template>
-												Bekijken
+												View
 											</NcActionButton>
 											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setDialog('deletePublicationThemeDialog')">
 												<template #icon>
 													<Delete :size="20" />
 												</template>
-												Verwijderen
+												Delete
 											</NcActionButton>
 										</template>
 									</ncactionbutton>
@@ -577,30 +578,30 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									:size="44" />
 							</template>
 							<template #subname>
-								Thema {{ value }} bestaat niet, het is aan te raden om het te verwijderen van deze publicatie.
+								Theme {{ value }} does not exist, it is recommended to delete it from this publication.
 							</template>
 							<template #actions>
 								<NcActionButton :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									Verwijderen
+									Delete
 								</NcActionButton>
 							</template>
 						</NcListItem>
 					</div>
 					<div v-if="!filteredThemes?.length && !missingThemes?.length" class="tabPanel">
 						<b class="emptyStateMessage">
-							Geen thema's gevonden
+							No themes found
 						</b>
 					</div>
 				</BTab>
 				<BTab title="Logging">
 					<table width="100%">
 						<tr>
-							<th><b>Tijdstip</b></th>
-							<th><b>Gebruiker</b></th>
-							<th><b>Actie</b></th>
+							<th><b>Timestamp</b></th>
+							<th><b>User</b></th>
+							<th><b>Action</b></th>
 							<th><b>Details</b></th>
 						</tr>
 						<tr>
@@ -612,7 +613,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									<template #icon>
 										<TimelineQuestionOutline :size="20" />
 									</template>
-									Bekijk details
+									View details
 								</NcButton>
 							</td>
 						</tr>
@@ -621,23 +622,23 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<BTab v-if="1 == 2" title="Rechten">
 					<table width="100%">
 						<tr>
-							<td>Deze publicatie is <b v-if="prive">NIET</b> openbaar toegankelijk</td>
+							<td>This publication is <b v-if="prive">NOT</b> publicly accessible</td>
 							<td>
 								<NcButton @click="prive = !prive">
 									<template #icon>
 										<LockOpenVariantOutline v-if="!prive" :size="20" />
 										<LockOutline v-if="prive" :size="20" />
 									</template>
-									<span v-if="!prive">Privé maken</span>
-									<span v-if="prive">Openbaar maken</span>
+									<span v-if="!prive">Make private</span>
+									<span v-if="prive">Make public</span>
 								</NcButton>
 							</td>
 						</tr>
 						<tr v-if="prive">
-							<td>Gebruikersgroepen</td>
+							<td>User groups</td>
 							<td>
 								<NcSelectTags v-model="userGroups"
-									input-label="gebruikers groepen"
+									input-label="user groups"
 									:multiple="true" />
 							</td>
 						</tr>
@@ -650,7 +651,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						:options="chart.options"
 						:series="chart.series" />
 					<NcNoteCard type="info">
-						<p>Er zijn nog geen statistieken over deze publicatie bekend</p>
+						<p>There are no statistics known about this publication</p>
 					</NcNoteCard>
 				</BTab>
 			</BTabs>
@@ -836,6 +837,18 @@ export default {
 			this.editingTags = attachment.title
 			this.editedTags = attachment.labels
 		},
+		addNewTag(newTag) {
+			if (!newTag) return
+			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+				this.labelOptionsEdit.options = []
+			}
+			if (!this.labelOptionsEdit.options.includes(newTag)) {
+				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+			}
+			if (!this.editedTags?.includes(newTag)) {
+				this.editedTags = [...(this.editedTags || []), newTag]
+			}
+		},
 		async getTags() {
 			const response = await fetch(
 				'/index.php/apps/openregister/api/tags',
@@ -857,7 +870,7 @@ export default {
 				formData.append('tags[]', tag)
 			})
 
-			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.title}`, {
+			await fetch(`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/files/${attachment.id}`, {
 				method: 'PUT',
 				body: JSON.stringify({
 					tags: this.editedTags,
@@ -913,7 +926,7 @@ export default {
 			this.publishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
-			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.title}/publish`, {
+			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/publish`, {
 				method: 'POST',
 			}).catch((error) => {
 				console.error('Error publishing file:', error)
@@ -922,13 +935,14 @@ export default {
 					this.publishLoading.splice(this.publishLoading.indexOf(attachment.id), 1)
 					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
 				})
+				catalogStore.fetchPublications()
 			})
 		},
 		depublishFile(attachment) {
 			this.depublishLoading.push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
-			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.title}/depublish`, {
+			return fetch(`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/depublish`, {
 				method: 'POST',
 			}).catch((error) => {
 				console.error('Error depublishing file:', error)
@@ -937,6 +951,7 @@ export default {
 					this.depublishLoading.splice(this.depublishLoading.indexOf(attachment.id), 1)
 					this.fileIdsLoading.splice(this.fileIdsLoading.indexOf(attachment.id), 1)
 				})
+				catalogStore.fetchPublications()
 			})
 		},
 		deleteFile(attachment) {
