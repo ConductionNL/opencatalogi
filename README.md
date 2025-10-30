@@ -24,3 +24,37 @@ Deze documentatie is bedoeld voor diverse doelgroepen:
 Voor meer informatie over OpenCatalogi en onze gemeenschappelijke inspanningen, bezoek onze [documentatie-pagina](https://documentatie.opencatalogi.nl) of de officiële website op [OpenCatalogi.nl](https://opencatalogi.nl).
 
 Veel succes met het gebruik van de app. Voor vragen of bijdragen, neem gerust contact met ons op via [support@conduction.nl](mailto:support@conduction.nl).
+
+## Robots.txt and sitemap.xml
+
+This app has a robots.txt that exposes public endpoints for search engine indexing and service discovery.
+The public endpoints are fetchable publications for a specific catalog. Each catalog has its own sitemap which can link to other public urls on its own.
+
+### Endpoints
+| Endpoint | Description |
+|-----------|--------------|
+| `{domain}/apps/opencatalogi/robots.txt` | Lists all catalog sitemap URLs. |
+| `{domain}/apps/opencatalogi/{catalogiSlug}/sitemap.xml` | Sitemap for a specific catalog. |
+
+### Examples
+
+Robots.txt:
+
+```
+User-agent: *
+Disallow:
+Sitemap: https://cloud.example.com/index.php/apps/opencatalogi/catalogSlug/sitemap.xml
+Sitemap: https://cloud.example.com/index.php/apps/opencatalogi/catalogSlug/sitemap.xml
+```
+Sitemap.xml:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://cloud.example.com/index.php/apps/opencatalogi/catalogSlug/publications</loc>
+    <lastmod>2025-10-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+```

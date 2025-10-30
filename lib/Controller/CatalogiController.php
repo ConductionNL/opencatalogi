@@ -5,12 +5,15 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use OCP\IURLGenerator;
+
 
 /**
  * Class CatalogiController
@@ -64,7 +67,8 @@ class CatalogiController extends Controller
         private readonly IAppManager $appManager,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-        int $corsMaxAge = 1728000
+        int $corsMaxAge = 1728000,
+        private readonly IURLGenerator $urlGenerator
     ) {
         parent::__construct($appName, $request);
         $this->corsMethods = $corsMethods;
@@ -211,6 +215,58 @@ class CatalogiController extends Controller
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+
+        return $response;
+
+    }//end show()
+
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     */
+    public function sitemap(string | int $id): Response
+    {
+        // Get all objects using the catalog's registers and schemas as filters
+        $catalog = $this->catalogiService->index($id);
+
+        $response = new Response();
+        // Add CORS headers for public API access
+        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+
+
+        $baseUrl = $this->urlGenerator->getAbsoluteURL('/') . 'apps/opencatalogi/';
+
+        // Build the XML string
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><urlset/>');
+        $xml->addAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+
+        $urlElement = $xml->addChild('url');
+        $urlElement->addChild('loc', htmlspecialchars($baseUrl . $catalog['slug'], ENT_XML1));
+        $urlElement->addChild('lastmod', $url['lastmod']);
+        $urlElement->addChild('changefreq', $url['changefreq']);
+        $urlElement->addChild('priority', $url['priority']);
+
+        // foreach ($urls as $url) {
+        //     $urlElement = $xml->addChild('url');
+        //     $urlElement->addChild('loc', htmlspecialchars($url['loc'], ENT_XML1));
+        //     $urlElement->addChild('lastmod', $url['lastmod']);
+        //     $urlElement->addChild('changefreq', $url['changefreq']);
+        //     $urlElement->addChild('priority', $url['priority']);
+        // }
+
+        $xmlString = $xml->asXML();
+
+        $response->setStatus(200);
+        $response->addHeader('Content-Type', 'application/xml; charset=utf-8');
+        $response->addHeader('Access-Control-Allow-Origin', '*');
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->setContent($xmlString);
 
         return $response;
 

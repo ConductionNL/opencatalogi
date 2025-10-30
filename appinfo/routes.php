@@ -19,6 +19,8 @@ return [
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
 		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
+		['name' => 'catalogi#sitemap', 'url' => '/api/catalogi/{id}/sitemaps', 'verb' => 'OPTIONS'],
+		['name' => 'robots#robots', 'url' => '/api/robots.txt', 'verb' => 'OPTIONS'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
@@ -48,7 +50,7 @@ return [
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
-		 * 
+		 *
 		 * IMPORTANT: Routes are matched in order from top to bottom.
 		 * Specific routes MUST come BEFORE wildcard routes to avoid incorrect matching.
 		 */
