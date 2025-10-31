@@ -302,7 +302,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 											:key="`cell-${publication['@self']?.id || publication.id}-${column.id || column.key || `col-${index}`}`"
 											:class="getClassName(column.id)">
 											<span v-if="column.id === 'meta_files'" :class="`${column.id === 'meta_files' ? 'metaFilesContent' : ''}`">
-												<NcCounterBubble :count="Array.isArray(publication['@self']?.files) ? publication['@self'].files.length : (publication['@self']?.files ? 1 : 0)" />
+												<NcCounterBubble :count="getFilesCount(publication)" />
 											</span>
 											<span v-else-if="column.id === 'meta_created' || column.id === 'meta_updated'">
 												{{ getValidISOstring(publication['@self']?.[column.key]) ? new Date(publication['@self'][column.key]).toLocaleString() : 'N/A' }}
@@ -527,6 +527,16 @@ export default {
 		objectStore.updateColumnFilter('meta_depublished', false)
 	},
 	methods: {
+		getFilesCount(publication) {
+			const countFromSelf = publication?.['@self']?.filesCount || publication?.['@self']?.attachmentsCount || publication?.['@self']?.attachmentCount
+			if (typeof countFromSelf === 'number') return countFromSelf
+			const filesProp = publication?.['@self']?.files
+			if (Array.isArray(filesProp)) return filesProp.length
+			if (filesProp) return 1
+			const pubId = publication?.['@self']?.id || publication?.id
+			const pagination = objectStore.getPagination && pubId ? objectStore.getPagination('publication_files') : null
+			return pagination?.total || 0
+		},
 		setViewMode(mode) {
 			console.info('Setting view mode to:', mode)
 			this.viewMode = mode
