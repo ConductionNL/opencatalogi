@@ -513,7 +513,6 @@ export default {
 			})
 		},
 	},
-
 	mounted() {
 		console.info('PublicationTable mounted, fetching publications...')
 

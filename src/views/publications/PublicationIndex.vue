@@ -13,7 +13,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 		<!-- Show new table view if use_old_style_publishing_view is false (default) -->
 		<!-- NEW: Only show table view if no publication ID is provided, otherwise go to details page -->
-		<PublicationTable v-else-if="!useOldStyleView && !$route.params.id" />
+		<PublicationTable v-else-if="!useOldStyleView && !$route.params.id" :key="$route.params.catalogSlug" />
 
 		<!-- Show old style view if use_old_style_publishing_view is true -->
 		<NcAppContent v-else>
