@@ -1,5 +1,6 @@
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
@@ -1400,8 +1401,60 @@ export default {
 		objectStore.fetchCollection('theme')
 		// Fetch tags for the label options dropdown
 		this.getAllTags()
+		// Listen to tags updates from UploadFiles modal
+		EventBus.$on('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
+		EventBus.$on('upload-files:closed', this.onUploadFilesClosed)
+	},
+	destroyed() {
+		try {
+			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
+			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
+		} catch (e) {
+			// ignore
+		}
 	},
 	methods: {
+		onUploadFilesTagsUpdated(payload) {
+			try {
+				const tags = Array.isArray(payload && payload.tags) ? payload.tags : []
+				const newTags = Array.isArray(payload && payload.newTags) ? payload.newTags : []
+				console.info('>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES', {
+					total: tags.length,
+					newTags,
+				})
+				if (!this.labelOptionsEdit) {
+					this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+				}
+				this.labelOptionsEdit.options = [...tags]
+			} catch (e) {
+				console.error('Failed to apply updated tags from UploadFiles', e)
+			}
+		},
+		onUploadFilesClosed(payload) {
+			try {
+				// prefer payload tags
+				const tagsFromPayload = Array.isArray(payload && payload.tags) ? payload.tags : null
+				if (tagsFromPayload) {
+					if (!this.labelOptionsEdit) {
+						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					}
+					this.labelOptionsEdit.options = [...tagsFromPayload]
+					return
+				}
+				// fallback: from store or re-fetch
+				const stored = objectStore.getCollection('tags')
+				if (Array.isArray(stored)) {
+					if (!this.labelOptionsEdit) {
+						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					}
+					this.labelOptionsEdit.options = [...stored]
+				} else {
+					this.getAllTags()
+				}
+			} catch (e) {
+				console.error('Failed to handle UploadFiles closed', e)
+			}
+		},
 		getModalTitle() {
 			// For new objects, show "Create Publication"
 			if (this.isNewObject) {
