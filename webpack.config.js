@@ -35,16 +35,6 @@ webpackConfig.entry = {
 	},
 }
 
-webpackConfig.resolve = {
-	extensions: ['.ts', '.tsx', '.vue', '.js'],
-	alias: {
-		'@': path.resolve(__dirname, 'src'),
-		'vue$': 'vue/dist/vue.esm.js',
-		'vue': path.resolve(__dirname, 'node_modules/vue'),
-		'@kangc/v-md-editor/node_modules/vue': path.resolve(__dirname, 'node_modules/vue'),
-	},
-}
-
 webpackConfig.devtool = 'inline-source-map'
 
 webpackConfig.module = {
@@ -69,5 +59,12 @@ webpackConfig.module = {
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
 ]
+
+// Ensure '@' alias resolves to the project's 'src' directory for cleaner imports like '@/...'
+webpackConfig.resolve = webpackConfig.resolve || {}
+webpackConfig.resolve.alias = {
+	...(webpackConfig.resolve.alias || {}),
+	'@': path.resolve(__dirname, 'src'),
+}
 
 module.exports = webpackConfig
