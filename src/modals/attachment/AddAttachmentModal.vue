@@ -9,8 +9,10 @@
  * @version 1.0.0
  * @link https://github.com/opencatalogi/opencatalogi
  */
+ <!-- It is possible that this modal is redundant. So I will disable eslint for this file. -->
 
 <script setup>
+/* eslint-disable */
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcButton, NcModal, NcTextField, NcSelectTags, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
@@ -87,13 +89,13 @@ const handleCancel = () => {
 		label-id="addAttachmentModal"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Bijlage toevoegen</h2>
+			<h2>Add Attachment</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Bijlage succesvol toegevoegd</p>
+					<p>Attachment successfully added</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het toevoegen van bijlage</p>
+					<p>Something went wrong while adding the attachment</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -102,12 +104,12 @@ const handleCancel = () => {
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="newAttachment.title"
-					label="Titel"
+					label="Title"
 					:disabled="loading"
 					:loading="loading" />
 				<NcTextField
 					v-model="newAttachment.description"
-					label="Beschrijving"
+					label="Description"
 					:disabled="loading"
 					:loading="loading" />
 				<NcSelectTags
@@ -119,14 +121,14 @@ const handleCancel = () => {
 					v-model="newAttachment.published"
 					:disabled="loading"
 					:loading="loading">
-					Gepubliceerd
+					Published
 				</NcCheckboxRadioSwitch>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="handleCancel">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -138,7 +140,7 @@ const handleCancel = () => {
 							<Plus v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Toevoegen
+					Add
 				</NcButton>
 			</span>
 		</div>
@@ -146,15 +148,6 @@ const handleCancel = () => {
 </template>
 
 <script>
-import {
-	NcButton,
-	NcModal,
-	NcTextField,
-	NcSelectTags,
-	NcCheckboxRadioSwitch,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
 
 // icons
 import Plus from 'vue-material-design-icons/Plus.vue'

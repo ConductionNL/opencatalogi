@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('publication')"
-					label="Zoeken"
+					label="Search"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
 					@update:value="objectStore.setSearchTerm('publication', $event)"
@@ -16,7 +16,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionCaption name="Zoeken" />
+					<NcActionCaption name="Search" />
 					<NcActionCheckbox
 						:checked="conceptChecked"
 						:value="'concept'"
@@ -27,170 +27,142 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						:checked="gepubliceerdChecked"
 						:value="'gepubliceerd'"
 						@change="handleCheckboxChange('gepubliceerd', $event)">
-						Gepubliceerd
+						Published
 					</NcActionCheckbox>
 					<NcActionSeparator />
-					<NcActionCaption name="Sorteren" />
+					<NcActionCaption name="Sort" />
 					<NcActionInput
 						v-model="sortField"
 						type="multiselect"
-						input-label="Eigenschap"
-						:options="['Titel', 'Datum gepubliceerd', 'Datum aangepast']">
+						input-label="Property"
+						:options="['Title', 'Published date', 'Modified date']">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Kies een eigenschap
+						Choose a property
 					</NcActionInput>
 					<NcActionRadio
 						:checked="sortDirection === 'asc'"
 						name="sortDirection"
 						value="asc"
 						@update:checked="updateSortOrder('asc')">
-						Oplopend
+						Ascending
 					</NcActionRadio>
 					<NcActionRadio
 						:checked="sortDirection === 'desc'"
 						name="sortDirection"
 						value="desc"
 						@update:checked="updateSortOrder('desc')">
-						Aflopend
+						Descending
 					</NcActionRadio>
 					<NcActionSeparator />
-					<NcActionCaption name="Acties" />
+					<NcActionCaption name="Actions" />
 					<NcActionButton
-						title="Bekijk de documentatie over publicaties"
+						title="View the documentation about publications"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
 						</template>
 						Help
 					</NcActionButton>
-					<NcActionButton :disabled="objectStore?.isLoading('publication')" @click="objectStore.fetchCollection('publication')">
+					<NcActionButton close-after-click :disabled="catalogStore.isLoading" @click="catalogStore.fetchPublications">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('publicationAdd')">
+					<NcActionButton close-after-click @click="objectStore.clearActiveObject('publication'); navigationStore.setModal('objectModal')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Publicatie toevoegen
+						Add publication
 					</NcActionButton>
 				</NcActions>
 			</div>
-			<div v-if="!objectStore.isLoading('publication')">
-				<NcListItem v-for="(publication, i) in objectStore.getCollection('publication').results"
+			<div v-if="!catalogStore.isLoading || !objectStore.isLoading('publication')">
+				<NcListItem v-for="(publication, i) in publicationsResults"
 					:key="`${publication}${i}`"
-					:name="publication.title"
+					:name="publication.title || publication.name || publication.titel || publication.naam || publication.id"
 					:bold="false"
 					:force-display-actions="true"
-					:active="objectStore.activeObjects['publication']?.id === publication.id"
+					:active="$route?.params?.id === publication.id"
 					:details="publication?.status"
-					@click="objectStore.setActiveObject('publication', publication)">
+					@click="toggleActive(publication)">
 					<template #icon>
-						<ListBoxOutline v-if="_.upperFirst(publication.status) === 'Published'" :size="44" />
-						<ArchiveOutline v-if="_.upperFirst(publication.status) === 'Archived'" :size="44" />
-						<Pencil v-if="_.upperFirst(publication.status) === 'Concept'" :size="44" />
-						<AlertOutline v-if="_.upperFirst(publication.status) === 'Withdrawn'" :size="44" />
-						<Cancel v-if="_.upperFirst(publication.status) === 'Rejected'" :size="44" />
+						<PublishedIcon :object="publication" :size="44" />
 					</template>
 					<template #subname>
 						{{ publication?.summary }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('editPublication')">
+						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('objectModal')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
-						<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyPublication')">
+						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyPublication')">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Kopiëren
+							Copy
 						</NcActionButton>
-						<NcActionButton v-if="_.upperFirst(publication.status) !== 'Published'" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('publishPublication')">
+						<NcActionButton v-if="publication['@self'].published === null" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('publish')">
 							<template #icon>
 								<Publish :size="20" />
 							</template>
-							Publiceren
+							Publish
 						</NcActionButton>
-						<NcActionButton v-if="_.upperFirst(publication.status) === 'Published'" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('depublishPublication')">
+						<NcActionButton v-if="publication['@self'].published" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('depublish')">
 							<template #icon>
 								<PublishOff :size="20" />
 							</template>
-							Depubliceren
+							Depublish
 						</NcActionButton>
-						<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('archivePublication')">
-							<template #icon>
-								<ArchivePlusOutline :size="20" />
-							</template>
-							Archiveren
-						</NcActionButton>
-						<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('addPublicationData')">
-							<template #icon>
-								<FileTreeOutline :size="20" />
-							</template>
-							Eigenschap toevoegen
-						</NcActionButton>
-						<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('AddAttachment')">
+						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('AddAttachment')">
 							<template #icon>
 								<FilePlusOutline :size="20" />
 							</template>
-							Bijlage toevoegen
+							Add attachment
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('addPublicationTheme')">
-							<template #icon>
-								<ShapeOutline :size="20" />
-							</template>
-							Thema toevoegen
-						</NcActionButton>
-						<NcActionButton class="publicationsList-actionsDelete" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deletePublication')">
+						<NcActionButton close-after-click class="publicationsList-actionsDelete" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
 			</div>
 
-			<NcLoadingIcon v-if="objectStore.isLoading('publication')"
+			<NcLoadingIcon v-if="catalogStore.isLoading"
 				:size="64"
 				class="loadingIcon"
 				appearance="dark"
-				name="Publicaties aan het laden" />
+				name="Publications are loading" />
 
-			<div v-if="!objectStore.collections['publication']?.length" class="emptyListHeader">
-				Er zijn nog geen publicaties gedefinieerd.
+			<div v-if="!publicationsResults?.length" class="emptyListHeader">
+				There are no publications defined.
 			</div>
 		</ul>
 	</NcAppContentList>
 </template>
 <script>
 import { NcListItem, NcActionButton, NcAppContentList, NcTextField, NcLoadingIcon, NcActionRadio, NcActionCheckbox, NcActionInput, NcActionCaption, NcActionSeparator, NcActions } from '@nextcloud/vue'
-import _ from 'lodash'
 
 // Icons
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
-import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
-import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
-import ArchivePlusOutline from 'vue-material-design-icons/ArchivePlusOutline.vue'
 import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+
+import PublishedIcon from '../../components/PublishedIcon.vue'
 
 export default {
 	name: 'PublicationList',
@@ -199,7 +171,6 @@ export default {
 		NcActionButton,
 		NcAppContentList,
 		NcTextField,
-		ListBoxOutline,
 		Magnify,
 		NcLoadingIcon,
 		NcActionRadio,
@@ -212,14 +183,12 @@ export default {
 		Refresh,
 		Plus,
 		FilePlusOutline,
-		FileTreeOutline,
 		ContentCopy,
-		ArchiveOutline,
-		AlertOutline,
 		Pencil,
 		Publish,
-		ArchivePlusOutline,
 		HelpCircleOutline,
+		// Components
+		PublishedIcon,
 	},
 	data() {
 		return {
@@ -227,12 +196,33 @@ export default {
 			sortDirection: 'desc',
 			conceptChecked: false,
 			gepubliceerdChecked: false,
-			publicationsResults: [],
 		}
 	},
+
+	computed: {
+		publicationsResults() {
+			return objectStore.getCollection('publication').results
+		},
+	},
+
 	methods: {
 		updateSortOrder(value) {
 			this.sortDirection = value
+		},
+		publishPublication(mode) {
+			const publication = objectStore.getActiveObject('publication')
+			fetch(`/index.php/apps/openregister/api/objects/${publication['@self'].register}/${publication['@self'].schema}/${publication.id}/${mode}`, {
+				method: 'POST',
+			}).then((response) => {
+				catalogStore.fetchPublications()
+				response.json().then((data) => {
+					objectStore.setActiveObject('publication', { ...data, id: data.id || data['@self'].id })
+				})
+			})
+		},
+		toggleActive(publication) {
+			objectStore.setActiveObject('publication', publication)
+			this.$router.push(`/publications/${this.$route?.params?.catalogSlug}/${publication.id}`)
 		},
 		handleCheckboxChange(key, event) {
 			const checked = event.target.checked

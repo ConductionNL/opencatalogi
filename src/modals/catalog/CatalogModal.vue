@@ -1,15 +1,3 @@
-/**
- * CatalogModal.vue
- * Modal for adding and editing catalogs
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -17,16 +5,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'catalog'"
 		ref="modalRef"
+		:name="isEdit ? 'Catalog edit' : 'Add Catalog'"
 		:label-id="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Catalogus {{ isEdit ? 'bewerken' : 'toevoegen' }}</h2>
 			<div v-if="objectStore.getState('catalog').success !== null || objectStore.getState('catalog').error">
 				<NcNoteCard v-if="objectStore.getState('catalog').success" type="success">
-					<p>{{ isEdit ? 'Catalogus succesvol bewerkt' : 'Catalogus succesvol toegevoegd' }}</p>
+					<p>{{ isEdit ? 'Catalog successfully edited' : 'Catalog successfully added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('catalog').success" type="error">
-					<p>{{ isEdit ? 'Er is iets fout gegaan bij het bewerken van de catalogus' : 'Er is iets fout gegaan bij het toevoegen van catalogus' }}</p>
+					<p>{{ isEdit ? 'Something went wrong while editing the catalog' : 'Something went wrong while adding the catalog' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('catalog').error" type="error">
 					<p>{{ objectStore.getState('catalog').error }}</p>
@@ -34,58 +22,77 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 			<div v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')" class="form-group">
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Titel*"
+					label="Title*"
 					maxlength="255"
 					:value.sync="catalogi.title"
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Samenvatting"
+					label="Summary"
 					maxlength="255"
 					:value.sync="catalogi.summary"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Beschrijving"
+					label="Description"
 					maxlength="255"
 					:value.sync="catalogi.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
+				<NcTextField :disabled="objectStore.isLoading('catalog')"
+					label="Slug*"
+					maxlength="255"
+					:value.sync="catalogi.slug"
+					:error="!!inputValidation.fieldErrors?.['slug']"
+					:helper-text="inputValidation.fieldErrors?.['slug']?.[0] || 'URL-friendly identifier (e.g., publications, datasets)'"
+					placeholder="publications" />
 				<NcCheckboxRadioSwitch :disabled="objectStore.isLoading('catalog')"
-					label="Publiek vindbaar"
+					label="Publicly available"
 					:checked.sync="catalogi.listed">
-					Publiek vindbaar
+					Publicly available
 				</NcCheckboxRadioSwitch>
 				<NcSelect v-model="selectedOrganization"
 					:options="organizationOptions"
-					input-label="Organisatie"
+					input-label="Organization"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcSelect v-model="selectedRegisters"
 					:options="registerOptions"
-					input-label="Registers"
+					input-label="Registers*"
 					:disabled="objectStore.isLoading('catalog')"
 					multiple />
 				<NcSelect v-model="selectedSchemas"
 					:options="schemaOptions"
-					input-label="Schema's"
+					input-label="Schemas*"
 					:disabled="objectStore.isLoading('catalog')"
 					multiple />
+				<NcSelect v-model="catalogi.status"
+					:options="statusOptions"
+					:label-attribute="'label'"
+					input-label="Status*"
+					:disabled="objectStore.isLoading('catalog')" />
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
-				<span>{{ isEdit ? 'Catalogus wordt bewerkt...' : 'Catalogus wordt toegevoegd...' }}</span>
+				<span>{{ isEdit ? 'Catalog is being edited...' : 'Catalog is being added...' }}</span>
 			</div>
-			<NcButton v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('catalog')"
-				type="primary"
-				class="catalog-submit-button"
-				@click="saveCatalog">
-				<template #icon>
-					<ContentSaveOutline :size="20" />
-				</template>
-				{{ isEdit ? 'Opslaan' : 'Toevoegen' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('catalog')"
+					type="primary"
+					@click="saveCatalog">
+					<template #icon>
+						<ContentSaveOutline :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -94,6 +101,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcModal, NcTextField, NcLoadingIcon, NcNoteCard, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import { Catalogi } from '../../entities/index.js'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'CatalogModal',
@@ -107,6 +115,7 @@ export default {
 		NcSelect,
 		// Icons
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {
@@ -114,15 +123,23 @@ export default {
 				title: '',
 				summary: '',
 				description: '',
+				slug: '',
 				listed: false,
 				registers: [],
 				schemas: [],
 				filters: {},
+				status: { id: 'development', label: 'Development' },
 			},
 			selectedOrganization: null,
 			selectedRegisters: [],
 			selectedSchemas: [],
 			hasUpdated: false,
+			statusOptions: [
+				{ id: 'development', label: 'Development' },
+				{ id: 'beta', label: 'Beta' },
+				{ id: 'stable', label: 'Stable' },
+				{ id: 'obsolete', label: 'Obsolete' },
+			],
 		}
 	},
 	computed: {
@@ -132,7 +149,7 @@ export default {
 		organizationOptions() {
 			return objectStore.getCollection('organization').results.map((organization) => ({
 				id: organization.id,
-				label: organization.title,
+				label: organization.name,
 			}))
 		},
 		registerOptions() {
@@ -142,18 +159,34 @@ export default {
 			}))
 		},
 		schemaOptions() {
-			return objectStore.availableSchemas.map(schema => ({
-				id: schema.id,
-				label: `${schema.title} (${schema.registerTitle})`,
-			}))
+			// Get the selected register IDs
+			const selectedRegisterIds = this.selectedRegisters.map(register => register.id)
+
+			// Filter available registers to only those that are selected
+			const selectedAvailableRegisters = objectStore.availableRegisters.filter(register =>
+				selectedRegisterIds.includes(register.id),
+			)
+
+			// Get all unique schema IDs from the selected registers
+			const availableSchemaIds = [...new Set(selectedAvailableRegisters.flatMap(register => register.schemas.map(schema => schema.id)))]
+
+			// Filter and map the schemas
+			return objectStore.availableSchemas
+				.filter(schema => availableSchemaIds.includes(schema.id))
+				.map(schema => ({
+					id: schema.id,
+					label: `${schema.title} (${schema.registerTitle})`,
+				}))
 		},
 		inputValidation() {
 			// Map selected objects to their IDs for validation
 			const registers = this.selectedRegisters.map(register => register.id)
 			const schemas = this.selectedSchemas.map(schema => schema.id)
 
+			const status = typeof this.catalogi.status === 'object' ? this.catalogi.status.id : this.catalogi.status.toLowerCase()
 			const catalogiItem = new Catalogi({
 				...this.catalogi,
+				status,
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
@@ -171,28 +204,35 @@ export default {
 	},
 	updated() {
 		if (navigationStore.modal === 'catalog' && !this.hasUpdated) {
+			this.hasUpdated = true
+
 			if (this.isEdit) {
 				const activeCatalog = objectStore.getActiveObject('catalog')
+
 				this.catalogi = {
 					...activeCatalog,
 					filters: Array.isArray(activeCatalog.filters) ? {} : activeCatalog.filters || {},
+					status: this.statusOptions.find(opt => opt.id === (activeCatalog.status || '').toLowerCase()) || this.statusOptions[0],
 				}
+
 				// Find and set the selected organization
 				const org = objectStore.getCollection('organization').results.find(
 					org => org.id.toString() === activeCatalog.organization.toString(),
 				)
+
 				this.selectedOrganization = org ? { id: org.id, label: org.title } : null
+
 				// Map existing registers and schemas to the format expected by NcSelect
 				this.selectedRegisters = activeCatalog.registers.map(id => ({
 					id,
 					label: objectStore.availableRegisters.find(r => r.id === id)?.title || id,
 				}))
+
 				this.selectedSchemas = activeCatalog.schemas.map(id => ({
 					id,
 					label: objectStore.availableSchemas.find(s => s.id === id)?.title || id,
 				}))
 			}
-			this.hasUpdated = true
 		}
 	},
 	methods: {
@@ -203,10 +243,12 @@ export default {
 				title: '',
 				summary: '',
 				description: '',
+				slug: '',
 				listed: false,
 				registers: [],
 				schemas: [],
 				filters: {},
+				status: { id: 'development', label: 'Development' },
 			}
 			this.selectedOrganization = null
 			this.selectedRegisters = []
@@ -219,8 +261,10 @@ export default {
 			const registers = this.selectedRegisters.map(register => register.id)
 			const schemas = this.selectedSchemas.map(schema => schema.id)
 
+			const status = typeof this.catalogi.status === 'object' ? this.catalogi.status.id : this.catalogi.status.toLowerCase()
 			const catalogiItem = new Catalogi({
 				...this.catalogi,
+				status,
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
@@ -237,6 +281,8 @@ export default {
 						}, 2000)
 					})
 			} else {
+				delete catalogiItem.id
+
 				objectStore.createObject('catalog', catalogiItem)
 					.then(() => {
 						// Wait for the user to read the feedback then close the model
@@ -252,10 +298,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
 
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
@@ -265,10 +307,6 @@ export default {
 
 .success {
     color: green;
-}
-
-.catalog-submit-button {
-    margin-block-start: 1rem;
 }
 
 .loading-status {

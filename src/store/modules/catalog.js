@@ -1,31 +1,29 @@
 import { defineStore } from 'pinia'
 import { Catalogi } from '../../entities/catalogi/catalogi.ts'
+import { objectStore } from '../../store/store.js'
+
+/** @typedef {import('../../entities/catalogi/catalogi.ts').Catalogi} CatalogEntity */
+/** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
 
 /**
  * Store for managing catalogs and their publications in OpenCatalogi.
- * @category Store
+ * @module Store
  * @package
  * @author Ruben Linde
  * @copyright 2024
  * @license AGPL-3.0-or-later
  * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 export const useCatalogStore = defineStore('catalog', {
 	state: () => ({
-		/**
-		 * @type {CatalogEntity|null} The currently active catalog
-		 */
+		/** @type {import('../../entities/catalogi/catalogi.ts').Catalogi|null} */
 		activeCatalog: null,
 
-		/**
-		 * @type {ObjectEntity|null} The currently active publication
-		 */
+		/** @type {{id: string, title: string, [key: string]: any}|null} */
 		activePublication: null,
 
-		/**
-		 * @type {object} List of publications for the active catalog
-		 */
+		/** @type {{results: Array<any>, total: number, page: number, pages: number, limit: number, offset: number}} */
 		publications: {
 			results: [],
 			total: 0,
@@ -35,13 +33,42 @@ export const useCatalogStore = defineStore('catalog', {
 			offset: 0,
 		},
 
-		/**
-		 * @type {boolean} Loading state indicator
-		 */
+		/** @type {Set<string>} */
+		registeredTypes: new Set(),
+
+		/** @type {boolean} */
 		loading: false,
+
+		/** @type {string} */
+		viewMode: 'cards',
+
+		/** @type {object} */
+		pagination: {
+			page: 1,
+			limit: 20,
+		},
 	}),
 
 	actions: {
+		/**
+		 * Set the view mode.
+		 * @param {string} mode - The view mode to set ('cards' or 'table')
+		 */
+		setViewMode(mode) {
+			this.viewMode = mode
+			console.info('Catalog view mode set to:', mode)
+		},
+
+		/**
+		 * Set pagination details.
+		 * @param {number} page - The current page number for pagination
+		 * @param {number} limit - The number of items to display per page
+		 */
+		setPagination(page, limit = 20) {
+			this.pagination = { page, limit }
+			console.info('Catalog pagination set to', { page, limit })
+		},
+
 		/**
 		 * Set the active catalog and fetch its publications
 		 * @param {CatalogEntity} catalog The catalog to set as active
@@ -49,6 +76,10 @@ export const useCatalogStore = defineStore('catalog', {
 		 */
 		async setActiveCatalog(catalog) {
 			this.activeCatalog = new Catalogi(catalog)
+			await this.fetchPublications()
+		},
+
+		async refreshPublications() {
 			await this.fetchPublications()
 		},
 
@@ -62,24 +93,84 @@ export const useCatalogStore = defineStore('catalog', {
 		},
 
 		/**
-		 * Fetch publications for the active catalog
+		 * Clear the active publication
+		 * @return {void}
+		 */
+		clearActivePublication() {
+			this.activePublication = null
+		},
+
+		/**
+		 * Fetch publications for a catalog
+		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
+		 * @param {object} params - Optional parameters for pagination and filtering
+		 * @param {number} params.page - Page number (default: 1)
+		 * @param {number} params.limit - Items per page (default: 20)
 		 * @return {Promise<void>}
 		 */
-		async fetchPublications() {
-			if (!this.activeCatalog) {
+		async fetchPublications(params = {}, catalogId = null) {
+			if (!catalogId && !this.activeCatalog) {
+				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
 				return
 			}
 
 			this.loading = true
+			objectStore.setLoading('publication', true)
+
+			// Build query parameters for pagination
+			const searchParams = {
+				_page: params.page || this.pagination.page || 1,
+				_limit: params.limit || this.pagination.limit || 20,
+				_extend: '@self.schema,@self.register', // Always include schema and register info
+			}
+
+			// Add any additional parameters (excluding page and limit to avoid duplication)
+			Object.keys(params).forEach(key => {
+				if (key !== 'page' && key !== 'limit') {
+					searchParams[key] = params[key]
+				}
+			})
+
+			const queryParams = new URLSearchParams(searchParams)
 
 			try {
-				const response = await fetch(`/index.php/apps/opencatalogi/api/catalogi/${this.activeCatalog.id}`)
+				const catalogIdToUse = catalogId || this.activeCatalog.id
+
+				const url = `/index.php/apps/opencatalogi/api/catalogi/${catalogIdToUse}?${queryParams}`
+				const response = await fetch(url)
 				const data = await response.json()
 
 				this.publications = {
-					...data,
 					results: data.results || [],
+					total: data.total || 0,
+					page: data.page || 1,
+					pages: data.pages || 0,
+					limit: data.limit || 20,
+					offset: data.offset || 0,
 				}
+
+				// Update internal pagination state
+				this.pagination = {
+					page: data.page || 1,
+					limit: data.limit || 20,
+				}
+
+				// Process each publication to register its type in the object store
+				for (const publication of data.results || []) {
+					if (publication.schema && publication.register) {
+						const slug = publication.schema.slug
+						if (!this.registeredTypes.has(slug)) {
+							await objectStore.registerObjectType(
+								slug,
+								publication.schema.id,
+								publication.register.id,
+							)
+							this.registeredTypes.add(slug)
+						}
+					}
+				}
+
+				objectStore.setCollection('publication', data.results)
 			} catch (error) {
 				console.error('Error fetching publications:', error)
 				this.publications = {
@@ -92,7 +183,19 @@ export const useCatalogStore = defineStore('catalog', {
 				}
 			} finally {
 				this.loading = false
+				objectStore.setLoading('publication', false)
 			}
+		},
+
+		async getPublicationAttachments() {
+			const publication = objectStore.getActiveObject('publication')
+			const register = publication['@self'].register
+			const schema = publication['@self'].schema
+			const id = publication.id
+
+			const response = await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`)
+			const data = await response.json()
+			objectStore.setCollection('publicationAttachments', data)
 		},
 
 		/**
@@ -100,6 +203,13 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @return {void}
 		 */
 		clearActiveCatalog() {
+
+			// Unregister all object types
+			for (const slug of this.registeredTypes) {
+				objectStore.unregisterObjectType(slug)
+			}
+			this.registeredTypes.clear()
+
 			this.activeCatalog = null
 			this.activePublication = null
 			this.publications = {
@@ -144,6 +254,44 @@ export const useCatalogStore = defineStore('catalog', {
 		 */
 		hasActivePublication() {
 			return this.activePublication !== null
+		},
+
+		/**
+		 * Get the active publication
+		 * @param {object} state - Store state
+		 * @return {object|null} The active publication
+		 */
+		getActivePublication: (state) => state.activePublication,
+
+		/**
+		 * Get loading state for specific type
+		 * @param {object} state - Store state
+		 * @return {boolean}
+		 */
+		isLoading: (state) => state.loading || false,
+
+		/**
+		 * Get the publications collection
+		 * @param {object} state - The store state
+		 * @return {object} The publications collection
+		 */
+		getPublications: (state) => {
+			return state.publications || null
+		},
+
+		/**
+		 * Get pagination info for publications
+		 * @param {object} state - The store state
+		 * @return {object} The pagination info
+		 */
+		publicationPagination: (state) => {
+			return {
+				page: state.publications.page || 1,
+				pages: state.publications.pages || 0,
+				total: state.publications.total || 0,
+				limit: state.publications.limit || 20,
+				offset: state.publications.offset || 0,
+			}
 		},
 	},
 })

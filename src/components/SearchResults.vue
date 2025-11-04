@@ -27,7 +27,7 @@ import RefreshIcon from 'vue-material-design-icons/Refresh.vue'
  * @property {string} [resultsClass] - Additional CSS class for the results container
  */
 
-const props = defineProps({
+defineProps({
 	containerClass: {
 		type: String,
 		default: '',
@@ -84,7 +84,7 @@ onMounted(() => {
 		<div class="search-results__header">
 			<NcTextField :class="['search-results__search', searchClass]"
 				:value="objectStore.getSearchTerm('search')"
-				label="Zoeken"
+				label="Search"
 				trailing-button-icon="close"
 				:show-trailing-button="objectStore.getSearchTerm('search') !== ''"
 				@update:value="(value) => objectStore.setSearchTerm('search', value)"
@@ -94,7 +94,7 @@ onMounted(() => {
 				</template>
 			</NcTextField>
 			<div class="search-results__actions">
-				<NcActionButton @click="fetchData">
+				<NcActionButton close-after-click @click="fetchData">
 					<template #icon>
 						<RefreshIcon />
 					</template>

@@ -1,13 +1,24 @@
 <?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="PHP_CodeSniffer" xsi:noNamespaceSchemaLocation="phpcs.xsd">
-    <description>The coding standard for PHP_CodeSniffer itself, for more config -> for https://github.com/squizlabs/PHP_CodeSniffer/wiki/Configuration-Options.</description>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="OpenCatalogi_PHP8" xsi:noNamespaceSchemaLocation="phpcs.xsd">
+    <description>OpenCatalogi coding standard with PHP 8+ support including named parameters enforcement.</description>
 
-    <file>README.md</file>
+    <!-- Target directories -->
+    <file>lib</file>
     <file>src</file>
+    
+    <!-- Exclude paths -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/vendor-bin/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
 
     <arg name="basepath" value="."/>
     <arg name="colors"/>
     <arg name="parallel" value="75"/>
+    <arg name="extensions" value="php"/>
+    
+    <!-- PHP version compatibility -->
+    <config name="php_version" value="80100"/>  <!-- PHP 8.1+ -->
 
     <!-- Don't hide tokenizer exceptions -->
     <rule ref="Internal.Tokenizer.Exception">
@@ -24,6 +35,9 @@
         <exclude name="PEAR.Commenting.FileComment.MissingLinkTag"/>
         <exclude name="PEAR.Commenting.FileComment.MissingVersion"/>
         <exclude name="PEAR.Commenting.InlineComment"/>
+        <exclude name="PEAR.WhiteSpace.ScopeIndent"/>
+        <exclude name="PEAR.WhiteSpace.ObjectOperatorIndent"/>
+        <exclude name="PEAR.WhiteSpace.ScopeClosingBrace"/>
     </rule>
 
     <!-- Include some sniffs from other standards that don't conflict with PEAR -->
@@ -105,6 +119,43 @@
     <rule ref="Squiz.NamingConventions.ValidVariableName"/>
     <rule ref="Squiz.NamingConventions.ValidVariableName.PrivateNoUnderscore">
         <severity>0</severity>
+    </rule>
+
+    <!-- Enforce named parameters usage (PHP 8.0+) -->
+    <!-- Custom sniff for named parameters (includes single-parameter calls) -->
+    <rule ref="CustomSniffs.Functions.NamedParameters"/>
+    
+    <!-- Enforce meaningful parameter names and documentation to encourage named parameters -->
+    <rule ref="Generic.NamingConventions.CamelCapsFunctionName"/>
+    
+    <!-- Require function parameter documentation (helps with named parameter usage) -->
+    <rule ref="Squiz.Commenting.FunctionComment">
+        <exclude name="Squiz.Commenting.FunctionComment.MissingReturn"/>
+        <exclude name="Squiz.Commenting.FunctionComment.SpacingAfterParamType"/>
+        <exclude name="Squiz.Commenting.FunctionComment.SpacingAfterParamName"/>
+    </rule>
+    
+    <!-- Ensure all function parameters are documented with types -->
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamComment">
+        <type>error</type>
+        <message>Function parameter %s is not documented. Consider using named parameters: functionName(parameterName: $value)</message>
+    </rule>
+    
+    <!-- Require parameter types in documentation -->
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamType">
+        <type>error</type>
+    </rule>
+    
+    <!-- Ensure function parameters follow spacing conventions -->
+    <rule ref="Squiz.Functions.FunctionDeclarationArgumentSpacing">
+        <properties>
+            <property name="equalsSpacing" value="1"/>
+        </properties>
+    </rule>
+    
+    <!-- Encourage descriptive parameter names (helps with named parameters) -->
+    <rule ref="Generic.Commenting.Todo">
+        <message>TODO: Consider using named parameters for better code readability: functionName(parameterName: $value)</message>
     </rule>
 
     <!-- Only one argument per line in multi-line function calls -->

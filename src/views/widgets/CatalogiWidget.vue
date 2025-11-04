@@ -1,17 +1,5 @@
-/**
- * CatalogiWidget.vue
- * Widget component for displaying catalogs
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -55,7 +43,7 @@ export default {
 			loading: false,
 			itemMenu: {
 				show: {
-					text: 'Catalogus bekijken',
+					text: 'View catalog',
 					icon: 'icon-open-in-app',
 				},
 			},
@@ -64,7 +52,8 @@ export default {
 	computed: {
 		items() {
 			return objectStore.getCollection('catalog').results.map((catalog) => ({
-				id: catalog.id,
+				// expecting that slug exists on the catalog object
+				id: catalog.slug,
 				mainText: catalog.title,
 				subText: catalog.summary,
 				avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/database-outline.svg' : '/apps-extra/opencatalogi/img/database-outline_light.svg',
@@ -81,9 +70,7 @@ export default {
 		 * @return {void}
 		 */
 		onShow(item) {
-			navigationStore.setSelected('publication')
-			navigationStore.setSelectedCatalogus(item.id)
-			window.open('/index.php/apps/opencatalogi', '_self')
+			window.location.href = `/index.php/apps/opencatalogi/publications/${item.id}`
 		},
 		/**
 		 * Fetch the catalog data

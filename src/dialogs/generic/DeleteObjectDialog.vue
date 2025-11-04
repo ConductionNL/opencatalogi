@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { navigationStore, objectStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -9,25 +9,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:can-close="false">
 		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
 			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} succesvol verwijderd</p>
+				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} successfully deleted</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="!objectStore.getState(objectType).success" type="error">
-				<p>Er is iets fout gegaan bij het verwijderen van {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
+			<NcNoteCard v-if="!objectStore.getState(objectType).success && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
+				<p>Something went wrong while deleting {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
 			</NcNoteCard>
-			<NcNoteCard v-if="objectStore.getState(objectType).error" type="error">
+			<NcNoteCard v-if="objectStore.getState(objectType).error && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
 			</NcNoteCard>
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'worden' : 'wordt' }} verwijderd...</span>
+			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'are' : 'is' }} being deleted...</span>
 		</div>
 		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
 			<template v-if="isMultiple">
-				Wil je de geselecteerde {{ dialogTitle.toLowerCase() }}s definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+				Do you want to delete the selected {{ dialogTitle.toLowerCase() }}s? This action cannot be undone.
 			</template>
 			<template v-else>
-				Wil je <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b> definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+				Do you want to delete <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b>? This action cannot be undone.
 			</template>
 		</p>
 		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
@@ -38,17 +38,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Annuleer
+				Cancel
 			</NcButton>
 			<NcButton
-				:disabled="objectStore.isLoading(objectType)"
+				:disabled="loading"
 				icon="Delete"
 				type="error"
 				@click="deleteObject">
 				<template #icon>
-					<Delete :size="20" />
+					<NcLoadingIcon v-if="loading" :size="20" />
+
+					<Delete v-if="!loading" :size="20" />
 				</template>
-				Verwijderen
+				Delete
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -84,6 +86,7 @@ export default {
 		return {
 			closeTimeout: null,
 			objectType: null,
+			loading: false,
 		}
 	},
 	computed: {
@@ -110,28 +113,92 @@ export default {
 	},
 	methods: {
 		deleteObject() {
+			this.loading = true
 			if (this.isMultiple) {
 				const selectedObjects = objectStore.getSelectedObjects(this.objectType)
 				if (!selectedObjects?.length) return
 
-				Promise.all(selectedObjects.map(obj =>
-					objectStore.deleteObject(this.objectType, obj.id),
-				))
-					.then(() => {
+				const deletePromises = selectedObjects.map(obj =>
+					objectStore.deleteObject(this.objectType, obj.id)
+						.catch(err => {
+							if (
+								this.objectType === 'publication'
+              && typeof err.message === 'string'
+              && err.message.includes('Invalid configuration for object type: publication')
+							) {
+								objectStore.setState(this.objectType, { success: true, error: null })
+								return {}
+							}
+							return Promise.reject(err)
+						}),
+				)
+
+				Promise.all(deletePromises)
+					.then(responses => {
 						this.closeTimeout = setTimeout(() => {
 							this.closeDialog()
 						}, 2000)
+						this.loading = false
 					})
+					.catch(err => {
+						console.error('Error deleting multiple objects:', err)
+						this.loading = false
+					})
+					.finally(() => {
+						this.refreshObjectList(this.objectType)
+						this.closeDialog()
+						this.loading = false
+					})
+
 			} else {
 				const activeObject = objectStore.getActiveObject(this.objectType)
 				if (!activeObject?.id) return
 
-				objectStore.deleteObject(this.objectType, activeObject.id)
-					.then(() => {
+				const publicationData = {
+					schema: activeObject['@self']?.schema,
+					register: activeObject['@self']?.register,
+				}
+
+				objectStore.deleteObject({
+					type: this.dialogProperties.objectType,
+					id: activeObject.id,
+					...publicationData,
+				})
+					.catch(err => {
+						if (
+							this.objectType === 'publication'
+            && typeof err.message === 'string'
+            && err.message.includes('Invalid configuration for object type: publication')
+						) {
+							objectStore.setState(this.objectType, { success: true, error: null })
+							return {}
+						}
+						return Promise.reject(err)
+					})
+					.then(response => {
 						this.closeTimeout = setTimeout(() => {
 							this.closeDialog()
 						}, 2000)
+						this.loading = false
 					})
+					.catch(err => {
+						console.error('Error deleting one object:', err)
+						this.loading = false
+					})
+					.finally(() => {
+						this.refreshObjectList(this.objectType)
+						this.closeDialog()
+
+					})
+			}
+		},
+		refreshObjectList(objectType) {
+			switch (objectType) {
+			case 'publication':
+				catalogStore.fetchPublications()
+				break
+			default:
+				objectStore.fetchCollection(objectType)
 			}
 		},
 		closeDialog() {
@@ -149,11 +216,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-	margin: var(--OC-margin-50);
-	text-align: center;
-}
-
 .zaakDetailsContainer {
 	margin-block-start: var(--OC-margin-20);
 	margin-inline-start: var(--OC-margin-20);

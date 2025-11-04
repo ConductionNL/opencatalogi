@@ -1,13 +1,12 @@
 /**
- * catalogi.mock.ts
- * Mock data for catalogi entities
- * @category Entities
+ * Mock data for Catalogi entity testing
+ * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
  * @license AGPL-3.0-or-later
  * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
 import { TCatalogi } from './catalogi.types'
@@ -26,6 +25,8 @@ export const mockCatalogi: TCatalogi = {
 		field1: 'value1',
 		field2: 'value2',
 	},
+	status: 'development',
+	slug: 'test-catalogi',
 }
 
 export const mockCatalogiList: TCatalogi[] = [
@@ -43,5 +44,7 @@ export const mockCatalogiList: TCatalogi[] = [
 		filters: {
 			field3: 'value3',
 		},
+		status: 'development',
+		slug: 'another-catalogi',
 	},
 ]

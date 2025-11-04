@@ -1,17 +1,16 @@
 /**
- * catalogi.ts
- * Implementation of the catalogi entity
- * @category Entities
+ * Catalogi entity class
+ * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
  * @license AGPL-3.0-or-later
  * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
 import { SafeParseReturnType, z } from 'zod'
-import { TCatalogi } from './catalogi.types'
+import { CatalogStatus, TCatalogi } from './catalogi.types'
 
 export class Catalogi implements TCatalogi {
 
@@ -21,10 +20,12 @@ export class Catalogi implements TCatalogi {
 	public description: string
 	public image: string
 	public listed: boolean
+	public status: CatalogStatus
 	public organization: string
 	public registers: string[]
 	public schemas: string[]
 	public filters: Record<string, unknown>
+	public slug: string
 
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
@@ -38,10 +39,12 @@ export class Catalogi implements TCatalogi {
 		this.description = data?.description || ''
 		this.image = data?.image || ''
 		this.listed = data?.listed || false
+		this.status = (data?.status as CatalogStatus) || 'development'
 		this.organization = data.organization || ''
 		this.registers = (Array.isArray(data.registers) && data.registers) || []
 		this.schemas = (Array.isArray(data.schemas) && data.schemas) || []
 		this.filters = data.filters || {}
+		this.slug = data?.slug || ''
 	}
 
 	/* istanbul ignore next */
@@ -55,10 +58,15 @@ export class Catalogi implements TCatalogi {
 			description: z.string().max(2555, 'kan niet langer dan 2555 zijn'),
 			image: z.string().max(255, 'kan niet langer dan 255 zijn'),
 			listed: z.boolean(),
+			status: z.enum(['development', 'beta', 'stable', 'obsolete']),
 			organization: z.number().or(z.string()).or(z.null()),
-			registers: z.array(z.number().or(z.string())),
-			schemas: z.array(z.number().or(z.string())),
+			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
+			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			filters: z.record(z.unknown()),
+			slug: z.string()
+				.min(1, 'is verplicht')
+				.max(255, 'kan niet langer dan 255 zijn')
+				.regex(/^[a-z0-9-]+$/, 'moet alleen kleine letters, cijfers en koppeltekens bevatten'),
 		})
 
 		const result = schema.safeParse({

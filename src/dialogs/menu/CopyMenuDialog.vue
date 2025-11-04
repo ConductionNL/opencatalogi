@@ -22,26 +22,26 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		label-id="copyMenuDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
-			<h2>Menu kopiëren</h2>
+			<h2>Copy Menu</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Menu succesvol gekopieerd</p>
+					<p>Menu successfully copied</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het kopiëren van menu</p>
+					<p>Something went wrong while copying the menu</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Weet je zeker dat je het menu '{{ menu.title }}' wilt kopiëren?</p>
+				<p>Do you want to copy the menu '{{ menu.title }}'?</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="navigationStore.setDialog(false)">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -53,7 +53,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<ContentCopy v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Kopiëren
+					Copy
 				</NcButton>
 			</span>
 		</div>
@@ -116,14 +116,6 @@ const handleCopy = async () => {
 	} finally {
 		loading.value = false
 	}
-}
-
-/**
- * Handle cancel action
- * @return {void}
- */
-const handleCancel = () => {
-	navigationStore.setDialog(false)
 }
 
 export default {

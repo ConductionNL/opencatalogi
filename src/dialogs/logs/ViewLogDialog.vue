@@ -5,14 +5,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog
 		v-if="navigationStore.dialog === 'viewLog'"
-		name="Log bekijken"
+		name="View Log"
 		:can-close="false">
 		<div v-if="objectStore.getState('log').success !== null || objectStore.getState('log').error">
 			<NcNoteCard v-if="objectStore.getState('log').success" type="success">
-				<p>Log succesvol bekeken</p>
+				<p>Log successfully viewed</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('log').success" type="error">
-				<p>Er is iets fout gegaan bij het bekijken van log</p>
+				<p>Something went wrong while viewing the log</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('log').error" type="error">
 				<p>{{ objectStore.getState('log').error }}</p>
@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('log')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Log wordt geladen...</span>
+			<span>Log is being loaded...</span>
 		</div>
 		<div v-if="objectStore.getState('log').success === null && !objectStore.isLoading('log')" class="log-content">
 			<pre>{{ objectStore.getActiveObject('log')?.content }}</pre>
@@ -32,7 +32,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				Close
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -44,15 +44,14 @@ import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 /**
- * View log dialog component
- *
- * @category Dialogs
+ * View Log Dialog Component
+ * @module Dialogs
  * @package
- * @author Your Name
+ * @author Ruben Linde
  * @copyright 2024
- * @license MIT
+ * @license AGPL-3.0-or-later
  * @version 1.0.0
- * @link https://github.com/your-repo
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 export default {
 	name: 'ViewLogDialog',
@@ -68,10 +67,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
 
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);

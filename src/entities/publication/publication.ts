@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TCatalogi, TPublicationType } from '../'
+import { TCatalogi } from '../'
 import { TPublication } from './publication.types'
 import { SafeParseReturnType, z } from 'zod'
 
@@ -16,7 +16,6 @@ export class Publication implements TPublication {
 	public category: string
 	public portal: string
 	public featured: boolean
-	public schema: string
 	public source: string
 	public status: TStatus
 	public themes: string[]
@@ -48,7 +47,8 @@ export class Publication implements TPublication {
 	public '@self'?: object
 
 	public catalog: TCatalogi | any
-	public publicationType: string | TPublicationType
+	public register: number | null
+	public schema: number | null
 
 	constructor(data: TPublication) {
 		this.hydrate(data)
@@ -70,7 +70,6 @@ export class Publication implements TPublication {
             // FIXME: remove once bug is fixed
             || (typeof data.featured === 'string' && !!parseInt(data.featured))
             || false
-		this.schema = data.schema || ''
 		this.source = data.source || ''
 		this.status = data.status as TStatus || 'Concept'
 		this.themes = data.themes || []
@@ -101,7 +100,8 @@ export class Publication implements TPublication {
 		this['@self'] = (!Array.isArray(data['@self']) && data['@self']) || {}
 
 		this.catalog = (!Array.isArray(data.catalog) && data.catalog) || {}
-		this.publicationType = (data.publicationType ?? data.publicationType) || ''
+		this.register = data.register || null
+		this.schema = data.schema || null
 	}
 
 	/* istanbul ignore next */
@@ -116,7 +116,6 @@ export class Publication implements TPublication {
 			category: z.string(),
 			portal: z.string().url('is niet een url').or(z.literal('')),
 			featured: z.boolean(),
-			schema: z.string(),
 			source: z.string(),
 			organization: z.string(),
 			status: z.enum(['Concept', 'Published', 'Withdrawn', 'Archived', 'Revised', 'Rejected']),
@@ -147,7 +146,8 @@ export class Publication implements TPublication {
 			}),
 			'@self': z.object({}).optional(),
 			catalog: z.string().or(z.number()),
-			publicationType: z.string(),
+			register: z.union([z.number(), z.string()]).refine((val) => val.toString().length > 0, 'register is verplicht'),
+			schema: z.union([z.number(), z.string()]).refine((val) => val.toString().length > 0, 'schema is verplicht'),
 		})
 
 		const result = schema.safeParse({

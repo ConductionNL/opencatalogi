@@ -22,10 +22,10 @@ import { NcButton, NcInputField } from '@nextcloud/vue'
 const loading = ref(false)
 
 /**
- * Get the active directory from the store
+ * Get the active listing from the store
  * @return {object | null}
  */
-const directory = computed(() => objectStore.getActiveObject('directory'))
+const listing = computed(() => objectStore.getActiveObject('listing'))
 
 /**
  * Handle save action
@@ -34,11 +34,11 @@ const directory = computed(() => objectStore.getActiveObject('directory'))
 const handleSave = async () => {
 	loading.value = true
 	try {
-		await objectStore.updateObject('directory', directory.value)
-		await objectStore.fetchCollection('publicationType')
+		await objectStore.updateObject('listing', listing.value.id, listing.value)
+		await objectStore.fetchCollection('listing')
 		navigationStore.setModal(false)
 	} catch (error) {
-		console.error('Error saving directory:', error)
+		console.error('Error saving listing:', error)
 	} finally {
 		loading.value = false
 	}
@@ -56,11 +56,11 @@ const handleCancel = () => {
 <template>
 	<div class="edit-listing-modal">
 		<NcInputField
-			:value.sync="directory.title"
+			:value.sync="listing.title"
 			:label="t('opencatalogi', 'Titel')"
 			:disabled="loading" />
 		<NcInputField
-			:value.sync="directory.description"
+			:value.sync="listing.description"
 			:label="t('opencatalogi', 'Beschrijving')"
 			:disabled="loading" />
 		<div class="edit-listing-modal__actions">

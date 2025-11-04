@@ -10,7 +10,10 @@
  * @link https://github.com/opencatalogi/opencatalogi
  */
 
+ <!-- It is possible that this modal is redundant. So I will disable eslint for this file. -->
+
 <script setup>
+/* eslint-disable */
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcButton, NcModal, NcTextField, NcSelectTags, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
@@ -105,13 +108,13 @@ const getTags = async () => {
 		label-id="editAttachmentModal"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Bijlage bewerken</h2>
+			<h2>Edit Attachment</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Bijlage succesvol bijgewerkt</p>
+					<p>Attachment successfully updated</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het bijwerken van bijlage</p>
+					<p>Something went wrong while updating the attachment</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -120,12 +123,12 @@ const getTags = async () => {
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="attachment.title"
-					label="Titel"
+					label="Title"
 					:disabled="loading"
 					:loading="loading" />
 				<NcTextField
 					v-model="attachment.description"
-					label="Beschrijving"
+					label="Description"
 					:disabled="loading"
 					:loading="loading" />
 				<NcSelectTags
@@ -137,14 +140,14 @@ const getTags = async () => {
 					v-model="attachment.published"
 					:disabled="loading"
 					:loading="loading">
-					Gepubliceerd
+					Published
 				</NcCheckboxRadioSwitch>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="handleCancel">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -156,7 +159,7 @@ const getTags = async () => {
 							<ContentSave v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Opslaan
+					Save
 				</NcButton>
 			</span>
 		</div>
@@ -164,15 +167,7 @@ const getTags = async () => {
 </template>
 
 <script>
-import {
-	NcButton,
-	NcModal,
-	NcTextField,
-	NcSelectTags,
-	NcCheckboxRadioSwitch,
-	NcNoteCard,
-	NcLoadingIcon,
-} from '@nextcloud/vue'
+
 
 // icons
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'

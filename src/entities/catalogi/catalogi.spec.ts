@@ -1,13 +1,12 @@
 /**
- * catalogi.spec.ts
- * Test suite for catalogi entities
- * @category Entities
+ * Test suite for Catalogi entity
+ * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
  * @license AGPL-3.0-or-later
  * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
 /* eslint-disable no-console */
@@ -45,6 +44,8 @@ describe('Catalogi Store', () => {
 			registers: [],
 			schemas: [],
 			filters: {},
+			status: 'development',
+			slug: '',
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)

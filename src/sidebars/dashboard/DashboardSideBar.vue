@@ -11,9 +11,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
-			Zoek snel in het voor uw beschikbare federatieve netwerk
+			Search in the federative network
 			<NcTextField class="searchField"
-				:value.sync="objectStore.getSearchTerm('search')"
+				:value="objectStore.getSearchTerm('search')"
 				label="Zoeken" />
 			<NcNoteCard v-if="objectStore.getError('search')" type="error">
 				<p>{{ objectStore.getError('search') }}</p>
@@ -25,27 +25,27 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<Plus :size="20" />
 			</template>
 			<h3 style="margin-top: 0;">
-				Snel Publicatie aanmaken
+				Create a quick publication
 			</h3>
 
 			<div class="formContainer">
 				<NcSelect v-bind="catalogi"
 					v-model="catalogi.value"
 					style="min-width: unset; width: 100%;"
-					input-label="Catalogus*"
+					input-label="Catalog*"
 					:loading="catalogiLoading"
 					:disabled="catalogiLoading || loading" />
 				<NcSelect v-bind="filteredPublicationTypeOptions"
 					v-model="publicationType.value"
 					style="min-width: unset; width: 100%;"
-					input-label="Publicatietype*"
+					input-label="Publication type*"
 					:loading="publicationTypeLoading"
 					:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
 				<NcTextField :disabled="loading"
-					label="Titel*"
+					label="Title*"
 					:value.sync="publicationItem.title" />
 				<NcTextField :disabled="loading"
-					label="Samenvatting*"
+					label="Summary*"
 					:value.sync="publicationItem.summary" />
 			</div>
 			<NcButton :disabled="!publicationItem.title || !publicationItem.summary || !catalogi.value?.id || !publicationType.value?.id || loading"
@@ -57,15 +57,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Plus v-if="!loading" :size="20" />
 				</template>
-				Toevoegen
+				Add
 			</NcButton>
 
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Publicatie succesvol toegevoegd</p>
+					<p>Publication successfully added</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het toevoegen van publicatie</p>
+					<p>Something went wrong while adding the publication</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -77,7 +77,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<template #icon>
 				<ListBoxOutline :size="20" />
 			</template>
-			Welke publicaties vereisen uw aandacht?
+			Which publications require your attention?
 			<NcListItem v-for="(publication, i) in objectStore.getCollection('publication').results"
 				:key="`${publication}${i}`"
 				:name="publication.title"
@@ -94,34 +94,34 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					{{ publication?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setSelected('publication');">
+					<NcActionButton close-after-click @click="handleViewPublication(publication)">
 						<template #icon>
 							<ListBoxOutline :size="20" />
 						</template>
-						Bekijken
+						View
 					</NcActionButton>
-					<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('editPublication')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('editPublication')">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Bewerken
+						Edit
 					</NcActionButton>
-					<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('publishPublication')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('publishPublication')">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
-						Publiceren
+						Publish
 					</NcActionButton>
-					<NcActionButton @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deletePublication')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deletePublication')">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
-						Verwijderen
+						Delete
 					</NcActionButton>
 				</template>
 			</NcListItem>
 			<NcNoteCard v-if="!objectStore.getCollection('publication').results?.length > 0" type="success">
-				<p>Er zijn op dit moment geen publicaties die uw aandacht vereisen</p>
+				<p>There are no publications that require your attention at the moment</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 
@@ -129,7 +129,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<template #icon>
 				<FileOutline :size="20" />
 			</template>
-			Welke bijlagen vereisen uw aandacht?
+			Which attachments require your attention?
 			<NcListItem v-for="(attachment, i) in objectStore.getCollection('attachment').results"
 				:key="`${attachment}${i}`"
 				:name="attachment.title"
@@ -146,28 +146,28 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					{{ attachment?.description }}
 				</template>
 				<template #actions>
-					<NcActionButton @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setModal('editAttachment')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setModal('editAttachment')">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Bewerken
+						Edit
 					</NcActionButton>
-					<NcActionButton @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('publishAttachment')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('publishAttachment')">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
-						Publiceren
+						Publish
 					</NcActionButton>
-					<NcActionButton @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('deleteAttachment')">
+					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('deleteAttachment')">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
-						Verwijderen
+						Delete
 					</NcActionButton>
 				</template>
 			</NcListItem>
 			<NcNoteCard v-if="!objectStore.getCollection('attachment').results?.length > 0" type="success">
-				<p>Er zijn op dit moment geen bijlagen die uw aandacht vereisen</p>
+				<p>There are no attachments that require your attention at the moment</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 	</NcAppSidebar>
@@ -280,6 +280,15 @@ export default {
 		this.fetchPublicationType()
 	},
 	methods: {
+		handleViewPublication(publication) {
+			objectStore.setActiveObject('publication', publication)
+			const catalogId = publication?.catalog?.id || publication?.catalog
+			const catalogs = objectStore.getCollection('catalogus')?.results || []
+			const matchedCatalog = catalogs.find((c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''))
+			const slug = matchedCatalog?.slug || publication?.catalog?.slug || this.$route?.params?.catalogSlug
+			if (!slug || !publication?.id) return
+			this.$router.push(`/publications/${slug}/${publication.id}`)
+		},
 		cleanup() {
 			if (this.success === true) {
 				this.publicationItem = {

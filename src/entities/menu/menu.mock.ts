@@ -1,43 +1,62 @@
-import { Menu } from './menu'
-import { TMenu } from './menu.types.js'
+/**
+ * Menu mock data
+ * @module Entities
+ * @package
+ * @author Ruben Linde
+ * @copyright 2024
+ * @license AGPL-3.0-or-later
+ * @version 1.0.0
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
+ */
+
+import { TMenuItem, TMenu } from './menu.types'
 
 /**
- * Mock data function that returns an array of menu data objects
- * Used for testing and development purposes
+ * Mock menu item data
  */
-export const mockMenuData = (): TMenu[] => [
-	{ // full data
-		id: '1',
-		uuid: '123e4567-e89b-12d3-a456-426614174000',
-		name: 'Main Menu',
-		position: 1,
-		items: [{ name: 'Home', description: 'Home', slug: '/', icon: 'home', link: '/' }],
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-	},
-	// @ts-expect-error -- expected missing items
-	{ // partial data
-		id: '2',
-		uuid: '123e4567-e89b-12d3-a456-426614174001',
-		name: 'Footer Menu',
-		position: 2,
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-	},
-	{ // invalid data
-		id: '3',
-		uuid: '123e4567-e89b-12d3-a456-426614174002',
-		name: '',
-		position: -1,
-		items: [],
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-	},
-]
+export const mockMenuItem: TMenuItem = {
+	id: '1',
+	order: 0,
+	name: 'Home',
+	link: '/',
+	description: 'Home page',
+	icon: 'home',
+	groups: ['admin', 'users'],
+
+	hideAfterLogin: false,
+	hideBeforeLogin: false,
+	items: [],
+}
 
 /**
- * Creates an array of Menu instances from provided data or default mock data
- * @param data Optional array of menu data to convert to Menu instances
- * @return {TMenu[]} Array of Menu instances
+ * Mock menu data
  */
-export const mockMenu = (data: TMenu[] = mockMenuData()): TMenu[] => data.map(item => new Menu(item))
+export const mockMenu: TMenu = {
+	id: '1',
+	uuid: '123e4567-e89b-12d3-a456-426614174000',
+	title: 'Main Menu',
+	position: 1,
+	items: [mockMenuItem],
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	groups: ['admin'],
+
+	hideBeforeLogin: true,
+}
+
+/**
+ * Mock minimal menu data
+ */
+export const mockMinimalMenu: TMenu = {
+	id: '1',
+	uuid: '123e4567-e89b-12d3-a456-426614174001',
+	title: 'Main Menu',
+	position: 1,
+	items: [],
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	groups: [],
+
+	hideAfterLogin: false,
+	hideBeforeLogin: false,
+}

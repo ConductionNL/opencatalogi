@@ -22,26 +22,26 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		label-id="deleteListingDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
-			<h2>Listing verwijderen</h2>
+			<h2>Delete Listing</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Listing succesvol verwijderd</p>
+					<p>Listing successfully deleted</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het verwijderen van listing</p>
+					<p>Something went wrong while deleting the listing</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Weet je zeker dat je de listing '{{ listing.title }}' wilt verwijderen?</p>
+				<p>Do you want to delete the listing '{{ listing.title }}'?</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="navigationStore.setDialog(false)">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -53,7 +53,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<Delete v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Verwijderen
+					Delete
 				</NcButton>
 			</span>
 		</div>
@@ -111,14 +111,6 @@ const handleDelete = async () => {
 	} finally {
 		loading.value = false
 	}
-}
-
-/**
- * Handle cancel action
- * @return {void}
- */
-const handleCancel = () => {
-	navigationStore.setDialog(false)
 }
 
 export default {

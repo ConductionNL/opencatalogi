@@ -1,13 +1,12 @@
 /**
- * Glossary Types
- * Type definitions for glossary entities
- * @category Entity
+ * Type definitions for Glossary entity
+ * @module Entities
  * @package
  * @author Ruben Linde
  * @copyright 2024
  * @license AGPL-3.0-or-later
  * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
+ * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
 export type TGlossary = {
@@ -17,5 +16,4 @@ export type TGlossary = {
     description: string
     externalLink: string
     keywords: string[]
-    published: boolean
 }
