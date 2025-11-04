@@ -1,14 +1,6 @@
-/**
- * @file ViewObject.vue
- * @module Modals/Object
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- */
-
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
@@ -210,7 +202,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														:min="getPropertyMinimum(key)"
 														:max="getPropertyMaximum(key)"
 														:step="getPropertyStep(key)"
-														@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
+														@update:value="updatePropertyValue(key, $event)" />
 													<InformationOutline
 														v-tooltip="'Array values should be separated by commas'"
 														:size="25"
@@ -1409,8 +1401,60 @@ export default {
 		objectStore.fetchCollection('theme')
 		// Fetch tags for the label options dropdown
 		this.getAllTags()
+		// Listen to tags updates from UploadFiles modal
+		EventBus.$on('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
+		EventBus.$on('upload-files:closed', this.onUploadFilesClosed)
+	},
+	destroyed() {
+		try {
+			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
+			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
+		} catch (e) {
+			// ignore
+		}
 	},
 	methods: {
+		onUploadFilesTagsUpdated(payload) {
+			try {
+				const tags = Array.isArray(payload && payload.tags) ? payload.tags : []
+				const newTags = Array.isArray(payload && payload.newTags) ? payload.newTags : []
+				console.info('>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES', {
+					total: tags.length,
+					newTags,
+				})
+				if (!this.labelOptionsEdit) {
+					this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+				}
+				this.labelOptionsEdit.options = [...tags]
+			} catch (e) {
+				console.error('Failed to apply updated tags from UploadFiles', e)
+			}
+		},
+		onUploadFilesClosed(payload) {
+			try {
+				// prefer payload tags
+				const tagsFromPayload = Array.isArray(payload && payload.tags) ? payload.tags : null
+				if (tagsFromPayload) {
+					if (!this.labelOptionsEdit) {
+						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					}
+					this.labelOptionsEdit.options = [...tagsFromPayload]
+					return
+				}
+				// fallback: from store or re-fetch
+				const stored = objectStore.getCollection('tags')
+				if (Array.isArray(stored)) {
+					if (!this.labelOptionsEdit) {
+						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					}
+					this.labelOptionsEdit.options = [...stored]
+				} else {
+					this.getAllTags()
+				}
+			} catch (e) {
+				console.error('Failed to handle UploadFiles closed', e)
+			}
+		},
 		getModalTitle() {
 			// For new objects, show "Create Publication"
 			if (this.isNewObject) {
@@ -1490,29 +1534,41 @@ export default {
 				this.formData = {}
 				this.jsonData = JSON.stringify({}, null, 2)
 
-				// Auto-select catalog if there's only one
 				const catalogs = objectStore.getCollection('catalog').results
-				if (catalogs.length === 1) {
+
+				// Check if we have a catalogSlug route param
+				const catalogSlug = this.$route.params.catalogSlug
+				if (catalogSlug) {
+					// Find catalog by slug
+					const matchingCatalog = catalogs.find(catalog => catalog.slug === catalogSlug)
+					if (matchingCatalog) {
+						this.selectedCatalog = {
+							id: matchingCatalog.id,
+							label: matchingCatalog.title,
+						}
+					}
+				} else if (catalogs.length === 1) {
+					// If no catalog found by slug and only one catalog exists, auto-select it
 					this.selectedCatalog = {
 						id: catalogs[0].id,
 						label: catalogs[0].title,
 					}
-
-					// Use nextTick to ensure the computed properties are updated
-					this.$nextTick(() => {
-						// Auto-select register if there's only one
-						if (this.registerOptions.length === 1) {
-							this.selectedRegister = this.registerOptions[0]
-
-							this.$nextTick(() => {
-								// Auto-select schema if there's only one
-								if (this.schemaOptions.length === 1) {
-									this.selectedSchema = this.schemaOptions[0]
-								}
-							})
-						}
-					})
 				}
+
+				// Use nextTick to ensure the computed properties are updated
+				this.$nextTick(() => {
+					// Auto-select register if there's only one
+					if (this.registerOptions.length === 1) {
+						this.selectedRegister = this.registerOptions[0]
+
+						this.$nextTick(() => {
+							// Auto-select schema if there's only one
+							if (this.schemaOptions.length === 1) {
+								this.selectedSchema = this.schemaOptions[0]
+							}
+						})
+					}
+				})
 
 				return
 			}
@@ -3111,8 +3167,26 @@ export default {
 						// This effectively removes the property from the payload
 						delete objectData[propertyKey]
 					} else {
-						// Use edited value from formData
-						objectData[propertyKey] = cleanedFormData[propertyKey]
+						// Use edited value from formData; normalize arrays if schema type is array
+						const formValue = cleanedFormData[propertyKey]
+						if (schemaProperty.type === 'array') {
+							let normalized
+							if (Array.isArray(formValue)) {
+								normalized = formValue
+							} else if (typeof formValue === 'string') {
+								normalized = formValue.split(/ *, */g).filter(Boolean)
+							} else if (formValue === null) {
+								normalized = null
+							} else if (formValue === false) {
+								// Edge case: some inputs may pass boolean false; treat as empty array
+								normalized = []
+							} else {
+								normalized = [String(formValue)].filter(Boolean)
+							}
+							objectData[propertyKey] = normalized
+						} else {
+							objectData[propertyKey] = formValue
+						}
 					}
 				} else if (Object.prototype.hasOwnProperty.call(currentObjectData, propertyKey)) {
 					// Keep existing value from current object

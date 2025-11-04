@@ -1,15 +1,3 @@
-/**
- * OrganizationIndex.vue
- * Component for displaying and managing organizations using GenericObjectTable
- * @category Views
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>

@@ -281,6 +281,8 @@ export default {
 						}, 2000)
 					})
 			} else {
+				delete catalogiItem.id
+
 				objectStore.createObject('catalog', catalogiItem)
 					.then(() => {
 						// Wait for the user to read the feedback then close the model

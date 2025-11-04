@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+// NOTE: Using component instance $router/$route in watchers below
 import { useSearchStore } from '../../store/modules/search.ts'
-import { navigationStore } from '../../store/store.js'
 import { t } from '@nextcloud/l10n'
 import {
 	NcAppSidebar,
@@ -194,18 +194,90 @@ watch(searchTerm, (newValue) => {
 	}, 800)
 })
 
+// --- SPOT utilities ---
+const RESERVED = new Set(['q', 'sort', 'view'])
+const debounceTimer = ref(null)
+
+function buildQueryFromState() {
+	const q = {}
+	if (searchStore.getSearchTerm) q.q = searchStore.getSearchTerm
+	const ord = Object.entries(searchStore.getOrdering)[0]
+	if (ord) q.sort = `${ord[0]}:${ord[1]}`
+	if (searchStore.getViewMode) q.view = searchStore.getViewMode
+	Object.entries(searchStore.getFilters).forEach(([k, v]) => {
+		q[k] = Array.isArray(v) ? v.join(',') : String(v)
+	})
+	return q
+}
+
+function applyQueryToState(routeQuery) {
+	const q = routeQuery || {}
+	searchStore.setSearchTerm(typeof q.q === 'string' ? q.q : '')
+	if (q.sort) {
+		const [f, d] = String(q.sort).split(':')
+		searchStore.clearOrdering()
+		if (f && d) searchStore.setOrdering(f, d === 'DESC' ? 'DESC' : 'ASC')
+	}
+	if (q.view === 'cards' || q.view === 'table') searchStore.setViewMode(q.view)
+	const filters = {}
+	Object.entries(q).forEach(([k, v]) => {
+		if (!RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== '') filters[k] = String(v)
+	})
+	searchStore.clearAllFilters()
+	if (Object.keys(filters).length) searchStore.setFilters(filters)
+}
+
+function shallowEqualQuery(a, b) {
+	const ak = Object.keys(a || {})
+	const bk = Object.keys(b || {})
+	if (ak.length !== bk.length) return false
+	for (const k of ak) {
+		if (String(a[k]) !== String(b[k])) return false
+	}
+	return true
+}
+
+function writeUrlFromStateIfChanged(vm) {
+	if (vm.$route.path !== '/search') return
+	const nextQuery = buildQueryFromState()
+	if (shallowEqualQuery(nextQuery, vm.$route.query)) return
+	vm.$router.replace({ path: vm.$route.path, query: nextQuery })
+}
+
 // Lifecycle
-onMounted(async () => {
-	// Initialize search term from store
+onMounted(async function() {
+	// Initialize from URL -> store
+	applyQueryToState(this.$route.query || {})
+
+	// Initialize search term local mirror
 	searchTerm.value = searchStore.getSearchTerm
 
-	// Always load initial results and discover facets when component mounts
 	try {
 		await searchStore.loadInitialResults()
 	} catch (error) {
 		console.error('SearchSideBar: Failed to load initial results:', error)
 	}
 })
+
+// Watch route changes -> apply to state
+watch(() => this && this.$route && this.$route.fullPath, function() {
+	if (!this || !this.$route) return
+	if (this.$route.path !== '/search') return
+	applyQueryToState(this.$route.query || {})
+}.bind(this))
+
+// Watch state changes -> write to URL (debounced)
+watch([
+	() => searchStore.getSearchTerm,
+	() => searchStore.getViewMode,
+	() => searchStore.getOrdering,
+	() => searchStore.getFilters,
+], function() {
+	if (debounceTimer.value) clearTimeout(debounceTimer.value)
+	debounceTimer.value = setTimeout(() => {
+		writeUrlFromStateIfChanged(this)
+	}, 400)
+}.bind(this))
 </script>
 
 <template>
