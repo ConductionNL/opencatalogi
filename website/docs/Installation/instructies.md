@@ -15,34 +15,29 @@ Follow these steps to easily install and use Nextcloud:
    * When starting the app, you can choose between a server and creating an account. Create an account if you don't have one yet.
    * We chose TheGoodCloud, without any particular preference.
    * You will receive an activation email, this can take up to 6 hours. As always, also check your spam folder.
-   *   Once logged in, the screen looks like this:\
-       \
+   *   Once logged in, the screen looks like this:
 
-
-       <img src="../.gitbook/assets/image.png" alt="the good cloud welcome" />
-       <figcaption>the good cloud welcome</figcaption>
+       <figure><img src="../assets/nc_welkom_to_the_good_cloud.png" alt="Nextcloud welcome screen" /><figcaption>Nextcloud welcome screen</figcaption></figure>
 2. **Install Nextcloud app via the app store**:
 
 Note! You need an admin account for this. This may not work with trial versions.
 
 * Navigate to your profile icon, on the right in the Nextcloud app. Click on it and choose "Apps".
 
-\
-
-
-<figure><img src="../assets/image (1).png" alt="" /><figcaption><p>App menu</p></figcaption></figure>
+<figure><img src="../assets/nc_app_menu.png" alt="Nextcloud app menu" /><figcaption>Nextcloud app menu</figcaption></figure>
 
 3. **Install OpenCatalogi**:
 
 * After you are logged in to the Nextcloud app, go to the app store within the Nextcloud environment.
 * Search for "OpenCatalogi" within the "Integration" category and install the app.
 
-<figure><img src="../assets/image (4).png" alt="" /><figcaption></figcaption></figure>
+<figure><img src="../assets/nc_app_enable.png" alt="Enable OpenCatalogi app" /><figcaption>Enable OpenCatalogi app in Nextcloud app store</figcaption></figure>
 
 With these steps you are ready to use Nextcloud and OpenCatalogi without having to set up your own server. If you have any questions or need help, consult the [official Nextcloud documentation](https://docs.nextcloud.com/) or send an email to support@conduction.nl.
 
-** Update OpenCatalogi**
-![alt text](upgrade.png)
+**Update OpenCatalogi**
+
+<figure><img src="./upgrade.png" alt="OpenCatalogi update screen" /><figcaption>Update OpenCatalogi to the latest version</figcaption></figure>
 
 ### Installation Instructions for Frontend
 
