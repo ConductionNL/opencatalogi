@@ -540,9 +540,9 @@ class CatalogiService
 
         // Get the context for the catalog
         $context = $this->getCatalogFilters($catalogId);
-        
+
         $objectService = $this->getObjectService();
-        
+
         // Build search query from config
         $query = [];
         if (!empty($context['registers']) || !empty($context['schemas'])) {
@@ -554,7 +554,7 @@ class CatalogiService
                 $query['@self']['schema'] = $context['schemas'];
             }
         }
-        
+
         // Add other filters from config
         if (!empty($config['filters'])) {
             foreach ($config['filters'] as $key => $value) {
@@ -563,7 +563,7 @@ class CatalogiService
                 }
             }
         }
-        
+
         // Add special parameters
         if (isset($config['limit'])) {
             $query['_limit'] = $config['limit'];
@@ -580,23 +580,25 @@ class CatalogiService
         if (isset($config['order'])) {
             $query['_order'] = $config['order'];
         }
-        
+
         // Use searchObjectsPaginated which handles pagination internally
         $result = $objectService->searchObjectsPaginated($query);
-        
+
         // Filter out unwanted properties from the '@self' array in each object
         $filteredResults = array_map(function ($object) {
+            $objectArray = $object->jsonSerialize();
+
             //@todo: a loggedin user should be able to see the full object
-            if (isset($object['@self']) && is_array($object['@self'])) {
+            if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
                 $unwantedProperties = [
                     'schemaVersion', 'relations', 'locked', 'owner', 'folder',
                     'application', 'validation', 'retention',
                     'size', 'deleted'
                 ];
                 // Remove unwanted properties from the '@self' array
-                $object['@self'] = array_diff_key($object['@self'], array_flip($unwantedProperties));
+                $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
             }
-            return $object;
+            return $objectArray;
         }, $result['results']);
         
         $result['results'] = $filteredResults;

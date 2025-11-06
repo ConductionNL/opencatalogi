@@ -7,7 +7,9 @@ return [
 		 */
 		// Dashboard
 		['name' => 'dashboard#index', 'url' => '/index', 'verb' => 'GET'],
-		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'], // Should be in directory becouse its public
+		// this may seem like a duplicate of the UI routes at the bottom, but this is needed
+		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+
 		// Catalogi
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
 		['name' => 'catalogi#show', 'url' => '/api/catalogi/{id}', 'verb' => 'GET'],
@@ -85,5 +87,18 @@ return [
 		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+
+		// UI page routes for SPA deep links
+		['name' => 'ui#dashboard', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'ui#catalogi', 'url' => '/catalogi', 'verb' => 'GET'],
+		['name' => 'ui#publicationsIndex', 'url' => '/publications/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ui#publicationsPage', 'url' => '/publications/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+', 'id' => '[a-z0-9-]+']],
+		['name' => 'ui#search', 'url' => '/search', 'verb' => 'GET'],
+		['name' => 'ui#organizations', 'url' => '/organizations', 'verb' => 'GET'],
+		['name' => 'ui#themes', 'url' => '/themes', 'verb' => 'GET'],
+		['name' => 'ui#glossary', 'url' => '/glossary', 'verb' => 'GET'],
+		['name' => 'ui#pages', 'url' => '/pages', 'verb' => 'GET'],
+		['name' => 'ui#menus', 'url' => '/menus', 'verb' => 'GET'],
+		['name' => 'ui#directory', 'url' => '/directory', 'verb' => 'GET'],
 	]
 ];

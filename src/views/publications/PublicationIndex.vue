@@ -1,6 +1,5 @@
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
-import { ref, onMounted, computed } from 'vue'
 </script>
 
 <template>
@@ -13,7 +12,8 @@ import { ref, onMounted, computed } from 'vue'
 			name="Loading settings..." />
 
 		<!-- Show new table view if use_old_style_publishing_view is false (default) -->
-		<PublicationTable v-else-if="!useOldStyleView" />
+		<!-- NEW: Only show table view if no publication ID is provided, otherwise go to details page -->
+		<PublicationTable v-else-if="!useOldStyleView && !$route.params.id" :key="$route.params.catalogSlug" />
 
 		<!-- Show old style view if use_old_style_publishing_view is true -->
 		<NcAppContent v-else>
@@ -41,22 +41,11 @@ import { ref, onMounted, computed } from 'vue'
 </template>
 
 <script>
-import { storeToRefs } from 'pinia'
 import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import PublicationList from './PublicationList.vue'
 import PublicationDetails from './PublicationDetail.vue'
 import PublicationTable from './PublicationTable.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
-
-// Make the stores reactive
-const { selected } = storeToRefs(navigationStore)
-const activePublication = computed(() => objectStore.getActiveObject('publication'))
-
-const showEmptyContent = computed(() => {
-	const hasActivePublication = activePublication.value
-	const isPublicationSelected = selected.value === 'publication'
-	return !hasActivePublication || !isPublicationSelected
-})
 
 export default {
 	name: 'PublicationIndex',
@@ -75,6 +64,11 @@ export default {
 			useOldStyleView: false,
 			loadingSettings: true,
 		}
+	},
+	computed: {
+		showEmptyContent() {
+			return !this.$route.params.id
+		},
 	},
 	async mounted() {
 		await this.loadPublishingSettings()

@@ -1,15 +1,3 @@
-/**
- * ThemeIndex.vue
- * Component for displaying themes with cards and table view
- * @category Views
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>

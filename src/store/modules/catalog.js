@@ -101,14 +101,16 @@ export const useCatalogStore = defineStore('catalog', {
 		},
 
 		/**
-		 * Fetch publications for the active catalog
+		 * Fetch publications for a catalog
+		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @param {object} params - Optional parameters for pagination and filtering
 		 * @param {number} params.page - Page number (default: 1)
 		 * @param {number} params.limit - Items per page (default: 20)
 		 * @return {Promise<void>}
 		 */
-		async fetchPublications(params = {}) {
-			if (!this.activeCatalog) {
+		async fetchPublications(params = {}, catalogId = null) {
+			if (!catalogId && !this.activeCatalog) {
+				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
 				return
 			}
 
@@ -132,7 +134,9 @@ export const useCatalogStore = defineStore('catalog', {
 			const queryParams = new URLSearchParams(searchParams)
 
 			try {
-				const url = `/index.php/apps/opencatalogi/api/catalogi/${this.activeCatalog.id}?${queryParams}`
+				const catalogIdToUse = catalogId || this.activeCatalog.id
+
+				const url = `/index.php/apps/opencatalogi/api/catalogi/${catalogIdToUse}?${queryParams}`
 				const response = await fetch(url)
 				const data = await response.json()
 
