@@ -17,23 +17,6 @@ Sitemap: https://cloud.example.com/index.php/apps/opencatalogi/{catalogiSlug}/si
 This endpoint can be found `/apps/opencatalogi/robots.txt` and shows other sitemap.xml endpoints.
 The RobotsController handles this.
 
-The robots.txt and sitemap.xml endpoints are not accessable from the root of the domain due to app structure in Nextcloud.
-If these endpoints need to be accessed from the root of the domain a proxy should be configured from another domain which can be a frontend or any other service. 
-
-For our Woo frontend we can change that on the base of the container-setup-v1 branch of repo woo-website-template-apiv2 should be added in /pwa/docker/default.conf.template: 
-
-location = /robots.txt {
-    proxy_pass ${UPSTREAM_BASE}/index.php/apps/opencatalogi/robots.txt;
-
-    proxy_set_header Host ${UPSTREAM_BASE};
-
-    proxy_set_header X-Real-IP $remote_addr;
-
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-    proxy_set_header X-Forwarded-Proto $scheme;
-
-}
 
 ## Woo robots.txt
 
@@ -88,6 +71,24 @@ That expansion on the robots.txt will look like:
 ```
 
 So the RobotsController must check if the hasWooSitemap option is enabled on the Catalog and add these urls to the robots.txt.
+
+The robots.txt and sitemap.xml endpoints are not accessable from the root of the domain due to app structure in Nextcloud.
+If these endpoints need to be accessed from the root of the domain a proxy should be configured from another domain which can be a frontend or any other service. 
+
+For our Woo frontend we can change that on the base of the container-setup-v1 branch of repo woo-website-template-apiv2 should be added in /pwa/docker/default.conf.template: 
+
+location = /robots.txt {
+    proxy_pass ${UPSTREAM_BASE}/index.php/apps/opencatalogi/robots.txt;
+
+    proxy_set_header Host ${UPSTREAM_BASE};
+
+    proxy_set_header X-Real-IP $remote_addr;
+
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+}
 
 ## General sitemap.xml
 
