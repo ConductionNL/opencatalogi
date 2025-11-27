@@ -69,6 +69,7 @@ That expansion on the robots.txt will look like:
 ```
 
 ${DOMAIN} is placed here so it can be replaced by NGINX with a configured frontend domain.
+Also all ${DOMAIN} in following sitemap endpoints need to be replaced because the domain of robots.txt and sitemaps need to be the same.
 
 NGINX:
 
@@ -79,11 +80,30 @@ server {
 
     set $site_domain $host;
 
+    # robots.txt
     location = /robots.txt {
         alias /etc/nginx/templates/robots.txt.template;
         default_type text/plain;
 
         gzip off;
+
+        sub_filter '${DOMAIN}' $site_domain;
+        sub_filter_once off;
+    }
+
+    # sitemap index 
+    location ~ ^/apps/opencatalogi/catalogs/[^/]+/sitemaps/sitemapindex-diwoo-infocat[0-9]+\.xml$ {
+        proxy_pass http://backend;  # pas aan naar jouw upstream
+        proxy_set_header Accept-Encoding "";  # nodig voor sub_filter
+
+        sub_filter '${DOMAIN}' $site_domain;
+        sub_filter_once off;
+    }
+
+    # sitemap publications 
+    location ~ ^/apps/opencatalogi/catalogs/[^/]+/sitemaps/sitemapindex-diwoo-infocat[0-9]+\.xml/publications$ {
+        proxy_pass http://backend;
+        proxy_set_header Accept-Encoding "";
 
         sub_filter '${DOMAIN}' $site_domain;
         sub_filter_once off;
@@ -188,6 +208,8 @@ Show woo document specific sitemap.xml
     "diwoo:Document.diwoo:DiWoo.diwoo:documenthandelingen.diwoo:documenthandeling.diwoo:atTime": "{{ object.publicatiedatum }}"
   }
 ```
+
+Note: there is no detail sitemap xml endpoint for a publicaton, just a index of multiple.
 
 ```mermaid
 flowchart TD
