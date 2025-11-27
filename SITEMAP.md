@@ -29,54 +29,72 @@ This can be toggled on or off on the create catalog modal and is turned off by d
 
 This option is called hasWooSitemap on a Catalog.
 
-![alt text](image.png)
-
 If enabled the robots.txt will be expanded with urls foreach Woo informatiecategorie.
 That expansion on the robots.txt will look like:
 
 ```
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat002.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat002.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat003.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat003.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat004.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat004.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat005.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat005.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat006.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat006.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat007.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat007.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat008.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat008.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat009.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat009.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat010.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat010.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat011.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat011.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat012.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat012.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat013.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat013.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat014.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat014.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat015.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat015.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat016.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat016.xml  
 
- Sitemap: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat017.xml 
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat017.xml 
 ```
 
-So the RobotsController must check if the hasWooSitemap option is enabled on the Catalog and add these urls to the robots.txt.
+${DOMAIN} is placed here so it can be replaced by NGINX with a configured frontend domain.
 
-The robots.txt and sitemap.xml endpoints are not accessable from the root of the domain due to app structure in Nextcloud.
-If these endpoints need to be accessed from the root of the domain a proxy should be configured from another domain which can be a frontend or any other service. 
+NGINX:
 
-For our Woo frontend we can change that on the base of the container-setup-v1 branch of repo woo-website-template-apiv2 should be added in /pwa/docker/default.conf.template: 
+```
+server {
+    listen 80;
+    server_name example.com www.example.com;
 
+    set $site_domain $host;
+
+    location = /robots.txt {
+        alias /etc/nginx/templates/robots.txt.template;
+        default_type text/plain;
+
+        gzip off;
+
+        sub_filter '${DOMAIN}' $site_domain;
+        sub_filter_once off;
+    }
+}
+```
+
+Also the /robot.txt must be forwarded in NGINX for the woo frontend.
+For our Woo frontend we can change that on the base of the container-setup-v1 branch of repo woo-website-template-apiv2. The following should be added in /pwa/docker/default.conf.template: 
+
+```
 location = /robots.txt {
     proxy_pass ${UPSTREAM_BASE}/index.php/apps/opencatalogi/robots.txt;
 
@@ -89,6 +107,14 @@ location = /robots.txt {
     proxy_set_header X-Forwarded-Proto $scheme;
 
 }
+```
+
+Then the RobotsController must check if the hasWooSitemap option is enabled on at least 1 Catalog if these Woo sitemap endpoints are to be shown and accessed.
+
+The robots.txt and sitemap.xml endpoints are not accessable from the root of the domain due to app structure in Nextcloud.
+If these endpoints need to be accessed from the root of the domain a proxy should be configured from another domain which can be a frontend or any other service, which is why we do this forwarding and url replacing in NGINX.
+
+
 
 ## General sitemap.xml
 
@@ -119,7 +145,7 @@ There is also a sitemap specifically for Woo catalogs. It follows the open overh
 If hasWooSitemap toggled on the in the Catalog the robots.txt will show these endpoints.
 This can be toggled on or off on the create catalog modal and is turned off by default.
 
-It can be accessed through endpoint like: https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml
+It can be accessed through endpoint like: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml
 
 The diwoo code must be translated back to a Woo schema.
 
@@ -131,11 +157,11 @@ This endpoint must have pagination and also based on total publications must sho
 <?xml version="1.0" encoding="utf-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <sitemap>
-        <loc>https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>
+        <loc>https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>
         <lastmod>2025-11-11 11:32:33</lastmod>
     </sitemap>
     <sitemap>
-        <loc>https://cloud.example.com/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2</loc>
+        <loc>https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2</loc>
         <lastmod>2025-11-11 11:32:33</lastmod>
     </sitemap>
 </sitemapindex>
