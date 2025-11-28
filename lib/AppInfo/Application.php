@@ -14,9 +14,11 @@ use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
+use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
+use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\IConfig;
 use OCP\App\IAppManager;
 
@@ -47,6 +49,9 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(ObjectCreatedEvent::class, CatalogCacheEventListener::class);
 		$context->registerEventListener(ObjectUpdatedEvent::class, CatalogCacheEventListener::class);
 		$context->registerEventListener(ObjectDeletedEvent::class, CatalogCacheEventListener::class);
+		
+		// Register tool registration listener for OpenRegister agents
+		$context->registerEventListener(ToolRegistrationEvent::class, ToolRegistrationListener::class);
 	}//end register
 
 	public function boot(IBootContext $context): void {

@@ -1,5 +1,22 @@
 {
     "openapi": "3.0.0",
+    "info": {
+        "title": "Publication Register",
+        "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
+        "version": "0.0.9"
+    },
+    "x-openregister": {
+        "type": "application",
+        "app": "opencatalogi",
+        "sourceType": "local",
+        "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+        "openregister": "^v0.2.10",
+        "github": {
+            "repo": null,
+            "branch": null,
+            "path": null
+        }
+    },
     "components": {
         "registers": {
             "publication": {
@@ -1208,11 +1225,5 @@
                 ]
             }
         ]
-    },
-    "info": {
-        "id": 21,
-        "title": "Publication",
-        "description": "",
-        "version": "0.0.8"
     }
 }

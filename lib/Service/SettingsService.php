@@ -460,36 +460,26 @@ class SettingsService
      */
     public function loadSettings(bool $force = false): array
     {
-        // Read the settings from the publication_register.json file.
-        $settingsFilePath = __DIR__.'/../Settings/publication_register.json';
-        $settings         = [];
-
         try {
-            // Check if the file exists.
-            if (file_exists($settingsFilePath) === false) {
-                throw new \Exception('Settings file not found.');
-            }
+            // Define the file path relative to Nextcloud root
+            // This enables the cron job to track and auto-update the configuration
+            $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
 
-            // Get the contents of the file.
-            $jsonContent = file_get_contents($settingsFilePath);
-
-            // Decode the JSON content into an associative array.
-            $settings = json_decode($jsonContent, true);
-
-            // Check for JSON decoding errors.
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Error decoding JSON: '.json_last_error_msg());
-            }
-
-            // Get the configuration service and import the settings.
+            // Get the configuration service
             $configurationService = $this->getConfigurationService();
 
             // Get the current app version dynamically
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            return $configurationService->importFromJson(
-                data: $settings,
+            // Use importFromFilePath to let OpenRegister handle file reading and import
+            // This method will:
+            // - Read the JSON file
+            // - Parse and validate the configuration data
+            // - Create or update the Configuration entity
+            // - Store the sourceUrl for cron job tracking
+            return $configurationService->importFromFilePath(
                 appId: Application::APP_ID,
+                filePath: $relativeFilePath,
                 version: $currentAppVersion,
                 force: $force
             );
