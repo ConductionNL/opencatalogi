@@ -390,6 +390,18 @@ class CatalogiService
             $schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
+            if (empty($schema) === true || empty($register) === true) {
+                $this->logger->error(
+                    'Catalog schema or register not found in config',
+                    [
+                        'slug' => $slug,
+                        'schema' => $schema,
+                        'register' => $register,
+                    ]
+                );
+                return null;
+            }
+
             $query = [
                 '@self' => [
                     'register' => $register,
@@ -402,7 +414,13 @@ class CatalogiService
             $catalogs = $this->getObjectService()->searchObjects($query);
 
             if (empty($catalogs)) {
-                $this->logger->warning('Catalog not found', ['slug' => $slug]);
+                $this->logger->error('Catalog not found',
+                    [
+                        'slug' => $slug,
+                        'schema' => $schema,
+                        'register' => $register,
+                    ]
+                );
                 return null;
             }
 
