@@ -414,7 +414,13 @@ class CatalogiService
             $catalogs = $this->getObjectService()->searchObjects($query);
 
             if (empty($catalogs)) {
-                $this->logger->error('Catalog not found', ['slug' => $slug]);
+                $this->logger->error('Catalog not found',
+                    [
+                        'slug' => $slug,
+                        'schema' => $schema,
+                        'register' => $register,
+                    ]
+                );
                 return null;
             }
 
