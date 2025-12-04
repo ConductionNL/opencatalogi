@@ -484,20 +484,97 @@ class SettingsService
             // Get the configuration service and import the settings.
             $configurationService = $this->getConfigurationService();
 
-            // Get the current app version dynamically
+            // Get the current app version dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            return $configurationService->importFromJson(
-                data: $settings,
+            // Use importFromApp which handles Configuration entity creation automatically.
+            $result = $configurationService->importFromApp(
                 appId: Application::APP_ID,
+                data: $settings,
                 version: $currentAppVersion,
                 force: $force
             );
+
+            // Update app configuration with imported schema and register IDs.
+            $this->updateObjectTypeConfiguration($result);
+
+            return $result;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to load settings: '.$e->getMessage());
         }//end try
 
     }//end loadSettings()
+
+
+    /**
+     * Update the app configuration with imported schema and register IDs.
+     *
+     * After importing the configuration from OpenRegister, this method updates
+     * the app configuration with the actual schema and register IDs so that
+     * the frontend can construct correct API URLs.
+     *
+     * @param array $importResult The result from the importFromApp call containing registers and schemas.
+     *
+     * @return void
+     */
+    private function updateObjectTypeConfiguration(array $importResult): void
+    {
+        // Get the object types that need configuration.
+        $objectTypes = [
+            'catalog',
+            'listing',
+            'organization',
+            'theme',
+            'page',
+            'menu',
+            'glossary',
+        ];
+
+        // Build a map of schema slugs to schema IDs.
+        $schemaMap = [];
+        foreach ($importResult['schemas'] ?? [] as $schema) {
+            // Handle both object and array formats.
+            if (is_object($schema) === true && method_exists($schema, 'getSlug') === true) {
+                $schemaMap[$schema->getSlug()] = $schema->getId();
+            } elseif (is_array($schema) === true && isset($schema['slug']) === true) {
+                $schemaMap[$schema['slug']] = $schema['id'] ?? $schema['uuid'] ?? null;
+            }
+        }
+
+        // Get the register ID (all schemas share the same publication register).
+        $registerId = null;
+        foreach ($importResult['registers'] ?? [] as $register) {
+            // Handle both object and array formats.
+            if (is_object($register) === true && method_exists($register, 'getSlug') === true) {
+                if ($register->getSlug() === 'publication') {
+                    $registerId = $register->getId();
+                    break;
+                }
+            } elseif (is_array($register) === true && isset($register['slug']) === true) {
+                if ($register['slug'] === 'publication') {
+                    $registerId = $register['id'] ?? $register['uuid'] ?? null;
+                    break;
+                }
+            }
+        }
+
+        // Update configuration for each object type.
+        foreach ($objectTypes as $type) {
+            // Set source to openregister.
+            $this->config->setValueString($this->appName, "{$type}_source", 'openregister');
+
+            // Set schema ID if found in the import result.
+            if (isset($schemaMap[$type]) === true && $schemaMap[$type] !== null) {
+                $this->config->setValueString($this->appName, "{$type}_schema", (string) $schemaMap[$type]);
+            }
+
+            // Set register ID if found.
+            if ($registerId !== null) {
+                $this->config->setValueString($this->appName, "{$type}_register", (string) $registerId);
+            }
+        }
+
+    }//end updateObjectTypeConfiguration()
 
 
     /**
