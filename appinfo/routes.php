@@ -24,6 +24,7 @@ return [
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
+		
 		// Publications CORS (wildcard catalog-based endpoints)
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],

@@ -629,11 +629,8 @@ class PublicationsController extends Controller
                 // Note: Published filtering is disabled in SOLR service, so we don't need published=true
                 $result = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery,
-                    rbac: false,
-                    multi: false,
                     deleted: false,
                     ids: $relations,
-                    published: true,
                 );
             }
 
@@ -701,10 +698,7 @@ class PublicationsController extends Controller
             // Note: Published filtering is disabled in SOLR service, so we don't need published=true
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery,
-                rbac: false,
-                multi: false,
                 deleted: false,
-                published: true,
                 uses: $id
             );
 
