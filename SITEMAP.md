@@ -33,39 +33,39 @@ If enabled the robots.txt will be expanded with urls foreach Woo informatiecateg
 That expansion on the robots.txt will look like:
 
 ```
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat002.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat002.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat003.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat003.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat004.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat004.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat005.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat005.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat006.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat006.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat007.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat007.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat008.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat008.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat009.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat009.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat010.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat010.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat011.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat011.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat012.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat012.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat013.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat013.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat014.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat014.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat015.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat015.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat016.xml  
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat016.xml  
 
- Sitemap: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat017.xml 
+ Sitemap: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat017.xml 
 ```
 
 ${DOMAIN} is placed here so it can be replaced by NGINX with a configured frontend domain.
@@ -92,7 +92,7 @@ server {
     }
 
     # sitemap index 
-    location ~ ^/apps/opencatalogi/catalogs/[^/]+/sitemaps/sitemapindex-diwoo-infocat[0-9]+\.xml$ {
+    location ~ ^/apps/opencatalogi/[^/]+/sitemaps/sitemapindex-diwoo-infocat[0-9]+\.xml$ {
         proxy_pass http://backend;  # pas aan naar jouw upstream
         proxy_set_header Accept-Encoding "";  # nodig voor sub_filter
 
@@ -101,7 +101,7 @@ server {
     }
 
     # sitemap publications 
-    location ~ ^/apps/opencatalogi/catalogs/[^/]+/sitemaps/sitemapindex-diwoo-infocat[0-9]+\.xml/publications$ {
+    location ~ ^/apps/opencatalogi/[^/]+/sitemaps/sitemapindex-diwoo-infocat[0-9]+\.xml/publications$ {
         proxy_pass http://backend;
         proxy_set_header Accept-Encoding "";
 
@@ -165,7 +165,7 @@ There is also a sitemap specifically for Woo catalogs. It follows the open overh
 If hasWooSitemap toggled on the in the Catalog the robots.txt will show these endpoints.
 This can be toggled on or off on the create catalog modal and is turned off by default.
 
-It can be accessed through endpoint like: https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml
+It can be accessed through endpoint like: https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml
 
 The diwoo code must be translated back to a Woo schema.
 
@@ -177,11 +177,11 @@ This endpoint must have pagination and also based on total publications must sho
 <?xml version="1.0" encoding="utf-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <sitemap>
-        <loc>https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>
+        <loc>https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1</loc>
         <lastmod>2025-11-11 11:32:33</lastmod>
     </sitemap>
     <sitemap>
-        <loc>https://${DOMAIN}/apps/opencatalogi/catalogs/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2</loc>
+        <loc>https://${DOMAIN}/apps/opencatalogi/{catalogSlug}/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2</loc>
         <lastmod>2025-11-11 11:32:33</lastmod>
     </sitemap>
 </sitemapindex>
