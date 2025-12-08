@@ -630,7 +630,10 @@ class PublicationsController extends Controller
                 $result = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery,
                     deleted: false,
+                    published: true,
                     ids: $relations,
+                    source: 'database',
+                    multi: false
                 );
             }
 
@@ -699,7 +702,10 @@ class PublicationsController extends Controller
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery,
                 deleted: false,
-                uses: $id
+                published: true,
+                uses: $id,
+                source: 'database',
+                multi: false
             );
 
             // Add relations being searched for debugging
