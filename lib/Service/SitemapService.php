@@ -135,38 +135,83 @@ class SitemapService
             return $isValid;
         }
 
+        $perPage = 1000;
         $searchQuery = [];
         $searchQuery['@self']['register'] = $registerId;
         $searchQuery['@self']['schema'] = $schemaId;
         $searchQuery['_order']['modified'] = 'desc';
-        $searchQuery['_limit'] = 1;
-        $lastModObject = $objectService->searchObjectsPaginated(
+        $searchQuery['_limit'] = $perPage;
+        $page = 1;
+
+        // First call: only to retrieve total publications count
+        $firstPage = $objectService->searchObjectsPaginated(
             query: $searchQuery,
             rbac: false,
             multi: false,
             published: true, // must be published
             deleted: false
-        )['results'][0] ?? [];
+        );
 
-        if ($lastModObject) {
-            $lastMod = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
-        }
-        
-
-        // $lastMod = new DateTime($lastMod);
-        // $lastMod = $lastMod->format('Y-m-d h:i:s');
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-        $sitemap = [
-            'loc' => "$baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode/publications?page=1",
-            'lastmod' => $lastMod
+
+        // Determine lastMod for this specific batch
+        $lastMod = null;
+        if (empty($firstPage['results']) === false) {
+            $lastModObject = $firstPage['results'][0]; // first item, sorted DESC
+            $lastMod = $lastModObject->jsonSerialize()['@self']['modified'] ?? null;
+        }
+
+        $sitemaps = [];
+        $sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode/publications";
+        // Add sitemap entry
+        $sitemaps[] = [
+            'loc' => "$sitemapBaseUri?page=$page",
+            'lastmod' => $lastMod,
         ];
+
+        $next = $firstPage['next'] ?? null;
+
+
+        while ($next) {
+            $page++;
+
+            // Fetch the current 1000-publication batch
+            $searchQuery['_page'] = $page;
+
+            $batch = $objectService->searchObjectsPaginated(
+                query: $searchQuery,
+                rbac: false,
+                multi: false,
+                published: true, // must be published
+                deleted: false
+            );
+
+            $next = $batch['next'] ?? null;
+            $results = $batch['results'] ?? [];
+
+            // Determine lastMod for this specific batch
+            $lastMod = null;
+            if (empty($results) === false) {
+                $lastModObject = $results[0]; // first item, sorted DESC
+                $lastMod = $lastModObject->jsonSerialize()['@self']['modified'] ?? null;
+            } else {
+                // If no results, break
+                break;
+            }
+
+            // Add sitemap entry
+            $sitemaps[] = [
+                'loc' => "$sitemapBaseUri?page=$page",
+                'lastmod' => $lastMod,
+            ];
+        }
 
         return new XMLResponse([
             '@root' => 'sitemapindex',
             '@attributes' => [
                 'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
             ],
-            'sitemap' => $sitemap,
+            'sitemap' => $sitemaps,
         ]);
     }//end buildSitemapIndex()
 
