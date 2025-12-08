@@ -213,6 +213,10 @@ class SitemapService
 
             // Map each file to a separate DIWOO Document
             foreach ($publication['@self']['files'] as $file) {
+                if (isset($file['downloadUrl']) === false) {
+                    continue;
+                }
+
                 $xmlDiwooDocuments[] = $this->mapDiwooDocument($publication, $file)['diwoo:Document'];
             }
         }
@@ -329,7 +333,7 @@ class SitemapService
         return [
             'diwoo:Document' => [
                 'diwoo:DiWoo' => [
-                    'loc' => $file['downloadUrl'] ?? 'PLACEHOLDER_ACCESS_URL',
+                    'loc' => $file['downloadUrl'],
                     'lastmod' => date('Y-m-d H:i:s', strtotime($file['published'] ?? $publication['@self']['updated'] ?? 'now')),
                     'diwoo:creatiedatum' => date('Y-m-d', strtotime($publication['@self']['created'] ?? 'now')),
                     'diwoo:publisher' => [
