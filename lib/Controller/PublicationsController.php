@@ -358,7 +358,11 @@ class PublicationsController extends Controller
             $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
 
             if ($catalogData === null) {
-                return new JSONResponse(['error' => 'Catalog not found'], 404);
+                return new JSONResponse([
+                    'error' => 'Catalog not found',
+                    'message' => 'The catalog "' . $catalogSlug . '" does not exist.',
+                    'catalogSlug' => $catalogSlug
+                ], 404);
             }
 
             // Convert ObjectEntity to array if needed (cache may return array directly)
@@ -372,14 +376,14 @@ class PublicationsController extends Controller
 
             // Build extend parameters
             $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
-            // Normalize to array - handle comma-separated strings
+            // Normalize to array - handle comma-separated strings.
             if (is_string($extend)) {
                 $extend = array_map('trim', explode(',', $extend));
             } elseif (!is_array($extend)) {
                 $extend = [$extend];
             }
 
-            // Ensure @self.schema and @self.register are always included for compatibility
+            // Ensure @self.schema and @self.register are always included for compatibility.
             if (!in_array('@self.schema', $extend)) {
                 $extend[] = '@self.schema';
             }
@@ -387,8 +391,19 @@ class PublicationsController extends Controller
                 $extend[] = '@self.register';
             }
 
-            // DIRECT OBJECT FETCH: Use find() method to get object by ID
-            // Set rbac=false, multi=false for public access
+            // Debug logging.
+            $this->logger->debug('[PublicationsController::show] Attempting to find publication', [
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'catalog' => $catalog,
+                'extend' => $extend,
+                'rbac' => false,
+                'multi' => false
+            ]);
+
+            // DIRECT OBJECT FETCH: Use find() method to get object by ID.
+            // Set rbac=false, multi=false for public access.
+            // Note: Published filtering happens via manual checks below.
             $object = $objectService->find(
                 id: $id,
                 extend: $extend,
@@ -400,8 +415,27 @@ class PublicationsController extends Controller
             );
 
             if ($object === null) {
-                return new JSONResponse(['error' => 'Publication not found'], 404);
+                $this->logger->warning('[PublicationsController::show] Object returned null', [
+                    'id' => $id,
+                    'catalogSlug' => $catalogSlug
+                ]);
+                return new JSONResponse([
+                    'error' => 'Publication not found',
+                    'message' => 'The publication with ID "' . $id . '" does not exist or is not accessible.',
+                    'id' => $id,
+                    'catalogSlug' => $catalogSlug,
+                    'hint' => 'This could be because: 1) The publication does not exist, 2) It is not published yet, 3) It has been depublished, or 4) It does not belong to this catalog.'
+                ], 404);
             }
+
+            $this->logger->debug('[PublicationsController::show] Object found successfully', [
+                'id' => $id,
+                'objectId' => $object->getId(),
+                'schema' => $object->getSchema(),
+                'register' => $object->getRegister(),
+                'published' => $object->getPublished()?->format('Y-m-d H:i:s'),
+                'depublished' => $object->getDepublished()?->format('Y-m-d H:i:s')
+            ]);
 
             // @todo: Catalog validation disabled for now
             // Validate that the object belongs to the catalog's schemas and registers
@@ -416,28 +450,45 @@ class PublicationsController extends Controller
             //     return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
             // }
 
-            // Check if object is published (since SOLR filtering is disabled)
+            // Check if object is published (additional validation layer).
             $published = $object->getPublished();
 
-            // For publications API, we require explicit published dates
-            // Objects with published=null are not considered published for public API
+            // For publications API, we require explicit published dates.
+            // Objects with published=null are not considered published for public API.
             if ($published === null) {
-                //@todo: remove this very dirty hotfix/hack
-                return new JSONResponse(['error' => 'Publication not published'], 404);
+                return new JSONResponse([
+                    'error' => 'Publication not published',
+                    'message' => 'The publication "' . $id . '" has no published date set.',
+                    'id' => $id,
+                    'published' => null,
+                    'hint' => 'The publication needs a published date to be accessible via the public API.'
+                ], 404);
             }
 
-            // Check if publication date is in the past
+            // Check if publication date is in the past.
             $now = new \DateTime();
             if ($published > $now) {
-                //@todo: remove this very dirty hotfix/hack
-                return new JSONResponse(['error' => 'Publication not published'], 404);
+                return new JSONResponse([
+                    'error' => 'Publication not yet published',
+                    'message' => 'The publication "' . $id . '" is scheduled for future publication.',
+                    'id' => $id,
+                    'published' => $published->format('Y-m-d H:i:s'),
+                    'now' => $now->format('Y-m-d H:i:s'),
+                    'hint' => 'This publication will be available on ' . $published->format('Y-m-d H:i:s') . '.'
+                ], 404);
             }
 
-            // Check if object is not depublished
+            // Check if object is not depublished.
             $depublished = $object->getDepublished();
             if ($depublished !== null && $depublished <= $now) {
-                //@todo: remove this very dirty hotfix/hack
-                return new JSONResponse(['error' => 'Publication depublished'], 404);
+                return new JSONResponse([
+                    'error' => 'Publication depublished',
+                    'message' => 'The publication "' . $id . '" has been depublished.',
+                    'id' => $id,
+                    'depublished' => $depublished->format('Y-m-d H:i:s'),
+                    'now' => $now->format('Y-m-d H:i:s'),
+                    'hint' => 'This publication was removed from public access on ' . $depublished->format('Y-m-d H:i:s') . '.'
+                ], 404);
             }
 
             // Render the object with extensions
@@ -462,9 +513,27 @@ class PublicationsController extends Controller
             return $response;
 
         } catch (DoesNotExistException $exception) {
-            return new JSONResponse(['error' => 'Publication not found'], 404);
+            return new JSONResponse([
+                'error' => 'Publication not found',
+                'message' => 'The publication with ID "' . $id . '" does not exist in the database.',
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'exception' => 'DoesNotExistException'
+            ], 404);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication: ' . $e->getMessage()], 500);
+            $this->logger->error('[PublicationsController::show] Failed to retrieve publication', [
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return new JSONResponse([
+                'error' => 'Failed to retrieve publication',
+                'message' => $e->getMessage(),
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'hint' => 'Check server logs for more details.'
+            ], 500);
         }
 
     }//end show()
@@ -546,13 +615,23 @@ class PublicationsController extends Controller
             // Lets set the limit to 1000 to make sure we catch all relations
             $searchQuery['_limit'] = 1000;
 
-            // DIRECT OBJECT FETCH: Get the publication object directly by ID
+            // DIRECT OBJECT FETCH: Get the publication object directly by ID.
+            // Set rbac=false, multi=false for public access.
+            // Note: Published filtering happens via manual checks below.
             $object = $objectService->find(
                 id: $id,
+                rbac: false,
+                multi: false
             );
 
             if ($object === null) {
-                return new JSONResponse(['error' => 'Publication not found'], 404);
+                return new JSONResponse([
+                    'error' => 'Publication not found',
+                    'message' => 'The publication with ID "' . $id . '" does not exist or is not accessible.',
+                    'id' => $id,
+                    'catalogSlug' => $catalogSlug,
+                    'hint' => 'This could be because: 1) The publication does not exist, 2) It is not published yet, 3) It has been depublished, or 4) Multi-tenancy restrictions apply.'
+                ], 404);
             }
 
             // Check if object is published (since SOLR filtering is disabled)
@@ -632,7 +711,6 @@ class PublicationsController extends Controller
                     deleted: false,
                     published: true,
                     ids: $relations,
-                    source: 'database',
                     multi: false
                 );
             }
@@ -650,9 +728,27 @@ class PublicationsController extends Controller
             return $response;
 
         } catch (DoesNotExistException $exception) {
-            return new JSONResponse(['error' => 'Publication not found'], 404);
+            return new JSONResponse([
+                'error' => 'Publication not found',
+                'message' => 'The publication with ID "' . $id . '" does not exist in the database.',
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'exception' => 'DoesNotExistException'
+            ], 404);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication uses: ' . $e->getMessage()], 500);
+            $this->logger->error('[PublicationsController::uses] Failed to retrieve publication uses', [
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return new JSONResponse([
+                'error' => 'Failed to retrieve publication uses',
+                'message' => $e->getMessage(),
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'hint' => 'Check server logs for more details.'
+            ], 500);
         }
     }
 
@@ -704,7 +800,6 @@ class PublicationsController extends Controller
                 deleted: false,
                 published: true,
                 uses: $id,
-                source: 'database',
                 multi: false
             );
 
@@ -721,9 +816,27 @@ class PublicationsController extends Controller
             return $response;
 
         } catch (DoesNotExistException $exception) {
-            return new JSONResponse(['error' => 'Publication not found'], 404);
+            return new JSONResponse([
+                'error' => 'Publication not found',
+                'message' => 'The publication with ID "' . $id . '" does not exist in the database.',
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'exception' => 'DoesNotExistException'
+            ], 404);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication used: ' . $e->getMessage()], 500);
+            $this->logger->error('[PublicationsController::used] Failed to retrieve publication used', [
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return new JSONResponse([
+                'error' => 'Failed to retrieve publication used',
+                'message' => $e->getMessage(),
+                'id' => $id,
+                'catalogSlug' => $catalogSlug,
+                'hint' => 'Check server logs for more details.'
+            ], 500);
         }
     }
 
