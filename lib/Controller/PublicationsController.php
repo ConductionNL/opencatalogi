@@ -307,8 +307,6 @@ class PublicationsController extends Controller
             // Set rbac=false, multi=false, published=true for public publication access
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                rbac: false,
-                multi: false,
                 published: true
             );
 
@@ -409,9 +407,7 @@ class PublicationsController extends Controller
                 extend: $extend,
                 files: false,
                 register: null,
-                schema: null,
-                rbac: false,
-                multi: false
+                schema: null
             );
 
             if ($object === null) {
@@ -610,7 +606,6 @@ class PublicationsController extends Controller
             // Force use of SOLR index for better performance on public endpoints
             $searchQuery = [];
             $searchQuery['_extend'] = ['@self.schema'];
-            $searchQuery['_source'] = 'database';
 
             // Lets set the limit to 1000 to make sure we catch all relations
             $searchQuery['_limit'] = 1000;
@@ -619,9 +614,7 @@ class PublicationsController extends Controller
             // Set rbac=false, multi=false for public access.
             // Note: Published filtering happens via manual checks below.
             $object = $objectService->find(
-                id: $id,
-                rbac: false,
-                multi: false
+                id: $id
             );
 
             if ($object === null) {
@@ -704,14 +697,13 @@ class PublicationsController extends Controller
                 $freshObjectService = $this->getObjectService();
 
 
-                // Call fresh ObjectService instance with ids as named parameter
-                // Note: Published filtering is disabled in SOLR service, so we don't need published=true
+                // Call fresh ObjectService instance with ids as named parameter.
+                // Published filtering now works correctly - filter out unpublished objects.
                 $result = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery,
                     deleted: false,
                     published: true,
-                    ids: $relations,
-                    multi: false
+                    ids: $relations
                 );
             }
 
@@ -787,20 +779,18 @@ class PublicationsController extends Controller
 
             // Force use of SOLR index for better performance on public endpoints
             $searchQuery = [];
-            $searchQuery['_source'] = 'database';
             $searchQuery['_extend'] = ['@self.schema'];
 
             // Lets set the limit to 1000 to make sure we catch all relations
             $searchQuery['_limit'] = 1000;
 
-            // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter
-            // Note: Published filtering is disabled in SOLR service, so we don't need published=true
+            // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter.
+            // Published filtering now works correctly - filter out unpublished objects.
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery,
                 deleted: false,
                 published: true,
-                uses: $id,
-                multi: false
+                uses: $id
             );
 
             // Add relations being searched for debugging
