@@ -158,14 +158,14 @@ class MenusController extends Controller
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter if configured - use proper OpenRegister syntax
+        // Add schema filter if configured - use _schema parameter
         if (!empty($menuConfig['schema'])) {
-            $searchQuery['@self']['schema'] = $menuConfig['schema'];
+            $searchQuery['_schema'] = $menuConfig['schema'];
         }
 
-        // Add register filter if configured - use proper OpenRegister syntax
+        // Add register filter if configured - use _register parameter
         if (!empty($menuConfig['register'])) {
-            $searchQuery['@self']['register'] = $menuConfig['register'];
+            $searchQuery['_register'] = $menuConfig['register'];
         }
 
         // Use searchObjectsPaginated for better performance and pagination support

@@ -168,8 +168,8 @@ class SettingsService
     public function autoConfigure(): array
     {
         try {
-            $objectService = $this->getObjectService();
-            $registers     = $objectService->getRegisters();
+            $registerMapper = $this->getRegisterMapper();
+            $registers      = $registerMapper->findAll();
 
             $registerSlug = 'publication';
 
@@ -279,6 +279,23 @@ class SettingsService
 
 
     /**
+     * Attempts to retrieve the RegisterMapper from the container.
+     *
+     * @return \OCA\OpenRegister\Db\RegisterMapper|null The RegisterMapper if available, null otherwise.
+     * @throws \RuntimeException If the service is not available.
+     */
+    public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+        }
+
+        throw new \RuntimeException('RegisterMapper is not available.');
+
+    }//end getRegisterMapper()
+
+
+    /**
      * Attempts to retrieve the Configuration service from the container.
      *
      * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
@@ -319,10 +336,10 @@ class SettingsService
 
         // Check if the OpenRegister service is available.
         try {
-            $openRegisters = $this->getObjectService();
-            if ($openRegisters !== null) {
+            $registerMapper = $this->getRegisterMapper();
+            if ($registerMapper !== null) {
                 $data['openRegisters']      = true;
-                $data['availableRegisters'] = $openRegisters->getRegisters();
+                $data['availableRegisters'] = $registerMapper->findAll();
             }
         } catch (\RuntimeException $e) {
             // Service not available, continue with default values.

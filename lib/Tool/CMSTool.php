@@ -117,11 +117,11 @@ class CMSTool implements ToolInterface
     /**
      * Set agent context
      *
-     * @param Agent $agent Agent entity
+     * @param Agent|null $agent Agent entity
      *
      * @return void
      */
-    public function setAgent(Agent $agent): void
+    public function setAgent(?Agent $agent): void
     {
         $this->agent = $agent;
         
@@ -129,7 +129,7 @@ class CMSTool implements ToolInterface
         // Prioritize session user, fallback to agent's configured user
         $this->currentUserId = $this->userSession->getUser() 
             ? $this->userSession->getUser()->getUID() 
-            : $agent->getUser();
+            : ($agent ? $agent->getUser() : null);
     }
 
     /**
@@ -314,11 +314,12 @@ class CMSTool implements ToolInterface
         ];
 
         // Use ObjectService to create page (it handles RBAC and validation)
-        // Assuming opencatalogi has a 'page' schema
+        // Using the publication register from OpenCatalogi configuration
         $page = $this->objectService->saveObject(
-            'opencatalogi',
-            'page',
-            $pageData
+            data: $pageData,
+            sources: [],
+            register: 'publication',  // Register (from OpenCatalogi configuration)
+            schema: 'page'
         );
 
         return $this->successResponse('Page created successfully', [
@@ -347,7 +348,7 @@ class CMSTool implements ToolInterface
         $pages = $this->objectService->findObjects(
             filters: $filters,
             limit: $limit,
-            schema: 'opencatalogi.page'
+            schema: 'page'  // Schema name without register prefix
         );
 
         return $this->successResponse('Pages retrieved successfully', [
@@ -389,8 +390,8 @@ class CMSTool implements ToolInterface
         $menu = $this->objectService->saveObject(
             $menuData,
             [],
-            'opencatalogi',  // Register
-            'menu'           // Schema
+            'publication',  // Register (from OpenCatalogi configuration)
+            'menu'          // Schema
         );
 
         return $this->successResponse('Menu created successfully', [
@@ -413,7 +414,7 @@ class CMSTool implements ToolInterface
 
         $menus = $this->objectService->findObjects(
             filters: $filters,
-            schema: 'opencatalogi.menu'
+            schema: 'menu'  // Schema name without register prefix
         );
 
         return $this->successResponse('Menus retrieved successfully', [
