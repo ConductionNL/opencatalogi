@@ -153,7 +153,7 @@ class CatalogiService
                 ],
             ];
             // Get all catalogs using searchObjects
-            $catalogs = $this->getObjectService()->searchObjects($query);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
         }
 
         // Initialize arrays to store unique registers and schemas
@@ -390,6 +390,18 @@ class CatalogiService
             $schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
+            if (empty($schema) === true || empty($register) === true) {
+                $this->logger->error(
+                    'Catalog schema or register not found in config',
+                    [
+                        'slug' => $slug,
+                        'schema' => $schema,
+                        'register' => $register,
+                    ]
+                );
+                return null;
+            }
+
             $query = [
                 '@self' => [
                     'register' => $register,
@@ -399,10 +411,16 @@ class CatalogiService
                 '_limit' => 1,
             ];
 
-            $catalogs = $this->getObjectService()->searchObjects($query);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
 
             if (empty($catalogs)) {
-                $this->logger->warning('Catalog not found', ['slug' => $slug]);
+                $this->logger->error('Catalog not found',
+                    [
+                        'slug' => $slug,
+                        'schema' => $schema,
+                        'register' => $register,
+                    ]
+                );
                 return null;
             }
 
