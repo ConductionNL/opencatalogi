@@ -38,6 +38,8 @@ use OCP\IURLGenerator;
 class SitemapService
 {
 
+    private const MAX_PER_PAGE = 1000;
+
     public const INFO_CAT = [
         'sitemapindex-diwoo-infocat001.xml' => 'Wetten en algemeen verbindende voorschriften',
         'sitemapindex-diwoo-infocat002.xml' => 'Overige besluiten van algemene strekking',
@@ -135,12 +137,11 @@ class SitemapService
             return $isValid;
         }
 
-        $perPage = 1000;
         $searchQuery = [];
         $searchQuery['@self']['register'] = $registerId;
         $searchQuery['@self']['schema'] = $schemaId;
-        $searchQuery['_order']['modified'] = 'desc';
-        $searchQuery['_limit'] = $perPage;
+        $searchQuery['_order']['updated'] = 'desc';
+        $searchQuery['_limit'] = $this::MAX_PER_PAGE;
         $page = 1;
 
         // First call: only to retrieve total publications count
@@ -154,12 +155,20 @@ class SitemapService
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
+        if (empty($firstPage['results']) === true) {
+            return new XMLResponse([
+                '@root' => 'sitemapindex',
+                '@attributes' => [
+                    'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
+                ],
+                'sitemap' => [],
+            ]);
+        }
+
         // Determine lastMod for this specific batch
         $lastMod = null;
-        if (empty($firstPage['results']) === false) {
-            $lastModObject = $firstPage['results'][0]; // first item, sorted DESC
-            $lastMod = $lastModObject->jsonSerialize()['@self']['modified'] ?? null;
-        }
+        $lastModObject = $firstPage['results'][0]; // first item, sorted DESC
+        $lastMod = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
 
         $sitemaps = [];
         $sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode/publications";
@@ -193,7 +202,7 @@ class SitemapService
             $lastMod = null;
             if (empty($results) === false) {
                 $lastModObject = $results[0]; // first item, sorted DESC
-                $lastMod = $lastModObject->jsonSerialize()['@self']['modified'] ?? null;
+                $lastMod = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
             } else {
                 // If no results, break
                 break;
@@ -221,10 +230,11 @@ class SitemapService
      * 
      * @param string $catalogSlug
      * @param string $categoryCode
+     * @param int    $page
      * 
      * @return XMLResponse
      */
-    public function buildSitemap(string $catalogSlug, string $categoryCode): XMLResponse
+    public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
         $registerId = null; // Create reference for $registerId
         $schemaId = null; // Create reference for $catalogId
@@ -237,6 +247,8 @@ class SitemapService
         $searchQuery = [];
         $searchQuery['@self']['register'] = $registerId;
         $searchQuery['@self']['schema'] = $schemaId;
+        $searchQuery['_limit'] = $this::MAX_PER_PAGE;
+        $searchQuery['_page'] = $page;
 
         $publications = $objectService->searchObjectsPaginated(
             query: $searchQuery,
@@ -340,7 +352,7 @@ class SitemapService
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
         $searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
         $searchQuery['slug'] = $catalogSlug;
-        // $searchQuery['hasWooSitemap'] = true;
+        $searchQuery['hasWooSitemap'] = true;
 
         $catalog = $objectService->searchObjectsPaginated(
             query: $searchQuery,
@@ -386,8 +398,8 @@ class SitemapService
                         '#text' => $file['owner'] ?? $publication['@self']['owner'] ?? 'PLACEHOLDER_OWNER',
                     ],
                     'diwoo:format' => [
-                        '@resource' => "http://publications.europa.eu/resource/authority/file-type/" . strtoupper($file['extension'] ?? 'PDF'),
-                        '#text' => strtolower($file['extension'] ?? 'pdf'),
+                        '@resource' => "http://publications.europa.eu/resource/authority/file-type/" . strtoupper($file['extension']),
+                        '#text' => strtolower($file['extension']),
                     ],
                     'diwoo:classificatiecollectie' => [
                         'diwoo:informatiecategorieen' => [
