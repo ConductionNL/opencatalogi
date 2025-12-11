@@ -13,6 +13,11 @@ return [
 		// Catalogi
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
 		['name' => 'catalogi#show', 'url' => '/api/catalogi/{id}', 'verb' => 'GET'],
+		// Catalogi sitemap
+		['name' => 'sitemap#index', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}', 'verb' => 'GET'],
+		['name' => 'sitemap#sitemap', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/publications', 'verb' => 'GET'],
+		// Robots
+		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],

@@ -23,4 +23,5 @@ export type TCatalogi = {
     filters: Record<string, unknown>
     status: CatalogStatus
     slug: string
+    hasWooSitemap: boolean
 }
