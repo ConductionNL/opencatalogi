@@ -69,11 +69,8 @@ class RobotsController extends Controller
             return new TextResponse('Could net fetch settings', 500);
         }
 
-        $catalogRegister = $settings['configuration']['catalog_register'];
-        $catalogSchema = $settings['configuration']['catalog_schema'];
-
-        $searchQuery['@self']['register'] = $catalogRegister;
-        $searchQuery['@self']['schema'] = $catalogSchema;
+        $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
+        $searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
 
         $catalogs = $this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
@@ -86,14 +83,21 @@ class RobotsController extends Controller
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
         $text = '';
+        $count = 0;
         foreach ($catalogs as $catalog) {
             if (!$catalog->getSlug()) {
                 continue;
             }
 
+            if ($count > 0) {
+                $text .= '\n';
+            }
+
             foreach (SitemapService::INFO_CAT as $categoryCode => $categoryName) {
                 $text .= "Sitemap: $baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode\n";
             }
+            
+            $count++;
         }
 
         return new TextResponse($text);
