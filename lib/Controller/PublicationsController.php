@@ -788,10 +788,6 @@ class PublicationsController extends Controller
             // Published filtering now works correctly - filter out unpublished objects.
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery,
-                rbac: true,
-                multi: true,
-                deleted: false,
-                published: false,
                 uses: $id
             );
 
