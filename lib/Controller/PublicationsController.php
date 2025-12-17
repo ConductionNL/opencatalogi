@@ -100,13 +100,13 @@ class PublicationsController extends Controller
 
     /**
      * Extract filter values from various filter formats
-     * 
+     *
      * Handles:
      * - Single value: 1
      * - Simple array: [1, 2, 3]
      * - OR operator: ['or' => '1,2,3'] or ['or' => [1, 2, 3]]
      * - AND operator: ['and' => '1,2,3'] or ['and' => [1, 2, 3]]
-     * 
+     *
      * @param mixed $filter The filter value in any supported format
      * @return array Array of integer values
      */
@@ -244,7 +244,7 @@ class PublicationsController extends Controller
             // DATABASE-LEVEL FILTERING: Handle catalog filtering intelligently
             // If frontend provides schema/register filters, validate they're within catalog
             // If no frontend filters, apply catalog's default filters
-            
+
             // Initialize @self if needed
             if (!isset($searchQuery['@self'])) {
                 $searchQuery['@self'] = [];
@@ -253,20 +253,20 @@ class PublicationsController extends Controller
             // Handle SCHEMA filtering
             if (!empty($catalog['schemas'])) {
                 $frontendSchemaFilter = $searchQuery['@self']['schema'] ?? null;
-                
+
                 if ($frontendSchemaFilter !== null) {
                     // Frontend provided a schema filter - validate it's within catalog
                     $requestedSchemas = $this->extractFilterValues($frontendSchemaFilter);
                     $allowedSchemas = array_map('intval', $catalog['schemas']);
-                    
+
                     // Check if all requested schemas are within the catalog
                     $validSchemas = array_intersect($requestedSchemas, $allowedSchemas);
-                    
+
                     if (empty($validSchemas)) {
                         // None of the requested schemas are in this catalog
                         return new JSONResponse(['error' => 'Requested schema(s) not available in this catalog'], 403);
                     }
-                    
+
                     // Keep the frontend's filter (it's valid) - don't overwrite
                 } else {
                     // No frontend filter - apply catalog's default filter
@@ -279,20 +279,20 @@ class PublicationsController extends Controller
             // Handle REGISTER filtering
             if (!empty($catalog['registers'])) {
                 $frontendRegisterFilter = $searchQuery['@self']['register'] ?? null;
-                
+
                 if ($frontendRegisterFilter !== null) {
                     // Frontend provided a register filter - validate it's within catalog
                     $requestedRegisters = $this->extractFilterValues($frontendRegisterFilter);
                     $allowedRegisters = array_map('intval', $catalog['registers']);
-                    
+
                     // Check if all requested registers are within the catalog
                     $validRegisters = array_intersect($requestedRegisters, $allowedRegisters);
-                    
+
                     if (empty($validRegisters)) {
                         // None of the requested registers are in this catalog
                         return new JSONResponse(['error' => 'Requested register(s) not available in this catalog'], 403);
                     }
-                    
+
                     // Keep the frontend's filter (it's valid) - don't overwrite
                 } else {
                     // No frontend filter - apply catalog's default filter
@@ -649,7 +649,7 @@ class PublicationsController extends Controller
             }
 
             $relationsArray = $object->getRelations();
-            
+
             // DEBUG: Log what we got from getRelations()
             if (is_array($relationsArray)) {
                 $this->logger->debug('[PublicationsController::uses] Relations count: ' . count($relationsArray));
@@ -657,7 +657,7 @@ class PublicationsController extends Controller
                     $this->logger->debug('[PublicationsController::uses] Relation [' . $key . ']: ' . json_encode($value) . ' (type: ' . gettype($value) . ')');
                 }
             }
-            
+
             // Filter relations, we only want uuids
             $logger = $this->logger; // Capture for use in closure
             $relations = array_values(array_filter($relationsArray, function ($value) use ($logger) {
@@ -788,8 +788,10 @@ class PublicationsController extends Controller
             // Published filtering now works correctly - filter out unpublished objects.
             $result = $freshObjectService->searchObjectsPaginated(
                 query: $searchQuery,
+                rbac: true,
+                multi: true,
                 deleted: false,
-                published: true,
+                published: false,
                 uses: $id
             );
 
