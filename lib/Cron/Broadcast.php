@@ -35,8 +35,9 @@ use Psr\Log\LoggerInterface;
  *
  * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
-class Broadcast extends TimedJob 
+class Broadcast extends TimedJob
 {
+
 
     /**
      * Constructor for Broadcast cron job
@@ -51,7 +52,7 @@ class Broadcast extends TimedJob
         private readonly LoggerInterface $logger
     ) {
         parent::__construct($time);
-        
+
         // Set interval to 4 hours (4 * 60 * 60 = 14400 seconds)
         $this->setInterval(14400);
 
@@ -60,7 +61,7 @@ class Broadcast extends TimedJob
 
         // Prevent parallel runs to avoid duplicate broadcasts
         $this->setAllowParallelRuns(false);
-        
+
     }//end __construct()
 
 
@@ -76,30 +77,32 @@ class Broadcast extends TimedJob
      *
      * @throws \Exception When broadcasting fails critically
      */
-    protected function run($arguments): void 
+    protected function run($arguments): void
     {
         try {
             // Log the start of the broadcast process
             $this->logger->info('Starting scheduled broadcast of OpenCatalogi directory');
-            
+
             // Perform the broadcast to all known directories
             // Passing null means broadcast to all known instances
             $this->broadcastService->broadcast(null);
-            
+
             // Log successful completion
             $this->logger->info('Successfully completed scheduled broadcast of OpenCatalogi directory');
-            
         } catch (\Exception $e) {
             // Log the error for debugging purposes
-            $this->logger->error('Failed to complete scheduled broadcast: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            $this->logger->error(
+                'Failed to complete scheduled broadcast: '.$e->getMessage(),
+                [
+                    'exception' => $e,
+                    'trace'     => $e->getTraceAsString(),
+                ]
+            );
+
             // Re-throw the exception to mark the job as failed
             throw $e;
-        }
-        
+        }//end try
+
     }//end run()
 
 

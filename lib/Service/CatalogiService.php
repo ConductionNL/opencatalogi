@@ -67,12 +67,12 @@ class CatalogiService
     /**
      * Constructor for PublicationService.
      *
-     * @param IAppConfig       $config       App configuration interface
-     * @param IRequest         $request      Request interface
-     * @param ContainerInterface $container  Server container for dependency injection
-     * @param IAppManager      $appManager   App manager for checking installed apps
-     * @param ICacheFactory    $cacheFactory Cache factory for creating cache instances
-     * @param LoggerInterface  $logger       Logger for logging errors and debug information
+     * @param IAppConfig         $config       App configuration interface
+     * @param IRequest           $request      Request interface
+     * @param ContainerInterface $container    Server container for dependency injection
+     * @param IAppManager        $appManager   App manager for checking installed apps
+     * @param ICacheFactory      $cacheFactory Cache factory for creating cache instances
+     * @param LoggerInterface    $logger       Logger for logging errors and debug information
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -83,7 +83,7 @@ class CatalogiService
         private readonly LoggerInterface $logger,
     ) {
         $this->appName = 'opencatalogi';
-        $this->cache = $cacheFactory->createDistributed('opencatalogi_catalogs');
+        $this->cache   = $cacheFactory->createDistributed('opencatalogi_catalogs');
 
     }//end __construct()
 
@@ -106,6 +106,7 @@ class CatalogiService
 
     }//end getObjectService()
 
+
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
@@ -122,7 +123,7 @@ class CatalogiService
 
         throw new \RuntimeException('OpenRegister service is not available.');
 
-    }//end getObjectService()
+    }//end getFileService()
 
 
     /**
@@ -131,7 +132,7 @@ class CatalogiService
      * This method retrieves all catalogs (or a specific one if ID is provided),
      * extracts their registers and schemas, and stores them as general variables.
      *
-     * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
@@ -149,7 +150,7 @@ class CatalogiService
             $query = [
                 '@self' => [
                     'register' => $register,
-                    'schema' => $schema,
+                    'schema'   => $schema,
                 ],
             ];
             // Get all catalogs using searchObjects
@@ -217,12 +218,12 @@ class CatalogiService
      * It calculates the number of pages, sets the appropriate offset and page values, and returns the paginated results
      * along with metadata such as total items, current page, total pages, limit, and offset.
      *
-     * @param array    $results The array of objects to paginate.
-     * @param int|null $total   The total number of items (before pagination). Defaults to 0.
-     * @param int|null $limit   The number of items per page. Defaults to 20.
-     * @param int|null $offset  The offset of items. Defaults to 0.
-     * @param int|null $page    The current page number. Defaults to 1.
-     * @param array|null $facets    The already fetched facets. Defaults to empty array.
+     * @param array        $results The array of objects to paginate.
+     * @param integer|null $total   The total number of items (before pagination). Defaults to 0.
+     * @param integer|null $limit   The number of items per page. Defaults to 20.
+     * @param integer|null $offset  The offset of items. Defaults to 0.
+     * @param integer|null $page    The current page number. Defaults to 1.
+     * @param array|null   $facets  The already fetched facets. Defaults to empty array.
      *
      * @return array The paginated results with metadata.
      *
@@ -231,7 +232,7 @@ class CatalogiService
      * @psalm-param    array<int, mixed> $results
      * @psalm-return   array<string, mixed>
      */
-    private function paginate(array $results, ?int $total=0, ?int $limit=20, ?int $offset=0, ?int $page=1, ?array $facets = []): array
+    private function paginate(array $results, ?int $total = 0, ?int $limit = 20, ?int $offset = 0, ?int $page = 1, ?array $facets = []): array
     {
         // Ensure we have valid values (never null)
         $total = max(0, ($total ?? 0));
@@ -321,7 +322,7 @@ class CatalogiService
      *               - schema: (string|null) Schema identifier
      *               - ids: (array|null) Specific IDs to filter
      */
-    private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
+    private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array
     {
         $params = $this->request->getParams();
 
@@ -374,7 +375,7 @@ class CatalogiService
     public function getCatalogBySlug(string $slug): ?array
     {
         // Step 1: Try to get from cache
-        $cacheKey = 'catalog_slug_' . $slug;
+        $cacheKey      = 'catalog_slug_'.$slug;
         $cachedCatalog = $this->cache->get($cacheKey);
 
         if ($cachedCatalog !== null) {
@@ -387,15 +388,15 @@ class CatalogiService
 
         try {
             // Get catalog schema and register from config
-            $schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
             if (empty($schema) === true || empty($register) === true) {
                 $this->logger->error(
                     'Catalog schema or register not found in config',
                     [
-                        'slug' => $slug,
-                        'schema' => $schema,
+                        'slug'     => $slug,
+                        'schema'   => $schema,
                         'register' => $register,
                     ]
                 );
@@ -403,21 +404,22 @@ class CatalogiService
             }
 
             $query = [
-                '@self' => [
+                '@self'  => [
                     'register' => $register,
-                    'schema' => $schema,
+                    'schema'   => $schema,
                 ],
-                'slug' => $slug,
+                'slug'   => $slug,
                 '_limit' => 1,
             ];
 
             $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
 
             if (empty($catalogs)) {
-                $this->logger->error('Catalog not found',
+                $this->logger->error(
+                    'Catalog not found',
                     [
-                        'slug' => $slug,
-                        'schema' => $schema,
+                        'slug'     => $slug,
+                        'schema'   => $schema,
                         'register' => $register,
                     ]
                 );
@@ -432,12 +434,15 @@ class CatalogiService
 
             return $catalog;
         } catch (Exception $e) {
-            $this->logger->error('Error retrieving catalog', [
-                'slug' => $slug,
-                'error' => $e->getMessage(),
-            ]);
+            $this->logger->error(
+                'Error retrieving catalog',
+                [
+                    'slug'  => $slug,
+                    'error' => $e->getMessage(),
+                ]
+            );
             return null;
-        }
+        }//end try
 
     }//end getCatalogBySlug()
 
@@ -454,7 +459,7 @@ class CatalogiService
      */
     public function invalidateCatalogCache(string $slug): void
     {
-        $cacheKey = 'catalog_slug_' . $slug;
+        $cacheKey = 'catalog_slug_'.$slug;
         $this->cache->remove($cacheKey);
         $this->logger->debug('Catalog cache invalidated', ['slug' => $slug]);
 
@@ -466,7 +471,7 @@ class CatalogiService
      *
      * This method retrieves the catalog by ID to get its slug, then invalidates the cache.
      *
-     * @param int|string $catalogId The ID of the catalog
+     * @param integer|string $catalogId The ID of the catalog
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -474,17 +479,20 @@ class CatalogiService
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
         try {
-            $catalog = $this->getObjectService()->find($catalogId);
+            $catalog     = $this->getObjectService()->find($catalogId);
             $catalogData = $catalog->jsonSerialize();
 
             if (isset($catalogData['slug'])) {
                 $this->invalidateCatalogCache($catalogData['slug']);
             }
         } catch (Exception $e) {
-            $this->logger->error('Error invalidating catalog cache', [
-                'catalogId' => $catalogId,
-                'error' => $e->getMessage(),
-            ]);
+            $this->logger->error(
+                'Error invalidating catalog cache',
+                [
+                    'catalogId' => $catalogId,
+                    'error'     => $e->getMessage(),
+                ]
+            );
         }
 
     }//end invalidateCatalogCacheById()
@@ -514,7 +522,7 @@ class CatalogiService
     /**
      * Warm up cache for a catalog by its ID.
      *
-     * @param int|string $catalogId The ID of the catalog
+     * @param integer|string $catalogId The ID of the catalog
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -522,17 +530,20 @@ class CatalogiService
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
         try {
-            $catalog = $this->getObjectService()->find($catalogId);
+            $catalog     = $this->getObjectService()->find($catalogId);
             $catalogData = $catalog->jsonSerialize();
 
             if (isset($catalogData['slug'])) {
                 $this->warmupCatalogCache($catalogData['slug']);
             }
         } catch (Exception $e) {
-            $this->logger->error('Error warming up catalog cache', [
-                'catalogId' => $catalogId,
-                'error' => $e->getMessage(),
-            ]);
+            $this->logger->error(
+                'Error warming up catalog cache',
+                [
+                    'catalogId' => $catalogId,
+                    'error'     => $e->getMessage(),
+                ]
+            );
         }
 
     }//end warmupCatalogCacheById()
@@ -548,7 +559,7 @@ class CatalogiService
      *
      * @return JSONResponse A JSON response containing the list of objects
      *
-     * @NoAdminRequired     *
+     * @NoAdminRequired *
      * @NoCSRFRequired
      */
     public function index(null|string|int $catalogId = null): JSONResponse
@@ -568,6 +579,7 @@ class CatalogiService
             if (!empty($context['registers'])) {
                 $query['@self']['register'] = $context['registers'];
             }
+
             if (!empty($context['schemas'])) {
                 $query['@self']['schema'] = $context['schemas'];
             }
@@ -586,15 +598,19 @@ class CatalogiService
         if (isset($config['limit'])) {
             $query['_limit'] = $config['limit'];
         }
+
         if (isset($config['offset'])) {
             $query['_offset'] = $config['offset'];
         }
+
         if (isset($config['page'])) {
             $query['_page'] = $config['page'];
         }
+
         if (isset($config['queries'])) {
             $query['_queries'] = $config['queries'];
         }
+
         if (isset($config['order'])) {
             $query['_order'] = $config['order'];
         }
@@ -603,26 +619,39 @@ class CatalogiService
         $result = $objectService->searchObjectsPaginated($query);
 
         // Filter out unwanted properties from the '@self' array in each object
-        $filteredResults = array_map(function ($object) {
-            $objectArray = $object->jsonSerialize();
+        $filteredResults = array_map(
+            function ($object) {
+                $objectArray = $object->jsonSerialize();
 
-            //@todo: a loggedin user should be able to see the full object
-            if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
-                $unwantedProperties = [
-                    'schemaVersion', 'relations', 'locked', 'owner', 'folder',
-                    'application', 'validation', 'retention',
-                    'size', 'deleted'
-                ];
-                // Remove unwanted properties from the '@self' array
-                $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
-            }
-            return $objectArray;
-        }, $result['results']);
-        
+                // @todo: a loggedin user should be able to see the full object
+                if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
+                    $unwantedProperties = [
+                        'schemaVersion',
+                        'relations',
+                        'locked',
+                        'owner',
+                        'folder',
+                        'application',
+                        'validation',
+                        'retention',
+                        'size',
+                        'deleted',
+                    ];
+                    // Remove unwanted properties from the '@self' array
+                    $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                }
+
+                return $objectArray;
+            },
+            $result['results']
+        );
+
         $result['results'] = $filteredResults;
 
         // Return paginated results
         return new JSONResponse($result);
+
     }//end index()
+
 
 }//end class

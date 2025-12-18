@@ -35,12 +35,14 @@ use OCP\EventDispatcher\IEventListener;
  */
 class ToolRegistrationListener implements IEventListener
 {
+
     /**
      * CMS tool
      *
      * @var CMSTool
      */
     private CMSTool $cmsTool;
+
 
     /**
      * Constructor
@@ -50,7 +52,9 @@ class ToolRegistrationListener implements IEventListener
     public function __construct(CMSTool $cmsTool)
     {
         $this->cmsTool = $cmsTool;
-    }
+
+    }//end __construct()
+
 
     /**
      * Handle the event
@@ -67,12 +71,18 @@ class ToolRegistrationListener implements IEventListener
 
         // Register OpenCatalogi CMS tool
         // Using tool's getName() and getDescription() to avoid duplication
-        $event->registerTool('opencatalogi.cms', $this->cmsTool, [
-            'name' => $this->cmsTool->getName(),
-            'description' => $this->cmsTool->getDescription(),
-            'icon' => 'icon-category-office',
-            'app' => 'opencatalogi',
-        ]);
-    }
-}
+        $event->registerTool(
+            'opencatalogi.cms',
+            $this->cmsTool,
+            [
+                'name'        => $this->cmsTool->getName(),
+                'description' => $this->cmsTool->getDescription(),
+                'icon'        => 'icon-category-office',
+                'app'         => 'opencatalogi',
+            ]
+        );
 
+    }//end handle()
+
+
+}//end class

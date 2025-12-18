@@ -127,12 +127,12 @@ class FileService
     /**
      * Try to find a IShare object with given $path & $shareType.
      *
-     * @param string   $path      The path to a file we are trying to find a IShare object for.
-     * @param int|null $shareType The shareType of the share we are trying to find.
+     * @param string       $path      The path to a file we are trying to find a IShare object for.
+     * @param integer|null $shareType The shareType of the share we are trying to find.
      *
      * @return IShare|null An IShare object or null.
      */
-    public function findShare(string $path, ?int $shareType=3): ?IShare
+    public function findShare(string $path, ?int $shareType = 3): ?IShare
     {
         $path = trim(string: $path, characters: '/');
 
@@ -202,14 +202,14 @@ class FileService
      * Creates and returns a share link for a file (or folder).
      * (https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html#create-a-new-share)
      *
-     * @param string   $path        Path (from root) to the file/folder which should be shared.
-     * @param int|null $shareType   0 = user; 1 = group; 3 = public link; 4 = email; 6 = federated cloud share; 7 = circle; 10 = Talk conversation
-     * @param int|null $permissions 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1)
+     * @param string       $path        Path (from root) to the file/folder which should be shared.
+     * @param integer|null $shareType   0 = user; 1 = group; 3 = public link; 4 = email; 6 = federated cloud share; 7 = circle; 10 = Talk conversation
+     * @param integer|null $permissions 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1)
      *
      * @return string The share link.
      * @throws Exception In case creating the share(link) fails.
      */
-    public function createShareLink(string $path, ?int $shareType=3, ?int $permissions=null): string
+    public function createShareLink(string $path, ?int $shareType = 3, ?int $permissions = null): string
     {
         $path = trim(string: $path, characters: '/');
         if ($permissions === null) {
@@ -290,7 +290,7 @@ class FileService
 
         // Construct the file path
         $filePath = "Publicaties/$publicationFolder/Bijlagen/".$uploadedFile['name'];
-// TODO: Consider adding a file version to the file name        // Upload the file
+        // TODO: Consider adding a file version to the file name        // Upload the file
         $created = $this->uploadFile(
             content: file_get_contents(filename: $uploadedFile['tmp_name']),
             filePath: $filePath
@@ -342,7 +342,7 @@ class FileService
      *
      * @param string $folderPath Path (from root) to where you want to create a folder, include the name of the folder. (/Media/exampleFolder)
      *
-     * @return bool True if successfully created a new folder.
+     * @return boolean True if successfully created a new folder.
      * @throws Exception In case we can't create the folder because it is not permitted.
      */
     public function createFolder(string $folderPath): bool
@@ -423,7 +423,7 @@ class FileService
      * @param mixed  $content  The content of the file.
      * @param string $filePath Path (from root) where to save the file. NOTE: this should include the name and extension/format of the file as well! (example.pdf)
      *
-     * @return bool True if successful.
+     * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
      */
     public function uploadFile(mixed $content, string $filePath): bool
@@ -462,14 +462,14 @@ class FileService
     /**
      * Overwrites an existing file in NextCloud.
      *
-     * @param mixed  $content   The content of the file.
-     * @param string $filePath  Path (from root) where to save the file. NOTE: this should include the name and extension/format of the file as well! (example.pdf)
-     * @param bool   $createNew Default = false. If set to true this function will create a new file if it doesn't exist yet.
+     * @param mixed   $content   The content of the file.
+     * @param string  $filePath  Path (from root) where to save the file. NOTE: this should include the name and extension/format of the file as well! (example.pdf)
+     * @param boolean $createNew Default = false. If set to true this function will create a new file if it doesn't exist yet.
      *
-     * @return bool True if successful.
+     * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
      */
-    public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
+    public function updateFile(mixed $content, string $filePath, bool $createNew = false): bool
     {
         $filePath = trim(string: $filePath, characters: '/');
 
@@ -514,7 +514,7 @@ class FileService
      *
      * @param string $filePath Path (from root) to the file you want to delete.
      *
-     * @return bool True if successful.
+     * @return boolean True if successful.
      * @throws Exception In case deleting the file is not permitted.
      */
     public function deleteFile(string $filePath): bool
@@ -639,7 +639,7 @@ class FileService
      *
      * @return void
      */
-    public function downloadZip(string $tempZip, ?string $inputFolder=null): void
+    public function downloadZip(string $tempZip, ?string $inputFolder = null): void
     {
         // Send the ZIP file to the client for download.
         header(header: 'Content-Type: application/zip');

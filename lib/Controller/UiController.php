@@ -14,20 +14,24 @@ use OCP\IRequest;
  */
 class UiController extends Controller
 {
+
+
     /**
-     * @param string $appName
+     * @param string   $appName
      * @param IRequest $request
      */
     public function __construct(string $appName, IRequest $request)
     {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
 
     /**
      * Returns the base SPA template response with permissive connect-src for API calls.
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     private function makeSpaResponse(): TemplateResponse
     {
@@ -53,138 +57,163 @@ class UiController extends Controller
                 ['error' => $e->getMessage()],
                 '500'
             );
-        }
-    }
+        }//end try
+
+    }//end makeSpaResponse()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function dashboard(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end dashboard()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function catalogi(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end catalogi()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function publicationsIndex(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end publicationsIndex()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function publicationsPage(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end publicationsPage()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function search(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end search()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function organizations(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end organizations()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function themes(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end themes()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function glossary(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end glossary()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function pages(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end pages()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function menus(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
+
+    }//end menus()
+
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @phpstan-return TemplateResponse
-     * @psalm-return TemplateResponse
+     * @psalm-return   TemplateResponse
      */
     public function directory(): TemplateResponse
     {
         return $this->makeSpaResponse();
-    }
-}
+
+    }//end directory()
+
+
+}//end class

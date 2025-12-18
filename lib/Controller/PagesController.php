@@ -38,21 +38,22 @@ class PagesController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * PagesController constructor.
      *
      * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object  
+     * @param IRequest           $request            The request object
      * @param IAppConfig         $config             App configuration interface
      * @param ContainerInterface $container          Server container for dependency injection
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -65,9 +66,9 @@ class PagesController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -131,7 +132,8 @@ class PagesController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
@@ -148,19 +150,19 @@ class PagesController extends Controller
     {
         // Get page configuration from settings
         $pageConfig = $this->getPageConfiguration();
-        
+
         // Get query parameters from request
         $queryParams = $this->request->getParams();
-        
+
         // Build search query
         $searchQuery = $queryParams;
-        
+
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
         // Add schema filter if configured - use proper OpenRegister syntax
         if (!empty($pageConfig['schema'])) {
-            $searchQuery['@self']['schema'	] = $pageConfig['schema'];
+            $searchQuery['@self']['schema'] = $pageConfig['schema'];
         }
 
         // Add register filter if configured - use proper OpenRegister syntax
@@ -171,43 +173,43 @@ class PagesController extends Controller
         // Use searchObjectsPaginated for better performance and pagination support
         // Set rbac=false, multi=false, published=true for public page access
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
-        
+
         // Build paginated response structure
         /*
-        $responseData = [
+            $responseData = [
             'results' => $result['results'] ?? [],
             'total' => $result['total'] ?? 0,
             'limit' => $result['limit'] ?? 20,
             'offset' => $result['offset'] ?? 0,
             'page' => $result['page'] ?? 1,
             'pages' => $result['pages'] ?? 1
-        ];
-        
-        // Add pagination links if present
-        if (isset($result['next'])) {
+            ];
+
+            // Add pagination links if present
+            if (isset($result['next'])) {
             $responseData['next'] = $result['next'];
-        }
-        if (isset($result['prev'])) {
+            }
+            if (isset($result['prev'])) {
             $responseData['prev'] = $result['prev'];
-        }
-        
-        // Add facets if present
-        if (isset($result['facets'])) {
+            }
+
+            // Add facets if present
+            if (isset($result['facets'])) {
             $facetsData = $result['facets'];
             // Unwrap nested facets if needed
             if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
                 $facetsData = $facetsData['facets'];
             }
             $responseData['facets'] = $facetsData;
-        }
-        if (isset($result['facetable'])) {
+            }
+            if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
-        }
-            */
+            }
+        */
 
         // Add CORS headers for public API access
         $response = new JSONResponse($result);
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $origin   = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -236,33 +238,34 @@ class PagesController extends Controller
 
         // Build search query to find page by slug
         $searchQuery = [
-            'slug' => $slug,
-            '_limit' => 1,  // We only need one result
-            '_source' => 'index'  // Force use of SOLR index for better performance
+            'slug'    => $slug,
+            '_limit'  => 1,
+// We only need one result
+            '_source' => 'index',
+// Force use of SOLR index for better performance
         ];
 
-        // Add schema filter if configured - use proper OpenRegister syntax
-        if (!empty($pageConfig['schema'])) {
-            $searchQuery['@self']['schema'] = $pageConfig['schema'];
+        // Always filter by page schema - OpenRegister expects filters in @self array.
+        // NOTE: Must use numeric ID, not slug, as slug lookup doesn't work reliably.
+        if (!isset($searchQuery['@self'])) {
+            $searchQuery['@self'] = [];
         }
 
-        // Add register filter if configured - use proper OpenRegister syntax
-        if (!empty($pageConfig['register'])) {
-            $searchQuery['@self']['register'] = $pageConfig['register'];
-        }
+        $searchQuery['@self']['schema']   = !empty($pageConfig['schema']) ? $pageConfig['schema'] : '5';
+        $searchQuery['@self']['register'] = !empty($pageConfig['register']) ? $pageConfig['register'] : '1';
 
         // Use searchObjectsPaginated for better performance
         // Set rbac=false, multi=false, published=true for public page access
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
-        
+
         if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
         } else {
             // Return the first matching page
-            $page = $result['results'][0];
+            $page     = $result['results'][0];
             $response = new JSONResponse($page);
         }
-        
+
         // Add CORS headers for public API access
         $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
         $response->addHeader('Access-Control-Allow-Origin', $origin);

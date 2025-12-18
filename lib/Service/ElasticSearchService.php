@@ -154,28 +154,28 @@ class ElasticSearchService
 
         foreach ($filter as $key => $value) {
             switch ($key) {
-                case 'regexp':
-                case 'like':
-                    if (preg_match("/^\/.+\/[a-z]*$/i", $value) !== false) {
-                        return ['regexp' => [$name => strtolower($value)]];
-                    } else {
-                        return ['match' => [$name => $value]];
-                    }
-
-                case '>=':
-                case 'after':
-                    return ['range' => [$key => ['gte' => $value]]];
-                case '>':
-                case 'strictly_after':
-                    return ['range' => [$key => ['gt' => $value]]];
-                case '<=':
-                case 'before':
-                    return ['range' => [$key => ['lte' => $value]]];
-                case '<':
-                case 'strictly_before':
-                    return ['range' => [$key => ['lt' => $value]]];
-                default:
+            case 'regexp':
+            case 'like':
+                if (preg_match("/^\/.+\/[a-z]*$/i", $value) !== false) {
+                    return ['regexp' => [$name => strtolower($value)]];
+                } else {
                     return ['match' => [$name => $value]];
+                }
+
+            case '>=':
+            case 'after':
+                return ['range' => [$key => ['gte' => $value]]];
+            case '>':
+            case 'strictly_after':
+                return ['range' => [$key => ['gt' => $value]]];
+            case '<=':
+            case 'before':
+                return ['range' => [$key => ['lte' => $value]]];
+            case '<':
+            case 'strictly_before':
+                return ['range' => [$key => ['lt' => $value]]];
+            default:
+                return ['match' => [$name => $value]];
             }//end switch
         }//end foreach
 
@@ -296,7 +296,7 @@ class ElasticSearchService
     }//end mapAggregationResults()
 
 
-    public function searchObject(array $filters, array $config, int &$totalResults=0): array
+    public function searchObject(array $filters, array $config, int &$totalResults = 0): array
     {
         $body = $this->parseFilters(filters: $filters);
 

@@ -38,9 +38,10 @@ class GlossaryController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * GlossaryController constructor.
@@ -52,7 +53,7 @@ class GlossaryController extends Controller
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -65,9 +66,9 @@ class GlossaryController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -131,7 +132,8 @@ class GlossaryController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
@@ -148,13 +150,13 @@ class GlossaryController extends Controller
     {
         // Get glossary configuration from settings
         $glossaryConfig = $this->getGlossaryConfiguration();
-        
+
         // Get query parameters from request
         $queryParams = $this->request->getParams();
-        
+
         // Build search query
         $searchQuery = $queryParams;
-        
+
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
@@ -174,25 +176,26 @@ class GlossaryController extends Controller
         // Use searchObjectsPaginated for better performance and pagination support
         // Set rbac=false, multi=false, published=true for public glossary access
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
-        
+
         // Build paginated response structure
         $responseData = [
-            'results' => $result['results'] ?? [],
-            'total' => $result['total'] ?? 0,
-            'limit' => $result['limit'] ?? 20,
-            'offset' => $result['offset'] ?? 0,
-            'page' => $result['page'] ?? 1,
-            'pages' => $result['pages'] ?? 1
+            'results' => ($result['results'] ?? []),
+            'total'   => ($result['total'] ?? 0),
+            'limit'   => ($result['limit'] ?? 20),
+            'offset'  => ($result['offset'] ?? 0),
+            'page'    => ($result['page'] ?? 1),
+            'pages'   => ($result['pages'] ?? 1),
         ];
-        
+
         // Add pagination links if present
         if (isset($result['next'])) {
             $responseData['next'] = $result['next'];
         }
+
         if (isset($result['prev'])) {
             $responseData['prev'] = $result['prev'];
         }
-        
+
         // Add facets if present
         if (isset($result['facets'])) {
             $facetsData = $result['facets'];
@@ -200,15 +203,17 @@ class GlossaryController extends Controller
             if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
                 $facetsData = $facetsData['facets'];
             }
+
             $responseData['facets'] = $facetsData;
         }
+
         if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
         }
 
         // Add CORS headers for public API access
         $response = new JSONResponse($responseData);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -221,7 +226,7 @@ class GlossaryController extends Controller
     /**
      * Get a specific glossary term by its ID.
      *
-     * @param string|int $id The ID of the glossary term to retrieve
+     * @param string|integer $id The ID of the glossary term to retrieve
      *
      * @return JSONResponse The JSON response containing the glossary term details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -234,23 +239,24 @@ class GlossaryController extends Controller
     {
         // Use searchObjectsPaginated to find single glossary term with published=true filter
         $searchQuery = [
-            '_ids' => [$id],
-            '_limit' => 1,
-            '_source' => 'index'  // Force use of SOLR index for better performance
+            '_ids'    => [$id],
+            '_limit'  => 1,
+            '_source' => 'index',
+// Force use of SOLR index for better performance
         ];
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
-        
+
         if (empty($result['results'])) {
             return new JSONResponse(['error' => 'Glossary term not found'], 404);
         }
-        
+
         $glossaryTerm = $result['results'][0];
-        
+
         $data = $glossaryTerm instanceof \OCP\AppFramework\Db\Entity ? $glossaryTerm->jsonSerialize() : $glossaryTerm;
-        
+
         // Add CORS headers for public API access
         $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

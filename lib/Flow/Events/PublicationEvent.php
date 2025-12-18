@@ -4,8 +4,9 @@ namespace OCA\OpenCatalogi\Cron;
 
 use OCP\WorkflowEngine\IEntity;
 
-class PublicationEvent extends IEntity {
+class PublicationEvent extends IEntity
+{
 
 
 
-}
+}//end class

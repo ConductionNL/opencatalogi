@@ -81,11 +81,14 @@ class BroadcastService
         private readonly LoggerInterface $logger,
     ) {
         // Initialize HTTP client with default configuration
-        $this->client = new Client([
-            'timeout' => self::REQUEST_TIMEOUT,
-            'connect_timeout' => 10,
-            'verify' => true, // Enable SSL verification for security
-        ]);
+        $this->client = new Client(
+            [
+                'timeout'         => self::REQUEST_TIMEOUT,
+                'connect_timeout' => 10,
+                'verify'          => true,
+            // Enable SSL verification for security
+            ]
+        );
 
     }//end __construct()
 
@@ -97,7 +100,7 @@ class BroadcastService
      * then attempts to retrieve the ObjectService from the dependency container.
      *
      * @return \OCA\OpenRegister\Service\ObjectService The OpenRegister ObjectService if available
-     * 
+     *
      * @throws \RuntimeException                       When OpenRegister service is not available
      * @throws ContainerExceptionInterface             When container access fails
      * @throws NotFoundExceptionInterface              When service is not found in container
@@ -111,7 +114,7 @@ class BroadcastService
                 return $this->container->get('OCA\OpenRegister\Service\ObjectService');
             } catch (ContainerExceptionInterface | NotFoundExceptionInterface $e) {
                 // Log the container error for debugging
-                $this->logger->error('Failed to retrieve OpenRegister ObjectService from container: ' . $e->getMessage());
+                $this->logger->error('Failed to retrieve OpenRegister ObjectService from container: '.$e->getMessage());
                 throw $e;
             }
         }
@@ -135,10 +138,10 @@ class BroadcastService
         try {
             // Get the app version from the app manager
             $appInfo = $this->appManager->getAppInfo($this->appName);
-            return $appInfo['version'] ?? 'unknown';
+            return ($appInfo['version'] ?? 'unknown');
         } catch (\Exception $e) {
             // Log the error and return a fallback version
-            $this->logger->warning('Failed to retrieve app version: ' . $e->getMessage());
+            $this->logger->warning('Failed to retrieve app version: '.$e->getMessage());
             return 'unknown';
         }
 
@@ -170,7 +173,7 @@ class BroadcastService
      * to determine which external instances should receive broadcast notifications.
      *
      * @return array<string> Array of unique directory URLs
-     * 
+     *
      * @throws DoesNotExistException              When required data is not found
      * @throws MultipleObjectsReturnedException   When duplicate objects are found
      * @throws ContainerExceptionInterface        When container access fails
@@ -181,16 +184,15 @@ class BroadcastService
         try {
             // Retrieve all listing objects from OpenRegister
             $listings = $this->getObjectService()->getObjects(objectType: 'listing');
-            
+
             // Extract unique directory URLs from the listings
             $directoryUrls = array_unique(array_column($listings, 'directory'));
-            
+
             // Filter out empty or invalid URLs
             return array_filter($directoryUrls, fn($url) => !empty($url) && filter_var($url, FILTER_VALIDATE_URL));
-            
         } catch (\Exception $e) {
             // Log the error and re-throw for caller handling
-            $this->logger->error('Failed to retrieve directory URLs: ' . $e->getMessage());
+            $this->logger->error('Failed to retrieve directory URLs: '.$e->getMessage());
             throw $e;
         }
 
@@ -204,31 +206,31 @@ class BroadcastService
      * for handling temporary network failures or service unavailability.
      * The User-Agent header includes the current app version for identification.
      *
-     * @param string $url         The target URL to broadcast to
+     * @param string $url          The target URL to broadcast to
      * @param string $directoryUrl The URL of this directory to include in broadcast
-     * 
-     * @return bool True if broadcast was successful, false otherwise
+     *
+     * @return boolean True if broadcast was successful, false otherwise
      */
     private function sendBroadcastRequest(string $url, string $directoryUrl): bool
     {
         $attempt = 0;
-        
+
         // Retry logic for handling temporary failures
         while ($attempt < self::MAX_RETRIES) {
             $attempt++;
-            
+
             try {
                 // Send POST request with directory URL payload
                 $response = $this->client->post(
                     $url,
                     [
-                        'json' => [
+                        'json'    => [
                             'directory' => $directoryUrl,
                             'timestamp' => (new DateTime())->format('c'),
-                            'source' => $this->appName,
+                            'source'    => $this->appName,
                         ],
                         'headers' => [
-                            'User-Agent' => 'OpenCatalogi-Broadcast/' . $this->getAppVersion(),
+                            'User-Agent'   => 'OpenCatalogi-Broadcast/'.$this->getAppVersion(),
                             'Content-Type' => 'application/json',
                         ],
                     ]
@@ -239,24 +241,23 @@ class BroadcastService
                     $this->logger->info("Successfully broadcasted to {$url} on attempt {$attempt}");
                     return true;
                 }
-                
+
                 // Log non-success status code
                 $this->logger->warning("Broadcast to {$url} returned status {$response->getStatusCode()} on attempt {$attempt}");
-                
             } catch (GuzzleException $e) {
                 // Log the attempt failure
-                $this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: " . $e->getMessage());
-                
+                $this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: ".$e->getMessage());
+
                 // If this was the last attempt, log as error
                 if ($attempt === self::MAX_RETRIES) {
-                    $this->logger->error("All {$attempt} broadcast attempts to {$url} failed. Final error: " . $e->getMessage());
+                    $this->logger->error("All {$attempt} broadcast attempts to {$url} failed. Final error: ".$e->getMessage());
                 } else {
                     // Wait before retrying (exponential backoff)
                     sleep($attempt * 2);
                 }
-            }
-        }
-        
+            }//end try
+        }//end while
+
         return false;
 
     }//end sendBroadcastRequest()
@@ -270,9 +271,9 @@ class BroadcastService
      *
      * @param string|null $url Optional URL of a specific instance to broadcast to.
      *                         If null, broadcasts to all known directories.
-     * 
+     *
      * @return array<string, bool> Associative array of URLs and their broadcast success status
-     * 
+     *
      * @throws DoesNotExistException              When required data is not found
      * @throws MultipleObjectsReturnedException   When duplicate objects are found
      * @throws ContainerExceptionInterface        When container access fails
@@ -282,16 +283,17 @@ class BroadcastService
     {
         // Get the URL of this directory to include in broadcast payload
         $directoryUrl = $this->getCurrentDirectoryUrl();
-        
+
         // Initialize results array to track success/failure per URL
         $results = [];
-        
+
         // Determine target URLs for broadcasting
         if ($url !== null) {
             // Validate the provided URL
             if (!filter_var($url, FILTER_VALIDATE_URL)) {
                 throw new \InvalidArgumentException("Invalid URL provided for broadcast: {$url}");
             }
+
             $targetUrls = [$url];
         } else {
             // Get all known directory URLs
@@ -305,7 +307,7 @@ class BroadcastService
         }
 
         // Log the start of broadcast operation
-        $this->logger->info('Starting broadcast to ' . count($targetUrls) . ' target(s)');
+        $this->logger->info('Starting broadcast to '.count($targetUrls).' target(s)');
 
         // Broadcast to each target URL
         foreach ($targetUrls as $targetUrl) {
@@ -314,15 +316,15 @@ class BroadcastService
                 $this->logger->debug("Skipping broadcast to self: {$targetUrl}");
                 continue;
             }
-            
+
             // Attempt to send broadcast request
-            $success = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
+            $success             = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
             $results[$targetUrl] = $success;
         }
 
         // Log summary of broadcast operation
         $successCount = count(array_filter($results));
-        $totalCount = count($results);
+        $totalCount   = count($results);
         $this->logger->info("Broadcast completed: {$successCount}/{$totalCount} successful");
 
         return $results;

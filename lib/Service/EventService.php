@@ -45,17 +45,15 @@ class EventService
     private string $appName;
 
 
-
-
     /**
      * EventService constructor.
      *
-     * @param IAppConfig         $config           App configuration interface.
-     * @param IRequest           $request          Request interface.
-     * @param ContainerInterface $container        Container for dependency injection.
-     * @param IAppManager        $appManager       App manager interface.
-     * @param SettingsService    $settingsService  Settings service for configuration access.
-     * @param LoggerInterface    $logger           PSR-3 logger.
+     * @param IAppConfig         $config          App configuration interface.
+     * @param IRequest           $request         Request interface.
+     * @param ContainerInterface $container       Container for dependency injection.
+     * @param IAppManager        $appManager      App manager interface.
+     * @param SettingsService    $settingsService Settings service for configuration access.
+     * @param LoggerInterface    $logger          PSR-3 logger.
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -139,11 +137,11 @@ class EventService
     public function handleObjectCreateEvents(array $objects): array
     {
         $results = [
-            'processed' => 0,
-            'published' => 0,
+            'processed'            => 0,
+            'published'            => 0,
             'attachmentsPublished' => 0,
-            'errors' => [],
-            'details' => [],
+            'errors'               => [],
+            'details'              => [],
         ];
 
         try {
@@ -153,9 +151,9 @@ class EventService
             // Process each created object.
             foreach ($objects as $objectData) {
                 $objectResult = [
-                    'objectId' => $objectData['@self']['id'] ?? 'unknown',
-                    'actions' => [],
-                    'errors' => [],
+                    'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
+                    'actions'  => [],
+                    'errors'   => [],
                 ];
 
                 try {
@@ -169,17 +167,17 @@ class EventService
                                 $objectResult['actions'][] = 'object_published';
                                 $results['published']++;
                             } else {
-                                $objectResult['errors'][] = 'Failed to auto-publish object: ' . $publishResult['error'];
+                                $objectResult['errors'][] = 'Failed to auto-publish object: '.$publishResult['error'];
                             }
                         }
                     }
 
                     // Check if auto-publish attachments is enabled and object has published status.
                     if ($publishingOptions['auto_publish_attachments'] === true && $this->isObjectPublished($objectData) === true) {
-                        $attachmentResult = $this->publishObjectAttachments($objectData);
-                        $objectResult['actions'][] = 'attachments_processed';
+                        $attachmentResult                 = $this->publishObjectAttachments($objectData);
+                        $objectResult['actions'][]        = 'attachments_processed';
                         $results['attachmentsPublished'] += $attachmentResult['published'];
-                        
+
                         if (empty($attachmentResult['errors']) === false) {
                             $objectResult['errors'] = array_merge($objectResult['errors'], $attachmentResult['errors']);
                         }
@@ -188,15 +186,15 @@ class EventService
                     $results['processed']++;
                 } catch (\Exception $e) {
                     $objectResult['errors'][] = $e->getMessage();
-                    $results['errors'][] = 'Error processing object ' . $objectResult['objectId'] . ': ' . $e->getMessage();
-                }
+                    $results['errors'][]      = 'Error processing object '.$objectResult['objectId'].': '.$e->getMessage();
+                }//end try
 
                 $results['details'][] = $objectResult;
-            }
+            }//end foreach
 
             return $results;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to handle object create events: ' . $e->getMessage());
+            throw new \RuntimeException('Failed to handle object create events: '.$e->getMessage());
         }//end try
 
     }//end handleObjectCreateEvents()
@@ -216,11 +214,11 @@ class EventService
     public function handleObjectUpdateEvents(array $objects): array
     {
         $results = [
-            'processed' => 0,
-            'published' => 0,
+            'processed'            => 0,
+            'published'            => 0,
             'attachmentsPublished' => 0,
-            'errors' => [],
-            'details' => [],
+            'errors'               => [],
+            'details'              => [],
         ];
 
         try {
@@ -230,18 +228,18 @@ class EventService
             // Process each updated object.
             foreach ($objects as $objectData) {
                 $objectResult = [
-                    'objectId' => $objectData['@self']['id'] ?? 'unknown',
-                    'actions' => [],
-                    'errors' => [],
+                    'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
+                    'actions'  => [],
+                    'errors'   => [],
                 ];
 
                 try {
                     // Check if auto-publish attachments is enabled and object is published.
                     if ($publishingOptions['auto_publish_attachments'] === true && $this->isObjectPublished($objectData) === true) {
-                        $attachmentResult = $this->publishObjectAttachments($objectData);
-                        $objectResult['actions'][] = 'attachments_processed';
+                        $attachmentResult                 = $this->publishObjectAttachments($objectData);
+                        $objectResult['actions'][]        = 'attachments_processed';
                         $results['attachmentsPublished'] += $attachmentResult['published'];
-                        
+
                         if (empty($attachmentResult['errors']) === false) {
                             $objectResult['errors'] = array_merge($objectResult['errors'], $attachmentResult['errors']);
                         }
@@ -250,15 +248,15 @@ class EventService
                     $results['processed']++;
                 } catch (\Exception $e) {
                     $objectResult['errors'][] = $e->getMessage();
-                    $results['errors'][] = 'Error processing object ' . $objectResult['objectId'] . ': ' . $e->getMessage();
+                    $results['errors'][]      = 'Error processing object '.$objectResult['objectId'].': '.$e->getMessage();
                 }
 
                 $results['details'][] = $objectResult;
-            }
+            }//end foreach
 
             return $results;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to handle object update events: ' . $e->getMessage());
+            throw new \RuntimeException('Failed to handle object update events: '.$e->getMessage());
         }//end try
 
     }//end handleObjectUpdateEvents()
@@ -272,7 +270,7 @@ class EventService
      *
      * @param array $objectData The object data to evaluate.
      *
-     * @return bool True if the object should be auto-published, false otherwise.
+     * @return boolean True if the object should be auto-published, false otherwise.
      */
     private function shouldAutoPublishObject(array $objectData): bool
     {
@@ -282,49 +280,51 @@ class EventService
         }
 
         $objectRegister = $objectData['@self']['register'];
-        $objectSchema = $objectData['@self']['schema'];
+        $objectSchema   = $objectData['@self']['schema'];
 
         try {
             // Get the actual catalogs from the system to check if object matches any catalog.
             $objectService = $this->getObjectService();
-            
+
             // Get catalogs (assuming they're stored in a specific register/schema).
-            $settings = $this->settingsService->getSettings();
+            $settings        = $this->settingsService->getSettings();
             $catalogRegister = $settings['configuration']['catalog_register'] ?? null;
-            $catalogSchema = $settings['configuration']['catalog_schema'] ?? null;
-            
+            $catalogSchema   = $settings['configuration']['catalog_schema'] ?? null;
+
             if ($catalogRegister && $catalogSchema) {
                 // Get all catalog objects using searchObjects with proper filters.
-                $catalogObjects = $objectService->searchObjects([
-                    '@self' => [
-                        'register' => $catalogRegister,
-                        'schema' => $catalogSchema,
-                    ],
-                ]);
-                
+                $catalogObjects = $objectService->searchObjects(
+                    [
+                        '@self' => [
+                            'register' => $catalogRegister,
+                            'schema'   => $catalogSchema,
+                        ],
+                    ]
+                );
+
                 // Check each catalog to see if it includes our object's register and schema.
                 foreach ($catalogObjects as $catalog) {
-                    $catalogData = $catalog->jsonSerialize();
-                    $catalogRegisters = $catalogData['registers'] ?? [];
-                    $catalogSchemas = $catalogData['schemas'] ?? [];
-                    
+                    $catalogData      = $catalog->jsonSerialize();
+                    $catalogRegisters = ($catalogData['registers'] ?? []);
+                    $catalogSchemas   = ($catalogData['schemas'] ?? []);
+
                     // Convert object register/schema to integers for comparison.
                     $objectRegisterInt = (int) $objectRegister;
-                    $objectSchemaInt = (int) $objectSchema;
-                    
+                    $objectSchemaInt   = (int) $objectSchema;
+
                     // Check if this catalog includes the object's register and schema.
                     if (in_array($objectRegisterInt, $catalogRegisters) && in_array($objectSchemaInt, $catalogSchemas)) {
                         return true;
                     }
                 }
-            }
+            }//end if
 
             return false;
         } catch (\Exception $e) {
             // Log error but don't fail the process.
-            $this->logger->error('OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: ' . $e->getMessage(), ['exception' => $e]);
+            $this->logger->error('OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: '.$e->getMessage(), ['exception' => $e]);
             return false;
-        }
+        }//end try
 
     }//end shouldAutoPublishObject()
 
@@ -337,11 +337,11 @@ class EventService
      *
      * @param array $objectData The object data to check.
      *
-     * @return bool True if the object is published, false otherwise.
+     * @return boolean True if the object is published, false otherwise.
      */
     private function isObjectPublished(array $objectData): bool
     {
-        $published = $objectData['@self']['published'] ?? null;
+        $published   = $objectData['@self']['published'] ?? null;
         $depublished = $objectData['@self']['depublished'] ?? null;
 
         // Object is published if it has a published date and no depublished date.
@@ -351,7 +351,7 @@ class EventService
 
         // Object is published if published date is after depublished date.
         if ($published !== null && $depublished !== null) {
-            $publishedTime = strtotime($published);
+            $publishedTime   = strtotime($published);
             $depublishedTime = strtotime($depublished);
             return $publishedTime > $depublishedTime;
         }
@@ -375,21 +375,21 @@ class EventService
     {
         try {
             $objectService = $this->getObjectService();
-            $objectId = $objectData['@self']['uuid'] ?? $objectData['@self']['id'];
+            $objectId      = ($objectData['@self']['uuid'] ?? $objectData['@self']['id']);
 
             // Use the OpenRegister ObjectService to publish the object.
             $publishedObject = $objectService->publish($objectId);
 
             return [
-                'success' => true,
-                'objectId' => $objectId,
+                'success'     => true,
+                'objectId'    => $objectId,
                 'publishedAt' => $publishedObject->getPublished()?->format('c'),
             ];
         } catch (\Exception $e) {
             return [
-                'success' => false,
-                'objectId' => $objectData['@self']['id'] ?? 'unknown',
-                'error' => $e->getMessage(),
+                'success'  => false,
+                'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
+                'error'    => $e->getMessage(),
             ];
         }
 
@@ -408,38 +408,37 @@ class EventService
      */
     private function publishObjectAttachments(array $objectData): array
     {
-        $objectId = $objectData['@self']['uuid'] ?? $objectData['@self']['id'];
-        
+        $objectId = ($objectData['@self']['uuid'] ?? $objectData['@self']['id']);
+
         $result = [
             'published' => 0,
-            'skipped' => 0,
-            'errors' => [],
+            'skipped'   => 0,
+            'errors'    => [],
         ];
 
         try {
             $fileService = $this->getFileService();
-            $fileMapper = $this->getFileMapper();
-            
+            $fileMapper  = $this->getFileMapper();
+
             // Use FileMapper to get files directly from database without triggering object updates
             // This completely avoids the infinite loop issue
-            
             // First, we need to get the ObjectEntity to use with FileMapper
             $objectService = $this->getObjectService();
-            $objectEntity = $objectService->find($objectId);
-            
+            $objectEntity  = $objectService->find($objectId);
+
             if ($objectEntity === null) {
                 return $result;
             }
-            
+
             // Use FileMapper to get files directly from database (no object updates triggered)
             $files = $fileMapper->getFilesForObject($objectEntity);
 
             // Process each file from the FileMapper.
             foreach ($files as $file) {
                 try {
-                    $fileName = $file['name'] ?? 'unknown';
-                    $filePath = $file['path'] ?? '';
-                    
+                    $fileName = ($file['name'] ?? 'unknown');
+                    $filePath = ($file['path'] ?? '');
+
                     // Check if file is already published by checking if it has a share token
                     // FileMapper already includes share information in the file data
                     if (!empty($file['share_token'])) {
@@ -449,33 +448,33 @@ class EventService
 
                     // Create share link directly without updating the object.
                     // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix
-                    $openRegisterPath = '/OpenRegister/' . $filePath;
-                    
+                    $openRegisterPath = '/OpenRegister/'.$filePath;
+
                     try {
                         // Use the converted OpenRegister path format
                         $shareLink = $fileService->createShareLink($openRegisterPath);
-                        
+
                         if ($shareLink && !str_contains($shareLink, 'not found') && !str_contains($shareLink, 'couldn\'t be found')) {
                             $result['published']++;
                         } else {
                             $result['errors'][] = "Failed to create share link for file {$fileName}";
                         }
                     } catch (\Exception $shareException) {
-                        $result['errors'][] = "Exception creating share link for file {$fileName}: " . $shareException->getMessage();
+                        $result['errors'][] = "Exception creating share link for file {$fileName}: ".$shareException->getMessage();
                     }
                 } catch (\Exception $e) {
-                    $fileName = $file['name'] ?? 'unknown';
-                    $result['errors'][] = "Failed to publish file {$fileName}: " . $e->getMessage();
-                }
-            }
+                    $fileName           = ($file['name'] ?? 'unknown');
+                    $result['errors'][] = "Failed to publish file {$fileName}: ".$e->getMessage();
+                }//end try
+            }//end foreach
 
             return $result;
         } catch (\Exception $e) {
-            $result['errors'][] = 'Failed to access file service: ' . $e->getMessage();
+            $result['errors'][] = 'Failed to access file service: '.$e->getMessage();
             return $result;
-        }
+        }//end try
 
     }//end publishObjectAttachments()
 
 
-}//end class 
+}//end class

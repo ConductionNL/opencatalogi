@@ -24,3 +24,5 @@
 
 /website/.docusaurus/
 /website/node_modules/
+
+phpqa/

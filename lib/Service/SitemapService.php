@@ -65,6 +65,7 @@ class SitemapService
      */
     private string $appName;
 
+
     /**
      * Constructor for PublicationService.
      *
@@ -115,71 +116,75 @@ class SitemapService
 
         throw new RuntimeException('OpenRegister FileService is not available.');
 
-    }//end getObjectService()
+    }//end getFileService()
 
-    
+
     /**
      * Build sitemap index based on woo category
-     * 
+     *
      * @param string $catalogSlug
      * @param string $categoryCode
-     * 
+     *
      * @return XMLResponse
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
-        $catalog = (object) []; // Create reference for $catalog
-        $registerId = null; // Create reference for $registerId
-        $schemaId = null; // Create reference for $catalogId
+        $catalog = (object) [];
+// Create reference for $catalog
+        $registerId = null;
+// Create reference for $registerId
+        $schemaId = null;
+// Create reference for $catalogId
         $objectService = $this->getObjectService();
-        $isValid = $this->isValidSitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode, objectService: $objectService, catalog: $catalog, registerId: $registerId, schemaId: $schemaId);
+        $isValid       = $this->isValidSitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode, objectService: $objectService, catalog: $catalog, registerId: $registerId, schemaId: $schemaId);
         if ($isValid instanceof XMLResponse === true) {
             return $isValid;
         }
 
-        $searchQuery = [];
+        $searchQuery                      = [];
         $searchQuery['@self']['register'] = $registerId;
-        $searchQuery['@self']['schema'] = $schemaId;
+        $searchQuery['@self']['schema']   = $schemaId;
         $searchQuery['_order']['updated'] = 'desc';
-        $searchQuery['_limit'] = $this::MAX_PER_PAGE;
-        $page = 1;
+        $searchQuery['_limit']            = $this::MAX_PER_PAGE;
+        $page                             = 1;
 
         // First call: only to retrieve total publications count
         $firstPage = $objectService->searchObjectsPaginated(
             query: $searchQuery,
             rbac: false,
             multi: false,
-            published: true, // must be published
+            published: true,
+            // must be published
             deleted: false
         );
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
         if (empty($firstPage['results']) === true) {
-            return new XMLResponse([
-                '@root' => 'sitemapindex',
-                '@attributes' => [
-                    'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
-                ],
-                'sitemap' => [],
-            ]);
+            return new XMLResponse(
+                [
+                    '@root'       => 'sitemapindex',
+                    '@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
+                    'sitemap'     => [],
+                ]
+            );
         }
 
         // Determine lastMod for this specific batch
-        $lastMod = null;
-        $lastModObject = $firstPage['results'][0]; // first item, sorted DESC
+        $lastMod       = null;
+        $lastModObject = $firstPage['results'][0];
+// first item, sorted DESC
         $lastMod = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
 
-        $sitemaps = [];
+        $sitemaps       = [];
         $sitemapBaseUri = "$baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode/publications";
         // Add sitemap entry
         $sitemaps[] = [
-            'loc' => "$sitemapBaseUri?page=$page",
+            'loc'     => "$sitemapBaseUri?page=$page",
             'lastmod' => $lastMod,
         ];
 
         $next = $firstPage['next'] ?? null;
-
 
         while ($next) {
             $page++;
@@ -191,17 +196,19 @@ class SitemapService
                 query: $searchQuery,
                 rbac: false,
                 multi: false,
-                published: true, // must be published
+                published: true,
+                // must be published
                 deleted: false
             );
 
-            $next = $batch['next'] ?? null;
-            $results = $batch['results'] ?? [];
+            $next    = $batch['next'] ?? null;
+            $results = ($batch['results'] ?? []);
 
             // Determine lastMod for this specific batch
             $lastMod = null;
             if (empty($results) === false) {
-                $lastModObject = $results[0]; // first item, sorted DESC
+                $lastModObject = $results[0];
+// first item, sorted DESC
                 $lastMod = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
             } else {
                 // If no results, break
@@ -210,55 +217,58 @@ class SitemapService
 
             // Add sitemap entry
             $sitemaps[] = [
-                'loc' => "$sitemapBaseUri?page=$page",
+                'loc'     => "$sitemapBaseUri?page=$page",
                 'lastmod' => $lastMod,
             ];
-        }
+        }//end while
 
-        return new XMLResponse([
-            '@root' => 'sitemapindex',
-            '@attributes' => [
-                'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
-            ],
-            'sitemap' => $sitemaps,
-        ]);
+        return new XMLResponse(
+            [
+                '@root'       => 'sitemapindex',
+                '@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
+                'sitemap'     => $sitemaps,
+            ]
+        );
+
     }//end buildSitemapIndex()
 
 
     /**
      * Build sitemap based on woo publications
-     * 
-     * @param string $catalogSlug
-     * @param string $categoryCode
-     * @param int    $page
-     * 
+     *
+     * @param string  $catalogSlug
+     * @param string  $categoryCode
+     * @param integer $page
+     *
      * @return XMLResponse
      */
     public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
-        $registerId = null; // Create reference for $registerId
-        $schemaId = null; // Create reference for $catalogId
+        $registerId = null;
+// Create reference for $registerId
+        $schemaId = null;
+// Create reference for $catalogId
         $objectService = $this->getObjectService();
-        $isValid = $this->isValidSitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode, objectService: $objectService, registerId: $registerId, schemaId: $schemaId);
+        $isValid       = $this->isValidSitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode, objectService: $objectService, registerId: $registerId, schemaId: $schemaId);
         if ($isValid instanceof XMLResponse === true) {
             return $isValid;
         }
 
-        $searchQuery = [];
+        $searchQuery                      = [];
         $searchQuery['@self']['register'] = $registerId;
-        $searchQuery['@self']['schema'] = $schemaId;
-        $searchQuery['_limit'] = $this::MAX_PER_PAGE;
-        $searchQuery['_page'] = $page;
+        $searchQuery['@self']['schema']   = $schemaId;
+        $searchQuery['_limit']            = $this::MAX_PER_PAGE;
+        $searchQuery['_page']             = $page;
 
-        $publications = $objectService->searchObjectsPaginated(
+        $publications = ($objectService->searchObjectsPaginated(
             query: $searchQuery,
             rbac: false,
             multi: false,
-            published: true, // must be published publications
+            published: true,
+            // must be published publications
             deleted: false
-        )['results'] ?? [];
+        )['results'] ?? []);
 
-        
         $fileService = $this->getFileService();
 
         $xmlDiwooDocuments = [];
@@ -266,7 +276,7 @@ class SitemapService
             $publication = $publication->jsonSerialize();
 
             // This should not be necessary but objectService->searchObjectsPaginated does not return files
-            $publication['@self']['files'] = $fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? [];
+            $publication['@self']['files'] = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
 
             // Map each file to a separate DIWOO Document
             foreach ($publication['@self']['files'] as $file) {
@@ -279,16 +289,16 @@ class SitemapService
         }
 
         $xmlContent = [
-            '@root' => 'diwoo:Documents',
-            '@attributes' => [
-                'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
-                'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-                'xmlns:diwoo' => 'https://standaarden.overheid.nl/diwoo/metadata/',
+            '@root'          => 'diwoo:Documents',
+            '@attributes'    => [
+                'xmlns'              => 'http://www.sitemaps.org/schemas/sitemap/0.9',
+                'xmlns:xsi'          => 'http://www.w3.org/2001/XMLSchema-instance',
+                'xmlns:diwoo'        => 'https://standaarden.overheid.nl/diwoo/metadata/',
                 'xsi:schemaLocation' => 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd https://standaarden.overheid.nl/diwoo/metadata/ https://standaarden.overheid.nl/diwoo/metadata/0.9.1/xsd/diwoo-metadata.xsd',
-                'xmlns:xhtml' => 'http://www.w3.org/1999/xhtml',
-                'xmlns:image' => 'http://www.google.com/schemas/sitemap-image/1.1',
-                'xmlns:video' => 'http://www.google.com/schemas/sitemap-video/1.1',
-                'xmlns:news' => 'http://www.google.com/schemas/sitemap-news/0.9',
+                'xmlns:xhtml'        => 'http://www.w3.org/1999/xhtml',
+                'xmlns:image'        => 'http://www.google.com/schemas/sitemap-image/1.1',
+                'xmlns:video'        => 'http://www.google.com/schemas/sitemap-video/1.1',
+                'xmlns:news'         => 'http://www.google.com/schemas/sitemap-news/0.9',
             ],
             'diwoo:Document' => $xmlDiwooDocuments,
         ];
@@ -296,6 +306,7 @@ class SitemapService
         return new XMLResponse($xmlContent);
 
     }//end buildSitemap()
+
 
     /**
      * Validates a sitemap request and resolves catalog, schema, and register IDs.
@@ -305,14 +316,14 @@ class SitemapService
      * - true on success
      * - XMLResponse with error details on failure
      *
-     * @param string                                   $catalogSlug   The slug of the Woo catalog
-     * @param string                                   $categoryCode  The sitemap category code
-     * @param \OCA\OpenRegister\Service\ObjectService  $objectService The OpenRegister ObjectService
-     * @param object|null                              $catalog       Resolved catalog object (output reference)
-     * @param string|null                              $schemaId      Resolved schema ID (output reference)
-     * @param string|null                              $registerId    Resolved register ID (output reference)
+     * @param string                                  $catalogSlug   The slug of the Woo catalog
+     * @param string                                  $categoryCode  The sitemap category code
+     * @param \OCA\OpenRegister\Service\ObjectService $objectService The OpenRegister ObjectService
+     * @param object|null                             $catalog       Resolved catalog object (output reference)
+     * @param string|null                             $schemaId      Resolved schema ID (output reference)
+     * @param string|null                             $registerId    Resolved register ID (output reference)
      *
-     * @return bool|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error
+     * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error
      */
     private function isValidSitemapRequest(string $catalogSlug, string $categoryCode, $objectService, &$catalog = null, &$schemaId = null, &$registerId = null)
     {
@@ -323,9 +334,9 @@ class SitemapService
         }
 
         foreach ($settings['availableRegisters'] as $register) {
-            if (strcasecmp($register['title'] ?? '', 'woo')  === 0) {
+            if (strcasecmp(($register['title'] ?? ''), 'woo') === 0) {
                 $registerId = $register['id'];
-                $schemas = $register['schemas'];
+                $schemas    = $register['schemas'];
             }
         }
 
@@ -334,33 +345,37 @@ class SitemapService
         }
 
         // Off case because our schema doesnt follow the woo category precisely
-        $schemas = array_map(function ($schema) {
-            if (trim($schema['title']) === 'Jaarplan of jaarverslag') {
-                $schema['title'] = 'Jaarplannen en jaarverslagen';
-            }
-            return $schema;
-        }, $schemas);
+        $schemas = array_map(
+            function ($schema) {
+                if (trim($schema['title']) === 'Jaarplan of jaarverslag') {
+                    $schema['title'] = 'Jaarplannen en jaarverslagen';
+                }
+
+                return $schema;
+            },
+            $schemas
+        );
 
         // Have to trim whitespcae because of typo in schema title definition..
-        $needle = trim($this::INFO_CAT[$categoryCode]);
+        $needle   = trim($this::INFO_CAT[$categoryCode]);
         $haystack = array_map(fn($s) => trim($s['title']), $schemas);
 
         // Get current schema belonging to requested category code.
-        $index = array_search(needle: $needle, haystack: $haystack);
+        $index    = array_search(needle: $needle, haystack: $haystack);
         $schemaId = $index !== false ? $schemas[$index]['id'] : null;
 
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
-        $searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
-        $searchQuery['slug'] = $catalogSlug;
-        $searchQuery['hasWooSitemap'] = true;
+        $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
+        $searchQuery['slug']              = $catalogSlug;
+        $searchQuery['hasWooSitemap']     = true;
 
-        $catalog = $objectService->searchObjectsPaginated(
+        $catalog = ($objectService->searchObjectsPaginated(
             query: $searchQuery,
             rbac: false,
             multi: false,
             published: false,
             deleted: false
-        )['results'][0] ?? [];
+        )['results'][0] ?? []);
 
         if (!$catalog) {
             return new XMLResponse('Invalid Woo catalog', 400);
@@ -372,7 +387,8 @@ class SitemapService
         }
 
         return true;
-    }
+
+    }//end isValidSitemapRequest()
 
 
     /**
@@ -390,37 +406,38 @@ class SitemapService
         return [
             'diwoo:Document' => [
                 'diwoo:DiWoo' => [
-                    'loc' => $file['downloadUrl'],
-                    'lastmod' => date('Y-m-d H:i:s', strtotime($file['published'] ?? $publication['@self']['updated'] ?? 'now')),
-                    'diwoo:creatiedatum' => date('Y-m-d', strtotime($publication['@self']['created'] ?? 'now')),
-                    'diwoo:publisher' => [
-                        '@resource' => $publication['@self']['organisation'] ?? 'PLACEHOLDER_ORG_URI',
-                        '#text' => $file['owner'] ?? $publication['@self']['owner'] ?? 'PLACEHOLDER_OWNER',
+                    'loc'                          => $file['downloadUrl'],
+                    'lastmod'                      => date('Y-m-d H:i:s', strtotime(($file['published'] ?? $publication['@self']['updated'] ?? 'now'))),
+                    'diwoo:creatiedatum'           => date('Y-m-d', strtotime(($publication['@self']['created'] ?? 'now'))),
+                    'diwoo:publisher'              => [
+                        '@resource' => ($publication['@self']['organisation'] ?? 'PLACEHOLDER_ORG_URI'),
+                        '#text'     => ($file['owner'] ?? $publication['@self']['owner'] ?? 'PLACEHOLDER_OWNER'),
                     ],
-                    'diwoo:format' => [
-                        '@resource' => "http://publications.europa.eu/resource/authority/file-type/" . strtoupper($file['extension']),
-                        '#text' => strtolower($file['extension']),
+                    'diwoo:format'                 => [
+                        '@resource' => "http://publications.europa.eu/resource/authority/file-type/".strtoupper($file['extension']),
+                        '#text'     => strtolower($file['extension']),
                     ],
                     'diwoo:classificatiecollectie' => [
                         'diwoo:informatiecategorieen' => [
                             'diwoo:informatiecategorie' => [
-                                '#text' => $publication['tooiCategorieNaam'] ?? 'PLACEHOLDER_CATEGORY',
-                                '@resource' => $publication['tooiCategorieUri'] ?? 'PLACEHOLDER_CATEGORY_URI',
+                                '#text'     => ($publication['tooiCategorieNaam'] ?? 'PLACEHOLDER_CATEGORY'),
+                                '@resource' => ($publication['tooiCategorieUri'] ?? 'PLACEHOLDER_CATEGORY_URI'),
                             ],
                         ],
                     ],
-                    'diwoo:documenthandelingen' => [
+                    'diwoo:documenthandelingen'    => [
                         'diwoo:documenthandeling' => [
                             'diwoo:soortHandeling' => [
-                                '#text' => 'ontvangst',
+                                '#text'     => 'ontvangst',
                                 '@resource' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535',
                             ],
-                            'diwoo:atTime' => $file['published'] ?? $publication['@self']['published'] ?? date('Y-m-d H:i:s'),
+                            'diwoo:atTime'         => ($file['published'] ?? $publication['@self']['published'] ?? date('Y-m-d H:i:s')),
                         ],
                     ],
                 ],
             ],
         ];
+
     }//end mapDiwooDocument()
 
 

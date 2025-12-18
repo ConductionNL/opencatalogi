@@ -13,10 +13,14 @@ use OCA\OpenCatalogi\AppInfo\Application;
 class CatalogWidget implements IWidget
 {
 
+
     public function __construct(
         private IL10N $l10n,
         private IURLGenerator $url
-    ) {}
+    ) {
+
+    }//end __construct()
+
 
     /**
      * @inheritDoc
@@ -24,7 +28,9 @@ class CatalogWidget implements IWidget
     public function getId(): string
     {
         return 'opencatalogi_catalogi_widget';
-    }
+
+    }//end getId()
+
 
     /**
      * @inheritDoc
@@ -32,7 +38,9 @@ class CatalogWidget implements IWidget
     public function getTitle(): string
     {
         return $this->l10n->t('Catalogi Overview');
-    }
+
+    }//end getTitle()
+
 
     /**
      * @inheritDoc
@@ -40,7 +48,9 @@ class CatalogWidget implements IWidget
     public function getOrder(): int
     {
         return 10;
-    }
+
+    }//end getOrder()
+
 
     /**
      * @inheritDoc
@@ -48,7 +58,9 @@ class CatalogWidget implements IWidget
     public function getIconClass(): string
     {
         return 'icon-catalogi-widget';
-    }
+
+    }//end getIconClass()
+
 
     /**
      * @inheritDoc
@@ -56,14 +68,19 @@ class CatalogWidget implements IWidget
     public function getUrl(): ?string
     {
         return null;
-    }
+
+    }//end getUrl()
+
 
     /**
      * @inheritDoc
      */
     public function load(): void
     {
-        Util::addScript(Application::APP_ID, Application::APP_ID . '-catalogiWidget');
+        Util::addScript(Application::APP_ID, Application::APP_ID.'-catalogiWidget');
         Util::addStyle(Application::APP_ID, 'dashboardWidgets');
-    }
-}
+
+    }//end load()
+
+
+}//end class
