@@ -38,9 +38,10 @@ class MenusController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * MenusController constructor.
@@ -52,7 +53,7 @@ class MenusController extends Controller
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -65,9 +66,9 @@ class MenusController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -131,7 +132,8 @@ class MenusController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
@@ -148,66 +150,68 @@ class MenusController extends Controller
     {
         // Get menu configuration from settings
         $menuConfig = $this->getMenuConfiguration();
-        
+
         // Get query parameters from request
         $queryParams = $this->request->getParams();
-        
+
         // Build search query
         $searchQuery = $queryParams;
-        
+
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter if configured - use proper OpenRegister syntax
-        if (!empty($menuConfig['schema'])) {
-            $searchQuery['@self']['schema'] = $menuConfig['schema'];
+        // Always filter by menu schema - OpenRegister expects filters in @self array.
+        // Use the configured schema if set, otherwise default to schema ID '7' (menu).
+        // NOTE: Must use numeric ID, not slug, as slug lookup doesn't work in searchObjects.
+        if (!isset($searchQuery['@self'])) {
+            $searchQuery['@self'] = [];
         }
 
-        // Add register filter if configured - use proper OpenRegister syntax
-        if (!empty($menuConfig['register'])) {
-            $searchQuery['@self']['register'] = $menuConfig['register'];
-        }
+        $searchQuery['@self']['schema'] = !empty($menuConfig['schema']) ? $menuConfig['schema'] : '7';
 
-        // Use searchObjectsPaginated for better performance and pagination support
-        // Set rbac=false, multi=false, published=false to get all menus regardless of published status
+        // Use the configured register if set, otherwise default to register ID '1' (publication).
+        $searchQuery['@self']['register'] = !empty($menuConfig['register']) ? $menuConfig['register'] : '1';
+
+        // Use searchObjectsPaginated for better performance and pagination support.
+        // Set rbac=false, multi=false, published=false to get all menus regardless of published status.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
-        
+
         // Build paginated response structure
         /*
-        $responseData = [
+            $responseData = [
             'results' => $result['results'] ?? [],
             'total' => $result['total'] ?? 0,
             'limit' => $result['limit'] ?? 20,
             'offset' => $result['offset'] ?? 0,
             'page' => $result['page'] ?? 1,
             'pages' => $result['pages'] ?? 1
-        ];
-        
-        // Add pagination links if present
-        if (isset($result['next'])) {
+            ];
+
+            // Add pagination links if present
+            if (isset($result['next'])) {
             $responseData['next'] = $result['next'];
-        }
-        if (isset($result['prev'])) {
+            }
+            if (isset($result['prev'])) {
             $responseData['prev'] = $result['prev'];
-        }
-        
-        // Add facets if present
-        if (isset($result['facets'])) {
+            }
+
+            // Add facets if present
+            if (isset($result['facets'])) {
             $facetsData = $result['facets'];
             // Unwrap nested facets if needed
             if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
                 $facetsData = $facetsData['facets'];
             }
             $responseData['facets'] = $facetsData;
-        }
-        if (isset($result['facetable'])) {
+            }
+            if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
-        }
-            */
+            }
+        */
 
         // Add CORS headers for public API access
         $response = new JSONResponse($result);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -220,7 +224,7 @@ class MenusController extends Controller
     /**
      * Get a specific menu by its ID.
      *
-     * @param string|int $id The ID of the menu to retrieve
+     * @param string|integer $id The ID of the menu to retrieve
      *
      * @return JSONResponse The JSON response containing the menu details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -233,23 +237,24 @@ class MenusController extends Controller
     {
         // Use searchObjectsPaginated to find single menu with published=true filter
         $searchQuery = [
-            '_ids' => [$id],
-            '_limit' => 1,
-            '_source' => 'index'  // Force use of SOLR index for better performance
+            '_ids'    => [$id],
+            '_limit'  => 1,
+            '_source' => 'index',
+// Force use of SOLR index for better performance
         ];
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
-        
+
         if (empty($result['results'])) {
             return new JSONResponse(['error' => 'Menu not found'], 404);
         }
-        
+
         $menu = $result['results'][0];
-        
+
         $data = $menu instanceof \OCP\AppFramework\Db\Entity ? $menu->jsonSerialize() : $menu;
-        
+
         // Add CORS headers for public API access
         $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

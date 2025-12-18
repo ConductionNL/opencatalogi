@@ -1,0 +1,176 @@
+name: Quality Assurance Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - development
+      - dev
+  push:
+    branches:
+      - main
+      - master
+      - development
+      - dev
+
+jobs:
+  quality-check:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, posix, simplexml, xmlreader, xmlwriter, zip
+          coverage: xdebug
+          tools: composer:v2
+      
+      - name: Validate composer.json
+        run: composer validate --strict
+      
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+      
+      - name: Run PHP Lint
+        run: composer lint
+        continue-on-error: true
+      
+      - name: Run PHPCS (Coding Standards)
+        id: phpcs
+        run: |
+          composer cs:check
+          composer phpcs:output
+          if [ -f phpcs-output.json ]; then
+            ERRORS=$(jq '.totals.errors' phpcs-output.json)
+            WARNINGS=$(jq '.totals.warnings' phpcs-output.json)
+            SCORE=$(echo "scale=2; 100 - (($ERRORS * 2) + ($WARNINGS * 0.5))" | bc)
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+            echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+            echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+            echo "### PHPCS Results (Informational)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Score:** $SCORE%" >> $GITHUB_STEP_SUMMARY
+            echo "- **Errors:** $ERRORS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warnings:** $WARNINGS" >> $GITHUB_STEP_SUMMARY
+            if [ "$ERRORS" -gt "0" ]; then
+              echo "⚠️ PHPCS found $ERRORS errors. Consider fixing these." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+        continue-on-error: true
+      
+      - name: Run PHPMD (Mess Detector)
+        id: phpmd
+        run: |
+          composer phpmd > phpmd-output.txt || true
+          if [ -f phpmd-output.txt ]; then
+            VIOLATIONS=$(grep -c "^" phpmd-output.txt || echo "0")
+            SCORE=$(echo "scale=2; 100 - ($VIOLATIONS * 0.5)" | bc)
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+            echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
+            echo "### PHPMD Results (Informational)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Score:** $SCORE%" >> $GITHUB_STEP_SUMMARY
+            echo "- **Violations:** $VIOLATIONS" >> $GITHUB_STEP_SUMMARY
+            if (( $(echo "$SCORE < 80" | bc -l) )); then
+              echo "⚠️ PHPMD score is below 80%. Consider reviewing and fixing violations." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+        continue-on-error: true
+      
+      - name: Run PHPQA (Full Quality Analysis)
+        id: phpqa
+        run: |
+          composer phpqa:ci
+          if [ -f phpqa/phpqa.json ]; then
+            # Parse PHPQA results
+            echo "### PHPQA Results (Informational)" >> $GITHUB_STEP_SUMMARY
+            echo "Full report available in artifacts." >> $GITHUB_STEP_SUMMARY
+            
+            # Calculate overall quality score
+            # This is a composite score based on all analyzers
+            PHPCS_SCORE="${{ steps.phpcs.outputs.score }}"
+            PHPMD_SCORE="${{ steps.phpmd.outputs.score }}"
+            OVERALL_SCORE=$(echo "scale=2; ($PHPCS_SCORE + $PHPMD_SCORE) / 2" | bc)
+            
+            echo "overall_score=$OVERALL_SCORE" >> $GITHUB_OUTPUT
+            echo "- **Overall Quality Score:** $OVERALL_SCORE%" >> $GITHUB_STEP_SUMMARY
+            
+            if (( $(echo "$OVERALL_SCORE < 90" | bc -l) )); then
+              echo "⚠️ Overall quality score ($OVERALL_SCORE%) is below target 90%." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Quality score meets target!" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+        continue-on-error: true
+      
+      - name: Upload PHPQA Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: phpqa-reports
+          path: phpqa/
+          retention-days: 30
+      
+      - name: Comment PR with Quality Report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const phpcsScore = '${{ steps.phpcs.outputs.score }}';
+            const phpcsErrors = '${{ steps.phpcs.outputs.errors }}';
+            const phpcsWarnings = '${{ steps.phpcs.outputs.warnings }}';
+            const phpmdScore = '${{ steps.phpmd.outputs.score }}';
+            const phpmdViolations = '${{ steps.phpmd.outputs.violations }}';
+            const overallScore = '${{ steps.phpqa.outputs.overall_score }}';
+            
+            const passed = parseFloat(overallScore) >= 90;
+            const emoji = passed ? '✅' : '⚠️';
+            
+            const body = `## ${emoji} Code Quality Report (Informational)
+            
+            > ℹ️ **Note:** Quality checks are currently **informational only** and will not block merges.
+            
+            ### Overall Score: **${overallScore}%** ${passed ? '(Target Met)' : '(Target: 90%+)'}
+            
+            | Analyzer | Score | Details |
+            |----------|-------|---------|
+            | PHPCS | ${phpcsScore}% | ${phpcsErrors} errors, ${phpcsWarnings} warnings |
+            | PHPMD | ${phpmdScore}% | ${phpmdViolations} violations |
+            
+            ### Targets
+            - PHPCS Errors: Target 0 (Current: ${phpcsErrors})
+            - Overall Score: Target ≥ 90% (Current: ${overallScore}%)
+            - PHPMD Score: Target ≥ 80% (Current: ${phpmdScore}%)
+            
+            ${passed ? 
+              '### ✅ This PR meets quality targets!' : 
+              '### ⚠️ Quality improvements recommended (but not required for merge)'}
+            
+            📊 Full quality reports are available in the workflow artifacts.
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+

@@ -22,12 +22,13 @@ use OCA\OpenCatalogi\Service\SitemapService;
 class SitemapController extends Controller
 {
 
+
     /**
      * SitemapController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param SitemapService     $sitemapService     SitemapService
+     * @param string         $appName        The name of the app
+     * @param IRequest       $request        The request object
+     * @param SitemapService $sitemapService SitemapService
      */
     public function __construct(
         $appName,
@@ -35,7 +36,9 @@ class SitemapController extends Controller
         private readonly SitemapService $sitemapService,
     ) {
         parent::__construct($appName, $request);
+
     }//end __construct()
+
 
     /**
      * @NoAdminRequired
@@ -45,7 +48,9 @@ class SitemapController extends Controller
     public function index(string $catalogSlug, string $categoryCode): XMLResponse
     {
         return $this->sitemapService->buildSitemapIndex(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
-    }
+
+    }//end index()
+
 
     /**
      * @NoAdminRequired
@@ -54,8 +59,10 @@ class SitemapController extends Controller
      */
     public function sitemap(string $catalogSlug, string $categoryCode): XMLResponse
     {
-        $page = (int) $this->request->getParams()['page'] ?? 1;
+        $page = ((int) $this->request->getParams()['page'] ?? 1);
         return $this->sitemapService->buildSitemap(catalogSlug: $catalogSlug, categoryCode: $categoryCode, page: $page);
-    }
+
+    }//end sitemap()
+
 
 }//end class

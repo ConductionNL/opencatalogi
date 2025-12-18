@@ -29,16 +29,16 @@ use OCA\OpenCatalogi\Service\SitemapService;
 class RobotsController extends Controller
 {
 
-    
+
     /**
      * PublicationsController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param SettingsService    $settingsService    The settings service
-     * @param ContainerInterface $container          The container for dependency injection
-     * @param IAppManager        $appManager         The app manager
-     * @param IURLGenerator      $urlGenerator       The Nextcloud URL generator
+     * @param string             $appName         The name of the app
+     * @param IRequest           $request         The request object
+     * @param SettingsService    $settingsService The settings service
+     * @param ContainerInterface $container       The container for dependency injection
+     * @param IAppManager        $appManager      The app manager
+     * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
      */
     public function __construct(
         $appName,
@@ -49,7 +49,8 @@ class RobotsController extends Controller
         private readonly IURLGenerator $urlGenerator,
     ) {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
 
 
     /**
@@ -70,19 +71,19 @@ class RobotsController extends Controller
         }
 
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
-        $searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
+        $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
 
-        $catalogs = $this->getObjectService()->searchObjectsPaginated(
+        $catalogs = ($this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
             rbac: false,
             multi: false,
             published: false,
             deleted: false
-        )['results'] ?? [];
+        )['results'] ?? []);
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
-        $text = '';
+        $text  = '';
         $count = 0;
         foreach ($catalogs as $catalog) {
             if (!$catalog->getSlug()) {
@@ -96,12 +97,14 @@ class RobotsController extends Controller
             foreach (SitemapService::INFO_CAT as $categoryCode => $categoryName) {
                 $text .= "Sitemap: $baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode\n";
             }
-            
+
             $count++;
         }
 
         return new TextResponse($text);
-    }
+
+    }//end index()
+
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.
@@ -121,4 +124,5 @@ class RobotsController extends Controller
 
     }//end getObjectService()
 
-}
+
+}//end class

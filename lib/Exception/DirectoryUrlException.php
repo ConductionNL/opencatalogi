@@ -6,9 +6,13 @@ use Exception;
 
 class DirectoryUrlException extends Exception
 {
-	public function setMessage(string $message): void
-	{
-		$this->message = $message;
-	}
 
-}
+
+    public function setMessage(string $message): void
+    {
+        $this->message = $message;
+
+    }//end setMessage()
+
+
+}//end class

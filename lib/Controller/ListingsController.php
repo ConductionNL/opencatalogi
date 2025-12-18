@@ -84,18 +84,19 @@ class ListingsController extends Controller
 
         // Build query for searchObjectsPaginated
         $query = [];
-        
+
         // Add metadata filters
         if (!empty($listingSchema) || !empty($listingRegister)) {
             $query['@self'] = [];
             if (!empty($listingSchema)) {
                 $query['@self']['schema'] = $listingSchema;
             }
+
             if (!empty($listingRegister)) {
                 $query['@self']['register'] = $listingRegister;
             }
         }
-        
+
         // Add any additional filters from request params
         if (isset($requestParams['filters'])) {
             foreach ($requestParams['filters'] as $key => $value) {
@@ -104,11 +105,12 @@ class ListingsController extends Controller
                 }
             }
         }
-        
+
         // Add pagination and other params
         if (isset($requestParams['limit'])) {
             $query['_limit'] = (int) $requestParams['limit'];
         }
+
         if (isset($requestParams['offset'])) {
             $query['_offset'] = (int) $requestParams['offset'];
         }
@@ -125,7 +127,7 @@ class ListingsController extends Controller
     /**
      * Retrieve a specific listing by its ID.
      *
-     * @param string|int $id The ID of the listing to retrieve
+     * @param string|integer $id The ID of the listing to retrieve
      *
      * @return JSONResponse JSON response containing the requested listing
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
@@ -177,7 +179,7 @@ class ListingsController extends Controller
     /**
      * Update an existing listing.
      *
-     * @param string|int $id The ID of the listing to update.
+     * @param string|integer $id The ID of the listing to update.
      *
      * @return JSONResponse The response containing the updated listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
@@ -205,7 +207,7 @@ class ListingsController extends Controller
     /**
      * Delete a listing.
      *
-     * @param string|int $id The ID of the listing to delete.
+     * @param string|integer $id The ID of the listing to delete.
      *
      * @return JSONResponse The response indicating the result of the deletion.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
@@ -234,7 +236,7 @@ class ListingsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function synchronise(?string $id=null): JSONResponse
+    public function synchronise(?string $id = null): JSONResponse
     {
         // Synchronize the specified listing or all listings
         $result = $this->directoryService->synchronise($id);

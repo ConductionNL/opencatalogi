@@ -39,9 +39,10 @@ class DirectoryController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * DirectoryController constructor.
@@ -51,7 +52,7 @@ class DirectoryController extends Controller
      * @param DirectoryService $directoryService   The directory service
      * @param string           $corsMethods        Allowed CORS methods
      * @param string           $corsAllowedHeaders Allowed CORS headers
-     * @param int              $corsMaxAge         CORS max age
+     * @param integer          $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -62,10 +63,11 @@ class DirectoryController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
-    }
+        $this->corsMaxAge         = $corsMaxAge;
+
+    }//end __construct()
 
 
     /**
@@ -91,7 +93,8 @@ class DirectoryController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
@@ -109,32 +112,36 @@ class DirectoryController extends Controller
         try {
             // Retrieve all request parameters
             $requestParams = $this->request->getParams();
-            
+
             // Use the directory service to get combined directory data
             $data = $this->directoryService->getDirectory($requestParams);
-            
+
             // Create JSON response with CORS headers
             $response = new JSONResponse($data);
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
         } catch (\Exception $e) {
             // Handle errors gracefully with CORS headers
-            $response = new JSONResponse([
-                'message' => 'Failed to retrieve directory data',
-                'error' => $e->getMessage()
-            ], 500);
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $response = new JSONResponse(
+                [
+                    'message' => 'Failed to retrieve directory data',
+                    'error'   => $e->getMessage(),
+                ],
+                500
+            );
+            $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-        }
-    }
+        }//end try
+
+    }//end index()
 
 
     /**
@@ -158,43 +165,54 @@ class DirectoryController extends Controller
 
         // Validate that directory URL is provided
         if (empty($directoryUrl)) {
-            $response = new JSONResponse([
-                'message' => 'Property "directory" is required',
-                'error' => 'Missing directory URL parameter'
-            ], 400);
+            $response = new JSONResponse(
+                [
+                    'message' => 'Property "directory" is required',
+                    'error'   => 'Missing directory URL parameter',
+                ],
+                400
+            );
         } else {
             // Sync the directory with the provided URL
             try {
                 $data = $this->directoryService->syncDirectory($directoryUrl);
-                
+
                 // Return success response with sync results
-                $response = new JSONResponse([
-                    'message' => 'Directory synchronized successfully',
-                    'data' => $data
-                ]);
-                
+                $response = new JSONResponse(
+                    [
+                        'message' => 'Directory synchronized successfully',
+                        'data'    => $data,
+                    ]
+                );
             } catch (\InvalidArgumentException $e) {
                 // Handle validation errors (invalid URL, etc.)
-                $response = new JSONResponse([
-                    'message' => 'Invalid directory URL',
-                    'error' => $e->getMessage()
-                ], 400);
-                
+                $response = new JSONResponse(
+                    [
+                        'message' => 'Invalid directory URL',
+                        'error'   => $e->getMessage(),
+                    ],
+                    400
+                );
             } catch (GuzzleException $e) {
                 // Handle HTTP/network errors
-                $response = new JSONResponse([
-                    'message' => 'Failed to fetch directory data',
-                    'error' => $e->getMessage()
-                ], 502);
-                
+                $response = new JSONResponse(
+                    [
+                        'message' => 'Failed to fetch directory data',
+                        'error'   => $e->getMessage(),
+                    ],
+                    502
+                );
             } catch (\Exception $e) {
                 // Handle other unexpected errors
-                $response = new JSONResponse([
-                    'message' => 'Directory synchronization failed',
-                    'error' => $e->getMessage()
-                ], 500);
-            }
-        }
+                $response = new JSONResponse(
+                    [
+                        'message' => 'Directory synchronization failed',
+                        'error'   => $e->getMessage(),
+                    ],
+                    500
+                );
+            }//end try
+        }//end if
 
         // Add CORS headers for public API access
         $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
@@ -203,7 +221,8 @@ class DirectoryController extends Controller
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
         return $response;
-    }
+
+    }//end update()
 
 
-}
+}//end class

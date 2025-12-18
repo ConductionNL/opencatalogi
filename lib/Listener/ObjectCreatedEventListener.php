@@ -34,10 +34,12 @@ use Psr\Log\LoggerInterface;
 class ObjectCreatedEventListener implements IEventListener
 {
 
+
     /**
      * ObjectCreatedEventListener constructor.
      */
-    public function __construct() {
+    public function __construct()
+    {
 
     }//end __construct()
 
@@ -55,7 +57,6 @@ class ObjectCreatedEventListener implements IEventListener
     public function handle(Event $event): void
     {
 
-
         // Verify this is the correct event type.
         if ($event instanceof ObjectCreatedEvent === false) {
             return;
@@ -64,12 +65,12 @@ class ObjectCreatedEventListener implements IEventListener
         try {
             // Get services from the server container
             $settingsService = \OC::$server->get(\OCA\OpenCatalogi\Service\SettingsService::class);
-            $eventService = \OC::$server->get(\OCA\OpenCatalogi\Service\EventService::class);
-            $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-            
+            $eventService    = \OC::$server->get(\OCA\OpenCatalogi\Service\EventService::class);
+            $logger          = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+
             // Check if any auto-publishing features are enabled before processing.
             $publishingOptions = $settingsService->getPublishingOptions();
-            
+
             // Skip processing if no auto-publishing features are enabled.
             if ($publishingOptions['auto_publish_objects'] === false && $publishingOptions['auto_publish_attachments'] === false) {
                 return;
@@ -77,29 +78,35 @@ class ObjectCreatedEventListener implements IEventListener
 
             // Get the created object from the event.
             $objectEntity = $event->getObject();
-            
+
             // Convert ObjectEntity to array format expected by EventService.
             $objectData = $this->convertObjectEntityToArray($objectEntity);
-            
+
             // Process the object creation event through EventService.
             $result = $eventService->handleObjectCreateEvents([$objectData]);
-            
+
             // Log successful processing for monitoring.
             if ($result['processed'] > 0) {
-                $logger->info('OpenCatalogi: Processed object creation event', [
-                    'objectId' => $objectData['@self']['id'] ?? 'unknown',
-                    'published' => $result['published'],
-                    'attachmentsPublished' => $result['attachmentsPublished']
-                ]);
+                $logger->info(
+                    'OpenCatalogi: Processed object creation event',
+                    [
+                        'objectId'             => ($objectData['@self']['id'] ?? 'unknown'),
+                        'published'            => $result['published'],
+                        'attachmentsPublished' => $result['attachmentsPublished'],
+                    ]
+                );
             }
-            
+
             // Log any errors that occurred during processing.
             if (empty($result['errors']) === false) {
                 foreach ($result['errors'] as $error) {
-                    $logger->error('OpenCatalogi: Error processing object creation event', [
-                        'error' => $error,
-                        'objectId' => $objectData['@self']['id'] ?? 'unknown'
-                    ]);
+                    $logger->error(
+                        'OpenCatalogi: Error processing object creation event',
+                        [
+                            'error'    => $error,
+                            'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
+                        ]
+                    );
                 }
             }
         } catch (\Exception $e) {
@@ -108,8 +115,9 @@ class ObjectCreatedEventListener implements IEventListener
             if (!isset($logger)) {
                 $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
             }
-            $logger->error('OpenCatalogi: Exception in object creation event listener: ' . $e->getMessage(), ['exception' => $e]);
-        }
+
+            $logger->error('OpenCatalogi: Exception in object creation event listener: '.$e->getMessage(), ['exception' => $e]);
+        }//end try
 
     }//end handle()
 
@@ -128,23 +136,23 @@ class ObjectCreatedEventListener implements IEventListener
     {
         // Use the ObjectEntity's jsonSerialize method to get array representation.
         $objectData = $objectEntity->jsonSerialize();
-        
+
         // Ensure the @self metadata is properly structured.
         if (isset($objectData['@self']) === false) {
             $objectData['@self'] = [];
         }
-        
+
         // Add essential metadata for event processing.
-        $objectData['@self']['id'] = $objectEntity->getUuid();
-        $objectData['@self']['uuid'] = $objectEntity->getUuid();
-        $objectData['@self']['register'] = $objectEntity->getRegister();
-        $objectData['@self']['schema'] = $objectEntity->getSchema();
-        $objectData['@self']['published'] = $objectEntity->getPublished()?->format('c');
+        $objectData['@self']['id']          = $objectEntity->getUuid();
+        $objectData['@self']['uuid']        = $objectEntity->getUuid();
+        $objectData['@self']['register']    = $objectEntity->getRegister();
+        $objectData['@self']['schema']      = $objectEntity->getSchema();
+        $objectData['@self']['published']   = $objectEntity->getPublished()?->format('c');
         $objectData['@self']['depublished'] = $objectEntity->getDepublished()?->format('c');
-        
+
         return $objectData;
 
     }//end convertObjectEntityToArray()
 
 
-}//end class 
+}//end class

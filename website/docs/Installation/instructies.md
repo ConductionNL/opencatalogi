@@ -1,39 +1,44 @@
-# Installatie-instructies Nextcloud
+# Installation Instructions 
+An installation of Open Catalogi always consists of two parts
 
-#### Installatie-instructies voor Nextcloud
+1. Setting up a Nextcloud instance
+2. Setting up a frontend
 
-Volg deze stappen om Nextcloud eenvoudig te installeren en te gebruiken:
+## Nextcloud
 
-1. **Downloaden en account aanmaken bij een Nextcloud-provider**:
-   * Ga naar de [Nextcloud website](https://nextcloud.com/signup/), download the app voor jouw besturingssysteem
-   * Bij het starten van de app kan er gekozen worden tussen een server en het aanmaken van een account. Maak een account aan als je deze nog niet hebt.
-   * We hebben gekozen voor TheGoodCloud, zonder enige voorkeur.
-   * Je ontvangt een activatiemail, dit kan tot 6 uur duren. Zoals altijd, check ook de spambox.
-   *   Eenmaal ingelogd ziet het scherm er zo uit:\
-       \
+### Installation Instructions for Nextcloud
 
+Follow these steps to easily install and use Nextcloud:
 
-       <img src="../.gitbook/assets/image.png" alt="the good cloud welkom" />
-       <figcaption>the good cloud welkom</figcaption>
-2. **Nextcloud-app installeren via de appstore**:
+1. **Download and create an account with a Nextcloud provider**:
+   * Go to the [Nextcloud website](https://nextcloud.com/signup/), download the app for your operating system
+   * When starting the app, you can choose between a server and creating an account. Create an account if you don't have one yet.
+   * We chose TheGoodCloud, without any particular preference.
+   * You will receive an activation email, this can take up to 6 hours. As always, also check your spam folder.
+   *   Once logged in, the screen looks like this:
 
-Let op! Je hebt hier een admin-account voor nodig. Dit werkt mogelijk niet met trialversies.
+       <figure><img src="../assets/nc_welkom_to_the_good_cloud.png" alt="Nextcloud welcome screen" /><figcaption>Nextcloud welcome screen</figcaption></figure>
+2. **Install Nextcloud app via the app store**:
 
-* Navigeer naar jouw profiel log, rechts in de Nextcloud app. Klik erop en kies "Apps" .
+Note! You need an admin account for this. This may not work with trial versions.
 
-\
+* Navigate to your profile icon, on the right in the Nextcloud app. Click on it and choose "Apps".
 
+<figure><img src="../assets/nc_app_menu.png" alt="Nextcloud app menu" /><figcaption>Nextcloud app menu</figcaption></figure>
 
-<figure><img src="../assets/image (1).png" alt="" /><figcaption><p>App-menu</p></figcaption></figure>
+3. **Install OpenCatalogi**:
 
-3. **OpenCatalogi installeren**:
+* After you are logged in to the Nextcloud app, go to the app store within the Nextcloud environment.
+* Search for "OpenCatalogi" within the "Integration" category and install the app.
 
-* Nadat je bent ingelogd in de Nextcloud-app, ga naar de appstore binnen de Nextcloud-omgeving.
-* Zoek naar "OpenCatalogi" binnen de categorie "Integration" en installeer de app.
+<figure><img src="../assets/nc_app_enable.png" alt="Enable OpenCatalogi app" /><figcaption>Enable OpenCatalogi app in Nextcloud app store</figcaption></figure>
 
-<figure><img src="../assets/image (4).png" alt="" /><figcaption></figcaption></figure>
+With these steps you are ready to use Nextcloud and OpenCatalogi without having to set up your own server. If you have any questions or need help, consult the [official Nextcloud documentation](https://docs.nextcloud.com/) or send an email to support@conduction.nl.
 
-Met deze stappen ben je klaar om Nextcloud en OpenCatalogi te gebruiken zonder dat je een eigen server hoeft op te zetten. Als je nog vragen hebt of hulp nodig hebt, raadpleeg dan de [officiële Nextcloud documentatie](https://docs.nextcloud.com/) of stuur een mail naar support@conduction.nl.
+**Update OpenCatalogi**
 
-** OpenCatalogi Bijwerken**
-![alt text](upgrade.png)
+<figure><img src="./upgrade.png" alt="OpenCatalogi update screen" /><figcaption>Update OpenCatalogi to the latest version</figcaption></figure>
+
+### Installation Instructions for Frontend
+
+There are several installation options, we recommend using the publication platform developed by [Acato](acato.nl) in collaboration with [Tilburg](tilburg.nl). This is available as a Docker container via the [Conduction Github](https://github.com/orgs/ConductionNL/packages?repo_name=tilburg-woo-ui). In the repository itself you will find besides a [docker-compose](https://github.com/ConductionNL/tilburg-woo-ui/blob/softwarecatalogus/docker-compose.yml) also further [installation instructions](https://github.com/ConductionNL/tilburg-woo-ui/tree/softwarecatalogus). 

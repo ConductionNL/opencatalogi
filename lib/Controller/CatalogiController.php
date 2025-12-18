@@ -38,9 +38,10 @@ class CatalogiController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * CatalogiController constructor.
@@ -53,7 +54,7 @@ class CatalogiController extends Controller
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -67,9 +68,9 @@ class CatalogiController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -133,13 +134,14 @@ class CatalogiController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
      * Retrieve a list of publications based on all available catalogs.
      *
-     * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
      * @return JSONResponse JSON response containing the list of publications and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -180,7 +182,7 @@ class CatalogiController extends Controller
         // Add CORS headers for public API access
         $response = new JSONResponse($result);
         $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -193,7 +195,7 @@ class CatalogiController extends Controller
     /**
      * Retrieve a list of catalogs based on provided filters and parameters.
      *
-     * @param  string|int $id The ID of the catalog to use as a filter
+     * @param  string|integer $id The ID of the catalog to use as a filter
      * @return JSONResponse JSON response containing the list of catalogs and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *

@@ -37,6 +37,7 @@ use Psr\Log\LoggerInterface;
 class CatalogCacheEventListener implements IEventListener
 {
 
+
     /**
      * CatalogCacheEventListener constructor.
      */
@@ -69,22 +70,22 @@ class CatalogCacheEventListener implements IEventListener
         try {
             // Get services from the server container
             $catalogiService = \OC::$server->get(\OCA\OpenCatalogi\Service\CatalogiService::class);
-            $appConfig = \OC::$server->get(\OCP\IAppConfig::class);
-            $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
+            $appConfig       = \OC::$server->get(\OCP\IAppConfig::class);
+            $logger          = \OC::$server->get(\Psr\Log\LoggerInterface::class);
 
             // Get the object from the event (different methods for different event types)
             if ($event instanceof ObjectCreatedEvent) {
                 $objectEntity = $event->getObject();
-            } elseif ($event instanceof ObjectUpdatedEvent) {
+            } else if ($event instanceof ObjectUpdatedEvent) {
                 $objectEntity = $event->getNewObject();
-            } elseif ($event instanceof ObjectDeletedEvent) {
+            } else if ($event instanceof ObjectDeletedEvent) {
                 $objectEntity = $event->getObject();
             } else {
                 return;
             }
 
             // Get catalog schema and register from config
-            $catalogSchema = $appConfig->getValueString('opencatalogi', 'catalog_schema', '');
+            $catalogSchema   = $appConfig->getValueString('opencatalogi', 'catalog_schema', '');
             $catalogRegister = $appConfig->getValueString('opencatalogi', 'catalog_register', '');
 
             // Only process if this is a catalog object
@@ -100,32 +101,38 @@ class CatalogCacheEventListener implements IEventListener
                 // For deletion, only invalidate cache
                 if (isset($catalogData['slug']) === true) {
                     $catalogiService->invalidateCatalogCache($catalogData['slug']);
-                    $logger->info('OpenCatalogi: Catalog cache invalidated after deletion', [
-                        'catalogId' => $objectEntity->getUuid(),
-                        'slug' => $catalogData['slug'],
-                    ]);
+                    $logger->info(
+                        'OpenCatalogi: Catalog cache invalidated after deletion',
+                        [
+                            'catalogId' => $objectEntity->getUuid(),
+                            'slug'      => $catalogData['slug'],
+                        ]
+                    );
                 }
             } else {
                 // For creation and updates, invalidate and warm up cache
                 if (isset($catalogData['slug']) === true) {
                     $catalogiService->warmupCatalogCache($catalogData['slug']);
-                    $logger->info('OpenCatalogi: Catalog cache warmed up after ' . ($event instanceof ObjectCreatedEvent ? 'creation' : 'update'), [
-                        'catalogId' => $objectEntity->getUuid(),
-                        'slug' => $catalogData['slug'],
-                    ]);
+                    $logger->info(
+                        'OpenCatalogi: Catalog cache warmed up after '.($event instanceof ObjectCreatedEvent ? 'creation' : 'update'),
+                        [
+                            'catalogId' => $objectEntity->getUuid(),
+                            'slug'      => $catalogData['slug'],
+                        ]
+                    );
                 }
-            }
+            }//end if
         } catch (\Exception $e) {
             // Log unexpected errors and continue gracefully
             // Get logger if not already available
             if (!isset($logger)) {
                 $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
             }
-            $logger->error('OpenCatalogi: Exception in catalog cache event listener: ' . $e->getMessage(), ['exception' => $e]);
-        }
+
+            $logger->error('OpenCatalogi: Exception in catalog cache event listener: '.$e->getMessage(), ['exception' => $e]);
+        }//end try
 
     }//end handle()
 
 
 }//end class
-

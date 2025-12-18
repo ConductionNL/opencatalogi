@@ -4,13 +4,13 @@
  *
  * Service for managing and synchronizing directories and listings.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service
- * @author   Conduction Development Team <info@conduction.nl>
+ * @category  Service
+ * @package   OCA\OpenCatalogi\Service
+ * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
- * @license  EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- * @version  GIT: <git_id>
- * @link     https://www.OpenCatalogi.nl
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git_id>
+ * @link      https://www.OpenCatalogi.nl
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -46,6 +46,7 @@ use React\Promise\PromiseInterface;
  */
 class DirectoryService
 {
+
     /**
      * @var string The name of the app
      */
@@ -67,9 +68,10 @@ class DirectoryService
     private ?array $cachedUniqueDirectories = null;
 
     /**
-     * @var int Cache timestamp to determine if cache is still valid (5 minute TTL)
+     * @var integer Cache timestamp to determine if cache is still valid (5 minute TTL)
      */
     private int $cacheTimestamp = 0;
+
 
     /**
      * Constructor for DirectoryService
@@ -82,8 +84,8 @@ class DirectoryService
      * @param ContainerInterface $container        Server container for dependency injection
      * @param IAppManager        $appManager       App manager for checking installed apps
      * @param BroadcastService   $broadcastService Broadcast service for notifying other directories
-     * @param IServerContainer   $server          Server container for logging and other services
-     * @param IRequest           $request         Request interface for accessing HTTP headers
+     * @param IServerContainer   $server           Server container for logging and other services
+     * @param IRequest           $request          Request interface for accessing HTTP headers
      */
     public function __construct(
         private readonly IURLGenerator $urlGenerator,
@@ -95,8 +97,10 @@ class DirectoryService
         private readonly IRequest $request
     ) {
         $this->appName = 'opencatalogi';
-        $this->client = new Client([]);
-    }
+        $this->client  = new Client([]);
+
+    }//end __construct()
+
 
     /**
      * Execute synchronization during cron job (asynchronous)
@@ -123,37 +127,41 @@ class DirectoryService
         $uniqueDirectoryUrls = $this->uniqueDirectories;
 
         $results = [
-            'total_directories' => count($uniqueDirectoryUrls),
+            'total_directories'  => count($uniqueDirectoryUrls),
             'synced_directories' => 0,
             'failed_directories' => 0,
-            'errors' => []
+            'errors'             => [],
         ];
 
         // Create promises for async directory synchronization
         $syncPromises = [];
         foreach ($uniqueDirectoryUrls as $directoryUrl) {
-            $syncPromises[] = new Promise(function ($resolve) use ($directoryUrl) {
-                try {
-                    $syncResult = $this->syncDirectory($directoryUrl);
+            $syncPromises[] = new Promise(
+                function ($resolve) use ($directoryUrl) {
+                    try {
+                        $syncResult = $this->syncDirectory($directoryUrl);
 
-                    // Directory sync completed successfully
-
-                    $resolve([
-                        'success' => true,
-                        'directory' => $directoryUrl,
-                        'result' => $syncResult
-                    ]);
-                } catch (\Exception $e) {
-                    // Removed redundant logging
-
-                    $resolve([
-                        'success' => false,
-                        'directory' => $directoryUrl,
-                        'error' => $e->getMessage()
-                    ]);
+                        // Directory sync completed successfully
+                        $resolve(
+                            [
+                                'success'   => true,
+                                'directory' => $directoryUrl,
+                                'result'    => $syncResult,
+                            ]
+                        );
+                    } catch (\Exception $e) {
+                        // Removed redundant logging
+                        $resolve(
+                            [
+                                'success'   => false,
+                                'directory' => $directoryUrl,
+                                'error'     => $e->getMessage(),
+                            ]
+                        );
+                    }//end try
                 }
-            });
-        }
+            );
+        }//end foreach
 
         // Execute all directory sync promises concurrently
         $syncResults = \React\Async\await(\React\Promise\all($syncPromises));
@@ -166,13 +174,15 @@ class DirectoryService
                 $results['failed_directories']++;
                 $results['errors'][] = [
                     'directory' => $syncResult['directory'],
-                    'error' => $syncResult['error']
+                    'error'     => $syncResult['error'],
                 ];
             }
         }
 
         return $results;
-    }
+
+    }//end doCronSync()
+
 
     /**
      * Get unique directory URLs from stored listings
@@ -180,8 +190,8 @@ class DirectoryService
      * Retrieves all unique directory URLs from listings that are currently
      * stored in the system and available for synchronization.
      *
-     * @param bool $availableOnly Whether to include only available listings
-     * @param bool $defaultOnly Whether to include only default listings
+     * @param  boolean $availableOnly Whether to include only available listings
+     * @param  boolean $defaultOnly   Whether to include only default listings
      * @return array<string> Array of unique directory URLs
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
@@ -203,11 +213,10 @@ class DirectoryService
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
         // Get listing configuration
-        $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+        $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
         $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 
         // Removed redundant logging
-
         $uniqueDirectoryUrls = [];
 
         // Get listings if configuration is available
@@ -216,36 +225,36 @@ class DirectoryService
                 $query = [
                     '@self' => [
                         'register' => $listingRegister,
-                        'schema' => $listingSchema,
+                        'schema'   => $listingSchema,
                     ],
                 ];
 
                 $listings = $objectService->searchObjects($query);
 
                 // Removed redundant logging
-
                 // Build unique directory URLs using URL as key to automatically handle duplicates
                 foreach ($listings as $listing) {
                     $listingData = $listing->jsonSerialize();
-                    $objectData = $listingData['object'] ?? $listingData;
+                    $objectData  = ($listingData['object'] ?? $listingData);
 
-                    $listingId = $objectData['id'] ?? $listingData['id'] ?? 'unknown';
-                    $listingTitle = $objectData['title'] ?? 'unknown';
-                    $available = ($objectData['integrationLevel'] ?? null) === 'search';
-                    $default = $objectData['default'] ?? false;
-                    $directory = $objectData['directory'] ?? $listingData['directory'] ?? null;
+                    $listingId    = ($objectData['id'] ?? $listingData['id'] ?? 'unknown');
+                    $listingTitle = ($objectData['title'] ?? 'unknown');
+                    $available    = ($objectData['integrationLevel'] ?? null) === 'search';
+                    $default      = $objectData['default'] ?? false;
+                    $directory    = ($objectData['directory'] ?? $listingData['directory'] ?? ) null;
 
                     // Removed redundant logging
-
                     // Apply post-query filtering for nested object properties
                     if ($availableOnly && !$available) {
                         // Removed redundant logging
-                        continue; // Skip unavailable listings
+                        continue;
+// Skip unavailable listings
                     }
 
                     if ($defaultOnly && !$default) {
                         // Removed redundant logging
-                        continue; // Skip non-default listings
+                        continue;
+// Skip non-default listings
                     }
 
                     // Check for publications URL in the object data (primary) or directory URL (fallback)
@@ -254,36 +263,36 @@ class DirectoryService
                         // Removed redundant logging
                     }
                     // Fallback: check for directory URL at top level (backwards compatibility)
-                    elseif (isset($listingData['directory']) && !empty($listingData['directory'])) {
+                    else if (isset($listingData['directory']) && !empty($listingData['directory'])) {
                         $uniqueDirectoryUrls[$listingData['directory']] = $listingData['directory'];
                         // Removed redundant logging
-                    } elseif (isset($objectData['directory']) && !empty($objectData['directory'])) {
+                    } else if (isset($objectData['directory']) && !empty($objectData['directory'])) {
                         // Fallback: convert directory URL to publications URL
-                        $publicationsUrl = str_replace('/api/directory', '/api/publications', rtrim($objectData['directory'], '/'));
+                        $publicationsUrl                       = str_replace('/api/directory', '/api/publications', rtrim($objectData['directory'], '/'));
                         $uniqueDirectoryUrls[$publicationsUrl] = $publicationsUrl;
                         // Removed redundant logging
                     } else {
                         // Removed redundant logging
                     }
-                }
-
-                // Removed redundant logging
+                }//end foreach
             } catch (\Exception $e) {
                 // Removed redundant logging
-            }
+            }//end try
         } else {
             // Removed redundant logging
-        }
+        }//end if
 
         // Return just the unique URLs as an indexed array
         $result = array_values($uniqueDirectoryUrls);
-        
+
         // Cache the result with current timestamp
         $this->cachedUniqueDirectories = $result;
-        $this->cacheTimestamp = $currentTime;
-        
+        $this->cacheTimestamp          = $currentTime;
+
         return $result;
-    }
+
+    }//end getUniqueDirectories()
+
 
     /**
      * Synchronize a specific directory (asynchronous)
@@ -332,23 +341,23 @@ class DirectoryService
 
         // Initialize results
         $results = [
-            'directory_url' => $directoryUrl,
-            'sync_time' => new \DateTime(),
-            'listings_created' => 0,
-            'listings_updated' => 0,
+            'directory_url'      => $directoryUrl,
+            'sync_time'          => new \DateTime(),
+            'listings_created'   => 0,
+            'listings_updated'   => 0,
             'listings_unchanged' => 0,
-            'listings_skipped' => 0,
-            'listings_failed' => 0,
-            'total_processed' => 0,
-            'errors' => [],
-            'listing_details' => []
+            'listings_skipped'   => 0,
+            'listings_failed'    => 0,
+            'total_processed'    => 0,
+            'errors'             => [],
+            'listing_details'    => [],
         ];
 
         try {
             // Fetch directory data with limit to get all listings
-            $directoryUrlWithLimit = $directoryUrl . '?_limit=10000';
-            $response = $this->client->get($directoryUrlWithLimit);
-            $directoryData = json_decode($response->getBody()->getContents(), true);
+            $directoryUrlWithLimit = $directoryUrl.'?_limit=10000';
+            $response              = $this->client->get($directoryUrlWithLimit);
+            $directoryData         = json_decode($response->getBody()->getContents(), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \InvalidArgumentException('Invalid JSON response from directory');
@@ -363,19 +372,22 @@ class DirectoryService
             if (isset($directoryData['results']) && is_array($directoryData['results'])) {
                 // Filter out listings that have our directory URL to prevent syncing ourselves
                 // Also filter out listings with localhost or .local extensions
-                $filteredListings = array_filter($directoryData['results'], function ($listingData) use ($ourDirectoryUrl) {
-                    // Skip if listing has our directory URL (prevent self-sync)
-                    if (isset($listingData['directory']) && $listingData['directory'] === $ourDirectoryUrl) {
-                        return false;
-                    }
+                $filteredListings = array_filter(
+                    $directoryData['results'],
+                    function ($listingData) use ($ourDirectoryUrl) {
+                        // Skip if listing has our directory URL (prevent self-sync)
+                        if (isset($listingData['directory']) && $listingData['directory'] === $ourDirectoryUrl) {
+                            return false;
+                        }
 
-                    // Skip if listing has a local URL (localhost, .local, private IPs)
-                    if (isset($listingData['directory']) && $this->isLocalUrl($listingData['directory'])) {
-                        return false;
-                    }
+                        // Skip if listing has a local URL (localhost, .local, private IPs)
+                        if (isset($listingData['directory']) && $this->isLocalUrl($listingData['directory'])) {
+                            return false;
+                        }
 
-                    return true;
-                });
+                        return true;
+                    }
+                );
 
                 // Check if the directory has any listings from our directory (before filtering)
                 $hasOurListings = count($directoryData['results']) > count($filteredListings);
@@ -384,9 +396,11 @@ class DirectoryService
 
                 // Create promises for each filtered listing sync
                 foreach ($filteredListings as $listingData) {
-                    $listingPromises[] = new Promise(function ($resolve) use ($listingData, $directoryUrl) {
-                        $resolve($this->syncListing($listingData, $directoryUrl));
-                    });
+                    $listingPromises[] = new Promise(
+                        function ($resolve) use ($listingData, $directoryUrl) {
+                            $resolve($this->syncListing($listingData, $directoryUrl));
+                        }
+                    );
                 }
 
                 // Execute all listing sync promises concurrently
@@ -398,11 +412,11 @@ class DirectoryService
                         $listingResults = [];
                         foreach ($listingPromises as $index => $promise) {
                             $listingResults[] = [
-                                'listing_id' => 'unknown',
+                                'listing_id'    => 'unknown',
                                 'listing_title' => 'Failed Promise',
-                                'action' => 'failed',
-                                'success' => false,
-                                'error' => 'Promise execution failed: ' . $e->getMessage()
+                                'action'        => 'failed',
+                                'success'       => false,
+                                'error'         => 'Promise execution failed: '.$e->getMessage(),
                             ];
                         }
                     }
@@ -414,28 +428,28 @@ class DirectoryService
 
                         if ($listingResult['success']) {
                             switch ($listingResult['action']) {
-                                case 'created':
-                                    $results['listings_created']++;
-                                    break;
-                                case 'updated':
-                                    $results['listings_updated']++;
-                                    break;
-                                case 'unchanged':
-                                    $results['listings_unchanged']++;
-                                    break;
-                                case 'skipped_outdated':
-                                case 'skipped_other_directory':
-                                    $results['listings_skipped']++;
-                                    break;
+                            case 'created':
+                                $results['listings_created']++;
+                                break;
+                            case 'updated':
+                                $results['listings_updated']++;
+                                break;
+                            case 'unchanged':
+                                $results['listings_unchanged']++;
+                                break;
+                            case 'skipped_outdated':
+                            case 'skipped_other_directory':
+                                $results['listings_skipped']++;
+                                break;
                             }
                         } else {
                             $results['listings_failed']++;
                             if ($listingResult['error']) {
-                                $results['errors'][] = 'Listing ' . $listingResult['listing_id'] . ': ' . $listingResult['error'];
+                                $results['errors'][] = 'Listing '.$listingResult['listing_id'].': '.$listingResult['error'];
                             }
-                        }
-                    }
-                }
+                        }//end if
+                    }//end foreach
+                }//end if
 
                 // Broadcast to the directory if it doesn't have our listings and our URL is not local
                 // Skip broadcasting if this sync was triggered by a system broadcast to prevent infinite loops
@@ -445,15 +459,12 @@ class DirectoryService
                     } catch (\Exception $e) {
                         // Removed redundant logging
                     }
-                } elseif ($this->isSystemBroadcast()) {
+                } else if ($this->isSystemBroadcast()) {
                     // Removed redundant logging
                 }
-            }
-
-            // Removed redundant logging
-
+            }//end if
         } catch (GuzzleException $e) {
-            $error = 'Failed to fetch directory data: ' . $e->getMessage();
+            $error               = 'Failed to fetch directory data: '.$e->getMessage();
             $results['errors'][] = $error;
 
             // Try to update existing listings with error status
@@ -470,7 +481,7 @@ class DirectoryService
                 throw new RequestException($error, null, null, $e);
             }
         } catch (\Exception $e) {
-            $error = 'Sync failed: ' . $e->getMessage();
+            $error               = 'Sync failed: '.$e->getMessage();
             $results['errors'][] = $error;
 
             // Try to update existing listings with error status
@@ -481,10 +492,12 @@ class DirectoryService
             }
 
             throw $e;
-        }
+        }//end try
 
         return $results;
-    }
+
+    }//end syncDirectory()
+
 
     /**
      * Synchronize a single listing from directory data
@@ -495,7 +508,7 @@ class DirectoryService
      * For new listings, sets 'available' and 'default' to false (conservative approach).
      * For updates, preserves existing 'available' and 'default' values to avoid overwriting status.
      *
-     * @param array $listingData The listing data to synchronize
+     * @param array  $listingData        The listing data to synchronize
      * @param string $sourceDirectoryUrl The source directory URL for reference
      *
      * @return array<string, mixed> Array containing sync results for this listing
@@ -505,26 +518,25 @@ class DirectoryService
     public function syncListing(array $listingData, string $sourceDirectoryUrl): array
     {
         $result = [
-            'listing_id' => $listingData['id'] ?? 'unknown',
-            'listing_title' => $listingData['title'] ?? 'Unknown',
-            'action' => 'none',
-            'success' => false,
-            'error' => null
+            'listing_id'    => ($listingData['id'] ?? 'unknown'),
+            'listing_title' => ($listingData['title'] ?? 'Unknown'),
+            'action'        => 'none',
+            'success'       => false,
+            'error'         => null,
         ];
 
         try {
             // Check if this listing belongs to a different directory that we already have as a source
-            if (isset($listingData['directory']) &&
-                !empty($listingData['directory']) &&
-                $listingData['directory'] !== $sourceDirectoryUrl &&
-                in_array($listingData['directory'], $this->uniqueDirectories)) {
-
-                $result['action'] = 'skipped_other_directory';
+            if (isset($listingData['directory'])
+                && !empty($listingData['directory'])
+                && $listingData['directory'] !== $sourceDirectoryUrl
+                && in_array($listingData['directory'], $this->uniqueDirectories)
+            ) {
+                $result['action']  = 'skipped_other_directory';
                 $result['success'] = true;
-                $result['reason'] = 'Listing belongs to directory ' . $listingData['directory'] . ' which is processed separately';
+                $result['reason']  = 'Listing belongs to directory '.$listingData['directory'].' which is processed separately';
 
                 // No need to log routine skips
-
                 return $result;
             }
 
@@ -537,7 +549,7 @@ class DirectoryService
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
             // Get listing configuration
-            $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+            $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
             $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 
             if (empty($listingSchema) || empty($listingRegister)) {
@@ -556,9 +568,9 @@ class DirectoryService
             $uuid = null;
             if (isset($listingData['@self']['id'])) {
                 $uuid = $listingData['@self']['id'];
-            } elseif (isset($listingData['id'])) {
+            } else if (isset($listingData['id'])) {
                 $uuid = $listingData['id'];
-            } elseif (isset($listingData['catalog'])) {
+            } else if (isset($listingData['catalog'])) {
                 // Use catalog as UUID if no explicit ID is provided
                 $uuid = $listingData['catalog'];
             }
@@ -573,7 +585,6 @@ class DirectoryService
             $listingData['lastSync'] = (new \DateTime())->format('c');
 
             // Catalog field is already present from external listing data
-
             // Set summary to 'unknown' if empty (required field)
             if (empty($listingData['summary'])) {
                 $listingData['summary'] = 'unknown';
@@ -590,55 +601,58 @@ class DirectoryService
             $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
 
             // Check if listing already exists to determine action type
-            $existingListings = $objectService->searchObjects([
-                '@self' => [
-                    'register' => $listingRegister,
-                    'schema' => $listingSchema,
-                ],
-                'catalog' => $catalogId,
-            ]);
+            $existingListings = $objectService->searchObjects(
+                [
+                    '@self'   => [
+                        'register' => $listingRegister,
+                        'schema'   => $listingSchema,
+                    ],
+                    'catalog' => $catalogId,
+                ]
+            );
 
             $isUpdate = !empty($existingListings);
 
             // Set directory properties based on whether it's new or updated
             if ($isUpdate) {
                 // For updates, preserve existing available and default values
-                $existingListing = $existingListings[0];
+                $existingListing     = $existingListings[0];
                 $existingListingData = $existingListing->jsonSerialize();
-                $existingObject = $existingListingData['object'] ?? [];
+                $existingObject      = ($existingListingData['object'] ?? []);
 
                 // Preserve existing availability and default status, but set smart defaults for missing fields
-                $listingData['default'] = $existingObject['default'] ?? ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
-                $listingData['statusCode'] = 200; // Update status code to show successful fetch
-                $listingData['status'] = $existingObject['status'] ?? 'development';
+                $listingData['default']    = ($existingObject['default'] ?? ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'));
+                $listingData['statusCode'] = 200;
+// Update status code to show successful fetch
+                $listingData['status'] = ($existingObject['status'] ?? 'development');
             } else {
                 // For new listings, mark as available since we successfully fetched and validated the data
-                $listingData['default'] = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'); // Only default OpenCatalogi directory is default
-                $listingData['statusCode'] = 200; // Successful fetch
-                $listingData['status'] = $existingObject['status'] ?? 'development';
+                $listingData['default'] = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+// Only default OpenCatalogi directory is default
+                $listingData['statusCode'] = 200;
+// Successful fetch
+                $listingData['status'] = ($existingObject['status'] ?? 'development');
             }
 
             if ($isUpdate) {
                 // For updates, check for race conditions and data changes
                 // (existingListing and existingListingData already retrieved above)
-
                 // Check for race condition: skip if incoming data is older than our last sync
                 if ($this->isListingDataOutdated($listingData, $existingListingData)) {
-                    $result['action'] = 'skipped_outdated';
+                    $result['action']  = 'skipped_outdated';
                     $result['success'] = true;
-                    $result['reason'] = 'Incoming listing data is older than existing data';
+                    $result['reason']  = 'Incoming listing data is older than existing data';
 
                     // Skipping outdated listing (no logging needed for routine operations)
-
                     return $result;
                 }
 
                 // Check if listing has actually changed using hash comparison
                 $newHash = hash('sha256', json_encode($listingData));
-                $oldHash = hash('sha256', json_encode($existingListingData['object'] ?? []));
+                $oldHash = hash('sha256', json_encode(($existingListingData['object'] ?? [])));
 
                 if ($newHash === $oldHash) {
-                    $result['action'] = 'unchanged';
+                    $result['action']  = 'unchanged';
                     $result['success'] = true;
                 } else {
                     // Use existing UUID for update
@@ -652,7 +666,7 @@ class DirectoryService
                         uuid: $uuid
                     );
 
-                    $result['action'] = 'updated';
+                    $result['action']  = 'updated';
                     $result['success'] = true;
                 }
             } else {
@@ -664,22 +678,22 @@ class DirectoryService
                     uuid: $uuid
                 );
 
-                $result['action'] = 'created';
+                $result['action']  = 'created';
                 $result['success'] = true;
-            }
-
+            }//end if
         } catch (\Exception $e) {
             $result['error'] = $e->getMessage();
 
             // Try to update the listing with error status if it exists
             try {
                 if (!empty($existingListings)) {
-                    $existingListing = $existingListings[0];
+                    $existingListing     = $existingListings[0];
                     $existingListingData = $existingListing->jsonSerialize();
-                    $errorData = $existingListingData['object'] ?? [];
+                    $errorData           = ($existingListingData['object'] ?? []);
 
                     // Update with error status
-                    $errorData['statusCode'] = 500; // Internal server error
+                    $errorData['statusCode'] = 500;
+// Internal server error
                     $errorData['lastSync'] = (new \DateTime())->format('c');
 
                     $objectService->saveObject(
@@ -691,13 +705,13 @@ class DirectoryService
                 }
             } catch (\Exception $updateException) {
                 // Removed redundant logging
-            }
-
-            // Removed redundant logging
-        }
+            }//end try
+        }//end try
 
         return $result;
-    }
+
+    }//end syncListing()
+
 
     /**
      * Get publications from all available federated catalogs asynchronously
@@ -705,8 +719,8 @@ class DirectoryService
      * Fetches publications from all publication endpoints of listings marked as available,
      * combining results into a single array.
      *
-     * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
-     * @param bool $includeDefault Whether to include only default listings or all available listings
+     * @param array   $guzzleConfig   Optional Guzzle configuration for HTTP requests
+     * @param boolean $includeDefault Whether to include only default listings or all available listings
      *
      * @return array Array containing combined publications
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -718,10 +732,12 @@ class DirectoryService
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
 
         // Removed redundant logging
-
         if (empty($directories)) {
                             // Removed redundant logging
-            return ['results' => [], 'sources' => []];
+            return [
+                'results' => [],
+                'sources' => [],
+            ];
         }
 
         // Get our own directory URL to exclude from search
@@ -730,25 +746,28 @@ class DirectoryService
         );
 
                     // Removed redundant logging
-
         // Prepare Guzzle client
-		$defaultGuzzleConfig = [
-			RequestOptions::TIMEOUT => 5,
-			RequestOptions::CONNECT_TIMEOUT => 2,
-			RequestOptions::HEADERS => [
-				'Accept' => 'application/json',
-				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
-			],
-		RequestOptions::HTTP_ERRORS => false
-		];
+        $defaultGuzzleConfig = [
+            RequestOptions::TIMEOUT         => 5,
+            RequestOptions::CONNECT_TIMEOUT => 2,
+            RequestOptions::HEADERS         => [
+                'Accept'     => 'application/json',
+                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
+            ],
+            RequestOptions::HTTP_ERRORS     => false,
+        ];
 
-		$finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-        $queryParams = $finalGuzzleConfig['query_params'] ?? [];
-        $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
-        $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
-
-        $client = new Client($finalGuzzleConfig);
-            $promises = [];
+        $finalGuzzleConfig         = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams               = ($finalGuzzleConfig['query_params'] ?? []);
+        $queryParams['_aggregate'] = 'false';
+// Prevent circular aggregation
+        $queryParams['_extend'] = [
+            '@self.schema',
+            '@self.register',
+        ];
+// Add self-extension
+        $client            = new Client($finalGuzzleConfig);
+            $promises      = [];
         $urlToDirectoryMap = [];
 
         // Create promises for each directory
@@ -768,90 +787,92 @@ class DirectoryService
             $publicationsUrl = $directoryUrl;
 
             if (!empty($queryParams)) {
-                $publicationsUrl .= '?' . http_build_query($queryParams);
+                $publicationsUrl .= '?'.http_build_query($queryParams);
             }
 
                             // Removed redundant logging
-
             // Store mapping for later source tracking
             $urlToDirectoryMap[count($promises)] = [
-                'url' => $publicationsUrl,
+                'url'          => $publicationsUrl,
                 'directoryUrl' => $directoryUrl,
-                'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
+                'name'         => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl,
             ];
 
-            $promises[] = new Promise(function ($resolve) use ($client, $publicationsUrl, $directoryUrl) {
-                try {
-                    $response = $client->get($publicationsUrl);
-                    $statusCode = $response->getStatusCode();
+            $promises[] = new Promise(
+                function ($resolve) use ($client, $publicationsUrl, $directoryUrl) {
+                    try {
+                        $response   = $client->get($publicationsUrl);
+                        $statusCode = $response->getStatusCode();
 
                         if ($statusCode >= 200 && $statusCode < 300) {
                             $body = $response->getBody()->getContents();
                             $data = json_decode($body, true);
 
-                        if (json_last_error() === JSON_ERROR_NONE) {
-                            // Handle different response formats
-                            if (isset($data['results']) && is_array($data['results'])) {
-                                $resultCount = count($data['results']);
-                                // Removed redundant logging
-                                $resolve([
-                                    'success' => true,
-                                    'results' => $data['results'],
-                                    'facets' => $data['facets'] ?? [],
-									'total'  => $data['total'],
-                                ]);
-                            } elseif (is_array($data)) {
-                                $resultCount = count($data);
-                                // Removed redundant logging
-                                $resolve([
-                                    'success' => true,
-                                    'results' => $data,
-                                    'facets' => [],
-									'total'  => $data['total'],
-                                ]);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                // Handle different response formats
+                                if (isset($data['results']) && is_array($data['results'])) {
+                                    $resultCount = count($data['results']);
+                                    // Removed redundant logging
+                                    $resolve(
+                                        [
+                                            'success' => true,
+                                            'results' => $data['results'],
+                                            'facets'  => $data['facets'] ?? [],
+                                            'total'   => $data['total'],
+                                        ]
+                                    );
+                                } else if (is_array($data)) {
+                                    $resultCount = count($data);
+                                    // Removed redundant logging
+                                    $resolve(
+                                        [
+                                            'success' => true,
+                                            'results' => $data,
+                                            'facets'  => [],
+                                            'total'   => $data['total'],
+                                        ]
+                                    );
+                                } else {
+                                    // Removed redundant logging
+                                    $resolve(['success' => false, 'results' => [], 'facets' => []]);
+                                }//end if
                             } else {
                                 // Removed redundant logging
-                                $resolve(['success' => false, 'results' => [], 'facets' => []]);
-                            }
+                                $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
+                            }//end if
                         } else {
-                            // Removed redundant logging
-                            $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
-                        }
-                    } else {
+                                            // Removed redundant logging
+                                            $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
+                        }//end if
+                    } catch (\Exception $e) {
                         // Removed redundant logging
                         $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
-                    }
-                    } catch (\Exception $e) {
-                    // Removed redundant logging
-                    $resolve(['success' => false, 'results' => [], 'facets' => [], 'total' => 0]);
-                    }
-                });
-            }
+                    }//end try
+                }
+            );
+        }//end foreach
 
         // Removed redundant logging
-
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
 
         // Removed redundant logging
-
         // Flatten and deduplicate results, track sources, aggregate facets
         $combinedResults = [];
-        $seenIds = [];
-        $sources = [];
-        $combinedFacets = [];
-		$combinedTotal = 0;
+        $seenIds         = [];
+        $sources         = [];
+        $combinedFacets  = [];
+        $combinedTotal   = 0;
 
         foreach ($allResults as $index => $result) {
             $directoryInfo = $urlToDirectoryMap[$index];
 
             if ($result['success'] && !empty($result['results'])) {
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
-                $combinedTotal += $result['total'];
+                $combinedTotal                  += $result['total'];
                 // Removed redundant logging
-
                 foreach ($result['results'] as $item) {
-                    $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
+                    $itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
                     if (!isset($seenIds[$itemId])) {
                         // Add directory information to federated publications for faceting
                         if (isset($item['@self']) && is_array($item['@self'])) {
@@ -861,7 +882,7 @@ class DirectoryService
                         }
 
                         $combinedResults[] = $item;
-                        $seenIds[$itemId] = true;
+                        $seenIds[$itemId]  = true;
                     } else {
                         // Removed redundant logging
                     }
@@ -873,18 +894,19 @@ class DirectoryService
                 }
             } else {
                                     // Removed redundant logging
-            }
-        }
+            }//end if
+        }//end foreach
 
         // Removed redundant logging
-
         return [
             'results' => $combinedResults,
             'sources' => $sources,
-            'facets' => $combinedFacets,
-			'total'  => $combinedTotal,
+            'facets'  => $combinedFacets,
+            'total'   => $combinedTotal,
         ];
-    }
+
+    }//end getPublications()
+
 
     /**
      * Update listing status after publication endpoint call
@@ -892,12 +914,12 @@ class DirectoryService
      * Updates the listing with the latest status code and availability based on
      * the result of calling its publication endpoint.
      *
-     * @param object $objectService The OpenRegister ObjectService instance
-     * @param string $listingRegister The listing register ID
-     * @param string $listingSchema The listing schema ID
-     * @param string $listingId The listing ID to update
-     * @param int $statusCode The HTTP status code from the endpoint call
-     * @param bool $success Whether the call was successful
+     * @param object  $objectService   The OpenRegister ObjectService instance
+     * @param string  $listingRegister The listing register ID
+     * @param string  $listingSchema   The listing schema ID
+     * @param string  $listingId       The listing ID to update
+     * @param integer $statusCode      The HTTP status code from the endpoint call
+     * @param boolean $success         Whether the call was successful
      *
      * @return void
      */
@@ -905,22 +927,24 @@ class DirectoryService
     {
         try {
             // Get the existing listing
-            $existingListings = $objectService->searchObjects([
-                '@self' => [
-                    'register' => $listingRegister,
-                    'schema' => $listingSchema,
-                ],
-                'id' => $listingId,
-            ]);
+            $existingListings = $objectService->searchObjects(
+                [
+                    '@self' => [
+                        'register' => $listingRegister,
+                        'schema'   => $listingSchema,
+                    ],
+                    'id'    => $listingId,
+                ]
+            );
 
             if (!empty($existingListings)) {
-                $existingListing = $existingListings[0];
+                $existingListing     = $existingListings[0];
                 $existingListingData = $existingListing->jsonSerialize();
-                $listingObject = $existingListingData['object'] ?? [];
+                $listingObject       = ($existingListingData['object'] ?? []);
 
                 // Update status information
                 $listingObject['statusCode'] = $statusCode;
-                $listingObject['lastSync'] = (new \DateTime())->format('c');
+                $listingObject['lastSync']   = (new \DateTime())->format('c');
 
                 // Save the updated listing
                 $objectService->saveObject(
@@ -929,13 +953,13 @@ class DirectoryService
                     schema: $listingSchema,
                     uuid: $existingListingData['id']
                 );
-
-
             }
         } catch (\Exception $e) {
             // Removed redundant logging
-        }
-    }
+        }//end try
+
+    }//end updateListingStatus()
+
 
     /**
      * Detect or generate publication endpoint for a listing
@@ -976,30 +1000,36 @@ class DirectoryService
                 $urlParts = parse_url($listingData['search']);
                 if ($urlParts && isset($urlParts['path'])) {
                     $pathSegments = explode('/', trim($urlParts['path'], '/'));
-                    $pathSegments = array_map(function($segment) {
-                        return $segment === 'search' ? 'publications' : $segment;
-                    }, $pathSegments);
+                    $pathSegments = array_map(
+                        function ($segment) {
+                            return $segment === 'search' ? 'publications' : $segment;
+                        },
+                        $pathSegments
+                    );
 
-                    $newPath = '/' . implode('/', $pathSegments);
-                    $publicationEndpoint = $urlParts['scheme'] . '://' . $urlParts['host'];
+                    $newPath             = '/'.implode('/', $pathSegments);
+                    $publicationEndpoint = $urlParts['scheme'].'://'.$urlParts['host'];
                     if (isset($urlParts['port'])) {
-                        $publicationEndpoint .= ':' . $urlParts['port'];
+                        $publicationEndpoint .= ':'.$urlParts['port'];
                     }
+
                     $publicationEndpoint .= $newPath;
                     if (isset($urlParts['query'])) {
-                        $publicationEndpoint .= '?' . $urlParts['query'];
+                        $publicationEndpoint .= '?'.$urlParts['query'];
                     }
                 }
-            }
+            }//end if
 
             // Only return if we actually made a change
             if ($publicationEndpoint !== $listingData['search']) {
                 return $publicationEndpoint;
             }
-        }
+        }//end if
 
         return null;
-    }
+
+    }//end detectPublicationEndpoint()
+
 
     /**
      * Check if incoming listing data is outdated compared to existing data
@@ -1010,13 +1040,13 @@ class DirectoryService
      * @param array $incomingData The incoming listing data from directory
      * @param array $existingData The existing listing data from database
      *
-     * @return bool True if incoming data is outdated and should be skipped
+     * @return boolean True if incoming data is outdated and should be skipped
      */
     private function isListingDataOutdated(array $incomingData, array $existingData): bool
     {
         try {
             // Get existing object data
-            $existingObject = $existingData['object'] ?? [];
+            $existingObject = ($existingData['object'] ?? []);
 
             // Get the last sync time from existing data
             $existingLastSync = $existingObject['lastSync'] ?? null;
@@ -1039,14 +1069,14 @@ class DirectoryService
             $isOutdated = $incomingUpdated < $existingUpdated;
 
             // Incoming data is outdated, skip silently
-
             return $isOutdated;
-
         } catch (\Exception $e) {
             // Removed redundant logging
             return false;
-        }
-    }
+        }//end try
+
+    }//end isListingDataOutdated()
+
 
     /**
      * Extract timestamp from listing data for comparison
@@ -1062,11 +1092,16 @@ class DirectoryService
     {
         // Priority order for timestamp fields
         $timestampFields = [
-            'updated',           // Standard updated field
-            '@self.updated',     // Metadata updated field
-            'created',           // Creation timestamp
-            '@self.created',     // Metadata creation timestamp
-            'lastSync'           // Last sync timestamp
+            'updated',
+// Standard updated field
+            '@self.updated',
+// Metadata updated field
+            'created',
+// Creation timestamp
+            '@self.created',
+// Metadata creation timestamp
+            'lastSync',
+// Last sync timestamp
         ];
 
         foreach ($timestampFields as $field) {
@@ -1093,10 +1128,10 @@ class DirectoryService
                     // Handle different timestamp formats
                     if (is_string($value)) {
                         return new \DateTime($value);
-                    } elseif (is_array($value) && isset($value['date'])) {
+                    } else if (is_array($value) && isset($value['date'])) {
                         // Handle DateTime object serialized as array
                         return new \DateTime($value['date']);
-                    } elseif ($value instanceof \DateTime) {
+                    } else if ($value instanceof \DateTime) {
                         return $value;
                     }
                 } catch (\Exception $e) {
@@ -1104,10 +1139,12 @@ class DirectoryService
                     continue;
                 }
             }
-        }
+        }//end foreach
 
         return null;
-    }
+
+    }//end extractTimestamp()
+
 
     /**
      * Update directory status on error
@@ -1115,8 +1152,8 @@ class DirectoryService
      * Updates existing listings from a directory with error status when
      * the directory sync fails at the HTTP level.
      *
-     * @param string $directoryUrl The directory URL that failed
-     * @param int $statusCode The HTTP status code of the error
+     * @param string  $directoryUrl The directory URL that failed
+     * @param integer $statusCode   The HTTP status code of the error
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -1126,37 +1163,41 @@ class DirectoryService
         try {
             // Check if OpenRegister service is available
             if (!in_array('openregister', $this->appManager->getInstalledApps())) {
-                return; // Can't update if OpenRegister is not available
+                return;
+// Can't update if OpenRegister is not available
             }
 
             // Get ObjectService from container
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
             // Get listing configuration
-            $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+            $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
             $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 
             if (empty($listingSchema) || empty($listingRegister)) {
-                return; // Can't update without schema/register configuration
+                return;
+// Can't update without schema/register configuration
             }
 
             // Find all listings from this directory
-            $existingListings = $objectService->searchObjects([
-                '@self' => [
-                    'register' => $listingRegister,
-                    'schema' => $listingSchema,
-                ],
-                'directory' => $directoryUrl,
-            ]);
+            $existingListings = $objectService->searchObjects(
+                [
+                    '@self'     => [
+                        'register' => $listingRegister,
+                        'schema'   => $listingSchema,
+                    ],
+                    'directory' => $directoryUrl,
+                ]
+            );
 
             // Update each listing with error status
             foreach ($existingListings as $listing) {
                 $listingData = $listing->jsonSerialize();
-                $errorData = $listingData['object'] ?? [];
+                $errorData   = ($listingData['object'] ?? []);
 
                 // Update with error status
                 $errorData['statusCode'] = $statusCode;
-                $errorData['lastSync'] = (new \DateTime())->format('c');
+                $errorData['lastSync']   = (new \DateTime())->format('c');
 
                 $objectService->saveObject(
                     object: $errorData,
@@ -1165,11 +1206,12 @@ class DirectoryService
                     uuid: $listingData['id']
                 );
             }
-
         } catch (\Exception $e) {
             // Removed redundant logging
-        }
-    }
+        }//end try
+
+    }//end updateDirectoryStatusOnError()
+
 
     /**
      * Check if the current request is from a system broadcast
@@ -1177,7 +1219,7 @@ class DirectoryService
      * Determines if the current HTTP request is from another OpenCatalogi instance
      * sending a broadcast notification, to prevent infinite broadcast loops.
      *
-     * @return bool True if request is from a system broadcast, false otherwise
+     * @return boolean True if request is from a system broadcast, false otherwise
      */
     private function isSystemBroadcast(): bool
     {
@@ -1185,7 +1227,9 @@ class DirectoryService
 
         // Check if User-Agent contains 'OpenCatalogi-Broadcast' (future-proof for version changes)
         return !empty($userAgent) && str_contains($userAgent, 'OpenCatalogi-Broadcast');
-    }
+
+    }//end isSystemBroadcast()
+
 
     /**
      * Check if a URL is considered local
@@ -1195,14 +1239,15 @@ class DirectoryService
      *
      * @param string $url The URL to check
      *
-     * @return bool True if the URL is local, false otherwise
+     * @return boolean True if the URL is local, false otherwise
      */
     private function isLocalUrl(string $url): bool
     {
         $parsedUrl = parse_url($url);
 
         if (!$parsedUrl || !isset($parsedUrl['host'])) {
-            return true; // Invalid URL is considered local
+            return true;
+// Invalid URL is considered local
         }
 
         $host = strtolower($parsedUrl['host']);
@@ -1212,7 +1257,7 @@ class DirectoryService
             'localhost',
             '127.0.0.1',
             '::1',
-            '0.0.0.0'
+            '0.0.0.0',
         ];
 
         // Check exact matches
@@ -1222,7 +1267,7 @@ class DirectoryService
 
         // Check for private IP ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-            if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            if (filter_var($host, FILTER_VALIDATE_IP, (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) === false) {
                 return true;
             }
         }
@@ -1233,7 +1278,9 @@ class DirectoryService
         }
 
         return false;
-    }
+
+    }//end isLocalUrl()
+
 
     /**
      * Get objects from other catalogs that use/reference our local object
@@ -1241,8 +1288,8 @@ class DirectoryService
      * Calls the /publications/{uuid}/used endpoint on all available federated
      * catalogs to find objects that reference or use the specified local object UUID.
      *
-     * @param string $uuid The UUID of the local object to find uses for
-     * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+     * @param string $uuid         The UUID of the local object to find uses for
+     * @param array  $guzzleConfig Optional Guzzle configuration for HTTP requests
      *
      * @return array Array with 'results' and 'sources' keys
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -1254,7 +1301,10 @@ class DirectoryService
         $directories = $this->getUniqueDirectories(availableOnly: true);
 
         if (empty($directories)) {
-            return ['results' => [], 'sources' => []];
+            return [
+                'results' => [],
+                'sources' => [],
+            ];
         }
 
         // Get our own directory URL to exclude from search
@@ -1264,22 +1314,26 @@ class DirectoryService
 
         // Prepare Guzzle client
         $defaultGuzzleConfig = [
-            RequestOptions::TIMEOUT => 5,
+            RequestOptions::TIMEOUT         => 5,
             RequestOptions::CONNECT_TIMEOUT => 2,
-            RequestOptions::HEADERS => [
-                'Accept' => 'application/json',
-                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+            RequestOptions::HEADERS         => [
+                'Accept'     => 'application/json',
+                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
             ],
-            RequestOptions::HTTP_ERRORS => false
+            RequestOptions::HTTP_ERRORS     => false,
         ];
 
-        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-        $queryParams = $finalGuzzleConfig['query_params'] ?? [];
-        $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
-        $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
-
-        $client = new Client($finalGuzzleConfig);
-        $promises = [];
+        $finalGuzzleConfig         = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams               = ($finalGuzzleConfig['query_params'] ?? []);
+        $queryParams['_aggregate'] = 'false';
+// Prevent circular aggregation
+        $queryParams['_extend'] = [
+            '@self.schema',
+            '@self.register',
+        ];
+// Add self-extension
+        $client            = new Client($finalGuzzleConfig);
+        $promises          = [];
         $urlToDirectoryMap = [];
 
         // Create promises for each directory
@@ -1292,54 +1346,56 @@ class DirectoryService
             // Build the /used endpoint URL
             // Convert directory URL to publications URL by replacing /api/directory with /api/publications
             $baseUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
-            $usedUrl = $baseUrl . '/' . urlencode($uuid) . '/used';
+            $usedUrl = $baseUrl.'/'.urlencode($uuid).'/used';
 
             if (!empty($queryParams)) {
-                $usedUrl .= '?' . http_build_query($queryParams);
+                $usedUrl .= '?'.http_build_query($queryParams);
             }
 
             // Store mapping for later source tracking
             $urlToDirectoryMap[count($promises)] = [
-                'url' => $usedUrl,
+                'url'          => $usedUrl,
                 'directoryUrl' => $directoryUrl,
-                'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
+                'name'         => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl,
             ];
 
-            $promises[] = new Promise(function ($resolve) use ($client, $usedUrl) {
-                try {
-                    $response = $client->get($usedUrl);
+            $promises[] = new Promise(
+                function ($resolve) use ($client, $usedUrl) {
+                    try {
+                        $response = $client->get($usedUrl);
 
-                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-                        $data = json_decode($response->getBody()->getContents(), true);
+                        if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                            $data = json_decode($response->getBody()->getContents(), true);
 
-                        if (json_last_error() === JSON_ERROR_NONE) {
-                            // Handle different response formats
-                            if (isset($data['results']) && is_array($data['results'])) {
-                                $resolve(['success' => true, 'results' => $data['results']]);
-                            } elseif (is_array($data)) {
-                                $resolve(['success' => true, 'results' => $data]);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                // Handle different response formats
+                                if (isset($data['results']) && is_array($data['results'])) {
+                                    $resolve(['success' => true, 'results' => $data['results']]);
+                                } else if (is_array($data)) {
+                                    $resolve(['success' => true, 'results' => $data]);
+                                } else {
+                                    $resolve(['success' => false, 'results' => []]);
+                                }
                             } else {
                                 $resolve(['success' => false, 'results' => []]);
                             }
                         } else {
                             $resolve(['success' => false, 'results' => []]);
                         }
-                    } else {
+                    } catch (\Exception $e) {
                         $resolve(['success' => false, 'results' => []]);
-                    }
-                } catch (\Exception $e) {
-                    $resolve(['success' => false, 'results' => []]);
+                    }//end try
                 }
-            });
-        }
+            );
+        }//end foreach
 
         // Execute all promises and collect results
         $allResults = \React\Async\await(\React\Promise\all($promises));
 
         // Flatten and deduplicate results, track sources
         $combinedResults = [];
-        $seenIds = [];
-        $sources = [];
+        $seenIds         = [];
+        $sources         = [];
 
         foreach ($allResults as $index => $result) {
             $directoryInfo = $urlToDirectoryMap[$index];
@@ -1348,10 +1404,10 @@ class DirectoryService
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
 
                 foreach ($result['results'] as $item) {
-                    $itemId = $item['id'] ?? $item['uuid'] ?? uniqid();
+                    $itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
                     if (!isset($seenIds[$itemId])) {
                         $combinedResults[] = $item;
-                        $seenIds[$itemId] = true;
+                        $seenIds[$itemId]  = true;
                     }
                 }
             }
@@ -1359,9 +1415,11 @@ class DirectoryService
 
         return [
             'results' => $combinedResults,
-            'sources' => $sources
+            'sources' => $sources,
         ];
-    }
+
+    }//end getUsed()
+
 
     /**
      * Get a single publication from federated catalogs by ID
@@ -1370,7 +1428,7 @@ class DirectoryService
      * publication by its ID. Returns the first match found with source information.
      *
      * @param string $publicationId The ID of the publication to find
-     * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+     * @param array  $guzzleConfig  Optional Guzzle configuration for HTTP requests
      *
      * @return array|null Array containing publication data and source, or null if not found
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -1392,22 +1450,26 @@ class DirectoryService
 
         // Prepare Guzzle client
         $defaultGuzzleConfig = [
-            RequestOptions::TIMEOUT => 5,
+            RequestOptions::TIMEOUT         => 5,
             RequestOptions::CONNECT_TIMEOUT => 2,
-            RequestOptions::HEADERS => [
-                'Accept' => 'application/json',
-                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0'
+            RequestOptions::HEADERS         => [
+                'Accept'     => 'application/json',
+                'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
             ],
-            RequestOptions::HTTP_ERRORS => false
+            RequestOptions::HTTP_ERRORS     => false,
         ];
 
-        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
-        $queryParams = $finalGuzzleConfig['query_params'] ?? [];
-        $queryParams['_aggregate'] = 'false'; // Prevent circular aggregation
-        $queryParams['_extend'] = ['@self.schema', '@self.register']; // Add self-extension
-
-        $client = new Client($finalGuzzleConfig);
-        $promises = [];
+        $finalGuzzleConfig         = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams               = ($finalGuzzleConfig['query_params'] ?? []);
+        $queryParams['_aggregate'] = 'false';
+// Prevent circular aggregation
+        $queryParams['_extend'] = [
+            '@self.schema',
+            '@self.register',
+        ];
+// Add self-extension
+        $client            = new Client($finalGuzzleConfig);
+        $promises          = [];
         $urlToDirectoryMap = [];
 
         // Create promises for each directory
@@ -1419,58 +1481,62 @@ class DirectoryService
 
             // Build the publication endpoint URL
             // Convert directory URL to publications URL by replacing /api/directory with /api/publications
-            $baseUrl = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
-            $publicationUrl = $baseUrl . '/' . urlencode($publicationId);
+            $baseUrl        = str_replace('/api/directory', '/api/publications', rtrim($directoryUrl, '/'));
+            $publicationUrl = $baseUrl.'/'.urlencode($publicationId);
 
             if (!empty($queryParams)) {
-                $publicationUrl .= '?' . http_build_query($queryParams);
+                $publicationUrl .= '?'.http_build_query($queryParams);
             }
 
             // Store mapping for later source tracking
             $urlToDirectoryMap[count($promises)] = [
-                'url' => $publicationUrl,
+                'url'          => $publicationUrl,
                 'directoryUrl' => $directoryUrl,
-                'name' => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl
+                'name'         => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl,
             ];
 
-            $promises[] = new Promise(function ($resolve) use ($client, $publicationUrl) {
-                try {
-                    $response = $client->get($publicationUrl);
+            $promises[] = new Promise(
+                function ($resolve) use ($client, $publicationUrl) {
+                    try {
+                        $response = $client->get($publicationUrl);
 
-                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-                        $data = json_decode($response->getBody()->getContents(), true);
+                        if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                            $data = json_decode($response->getBody()->getContents(), true);
 
-                        if (json_last_error() === JSON_ERROR_NONE && !empty($data)) {
-                            $resolve(['success' => true, 'data' => $data]);
-                            return;
+                            if (json_last_error() === JSON_ERROR_NONE && !empty($data)) {
+                                $resolve(['success' => true, 'data' => $data]);
+                                return;
+                            }
                         }
-                    }
 
-                    $resolve(['success' => false, 'data' => null]);
-                } catch (\Exception $e) {
-                    $resolve(['success' => false, 'data' => null]);
+                        $resolve(['success' => false, 'data' => null]);
+                    } catch (\Exception $e) {
+                        $resolve(['success' => false, 'data' => null]);
+                    }
                 }
-            });
-        }
+            );
+        }//end foreach
 
         // Execute all promises and return first successful result with source
         $allResults = \React\Async\await(\React\Promise\all($promises));
 
                  // Return the first successful result with source information
-         foreach ($allResults as $index => $result) {
-             if ($result['success'] && $result['data'] !== null) {
-                 $directoryInfo = $urlToDirectoryMap[$index];
-                 return [
-                     'result' => $result['data'],
-                     'source' => [
-                         $directoryInfo['name'] => $directoryInfo['url']
-                     ]
-                 ];
-             }
-         }
+        foreach ($allResults as $index => $result) {
+            if ($result['success'] && $result['data'] !== null) {
+                $directoryInfo = $urlToDirectoryMap[$index];
+                return [
+                    'result' => $result['data'],
+                    'source' => [
+                        $directoryInfo['name'] => $directoryInfo['url'],
+                    ],
+                ];
+            }
+        }
 
          return null;
-    }
+
+    }//end getPublication()
+
 
     /**
      * Get directory entries (listings and catalogs formatted as listings)
@@ -1478,7 +1544,7 @@ class DirectoryService
      * Retrieves both discovered listings and local catalogs, formatting catalogs
      * as listing objects according to the publication register schema.
      *
-     * @param array $requestParams Request parameters for filtering, pagination, etc.
+     * @param  array $requestParams Request parameters for filtering, pagination, etc.
      * @return array<string, mixed> Array containing results and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
@@ -1494,18 +1560,16 @@ class DirectoryService
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
         // Get configuration
-        $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+        $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
         $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-        $catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
+        $catalogSchema   = $this->config->getValueString($this->appName, 'catalog_schema', 'catalog');
         $catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-
 
         $allResults = [];
 
         // Build base config for filters and pagination
         $baseConfig = [
-            'filters' => []
+            'filters' => [],
         ];
 
         // Add any additional filters from request params
@@ -1517,6 +1581,7 @@ class DirectoryService
         if (isset($requestParams['limit'])) {
             $baseConfig['limit'] = (int) $requestParams['limit'];
         }
+
         if (isset($requestParams['offset'])) {
             $baseConfig['offset'] = (int) $requestParams['offset'];
         }
@@ -1525,11 +1590,11 @@ class DirectoryService
         if (!empty($listingSchema) && !empty($listingRegister)) {
             $query = [
                 '@self' => [
-                    'schema' => $listingSchema,
+                    'schema'   => $listingSchema,
                     'register' => $listingRegister,
                 ],
             ];
-            
+
             // Add filters from base config
             if (!empty($baseConfig['filters'])) {
                 foreach ($baseConfig['filters'] as $key => $value) {
@@ -1538,11 +1603,12 @@ class DirectoryService
                     }
                 }
             }
-            
+
             // Add pagination parameters
             if (isset($baseConfig['limit'])) {
                 $query['_limit'] = $baseConfig['limit'];
             }
+
             if (isset($baseConfig['offset'])) {
                 $query['_offset'] = $baseConfig['offset'];
             }
@@ -1552,26 +1618,29 @@ class DirectoryService
 
                 // Convert listing objects to arrays and filter out internal properties
                 // Note: Don't expand schemas for listings as they already come with expanded schemas from external directories
-                $listings = array_map(function ($object) {
-                    $listingData = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-                    return $this->filterListingProperties($listingData);
-                }, $listingResult);
+                $listings = array_map(
+                    function ($object) {
+                        $listingData = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+                        return $this->filterListingProperties($listingData);
+                    },
+                    $listingResult
+                );
 
                 $allResults = array_merge($allResults, $listings);
             } catch (\Exception $e) {
                 // Removed redundant logging
             }
-        }
+        }//end if
 
         // Fetch local catalogs and convert them to listing format
         if (!empty($catalogSchema) && !empty($catalogRegister)) {
             $query = [
                 '@self' => [
-                    'schema' => $catalogSchema,
+                    'schema'   => $catalogSchema,
                     'register' => $catalogRegister,
                 ],
             ];
-            
+
             // Add filters from base config
             if (!empty($baseConfig['filters'])) {
                 foreach ($baseConfig['filters'] as $key => $value) {
@@ -1580,11 +1649,12 @@ class DirectoryService
                     }
                 }
             }
-            
+
             // Add pagination parameters
             if (isset($baseConfig['limit'])) {
                 $query['_limit'] = $baseConfig['limit'];
             }
+
             if (isset($baseConfig['offset'])) {
                 $query['_offset'] = $baseConfig['offset'];
             }
@@ -1593,27 +1663,30 @@ class DirectoryService
                 $catalogResult = $objectService->searchObjects($query);
 
                 // Convert catalog objects to listing format and expand schemas
-                $catalogsAsListings = array_map(function ($catalogObject) {
-                    $listing = $this->convertCatalogToListing($catalogObject);
-                    return $this->processSchemaExpansion($listing);
-                }, $catalogResult);
+                $catalogsAsListings = array_map(
+                    function ($catalogObject) {
+                        $listing = $this->convertCatalogToListing($catalogObject);
+                        return $this->processSchemaExpansion($listing);
+                    },
+                    $catalogResult
+                );
 
                 $allResults = array_merge($allResults, $catalogsAsListings);
             } catch (\Exception $e) {
                 // Removed redundant logging
             }
-        }
+        }//end if
 
         // Calculate total
         $total = count($allResults);
 
-
-
         return [
             'results' => $allResults,
-            'total' => $total
+            'total'   => $total,
         ];
-    }
+
+    }//end getDirectory()
+
 
     /**
      * Convert a catalog object to listing format
@@ -1621,17 +1694,15 @@ class DirectoryService
      * Transforms a catalog object into a listing object format according to the
      * publication register schema, ensuring all required fields are present.
      *
-     * @param mixed $catalogObject The catalog object to convert
+     * @param  mixed $catalogObject The catalog object to convert
      * @return array The catalog formatted as a listing object
      */
     private function convertCatalogToListing($catalogObject): array
     {
         // Extract catalog data
-        $catalogData = $catalogObject instanceof \OCP\AppFramework\Db\Entity
-            ? $catalogObject->jsonSerialize()
-            : $catalogObject;
+        $catalogData = $catalogObject instanceof \OCP\AppFramework\Db\Entity ? $catalogObject->jsonSerialize() : $catalogObject;
 
-        $catalog = $catalogData['object'] ?? $catalogData;
+        $catalog = ($catalogData['object'] ?? $catalogData);
 
         // Get our directory URL for the listing
         $directoryUrl = $this->urlGenerator->getAbsoluteURL(
@@ -1639,7 +1710,7 @@ class DirectoryService
         );
 
         // Get our search and publications URLs
-        $searchUrl = $this->urlGenerator->getAbsoluteURL(
+        $searchUrl       = $this->urlGenerator->getAbsoluteURL(
             $this->urlGenerator->linkToRoute('opencatalogi.search.index')
         );
         $publicationsUrl = $this->urlGenerator->getAbsoluteURL(
@@ -1649,26 +1720,28 @@ class DirectoryService
         // Create listing object from catalog - only core API fields
         $listing = [
             // Required fields for listing
-            'id' => $catalog['id'] ?? $catalogData['id'] ?? '',
-            'catalog' => $catalog['id'] ?? $catalogData['id'] ?? '',
-            'title' => $catalog['title'] ?? 'Unknown Catalog',
-            'summary' => $catalog['summary'] ?? $catalog['description'] ?? 'Local catalog',
-            'status' => $catalog['status'] ?? 'development',
+            'id'           => ($catalog['id'] ?? $catalogData['id'] ?? ''),
+            'catalog'      => ($catalog['id'] ?? $catalogData['id'] ?? ''),
+            'title'        => ($catalog['title'] ?? 'Unknown Catalog'),
+            'summary'      => ($catalog['summary'] ?? $catalog['description'] ?? 'Local catalog'),
+            'status'       => ($catalog['status'] ?? 'development'),
 
             // Optional fields from catalog
-            'description' => $catalog['description'] ?? null,
+            'description'  => $catalog['description'] ?? null,
             'organization' => $catalog['organization'] ?? null,
-            'schemas' => $catalog['schemas'] ?? [],
+            'schemas'      => ($catalog['schemas'] ?? []),
 
             // Directory-specific fields
-            'directory' => $directoryUrl,
-            'search' => $searchUrl,
+            'directory'    => $directoryUrl,
+            'search'       => $searchUrl,
             'publications' => $publicationsUrl,
-            'version' => $this->appManager->getAppInfo('opencatalogi')['version']
+            'version'      => $this->appManager->getAppInfo('opencatalogi')['version'],
         ];
 
         return $listing;
-    }
+
+    }//end convertCatalogToListing()
+
 
     /**
      * Filter listing object to remove properties not meant for external API
@@ -1676,13 +1749,13 @@ class DirectoryService
      * Removes internal properties and unwanted properties that shouldn't be exposed
      * in the public API, keeping only the core listing properties.
      *
-     * @param array $listing The listing object to filter
+     * @param  array $listing The listing object to filter
      * @return array The filtered listing object with only public properties
      */
     private function filterListingProperties(array $listing): array
     {
         // Extract the actual object data
-        $objectData = $listing['object'] ?? $listing;
+        $objectData = ($listing['object'] ?? $listing);
 
         // List of properties to remove for external API
         $propertiesToRemove = [
@@ -1696,7 +1769,7 @@ class DirectoryService
             'metadata',
             'image',
             'listed',
-            'filters'
+            'filters',
         ];
 
         // Remove unwanted properties
@@ -1712,7 +1785,9 @@ class DirectoryService
 
         // Otherwise return the cleaned object directly
         return $objectData;
-    }
+
+    }//end filterListingProperties()
+
 
     /**
      * Convert catalogi to listings format
@@ -1720,16 +1795,21 @@ class DirectoryService
      * Public method to convert catalog objects to listing format for external use.
      * This is the main function for translating catalogi to listings.
      *
-     * @param array $catalogs Array of catalog objects to convert
+     * @param  array $catalogs Array of catalog objects to convert
      * @return array Array of catalogs converted to listing format with expanded schemas
      */
     public function convertCatalogiToListings(array $catalogs): array
     {
-        return array_map(function ($catalogObject) {
-            $listing = $this->convertCatalogToListing($catalogObject);
-            return $this->processSchemaExpansion($listing);
-        }, $catalogs);
-    }
+        return array_map(
+            function ($catalogObject) {
+                $listing = $this->convertCatalogToListing($catalogObject);
+                return $this->processSchemaExpansion($listing);
+            },
+            $catalogs
+        );
+
+    }//end convertCatalogiToListings()
+
 
     /**
      * Expand schema IDs to full schema objects
@@ -1737,7 +1817,7 @@ class DirectoryService
      * Takes an array of schema IDs and returns the corresponding full schema objects
      * using the OpenRegister SchemaMapper.
      *
-     * @param array $schemaIds Array of schema IDs to expand
+     * @param  array $schemaIds Array of schema IDs to expand
      * @return array Array of full schema objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
@@ -1749,7 +1829,8 @@ class DirectoryService
 
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
-            return $schemaIds; // Return IDs if OpenRegister is not available
+            return $schemaIds;
+// Return IDs if OpenRegister is not available
         }
 
         try {
@@ -1760,29 +1841,33 @@ class DirectoryService
             $schemas = $schemaMapper->findMultiple($schemaIds);
 
             // Convert schema entities to arrays
-            return array_map(function ($schema) {
-                return $schema instanceof \OCP\AppFramework\Db\Entity ? $schema->jsonSerialize() : $schema;
-            }, $schemas);
-
+            return array_map(
+                function ($schema) {
+                    return $schema instanceof \OCP\AppFramework\Db\Entity ? $schema->jsonSerialize() : $schema;
+                },
+                $schemas
+            );
         } catch (\Exception $e) {
             // Removed redundant logging
             // Return original IDs if expansion fails
             return $schemaIds;
         }
-    }
+
+    }//end expandSchemas()
+
 
     /**
      * Process listing or catalog data to expand schema IDs
      *
      * Takes listing or catalog data and expands any schema IDs to full objects.
      *
-     * @param array $data The listing or catalog data to process
+     * @param  array $data The listing or catalog data to process
      * @return array The processed data with expanded schemas
      */
     private function processSchemaExpansion(array $data): array
     {
         // Extract the actual object data
-        $objectData = $data['object'] ?? $data;
+        $objectData = ($data['object'] ?? $data);
 
         // Expand schemas if they exist and are an array of IDs
         if (isset($objectData['schemas']) && is_array($objectData['schemas'])) {
@@ -1797,7 +1882,9 @@ class DirectoryService
 
         // Otherwise return the processed object directly
         return $objectData;
-    }
+
+    }//end processSchemaExpansion()
+
 
     /**
      * Get the actual publications URL from listing data for a given directory URL
@@ -1806,7 +1893,7 @@ class DirectoryService
      * the publications URL from the listing data. This ensures we use the correct
      * publications endpoint even if it differs from the directory URL pattern.
      *
-     * @param string $directoryUrl The directory URL to look up
+     * @param  string $directoryUrl The directory URL to look up
      * @return string|null The publications URL if found, null otherwise
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
@@ -1822,7 +1909,7 @@ class DirectoryService
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
             // Get listing configuration
-            $listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+            $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
             $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 
             if (empty($listingSchema) || empty($listingRegister)) {
@@ -1830,18 +1917,20 @@ class DirectoryService
             }
 
             // Find listings with this directory URL
-            $listings = $objectService->searchObjects([
-                '@self' => [
-                    'register' => $listingRegister,
-                    'schema' => $listingSchema,
-                ],
-                'directory' => $directoryUrl,
-            ]);
+            $listings = $objectService->searchObjects(
+                [
+                    '@self'     => [
+                        'register' => $listingRegister,
+                        'schema'   => $listingSchema,
+                    ],
+                    'directory' => $directoryUrl,
+                ]
+            );
 
             // Look for the first listing that has a publications URL
             foreach ($listings as $listing) {
                 $listingData = $listing->jsonSerialize();
-                $objectData = $listingData['object'] ?? $listingData;
+                $objectData  = ($listingData['object'] ?? $listingData);
 
                 // Check for publications URL in the object data
                 if (isset($objectData['publications']) && !empty($objectData['publications'])) {
@@ -1852,12 +1941,13 @@ class DirectoryService
 
                             // Removed redundant logging
             return null;
-
         } catch (\Exception $e) {
             // Removed redundant logging
             return null;
-        }
-    }
+        }//end try
+
+    }//end getPublicationsUrlFromListing()
+
 
     /**
      * Aggregate facets from multiple directory sources
@@ -1865,8 +1955,8 @@ class DirectoryService
      * Combines facet data from different publication endpoints,
      * merging counts for the same facet values.
      *
-     * @param array $existingFacets The current aggregated facets
-     * @param array $newFacets The new facets to merge in
+     * @param  array $existingFacets The current aggregated facets
+     * @param  array $newFacets      The new facets to merge in
      * @return array The merged facets
      */
     private function aggregateFacets(array $existingFacets, array $newFacets): array
@@ -1907,6 +1997,7 @@ class DirectoryService
                     // Removed redundant logging
                     continue;
                 }
+
                 $existingValues[$existingFacet['_id']] = $index;
             }
 
@@ -1934,23 +2025,30 @@ class DirectoryService
             // Re-sort merged facets by count (descending) and then by value (ascending)
             // Only sort if we have valid array data
             if (is_array($mergedFacets[$field]) && !empty($mergedFacets[$field])) {
-                usort($mergedFacets[$field], function($a, $b) {
-                    // Ensure both items are arrays with required fields
-                    if (!is_array($a) || !is_array($b) || !isset($a['_id']) || !isset($b['_id'])) {
-                        return 0;
-                    }
+                usort(
+                    $mergedFacets[$field],
+                    function ($a, $b) {
+                        // Ensure both items are arrays with required fields
+                        if (!is_array($a) || !is_array($b) || !isset($a['_id']) || !isset($b['_id'])) {
+                            return 0;
+                        }
 
-                    $countA = $a['count'] ?? 0;
-                    $countB = $b['count'] ?? 0;
+                        $countA = ($a['count'] ?? 0);
+                        $countB = ($b['count'] ?? 0);
 
-                    if ($countA === $countB) {
-                        return strcmp($a['_id'], $b['_id']);
+                        if ($countA === $countB) {
+                            return strcmp($a['_id'], $b['_id']);
+                        }
+
+                        return ($countB <=> $countA);
                     }
-                    return $countB <=> $countA;
-                });
+                );
             }
-        }
+        }//end foreach
 
         return $mergedFacets;
-    }
-}
+
+    }//end aggregateFacets()
+
+
+}//end class

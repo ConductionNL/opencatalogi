@@ -218,6 +218,7 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return new JSONResponse(['error' => $e->getMessage()], 500);
         }
+
     }//end getVersionInfo()
 
 
@@ -231,23 +232,27 @@ class SettingsController extends Controller
     public function manualImport(): JSONResponse
     {
         try {
-            $params = $this->request->getParams();
+            $params      = $this->request->getParams();
             $forceImport = isset($params['force']) && $params['force'] === true;
-            
+
             $result = $this->settingsService->manualImport($forceImport);
-            
+
             if ($result['success']) {
                 return new JSONResponse($result);
             } else {
                 return new JSONResponse($result, 400);
             }
         } catch (\Exception $e) {
-            return new JSONResponse([
-                'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage(),
-                'error' => $e->getMessage()
-            ], 500);
-        }
+            return new JSONResponse(
+                [
+                    'success' => false,
+                    'message' => 'Import failed: '.$e->getMessage(),
+                    'error'   => $e->getMessage(),
+                ],
+                500
+            );
+        }//end try
+
     }//end manualImport()
 
 
