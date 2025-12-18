@@ -196,6 +196,12 @@
                         "minLength": 1,
                         "maxLength": 255,
                         "facetable": false
+                    },
+                    "hasWooSitemap": {
+                        "type": "boolean",
+                        "description": "If this catalog needs Woo specific sitemap or not, meant for Woo catalgos",
+                        "default": false,
+                        "facetable": false
                     }
                 },
                 "configuration": {
