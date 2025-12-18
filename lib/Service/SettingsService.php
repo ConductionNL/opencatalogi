@@ -478,25 +478,63 @@ class SettingsService
     public function loadSettings(bool $force = false): array
     {
         try {
-            // Define the file path relative to Nextcloud root
-            // This enables the cron job to track and auto-update the configuration
-            $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
-
+            // Get the absolute path to the app directory
+            $appPath = $this->appManager->getAppPath(Application::APP_ID);
+            
+            // Build absolute path to the file
+            $absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
+            
+            // Check if file exists
+            if (file_exists($absoluteFilePath) === false) {
+                throw new \RuntimeException("Configuration file not found: {$absoluteFilePath}");
+            }
+            
+            // Read the JSON file content
+            $jsonContent = file_get_contents($absoluteFilePath);
+            if ($jsonContent === false) {
+                throw new \RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
+            }
+            
+            // Parse JSON
+            $data = json_decode($jsonContent, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \RuntimeException("Invalid JSON in configuration file: " . json_last_error_msg());
+            }
+            
+            // Calculate relative path from Nextcloud root for sourceUrl tracking
+            // appPath is something like /var/www/html/apps-extra/opencatalogi
+            // We need to get the part after the Nextcloud root
+            $nextcloudRoot = dirname(dirname(dirname($appPath))); // Go up from apps-extra/opencatalogi to root
+            $relativeFilePath = str_replace($nextcloudRoot . '/', '', $absoluteFilePath);
+            
+            // Fallback: if path calculation fails, use the standard relative path
+            if (str_starts_with($relativeFilePath, 'apps-extra/') === false && str_starts_with($relativeFilePath, 'apps/') === false) {
+                $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
+            }
+            
+            // Set the sourceUrl in the data if not already set
+            // This allows the cron job to track the file location
+            if (isset($data['x-openregister']) === false) {
+                $data['x-openregister'] = [];
+            }
+            if (isset($data['x-openregister']['sourceUrl']) === false) {
+                $data['x-openregister']['sourceUrl'] = $relativeFilePath;
+            }
+            if (isset($data['x-openregister']['sourceType']) === false) {
+                $data['x-openregister']['sourceType'] = 'local';
+            }
+            
             // Get the configuration service
             $configurationService = $this->getConfigurationService();
 
             // Get the current app version dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Use importFromFilePath to let OpenRegister handle file reading and import
-            // This method will:
-            // - Read the JSON file
-            // - Parse and validate the configuration data
-            // - Create or update the Configuration entity
-            // - Store the sourceUrl for cron job tracking
-            return $configurationService->importFromFilePath(
+            // Use importFromApp to import the configuration data directly
+            // This avoids the file path resolution issue in importFromFilePath
+            return $configurationService->importFromApp(
                 appId: Application::APP_ID,
-                filePath: $relativeFilePath,
+                data: $data,
                 version: $currentAppVersion,
                 force: $force
             );
@@ -543,7 +581,7 @@ class SettingsService
             if (is_object($schema) === true && method_exists($schema, 'getSlug') === true) {
                 $schemaMap[$schema->getSlug()] = $schema->getId();
             } else if (is_array($schema) === true && isset($schema['slug']) === true) {
-                $schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? ) null;
+                $schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
             }
         }
 
@@ -558,7 +596,7 @@ class SettingsService
                 }
             } else if (is_array($register) === true && isset($register['slug']) === true) {
                 if ($register['slug'] === 'publication') {
-                    $registerId = ($register['id'] ?? $register['uuid'] ?? ) null;
+                    $registerId = ($register['id'] ?? $register['uuid'] ?? null);
                     break;
                 }
             }
@@ -673,7 +711,7 @@ class SettingsService
             $versionInfo = $this->getVersionInfo();
 
             // Check if import is needed (unless forced)
-            if (!$forceImport && $versionInfo['versionsMatch']) {
+            if ($forceImport === false && $versionInfo['versionsMatch']) {
                 return [
                     'success'     => false,
                     'message'     => 'Configuration is already up to date. Use force import if you want to reimport.',
