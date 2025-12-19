@@ -241,17 +241,17 @@ class DirectoryService
                     $listingTitle = ($objectData['title'] ?? 'unknown');
                     $available    = ($objectData['integrationLevel'] ?? null) === 'search';
                     $default      = $objectData['default'] ?? false;
-                    $directory    = ($objectData['directory'] ?? $listingData['directory'] ?? ) null;
+                    $directory    = ($objectData['directory'] ?? $listingData['directory']) ?? null;
 
                     // Removed redundant logging
                     // Apply post-query filtering for nested object properties
-                    if ($availableOnly && !$available) {
+                    if ($availableOnly && $available === false) {
                         // Removed redundant logging
                         continue;
 // Skip unavailable listings
                     }
 
-                    if ($defaultOnly && !$default) {
+                    if ($defaultOnly && $default === false) {
                         // Removed redundant logging
                         continue;
 // Skip non-default listings
@@ -453,7 +453,7 @@ class DirectoryService
 
                 // Broadcast to the directory if it doesn't have our listings and our URL is not local
                 // Skip broadcasting if this sync was triggered by a system broadcast to prevent infinite loops
-                if (!$hasOurListings && !$this->isLocalUrl($ourDirectoryUrl) && !$this->isSystemBroadcast()) {
+                if ($hasOurListings === false && $this->isLocalUrl($ourDirectoryUrl) === false && $this->isSystemBroadcast() === false) {
                     try {
                         $this->broadcastService->broadcast($directoryUrl);
                     } catch (\Exception $e) {
@@ -517,9 +517,29 @@ class DirectoryService
      */
     public function syncListing(array $listingData, string $sourceDirectoryUrl): array
     {
+        // Extract fields from OpenRegister object structure
+        $listingId = ($listingData['id'] ?? null);
+        $listingTitle = ($listingData['title'] ?? $listingData['@self']['name'] ?? 'Unknown');
+        
+        // Extract catalog ID from relations.catalog or use id as fallback
+        $catalogId = null;
+        if (isset($listingData['catalog']) === true) {
+            // Catalog field at top level
+            $catalogId = $listingData['catalog'];
+        } else if (isset($listingData['@self']['relations']['catalog']) === true) {
+            // Catalog in relations
+            $catalogId = $listingData['@self']['relations']['catalog'];
+        } else if (empty($listingId) === false) {
+            // Fallback: use id as catalog (for listings, catalog ID is often the same as listing ID)
+            $catalogId = $listingId;
+        }
+        
+        // Extract directory from relations if present
+        $listingDirectory = ($listingData['directory'] ?? $listingData['@self']['relations']['directory'] ?? null);
+        
         $result = [
-            'listing_id'    => ($listingData['id'] ?? 'unknown'),
-            'listing_title' => ($listingData['title'] ?? 'Unknown'),
+            'listing_id'    => ($listingId ?? 'unknown'),
+            'listing_title' => $listingTitle,
             'action'        => 'none',
             'success'       => false,
             'error'         => null,
@@ -527,21 +547,20 @@ class DirectoryService
 
         try {
             // Check if this listing belongs to a different directory that we already have as a source
-            if (isset($listingData['directory'])
-                && !empty($listingData['directory'])
-                && $listingData['directory'] !== $sourceDirectoryUrl
-                && in_array($listingData['directory'], $this->uniqueDirectories)
+            if (empty($listingDirectory) === false
+                && $listingDirectory !== $sourceDirectoryUrl
+                && in_array($listingDirectory, $this->uniqueDirectories)
             ) {
                 $result['action']  = 'skipped_other_directory';
                 $result['success'] = true;
-                $result['reason']  = 'Listing belongs to directory '.$listingData['directory'].' which is processed separately';
+                $result['reason']  = 'Listing belongs to directory '.$listingDirectory.' which is processed separately';
 
                 // No need to log routine skips
                 return $result;
             }
 
             // Check if OpenRegister service is available
-            if (!in_array('openregister', $this->appManager->getInstalledApps())) {
+            if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
                 throw new \RuntimeException('OpenRegister service is not available.');
             }
 
@@ -556,21 +575,32 @@ class DirectoryService
                 throw new \RuntimeException('Listing schema or register not configured');
             }
 
-            // Validate listing data - only accept 'catalog'
-            if (empty($listingData['id']) || empty($listingData['catalog'])) {
-                throw new \InvalidArgumentException('Invalid listing data: missing id or catalog');
+            // Validate listing data - require id and catalog
+            if (empty($listingId)) {
+                throw new \InvalidArgumentException('Invalid listing data: missing id');
+            }
+            
+            if (empty($catalogId)) {
+                throw new \InvalidArgumentException('Invalid listing data: missing catalog');
             }
 
-            $catalogId = $listingData['catalog'];
+            // Ensure catalog field is set in listingData for later use
+            $listingData['catalog'] = $catalogId;
+            $listingData['id'] = $listingId;
+            
+            // Extract title from @self.name if title is not at top level
+            if (empty($listingData['title']) && isset($listingData['@self']['name'])) {
+                $listingData['title'] = $listingData['@self']['name'];
+            }
 
             // Clean up listing data to match schema
             // Keep the @self metadata for UUID handling, but clean it up
             $uuid = null;
-            if (isset($listingData['@self']['id'])) {
+            if (isset($listingData['@self']['id']) === true) {
                 $uuid = $listingData['@self']['id'];
-            } else if (isset($listingData['id'])) {
+            } else if (isset($listingData['id']) === true) {
                 $uuid = $listingData['id'];
-            } else if (isset($listingData['catalog'])) {
+            } else if (isset($listingData['catalog']) === true) {
                 // Use catalog as UUID if no explicit ID is provided
                 $uuid = $listingData['catalog'];
             }
@@ -625,13 +655,17 @@ class DirectoryService
                 $listingData['statusCode'] = 200;
 // Update status code to show successful fetch
                 $listingData['status'] = ($existingObject['status'] ?? 'development');
+                // Preserve integrationLevel if it exists, otherwise set to 'search' to enable federation
+                $listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
             } else {
                 // For new listings, mark as available since we successfully fetched and validated the data
                 $listingData['default'] = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
 // Only default OpenCatalogi directory is default
                 $listingData['statusCode'] = 200;
 // Successful fetch
-                $listingData['status'] = ($existingObject['status'] ?? 'development');
+                $listingData['status'] = 'development';
+                // Set integrationLevel to 'search' to enable federation for new listings
+                $listingData['integrationLevel'] = 'search';
             }
 
             if ($isUpdate) {
@@ -1009,12 +1043,12 @@ class DirectoryService
 
                     $newPath             = '/'.implode('/', $pathSegments);
                     $publicationEndpoint = $urlParts['scheme'].'://'.$urlParts['host'];
-                    if (isset($urlParts['port'])) {
+                    if (isset($urlParts['port']) === true) {
                         $publicationEndpoint .= ':'.$urlParts['port'];
                     }
 
                     $publicationEndpoint .= $newPath;
-                    if (isset($urlParts['query'])) {
+                    if (isset($urlParts['query']) === true) {
                         $publicationEndpoint .= '?'.$urlParts['query'];
                     }
                 }
@@ -1112,7 +1146,7 @@ class DirectoryService
                 $parts = explode('.', $field);
                 $value = $data;
                 foreach ($parts as $part) {
-                    if (isset($value[$part])) {
+                    if (isset($value[$part]) === true) {
                         $value = $value[$part];
                     } else {
                         $value = null;
@@ -1573,16 +1607,16 @@ class DirectoryService
         ];
 
         // Add any additional filters from request params
-        if (isset($requestParams['filters'])) {
+        if (isset($requestParams['filters']) === true) {
             $baseConfig['filters'] = array_merge($baseConfig['filters'], $requestParams['filters']);
         }
 
         // Add pagination params
-        if (isset($requestParams['limit'])) {
+        if (isset($requestParams['limit']) === true) {
             $baseConfig['limit'] = (int) $requestParams['limit'];
         }
 
-        if (isset($requestParams['offset'])) {
+        if (isset($requestParams['offset']) === true) {
             $baseConfig['offset'] = (int) $requestParams['offset'];
         }
 
@@ -1605,11 +1639,11 @@ class DirectoryService
             }
 
             // Add pagination parameters
-            if (isset($baseConfig['limit'])) {
+            if (isset($baseConfig['limit']) === true) {
                 $query['_limit'] = $baseConfig['limit'];
             }
 
-            if (isset($baseConfig['offset'])) {
+            if (isset($baseConfig['offset']) === true) {
                 $query['_offset'] = $baseConfig['offset'];
             }
 
@@ -1651,11 +1685,11 @@ class DirectoryService
             }
 
             // Add pagination parameters
-            if (isset($baseConfig['limit'])) {
+            if (isset($baseConfig['limit']) === true) {
                 $query['_limit'] = $baseConfig['limit'];
             }
 
-            if (isset($baseConfig['offset'])) {
+            if (isset($baseConfig['offset']) === true) {
                 $query['_offset'] = $baseConfig['offset'];
             }
 
@@ -1778,7 +1812,7 @@ class DirectoryService
         }
 
         // If this was a nested object structure, maintain it
-        if (isset($listing['object'])) {
+        if (isset($listing['object']) === true) {
             $listing['object'] = $objectData;
             return $listing;
         }
@@ -1875,7 +1909,7 @@ class DirectoryService
         }
 
         // If this was a nested object structure, maintain it
-        if (isset($data['object'])) {
+        if (isset($data['object']) === true) {
             $data['object'] = $objectData;
             return $data;
         }
@@ -2011,9 +2045,9 @@ class DirectoryService
 
                 $valueId = $facetValue['_id'];
 
-                if (isset($existingValues[$valueId]) && isset($facetValue['count'])) {
+                if (isset($existingValues[$valueId]) === true && isset($facetValue['count']) === true) {
                     // Add to existing count
-                    if (isset($mergedFacets[$field][$existingValues[$valueId]]['count'])) {
+                    if (isset($mergedFacets[$field][$existingValues[$valueId]]['count']) === true) {
                         $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
                     }
                 } else {

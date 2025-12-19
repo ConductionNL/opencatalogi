@@ -369,7 +369,7 @@ class PublicationService
 
             foreach ($listings as $listing) {
                 // Extract catalog information from listing
-                $catalogId    = ($listing['catalog'] ?? $listing['id'] ?? ) null;
+                $catalogId    = ($listing['catalog'] ?? $listing['id'] ?? null);
                 $catalogTitle = ($listing['title'] ?? $catalogId ?? 'Unknown Catalog');
 
                 if ($catalogId && !isset($seenCatalogs[$catalogId])) {
