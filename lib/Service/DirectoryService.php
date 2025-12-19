@@ -198,7 +198,7 @@ class DirectoryService
      */
     public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
     {
-        // Check cache validity (5 minute TTL)
+        // Check cache validity (5 minute TTL).
         $currentTime = time();
         if ($this->cachedUniqueDirectories !== null && ($currentTime - $this->cacheTimestamp) < 300) {
             return $this->cachedUniqueDirectories;
@@ -231,7 +231,7 @@ class DirectoryService
 
                 $listings = $objectService->searchObjects($query);
 
-                // Removed redundant logging
+                // Removed redundant logging.
                 // Build unique directory URLs using URL as key to automatically handle duplicates.
                 foreach ($listings as $listing) {
                     $listingData = $listing->jsonSerialize();
@@ -257,23 +257,15 @@ class DirectoryService
 // Skip non-default listings
                     }
 
-                    // Check for publications URL in the object data (primary) or directory URL (fallback)
+                    // Check for publications URL in the object data (primary) or directory URL (fallback).
                     if (isset($objectData['publications']) && !empty($objectData['publications'])) {
                         $uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
-                        // Removed redundant logging
+                        // Removed redundant logging.
                     }
-                    // Fallback: check for directory URL at top level (backwards compatibility)
-                    else if (isset($listingData['directory']) && !empty($listingData['directory'])) {
-                        $uniqueDirectoryUrls[$listingData['directory']] = $listingData['directory'];
-                        // Removed redundant logging
-                    } else if (isset($objectData['directory']) && !empty($objectData['directory'])) {
-                        // Fallback: convert directory URL to publications URL
-                        $publicationsUrl                       = str_replace('/api/directory', '/api/publications', rtrim($objectData['directory'], '/'));
-                        $uniqueDirectoryUrls[$publicationsUrl] = $publicationsUrl;
-                        // Removed redundant logging
-                    } else {
-                        // Removed redundant logging
-                    }
+                    // If no publications URL found, skip this listing.
+                    // We used to have fallback logic here that would try to use the directory field,
+                    // but that often pointed to the source directory (where we got the listing from)
+                    // rather than the catalog's own API, causing circular queries.
                 }//end foreach
             } catch (\Exception $e) {
                 // Removed redundant logging
@@ -594,41 +586,66 @@ class DirectoryService
             }
 
             // Clean up listing data to match schema
-            // Keep the @self metadata for UUID handling, but clean it up
+            // Keep the @self metadata for UUID handling, but clean it up.
             $uuid = null;
             if (isset($listingData['@self']['id']) === true) {
                 $uuid = $listingData['@self']['id'];
             } else if (isset($listingData['id']) === true) {
                 $uuid = $listingData['id'];
             } else if (isset($listingData['catalog']) === true) {
-                // Use catalog as UUID if no explicit ID is provided
+                // Use catalog as UUID if no explicit ID is provided.
                 $uuid = $listingData['catalog'];
             }
 
-            // Remove @self metadata from the object data (but keep UUID for saveObject)
+            // Extract API endpoints from @self.relations BEFORE we unset @self.
+            // These endpoints tell us where the actual catalog's API is hosted.
+            if (isset($listingData['@self']['relations']) && is_array($listingData['@self']['relations'])) {
+                $relations = $listingData['@self']['relations'];
+                
+                // Extract publications endpoint.
+                if (isset($relations['publications']) && !empty($relations['publications'])) {
+                    $listingData['publications'] = $relations['publications'];
+                }
+                
+                // Extract search endpoint (alternative).
+                if (isset($relations['search']) && !empty($relations['search'])) {
+                    $listingData['search'] = $relations['search'];
+                }
+                
+                // Extract directory endpoint from relations (the actual catalog's directory URL).
+                // This is different from $sourceDirectoryUrl which is where we got the listing from.
+                if (isset($relations['directory']) && !empty($relations['directory'])) {
+                    $listingData['catalogDirectory'] = $relations['directory'];
+                }
+            }
+
+            // Remove @self metadata from the object data (but keep UUID for saveObject).
             unset($listingData['@self']);
 
-            // Set directory URL in listing data for reference
+            // Detect or generate publication endpoint BEFORE we overwrite directory field.
+            // If not already extracted from relations, try to detect from available data.
+            if (empty($listingData['publications'])) {
+                $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
+            }
+
+            // Set sourceDirectory URL in listing data for reference (where we got this listing from).
             $listingData['directory'] = $sourceDirectoryUrl;
 
-            // Set lastSync as ISO string format instead of DateTime object
+            // Set lastSync as ISO string format instead of DateTime object.
             $listingData['lastSync'] = (new \DateTime())->format('c');
 
-            // Catalog field is already present from external listing data
-            // Set summary to 'unknown' if empty (required field)
+            // Catalog field is already present from external listing data.
+            // Set summary to 'unknown' if empty (required field).
             if (empty($listingData['summary'])) {
                 $listingData['summary'] = 'unknown';
             }
 
-            // Count schemas if available
+            // Count schemas if available.
             if (isset($listingData['schemas']) && is_array($listingData['schemas'])) {
                 $listingData['schemaCount'] = count($listingData['schemas']);
             } else {
                 $listingData['schemaCount'] = 0;
             }
-
-            // Detect or generate publication endpoint
-            $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
 
             // Check if listing already exists to determine action type
             $existingListings = $objectService->searchObjects(
@@ -762,10 +779,10 @@ class DirectoryService
      */
     public function getPublications(array $guzzleConfig = [], bool $includeDefault = false): array
     {
-        // Get directories based on criteria
+        // Get directories based on criteria.
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
 
-        // Removed redundant logging
+        // Removed redundant logging.
         if (empty($directories)) {
                             // Removed redundant logging
             return [
@@ -1007,30 +1024,30 @@ class DirectoryService
      */
     private function detectPublicationEndpoint(array $listingData): ?string
     {
-        // Check if listing already has a publication endpoint
+        // Check if listing already has a publication endpoint.
         if (!empty($listingData['publications'])) {
             return $listingData['publications'];
         }
 
-        // Check if listing already has a publication endpoint (alternative field name)
+        // Check if listing already has a publication endpoint (alternative field name).
         if (!empty($listingData['publication'])) {
             return $listingData['publication'];
         }
 
-        // Try to generate from search endpoint
+        // Try to generate from search endpoint.
         if (!empty($listingData['search'])) {
-            // Replace 'search' with 'publications' in the URL
+            // Replace 'search' with 'publications' in the URL.
             $publicationEndpoint = str_replace('/search', '/publications', $listingData['search']);
 
-            // Also handle cases where 'search' might be a query parameter or different pattern
+            // Also handle cases where 'search' might be a query parameter or different pattern.
             if ($publicationEndpoint === $listingData['search']) {
-                // Try replacing 'search' anywhere in the URL path
+                // Try replacing 'search' anywhere in the URL path.
                 $publicationEndpoint = preg_replace('/\/search(?=\/|$)/', '/publications', $listingData['search']);
             }
 
-            // If still no change, try a more generic approach
+            // If still no change, try a more generic approach.
             if ($publicationEndpoint === $listingData['search']) {
-                // Parse URL and replace 'search' in path segments
+                // Parse URL and replace 'search' in path segments.
                 $urlParts = parse_url($listingData['search']);
                 if ($urlParts && isset($urlParts['path'])) {
                     $pathSegments = explode('/', trim($urlParts['path'], '/'));
@@ -1054,11 +1071,62 @@ class DirectoryService
                 }
             }//end if
 
-            // Only return if we actually made a change
+            // Only return if we actually made a change.
             if ($publicationEndpoint !== $listingData['search']) {
                 return $publicationEndpoint;
             }
         }//end if
+
+        // Try to construct from catalogDirectory (the actual catalog's directory endpoint from relations).
+        // Format: Replace /api/directory with /api/publications.
+        if (!empty($listingData['catalogDirectory'])) {
+            $catalogDir = $listingData['catalogDirectory'];
+            // Replace /api/directory with /api/publications.
+            $publicationEndpoint = str_replace('/api/directory', '/api/publications', $catalogDir);
+            if ($publicationEndpoint !== $catalogDir) {
+                return $publicationEndpoint;
+            }
+        }
+
+        // Try to construct from directory hostname (fallback for listings without proper relations).
+        // Format: https://{directory-host}/apps/opencatalogi/api/publications
+        if (!empty($listingData['directory'])) {
+            $directory = $listingData['directory'];
+            
+            // If directory is just a hostname (e.g., "directory.opencatalogi.nl" or "opencatalogi.nl")
+            // construct the full publications URL.
+            if (strpos($directory, '://') === false) {
+                // No protocol, assume HTTPS and add standard OpenCatalogi API path.
+                return 'https://'.$directory.'/apps/opencatalogi/api/publications';
+            } else {
+                // Directory is a full URL, extract the base and construct publications endpoint.
+                $urlParts = parse_url($directory);
+                if ($urlParts && isset($urlParts['host'])) {
+                    $publicationEndpoint = $urlParts['scheme'].'://'.$urlParts['host'];
+                    if (isset($urlParts['port']) === true) {
+                        $publicationEndpoint .= ':'.$urlParts['port'];
+                    }
+                    $publicationEndpoint .= '/apps/opencatalogi/api/publications';
+                    return $publicationEndpoint;
+                }
+            }
+        }//end if
+
+        // Try to infer hostname from catalog title or name.
+        // For catalogs named like "OpenCatalogi.nl", "Example.com", try using that as hostname.
+        $title = ($listingData['title'] ?? $listingData['name'] ?? '');
+        if (!empty($title)) {
+            // Check if title looks like a domain name (contains a dot and no spaces).
+            if (strpos($title, '.') !== false && strpos($title, ' ') === false) {
+                // Looks like a domain, try using it.
+                $hostname = strtolower(trim($title));
+                // Remove any trailing slashes or paths.
+                $hostname = preg_replace('#[/\\\\].*$#', '', $hostname);
+                if (!empty($hostname)) {
+                    return 'https://'.$hostname.'/apps/opencatalogi/api/publications';
+                }
+            }
+        }
 
         return null;
 
