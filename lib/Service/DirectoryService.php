@@ -232,7 +232,7 @@ class DirectoryService
                 $listings = $objectService->searchObjects($query);
 
                 // Removed redundant logging
-                // Build unique directory URLs using URL as key to automatically handle duplicates
+                // Build unique directory URLs using URL as key to automatically handle duplicates.
                 foreach ($listings as $listing) {
                     $listingData = $listing->jsonSerialize();
                     $objectData  = ($listingData['object'] ?? $listingData);
@@ -248,7 +248,7 @@ class DirectoryService
                     if ($availableOnly && $available === false) {
                         // Removed redundant logging
                         continue;
-// Skip unavailable listings
+// Skip unavailable listings.
                     }
 
                     if ($defaultOnly && $default === false) {

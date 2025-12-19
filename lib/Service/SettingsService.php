@@ -296,6 +296,23 @@ class SettingsService
 
 
     /**
+     * Attempts to retrieve the Schema mapper from the container.
+     *
+     * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
+     * @throws \RuntimeException If the mapper is not available.
+     */
+    public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+        }
+
+        throw new \RuntimeException('SchemaMapper is not available.');
+
+    }//end getSchemaMapper()
+
+
+    /**
      * Attempts to retrieve the Configuration service from the container.
      *
      * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
@@ -339,7 +356,10 @@ class SettingsService
             $registerMapper = $this->getRegisterMapper();
             if ($registerMapper !== null) {
                 $data['openRegisters']      = true;
-                $data['availableRegisters'] = $registerMapper->findAll();
+                $registers                  = $registerMapper->findAll();
+                
+                // Enrich registers with full schema objects instead of just IDs.
+                $data['availableRegisters'] = $this->enrichRegistersWithSchemas($registers);
             }
         } catch (\RuntimeException $e) {
             // Service not available, continue with default values.
@@ -371,6 +391,81 @@ class SettingsService
         }
 
     }//end getSettings()
+
+
+    /**
+     * Enrich registers with full schema objects instead of just schema IDs.
+     *
+     * This method takes an array of register entities and replaces their schema ID arrays
+     * with full schema objects containing id, title, and other metadata.
+     *
+     * @param array $registers Array of register entities from OpenRegister.
+     *
+     * @return array Array of registers with enriched schema data.
+     */
+    private function enrichRegistersWithSchemas(array $registers): array
+    {
+        try {
+            // Get the schema mapper to fetch full schema objects.
+            $schemaMapper = $this->getSchemaMapper();
+            if ($schemaMapper === null) {
+                // If we can't get the schema mapper, return registers as-is.
+                return $registers;
+            }
+
+            $enrichedRegisters = [];
+            
+            foreach ($registers as $register) {
+                // Convert register to array if it's an object.
+                $registerArray = is_object($register) && method_exists($register, 'jsonSerialize')
+                    ? $register->jsonSerialize()
+                    : (array) $register;
+                
+                // Get schema IDs from the register.
+                $schemaIds = $registerArray['schemas'] ?? [];
+                
+                // If schemas is not an array or is empty, keep as-is.
+                if (is_array($schemaIds) === false || empty($schemaIds)) {
+                    $enrichedRegisters[] = $registerArray;
+                    continue;
+                }
+                
+                // Fetch full schema objects for each schema ID.
+                $fullSchemas = [];
+                foreach ($schemaIds as $schemaId) {
+                    // Skip if not a number (already an object).
+                    if (is_numeric($schemaId) === false) {
+                        $fullSchemas[] = $schemaId;
+                        continue;
+                    }
+                    
+                    try {
+                        $schema = $schemaMapper->find((int) $schemaId);
+                        if ($schema !== null) {
+                            // Convert schema entity to array.
+                            $schemaArray = is_object($schema) && method_exists($schema, 'jsonSerialize')
+                                ? $schema->jsonSerialize()
+                                : (array) $schema;
+                            $fullSchemas[] = $schemaArray;
+                        }
+                    } catch (\Exception $e) {
+                        // Schema not found, skip it.
+                        continue;
+                    }
+                }
+                
+                // Replace schema IDs with full schema objects.
+                $registerArray['schemas'] = $fullSchemas;
+                $enrichedRegisters[]      = $registerArray;
+            }
+            
+            return $enrichedRegisters;
+        } catch (\Exception $e) {
+            // If enrichment fails, return registers as-is.
+            return $registers;
+        }//end try
+
+    }//end enrichRegistersWithSchemas()
 
 
     /**
@@ -469,6 +564,10 @@ class SettingsService
 
     /**
      * Load settings from the publication_register.json file.
+     *
+     * This method supports both old and new versions of OpenRegister:
+     * - New version (>= 0.2.10): Uses importFromFilePath method.
+     * - Old version (< 0.2.10): Uses importFromApp method with manual file reading.
      *
      * @param boolean $force Whether to force the import regardless of version checks.
      *
@@ -576,10 +675,16 @@ class SettingsService
 
         // Build a map of schema slugs to schema IDs.
         $schemaMap = [];
-        foreach (($importResult['schemas'] ?? []) as $schema) {
+        foreach (($importResult['schemas'] ?? []) as $index => $schema) {
             // Handle both object and array formats.
-            if (is_object($schema) === true && method_exists($schema, 'getSlug') === true) {
-                $schemaMap[$schema->getSlug()] = $schema->getId();
+            if (is_object($schema) === true) {
+                // Nextcloud entities have jsonSerialize() method to convert to array.
+                if (method_exists($schema, 'jsonSerialize') === true) {
+                    $schemaArray = $schema->jsonSerialize();
+                    if (isset($schemaArray['slug']) === true && isset($schemaArray['id']) === true) {
+                        $schemaMap[$schemaArray['slug']] = $schemaArray['id'];
+                    }
+                }
             } else if (is_array($schema) === true && isset($schema['slug']) === true) {
                 $schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
             }
@@ -589,12 +694,17 @@ class SettingsService
         $registerId = null;
         foreach (($importResult['registers'] ?? []) as $register) {
             // Handle both object and array formats.
-            if (is_object($register) === true && method_exists($register, 'getSlug') === true) {
-                if ($register->getSlug() === 'publication') {
-                    $registerId = $register->getId();
-                    break;
+            if (is_object($register) === true) {
+                // Nextcloud entities have jsonSerialize() method to convert to array.
+                if (method_exists($register, 'jsonSerialize') === true) {
+                    $registerArray = $register->jsonSerialize();
+                    if (isset($registerArray['slug']) === true && $registerArray['slug'] === 'publication') {
+                        $registerId = ($registerArray['id'] ?? $registerArray['uuid'] ?? null);
+                        break;
+                    }
                 }
             } else if (is_array($register) === true && isset($register['slug']) === true) {
+                // Already an array.
                 if ($register['slug'] === 'publication') {
                     $registerId = ($register['id'] ?? $register['uuid'] ?? null);
                     break;
