@@ -154,7 +154,7 @@ class CatalogiService
                 ],
             ];
             // Get all catalogs using searchObjects
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
         }
 
         // Initialize arrays to store unique registers and schemas
@@ -412,7 +412,7 @@ class CatalogiService
                 '_limit' => 1,
             ];
 
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
             if (empty($catalogs)) {
                 $this->logger->error(

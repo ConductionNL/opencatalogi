@@ -173,8 +173,8 @@ class CatalogiController extends Controller
         // Fetch catalog objects using searchObjectsPaginated
         $result = $this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
-            rbac: false,
-            multi: false,
+            _rbac: false,
+            _multitenancy: false,
             published: false,
             deleted: false
         );

@@ -1,28 +1,29 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Publication Register",
-        "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-        "version": "0.7.3"
+        "title": "Publication Register (Magic Mapper)",
+        "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
+        "version": "0.1.0"
     },
     "x-openregister": {
         "type": "application",
         "app": "opencatalogi",
-        "sourceType": "local",
-        "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+        "sourceType": "github",
+        "sourceUrl": "https://github.com/ConductionNL/opencatalogi/blob/master/apps-extra/opencatalogi/lib/Settings/publication_register_magic.json",
         "openregister": "^v0.2.10",
         "github": {
-            "repo": null,
-            "branch": null,
-            "path": null
-        }
+            "repo": "ConductionNL/opencatalogi",
+            "branch": "master",
+            "path": "apps-extra/opencatalogi/lib/Settings/publication_register_magic.json"
+        },
+        "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage"
     },
     "components": {
         "registers": {
             "publication": {
                 "slug": "publication",
                 "title": "Publication",
-                "version": "0.0.4",
+                "version": "0.1.0",
                 "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
                 "schemas": [
                     "catalog",
@@ -36,8 +37,42 @@
                 ],
                 "tablePrefix": "",
                 "folder": "Open Registers/Publication Register",
-                "updated": "2025-10-20T12:00:00+00:00",
-                "created": "2025-04-14T15:13:10+00:00"
+                "updated": "2026-01-06T12:00:00+00:00",
+                "created": "2025-04-14T15:13:10+00:00",
+                "configuration": {
+                    "schemas": {
+                        "publication": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "High-volume content schema - main content type with frequent queries for search, filtering, and display"
+                        },
+                        "catalog": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "Frequently queried for navigation and organization - benefits from SQL indexing and joins"
+                        },
+                        "listing": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "High query volume for search, filtering, and synchronization operations"
+                        },
+                        "page": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "Frequently accessed for website navigation - complex content structure with nested blocks"
+                        },
+                        "menu": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "Frequently queried for navigation structure - hierarchical data benefits from SQL"
+                        },
+                        "organization": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "Frequently queried for filtering and authentication - benefits from SQL indexing"
+                        }
+                    }
+                }
             }
         },
         "schemas": {
@@ -57,7 +92,7 @@
                         "description": "The title of the publication",
                         "maxLength": 255,
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "summary": {
                         "type": "string",
@@ -74,7 +109,7 @@
                     "organization": {
                         "type": "string",
                         "description": "Reference to the organization that owns this publication",
-                        "facetable": false
+                        "facetable": true
                     },
                     "themes": {
                         "type": "array",
@@ -82,7 +117,7 @@
                             "type": "string"
                         },
                         "description": "List of themes associated with this publication",
-                        "facetable": false
+                        "facetable": true
                     }
                 },
                 "configuration": {
@@ -107,7 +142,7 @@
                         "description": "The title of the catalog",
                         "maxLength": 255,
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "summary": {
                         "type": "string",
@@ -130,12 +165,12 @@
                     "listed": {
                         "type": "boolean",
                         "description": "Whether the catalog is publicly listed",
-                        "facetable": false
+                        "facetable": true
                     },
                     "organization": {
                         "type": "string",
                         "description": "Reference to the organization that owns this catalog",
-                        "facetable": false
+                        "facetable": true
                     },
                     "registers": {
                         "type": "array",
@@ -182,7 +217,7 @@
                             "stable",
                             "obsolete"
                         ],
-                        "facetable": false
+                        "facetable": true
                     },
                     "view": {
                         "type": "integer",
@@ -195,7 +230,7 @@
                         "pattern": "^[a-z0-9-]+$",
                         "minLength": 1,
                         "maxLength": 255,
-                        "facetable": false
+                        "facetable": true
                     },
                     "hasWooSitemap": {
                         "type": "boolean",
@@ -226,13 +261,13 @@
                     "catalogusId": {
                         "type": "string",
                         "description": "ID of the catalog this listing belongs to",
-                        "facetable": false
+                        "facetable": true
                     },
                     "title": {
                         "type": "string",
                         "description": "The title of the listing",
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "summary": {
                         "type": "string",
@@ -280,7 +315,7 @@
                             "stable",
                             "obsolete"
                         ],
-                        "facetable": false
+                        "facetable": true
                     },
                     "statusMessage": {
                         "type": "string",
@@ -297,7 +332,7 @@
                         "type": "string",
                         "description": "Timestamp of the last synchronization",
                         "format": "date-time",
-                        "facetable": false
+                        "facetable": true
                     },
                     "integrationLevel": {
                         "type": "string",
@@ -307,12 +342,12 @@
                             "connection",
                             "search"
                         ],
-                        "facetable": false
+                        "facetable": true
                     },
                     "default": {
                         "type": "boolean",
                         "description": "Whether this is the default listing",
-                        "facetable": false
+                        "facetable": true
                     },
                     "organization": {
                         "type": "object",
@@ -352,7 +387,7 @@
                         "type": "string",
                         "description": "The name of the organization",
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "summary": {
                         "type": "string",
@@ -369,19 +404,19 @@
                         "type": "string",
                         "description": "Organization Identification Number (OIN)",
                         "pattern": "^0000000\\d{10}000$",
-                        "facetable": false
+                        "facetable": true
                     },
                     "tooi": {
                         "type": "string",
                         "description": "TOOI identifier for the organization",
                         "pattern": "^\\w{2,}\\d{4}$",
-                        "facetable": false
+                        "facetable": true
                     },
                     "rsin": {
                         "type": "string",
                         "description": "RSIN number for tax identification",
                         "pattern": "^\\d{9}$",
-                        "facetable": false
+                        "facetable": true
                     },
                     "pki": {
                         "type": "string",
@@ -417,14 +452,14 @@
                         "type": "string",
                         "description": "The title of the page",
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "slug": {
                         "type": "string",
                         "description": "URL-friendly version of the page name",
                         "pattern": "^[a-z0-9-]+$",
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "contents": {
                         "type": "array",
@@ -549,13 +584,13 @@
                         "type": "string",
                         "description": "The name of the menu",
                         "minLength": 1,
-                        "facetable": false
+                        "facetable": true
                     },
                     "position": {
                         "type": "number",
                         "description": "Order position of the menu",
                         "minimum": 0,
-                        "facetable": false
+                        "facetable": true
                     },
                     "items": {
                         "type": "array",
@@ -741,495 +776,7 @@
         "jobs": [],
         "synchronizations": [],
         "rules": [],
-        "objects": [
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "home"
-                },
-                "title": "Home",
-                "slug": "home",
-                "name": "home",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "welcome",
-                        "data": {
-                            "text": "Welcome to OpenCatalogi",
-                            "html": "<h1>Welcome to OpenCatalogi</h1><p>This is the default home page for your catalog website. You can customize this content through the admin interface.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "menu",
-                    "version": "1.1.1",
-                    "slug": "main-navigation"
-                },
-                "title": "Main Navigation",
-                "name": "main-navigation",
-                "position": 1,
-                "items": [
-                    {
-                        "name": "Home",
-                        "slug": "home",
-                        "link": "/",
-                        "description": "Homepage",
-                        "icon": "home",
-                        "order": 0
-                    },
-                    {
-                        "name": "Catalogs",
-                        "slug": "catalogs",
-                        "link": "/catalogs",
-                        "description": "Browse available catalogs",
-                        "icon": "catalog",
-                        "order": 1
-                    },
-                    {
-                        "name": "Publications",
-                        "slug": "publications",
-                        "link": "/publications",
-                        "description": "Browse all publications",
-                        "icon": "publication",
-                        "order": 2
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "catalog",
-                    "version": "0.0.6",
-                    "slug": "default-catalog"
-                },
-                "title": "Default Catalog",
-                "name": "default-catalog",
-                "summary": "The default catalog for OpenCatalogi",
-                "description": "This is the default catalog created during initial setup. It contains sample content to help you get started with OpenCatalogi.",
-                "image": "",
-                "listed": true,
-                "organization": "",
-                "registers": [],
-                "schemas": [],
-                "filters": [],
-                "status": "development",
-                "slug": "publications"
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "publication",
-                    "version": "1.1.1",
-                    "slug": "welcome-publication"
-                },
-                "title": "Welcome Publication",
-                "name": "welcome-publication",
-                "summary": "A sample publication to demonstrate OpenCatalogi functionality",
-                "description": "This is a sample publication created during the initial setup of OpenCatalogi. It demonstrates how publications work within the catalog system and can be used as a template for creating your own content.",
-                "organization": "",
-                "themes": []
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "organization",
-                    "version": "1.1.1",
-                    "slug": "default-organization"
-                },
-                "name": "Default Organization",
-                "summary": "The default organization for this OpenCatalogi instance",
-                "description": "This is the default organization created during initial setup. You can modify this organization or create additional organizations through the admin interface."
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "theme",
-                    "version": "1.1.1",
-                    "slug": "general-theme"
-                },
-                "title": "General",
-                "name": "general-theme",
-                "summary": "General theme for uncategorized content",
-                "description": "This is a default theme for general content that doesn't fit into specific categories. You can create additional themes to better organize your publications.",
-                "image": ""
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "glossary",
-                    "version": "1.1.1",
-                    "slug": "catalog-glossary"
-                },
-                "title": "Catalog",
-                "name": "catalog-glossary",
-                "summary": "A collection of publications organized by theme and schema",
-                "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface.",
-                "externalLink": "",
-                "keywords": [
-                    "catalog",
-                    "collection",
-                    "publications",
-                    "organization",
-                    "content management"
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "about-us"
-                },
-                "title": "About Us",
-                "slug": "about-us",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "about-content",
-                        "data": {
-                            "text": "About Us",
-                            "html": "<h1>About Us</h1><p>Learn more about our organization and mission.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "accessibility"
-                },
-                "title": "Accessibility",
-                "slug": "accessibility",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "accessibility-content",
-                        "data": {
-                            "text": "Accessibility",
-                            "html": "<h1>Accessibility</h1><p>Information about our commitment to accessibility and how to report accessibility issues.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "contact"
-                },
-                "title": "Contact",
-                "slug": "contact",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "contact-content",
-                        "data": {
-                            "text": "Contact",
-                            "html": "<h1>Contact</h1><p>Get in touch with us through the following channels.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "faq"
-                },
-                "title": "FAQ",
-                "slug": "faq",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "faq-content",
-                        "data": {
-                            "text": "Frequently Asked Questions",
-                            "html": "<h1>Frequently Asked Questions</h1><p>Find answers to commonly asked questions.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "cookies"
-                },
-                "title": "Cookies",
-                "slug": "cookies",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "cookies-content",
-                        "data": {
-                            "text": "Cookie Policy",
-                            "html": "<h1>Cookie Policy</h1><p>Information about how we use cookies on this website.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "privacy"
-                },
-                "title": "Privacy",
-                "slug": "privacy",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "privacy-content",
-                        "data": {
-                            "text": "Privacy Policy",
-                            "html": "<h1>Privacy Policy</h1><p>Our privacy policy explains how we collect, use, and protect your personal information.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "disclaimer"
-                },
-                "title": "Disclaimer",
-                "slug": "disclaimer",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "disclaimer-content",
-                        "data": {
-                            "text": "Disclaimer",
-                            "html": "<h1>Disclaimer</h1><p>Important legal disclaimers and limitations of liability.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "page",
-                    "version": "1.1.1",
-                    "slug": "website"
-                },
-                "title": "Website",
-                "slug": "website",
-                "contents": [
-                    {
-                        "type": "text",
-                        "id": "website-content",
-                        "data": {
-                            "text": "Website Information",
-                            "html": "<h1>Website Information</h1><p>Information about this website, its purpose, and technical details.</p>"
-                        }
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "menu",
-                    "version": "1.1.1",
-                    "slug": "user-menu"
-                },
-                "title": "User Menu",
-                "position": 1,
-                "items": [
-                    {
-                        "order": 1,
-                        "name": "Profile",
-                        "link": "/profile",
-                        "description": "User profile page",
-                        "icon": "user",
-                        "hideBeforeLogin": true
-                    },
-                    {
-                        "order": 2,
-                        "name": "Settings",
-                        "link": "/settings",
-                        "description": "User settings",
-                        "icon": "settings",
-                        "hideBeforeLogin": true
-                    },
-                    {
-                        "order": 3,
-                        "name": "Logout",
-                        "link": "/logout",
-                        "description": "Sign out",
-                        "icon": "logout",
-                        "hideBeforeLogin": true
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "menu",
-                    "version": "1.1.1",
-                    "slug": "admin-menu"
-                },
-                "title": "Admin Menu",
-                "position": 1,
-                "groups": [
-                    "admin"
-                ],
-                "items": [
-                    {
-                        "order": 1,
-                        "name": "Dashboard",
-                        "link": "/admin",
-                        "description": "Admin dashboard",
-                        "icon": "dashboard"
-                    },
-                    {
-                        "order": 2,
-                        "name": "Users",
-                        "link": "/admin/users",
-                        "description": "Manage users",
-                        "icon": "users"
-                    },
-                    {
-                        "order": 3,
-                        "name": "Content",
-                        "link": "/admin/content",
-                        "description": "Manage content",
-                        "icon": "content"
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "menu",
-                    "version": "1.1.1",
-                    "slug": "main-pages"
-                },
-                "title": "Main Pages",
-                "position": 2,
-                "items": [
-                    {
-                        "order": 1,
-                        "name": "Home",
-                        "link": "/",
-                        "description": "Homepage",
-                        "icon": "home"
-                    },
-                    {
-                        "order": 2,
-                        "name": "About Us",
-                        "link": "/about-us",
-                        "description": "About our organization",
-                        "icon": "info"
-                    },
-                    {
-                        "order": 3,
-                        "name": "Accessibility",
-                        "link": "/accessibility",
-                        "description": "Accessibility information",
-                        "icon": "accessibility"
-                    },
-                    {
-                        "order": 4,
-                        "name": "Contact",
-                        "link": "/contact",
-                        "description": "Contact information",
-                        "icon": "contact"
-                    },
-                    {
-                        "order": 5,
-                        "name": "FAQ",
-                        "link": "/faq",
-                        "description": "Frequently asked questions",
-                        "icon": "help"
-                    },
-                    {
-                        "order": 6,
-                        "name": "Website",
-                        "link": "/website",
-                        "description": "Website information",
-                        "icon": "web"
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "menu",
-                    "version": "1.1.1",
-                    "slug": "about-menu"
-                },
-                "title": "About",
-                "position": 3,
-                "items": [
-                    {
-                        "order": 1,
-                        "name": "Contact",
-                        "link": "/contact",
-                        "description": "Contact information",
-                        "icon": "contact"
-                    },
-                    {
-                        "order": 2,
-                        "name": "FAQ",
-                        "link": "/faq",
-                        "description": "Frequently asked questions",
-                        "icon": "help"
-                    },
-                    {
-                        "order": 3,
-                        "name": "Website",
-                        "link": "/website",
-                        "description": "Website information",
-                        "icon": "web"
-                    }
-                ]
-            },
-            {
-                "@self": {
-                    "register": "publication",
-                    "schema": "menu",
-                    "version": "1.1.1",
-                    "slug": "legal-menu"
-                },
-                "title": "Legal",
-                "position": 6,
-                "items": [
-                    {
-                        "order": 1,
-                        "name": "Cookies",
-                        "link": "/cookies",
-                        "description": "Cookie policy",
-                        "icon": "cookie"
-                    },
-                    {
-                        "order": 2,
-                        "name": "Privacy",
-                        "link": "/privacy",
-                        "description": "Privacy policy",
-                        "icon": "privacy"
-                    },
-                    {
-                        "order": 3,
-                        "name": "Disclaimer",
-                        "link": "/disclaimer",
-                        "description": "Legal disclaimer",
-                        "icon": "legal"
-                    }
-                ]
-            }
-        ]
+        "objects": []
     }
 }
+

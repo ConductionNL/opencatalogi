@@ -539,8 +539,8 @@ class PublicationsController extends Controller
                 filter: [],
                 fields: [],
                 unset: [],
-                rbac: false,
-                multi: false,
+                _rbac: false,
+                _multitenancy: false,
             );
 
             // Add CORS headers for public API access

@@ -174,7 +174,23 @@ class MenusController extends Controller
 
         // Use searchObjectsPaginated for better performance and pagination support.
         // Set rbac=false, multi=false, published=false to get all menus regardless of published status.
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+
+        // WORKAROUND: OpenRegister ignores @self filters, so we filter clientside.
+        // Remove any results that don't match the configured schema and register.
+        if (isset($result['results']) && is_array($result['results'])) {
+            $result['results'] = array_values(array_filter($result['results'], function($item) use ($menuConfig) {
+                // Convert ObjectEntity to array if needed.
+                if (is_object($item) && method_exists($item, 'jsonSerialize')) {
+                    $item = $item->jsonSerialize();
+                }
+                
+                $self = $item['@self'] ?? [];
+                return ($self['schema'] ?? null) === $menuConfig['schema'] 
+                    && ($self['register'] ?? null) === $menuConfig['register'];
+            }));
+            $result['total'] = count($result['results']);
+        }
 
         // Build paginated response structure
         /*
@@ -242,7 +258,7 @@ class MenusController extends Controller
             '_source' => 'index',
 // Force use of SOLR index for better performance
         ];
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
         if (empty($result['results'])) {
             return new JSONResponse(['error' => 'Menu not found'], 404);

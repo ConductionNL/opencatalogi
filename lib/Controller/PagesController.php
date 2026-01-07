@@ -170,9 +170,26 @@ class PagesController extends Controller
             $searchQuery['@self']['register'] = $pageConfig['register'];
         }
 
-        // Use searchObjectsPaginated for better performance and pagination support
-        // Set rbac=false, multi=false, published=true for public page access
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: false);
+        // Use searchObjectsPaginated for better performance and pagination support.
+        // Set _rbac=false, _multitenancy=false, published=false for public page access.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+
+        // WORKAROUND: OpenRegister ignores @self filters, so we filter clientside.
+        // Remove any results that don't match the configured schema and register.
+        if (isset($result['results']) && is_array($result['results'])) {
+            $result['results'] = array_values(array_filter($result['results'], function($item) use ($pageConfig) {
+                // Convert ObjectEntity to array if needed.
+                if (is_object($item) && method_exists($item, 'jsonSerialize')) {
+                    $item = $item->jsonSerialize();
+                }
+                
+                $self = $item['@self'] ?? [];
+                $schemaMatch = !isset($pageConfig['schema']) || ($self['schema'] ?? null) === $pageConfig['schema'];
+                $registerMatch = !isset($pageConfig['register']) || ($self['register'] ?? null) === $pageConfig['register'];
+                return $schemaMatch && $registerMatch;
+            }));
+            $result['total'] = count($result['results']);
+        }
 
         // Build paginated response structure
         /*
@@ -233,30 +250,35 @@ class PagesController extends Controller
      */
     public function show(string $slug): JSONResponse
     {
-        // Get page configuration from settings
+        // Get page configuration from settings.
         $pageConfig = $this->getPageConfiguration();
 
-        // Build search query to find page by slug
+        // Build search query to find page by slug.
         $searchQuery = [
             'slug'    => $slug,
             '_limit'  => 1,
-// We only need one result
-            '_source' => 'index',
-// Force use of SOLR index for better performance
+            '_source' => 'database',
+// Use database for reliable slug lookup.
         ];
 
-        // Always filter by page schema - OpenRegister expects filters in @self array.
-        // NOTE: Must use numeric ID, not slug, as slug lookup doesn't work reliably.
+        // Always filter by page schema if configured - OpenRegister expects filters in @self array.
         if (!isset($searchQuery['@self'])) {
             $searchQuery['@self'] = [];
         }
 
-        $searchQuery['@self']['schema']   = !empty($pageConfig['schema']) ? $pageConfig['schema'] : '5';
-        $searchQuery['@self']['register'] = !empty($pageConfig['register']) ? $pageConfig['register'] : '1';
+        // Add schema filter if configured.
+        if (!empty($pageConfig['schema'])) {
+            $searchQuery['@self']['schema'] = $pageConfig['schema'];
+        }
 
-        // Use searchObjectsPaginated for better performance
-        // Set rbac=false, multi=false, published=true for public page access
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, rbac: false, multi: false, published: true);
+        // Add register filter if configured.
+        if (!empty($pageConfig['register'])) {
+            $searchQuery['@self']['register'] = $pageConfig['register'];
+        }
+
+        // Use searchObjectsPaginated for better performance and pagination support.
+        // Set _rbac=false, _multitenancy=false, published=false for public page access.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
         if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
