@@ -160,17 +160,13 @@ class MenusController extends Controller
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Always filter by menu schema - OpenRegister expects filters in @self array.
+        // Add schema filter - use _schema for magic mapper routing
         // Use the configured schema if set, otherwise default to schema ID '7' (menu).
-        // NOTE: Must use numeric ID, not slug, as slug lookup doesn't work in searchObjects.
-        if (!isset($searchQuery['@self'])) {
-            $searchQuery['@self'] = [];
-        }
+        $searchQuery['_schema'] = !empty($menuConfig['schema']) ? $menuConfig['schema'] : '7';
 
-        $searchQuery['@self']['schema'] = !empty($menuConfig['schema']) ? $menuConfig['schema'] : '7';
-
+        // Add register filter - use _register for magic mapper routing
         // Use the configured register if set, otherwise default to register ID '1' (publication).
-        $searchQuery['@self']['register'] = !empty($menuConfig['register']) ? $menuConfig['register'] : '1';
+        $searchQuery['_register'] = !empty($menuConfig['register']) ? $menuConfig['register'] : '1';
 
         // Use searchObjectsPaginated for better performance and pagination support.
         // Set rbac=false, multi=false, published=false to get all menus regardless of published status.

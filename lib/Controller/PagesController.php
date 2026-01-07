@@ -160,14 +160,14 @@ class PagesController extends Controller
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter if configured - use proper OpenRegister syntax
+        // Add schema filter if configured - use _schema for magic mapper routing
         if (!empty($pageConfig['schema'])) {
-            $searchQuery['@self']['schema'] = $pageConfig['schema'];
+            $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured - use proper OpenRegister syntax
+        // Add register filter if configured - use _register for magic mapper routing
         if (!empty($pageConfig['register'])) {
-            $searchQuery['@self']['register'] = $pageConfig['register'];
+            $searchQuery['_register'] = $pageConfig['register'];
         }
 
         // Use searchObjectsPaginated for better performance and pagination support.
@@ -261,19 +261,14 @@ class PagesController extends Controller
 // Use database for reliable slug lookup.
         ];
 
-        // Always filter by page schema if configured - OpenRegister expects filters in @self array.
-        if (!isset($searchQuery['@self'])) {
-            $searchQuery['@self'] = [];
-        }
-
-        // Add schema filter if configured.
+        // Add schema filter if configured - use _schema for magic mapper routing
         if (!empty($pageConfig['schema'])) {
-            $searchQuery['@self']['schema'] = $pageConfig['schema'];
+            $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured.
+        // Add register filter if configured - use _register for magic mapper routing
         if (!empty($pageConfig['register'])) {
-            $searchQuery['@self']['register'] = $pageConfig['register'];
+            $searchQuery['_register'] = $pageConfig['register'];
         }
 
         // Use searchObjectsPaginated for better performance and pagination support.

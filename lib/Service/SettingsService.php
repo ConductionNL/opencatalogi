@@ -180,8 +180,10 @@ class SettingsService
                 // Try to find a register with a matching name.
                 $matchingRegister = null;
                 foreach ($registers as $register) {
-                    if (stripos($register['slug'], $registerSlug) !== false) {
-                        $matchingRegister = $register;
+                    // Convert Register entity to array if needed
+                    $registerData = is_array($register) ? $register : $register->jsonSerialize();
+                    if (stripos($registerData['slug'], $registerSlug) !== false) {
+                        $matchingRegister = $registerData;
                         break;
                     }
                 }

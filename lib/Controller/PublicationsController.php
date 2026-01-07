@@ -264,64 +264,19 @@ class PublicationsController extends Controller
             }
 
             // DATABASE-LEVEL FILTERING: Handle catalog filtering intelligently
-            // If frontend provides schema/register filters, validate they're within catalog
-            // If no frontend filters, apply catalog's default filters
-            // Initialize @self if needed
-            if (!isset($searchQuery['@self'])) {
-                $searchQuery['@self'] = [];
+            // Use _schema and _register for magic mapper routing
+            // If catalog has schemas/registers configured, use the first one for routing
+            if (!empty($catalog['schemas'])) {
+                $schemas = array_map('intval', $catalog['schemas']);
+                // Use first schema for magic mapper routing
+                $searchQuery['_schema'] = $schemas[0];
             }
 
-            // Handle SCHEMA filtering
-            if (!empty($catalog['schemas'])) {
-                $frontendSchemaFilter = $searchQuery['@self']['schema'] ?? null;
-
-                if ($frontendSchemaFilter !== null) {
-                    // Frontend provided a schema filter - validate it's within catalog
-                    $requestedSchemas = $this->extractFilterValues($frontendSchemaFilter);
-                    $allowedSchemas   = array_map('intval', $catalog['schemas']);
-
-                    // Check if all requested schemas are within the catalog
-                    $validSchemas = array_intersect($requestedSchemas, $allowedSchemas);
-
-                    if (empty($validSchemas)) {
-                        // None of the requested schemas are in this catalog
-                        return new JSONResponse(['error' => 'Requested schema(s) not available in this catalog'], 403);
-                    }
-
-                    // Keep the frontend's filter (it's valid) - don't overwrite
-                } else {
-                    // No frontend filter - apply catalog's default filter
-                    $searchQuery['@self']['schema'] = [
-                        'or' => implode(',', array_map('intval', $catalog['schemas'])),
-                    ];
-                }
-            }//end if
-
-            // Handle REGISTER filtering
             if (!empty($catalog['registers'])) {
-                $frontendRegisterFilter = $searchQuery['@self']['register'] ?? null;
-
-                if ($frontendRegisterFilter !== null) {
-                    // Frontend provided a register filter - validate it's within catalog
-                    $requestedRegisters = $this->extractFilterValues($frontendRegisterFilter);
-                    $allowedRegisters   = array_map('intval', $catalog['registers']);
-
-                    // Check if all requested registers are within the catalog
-                    $validRegisters = array_intersect($requestedRegisters, $allowedRegisters);
-
-                    if (empty($validRegisters)) {
-                        // None of the requested registers are in this catalog
-                        return new JSONResponse(['error' => 'Requested register(s) not available in this catalog'], 403);
-                    }
-
-                    // Keep the frontend's filter (it's valid) - don't overwrite
-                } else {
-                    // No frontend filter - apply catalog's default filter
-                    $searchQuery['@self']['register'] = [
-                        'or' => implode(',', array_map('intval', $catalog['registers'])),
-                    ];
-                }
-            }//end if
+                $registers = array_map('intval', $catalog['registers']);
+                // Use first register for magic mapper routing
+                $searchQuery['_register'] = $registers[0];
+            }
 
             // DIRECT ObjectService call - WITH PUBLISHED FILTERING AND CATALOG FILTERING
             // Filtering is now done at database/Solr level for maximum performance

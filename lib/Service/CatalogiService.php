@@ -146,12 +146,10 @@ class CatalogiService
         if ($catalogId !== null) {
             $catalogs = [$this->getObjectService()->find($catalogId)];
         } else {
-            // Setup the query for searchObjects
+            // Setup the query for searchObjects - use _register and _schema for magic mapper routing
             $query = [
-                '@self' => [
-                    'register' => $register,
-                    'schema'   => $schema,
-                ],
+                '_register' => $register,
+                '_schema'   => $schema,
             ];
             // Get all catalogs using searchObjects
             $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
@@ -404,12 +402,10 @@ class CatalogiService
             }
 
             $query = [
-                '@self'  => [
-                    'register' => $register,
-                    'schema'   => $schema,
-                ],
-                'slug'   => $slug,
-                '_limit' => 1,
+                '_register' => $register,
+                '_schema'   => $schema,
+                'slug'      => $slug,
+                '_limit'    => 1,
             ];
 
             $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
@@ -572,17 +568,16 @@ class CatalogiService
 
         $objectService = $this->getObjectService();
 
-        // Build search query from config
+        // Build search query from config - use _register and _schema for magic mapper routing
         $query = [];
-        if (!empty($context['registers']) || !empty($context['schemas'])) {
-            $query['@self'] = [];
-            if (!empty($context['registers'])) {
-                $query['@self']['register'] = $context['registers'];
-            }
+        if (!empty($context['registers'])) {
+            // Use first register for magic mapper routing
+            $query['_register'] = is_array($context['registers']) ? $context['registers'][0] : $context['registers'];
+        }
 
-            if (!empty($context['schemas'])) {
-                $query['@self']['schema'] = $context['schemas'];
-            }
+        if (!empty($context['schemas'])) {
+            // Use first schema for magic mapper routing
+            $query['_schema'] = is_array($context['schemas']) ? $context['schemas'][0] : $context['schemas'];
         }
 
         // Add other filters from config
