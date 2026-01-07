@@ -710,24 +710,16 @@ class DirectoryService
                     $uuid = $existingListingData['id'];
 
                     // Use saveObject which respects hard validation settings
-                    $objectService->saveObject(
-                        object: $listingData,
-                        register: $listingRegister,
-                        schema: $listingSchema,
-                        uuid: $uuid
-                    );
+                    // Use positional parameters for compatibility with different ObjectService versions
+                    $objectService->saveObject($listingData, [], $listingRegister, $listingSchema, $uuid);
 
                     $result['action']  = 'updated';
                     $result['success'] = true;
                 }
             } else {
                 // Create new listing using saveObject
-                $objectService->saveObject(
-                    object: $listingData,
-                    register: $listingRegister,
-                    schema: $listingSchema,
-                    uuid: $uuid
-                );
+                // Use positional parameters for compatibility with different ObjectService versions
+                $objectService->saveObject($listingData, [], $listingRegister, $listingSchema, $uuid);
 
                 $result['action']  = 'created';
                 $result['success'] = true;
@@ -747,12 +739,8 @@ class DirectoryService
 // Internal server error
                     $errorData['lastSync'] = (new \DateTime())->format('c');
 
-                    $objectService->saveObject(
-                        object: $errorData,
-                        register: $listingRegister,
-                        schema: $listingSchema,
-                        uuid: $existingListingData['id']
-                    );
+                    // Use positional parameters for compatibility with different ObjectService versions
+                    $objectService->saveObject($errorData, [], $listingRegister, $listingSchema, $existingListingData['id']);
                 }
             } catch (\Exception $updateException) {
                 // Removed redundant logging
@@ -998,12 +986,8 @@ class DirectoryService
                 $listingObject['lastSync']   = (new \DateTime())->format('c');
 
                 // Save the updated listing
-                $objectService->saveObject(
-                    object: $listingObject,
-                    register: $listingRegister,
-                    schema: $listingSchema,
-                    uuid: $existingListingData['id']
-                );
+                // Use positional parameters for compatibility with different ObjectService versions
+                $objectService->saveObject($listingObject, [], $listingRegister, $listingSchema, $existingListingData['id']);
             }
         } catch (\Exception $e) {
             // Removed redundant logging
@@ -1301,12 +1285,8 @@ class DirectoryService
                 $errorData['statusCode'] = $statusCode;
                 $errorData['lastSync']   = (new \DateTime())->format('c');
 
-                $objectService->saveObject(
-                    object: $errorData,
-                    register: $listingRegister,
-                    schema: $listingSchema,
-                    uuid: $listingData['id']
-                );
+                // Use positional parameters for compatibility with different ObjectService versions
+                $objectService->saveObject($errorData, [], $listingRegister, $listingSchema, $listingData['id']);
             }
         } catch (\Exception $e) {
             // Removed redundant logging

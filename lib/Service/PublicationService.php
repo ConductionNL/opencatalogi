@@ -569,8 +569,9 @@ class PublicationService
 
         try {
             // Render the object with requested extensions and filters.
+            // Use positional parameters for compatibility with different ObjectService versions
             return new JSONResponse(
-                $this->getObjectService()->find(id: $id, extend: $extend)
+                $this->getObjectService()->find($id, $extend)
             );
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Not Found'], 404);
@@ -594,7 +595,8 @@ class PublicationService
      */
     public function attachments(string $id): JSONResponse
     {
-        $object = $this->getObjectService()->find(id: $id, extend: [])->jsonSerialize();
+        // Use positional parameters for compatibility with different ObjectService versions
+        $object = $this->getObjectService()->find($id, [])->jsonSerialize();
 
         // Check if the object is published - if so, allow access to attachments regardless of catalog restrictions
         $isPublished = !empty($object['@self']['published']) && $object['@self']['published'] !== null;

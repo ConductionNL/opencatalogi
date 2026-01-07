@@ -429,13 +429,8 @@ class PublicationsController extends Controller
             // DIRECT OBJECT FETCH: Use find() method to get object by ID.
             // Set rbac=false, multi=false for public access.
             // Note: Published filtering happens via manual checks below.
-            $object = $objectService->find(
-                id: $id,
-                extend: $extend,
-                files: false,
-                register: null,
-                schema: null
-            );
+            // Use positional parameters for compatibility with different ObjectService versions
+            $object = $objectService->find($id, $extend, false, null, null);
 
             if ($object === null) {
                 $this->logger->warning(
@@ -532,16 +527,8 @@ class PublicationsController extends Controller
             }
 
             // Render the object with extensions
-            $result = $objectService->renderEntity(
-                entity: $object,
-                extend: $extend,
-                depth: 0,
-                filter: [],
-                fields: [],
-                unset: [],
-                _rbac: false,
-                _multitenancy: false,
-            );
+            // Use positional parameters for compatibility with different ObjectService versions
+            $result = $objectService->renderEntity($object, $extend, 0, [], [], [], false, false);
 
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -665,9 +652,8 @@ class PublicationsController extends Controller
             // DIRECT OBJECT FETCH: Get the publication object directly by ID.
             // Set rbac=false, multi=false for public access.
             // Note: Published filtering happens via manual checks below.
-            $object = $objectService->find(
-                id: $id
-            );
+            // Use positional parameters for compatibility with different ObjectService versions
+            $object = $objectService->find($id);
 
             if ($object === null) {
                 return new JSONResponse(

@@ -387,13 +387,8 @@ class CMSTool implements ToolInterface
 
         // Use ObjectService to create page (it handles RBAC and validation)
         // Using the publication register from OpenCatalogi configuration
-        $page = $this->objectService->saveObject(
-            object: $pageData,
-            extend: [],
-            register: 'publication',
-            // Register (from OpenCatalogi configuration)
-            schema: 'page'
-        );
+        // Use positional parameters for compatibility with different ObjectService versions
+        $page = $this->objectService->saveObject($pageData, [], 'publication', 'page');
 
         return $this->successResponse(
             'Page created successfully',
@@ -505,14 +500,8 @@ class CMSTool implements ToolInterface
         }
 
         // Use ObjectService to create menu.
-        $menu = $this->objectService->saveObject(
-            object: $menuData,
-            extend: [],
-            register: 'publication',
-            // Register (from OpenCatalogi configuration)
-            schema: 'menu'
-            // Schema
-        );
+        // Use positional parameters for compatibility with different ObjectService versions
+        $menu = $this->objectService->saveObject($menuData, [], 'publication', 'menu');
 
         return $this->successResponse(
             'Menu created successfully',
@@ -602,12 +591,8 @@ class CMSTool implements ToolInterface
         ];
 
         // Use ObjectService to create menu item
-        $menuItem = $this->objectService->saveObject(
-            object: $menuItemData,
-            extend: [],
-            register: 'publication',
-            schema: 'menuItem'
-        );
+        // Use positional parameters for compatibility with different ObjectService versions
+        $menuItem = $this->objectService->saveObject($menuItemData, [], 'publication', 'menuItem');
 
         return $this->successResponse(
             'Menu item added successfully',

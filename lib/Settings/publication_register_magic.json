@@ -776,7 +776,132 @@
         "jobs": [],
         "synchronizations": [],
         "rules": [],
-        "objects": []
+        "objects": [
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "catalog",
+                    "slug": "publications"
+                },
+                "title": "Publications",
+                "summary": "The main publications catalog",
+                "description": "This catalog contains all public publications available in OpenCatalogi.",
+                "listed": true,
+                "status": "stable",
+                "slug": "publications"
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "page",
+                    "slug": "home"
+                },
+                "title": "Home",
+                "slug": "home",
+                "contents": [
+                    {
+                        "type": "hero",
+                        "data": {
+                            "title": "Welcome to OpenCatalogi",
+                            "subtitle": "Your open source publication catalog"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "data": {
+                            "content": "This is the home page of your OpenCatalogi installation. Browse our publications catalog to find what you're looking for."
+                        }
+                    }
+                ]
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "page",
+                    "slug": "about"
+                },
+                "title": "About",
+                "slug": "about",
+                "contents": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "content": "OpenCatalogi is an open source publication catalog system built on Nextcloud."
+                        }
+                    }
+                ]
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "menu",
+                    "slug": "main-menu"
+                },
+                "title": "Main Menu",
+                "position": 0,
+                "items": [
+                    {
+                        "order": 0,
+                        "name": "Home",
+                        "link": "/",
+                        "description": "Go to homepage"
+                    },
+                    {
+                        "order": 1,
+                        "name": "Publications",
+                        "link": "/publications",
+                        "description": "Browse all publications"
+                    },
+                    {
+                        "order": 2,
+                        "name": "About",
+                        "link": "/about",
+                        "description": "About this catalog"
+                    }
+                ]
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "menu",
+                    "slug": "footer-menu"
+                },
+                "title": "Footer Menu",
+                "position": 1,
+                "items": [
+                    {
+                        "order": 0,
+                        "name": "Privacy",
+                        "link": "/privacy",
+                        "description": "Privacy policy"
+                    },
+                    {
+                        "order": 1,
+                        "name": "Terms",
+                        "link": "/terms",
+                        "description": "Terms of service"
+                    }
+                ]
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "theme",
+                    "slug": "general"
+                },
+                "title": "General",
+                "summary": "General publications and announcements"
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "organization",
+                    "slug": "default-org"
+                },
+                "name": "Default Organization",
+                "summary": "The default organization for this OpenCatalogi instance"
+            }
+        ]
     }
 }
 
