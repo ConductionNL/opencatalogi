@@ -835,7 +835,8 @@
                 "@self": {
                     "register": "publication",
                     "schema": "menu",
-                    "slug": "main-menu"
+                    "slug": "main-menu",
+                    "version": "1.0.1"
                 },
                 "title": "Main Menu",
                 "position": 0,
@@ -864,10 +865,36 @@
                 "@self": {
                     "register": "publication",
                     "schema": "menu",
-                    "slug": "footer-menu"
+                    "slug": "user-menu",
+                    "version": "1.0.1"
+                },
+                "title": "User Menu",
+                "position": 1,
+                "hideAfterLogin": true,
+                "items": [
+                    {
+                        "order": 0,
+                        "name": "Aanmelden",
+                        "link": "/register",
+                        "description": "Create an account"
+                    },
+                    {
+                        "order": 1,
+                        "name": "Inloggen",
+                        "link": "/login",
+                        "description": "Sign in to your account"
+                    }
+                ]
+            },
+            {
+                "@self": {
+                    "register": "publication",
+                    "schema": "menu",
+                    "slug": "footer-menu",
+                    "version": "1.0.1"
                 },
                 "title": "Footer Menu",
-                "position": 1,
+                "position": 2,
                 "items": [
                     {
                         "order": 0,

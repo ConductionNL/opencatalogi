@@ -246,30 +246,19 @@ class PublicationsController extends Controller
             // Clean up catalog-specific parameters
             unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 
-            // Add schema/register extension if needed
-            if (!isset($searchQuery['_extend'])) {
-                $searchQuery['_extend'] = [];
-            } else if (!is_array($searchQuery['_extend'])) {
-                // Handle comma-separated strings
-                $searchQuery['_extend'] = array_map('trim', explode(',', $searchQuery['_extend']));
-            }
-
-            // Ensure @self.schema and @self.register are always included for compatibility
-            if (!in_array('@self.schema', $searchQuery['_extend'])) {
-                $searchQuery['_extend'][] = '@self.schema';
-            }
-
-            if (!in_array('@self.register', $searchQuery['_extend'])) {
-                $searchQuery['_extend'][] = '@self.register';
-            }
-
             // DATABASE-LEVEL FILTERING: Handle catalog filtering intelligently
-            // Use _schema and _register for magic mapper routing
-            // If catalog has schemas/registers configured, use the first one for routing
+            // Use _schemas for multi-schema search and faceting
             if (!empty($catalog['schemas'])) {
                 $schemas = array_map('intval', $catalog['schemas']);
-                // Use first schema for magic mapper routing
-                $searchQuery['_schema'] = $schemas[0];
+                // Pass all schemas for both search and faceting (enables multi-schema search)
+                $searchQuery['_schemas'] = $schemas;
+                // Only set _schema for single-schema catalogs (enables magic mapper optimization)
+                if (count($schemas) === 1) {
+                    $searchQuery['_schema'] = $schemas[0];
+                } else {
+                    // Explicitly unset _schema for multi-schema search to prevent auto-setting
+                    unset($searchQuery['_schema']);
+                }
             }
 
             if (!empty($catalog['registers'])) {
@@ -359,14 +348,8 @@ class PublicationsController extends Controller
                 $extend = [$extend];
             }
 
-            // Ensure @self.schema and @self.register are always included for compatibility.
-            if (!in_array('@self.schema', $extend)) {
-                $extend[] = '@self.schema';
-            }
-
-            if (!in_array('@self.register', $extend)) {
-                $extend[] = '@self.register';
-            }
+            // Note: @self.schema and @self.register are now provided at response @self level
+            // for list operations, and can be requested via _extend for single object fetches.
 
             // Debug logging.
             $this->logger->debug(
@@ -384,8 +367,13 @@ class PublicationsController extends Controller
             // DIRECT OBJECT FETCH: Use find() method to get object by ID.
             // Set rbac=false, multi=false for public access.
             // Note: Published filtering happens via manual checks below.
-            // Use positional parameters for compatibility with different ObjectService versions
-            $object = $objectService->find($id, $extend, false, null, null);
+            // Extract register and schema from catalog for magic table support.
+            $catalogRegisters = $catalog['registers'] ?? [];
+            $catalogSchemas = $catalog['schemas'] ?? [];
+            $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
+
+            $object = $objectService->find($id, $extend, false, $register, $schema);
 
             if ($object === null) {
                 $this->logger->warning(
@@ -431,59 +419,61 @@ class PublicationsController extends Controller
             // if (!$schemaMatches || !$registerMatches) {
             // return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
             // }
-            // Check if object is published (additional validation layer).
-            $published = $object->getPublished();
-
-            // For publications API, we require explicit published dates.
-            // Objects with published=null are not considered published for public API.
-            if ($published === null) {
-                return new JSONResponse(
-                    [
-                        'error'     => 'Publication not published',
-                        'message'   => 'The publication "'.$id.'" has no published date set.',
-                        'id'        => $id,
-                        'published' => null,
-                        'hint'      => 'The publication needs a published date to be accessible via the public API.',
-                    ],
-                    404
-                );
-            }
-
-            // Check if publication date is in the past.
-            $now = new \DateTime();
-            if ($published > $now) {
-                return new JSONResponse(
-                    [
-                        'error'     => 'Publication not yet published',
-                        'message'   => 'The publication "'.$id.'" is scheduled for future publication.',
-                        'id'        => $id,
-                        'published' => $published->format('Y-m-d H:i:s'),
-                        'now'       => $now->format('Y-m-d H:i:s'),
-                        'hint'      => 'This publication will be available on '.$published->format('Y-m-d H:i:s').'.',
-                    ],
-                    404
-                );
-            }
-
-            // Check if object is not depublished.
-            $depublished = $object->getDepublished();
-            if ($depublished !== null && $depublished <= $now) {
-                return new JSONResponse(
-                    [
-                        'error'       => 'Publication depublished',
-                        'message'     => 'The publication "'.$id.'" has been depublished.',
-                        'id'          => $id,
-                        'depublished' => $depublished->format('Y-m-d H:i:s'),
-                        'now'         => $now->format('Y-m-d H:i:s'),
-                        'hint'        => 'This publication was removed from public access on '.$depublished->format('Y-m-d H:i:s').'.',
-                    ],
-                    404
-                );
-            }
-
             // Render the object with extensions
             // Use positional parameters for compatibility with different ObjectService versions
             $result = $objectService->renderEntity($object, $extend, 0, [], [], [], false, false);
+
+            // Add registers, schemas, and extended objects to @self when requested via _extend.
+            // Supports both singular (_register, _schema) and plural (_registers, _schemas) forms.
+            if (isset($result['@self']) === true && empty($extend) === false) {
+                // Add registers if _registers or _register is in _extend.
+                if (in_array('_registers', $extend, true) === true
+                    || in_array('_register', $extend, true) === true
+                ) {
+                    $registerId = $object->getRegister();
+                    $registers  = [];
+                    try {
+                        $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+                        $registerEntity = $registerMapper->find($registerId);
+                        if ($registerEntity !== null) {
+                            $registers[$registerId] = $registerEntity->jsonSerialize();
+                        }
+                    } catch (\Exception $e) {
+                        $this->logger->warning(
+                            '[PublicationsController::show] Could not fetch register entity',
+                            ['registerId' => $registerId, 'error' => $e->getMessage()]
+                        );
+                    }
+
+                    $result['@self']['registers'] = $registers;
+                }
+
+                // Add schemas if _schemas or _schema is in _extend.
+                if (in_array('_schemas', $extend, true) === true
+                    || in_array('_schema', $extend, true) === true
+                ) {
+                    $schemaId = $object->getSchema();
+                    $schemas  = [];
+                    try {
+                        $schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+                        $schemaEntity = $schemaMapper->find($schemaId);
+                        if ($schemaEntity !== null) {
+                            $schemas[$schemaId] = $schemaEntity->jsonSerialize();
+                        }
+                    } catch (\Exception $e) {
+                        $this->logger->warning(
+                            '[PublicationsController::show] Could not fetch schema entity',
+                            ['schemaId' => $schemaId, 'error' => $e->getMessage()]
+                        );
+                    }
+
+                    $result['@self']['schemas'] = $schemas;
+                }
+
+                // Get extended objects indexed by UUID (for _extend lookups).
+                $extendedObjects             = $objectService->getExtendedObjects();
+                $result['@self']['objects'] = $extendedObjects;
+            }//end if
 
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -544,8 +534,66 @@ class PublicationsController extends Controller
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
-        // @todo: Add catalog validation here if needed
-        return $this->publicationService->attachments(id: $id);
+        try {
+            // Get the catalog from cache or database
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
+
+            if ($catalogData === null) {
+                return new JSONResponse(
+                    [
+                        'error'       => 'Catalog not found',
+                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }
+
+            // Convert ObjectEntity to array if needed
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+
+            // Extract register and schema from catalog for magic table support.
+            $catalogRegisters = $catalog['registers'] ?? [];
+            $catalogSchemas = $catalog['schemas'] ?? [];
+            $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
+
+            // First verify the object exists in this catalog's register/schema
+            $objectService = $this->getObjectService();
+            $object = $objectService->find($id, [], false, $register, $schema);
+
+            if ($object === null) {
+                return new JSONResponse(
+                    [
+                        'error'       => 'Publication not found',
+                        'message'     => 'The publication with ID "'.$id.'" does not exist.',
+                        'id'          => $id,
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }
+
+            return $this->publicationService->attachments(id: $id);
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(
+                [
+                    'error'       => 'Publication not found',
+                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
+                    'id'          => $id,
+                    'catalogSlug' => $catalogSlug,
+                ],
+                404
+            );
+        } catch (\Exception $e) {
+            return new JSONResponse(
+                [
+                    'error'   => 'Failed to retrieve attachments',
+                    'message' => $e->getMessage(),
+                ],
+                500
+            );
+        }
 
     }//end attachments()
 
@@ -565,8 +613,66 @@ class PublicationsController extends Controller
      */
     public function download(string $catalogSlug, string $id): JSONResponse
     {
-        // @todo: Add catalog validation here if needed
-        return $this->publicationService->download(id: $id);
+        try {
+            // Get the catalog from cache or database
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
+
+            if ($catalogData === null) {
+                return new JSONResponse(
+                    [
+                        'error'       => 'Catalog not found',
+                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }
+
+            // Convert ObjectEntity to array if needed
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+
+            // Extract register and schema from catalog for magic table support.
+            $catalogRegisters = $catalog['registers'] ?? [];
+            $catalogSchemas = $catalog['schemas'] ?? [];
+            $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
+
+            // First verify the object exists in this catalog's register/schema
+            $objectService = $this->getObjectService();
+            $object = $objectService->find($id, [], false, $register, $schema);
+
+            if ($object === null) {
+                return new JSONResponse(
+                    [
+                        'error'       => 'Publication not found',
+                        'message'     => 'The publication with ID "'.$id.'" does not exist.',
+                        'id'          => $id,
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }
+
+            return $this->publicationService->download(id: $id);
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(
+                [
+                    'error'       => 'Publication not found',
+                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
+                    'id'          => $id,
+                    'catalogSlug' => $catalogSlug,
+                ],
+                404
+            );
+        } catch (\Exception $e) {
+            return new JSONResponse(
+                [
+                    'error'   => 'Failed to download publication',
+                    'message' => $e->getMessage(),
+                ],
+                500
+            );
+        }
 
     }//end download()
 
@@ -589,26 +695,33 @@ class PublicationsController extends Controller
     public function uses(string $catalogSlug, string $id): JSONResponse
     {
         try {
+            // Get the catalog from cache or database
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
+
+            if ($catalogData === null) {
+                return new JSONResponse(
+                    [
+                        'error'       => 'Catalog not found',
+                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }
+
+            // Convert ObjectEntity to array if needed
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+
             // Get ObjectService directly
             $objectService = $this->getObjectService();
 
-            // Get query parameters once
-            $searchQuery = $this->request->getParams();
+            // Extract register and schema from catalog for magic table support.
+            $catalogRegisters = $catalog['registers'] ?? [];
+            $catalogSchemas = $catalog['schemas'] ?? [];
+            $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
 
-            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
-
-            // Force use of SOLR index for better performance on public endpoints
-            $searchQuery            = [];
-            $searchQuery['_extend'] = ['@self.schema'];
-
-            // Lets set the limit to 1000 to make sure we catch all relations
-            $searchQuery['_limit'] = 1000;
-
-            // DIRECT OBJECT FETCH: Get the publication object directly by ID.
-            // Set rbac=false, multi=false for public access.
-            // Note: Published filtering happens via manual checks below.
-            // Use positional parameters for compatibility with different ObjectService versions
-            $object = $objectService->find($id);
+            $object = $objectService->find($id, [], false, $register, $schema);
 
             if ($object === null) {
                 return new JSONResponse(
@@ -621,27 +734,6 @@ class PublicationsController extends Controller
                     ],
                     404
                 );
-            }
-
-            // Check if object is published (since SOLR filtering is disabled)
-            $published = $object->getPublished();
-            if ($published === null) {
-                // @todo: remove this very dirty hotfix/hack
-                return new JSONResponse(['error' => 'Publication not published'], 404);
-            }
-
-            // Check if publication date is in the past
-            $now = new \DateTime();
-            if ($published > $now) {
-                // @todo: remove this very dirty hotfix/hack
-                return new JSONResponse(['error' => 'Publication yet published'], 404);
-            }
-
-            // Check if object is not depublished
-            $depublished = $object->getDepublished();
-            if ($depublished !== null && $depublished <= $now) {
-                // @todo: remove this very dirty hotfix/hack
-                return new JSONResponse(['error' => 'Publication depublished'], 404);
             }
 
             $relationsArray = $object->getRelations();
@@ -675,12 +767,16 @@ class PublicationsController extends Controller
             // Check if relations array is empty
             if (empty($relations)) {
                 // If relations is empty, return empty paginated response
+                $searchQuery = [
+                    '_extend' => ['@self.schema'],
+                    '_limit'  => 1000,
+                ];
                 $result = [
                     'results' => [],
                     'total'   => 0,
                     'page'    => 1,
                     'pages'   => 1,
-                    'limit'   => (int) ($searchQuery['_limit'] ?? $searchQuery['limit'] ?? 20),
+                    'limit'   => 1000,
                     'offset'  => 0,
                     'facets'  => [],
                     '@self'   => [
@@ -693,18 +789,29 @@ class PublicationsController extends Controller
                     ],
                 ];
             } else {
-                // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
-                // After find(), ObjectService is constrained to the object's register/schema
-                // But for /uses endpoint, we want to search across ALL registers/schemas
-                $freshObjectService = $this->getObjectService();
+                // Search for objects by their UUIDs using multi-schema search.
+                // Related objects can be in ANY schema, not just the catalog's schemas.
+                // Get all schemas from the register to search across all possible locations.
+                $registerMapper   = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+                $registerEntity   = $registerMapper->find($register, _multitenancy: false, _rbac: false);
+                $registerSchemas  = $registerEntity->getSchemas() ?? [];
+                $registerSchemaIds = array_map('intval', $registerSchemas);
 
-                // Call fresh ObjectService instance with ids as named parameter.
-                // Published filtering now works correctly - filter out unpublished objects.
-                $result = $freshObjectService->searchObjectsPaginated(
+                // Use _ids filter which is supported by MagicMapper for UUID/slug lookup.
+                $searchQuery = [
+                    '_extend'   => ['@self.schema'],
+                    '_limit'    => 1000,
+                    '_register' => $register,
+                    '_schemas'  => $registerSchemaIds,
+                    '_ids'      => $relations,
+                ];
+
+                // Create a fresh ObjectService to avoid state from previous operations.
+                $freshObjectService = $this->getObjectService();
+                $result             = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery,
                     deleted: false,
-                    published: true,
-                    ids: $relations
+                    published: true
                 );
             }//end if
 
@@ -773,32 +880,52 @@ class PublicationsController extends Controller
     public function used(string $catalogSlug, string $id): JSONResponse
     {
         try {
+            // Get the catalog from cache or database
+            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
+
+            if ($catalogData === null) {
+                return new JSONResponse(
+                    [
+                        'error'       => 'Catalog not found',
+                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }
+
+            // Convert ObjectEntity to array if needed
+            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
 
-            // Get query parameters once
-            $searchQuery = $this->request->getParams();
+            // Extract register from catalog for magic table support.
+            $catalogRegisters = $catalog['registers'] ?? [];
+            $register         = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
 
-            // **CRITICAL FIX**: Create a fresh ObjectService instance for cross-register/schema search
-            // For /used endpoint, we want to search across ALL registers/schemas
-            $freshObjectService = $this->getObjectService();
+            // Get all schemas from the register to search across all possible locations.
+            // Related objects can be in ANY schema, not just the catalog's schemas.
+            $registerMapper    = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+            $registerEntity    = $registerMapper->find($register, _multitenancy: false, _rbac: false);
+            $registerSchemas   = $registerEntity->getSchemas() ?? [];
+            $registerSchemaIds = array_map('intval', $registerSchemas);
 
-            // Clean up unwanted parameters and remove register/schema restrictions
-            // **CRITICAL FIX**: Remove extend parameter - it's for rendering, not filtering
-            unset($searchQuery['id'], $searchQuery['_route'], $searchQuery['register'], $searchQuery['schema'], $searchQuery['extend']);
+            // Build search query for cross-schema search.
+            // Search for objects that have this UUID in their _relations using _relations_contains filter.
+            $searchQuery = [
+                '_extend'             => ['@self.schema'],
+                '_limit'              => 1000,
+                '_register'           => $register,
+                '_schemas'            => $registerSchemaIds,
+                '_relations_contains' => $id,
+            ];
 
-            // Force use of SOLR index for better performance on public endpoints
-            $searchQuery            = [];
-            $searchQuery['_extend'] = ['@self.schema'];
-
-            // Lets set the limit to 1000 to make sure we catch all relations
-            $searchQuery['_limit'] = 1000;
-
-            // Use fresh ObjectService instance searchObjectsPaginated directly - pass uses as named parameter.
-            // Published filtering now works correctly - filter out unpublished objects.
-            $result = $freshObjectService->searchObjectsPaginated(
+            // Search for objects that have this UUID in their relations.
+            $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                uses: $id
+                deleted: false,
+                published: true
             );
 
             // Add relations being searched for debugging

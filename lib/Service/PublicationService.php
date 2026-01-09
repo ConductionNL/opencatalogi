@@ -890,8 +890,8 @@ class PublicationService
         $page   = (int) ($queryParams['_page'] ?? $queryParams['page'] ?? 1);
         $offset = (int) ($queryParams['offset'] ?? (($page - 1) * $limit));
 
-        // Ensure minimum values
-        $limit  = max(1, $limit);
+        // Ensure minimum values (limit=0 is valid for count/facets-only requests)
+        $limit  = max(0, $limit);
         $page   = max(1, $page);
         $offset = max(0, $offset);
 
@@ -956,21 +956,8 @@ class PublicationService
             return $this->getLocalPublicationsFast($queryParams, $requestParams, $baseUrl, $includeCatalogs, $requestedDirectoryFacets, $requestedCatalogFacets);
         }
 
-        // Always add _extend parameters for schema and register information
-        if (!isset($queryParams['_extend'])) {
-            $queryParams['_extend'] = [];
-        } else if (!is_array($queryParams['_extend'])) {
-            $queryParams['_extend'] = [$queryParams['_extend']];
-        }
-
-        // Ensure @self.schema and @self.register are always included
-        if (!in_array('@self.schema', $queryParams['_extend'])) {
-            $queryParams['_extend'][] = '@self.schema';
-        }
-
-        if (!in_array('@self.register', $queryParams['_extend'])) {
-            $queryParams['_extend'][] = '@self.register';
-        }
+        // Note: @self.schema and @self.register are now provided at response @self level,
+        // not duplicated in each result. No need to add them to _extend.
 
         // Get local publications first
         $localResponse = $this->index(null, $queryParams);
@@ -1345,21 +1332,8 @@ class PublicationService
         // Setup timing start
         $setupStart = microtime(true);
 
-        // Always add _extend parameters for schema and register information
-        if (!isset($queryParams['_extend'])) {
-            $queryParams['_extend'] = [];
-        } else if (!is_array($queryParams['_extend'])) {
-            $queryParams['_extend'] = [$queryParams['_extend']];
-        }
-
-        // Ensure @self.schema and @self.register are always included
-        if (!in_array('@self.schema', $queryParams['_extend'])) {
-            $queryParams['_extend'][] = '@self.schema';
-        }
-
-        if (!in_array('@self.register', $queryParams['_extend'])) {
-            $queryParams['_extend'][] = '@self.register';
-        }
+        // Note: @self.schema and @self.register are now provided at response @self level,
+        // not duplicated in each result. No need to add them to _extend.
 
         $timings['setup'] = ((microtime(true) - $setupStart) * 1000);
 
