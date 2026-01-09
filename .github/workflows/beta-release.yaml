@@ -3,7 +3,8 @@ name: Beta Release
 on:
   push:
     branches:
-      - beta
+      - feature/newopenregisters
+      # - beta
 
 jobs:
   release-management:
@@ -30,7 +31,7 @@ jobs:
           git fetch origin master
           master_version=$(git show origin/master:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
           
-          # Get current version from development branch
+          # Get current version from feature/newopenregisters branch
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
           
           # Split master version into parts
@@ -151,7 +152,7 @@ jobs:
         id: version
         uses: codacy/git-version@2.7.1
         with:
-          release-branch: beta
+          release-branch: feature/newopenregisters
 
       # Stap 14: Extraheer repository description (optioneel)
       - name: Extract repository description
