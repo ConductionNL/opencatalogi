@@ -4,6 +4,7 @@ import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
 import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import pinia from './pinia.js'
 import App from './App.vue'
+import router from './router/index.js'
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
 import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
@@ -50,6 +51,7 @@ Vue.directive('tooltip', Tooltip) // it would be nice if this was in the documen
 new Vue(
 	{
 		pinia,
+		router,
 		render: h => h(App),
 	},
 ).$mount('#content')

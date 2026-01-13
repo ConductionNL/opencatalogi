@@ -308,9 +308,14 @@ export default defineComponent({
 				r => r.id.toString() === this.selectedRegister.value,
 			)
 
-			// Check if register has valid schema objects (not just any array items)
-			return register && Array.isArray(register.schemas)
-				&& register.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+			// Check if register has schemas - accept both array of IDs or array of schema objects.
+			if (!register || !Array.isArray(register.schemas)) {
+				return false
+			}
+
+			// Accept either array of integers (schema IDs) or array of schema objects.
+			return register.schemas.length > 0 
+				&& (register.schemas.some(schema => typeof schema === 'number' || (schema && typeof schema === 'object' && schema.id)))
 		},
 		/**
 		 * Returns all available schema options (no filtering for reuse)
@@ -400,16 +405,29 @@ export default defineComponent({
 					}
 				}
 
-				// If we have a schema configured, set it
+				// If we have a schema configured, set it.
 				if (schemaId && this.selectedRegister) {
 					const register = this.settings.availableRegisters.find(
 						r => r.id.toString() === this.selectedRegister.value,
 					)
 					if (register && Array.isArray(register.schemas)) {
-						// Filter out non-object schemas and find the matching one
-						const schema = register.schemas
-							.filter(s => s && typeof s === 'object' && s.id && s.title)
-							.find(s => s.id.toString() === schemaId)
+						// Handle both schema IDs (numbers) and schema objects.
+						let schema = null
+						if (register.schemas.some(s => typeof s === 'number')) {
+							// Schemas are just IDs, check if our schemaId is in the array.
+							if (register.schemas.includes(parseInt(schemaId))) {
+								schema = {
+									id: schemaId,
+									title: `Schema ${schemaId}`, // Fallback title.
+								}
+							}
+						} else {
+							// Schemas are objects, find the matching one.
+							schema = register.schemas
+								.filter(s => s && typeof s === 'object' && s.id && s.title)
+								.find(s => s.id.toString() === schemaId)
+						}
+						
 						if (schema) {
 							this.configuration = {
 								...this.configuration,
@@ -432,7 +450,7 @@ export default defineComponent({
 		 * Automatically selects the opencatalogi register if it exists
 		 */
 		autoSelectOpenCatalogiRegister() {
-			// Look for a register with "opencatalogi" in the name
+			// Look for a register with "opencatalogi" in the name.
 			const opencatalogiRegister = this.settings.availableRegisters.find(
 				register => register.title.toLowerCase().includes('publication'),
 			)
@@ -444,13 +462,16 @@ export default defineComponent({
 				}
 				this.updateSchemaOptions(opencatalogiRegister.id.toString())
 
-				// Only try to auto-select schemas if the register has valid schemas
-				if (Array.isArray(opencatalogiRegister.schemas)
-					&& opencatalogiRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)) {
-					this.autoSelectMatchingSchemas(opencatalogiRegister)
+				// Only try to auto-select schemas if the register has valid schemas.
+				if (Array.isArray(opencatalogiRegister.schemas) && opencatalogiRegister.schemas.length > 0) {
+					// Check if schemas are objects or just IDs.
+					const hasSchemaObjects = opencatalogiRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					if (hasSchemaObjects) {
+						this.autoSelectMatchingSchemas(opencatalogiRegister)
+					}
 				}
 			} else if (this.settings.availableRegisters.length > 0 && !this.selectedRegister) {
-				// If no Open Catalogi register but we have registers, select the first one
+				// If no Open Catalogi register but we have registers, select the first one.
 				const firstRegister = this.settings.availableRegisters[0]
 				this.selectedRegister = {
 					label: firstRegister.title,
@@ -458,10 +479,13 @@ export default defineComponent({
 				}
 				this.updateSchemaOptions(firstRegister.id.toString())
 
-				// Only try to auto-select schemas if the register has valid schemas
-				if (Array.isArray(firstRegister.schemas)
-					&& firstRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)) {
-					this.autoSelectMatchingSchemas(firstRegister)
+				// Only try to auto-select schemas if the register has valid schemas.
+				if (Array.isArray(firstRegister.schemas) && firstRegister.schemas.length > 0) {
+					// Check if schemas are objects or just IDs.
+					const hasSchemaObjects = firstRegister.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					if (hasSchemaObjects) {
+						this.autoSelectMatchingSchemas(firstRegister)
+					}
 				}
 			}
 		},
@@ -507,13 +531,24 @@ export default defineComponent({
 		updateSchemaOptions(registerId) {
 			const register = this.settings.availableRegisters.find(r => r.id.toString() === registerId)
 			if (register && Array.isArray(register.schemas)) {
-				// Filter out non-object schemas and only include valid schema objects
-				const validSchemas = register.schemas
-					.filter(schema => schema && typeof schema === 'object' && schema.id && schema.title)
-				this.schemaOptions = validSchemas.map(schema => ({
-					label: schema.title,
-					value: schema.id.toString(),
-				}))
+				// Handle both schema IDs (numbers) and schema objects.
+				if (register.schemas.some(s => typeof s === 'number')) {
+					// Schemas are just IDs, create options with ID as both label and value.
+					this.schemaOptions = register.schemas
+						.filter(schemaId => typeof schemaId === 'number')
+						.map(schemaId => ({
+							label: `Schema ${schemaId}`,
+							value: schemaId.toString(),
+						}))
+				} else {
+					// Schemas are objects, filter out non-object schemas and only include valid schema objects.
+					const validSchemas = register.schemas
+						.filter(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					this.schemaOptions = validSchemas.map(schema => ({
+						label: schema.title,
+						value: schema.id.toString(),
+					}))
+				}
 			} else {
 				this.schemaOptions = []
 			}
@@ -548,13 +583,16 @@ export default defineComponent({
 					}
 				})
 
-				// Auto-select matching schemas
+				// Auto-select matching schemas.
 				const register = this.settings.availableRegisters.find(
 					r => r.id.toString() === this.selectedRegister.value,
 				)
-				if (register && Array.isArray(register.schemas)
-					&& register.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)) {
-					this.autoSelectMatchingSchemas(register)
+				if (register && Array.isArray(register.schemas) && register.schemas.length > 0) {
+					// Check if schemas are objects or just IDs.
+					const hasSchemaObjects = register.schemas.some(schema => schema && typeof schema === 'object' && schema.id && schema.title)
+					if (hasSchemaObjects) {
+						this.autoSelectMatchingSchemas(register)
+					}
 				}
 			}
 		},

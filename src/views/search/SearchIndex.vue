@@ -1,15 +1,3 @@
-/**
- * SearchIndex.vue
- * Component for displaying the search index
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { useSearchStore } from '../../store/modules/search.ts'
 </script>

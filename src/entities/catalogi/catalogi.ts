@@ -26,6 +26,7 @@ export class Catalogi implements TCatalogi {
 	public schemas: string[]
 	public filters: Record<string, unknown>
 	public slug: string
+	public hasWooSitemap: boolean
 
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
@@ -45,6 +46,7 @@ export class Catalogi implements TCatalogi {
 		this.schemas = (Array.isArray(data.schemas) && data.schemas) || []
 		this.filters = data.filters || {}
 		this.slug = data?.slug || ''
+		this.hasWooSitemap = data?.hasWooSitemap || false
 	}
 
 	/* istanbul ignore next */
@@ -67,6 +69,7 @@ export class Catalogi implements TCatalogi {
 				.min(1, 'is verplicht')
 				.max(255, 'kan niet langer dan 255 zijn')
 				.regex(/^[a-z0-9-]+$/, 'moet alleen kleine letters, cijfers en koppeltekens bevatten'),
+			hasWooSitemap: z.boolean(),
 		})
 
 		const result = schema.safeParse({
