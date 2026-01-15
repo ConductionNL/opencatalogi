@@ -565,7 +565,7 @@ class SettingsService
 
 
     /**
-     * Load settings from the publication_register_magic.json file.
+     * Load settings from the publication_register.json file.
      *
      * This method supports both old and new versions of OpenRegister:
      * - New version (>= 0.2.10): Uses importFromFilePath method.
@@ -582,8 +582,8 @@ class SettingsService
             // Get the absolute path to the app directory
             $appPath = $this->appManager->getAppPath(Application::APP_ID);
             
-            // Build absolute path to the file (use magic version for better performance)
-            $absoluteFilePath = $appPath . '/lib/Settings/publication_register_magic.json';
+            // Build absolute path to the configuration file
+            $absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
             
             // Check if file exists
             if (file_exists($absoluteFilePath) === false) {
@@ -610,7 +610,7 @@ class SettingsService
             
             // Fallback: if path calculation fails, use the standard relative path
             if (str_starts_with($relativeFilePath, 'apps-extra/') === false && str_starts_with($relativeFilePath, 'apps/') === false) {
-                $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register_magic.json';
+                $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
             }
             
             // Set the sourceUrl in the data if not already set
@@ -633,7 +633,7 @@ class SettingsService
 
             // Use importFromApp to import the configuration data directly
             // This avoids the file path resolution issue in importFromFilePath
-            return $configurationService->importFromApp(
+            $result = $configurationService->importFromApp(
                 appId: Application::APP_ID,
                 data: $data,
                 version: $currentAppVersion,
