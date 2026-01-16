@@ -144,7 +144,11 @@ class CatalogiService
 
         $config = [];
         if ($catalogId !== null) {
-            $catalogs = [$this->getObjectService()->find($catalogId)];
+            $catalogs = [$this->getObjectService()->find(
+                id: $catalogId,
+                register: $register,
+                schema: $schema
+            )];
         } else {
             // Setup the query for searchObjects - use _register and _schema for magic mapper routing
             $query = [
@@ -475,7 +479,15 @@ class CatalogiService
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
         try {
-            $catalog     = $this->getObjectService()->find($catalogId);
+            // Get catalog register/schema for magic mapper routing
+            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            $catalog     = $this->getObjectService()->find(
+                id: $catalogId,
+                register: $register,
+                schema: $schema
+            );
             $catalogData = $catalog->jsonSerialize();
 
             if (isset($catalogData['slug'])) {
@@ -526,7 +538,15 @@ class CatalogiService
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
         try {
-            $catalog     = $this->getObjectService()->find($catalogId);
+            // Get catalog register/schema for magic mapper routing
+            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            $catalog     = $this->getObjectService()->find(
+                id: $catalogId,
+                register: $register,
+                schema: $schema
+            );
             $catalogData = $catalog->jsonSerialize();
 
             if (isset($catalogData['slug'])) {

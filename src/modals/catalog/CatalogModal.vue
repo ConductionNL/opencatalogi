@@ -219,6 +219,8 @@ export default {
 
 				this.catalogi = {
 					...activeCatalog,
+					// Extract id from @self if not present at top level
+					id: activeCatalog.id || activeCatalog['@self']?.id || '',
 					filters: Array.isArray(activeCatalog.filters) ? {} : activeCatalog.filters || {},
 					status: this.statusOptions.find(opt => opt.id === (activeCatalog.status || '').toLowerCase()) || this.statusOptions[0],
 				}
