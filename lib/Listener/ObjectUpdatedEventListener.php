@@ -148,7 +148,7 @@ class ObjectUpdatedEventListener implements IEventListener
      *
      * @return boolean True if the update should be processed, false otherwise.
      */
-    private function shouldProcessUpdate(array $newObjectData, \OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity, array $publishingOptions): bool
+    private function shouldProcessUpdate(array $newObjectData, ?\OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity, array $publishingOptions): bool
     {
         // If auto-publish attachments is enabled, always process updates for published objects.
         if ($publishingOptions['auto_publish_attachments'] === true) {
@@ -164,7 +164,8 @@ class ObjectUpdatedEventListener implements IEventListener
         }
 
         // Check if publication status changed from unpublished to published.
-        $wasPublished = $this->isObjectEntityPublished($oldObjectEntity);
+        // If old object is null, assume it was not published.
+        $wasPublished = $oldObjectEntity !== null ? $this->isObjectEntityPublished($oldObjectEntity) : false;
         $isPublished  = $this->isObjectPublished($newObjectData);
 
         // Process if object became published.
