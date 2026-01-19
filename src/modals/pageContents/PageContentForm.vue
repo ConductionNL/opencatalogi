@@ -49,15 +49,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:value.sync="contentsItem.order"
 								required />
 
-							<!-- RichText -->
-							<div v-if="contentsItem.type === 'RichText'">
-								<label>Rich Text Content</label>
-								<v-md-editor
-									v-model="contentsItem.richTextData"
-									:disabled="objectStore.isLoading('page')"
-									height="300px"
-									mode="edit" />
-							</div>
+					<!-- RichText / Text -->
+					<div v-if="contentsItem.type === 'RichText' || contentsItem.type === 'Text'">
+						<label>Rich Text Content</label>
+						<v-md-editor
+							:key="`editor-${contentsItem.id}`"
+							v-model="contentsItem.richTextData"
+							:disabled="objectStore.isLoading('page')"
+							height="300px"
+							mode="edit" />
+					</div>
 
 							<!-- Faq -->
 							<div v-if="contentsItem.type === 'Faq'">
@@ -228,35 +229,59 @@ export default {
 			deep: true,
 		},
 	},
-	mounted() {
-		// Fetch groups for the dropdown
-		this.fetchGroups()
+mounted() {
+	// Fetch groups for the dropdown
+	this.fetchGroups()
 
-		if (this.isEdit) {
-			const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
+	if (this.isEdit) {
+		const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
 
-			// put in all data that does not require special handeling
-			this.contentsItem = {
-				...this.contentsItem,
-				type: contentItem.type,
-				order: contentItem.order || 0,
-				richTextData: contentItem.data.content || '',
-				id: contentItem.id,
-				groups: contentItem.groups || [],
-				hideAfterLogin: contentItem.hideAfterLogin || false,
-				hideBeforeLogin: contentItem.hideBeforeLogin || false,
-			}
+		console.log('🔍 Loading content for edit:', contentItem)
+		console.log('🔍 Content data:', contentItem.data)
+		console.log('🔍 Content type:', contentItem.type)
 
-			// if faqs are present, prepend them to the contentsItem
-			if (contentItem.data.faqs && contentItem.data.faqs.length > 0) {
-				this.contentsItem.faqData = contentItem.data.faqs.map((faq) => ({
-					id: Math.random().toString(36).substring(2, 12),
-					question: faq.question,
-					answer: faq.answer,
-				})).concat(this.contentsItem.faqData)
-			}
+		// Normalize type for backward compatibility
+		// 'text' and 'Text' should be treated as 'RichText'
+		let normalizedType = contentItem.type
+		if (contentItem.type === 'text' || contentItem.type === 'Text') {
+			normalizedType = 'RichText'
 		}
-	},
+
+		// put in all data that does not require special handeling
+		// Note: groups, hideAfterLogin, and hideBeforeLogin are stored in contentItem.data, not at the root level
+		// Note: richTextData might be stored as 'content' or 'text' for backward compatibility
+		this.contentsItem = {
+			...this.contentsItem,
+			type: normalizedType,
+			order: contentItem.order || 0,
+			richTextData: contentItem.data.content || contentItem.data.text || '',
+			id: contentItem.id,
+			groups: contentItem.data.groups || [],
+			hideAfterLogin: contentItem.data.hideAfterLogin || false,
+			hideBeforeLogin: contentItem.data.hideBeforeLogin || false,
+		}
+
+		console.log('📝 Set contentsItem.richTextData to:', this.contentsItem.richTextData)
+		console.log('📝 Full contentsItem:', this.contentsItem)
+
+		// if faqs are present, prepend them to the contentsItem
+		if (contentItem.data.faqs && contentItem.data.faqs.length > 0) {
+			this.contentsItem.faqData = contentItem.data.faqs.map((faq) => ({
+				id: Math.random().toString(36).substring(2, 12),
+				question: faq.question,
+				answer: faq.answer,
+			})).concat(this.contentsItem.faqData)
+		}
+
+		// Force Vue to update the DOM after data changes
+		// This is needed for the v-md-editor to properly bind to the richTextData
+		this.$nextTick(() => {
+			console.log('✅ DOM updated, editor should now show content')
+			// Force a re-render by triggering reactivity
+			this.$forceUpdate()
+		})
+	}
+},
 	methods: {
 		/**
 		 * Handle dialog close event
@@ -278,22 +303,22 @@ export default {
 
 			const pageItemClone = _.cloneDeep(this.pageItem)
 
-			// Create the content item
-			// a different data format is needed for the type of content
-			let contentItem
-			if (this.contentsItem.type === 'RichText') {
-				contentItem = {
-					type: this.contentsItem.type,
-					order: this.contentsItem.order || 0,
-					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
-					data: {
-						content: this.contentsItem.richTextData,
-						groups: this.normalizeGroups(this.contentsItem.groups),
-						hideAfterLogin: this.contentsItem.hideAfterLogin,
-						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
-					},
-				}
-			} else if (this.contentsItem.type === 'Faq') {
+		// Create the content item
+		// a different data format is needed for the type of content
+		let contentItem
+		if (this.contentsItem.type === 'RichText' || this.contentsItem.type === 'Text') {
+			contentItem = {
+				type: this.contentsItem.type,
+				order: this.contentsItem.order || 0,
+				id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+				data: {
+					content: this.contentsItem.richTextData,
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				},
+			}
+		} else if (this.contentsItem.type === 'Faq') {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,

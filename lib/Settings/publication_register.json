@@ -25,6 +25,7 @@
                 "title": "Publication",
                 "version": "0.1.0",
                 "description": "The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website, including catalogs, listings, organizations, publications, themes, pages, menus, and glossary items. This register enables the creation of rich, navigable catalog websites with proper content organization and user-friendly navigation.",
+                "published": "2025-01-01T00:00:00+00:00",
                 "schemas": [
                     "catalog",
                     "listing",
@@ -70,6 +71,16 @@
                             "magicMapping": true,
                             "autoCreateTable": true,
                             "comment": "Frequently queried for filtering and authentication - benefits from SQL indexing"
+                        },
+                        "theme": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "Category schema for organizing publications - benefits from SQL indexing for filtering"
+                        },
+                        "glossary": {
+                            "magicMapping": true,
+                            "autoCreateTable": true,
+                            "comment": "Definitions and terms - benefits from SQL indexing for search and lookups"
                         }
                     }
                 }
@@ -80,6 +91,7 @@
                 "slug": "publication",
                 "title": "Publication",
                 "version": "0.0.4",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "A single publication entry within the catalog",
                 "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
                 "icon": null,
@@ -130,6 +142,7 @@
                 "slug": "catalog",
                 "title": "Catalog",
                 "version": "0.0.6",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "A collection of publications organized by theme and schema",
                 "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
                 "icon": null,
@@ -249,6 +262,7 @@
                 "slug": "listing",
                 "title": "Listing",
                 "version": "0.0.4",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "A filtered view of publications within a catalog",
                 "description": "A listing provides a customizable view of publications within a catalog. It allows for the creation of specific publication collections based on filters, sorting, and presentation preferences. Listings can be used to create featured sections, topic-based collections, or any other organized view of publications.",
                 "icon": null,
@@ -375,6 +389,7 @@
                 "slug": "organization",
                 "title": "Organization",
                 "version": "0.0.4",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "An organization that publishes or manages catalogs",
                 "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
                 "icon": null,
@@ -440,6 +455,7 @@
                 "slug": "page",
                 "title": "Page",
                 "version": "0.0.3",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "A content page for static information",
                 "description": "Pages are used to create static content within the catalog website. They can contain information about how to use the catalog, contact information, about pages, or any other static content that needs to be accessible through the website. Pages are accessible through their unique slugs and can be organized in the navigation menu.",
                 "icon": null,
@@ -532,6 +548,7 @@
                 "slug": "theme",
                 "title": "Theme",
                 "version": "0.0.3",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "A category for organizing publications",
                 "description": "Themes are used to categorize publications within catalogs. They provide a way to group related publications together, making it easier for users to find content they're interested in. Themes can be hierarchical and can be used for navigation and filtering purposes.",
                 "icon": null,
@@ -573,6 +590,7 @@
                 "slug": "menu",
                 "title": "Menu",
                 "version": "0.0.3",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "Navigation structure for the catalog website",
                 "description": "Menus define the navigation structure of the catalog website. They allow administrators to organize pages, listings, and other content into a hierarchical navigation system. Multiple menus can be created for different purposes, such as main navigation, footer links, or specialized content groupings.",
                 "icon": null,
@@ -721,6 +739,7 @@
                 "slug": "glossary",
                 "title": "Glossary",
                 "version": "0.0.4",
+                "published": "2025-01-01T00:00:00+00:00",
                 "summary": "Definitions and explanations of terms used in the catalog",
                 "description": "The glossary provides definitions and explanations for terms used throughout the catalog. It helps users understand specialized terminology, acronyms, and concepts. Each glossary entry can include detailed explanations, external references, and related keywords to help users find and understand relevant information.",
                 "icon": null,

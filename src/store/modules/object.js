@@ -503,67 +503,77 @@ export const useObjectStore = defineStore('object', {
 			}
 		},
 
-		/**
-		 * Set active object for type and fetch related data
-		 * @param {string} type - Object type
-		 * @param {object} object - Object to set as active
-		 * @return {Promise<void>}
-		 */
-		async setActiveObject(type, object) {
-			console.info('setActiveObject called with:', { type, object })
-			// Log the current state before update
-			console.info('Current activeObjects state:', { ...this.activeObjects })
-			// Update using reactive assignment
-			this.activeObjects = {
-				...this.activeObjects,
-				[type]: object,
-			}
-			// Log the state after update
-			console.info('Updated activeObjects state:', { ...this.activeObjects })
+	/**
+	 * Set active object for type and fetch related data
+	 * @param {string} type - Object type
+	 * @param {object} object - Object to set as active
+	 * @return {Promise<void>}
+	 */
+	async setActiveObject(type, object) {
+		console.info('setActiveObject called with:', { type, object })
+		// Log the current state before update
+		console.info('Current activeObjects state:', { ...this.activeObjects })
+		// Update using reactive assignment
+		this.activeObjects = {
+			...this.activeObjects,
+			[type]: object,
+		}
+		// Log the state after update
+		console.info('Updated activeObjects state:', { ...this.activeObjects })
 
-			// Initialize related data structure if not exists
-			console.info('Initializing relatedData for type:', type)
-			this.relatedData = {
-				...this.relatedData,
-				[type]: {
-					logs: null,
-					uses: null,
-					used: null,
-					files: null,
-				},
-			}
+		// List of virtual types that don't have API schemas and should not fetch related data
+		const virtualTypes = ['pageContent']
 
-			// Fetch related data in parallel
-			if (object?.id) {
-				console.info('Fetching related data for:', { type, objectId: object.id })
-
-				// For publications, extract schema and register info from the object itself
-				let publicationData = null
-				if (type === 'publication' && object['@self']) {
-					publicationData = {
-						source: 'openregister',
-						schema: object['@self'].schema,
-						register: object['@self'].register,
-					}
-					console.info('Using publication-specific config:', publicationData)
-				}
-
-				const fetchPromises = []
-				const dataTypes = ['logs', 'uses', 'used', 'files']
-				for (const dataType of dataTypes) {
-					if (!this.relatedData[type][dataType]) {
-						// Set default limit to 500 for files, 20 for other data types
-						const defaultLimit = dataType === 'files' ? 500 : 20
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
-					}
-				}
-				await Promise.all(fetchPromises)
-				console.info('Finished fetching related data')
-			} else {
-				console.info('No object ID provided, skipping related data fetch')
-			}
+		// Skip fetching related data for virtual types
+		if (virtualTypes.includes(type)) {
+			console.info('Skipping related data fetch for virtual type:', type)
 			console.info('setActiveObject completed')
-		},
+			return
+		}
+
+		// Initialize related data structure if not exists
+		console.info('Initializing relatedData for type:', type)
+		this.relatedData = {
+			...this.relatedData,
+			[type]: {
+				logs: null,
+				uses: null,
+				used: null,
+				files: null,
+			},
+		}
+
+		// Fetch related data in parallel
+		if (object?.id) {
+			console.info('Fetching related data for:', { type, objectId: object.id })
+
+			// For publications, extract schema and register info from the object itself
+			let publicationData = null
+			if (type === 'publication' && object['@self']) {
+				publicationData = {
+					source: 'openregister',
+					schema: object['@self'].schema,
+					register: object['@self'].register,
+				}
+				console.info('Using publication-specific config:', publicationData)
+			}
+
+			const fetchPromises = []
+			const dataTypes = ['logs', 'uses', 'used', 'files']
+			for (const dataType of dataTypes) {
+				if (!this.relatedData[type][dataType]) {
+					// Set default limit to 500 for files, 20 for other data types
+					const defaultLimit = dataType === 'files' ? 500 : 20
+					fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
+				}
+			}
+			await Promise.all(fetchPromises)
+			console.info('Finished fetching related data')
+		} else {
+			console.info('No object ID provided, skipping related data fetch')
+		}
+		console.info('setActiveObject completed')
+	},
 
 		/**
 		 * Clear active object for type
