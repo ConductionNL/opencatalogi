@@ -171,7 +171,8 @@ class ThemesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery);
+        // Set _rbac=false, _multitenancy=false for public theme access
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         // Build paginated response structure
         $responseData = [
@@ -233,7 +234,8 @@ class ThemesController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        $theme = $this->getObjectService()->find($id);
+        // Set _rbac=false, _multitenancy=false for public theme access
+        $theme = $this->getObjectService()->find($id, _rbac: false, _multitenancy: false);
 
         $data = $theme instanceof \OCP\AppFramework\Db\Entity ? $theme->jsonSerialize() : $theme;
 

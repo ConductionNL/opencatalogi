@@ -248,8 +248,14 @@ class PublicationsController extends Controller
 
             // DATABASE-LEVEL FILTERING: Handle catalog filtering intelligently
             // Use _schemas for multi-schema search and faceting
+            // Note: schemas/registers may be JSON-encoded strings or arrays
             if (!empty($catalog['schemas'])) {
-                $schemas = array_map('intval', $catalog['schemas']);
+                $schemas = $catalog['schemas'];
+                // Parse JSON string if needed
+                if (is_string($schemas)) {
+                    $schemas = json_decode($schemas, true) ?? [];
+                }
+                $schemas = array_map('intval', $schemas);
                 // Pass all schemas for both search and faceting (enables multi-schema search)
                 $searchQuery['_schemas'] = $schemas;
                 // Only set _schema for single-schema catalogs (enables magic mapper optimization)
@@ -262,17 +268,25 @@ class PublicationsController extends Controller
             }
 
             if (!empty($catalog['registers'])) {
-                $registers = array_map('intval', $catalog['registers']);
+                $registers = $catalog['registers'];
+                // Parse JSON string if needed
+                if (is_string($registers)) {
+                    $registers = json_decode($registers, true) ?? [];
+                }
+                $registers = array_map('intval', $registers);
                 // Use first register for magic mapper routing
                 $searchQuery['_register'] = $registers[0];
             }
 
-            // DIRECT ObjectService call - WITH PUBLISHED FILTERING AND CATALOG FILTERING
+            // DIRECT ObjectService call - WITH CATALOG FILTERING
             // Filtering is now done at database/Solr level for maximum performance
-            // Set rbac=false, multi=false, published=true for public publication access
+            // Set rbac=false, multi=false for public access - schema authorization controls visibility
+            // published=false to show all objects (schema authorization determines access, not published status)
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                published: true
+                _rbac: false,
+                _multitenancy: false,
+                published: false
             );
 
             // Add catalog information to the response
@@ -370,10 +384,38 @@ class PublicationsController extends Controller
             // Extract register and schema from catalog for magic table support.
             $catalogRegisters = $catalog['registers'] ?? [];
             $catalogSchemas = $catalog['schemas'] ?? [];
+            // Parse JSON string if needed (catalog fields may be JSON-encoded)
+            if (is_string($catalogRegisters)) {
+                $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
+            }
+            if (is_string($catalogSchemas)) {
+                $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
+            }
             $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
-            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
 
-            $object = $objectService->find($id, $extend, false, $register, $schema);
+            // For multi-schema catalogs, loop through all schemas to find the object.
+            // MagicMapper requires both register AND schema to be set, so we must try each schema.
+            $object = null;
+            $schemasToTry = array_map('intval', $catalogSchemas);
+            foreach ($schemasToTry as $schemaId) {
+                try {
+                    $object = $objectService->find(
+                        id: $id,
+                        _extend: $extend,
+                        files: false,
+                        register: $register,
+                        schema: $schemaId,
+                        _rbac: false,
+                        _multitenancy: false
+                    );
+                    if ($object !== null) {
+                        break;
+                    }
+                } catch (DoesNotExistException $e) {
+                    // Object not found in this schema, try next one.
+                    continue;
+                }
+            }
 
             if ($object === null) {
                 $this->logger->warning(
@@ -555,12 +597,40 @@ class PublicationsController extends Controller
             // Extract register and schema from catalog for magic table support.
             $catalogRegisters = $catalog['registers'] ?? [];
             $catalogSchemas = $catalog['schemas'] ?? [];
+            // Parse JSON string if needed (catalog fields may be JSON-encoded)
+            if (is_string($catalogRegisters)) {
+                $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
+            }
+            if (is_string($catalogSchemas)) {
+                $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
+            }
             $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
-            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
 
             // First verify the object exists in this catalog's register/schema
             $objectService = $this->getObjectService();
-            $object = $objectService->find($id, [], false, $register, $schema);
+
+            // For multi-schema catalogs, loop through all schemas to find the object.
+            $object = null;
+            $schemasToTry = array_map('intval', $catalogSchemas);
+            foreach ($schemasToTry as $schemaId) {
+                try {
+                    $object = $objectService->find(
+                        id: $id,
+                        _extend: [],
+                        files: false,
+                        register: $register,
+                        schema: $schemaId,
+                        _rbac: false,
+                        _multitenancy: false
+                    );
+                    if ($object !== null) {
+                        break;
+                    }
+                } catch (DoesNotExistException $e) {
+                    // Object not found in this schema, try next one.
+                    continue;
+                }
+            }
 
             if ($object === null) {
                 return new JSONResponse(
@@ -634,12 +704,40 @@ class PublicationsController extends Controller
             // Extract register and schema from catalog for magic table support.
             $catalogRegisters = $catalog['registers'] ?? [];
             $catalogSchemas = $catalog['schemas'] ?? [];
+            // Parse JSON string if needed (catalog fields may be JSON-encoded)
+            if (is_string($catalogRegisters)) {
+                $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
+            }
+            if (is_string($catalogSchemas)) {
+                $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
+            }
             $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
-            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
 
             // First verify the object exists in this catalog's register/schema
             $objectService = $this->getObjectService();
-            $object = $objectService->find($id, [], false, $register, $schema);
+
+            // For multi-schema catalogs, loop through all schemas to find the object.
+            $object = null;
+            $schemasToTry = array_map('intval', $catalogSchemas);
+            foreach ($schemasToTry as $schemaId) {
+                try {
+                    $object = $objectService->find(
+                        id: $id,
+                        _extend: [],
+                        files: false,
+                        register: $register,
+                        schema: $schemaId,
+                        _rbac: false,
+                        _multitenancy: false
+                    );
+                    if ($object !== null) {
+                        break;
+                    }
+                } catch (DoesNotExistException $e) {
+                    // Object not found in this schema, try next one.
+                    continue;
+                }
+            }
 
             if ($object === null) {
                 return new JSONResponse(
@@ -718,10 +816,37 @@ class PublicationsController extends Controller
             // Extract register and schema from catalog for magic table support.
             $catalogRegisters = $catalog['registers'] ?? [];
             $catalogSchemas = $catalog['schemas'] ?? [];
+            // Parse JSON string if needed (catalog fields may be JSON-encoded)
+            if (is_string($catalogRegisters)) {
+                $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
+            }
+            if (is_string($catalogSchemas)) {
+                $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
+            }
             $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
-            $schema = !empty($catalogSchemas) ? (int) $catalogSchemas[0] : null;
 
-            $object = $objectService->find($id, [], false, $register, $schema);
+            // For multi-schema catalogs, loop through all schemas to find the object.
+            $object = null;
+            $schemasToTry = array_map('intval', $catalogSchemas);
+            foreach ($schemasToTry as $schemaId) {
+                try {
+                    $object = $objectService->find(
+                        id: $id,
+                        _extend: [],
+                        files: false,
+                        register: $register,
+                        schema: $schemaId,
+                        _rbac: false,
+                        _multitenancy: false
+                    );
+                    if ($object !== null) {
+                        break;
+                    }
+                } catch (DoesNotExistException $e) {
+                    // Object not found in this schema, try next one.
+                    continue;
+                }
+            }
 
             if ($object === null) {
                 return new JSONResponse(
