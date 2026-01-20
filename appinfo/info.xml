@@ -55,6 +55,12 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 		<nextcloud min-version="28" max-version="33"/>
 	</dependencies>
 
+	<repair-steps>
+		<post-migration>
+			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+		</post-migration>
+	</repair-steps>
+
 	<background-jobs>
 		<job>OCA\OpenCatalogi\Cron\DirectorySync</job>
 	</background-jobs>
