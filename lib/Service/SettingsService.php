@@ -194,7 +194,7 @@ class SettingsService
                     // Try to find a matching schema.
                     if (empty($matchingRegister['schemas']) === false) {
                         foreach ($matchingRegister['schemas'] as $schema) {
-                            if (is_array($schema) === true) {
+                            if (is_array($schema) === false) {
                                 continue;
                             }
 

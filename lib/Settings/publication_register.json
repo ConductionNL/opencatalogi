@@ -454,7 +454,7 @@
             "page": {
                 "slug": "page",
                 "title": "Page",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "published": "2025-01-01T00:00:00+00:00",
                 "summary": "A content page for static information",
                 "description": "Pages are used to create static content within the catalog website. They can contain information about how to use the catalog, contact information, about pages, or any other static content that needs to be accessible through the website. Pages are accessible through their unique slugs and can be organized in the navigation menu.",
@@ -463,6 +463,9 @@
                     "title",
                     "slug"
                 ],
+                "configuration": {
+                    "objectNameField": "title"
+                },
                 "properties": {
                     "title": {
                         "type": "string",
@@ -589,7 +592,7 @@
             "menu": {
                 "slug": "menu",
                 "title": "Menu",
-                "version": "0.0.3",
+                "version": "0.0.4",
                 "published": "2025-01-01T00:00:00+00:00",
                 "summary": "Navigation structure for the catalog website",
                 "description": "Menus define the navigation structure of the catalog website. They allow administrators to organize pages, listings, and other content into a hierarchical navigation system. Multiple menus can be created for different purposes, such as main navigation, footer links, or specialized content groupings.",
@@ -597,6 +600,9 @@
                 "required": [
                     "title"
                 ],
+                "configuration": {
+                    "objectNameField": "title"
+                },
                 "properties": {
                     "title": {
                         "type": "string",
