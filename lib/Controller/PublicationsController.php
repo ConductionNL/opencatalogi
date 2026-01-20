@@ -914,29 +914,39 @@ class PublicationsController extends Controller
                     ],
                 ];
             } else {
-                // Search for objects by their UUIDs using multi-schema search.
-                // Related objects can be in ANY schema, not just the catalog's schemas.
-                // Get all schemas from the register to search across all possible locations.
-                $registerMapper   = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-                $registerEntity   = $registerMapper->find($register, _multitenancy: false, _rbac: false);
-                $registerSchemas  = $registerEntity->getSchemas() ?? [];
-                $registerSchemaIds = array_map('intval', $registerSchemas);
+                // Get request parameters for extensions
+                $requestParams = $this->request->getParams();
+                $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
+                // Normalize to array - handle comma-separated strings.
+                if (is_string($extend)) {
+                    $extend = array_map('trim', explode(',', $extend));
+                } else if (!is_array($extend)) {
+                    $extend = [$extend];
+                }
+                // Ensure @self.schema is always included for related objects.
+                if (!in_array('@self.schema', $extend) && !in_array('_schema', $extend)) {
+                    $extend[] = '@self.schema';
+                }
 
-                // Use _ids filter which is supported by MagicMapper for UUID/slug lookup.
+                // Search for objects by their UUIDs across ALL registers and schemas.
+                // Related objects can be in ANY register/schema, not just the catalog's.
+                // Explicitly set _register and _schema to null to prevent ObjectService from auto-setting them.
                 $searchQuery = [
-                    '_extend'   => ['@self.schema'],
+                    '_extend'   => $extend,
                     '_limit'    => 1000,
-                    '_register' => $register,
-                    '_schemas'  => $registerSchemaIds,
                     '_ids'      => $relations,
+                    '_register' => null,
+                    '_schema'   => null,
                 ];
 
                 // Create a fresh ObjectService to avoid state from previous operations.
+                // Note: Don't filter by published status for related objects - they may not be published
+                // but should still be visible when referenced by a published object.
                 $freshObjectService = $this->getObjectService();
                 $result             = $freshObjectService->searchObjectsPaginated(
                     query: $searchQuery,
                     deleted: false,
-                    published: true
+                    published: false
                 );
             }//end if
 
@@ -1025,32 +1035,38 @@ class PublicationsController extends Controller
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
 
-            // Extract register from catalog for magic table support.
-            $catalogRegisters = $catalog['registers'] ?? [];
-            $register         = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            // Get request parameters for extensions
+            $requestParams = $this->request->getParams();
+            $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
+            // Normalize to array - handle comma-separated strings.
+            if (is_string($extend)) {
+                $extend = array_map('trim', explode(',', $extend));
+            } else if (!is_array($extend)) {
+                $extend = [$extend];
+            }
+            // Ensure @self.schema is always included for related objects.
+            if (!in_array('@self.schema', $extend) && !in_array('_schema', $extend)) {
+                $extend[] = '@self.schema';
+            }
 
-            // Get all schemas from the register to search across all possible locations.
-            // Related objects can be in ANY schema, not just the catalog's schemas.
-            $registerMapper    = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-            $registerEntity    = $registerMapper->find($register, _multitenancy: false, _rbac: false);
-            $registerSchemas   = $registerEntity->getSchemas() ?? [];
-            $registerSchemaIds = array_map('intval', $registerSchemas);
-
-            // Build search query for cross-schema search.
+            // Build search query for cross-register search.
             // Search for objects that have this UUID in their _relations using _relations_contains filter.
+            // Explicitly set _register and _schema to null to prevent ObjectService from auto-setting them.
             $searchQuery = [
-                '_extend'             => ['@self.schema'],
+                '_extend'             => $extend,
                 '_limit'              => 1000,
-                '_register'           => $register,
-                '_schemas'            => $registerSchemaIds,
                 '_relations_contains' => $id,
+                '_register'           => null,
+                '_schema'             => null,
             ];
 
             // Search for objects that have this UUID in their relations.
+            // Note: Don't filter by published status - related objects may not be published
+            // but should still be visible when showing usage relationships.
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
                 deleted: false,
-                published: true
+                published: false
             );
 
             // Add relations being searched for debugging

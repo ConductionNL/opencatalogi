@@ -174,8 +174,7 @@ class GlossaryController extends Controller
         $searchQuery['_source'] = 'index';
 
         // Use searchObjectsPaginated for better performance and pagination support
-        // Set rbac=false, multi=false, published=true for public glossary access
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: true);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
         // Build paginated response structure
         $responseData = [
@@ -237,14 +236,14 @@ class GlossaryController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        // Use searchObjectsPaginated to find single glossary term with published=true filter
+        // Use searchObjectsPaginated to find single glossary term
         $searchQuery = [
             '_ids'    => [$id],
             '_limit'  => 1,
             '_source' => 'index',
 // Force use of SOLR index for better performance
         ];
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: true);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
         if (empty($result['results'])) {
             return new JSONResponse(['error' => 'Glossary term not found'], 404);
