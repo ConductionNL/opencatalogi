@@ -115,20 +115,21 @@ const handleDelete = async () => {
 
 		// Use the same logic as MenuItemForm.vue to find and remove the correct item
 		const activeMenuItem = menuItem.value
+		const menuItems = menu.items || []
 		let itemIndex = -1
-		
+
 		// Try to find by index first (most reliable)
-		if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menu.items.length) {
+		if (activeMenuItem.index !== undefined && activeMenuItem.index >= 0 && activeMenuItem.index < menuItems.length) {
 			itemIndex = activeMenuItem.index
 		} else {
 			// Try to find by id
 			if (activeMenuItem.id && activeMenuItem.id !== null && activeMenuItem.id !== undefined) {
-				itemIndex = menu.items.findIndex(item => item.id === activeMenuItem.id)
+				itemIndex = menuItems.findIndex(item => item.id === activeMenuItem.id)
 			}
-			
+
 			// If still not found, try by name and order
 			if (itemIndex === -1) {
-				itemIndex = menu.items.findIndex(item =>
+				itemIndex = menuItems.findIndex(item =>
 					item.name === activeMenuItem.name
 					&& item.order === activeMenuItem.order
 				)

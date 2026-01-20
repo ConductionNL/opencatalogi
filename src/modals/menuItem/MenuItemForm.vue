@@ -342,7 +342,7 @@ export default {
 	data() {
 		return {
 			isEdit: !!objectStore.getActiveObject('menuItem'),
-			index: objectStore.getActiveObject('menuItem')?.index ?? objectStore.getActiveObject('menu').items.length,
+			index: objectStore.getActiveObject('menuItem')?.index ?? (objectStore.getActiveObject('menu')?.items?.length ?? 0),
 			loading: false,
 			menuItem: {
 				order: 0,
@@ -584,12 +584,12 @@ export default {
 
 			// Determine the new items array based on whether we're editing or adding
 			const updatedItems = this.isEdit
-				? this.menuObject.items.map(item =>
+				? (this.menuObject?.items || []).map(item =>
 					item.id === objectStore.getActiveObject('menuItem').id
 						? updatedMenuItem
 						: item,
 				)
-				: [...this.menuObject.items, updatedMenuItem]
+				: [...(this.menuObject?.items || []), updatedMenuItem]
 
 			// Create a temporary menu object for validation
 			const tempMenu = {
@@ -880,6 +880,10 @@ export default {
 			objectStore.setState('menu', { success: null, error: null, loading: true })
 
 			const menuClone = _.cloneDeep(this.menuObject)
+			// Ensure items array exists to prevent undefined errors
+			if (!menuClone.items) {
+				menuClone.items = []
+			}
 			const activeMenuItem = objectStore.getActiveObject('menuItem')
 
 			// prepare value for save
