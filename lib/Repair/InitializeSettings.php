@@ -34,42 +34,10 @@ class InitializeSettings implements IRepairStep
     {
         $output->startProgress(1);
 
-        try {
-            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-            $lastInitializedVersion = $this->config->getAppValue(Application::APP_ID, 'last_initialized_version', '');
-
-            // Only initialize if version changed or never initialized
-            if ($lastInitializedVersion === $currentAppVersion) {
-                $output->info('Settings already initialized for version ' . $currentAppVersion);
-                $output->advance(1);
-                $output->finishProgress();
-                return;
-            }
-
-            $output->info('Initializing settings for version ' . $currentAppVersion);
-
-            // Get the settings service and initialize
-            $settingsService = $this->container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
-            $result = $settingsService->initialize();
-
-            // Mark this version as initialized regardless of partial failures
-            // This prevents repeated attempts on every request
-            $this->config->setAppValue(Application::APP_ID, 'last_initialized_version', $currentAppVersion);
-
-            if (!empty($result['errors'])) {
-                foreach ($result['errors'] as $error) {
-                    $output->warning('Initialization warning: ' . $error);
-                }
-            }
-
-            $output->info('Settings initialization completed');
-
-        } catch (\Exception $e) {
-            // Still mark as initialized to prevent repeated failures
-            $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-            $this->config->setAppValue(Application::APP_ID, 'last_initialized_version', $currentAppVersion);
-            $output->warning('Settings initialization failed: ' . $e->getMessage());
-        }
+        // Initialization disabled due to duplicate key violations (unique_uuid constraint)
+        // when importing configuration on app install/update. Users should manually
+        // initialize via the settings page if needed.
+        $output->info('Automatic initialization disabled - please initialize manually via settings if needed');
 
         $output->advance(1);
         $output->finishProgress();
