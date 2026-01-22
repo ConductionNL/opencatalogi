@@ -235,7 +235,7 @@
               "stable",
               "obsolete"
             ],
-            "facetable": true
+            "facetable": false
           },
           "view": {
             "type": "integer",
@@ -339,7 +339,7 @@
               "stable",
               "obsolete"
             ],
-            "facetable": true
+            "facetable": false
           },
           "statusMessage": {
             "type": "string",

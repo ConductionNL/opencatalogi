@@ -280,11 +280,12 @@ class PublicationsController extends Controller
 
             // DIRECT ObjectService call - WITH CATALOG FILTERING
             // Filtering is now done at database/Solr level for maximum performance
-            // Set rbac=false, multi=false for public access - schema authorization controls visibility
+            // Set rbac=true to enable schema authorization (conditional rules like geregistreerdDoor)
+            // Set multi=false for public access (no organization filtering)
             // published=false to show all objects (schema authorization determines access, not published status)
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                _rbac: false,
+                _rbac: true,
                 _multitenancy: false,
                 published: false
             );
