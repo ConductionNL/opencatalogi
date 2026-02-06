@@ -20,8 +20,8 @@ class DirectorySync extends TimedJob
     ) {
         parent::__construct($time);
 
-        // Run every minute @todochange to hour
-        $this->setInterval(60);
+        // Run every hour
+        $this->setInterval(3600);
 
         // Delay until low-load time
         $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
@@ -40,7 +40,6 @@ class DirectorySync extends TimedJob
      */
     protected function run($arguments)
     {
-        // @todo disabled for now, triggers to many times and current state is broken and needs fixing/refactor
         $this->directoryService->doCronSync();
 
     }//end run()

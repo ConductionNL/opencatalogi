@@ -2,9 +2,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Exception\DirectoryUrlException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -15,7 +13,6 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use OCP\AppFramework\Http\PublicPage;
 
 /**
  * Controller for handling Listing-related operations
@@ -138,8 +135,12 @@ class ListingsController extends Controller
      */
     public function show(string | int $id): JSONResponse
     {
-        // Fetch the listing object by its ID
-        $object = $this->getObjectService()->find($id);
+        // Get listing schema and register from configuration
+        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+
+        // Fetch the listing object by its ID with register/schema context
+        $object = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
 
         // Convert to array if it's an Entity
         $data = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
@@ -164,11 +165,15 @@ class ListingsController extends Controller
         // Get all parameters from the request
         $data = $this->request->getParams();
 
-        // Remove the 'id' field if it exists, as we're creating a new object
-        unset($data['id']);
+        // Remove internal/framework fields
+        unset($data['id'], $data['_route']);
+
+        // Get listing schema and register from configuration
+        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
 
         // Save the new listing object
-        $object = $this->getObjectService()->saveObject('listing', $data);
+        $object = $this->getObjectService()->saveObject($data, [], $listingRegister, $listingSchema);
 
         // Return the created object as a JSON response
         return new JSONResponse($object);
@@ -192,11 +197,15 @@ class ListingsController extends Controller
         // Get all parameters from the request
         $data = $this->request->getParams();
 
-        // Ensure the ID in the data matches the ID in the URL
-        $data['id'] = $id;
+        // Remove internal/framework fields
+        unset($data['_route']);
 
-        // Save the updated listing object
-        $object = $this->getObjectService()->saveObject('listing', $data);
+        // Get listing schema and register from configuration
+        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+
+        // Save the updated listing object (pass id as UUID for update)
+        $object = $this->getObjectService()->saveObject($data, [], $listingRegister, $listingSchema, (string) $id);
 
         // Return the updated object as a JSON response
         return new JSONResponse($object);
@@ -217,8 +226,8 @@ class ListingsController extends Controller
      */
     public function destroy(string | int $id): JSONResponse
     {
-        // Delete the listing object
-        $result = $this->getObjectService()->deleteObject('listing', $id);
+        // Delete the listing object by its UUID
+        $result = $this->getObjectService()->deleteObject((string) $id);
 
         // Return the result as a JSON response
         return new JSONResponse(['success' => $result], $result === true ? '200' : '404');
@@ -227,22 +236,51 @@ class ListingsController extends Controller
 
 
     /**
-     * Synchronize a listing or all listings.
+     * Synchronize a specific directory or all directories.
      *
-     * @param string|null $id The ID of the listing to synchronize (optional).
+     * When an ID is provided, the corresponding listing is looked up and its
+     * directory URL is synced. When no ID is provided, all known directories
+     * are synced (equivalent to a cron sync).
      *
-     * @return JSONResponse The response indicating the result of the synchronization.
+     * @param string|null $id The ID of the listing whose directory to synchronize (optional).
+     *
+     * @return JSONResponse The response containing synchronization results.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function synchronise(?string $id = null): JSONResponse
     {
-        // Synchronize the specified listing or all listings
-        $result = $this->directoryService->synchronise($id);
+        try {
+            if ($id !== null) {
+                // Look up the listing to get its directory URL
+                $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+                $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+                $object          = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+                $objectData      = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+                $listingData = $objectData['object'] ?? $objectData;
 
-        // Return the result as a JSON response
-        return new JSONResponse(['success' => $result]);
+                $directoryUrl = $listingData['directory'] ?? null;
+                if (empty($directoryUrl)) {
+                    return new JSONResponse(
+                        data: ['message' => 'Listing has no directory URL configured'],
+                        statusCode: 400
+                    );
+                }
+
+                $result = $this->directoryService->syncDirectory($directoryUrl);
+            } else {
+                // Sync all known directories
+                $result = $this->directoryService->doCronSync();
+            }
+
+            return new JSONResponse($result);
+        } catch (\Exception $e) {
+            return new JSONResponse(
+                data: ['message' => 'Synchronization failed: ' . $e->getMessage()],
+                statusCode: 500
+            );
+        }
 
     }//end synchronise()
 
@@ -251,7 +289,6 @@ class ListingsController extends Controller
      * Add a new listing from a URL.
      *
      * @return JSONResponse The response indicating the result of adding the listing.
-     * @throws GuzzleException
      *
      * @PublicPage
      * @NoAdminRequired
@@ -262,19 +299,21 @@ class ListingsController extends Controller
         // Get the URL parameter from the request
         $url = $this->request->getParam('url');
 
-        // Add the new listing using the provided URL
-        try {
-            $result = $this->directoryService->syncExternalDirectory($url);
-        } catch (DirectoryUrlException $exception) {
-            if ($exception->getMessage() === 'URL is required') {
-                $exception->setMessage('Property "url" is required');
-            }
+        if (empty($url)) {
+            return new JSONResponse(data: ['message' => 'Property "url" is required'], statusCode: 400);
+        }
 
+        // Add the new listing by syncing the provided directory URL
+        try {
+            $result = $this->directoryService->syncDirectory($url);
+        } catch (\InvalidArgumentException $exception) {
             return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
+        } catch (\Exception $exception) {
+            return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 500);
         }
 
         // Return the result as a JSON response
-        return new JSONResponse(['success' => $result]);
+        return new JSONResponse($result);
 
     }//end add()
 
