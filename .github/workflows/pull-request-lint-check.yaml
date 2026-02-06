@@ -3,7 +3,8 @@ name: Lint Check
 on:
   pull_request:
     branches:
-      - never
+      - development
+      - main
 
 jobs:
   lint-check:
