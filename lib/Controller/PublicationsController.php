@@ -291,9 +291,7 @@ class PublicationsController extends Controller
                     // Keep the frontend's filter (it's valid) - don't overwrite
                 } else {
                     // No frontend filter - apply catalog's default filter
-                    $searchQuery['@self']['schema'] = [
-                        'or' => implode(',', array_map('intval', $catalog['schemas'])),
-                    ];
+                    $searchQuery['@self']['schema'] = $catalog['schemas'];
                 }
             }//end if
 
@@ -317,9 +315,7 @@ class PublicationsController extends Controller
                     // Keep the frontend's filter (it's valid) - don't overwrite
                 } else {
                     // No frontend filter - apply catalog's default filter
-                    $searchQuery['@self']['register'] = [
-                        'or' => implode(',', array_map('intval', $catalog['registers'])),
-                    ];
+                    $searchQuery['@self']['register'] = $catalog['registers'];
                 }
             }//end if
 
