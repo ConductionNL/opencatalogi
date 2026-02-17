@@ -143,21 +143,21 @@ class CatalogiService
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
         $config = [];
+        // Setup the base query for searchObjects
+        $query = [
+            '@self' => [
+                'register' => $register,
+                'schema'   => $schema,
+            ],
+        ];
+
+        // If a specific catalog ID is provided, add it as a filter
         if ($catalogId !== null) {
-            $catalogs = [$this->getObjectService()->find(
-                id: $catalogId,
-                register: $register,
-                schema: $schema
-            )];
-        } else {
-            // Setup the query for searchObjects - use _register and _schema for magic mapper routing
-            $query = [
-                '_register' => $register,
-                '_schema'   => $schema,
-            ];
-            // Get all catalogs using searchObjects
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+            $query['@self']['uuid'] = $catalogId;
         }
+
+        // Get catalogs using searchObjects (handles deleted field correctly)
+        $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
         // Initialize arrays to store unique registers and schemas
         $uniqueRegisters = [];
@@ -590,14 +590,21 @@ class CatalogiService
 
         // Build search query from config - use _register and _schema for magic mapper routing
         $query = [];
-        if (!empty($context['registers'])) {
-            // Use first register for magic mapper routing
-            $query['_register'] = is_array($context['registers']) ? $context['registers'][0] : $context['registers'];
-        }
+        if (!empty($context['registers']) || !empty($context['schemas'])) {
+            $query['@self'] = [];
+            if (!empty($context['registers'])) {
+                // Use scalar value when only one register to avoid magic_mapper overhead
+                $query['@self']['register'] = count($context['registers']) === 1
+                    ? $context['registers'][0]
+                    : $context['registers'];
+            }
 
-        if (!empty($context['schemas'])) {
-            // Use first schema for magic mapper routing
-            $query['_schema'] = is_array($context['schemas']) ? $context['schemas'][0] : $context['schemas'];
+            if (!empty($context['schemas'])) {
+                // Use scalar value when only one schema to avoid magic_mapper overhead
+                $query['@self']['schema'] = count($context['schemas']) === 1
+                    ? $context['schemas'][0]
+                    : $context['schemas'];
+            }
         }
 
         // Add other filters from config

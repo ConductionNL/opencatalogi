@@ -170,26 +170,9 @@ class PagesController extends Controller
             $searchQuery['_register'] = $pageConfig['register'];
         }
 
-        // Use searchObjectsPaginated for better performance and pagination support.
-        // Set _rbac=false, _multitenancy=false, published=false for public page access.
+        // Use searchObjectsPaginated for better performance and pagination support
+        // Set rbac=false, multi=false, published=true for public page access
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
-
-        // WORKAROUND: OpenRegister ignores @self filters, so we filter clientside.
-        // Remove any results that don't match the configured schema and register.
-        if (isset($result['results']) && is_array($result['results'])) {
-            $result['results'] = array_values(array_filter($result['results'], function($item) use ($pageConfig) {
-                // Convert ObjectEntity to array if needed.
-                if (is_object($item) && method_exists($item, 'jsonSerialize')) {
-                    $item = $item->jsonSerialize();
-                }
-                
-                $self = $item['@self'] ?? [];
-                $schemaMatch = !isset($pageConfig['schema']) || ($self['schema'] ?? null) === $pageConfig['schema'];
-                $registerMatch = !isset($pageConfig['register']) || ($self['register'] ?? null) === $pageConfig['register'];
-                return $schemaMatch && $registerMatch;
-            }));
-            $result['total'] = count($result['results']);
-        }
 
         // Build paginated response structure
         /*
@@ -257,8 +240,8 @@ class PagesController extends Controller
         $searchQuery = [
             'slug'    => $slug,
             '_limit'  => 1,
+// We only need one result
             '_source' => 'database',
-// Use database for reliable slug lookup.
         ];
 
         // Add schema filter if configured - use _schema for magic mapper routing
@@ -271,8 +254,8 @@ class PagesController extends Controller
             $searchQuery['_register'] = $pageConfig['register'];
         }
 
-        // Use searchObjectsPaginated for better performance and pagination support.
-        // Set _rbac=false, _multitenancy=false, published=false for public page access.
+        // Use searchObjectsPaginated for better performance
+        // Set rbac=false, multi=false, published=false (schema authorization handles access)
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
         if (empty($result['results'])) {

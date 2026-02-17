@@ -14,6 +14,7 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -74,6 +75,7 @@ class PublicationsController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
+        private readonly IDBConnection $db,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -101,6 +103,68 @@ class PublicationsController extends Controller
         throw new \RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
+
+
+    /**
+     * Find the register and schema IDs for an object UUID by searching all magic tables.
+     *
+     * OpenRegister stores objects in per-register-per-schema "magic tables" named
+     * oc_openregister_table_{register}_{schema}. Without knowing the register/schema,
+     * we need to search across all these tables to find where an object lives.
+     *
+     * @param string $uuid The UUID of the object to find
+     *
+     * @return array{register: int, schema: int}|null The register/schema IDs, or null if not found
+     */
+    private function findObjectLocation(string $uuid): ?array
+    {
+        // Get all magic table names from the database schema
+        $qb = $this->db->getQueryBuilder();
+        $result = $this->db->executeQuery(
+            "SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'oc_openregister_table_%' ORDER BY table_name"
+        );
+
+        $tables = [];
+        while ($row = $result->fetch()) {
+            $tables[] = $row['table_name'];
+        }
+        $result->closeCursor();
+
+        if (empty($tables)) {
+            return null;
+        }
+
+        // Build a UNION ALL query to search all magic tables for the UUID in one query
+        $unionParts = [];
+        $quotedUuid = $this->db->quote($uuid);
+        foreach ($tables as $table) {
+            // Extract register/schema from table name (oc_openregister_table_{register}_{schema})
+            if (preg_match('/^oc_openregister_table_(\d+)_(\d+)$/', $table, $matches)) {
+                $register = (int) $matches[1];
+                $schema   = (int) $matches[2];
+                $unionParts[] = "(SELECT {$register} AS register_id, {$schema} AS schema_id FROM {$table} WHERE _uuid = {$quotedUuid})";
+            }
+        }
+
+        if (empty($unionParts)) {
+            return null;
+        }
+
+        $sql = implode(' UNION ALL ', $unionParts) . ' LIMIT 1';
+        $result = $this->db->executeQuery($sql);
+        $row = $result->fetch();
+        $result->closeCursor();
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'register' => (int) $row['register_id'],
+            'schema'   => (int) $row['schema_id'],
+        ];
+
+    }//end findObjectLocation()
 
 
     /**
@@ -379,48 +443,73 @@ class PublicationsController extends Controller
                 ]
             );
 
-            // DIRECT OBJECT FETCH: Use find() method to get object by ID.
-            // Set rbac=false, multi=false for public access.
-            // Note: Published filtering happens via manual checks below.
-            // Extract register and schema from catalog for magic table support.
-            $catalogRegisters = $catalog['registers'] ?? [];
-            $catalogSchemas = $catalog['schemas'] ?? [];
-            // Parse JSON string if needed (catalog fields may be JSON-encoded)
-            if (is_string($catalogRegisters)) {
-                $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
-            }
-            if (is_string($catalogSchemas)) {
-                $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
-            }
-            $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            // DIRECT OBJECT FETCH: Use searchObjects with UUID filter instead of find()
+            // because find() has a `deleted IS NULL` condition that fails on objects
+            // with `deleted: []` (empty array, not NULL).
+            //
+            // OpenRegister routes to magic tables only when register+schema are provided.
+            // Strategy: first try catalog's register/schema combos (fast path),
+            // then fall back to searching all magic tables via DB lookup.
+            $object  = null;
+            $objects = [];
 
-            // For multi-schema catalogs, loop through all schemas to find the object.
-            // MagicMapper requires both register AND schema to be set, so we must try each schema.
-            $object = null;
-            $schemasToTry = array_map('intval', $catalogSchemas);
-            foreach ($schemasToTry as $schemaId) {
-                try {
-                    $object = $objectService->find(
-                        id: $id,
-                        _extend: $extend,
-                        files: false,
-                        register: $register,
-                        schema: $schemaId,
-                        _rbac: false,
-                        _multitenancy: false
-                    );
-                    if ($object !== null) {
-                        break;
+            // Fast path: try catalog's register/schema combinations first
+            $catalogRegisters = $catalog['registers'] ?? [];
+            $catalogSchemas   = $catalog['schemas'] ?? [];
+
+            if (!empty($catalogRegisters) && !empty($catalogSchemas)) {
+                foreach ($catalogRegisters as $reg) {
+                    foreach ($catalogSchemas as $sch) {
+                        $searchQuery = [
+                            '@self' => [
+                                'uuid'     => $id,
+                                'register' => $reg,
+                                'schema'   => $sch,
+                            ],
+                        ];
+
+                        $objects = $objectService->searchObjects(
+                            query: $searchQuery,
+                            _rbac: false,
+                            _multitenancy: false,
+                        );
+
+                        if (!empty($objects)) {
+                            $object = $objects[0];
+                            break 2;
+                        }
                     }
-                } catch (DoesNotExistException $e) {
-                    // Object not found in this schema, try next one.
-                    continue;
+                }
+            }
+
+            // Fallback: find the object's register/schema across all magic tables
+            if ($object === null) {
+                $location = $this->findObjectLocation($id);
+
+                if ($location !== null) {
+                    $searchQuery = [
+                        '@self' => [
+                            'uuid'     => $id,
+                            'register' => $location['register'],
+                            'schema'   => $location['schema'],
+                        ],
+                    ];
+
+                    $objects = $objectService->searchObjects(
+                        query: $searchQuery,
+                        _rbac: false,
+                        _multitenancy: false,
+                    );
+
+                    if (!empty($objects)) {
+                        $object = $objects[0];
+                    }
                 }
             }
 
             if ($object === null) {
                 $this->logger->warning(
-                    '[PublicationsController::show] Object returned null',
+                    '[PublicationsController::show] Object not found in any register/schema',
                     [
                         'id'          => $id,
                         'catalogSlug' => $catalogSlug,
@@ -432,7 +521,6 @@ class PublicationsController extends Controller
                         'message'     => 'The publication with ID "'.$id.'" does not exist or is not accessible.',
                         'id'          => $id,
                         'catalogSlug' => $catalogSlug,
-                        'hint'        => 'This could be because: 1) The publication does not exist, 2) It is not published yet, 3) It has been depublished, or 4) It does not belong to this catalog.',
                     ],
                     404
                 );
@@ -445,8 +533,6 @@ class PublicationsController extends Controller
                     'objectId'    => $object->getId(),
                     'schema'      => $object->getSchema(),
                     'register'    => $object->getRegister(),
-                    'published'   => $object->getPublished()?->format('Y-m-d H:i:s'),
-                    'depublished' => $object->getDepublished()?->format('Y-m-d H:i:s'),
                 ]
             );
 
@@ -462,61 +548,18 @@ class PublicationsController extends Controller
             // if (!$schemaMatches || !$registerMatches) {
             // return new JSONResponse(['error' => 'Publication not found in this catalog'], 404);
             // }
+
             // Render the object with extensions
-            // Use positional parameters for compatibility with different ObjectService versions
-            $result = $objectService->renderEntity($object, $extend, 0, [], [], [], false, false);
-
-            // Add registers, schemas, and extended objects to @self when requested via _extend.
-            // Supports both singular (_register, _schema) and plural (_registers, _schemas) forms.
-            if (isset($result['@self']) === true && empty($extend) === false) {
-                // Add registers if _registers or _register is in _extend.
-                if (in_array('_registers', $extend, true) === true
-                    || in_array('_register', $extend, true) === true
-                ) {
-                    $registerId = $object->getRegister();
-                    $registers  = [];
-                    try {
-                        $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-                        $registerEntity = $registerMapper->find($registerId);
-                        if ($registerEntity !== null) {
-                            $registers[$registerId] = $registerEntity->jsonSerialize();
-                        }
-                    } catch (\Exception $e) {
-                        $this->logger->warning(
-                            '[PublicationsController::show] Could not fetch register entity',
-                            ['registerId' => $registerId, 'error' => $e->getMessage()]
-                        );
-                    }
-
-                    $result['@self']['registers'] = $registers;
-                }
-
-                // Add schemas if _schemas or _schema is in _extend.
-                if (in_array('_schemas', $extend, true) === true
-                    || in_array('_schema', $extend, true) === true
-                ) {
-                    $schemaId = $object->getSchema();
-                    $schemas  = [];
-                    try {
-                        $schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-                        $schemaEntity = $schemaMapper->find($schemaId);
-                        if ($schemaEntity !== null) {
-                            $schemas[$schemaId] = $schemaEntity->jsonSerialize();
-                        }
-                    } catch (\Exception $e) {
-                        $this->logger->warning(
-                            '[PublicationsController::show] Could not fetch schema entity',
-                            ['schemaId' => $schemaId, 'error' => $e->getMessage()]
-                        );
-                    }
-
-                    $result['@self']['schemas'] = $schemas;
-                }
-
-                // Get extended objects indexed by UUID (for _extend lookups).
-                $extendedObjects             = $objectService->getExtendedObjects();
-                $result['@self']['objects'] = $extendedObjects;
-            }//end if
+            $result = $objectService->renderEntity(
+                entity: $object,
+                _extend: $extend,
+                depth: 0,
+                filter: [],
+                fields: [],
+                unset: [],
+                _rbac: false,
+                _multitenancy: false,
+            );
 
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
