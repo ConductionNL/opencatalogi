@@ -5,7 +5,7 @@
  * It provides read-only access to publication data through federation endpoints.
  *
  * @module Store
- * @package opencatalogi
+ * @package
  * @author   Ruben van der Linde
  * @copyright 2024
  * @license  AGPL-3.0-or-later

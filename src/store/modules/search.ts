@@ -196,7 +196,8 @@ export const useSearchStore = defineStore('search', {
 		 * @param filterKey The key of the filter to clear
 		 */
 		clearFilter(filterKey: string) {
-			const { [filterKey]: _removed, ...remainingFilters } = this.filters
+			const remainingFilters = { ...this.filters }
+			delete remainingFilters[filterKey]
 			this.filters = remainingFilters
 			console.log('Filter cleared:', filterKey, 'Remaining filters:', this.filters)
 		},
@@ -226,7 +227,8 @@ export const useSearchStore = defineStore('search', {
 		 * @param field The field to remove ordering from
 		 */
 		removeOrdering(field: string) {
-			const { [field]: _removed, ...remainingOrdering } = this.ordering
+			const remainingOrdering = { ...this.ordering }
+			delete remainingOrdering[field]
 			this.ordering = remainingOrdering
 			console.log('Ordering removed for field:', field, 'Remaining ordering:', this.ordering)
 		},
@@ -361,7 +363,8 @@ export const useSearchStore = defineStore('search', {
 				}
 				console.log('✅ Added active facet:', fieldName, '=', this.activeFacets[fieldName])
 			} else {
-				const { [fieldName]: _removed, ...remainingFacets } = this.activeFacets
+				const remainingFacets = { ...this.activeFacets }
+				delete remainingFacets[fieldName]
 				this.activeFacets = remainingFacets
 				console.log('❌ Removed active facet:', fieldName)
 			}

@@ -49,14 +49,28 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:value.sync="contentsItem.order"
 								required />
 
+							<!-- text (legacy format) -->
+							<div v-if="contentsItem.type === 'text'" class="editor-container">
+								<label>Text Content</label>
+								<v-md-editor
+									:initial-value="contentsItem.textData"
+									:options="editorOptions"
+									initial-edit-type="wysiwyg"
+									preview-style="tab"
+									height="300px"
+									@load="(editor) => textEditor = editor" />
+							</div>
+
 							<!-- RichText -->
-							<div v-if="contentsItem.type === 'RichText'">
+							<div v-if="contentsItem.type === 'RichText'" class="editor-container">
 								<label>Rich Text Content</label>
 								<v-md-editor
-									v-model="contentsItem.richTextData"
-									:disabled="objectStore.isLoading('page')"
+									:initial-value="contentsItem.richTextData"
+									:options="editorOptions"
+									initial-edit-type="wysiwyg"
+									preview-style="tab"
 									height="300px"
-									mode="edit" />
+									@load="(editor) => richTextEditor = editor" />
 							</div>
 
 							<!-- Faq -->
@@ -140,10 +154,10 @@ import { BTabs, BTab } from 'bootstrap-vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import _ from 'lodash'
 import { Editor as vMdEditor } from '@toast-ui/vue-editor'
+import '@toast-ui/editor/dist/toastui-editor.css'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 import { Page } from '../../entities/index.js'
 
@@ -172,6 +186,7 @@ export default {
 				type: '',
 				order: 0,
 				richTextData: '',
+				textData: '',
 				id: Math.random().toString(36).substring(2, 12),
 				faqData: [
 					{
@@ -185,7 +200,7 @@ export default {
 				hideBeforeLogin: false,
 			},
 			typeOptions: {
-				options: ['RichText', 'Faq'],
+				options: ['text', 'RichText', 'Faq'],
 			},
 			success: null,
 			error: false,
@@ -194,6 +209,21 @@ export default {
 			groupsOptions: {
 				options: [],
 				loading: false,
+			},
+			textEditor: null,
+			richTextEditor: null,
+			editorOptions: {
+				minHeight: '200px',
+				language: 'en-US',
+				hideModeSwitch: true,
+				toolbarItems: [
+					['heading', 'bold', 'italic', 'strike'],
+					['hr', 'quote'],
+					['ul', 'ol', 'task', 'indent', 'outdent'],
+					['table', 'image', 'link'],
+					['code', 'codeblock'],
+				],
+				initialEditType: 'wysiwyg',
 			},
 		}
 	},
@@ -229,25 +259,32 @@ export default {
 		},
 	},
 	mounted() {
-		// Fetch groups for the dropdown
+		// Fetch groups for the dropdown.
 		this.fetchGroups()
 
 		if (this.isEdit) {
 			const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
 
-			// put in all data that does not require special handeling
+			// Put in all data that does not require special handling.
 			this.contentsItem = {
 				...this.contentsItem,
 				type: contentItem.type,
 				order: contentItem.order || 0,
-				richTextData: contentItem.data.content || '',
 				id: contentItem.id,
 				groups: contentItem.groups || [],
 				hideAfterLogin: contentItem.hideAfterLogin || false,
 				hideBeforeLogin: contentItem.hideBeforeLogin || false,
 			}
 
-			// if faqs are present, prepend them to the contentsItem
+			// Handle different content formats.
+			// Legacy "text" format: data.html and data.text
+			if (contentItem.type === 'text') {
+				this.contentsItem.textData = contentItem.data.html || contentItem.data.text || ''
+			} else if (contentItem.type === 'RichText') {
+				this.contentsItem.richTextData = contentItem.data.content || ''
+			}
+
+			// If faqs are present, prepend them to the contentsItem.
 			if (contentItem.data.faqs && contentItem.data.faqs.length > 0) {
 				this.contentsItem.faqData = contentItem.data.faqs.map((faq) => ({
 					id: Math.random().toString(36).substring(2, 12),
@@ -278,20 +315,37 @@ export default {
 
 			const pageItemClone = _.cloneDeep(this.pageItem)
 
-			// Create the content item
-			// a different data format is needed for the type of content
+			// Read content from editor instances (Toast UI editor uses initial-value, not v-model).
+			const textContent = this.textEditor ? this.textEditor.getHTML() : this.contentsItem.textData
+			const richTextContent = this.richTextEditor ? this.richTextEditor.getHTML() : this.contentsItem.richTextData
+
+			// Create the content item.
+			// A different data format is needed for the type of content.
 			let contentItem
-			if (this.contentsItem.type === 'RichText') {
+			if (this.contentsItem.type === 'text') {
 				contentItem = {
 					type: this.contentsItem.type,
 					order: this.contentsItem.order || 0,
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
-						content: this.contentsItem.richTextData,
-						groups: this.normalizeGroups(this.contentsItem.groups),
-						hideAfterLogin: this.contentsItem.hideAfterLogin,
-						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+						html: textContent,
+						text: textContent.replace(/<[^>]*>/g, ''), // Strip HTML tags for text field.
 					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'RichText') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						content: richTextContent,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 				}
 			} else if (this.contentsItem.type === 'Faq') {
 				contentItem = {
@@ -299,15 +353,15 @@ export default {
 					order: this.contentsItem.order || 0,
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
-						// remove the last item since it's a placeholder and is always empty no matter what
+						// Remove the last item since it's a placeholder and is always empty no matter what.
 						faqs: this.contentsItem.faqData.slice(0, -1).map((faq) => ({
 							question: faq.question,
 							answer: faq.answer,
 						})),
-						groups: this.normalizeGroups(this.contentsItem.groups),
-						hideAfterLogin: this.contentsItem.hideAfterLogin,
-						hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 				}
 			}
 
@@ -315,7 +369,7 @@ export default {
 				pageItemClone.contents = []
 			}
 
-			// Check if it's an edit modal by checking if contentId exists
+			// Check if it's an edit modal by checking if contentId exists.
 			if (objectStore.getActiveObject('pageContent')?.id) {
 				const index = pageItemClone.contents.findIndex(content => content.id === objectStore.getActiveObject('pageContent').id)
 				if (index !== -1) {
@@ -330,7 +384,7 @@ export default {
 			objectStore.updateObject('page', this.pageItem.id, newPageItem)
 				.then(() => {
 					objectStore.setState('page', { success: true })
-					// Wait for the user to read the feedback then return to parent dialog
+					// Wait for the user to read the feedback then return to parent dialog.
 					setTimeout(() => {
 						navigationStore.setModal('viewPage')
 					}, 2000)
@@ -443,18 +497,66 @@ export default {
 	margin-block-start: var(--OC-margin-20);
 }
 
-/* Markdown Editor Styles */
-:deep(.v-md-editor) {
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius);
+/* Toast UI Editor Styles */
+.editor-container {
+	width: 100%;
 }
 
-:deep(.v-md-editor__toolbar) {
-	background-color: var(--color-background-hover);
-	border-bottom: 1px solid var(--color-border);
+.editor-container :deep(.toastui-editor-defaultUI) {
+	font-family: var(--font-face) !important;
+	font-size: var(--default-font-size) !important;
+	background-color: var(--color-main-background) !important;
+	width: 100% !important;
+	border: 1px solid var(--color-border) !important;
+	border-radius: var(--border-radius) !important;
 }
 
-:deep(.v-md-editor__editor) {
-	background-color: var(--color-main-background);
+.editor-container :deep(.toastui-editor-toolbar) {
+	background-color: var(--color-background-hover) !important;
+	border-bottom: 1px solid var(--color-border-dark) !important;
+	padding: 8px !important;
+}
+
+.editor-container :deep(.toastui-editor-toolbar-icons button) {
+	color: var(--color-main-text) !important;
+	background-color: transparent !important;
+	border: none !important;
+	border-radius: var(--border-radius) !important;
+	padding: 6px !important;
+	margin: 2px !important;
+}
+
+.editor-container :deep(.toastui-editor-toolbar-icons button:hover) {
+	background-color: var(--color-background-dark) !important;
+}
+
+.editor-container :deep(.toastui-editor-toolbar-icons button.active) {
+	background-color: var(--color-primary-element) !important;
+	color: var(--color-primary-element-text) !important;
+}
+
+.editor-container :deep(.toastui-editor-mode-switch) {
+	display: none !important;
+}
+
+.editor-container :deep(.toastui-editor-contents) {
+	color: var(--color-main-text) !important;
+	font-family: var(--font-face) !important;
+}
+
+.editor-container :deep(.toastui-editor.ww-mode) {
+	width: 100% !important;
+	height: 100% !important;
+}
+
+.editor-container :deep(.ProseMirror) {
+	background-color: var(--color-main-background) !important;
+	color: var(--color-main-text) !important;
+	font-family: var(--font-face) !important;
+	font-size: var(--default-font-size) !important;
+	padding: 12px !important;
+	min-height: 200px !important;
+	width: 100% !important;
+	height: 100% !important;
 }
 </style>

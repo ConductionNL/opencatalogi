@@ -490,6 +490,9 @@
                 "configuration": {
                     "autoPublish": false
                 },
+                "authorization": {
+                    "read": ["public"]
+                },
                 "hardValidation": true,
                 "searchable": true
             },
@@ -678,6 +681,9 @@
                 },
                 "configuration": {
                     "autoPublish": false
+                },
+                "authorization": {
+                    "read": ["public"]
                 },
                 "hardValidation": true,
                 "searchable": true
