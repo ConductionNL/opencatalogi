@@ -314,7 +314,7 @@ export default defineComponent({
 			}
 
 			// Accept either array of integers (schema IDs) or array of schema objects.
-			return register.schemas.length > 0 
+			return register.schemas.length > 0
 				&& (register.schemas.some(schema => typeof schema === 'number' || (schema && typeof schema === 'object' && schema.id)))
 		},
 		/**
@@ -427,7 +427,7 @@ export default defineComponent({
 								.filter(s => s && typeof s === 'object' && s.id && s.title)
 								.find(s => s.id.toString() === schemaId)
 						}
-						
+
 						if (schema) {
 							this.configuration = {
 								...this.configuration,

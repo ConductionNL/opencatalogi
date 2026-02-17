@@ -70,13 +70,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:label-attribute="'label'"
 					input-label="Status*"
 					:disabled="objectStore.isLoading('catalog')" />
-				<NcCheckboxRadioSwitch 
+				<NcCheckboxRadioSwitch
 					:disabled="objectStore.isLoading('catalog')"
 					label="Has Woo Sitemap"
 					:checked.sync="catalogi.hasWooSitemap">
 					Requires Woo sitemap
 				</NcCheckboxRadioSwitch>
-				
+
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
