@@ -47,6 +47,6 @@ export const mockCatalogiList: TCatalogi[] = [
 		},
 		status: 'development',
 		slug: 'another-catalogi',
-		hasWooSitemap: true
+		hasWooSitemap: true,
 	},
 ]

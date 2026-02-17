@@ -135,7 +135,7 @@ const handleDelete = async () => {
 				)
 			}
 		}
-		
+
 		// Create updated items array by removing the item at the found index
 		const updatedItems = [...(menu.items || [])]
 		if (itemIndex !== -1 && itemIndex < updatedItems.length) {
