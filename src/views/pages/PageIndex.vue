@@ -120,12 +120,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</template>
 										Edit
 									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('pageContentForm')">
-										<template #icon>
-											<Plus :size="20" />
-										</template>
-										Add Content
-									</NcActionButton>
 									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setDialog('copyObject', { objectType: 'page', dialogTitle: 'Pagina' })">
 										<template #icon>
 											<ContentCopy :size="20" />
@@ -229,12 +223,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 													<Pencil :size="20" />
 												</template>
 												Edit
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('pageContentForm')">
-												<template #icon>
-													<Plus :size="20" />
-												</template>
-												Add Content
 											</NcActionButton>
 											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setDialog('copyObject', { objectType: 'page', dialogTitle: 'Pagina' })">
 												<template #icon>

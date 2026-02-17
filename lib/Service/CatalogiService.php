@@ -143,19 +143,21 @@ class CatalogiService
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
         $config = [];
+        // Setup the base query for searchObjects
+        $query = [
+            '@self' => [
+                'register' => $register,
+                'schema'   => $schema,
+            ],
+        ];
+
+        // If a specific catalog ID is provided, add it as a filter
         if ($catalogId !== null) {
-            $catalogs = [$this->getObjectService()->find($catalogId)];
-        } else {
-            // Setup the query for searchObjects
-            $query = [
-                '@self' => [
-                    'register' => $register,
-                    'schema'   => $schema,
-                ],
-            ];
-            // Get all catalogs using searchObjects
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
+            $query['@self']['uuid'] = $catalogId;
         }
+
+        // Get catalogs using searchObjects (handles deleted field correctly)
+        $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
         // Initialize arrays to store unique registers and schemas
         $uniqueRegisters = [];
@@ -412,7 +414,7 @@ class CatalogiService
                 '_limit' => 1,
             ];
 
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, rbac: false, multi: false);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
             if (empty($catalogs)) {
                 $this->logger->error(
@@ -577,11 +579,17 @@ class CatalogiService
         if (!empty($context['registers']) || !empty($context['schemas'])) {
             $query['@self'] = [];
             if (!empty($context['registers'])) {
-                $query['@self']['register'] = $context['registers'];
+                // Use scalar value when only one register to avoid magic_mapper overhead
+                $query['@self']['register'] = count($context['registers']) === 1
+                    ? $context['registers'][0]
+                    : $context['registers'];
             }
 
             if (!empty($context['schemas'])) {
-                $query['@self']['schema'] = $context['schemas'];
+                // Use scalar value when only one schema to avoid magic_mapper overhead
+                $query['@self']['schema'] = count($context['schemas']) === 1
+                    ? $context['schemas'][0]
+                    : $context['schemas'];
             }
         }
 

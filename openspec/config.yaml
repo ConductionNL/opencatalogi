@@ -1,0 +1,28 @@
+schema: conduction
+
+context: |
+  Project: OpenCatalogi
+  Repo: ConductionNL/opencatalogi
+  Type: Nextcloud App (PHP)
+  Description: Open catalogi publication system for WOO/government transparency
+  Key components: Catalogi, Publications, Listings, Themes, Attachments
+  Database: PostgreSQL (via OpenRegister's ObjectService)
+  Mount path: /var/www/html/custom_apps/opencatalogi
+
+  Shared specs: See ../openspec/specs/ for cross-project conventions
+  Project guidelines: See ../project.md for workspace-wide standards
+
+rules:
+  proposal:
+    - Reference shared nextcloud-app spec for app structure requirements
+    - Consider impact on tilburg-woo-ui frontend
+  specs:
+    - Include public API specs for endpoints consumed by frontend UIs
+    - WOO compliance requirements where applicable
+  design:
+    - Uses OpenRegister's ObjectService for data persistence
+    - Config keys stored in IAppConfig: listing_schema, listing_register, listing_source
+    - Public endpoints need @CORS, @NoCSRFRequired, @PublicPage annotations
+  tasks:
+    - Test with tilburg-woo-ui to verify frontend compatibility
+    - Verify CORS headers on all public endpoints

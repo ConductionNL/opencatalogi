@@ -173,15 +173,14 @@ class CatalogiController extends Controller
         // Fetch catalog objects using searchObjectsPaginated
         $result = $this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
-            rbac: false,
-            multi: false,
+            _rbac: false,
+            _multitenancy: false,
             published: false,
             deleted: false
         );
 
         // Add CORS headers for public API access
         $response = new JSONResponse($result);
-        $response = new JSONResponse($data);
         $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
