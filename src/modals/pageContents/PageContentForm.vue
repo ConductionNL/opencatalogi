@@ -158,7 +158,6 @@ import '@toast-ui/editor/dist/toastui-editor.css'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 import { Page } from '../../entities/index.js'
 
@@ -266,8 +265,6 @@ export default {
 		if (this.isEdit) {
 			const contentItem = this.pageItem.contents.find((content) => content.id === objectStore.getActiveObject('pageContent').id)
 
-			console.log('[PageContentForm] Editing content item:', contentItem)
-
 			// Put in all data that does not require special handling.
 			this.contentsItem = {
 				...this.contentsItem,
@@ -283,12 +280,8 @@ export default {
 			// Legacy "text" format: data.html and data.text
 			if (contentItem.type === 'text') {
 				this.contentsItem.textData = contentItem.data.html || contentItem.data.text || ''
-				console.log('[PageContentForm] Loaded text content:', this.contentsItem.textData)
-			}
-			// New "RichText" format: data.content
-			else if (contentItem.type === 'RichText') {
+			} else if (contentItem.type === 'RichText') {
 				this.contentsItem.richTextData = contentItem.data.content || ''
-				console.log('[PageContentForm] Loaded RichText content:', this.contentsItem.richTextData)
 			}
 
 			// If faqs are present, prepend them to the contentsItem.
