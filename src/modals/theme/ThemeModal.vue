@@ -24,16 +24,22 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<div class="form-group">
 					<NcTextField
 						:disabled="objectStore.isLoading('theme')"
-						label="Title"
+						label="Title *"
 						:value.sync="theme.title"
 						:error="!!inputValidation.fieldErrors?.['title']"
 						:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 					<NcTextField
 						:disabled="objectStore.isLoading('theme')"
-						label="Summary"
+						label="Summary *"
 						:value.sync="theme.summary"
 						:error="!!inputValidation.fieldErrors?.['summary']"
 						:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
+					<NcTextArea
+						:disabled="objectStore.isLoading('theme')"
+						label="Content (HTML)"
+						:value.sync="theme.content"
+						:error="!!inputValidation.fieldErrors?.['content']"
+						:helper-text="inputValidation.fieldErrors?.['content']?.[0]" />
 					<NcTextArea
 						:disabled="objectStore.isLoading('theme')"
 						label="Description"
@@ -46,6 +52,31 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						:value.sync="theme.image"
 						:error="!!inputValidation.fieldErrors?.['image']"
 						:helper-text="inputValidation.fieldErrors?.['image']?.[0]" />
+					<NcTextField
+						:disabled="objectStore.isLoading('theme')"
+						label="Link text (button label)"
+						:value.sync="theme.link"
+						placeholder="Bekijk de documenten" />
+					<NcTextField
+						:disabled="objectStore.isLoading('theme')"
+						label="URL (destination)"
+						:value.sync="theme.url"
+						placeholder="https://example.com or /path" />
+					<NcTextField
+						:disabled="objectStore.isLoading('theme')"
+						label="Icon"
+						:value.sync="theme.icon"
+						placeholder="e.g. raadsstuk, bestuursstuk" />
+					<NcCheckboxRadioSwitch
+						:checked.sync="theme.isExternal"
+						:disabled="objectStore.isLoading('theme')">
+						Opens in new tab (external link)
+					</NcCheckboxRadioSwitch>
+					<NcTextField
+						:disabled="objectStore.isLoading('theme')"
+						label="Sort order"
+						type="number"
+						:value.sync="theme.sort" />
 				</div>
 			</div>
 			<div class="modalActions">
@@ -74,6 +105,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
 	NcModal,
 	NcNoteCard,
@@ -92,6 +124,7 @@ export default {
 		NcTextField,
 		NcTextArea,
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcLoadingIcon,
 		NcNoteCard,
 		// Icons
@@ -106,6 +139,12 @@ export default {
 				summary: '',
 				description: '',
 				image: '',
+				content: '',
+				link: '',
+				url: '',
+				icon: '',
+				isExternal: false,
+				sort: 0,
 			},
 			hasUpdated: false,
 		}
@@ -146,6 +185,12 @@ export default {
 				summary: '',
 				description: '',
 				image: '',
+				content: '',
+				link: '',
+				url: '',
+				icon: '',
+				isExternal: false,
+				sort: 0,
 			}
 			// Reset the object store state
 			objectStore.setState('theme', { success: null, error: null })

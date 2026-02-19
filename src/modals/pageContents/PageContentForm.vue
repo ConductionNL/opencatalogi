@@ -73,6 +73,20 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									@load="(editor) => richTextEditor = editor" />
 							</div>
 
+							<!-- Image -->
+							<div v-if="contentsItem.type === 'Image'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Image URL"
+									:value.sync="contentsItem.imageUrl"
+									placeholder="https://example.com/image.jpg" />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Srcset (optional, responsive images)"
+									:value.sync="contentsItem.imageSrcset"
+									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
+							</div>
+
 							<!-- Faq -->
 							<div v-if="contentsItem.type === 'Faq'">
 								<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
@@ -190,6 +204,8 @@ export default {
 				order: 0,
 				richTextData: '',
 				textData: '',
+				imageUrl: '',
+				imageSrcset: '',
 				id: Math.random().toString(36).substring(2, 12),
 				faqData: [
 					{
@@ -203,7 +219,7 @@ export default {
 				hideBeforeLogin: false,
 			},
 			typeOptions: {
-				options: ['text', 'RichText', 'Faq'],
+				options: ['text', 'RichText', 'Image', 'Faq'],
 			},
 			success: null,
 			error: false,
@@ -285,6 +301,9 @@ export default {
 				this.contentsItem.textData = contentItem.data.html || contentItem.data.text || ''
 			} else if (contentItem.type === 'RichText') {
 				this.contentsItem.richTextData = contentItem.data.content || ''
+			} else if (contentItem.type === 'Image') {
+				this.contentsItem.imageUrl = contentItem.data.url || ''
+				this.contentsItem.imageSrcset = contentItem.data.srcset || ''
 			}
 
 			// If faqs are present, prepend them to the contentsItem.
@@ -345,6 +364,19 @@ export default {
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						content: richTextContent,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'Image') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						url: this.contentsItem.imageUrl,
+						srcset: this.contentsItem.imageSrcset || undefined,
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,

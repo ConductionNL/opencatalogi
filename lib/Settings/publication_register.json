@@ -572,7 +572,7 @@
       "theme": {
         "slug": "theme",
         "title": "Theme",
-        "version": "0.0.3",
+        "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A category for organizing publications",
         "description": "Themes are used to categorize publications within catalogs. They provide a way to group related publications together, making it easier for users to find content they're interested in. Themes can be hierarchical and can be used for navigation and filtering purposes.",
@@ -602,6 +602,36 @@
           "image": {
             "type": "string",
             "description": "URL to the theme's image",
+            "facetable": false
+          },
+          "content": {
+            "type": "string",
+            "description": "HTML content describing the theme",
+            "facetable": false
+          },
+          "link": {
+            "type": "string",
+            "description": "Button/link text for the theme card",
+            "facetable": false
+          },
+          "url": {
+            "type": "string",
+            "description": "Destination URL when clicking the theme card link",
+            "facetable": false
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon identifier for the theme card",
+            "facetable": false
+          },
+          "isExternal": {
+            "type": "boolean",
+            "description": "Whether the link opens in a new tab",
+            "facetable": false
+          },
+          "sort": {
+            "type": "integer",
+            "description": "Sort order for display",
             "facetable": false
           }
         },

@@ -4,4 +4,10 @@ export type TTheme = {
     summary: string
     description: string
     image: string
+    content: string
+    link: string
+    url: string
+    icon: string
+    isExternal: boolean
+    sort: number
 }
