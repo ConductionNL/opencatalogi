@@ -882,6 +882,13 @@ class PublicationsController extends Controller
         try {
             $objectService = $this->getObjectService();
 
+            // Set register/schema context so RelationHandler can find the object in magic tables.
+            $location = $this->findObjectLocation($id);
+            if ($location !== null) {
+                $objectService->setRegister(register: (string) $location['register']);
+                $objectService->setSchema(schema: (string) $location['schema']);
+            }
+
             $queryParams = $this->request->getParams();
             unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
@@ -941,6 +948,13 @@ class PublicationsController extends Controller
     {
         try {
             $objectService = $this->getObjectService();
+
+            // Set register/schema context so RelationHandler can find the object in magic tables.
+            $location = $this->findObjectLocation($id);
+            if ($location !== null) {
+                $objectService->setRegister(register: (string) $location['register']);
+                $objectService->setSchema(schema: (string) $location['schema']);
+            }
 
             $queryParams = $this->request->getParams();
             unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
