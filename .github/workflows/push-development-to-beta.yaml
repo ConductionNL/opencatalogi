@@ -44,7 +44,7 @@ jobs:
           if [ -n "$BETA_VERSION" ]; then
             sed -i "s|<version>.*</version>|<version>${BETA_VERSION}</version>|" appinfo/info.xml
             git add appinfo/info.xml
-            git commit -m "Restore beta version to ${BETA_VERSION} [skip ci]" || true
+            git commit -m "Restore beta version to ${BETA_VERSION}" || true
           fi
 
           # Force push to beta branch
