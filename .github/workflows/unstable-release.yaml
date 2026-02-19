@@ -30,12 +30,12 @@ jobs:
           IFS='.' read -ra main_version_parts <<< "$main_version"
           next_patch=$((main_version_parts[2] + 1))
 
+          # Use git tags to find the highest unstable counter (info.xml gets overwritten by PR merges)
           unstable_counter=1
-          if [[ $current_version =~ -unstable\.([0-9]+)$ ]]; then
-            current_patch=$(echo $current_version | grep -oP '^[0-9]+\.[0-9]+\.(\d+)' | cut -d. -f3)
-            if [ "$current_patch" -eq "$next_patch" ]; then
-              unstable_counter=$((BASH_REMATCH[1] + 1))
-            fi
+          tag_prefix="v${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable."
+          latest_counter=$(git tag -l "${tag_prefix}*" | sed "s|${tag_prefix}||" | sort -n | tail -1)
+          if [[ -n "$latest_counter" ]]; then
+            unstable_counter=$((latest_counter + 1))
           fi
 
           unstable_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable.${unstable_counter}"
