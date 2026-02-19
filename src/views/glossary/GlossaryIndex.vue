@@ -158,13 +158,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 									<tr>
 										<th>{{ t('opencatalogi', 'Property') }}</th>
 										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr>
 										<td>{{ t('opencatalogi', 'Status') }}</td>
-										<td>{{ term.published ? 'Public' : 'Private' }}</td>
 										<td>{{ term.published ? 'Published' : 'Draft' }}</td>
 									</tr>
 									<tr v-if="term.summary">
@@ -172,24 +170,20 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<td class="truncatedText">
 											{{ term.summary }}
 										</td>
-										<td>{{ 'Available' }}</td>
 									</tr>
 									<tr v-if="term.description">
 										<td>{{ t('opencatalogi', 'Description') }}</td>
 										<td class="truncatedText">
 											{{ term.description }}
 										</td>
-										<td>{{ 'Available' }}</td>
 									</tr>
 									<tr>
 										<td>{{ t('opencatalogi', 'Related Terms') }}</td>
 										<td>{{ term.relatedTerms?.length || 0 }}</td>
-										<td>{{ term.relatedTerms?.length > 0 ? 'Linked' : 'None' }}</td>
 									</tr>
 									<tr v-if="term.keywords?.length">
 										<td>{{ t('opencatalogi', 'Keywords') }}</td>
-										<td>{{ term.keywords.join(', ') }}</td>
-										<td>{{ 'Available' }}</td>
+										<td class="truncatedText">{{ term.keywords.join(', ') }}</td>
 									</tr>
 								</tbody>
 							</table>
@@ -404,11 +398,18 @@ export default {
 </script>
 
 <style scoped>
+.termStats {
+	table-layout: fixed;
+}
+
+.termStats td:first-child {
+	width: 120px;
+}
+
 .truncatedText {
-	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	display: inline-block;
+	max-width: 0;
 }
 </style>
