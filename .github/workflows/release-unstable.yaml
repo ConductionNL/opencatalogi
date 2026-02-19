@@ -3,22 +3,20 @@ name: Unstable Release
 on:
   push:
     branches:
-      - development
+      - development-release
 
 jobs:
   release-management:
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Set app env
-        run: |
-          echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+        run: echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
       - name: Get current version and append unstable suffix
         id: increment_version
@@ -39,7 +37,6 @@ jobs:
           fi
 
           unstable_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable.${unstable_counter}"
-
           echo "NEW_VERSION=$unstable_version" >> $GITHUB_ENV
           echo "new_version=$unstable_version" >> $GITHUB_OUTPUT
           echo "Main version: $main_version"
@@ -47,14 +44,12 @@ jobs:
           echo "Using unstable version: $unstable_version"
 
       - name: Update version in info.xml
-        run: |
-          sed -i "s|<version>.*</version>|<version>${{ env.NEW_VERSION }}</version>|" appinfo/info.xml
+        run: sed -i "s|<version>.*</version>|<version>${{ env.NEW_VERSION }}</version>|" appinfo/info.xml
 
       - name: Commit version update
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
           if git diff --quiet && git diff --cached --quiet; then
             echo "No changes to commit"
           else
@@ -69,7 +64,7 @@ jobs:
           echo "${{ secrets.NEXTCLOUD_SIGNING_KEY }}" > signing-key.key
 
       - name: Install npm dependencies
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '18.x'
 
@@ -119,12 +114,10 @@ jobs:
             ./ package/${{ github.event.repository.name }}/
 
       - name: Create Tarball
-        run: |
-          cd package && tar -czf ../nextcloud-release.tar.gz ${{ github.event.repository.name }}
+        run: cd package && tar -czf ../nextcloud-release.tar.gz ${{ github.event.repository.name }}
 
       - name: Sign the TAR.GZ file with OpenSSL
-        run: |
-          openssl dgst -sha512 -sign signing-key.key nextcloud-release.tar.gz | openssl base64 -out nextcloud-release.signature
+        run: openssl dgst -sha512 -sign signing-key.key nextcloud-release.tar.gz | openssl base64 -out nextcloud-release.signature
 
       - name: Upload tarball as artifact
         uses: actions/upload-artifact@v4
@@ -139,7 +132,7 @@ jobs:
         id: version
         uses: codacy/git-version@2.7.1
         with:
-          release-branch: development
+          release-branch: development-release
 
       - name: Upload Unstable Release
         uses: ncipollo/release-action@v1.12.0

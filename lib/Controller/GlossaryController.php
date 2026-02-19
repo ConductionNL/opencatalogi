@@ -244,6 +244,7 @@ class GlossaryController extends Controller
             '_limit'  => 1,
             '_source' => 'database',
         ];
+        // Glossary terms do not use the publishing workflow, so published=false
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
         if (empty($result['results'])) {

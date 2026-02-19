@@ -597,8 +597,7 @@ class PublicationService
      */
     public function attachments(string $id): JSONResponse
     {
-        // Use positional parameters for compatibility with different ObjectService versions
-        $object = $this->getObjectService()->find($id, [])->jsonSerialize();
+        $object = $this->getObjectService()->find(id: $id, extend: [])->jsonSerialize();
 
         $fileService = $this->getFileService();
 

@@ -27,10 +27,10 @@ jobs:
         id: increment_version
         run: |
           # Get version from master branch
-          git fetch origin master
-          master_version=$(git show origin/master:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
+          git fetch origin main
+          master_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
 
-          # Get current version from feature/beta branch
+          # Get current version from development branch
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
 
           # Split master version into parts
