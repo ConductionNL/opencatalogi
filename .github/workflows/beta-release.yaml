@@ -22,38 +22,27 @@ jobs:
         run: |
           echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
-      # Stap 3: Haal huidige versie uit info.xml, verhoog de patch en voeg beta-suffix toe
-      - name: Get current version and append beta suffix
+      # Stap 3: Increment the beta counter from current version in info.xml
+      - name: Get current version and increment beta counter
         id: increment_version
         run: |
-          # Get version from master branch
-          git fetch origin main
-          master_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
-
-          # Get current version from development branch
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
 
-          # Split master version into parts
-          IFS='.' read -ra master_version_parts <<< "$master_version"
-
-          # Increment patch version by 1 from master
-          next_patch=$((master_version_parts[2] + 1))
-
-          # Extract beta counter from current version if it exists
-          beta_counter=1
-          if [[ $current_version =~ -beta\.([0-9]+)$ ]]; then
-            # If current patch version is still ahead of master, increment counter
-            current_patch=$(echo $current_version | grep -oP '^[0-9]+\.[0-9]+\.(\d+)' | cut -d. -f3)
-            if [ "$current_patch" -eq "$next_patch" ]; then
-              beta_counter=$((BASH_REMATCH[1] + 1))
-            fi
+          # Extract base version and beta counter
+          if [[ $current_version =~ ^([0-9]+\.[0-9]+\.[0-9]+)-beta\.([0-9]+)$ ]]; then
+            # Already a beta version, increment counter
+            base_version="${BASH_REMATCH[1]}"
+            beta_counter=$((BASH_REMATCH[2] + 1))
+          else
+            # Strip any suffix (-unstable.N etc) to get the base version
+            base_version=$(echo "$current_version" | sed 's/-[a-z].*$//')
+            beta_counter=1
           fi
 
-          beta_version="${master_version_parts[0]}.${master_version_parts[1]}.${next_patch}-beta.${beta_counter}"
+          beta_version="${base_version}-beta.${beta_counter}"
 
           echo "NEW_VERSION=$beta_version" >> $GITHUB_ENV
           echo "new_version=$beta_version" >> $GITHUB_OUTPUT
-          echo "Master version: $master_version"
           echo "Current version: $current_version"
           echo "Using beta version: $beta_version"
 
