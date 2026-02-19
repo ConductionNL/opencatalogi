@@ -338,8 +338,29 @@ class PublicationsController extends Controller
                     $registers = json_decode($registers, true) ?? [];
                 }
                 $registers = array_map('intval', $registers);
-                // Use first register for magic mapper routing
-                $searchQuery['_register'] = $registers[0];
+                if (count($registers) === 1) {
+                    // Single register: use magic mapper optimization
+                    $searchQuery['_register'] = $registers[0];
+                } else {
+                    // Multi-register: pass all register IDs and prevent auto-setting
+                    $searchQuery['_registers'] = $registers;
+                    $searchQuery['_register'] = null;
+
+                    // Multi-register search: strip _order on non-universal fields
+                    // since schemas may have different property names (e.g., 'name' vs 'naam').
+                    // Only allow metadata fields that exist in all magic mapper tables.
+                    $universalOrderFields = ['uuid', 'created', 'updated', 'published', 'depublished'];
+                    if (!empty($searchQuery['_order']) && is_array($searchQuery['_order'])) {
+                        foreach (array_keys($searchQuery['_order']) as $orderField) {
+                            if (!in_array($orderField, $universalOrderFields, true)) {
+                                unset($searchQuery['_order'][$orderField]);
+                            }
+                        }
+                        if (empty($searchQuery['_order'])) {
+                            unset($searchQuery['_order']);
+                        }
+                    }
+                }
             }
 
             // DIRECT ObjectService call - WITH CATALOG FILTERING
