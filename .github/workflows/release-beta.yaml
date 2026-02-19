@@ -1,60 +1,60 @@
-name: Unstable Release
+name: Beta Release
 
 on:
   push:
     branches:
-      - feature/newopenregister
+      - beta-release
 
 jobs:
   release-management:
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Set app env
-        run: |
-          echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+        run: echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
-      - name: Get current version and append unstable suffix
+      - name: Get current version and append beta suffix
         id: increment_version
         run: |
+          git fetch origin main
+          main_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
 
-          # Strip any existing -unstable.N suffix to get the base version
-          base_version=$(echo "$current_version" | sed 's/-unstable\.[0-9]*//')
+          IFS='.' read -ra main_version_parts <<< "$main_version"
+          next_patch=$((main_version_parts[2] + 1))
 
-          unstable_counter=1
-          if [[ $current_version =~ -unstable\.([0-9]+)$ ]]; then
-            unstable_counter=$((BASH_REMATCH[1] + 1))
+          beta_counter=1
+          if [[ $current_version =~ -beta\.([0-9]+)$ ]]; then
+            current_patch=$(echo $current_version | grep -oP '^[0-9]+\.[0-9]+\.(\d+)' | cut -d. -f3)
+            if [ "$current_patch" -eq "$next_patch" ]; then
+              beta_counter=$((BASH_REMATCH[1] + 1))
+            fi
           fi
 
-          unstable_version="${base_version}-unstable.${unstable_counter}"
-
-          echo "NEW_VERSION=$unstable_version" >> $GITHUB_ENV
-          echo "new_version=$unstable_version" >> $GITHUB_OUTPUT
-          echo "Base version: $base_version"
+          beta_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-beta.${beta_counter}"
+          echo "NEW_VERSION=$beta_version" >> $GITHUB_ENV
+          echo "new_version=$beta_version" >> $GITHUB_OUTPUT
+          echo "Main version: $main_version"
           echo "Current version: $current_version"
-          echo "Using unstable version: $unstable_version"
+          echo "Using beta version: $beta_version"
 
       - name: Update version in info.xml
-        run: |
-          sed -i "s|<version>.*</version>|<version>${{ env.NEW_VERSION }}</version>|" appinfo/info.xml
+        run: sed -i "s|<version>.*</version>|<version>${{ env.NEW_VERSION }}</version>|" appinfo/info.xml
 
       - name: Commit version update
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
           if git diff --quiet && git diff --cached --quiet; then
             echo "No changes to commit"
           else
             git add appinfo/info.xml
-            git commit -m "Bump unstable version to ${{ env.NEW_VERSION }} [skip ci]"
+            git commit -m "Bump beta version to ${{ env.NEW_VERSION }} [skip ci]"
             git push
           fi
 
@@ -64,7 +64,7 @@ jobs:
           echo "${{ secrets.NEXTCLOUD_SIGNING_KEY }}" > signing-key.key
 
       - name: Install npm dependencies
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '18.x'
 
@@ -114,12 +114,10 @@ jobs:
             ./ package/${{ github.event.repository.name }}/
 
       - name: Create Tarball
-        run: |
-          cd package && tar -czf ../nextcloud-release.tar.gz ${{ github.event.repository.name }}
+        run: cd package && tar -czf ../nextcloud-release.tar.gz ${{ github.event.repository.name }}
 
       - name: Sign the TAR.GZ file with OpenSSL
-        run: |
-          openssl dgst -sha512 -sign signing-key.key nextcloud-release.tar.gz | openssl base64 -out nextcloud-release.signature
+        run: openssl dgst -sha512 -sign signing-key.key nextcloud-release.tar.gz | openssl base64 -out nextcloud-release.signature
 
       - name: Upload tarball as artifact
         uses: actions/upload-artifact@v4
@@ -134,13 +132,13 @@ jobs:
         id: version
         uses: codacy/git-version@2.7.1
         with:
-          release-branch: feature/newopenregister
+          release-branch: beta-release
 
-      - name: Upload Unstable Release
+      - name: Upload Beta Release
         uses: ncipollo/release-action@v1.12.0
         with:
           tag: v${{ env.NEW_VERSION }}
-          name: Unstable Release ${{ env.NEW_VERSION }}
+          name: Beta Release ${{ env.NEW_VERSION }}
           draft: false
           prerelease: true
           skipIfReleaseExists: true
@@ -161,7 +159,7 @@ jobs:
           appstore_token: ${{ secrets.NEXTCLOUD_APPSTORE_TOKEN }}
           download_url: https://github.com/${{ github.repository }}/releases/download/v${{ env.NEW_VERSION }}/${{ env.APP_NAME }}-${{ env.NEW_VERSION }}.tar.gz
           app_private_key: ${{ secrets.NEXTCLOUD_SIGNING_KEY }}
-          nightly: true
+          nightly: false
 
       - name: Verify release
         run: |

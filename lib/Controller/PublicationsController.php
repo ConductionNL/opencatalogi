@@ -338,8 +338,29 @@ class PublicationsController extends Controller
                     $registers = json_decode($registers, true) ?? [];
                 }
                 $registers = array_map('intval', $registers);
-                // Use first register for magic mapper routing
-                $searchQuery['_register'] = $registers[0];
+                if (count($registers) === 1) {
+                    // Single register: use magic mapper optimization
+                    $searchQuery['_register'] = $registers[0];
+                } else {
+                    // Multi-register: pass all register IDs and prevent auto-setting
+                    $searchQuery['_registers'] = $registers;
+                    $searchQuery['_register'] = null;
+
+                    // Multi-register search: strip _order on non-universal fields
+                    // since schemas may have different property names (e.g., 'name' vs 'naam').
+                    // Only allow metadata fields that exist in all magic mapper tables.
+                    $universalOrderFields = ['uuid', 'created', 'updated', 'published', 'depublished'];
+                    if (!empty($searchQuery['_order']) && is_array($searchQuery['_order'])) {
+                        foreach (array_keys($searchQuery['_order']) as $orderField) {
+                            if (!in_array($orderField, $universalOrderFields, true)) {
+                                unset($searchQuery['_order'][$orderField]);
+                            }
+                        }
+                        if (empty($searchQuery['_order'])) {
+                            unset($searchQuery['_order']);
+                        }
+                    }
+                }
             }
 
             // DIRECT ObjectService call - WITH CATALOG FILTERING
@@ -820,12 +841,11 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieves all objects that this publication references - DIRECT OBJECTSERVICE HACK
+     * Retrieves all objects that this publication references (outgoing relations).
      *
-     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
-     * Bypasses ALL middleware and calls ObjectService directly for maximum performance.
+     * Delegates directly to OpenRegister's ObjectService::getObjectUses() and trusts RBAC.
      *
-     * @param  string $catalogSlug The slug of the catalog
+     * @param  string $catalogSlug The slug of the catalog (unused, kept for route compatibility)
      * @param  string $id          The ID of the publication to retrieve relations for
      * @return JSONResponse A JSON response containing the related objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -837,165 +857,17 @@ class PublicationsController extends Controller
     public function uses(string $catalogSlug, string $id): JSONResponse
     {
         try {
-            // Get the catalog from cache or database
-            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
-
-            if ($catalogData === null) {
-                return new JSONResponse(
-                    [
-                        'error'       => 'Catalog not found',
-                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
-                        'catalogSlug' => $catalogSlug,
-                    ],
-                    404
-                );
-            }
-
-            // Convert ObjectEntity to array if needed
-            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
-
-            // Get ObjectService directly
             $objectService = $this->getObjectService();
 
-            // Extract register and schema from catalog for magic table support.
-            $catalogRegisters = $catalog['registers'] ?? [];
-            $catalogSchemas = $catalog['schemas'] ?? [];
-            // Parse JSON string if needed (catalog fields may be JSON-encoded)
-            if (is_string($catalogRegisters)) {
-                $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
-            }
-            if (is_string($catalogSchemas)) {
-                $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
-            }
-            $register = !empty($catalogRegisters) ? (int) $catalogRegisters[0] : null;
+            $queryParams = $this->request->getParams();
+            unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
-            // For multi-schema catalogs, loop through all schemas to find the object.
-            $object = null;
-            $schemasToTry = array_map('intval', $catalogSchemas);
-            foreach ($schemasToTry as $schemaId) {
-                try {
-                    $object = $objectService->find(
-                        id: $id,
-                        _extend: [],
-                        files: false,
-                        register: $register,
-                        schema: $schemaId,
-                        _rbac: false,
-                        _multitenancy: false
-                    );
-                    if ($object !== null) {
-                        break;
-                    }
-                } catch (DoesNotExistException $e) {
-                    // Object not found in this schema, try next one.
-                    continue;
-                }
-            }
-
-            if ($object === null) {
-                return new JSONResponse(
-                    [
-                        'error'       => 'Publication not found',
-                        'message'     => 'The publication with ID "'.$id.'" does not exist or is not accessible.',
-                        'id'          => $id,
-                        'catalogSlug' => $catalogSlug,
-                        'hint'        => 'This could be because: 1) The publication does not exist, 2) It is not published yet, 3) It has been depublished, or 4) Multi-tenancy restrictions apply.',
-                    ],
-                    404
-                );
-            }
-
-            $relationsArray = $object->getRelations();
-
-            // DEBUG: Log what we got from getRelations()
-            if (is_array($relationsArray)) {
-                $this->logger->debug('[PublicationsController::uses] Relations count: '.count($relationsArray));
-                foreach ($relationsArray as $key => $value) {
-                    $this->logger->debug('[PublicationsController::uses] Relation ['.$key.']: '.json_encode($value).' (type: '.gettype($value).')');
-                }
-            }
-
-            // Filter relations, we only want uuids
-            $logger = $this->logger;
-// Capture for use in closure
-            $relations = array_values(
-                array_filter(
-                    $relationsArray,
-                    function ($value) use ($logger) {
-                        // Accept only strings that look like uuids
-                        $isValid = is_string($value) && preg_match('/^[0-9a-fA-F\-]{32,36}$/', $value);
-                        if (!$isValid && is_string($value)) {
-                            $logger->debug('[PublicationsController::uses] Filtered out: '.$value.' (length: '.strlen($value).')');
-                        }
-
-                        return $isValid;
-                    }
-                )
+            $result = $objectService->getObjectUses(
+                objectId: $id,
+                query: $queryParams,
+                rbac: true,
+                _multitenancy: true
             );
-
-            // Check if relations array is empty
-            if (empty($relations)) {
-                // If relations is empty, return empty paginated response
-                $searchQuery = [
-                    '_extend' => ['@self.schema'],
-                    '_limit'  => 1000,
-                ];
-                $result = [
-                    'results' => [],
-                    'total'   => 0,
-                    'page'    => 1,
-                    'pages'   => 1,
-                    'limit'   => 1000,
-                    'offset'  => 0,
-                    'facets'  => [],
-                    '@self'   => [
-                        'source'    => 'database',
-                        'query'     => $searchQuery,
-                        'rbac'      => false,
-                        'multi'     => false,
-                        'published' => true,
-                        'deleted'   => false,
-                    ],
-                ];
-            } else {
-                // Get request parameters for extensions
-                $requestParams = $this->request->getParams();
-                $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
-                // Normalize to array - handle comma-separated strings.
-                if (is_string($extend)) {
-                    $extend = array_map('trim', explode(',', $extend));
-                } else if (!is_array($extend)) {
-                    $extend = [$extend];
-                }
-                // Ensure @self.schema is always included for related objects.
-                if (!in_array('@self.schema', $extend) && !in_array('_schema', $extend)) {
-                    $extend[] = '@self.schema';
-                }
-
-                // Search for objects by their UUIDs across ALL registers and schemas.
-                // Related objects can be in ANY register/schema, not just the catalog's.
-                // Explicitly set _register and _schema to null to prevent ObjectService from auto-setting them.
-                $searchQuery = [
-                    '_extend'   => $extend,
-                    '_limit'    => 1000,
-                    '_ids'      => $relations,
-                    '_register' => null,
-                    '_schema'   => null,
-                ];
-
-                // Create a fresh ObjectService to avoid state from previous operations.
-                // Note: Don't filter by published status for related objects - they may not be published
-                // but should still be visible when referenced by a published object.
-                $freshObjectService = $this->getObjectService();
-                $result             = $freshObjectService->searchObjectsPaginated(
-                    query: $searchQuery,
-                    deleted: false,
-                    published: false
-                );
-            }//end if
-
-            // Add what we're searching for in debugging
-            $result["@self"]['ids'] = $relations;
 
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -1005,34 +877,19 @@ class PublicationsController extends Controller
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
             return $response;
-        } catch (DoesNotExistException $exception) {
-            return new JSONResponse(
-                [
-                    'error'       => 'Publication not found',
-                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
-                    'id'          => $id,
-                    'catalogSlug' => $catalogSlug,
-                    'exception'   => 'DoesNotExistException',
-                ],
-                404
-            );
         } catch (\Exception $e) {
             $this->logger->error(
                 '[PublicationsController::uses] Failed to retrieve publication uses',
                 [
-                    'id'          => $id,
-                    'catalogSlug' => $catalogSlug,
-                    'error'       => $e->getMessage(),
-                    'trace'       => $e->getTraceAsString(),
+                    'id'    => $id,
+                    'error' => $e->getMessage(),
                 ]
             );
             return new JSONResponse(
                 [
-                    'error'       => 'Failed to retrieve publication uses',
-                    'message'     => $e->getMessage(),
-                    'id'          => $id,
-                    'catalogSlug' => $catalogSlug,
-                    'hint'        => 'Check server logs for more details.',
+                    'error'   => 'Failed to retrieve publication uses',
+                    'message' => $e->getMessage(),
+                    'id'      => $id,
                 ],
                 500
             );
@@ -1042,12 +899,11 @@ class PublicationsController extends Controller
 
 
     /**
-     * Retrieves all objects that use this publication - DIRECT OBJECTSERVICE HACK
+     * Retrieves all objects that use this publication (incoming relations).
      *
-     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
-     * Bypasses ALL middleware and calls ObjectService directly for maximum performance.
+     * Delegates directly to OpenRegister's ObjectService::getObjectUsedBy() and trusts RBAC.
      *
-     * @param  string $catalogSlug The slug of the catalog
+     * @param  string $catalogSlug The slug of the catalog (unused, kept for route compatibility)
      * @param  string $id          The ID of the publication to retrieve uses for
      * @return JSONResponse A JSON response containing the referenced objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -1059,62 +915,17 @@ class PublicationsController extends Controller
     public function used(string $catalogSlug, string $id): JSONResponse
     {
         try {
-            // Get the catalog from cache or database
-            $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
-
-            if ($catalogData === null) {
-                return new JSONResponse(
-                    [
-                        'error'       => 'Catalog not found',
-                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
-                        'catalogSlug' => $catalogSlug,
-                    ],
-                    404
-                );
-            }
-
-            // Convert ObjectEntity to array if needed
-            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
-
-            // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
 
-            // Get request parameters for extensions
-            $requestParams = $this->request->getParams();
-            $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
-            // Normalize to array - handle comma-separated strings.
-            if (is_string($extend)) {
-                $extend = array_map('trim', explode(',', $extend));
-            } else if (!is_array($extend)) {
-                $extend = [$extend];
-            }
-            // Ensure @self.schema is always included for related objects.
-            if (!in_array('@self.schema', $extend) && !in_array('_schema', $extend)) {
-                $extend[] = '@self.schema';
-            }
+            $queryParams = $this->request->getParams();
+            unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
-            // Build search query for cross-register search.
-            // Search for objects that have this UUID in their _relations using _relations_contains filter.
-            // Explicitly set _register and _schema to null to prevent ObjectService from auto-setting them.
-            $searchQuery = [
-                '_extend'             => $extend,
-                '_limit'              => 1000,
-                '_relations_contains' => $id,
-                '_register'           => null,
-                '_schema'             => null,
-            ];
-
-            // Search for objects that have this UUID in their relations.
-            // Note: Don't filter by published status - related objects may not be published
-            // but should still be visible when showing usage relationships.
-            $result = $objectService->searchObjectsPaginated(
-                query: $searchQuery,
-                deleted: false,
-                published: false
+            $result = $objectService->getObjectUsedBy(
+                objectId: $id,
+                query: $queryParams,
+                rbac: true,
+                _multitenancy: true
             );
-
-            // Add relations being searched for debugging
-            $result['@self']['used'] = $id;
 
             // Add CORS headers for public API access
             $response = new JSONResponse($result, 200);
@@ -1124,34 +935,19 @@ class PublicationsController extends Controller
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
             return $response;
-        } catch (DoesNotExistException $exception) {
-            return new JSONResponse(
-                [
-                    'error'       => 'Publication not found',
-                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
-                    'id'          => $id,
-                    'catalogSlug' => $catalogSlug,
-                    'exception'   => 'DoesNotExistException',
-                ],
-                404
-            );
         } catch (\Exception $e) {
             $this->logger->error(
                 '[PublicationsController::used] Failed to retrieve publication used',
                 [
-                    'id'          => $id,
-                    'catalogSlug' => $catalogSlug,
-                    'error'       => $e->getMessage(),
-                    'trace'       => $e->getTraceAsString(),
+                    'id'    => $id,
+                    'error' => $e->getMessage(),
                 ]
             );
             return new JSONResponse(
                 [
-                    'error'       => 'Failed to retrieve publication used',
-                    'message'     => $e->getMessage(),
-                    'id'          => $id,
-                    'catalogSlug' => $catalogSlug,
-                    'hint'        => 'Check server logs for more details.',
+                    'error'   => 'Failed to retrieve publication used',
+                    'message' => $e->getMessage(),
+                    'id'      => $id,
                 ],
                 500
             );
