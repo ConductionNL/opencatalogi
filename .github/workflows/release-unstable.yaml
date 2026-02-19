@@ -21,26 +21,29 @@ jobs:
       - name: Get current version and append unstable suffix
         id: increment_version
         run: |
-          git fetch origin main
-          main_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
-          current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
+          # Find the highest base version across ALL git tags (stable, beta, unstable)
+          # This ensures the unstable version is always higher than any existing release
+          highest_version=$(git tag -l "v*" | sed 's/^v//' | sed 's/-.*$//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+          if [[ -z "$highest_version" ]]; then
+            git fetch origin main
+            highest_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "0.0.0")
+          fi
+          echo "Highest base version from tags: $highest_version"
 
-          IFS='.' read -ra main_version_parts <<< "$main_version"
-          next_patch=$((main_version_parts[2] + 1))
+          IFS='.' read -ra version_parts <<< "$highest_version"
+          next_patch=$((version_parts[2] + 1))
 
-          # Use git tags to find the highest unstable counter (info.xml gets overwritten by PR merges)
+          # Use git tags to find the highest unstable counter
           unstable_counter=1
-          tag_prefix="v${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable."
+          tag_prefix="v${version_parts[0]}.${version_parts[1]}.${next_patch}-unstable."
           latest_counter=$(git tag -l "${tag_prefix}*" | sed "s|${tag_prefix}||" | sort -n | tail -1)
           if [[ -n "$latest_counter" ]]; then
             unstable_counter=$((latest_counter + 1))
           fi
 
-          unstable_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable.${unstable_counter}"
+          unstable_version="${version_parts[0]}.${version_parts[1]}.${next_patch}-unstable.${unstable_counter}"
           echo "NEW_VERSION=$unstable_version" >> $GITHUB_ENV
           echo "new_version=$unstable_version" >> $GITHUB_OUTPUT
-          echo "Main version: $main_version"
-          echo "Current version: $current_version"
           echo "Using unstable version: $unstable_version"
 
       - name: Update version in info.xml
