@@ -3,7 +3,7 @@ name: Unstable Release
 on:
   push:
     branches:
-      - feature/newopenregister
+      - development
 
 jobs:
   release-management:
@@ -23,21 +23,26 @@ jobs:
       - name: Get current version and append unstable suffix
         id: increment_version
         run: |
+          git fetch origin main
+          main_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
 
-          # Strip any existing -unstable.N suffix to get the base version
-          base_version=$(echo "$current_version" | sed 's/-unstable\.[0-9]*//')
+          IFS='.' read -ra main_version_parts <<< "$main_version"
+          next_patch=$((main_version_parts[2] + 1))
 
           unstable_counter=1
           if [[ $current_version =~ -unstable\.([0-9]+)$ ]]; then
-            unstable_counter=$((BASH_REMATCH[1] + 1))
+            current_patch=$(echo $current_version | grep -oP '^[0-9]+\.[0-9]+\.(\d+)' | cut -d. -f3)
+            if [ "$current_patch" -eq "$next_patch" ]; then
+              unstable_counter=$((BASH_REMATCH[1] + 1))
+            fi
           fi
 
-          unstable_version="${base_version}-unstable.${unstable_counter}"
+          unstable_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable.${unstable_counter}"
 
           echo "NEW_VERSION=$unstable_version" >> $GITHUB_ENV
           echo "new_version=$unstable_version" >> $GITHUB_OUTPUT
-          echo "Base version: $base_version"
+          echo "Main version: $main_version"
           echo "Current version: $current_version"
           echo "Using unstable version: $unstable_version"
 
@@ -134,7 +139,7 @@ jobs:
         id: version
         uses: codacy/git-version@2.7.1
         with:
-          release-branch: feature/newopenregister
+          release-branch: development
 
       - name: Upload Unstable Release
         uses: ncipollo/release-action@v1.12.0
