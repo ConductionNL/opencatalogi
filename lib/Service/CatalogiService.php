@@ -236,22 +236,22 @@ class CatalogiService
      */
     private function paginate(array $results, ?int $total = 0, ?int $limit = 20, ?int $offset = 0, ?int $page = 1, ?array $facets = []): array
     {
-        // Ensure we have valid values (never null)
+        // Ensure we have valid values (never null, limit=0 is valid for count/facets-only requests)
         $total = max(0, ($total ?? 0));
-        $limit = max(1, ($limit ?? 20));
-        // Minimum limit of 1
+        $limit = max(0, ($limit ?? 20));
         $offset = max(0, ($offset ?? 0));
         $page   = max(1, ($page ?? 1));
-        // Minimum page of 1        // Calculate the number of pages (minimum 1 page)
-        $pages = max(1, ceil($total / $limit));
+
+        // Calculate the number of pages (avoid division by zero when limit=0)
+        $pages = $limit > 0 ? max(1, ceil($total / $limit)) : 0;
 
         // If we have a page but no offset, calculate the offset
         if ($offset === 0) {
             $offset = (($page - 1) * $limit);
         }
 
-        // If we have an offset but page is 1, calculate the page
-        if ($page === 1 && $offset > 0) {
+        // If we have an offset but page is 1, calculate the page (avoid division by zero)
+        if ($page === 1 && $offset > 0 && $limit > 0) {
             $page = (floor($offset / $limit) + 1);
         }
 
@@ -259,7 +259,7 @@ class CatalogiService
         // @todo: this is a hack to ensure the pagination is correct when the total is not known. That sugjest that the underlaying count service has a problem that needs to be fixed instead
         if ($total < count($results)) {
             $total = count($results);
-            $pages = max(1, ceil($total / $limit));
+            $pages = $limit > 0 ? max(1, ceil($total / $limit)) : 0;
         }
 
         // Initialize the results array with pagination information
@@ -406,12 +406,10 @@ class CatalogiService
             }
 
             $query = [
-                '@self'  => [
-                    'register' => $register,
-                    'schema'   => $schema,
-                ],
-                'slug'   => $slug,
-                '_limit' => 1,
+                '_register' => $register,
+                '_schema'   => $schema,
+                'slug'      => $slug,
+                '_limit'    => 1,
             ];
 
             $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
@@ -481,7 +479,15 @@ class CatalogiService
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
         try {
-            $catalog     = $this->getObjectService()->find($catalogId);
+            // Get catalog register/schema for magic mapper routing
+            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            $catalog     = $this->getObjectService()->find(
+                id: $catalogId,
+                register: $register,
+                schema: $schema
+            );
             $catalogData = $catalog->jsonSerialize();
 
             if (isset($catalogData['slug'])) {
@@ -532,7 +538,15 @@ class CatalogiService
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
         try {
-            $catalog     = $this->getObjectService()->find($catalogId);
+            // Get catalog register/schema for magic mapper routing
+            $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
+            $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+
+            $catalog     = $this->getObjectService()->find(
+                id: $catalogId,
+                register: $register,
+                schema: $schema
+            );
             $catalogData = $catalog->jsonSerialize();
 
             if (isset($catalogData['slug'])) {
@@ -574,7 +588,7 @@ class CatalogiService
 
         $objectService = $this->getObjectService();
 
-        // Build search query from config
+        // Build search query from config - use _register and _schema for magic mapper routing
         $query = [];
         if (!empty($context['registers']) || !empty($context['schemas'])) {
             $query['@self'] = [];

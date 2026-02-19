@@ -180,8 +180,10 @@ class SettingsService
                 // Try to find a register with a matching name.
                 $matchingRegister = null;
                 foreach ($registers as $register) {
-                    if (stripos($register['slug'], $registerSlug) !== false) {
-                        $matchingRegister = $register;
+                    // Convert Register entity to array if needed
+                    $registerData = is_array($register) ? $register : $register->jsonSerialize();
+                    if (stripos($registerData['slug'], $registerSlug) !== false) {
+                        $matchingRegister = $registerData;
                         break;
                     }
                 }
@@ -192,7 +194,7 @@ class SettingsService
                     // Try to find a matching schema.
                     if (empty($matchingRegister['schemas']) === false) {
                         foreach ($matchingRegister['schemas'] as $schema) {
-                            if (is_array($schema) === true) {
+                            if (is_array($schema) === false) {
                                 continue;
                             }
 
@@ -580,7 +582,7 @@ class SettingsService
             // Get the absolute path to the app directory
             $appPath = $this->appManager->getAppPath(Application::APP_ID);
             
-            // Build absolute path to the file
+            // Build absolute path to the configuration file
             $absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
             
             // Check if file exists
@@ -631,7 +633,7 @@ class SettingsService
 
             // Use importFromApp to import the configuration data directly
             // This avoids the file path resolution issue in importFromFilePath
-            return $configurationService->importFromApp(
+            $result = $configurationService->importFromApp(
                 appId: Application::APP_ID,
                 data: $data,
                 version: $currentAppVersion,

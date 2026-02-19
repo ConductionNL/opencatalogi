@@ -75,8 +75,8 @@ class RobotsController extends Controller
 
         $catalogs = ($this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
-            rbac: false,
-            multi: false,
+            _rbac: false,
+            _multitenancy: false,
             published: false,
             deleted: false
         )['results'] ?? []);

@@ -151,10 +151,9 @@ class SitemapService
         // First call: only to retrieve total publications count
         $firstPage = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            rbac: false,
-            multi: false,
-            published: true,
-            // must be published
+            _rbac: false,
+            _multitenancy: false,
+            published: false,
             deleted: false
         );
 
@@ -194,10 +193,9 @@ class SitemapService
 
             $batch = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                rbac: false,
-                multi: false,
-                published: true,
-                // must be published
+                _rbac: false,
+                _multitenancy: false,
+                published: false,
                 deleted: false
             );
 
@@ -262,10 +260,9 @@ class SitemapService
 
         $publications = ($objectService->searchObjectsPaginated(
             query: $searchQuery,
-            rbac: false,
-            multi: false,
-            published: true,
-            // must be published publications
+            _rbac: false,
+            _multitenancy: false,
+            published: false,
             deleted: false
         )['results'] ?? []);
 
@@ -371,8 +368,8 @@ class SitemapService
 
         $catalog = ($objectService->searchObjectsPaginated(
             query: $searchQuery,
-            rbac: false,
-            multi: false,
+            _rbac: false,
+            _multitenancy: false,
             published: false,
             deleted: false
         )['results'][0] ?? []);

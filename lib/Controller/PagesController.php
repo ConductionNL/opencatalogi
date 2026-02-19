@@ -160,14 +160,14 @@ class PagesController extends Controller
         // Clean up unwanted parameters
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter if configured - use proper OpenRegister syntax
+        // Add schema filter if configured - use _schema for magic mapper routing
         if (!empty($pageConfig['schema'])) {
-            $searchQuery['@self']['schema'] = $pageConfig['schema'];
+            $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured - use proper OpenRegister syntax
+        // Add register filter if configured - use _register for magic mapper routing
         if (!empty($pageConfig['register'])) {
-            $searchQuery['@self']['register'] = $pageConfig['register'];
+            $searchQuery['_register'] = $pageConfig['register'];
         }
 
         // Use searchObjectsPaginated for better performance and pagination support
@@ -233,10 +233,10 @@ class PagesController extends Controller
      */
     public function show(string $slug): JSONResponse
     {
-        // Get page configuration from settings
+        // Get page configuration from settings.
         $pageConfig = $this->getPageConfiguration();
 
-        // Build search query to find page by slug
+        // Build search query to find page by slug.
         $searchQuery = [
             'slug'    => $slug,
             '_limit'  => 1,
@@ -244,14 +244,15 @@ class PagesController extends Controller
             '_source' => 'database',
         ];
 
-        // Always filter by page schema - OpenRegister expects filters in @self array.
-        // NOTE: Must use numeric ID, not slug, as slug lookup doesn't work reliably.
-        if (!isset($searchQuery['@self'])) {
-            $searchQuery['@self'] = [];
+        // Add schema filter if configured - use _schema for magic mapper routing
+        if (!empty($pageConfig['schema'])) {
+            $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        $searchQuery['@self']['schema']   = !empty($pageConfig['schema']) ? $pageConfig['schema'] : '5';
-        $searchQuery['@self']['register'] = !empty($pageConfig['register']) ? $pageConfig['register'] : '1';
+        // Add register filter if configured - use _register for magic mapper routing
+        if (!empty($pageConfig['register'])) {
+            $searchQuery['_register'] = $pageConfig['register'];
+        }
 
         // Use searchObjectsPaginated for better performance
         // Set rbac=false, multi=false, published=false (schema authorization handles access)

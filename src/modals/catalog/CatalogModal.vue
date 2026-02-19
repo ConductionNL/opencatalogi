@@ -219,16 +219,18 @@ export default {
 
 				this.catalogi = {
 					...activeCatalog,
+					// Extract id from @self if not present at top level
+					id: activeCatalog.id || activeCatalog['@self']?.id || '',
 					filters: Array.isArray(activeCatalog.filters) ? {} : activeCatalog.filters || {},
 					status: this.statusOptions.find(opt => opt.id === (activeCatalog.status || '').toLowerCase()) || this.statusOptions[0],
 				}
 
-				// Find and set the selected organization
-				const org = objectStore.getCollection('organization').results.find(
-					org => org.id.toString() === activeCatalog.organization.toString(),
-				)
+			// Find and set the selected organization
+			const org = objectStore.getCollection('organization').results.find(
+				org => org.id && activeCatalog.organization && org.id.toString() === activeCatalog.organization.toString(),
+			)
 
-				this.selectedOrganization = org ? { id: org.id, label: org.title } : null
+			this.selectedOrganization = org ? { id: org.id, label: org.title } : null
 
 				// Map existing registers and schemas to the format expected by NcSelect
 				this.selectedRegisters = activeCatalog.registers.map(id => ({

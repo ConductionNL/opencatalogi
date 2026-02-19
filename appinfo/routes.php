@@ -54,6 +54,11 @@ return [
 		['name' => 'pages#preflightedCors', 'url' => '/api/pages/{slug}', 'verb' => 'OPTIONS', 'requirements' => ['slug' => '.+']],
 		// Directory CORS
 		['name' => 'directory#preflightedCors', 'url' => '/api/directory', 'verb' => 'OPTIONS'],
+		// Listings CORS
+		['name' => 'listings#preflightedCors', 'url' => '/api/listings', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'url' => '/api/listings/sync', 'verb' => 'OPTIONS'],
+		['name' => 'listings#preflightedCors', 'url' => '/api/listings/add', 'verb' => 'OPTIONS'],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 * 
@@ -75,6 +80,14 @@ return [
 		// Directory (specific route - must be before wildcard catalog routes)
 		['name' => 'directory#index', 'url' => '/api/directory', 'verb' => 'GET'],
 		['name' => 'directory#update', 'url' => '/api/directory', 'verb' => 'POST'],
+		// Listings (specific route - must be before wildcard catalog routes)
+		['name' => 'listings#index', 'url' => '/api/listings', 'verb' => 'GET'],
+		['name' => 'listings#create', 'url' => '/api/listings', 'verb' => 'POST'],
+		['name' => 'listings#synchronise', 'url' => '/api/listings/sync', 'verb' => 'POST'],
+		['name' => 'listings#add', 'url' => '/api/listings/add', 'verb' => 'POST'],
+		['name' => 'listings#show', 'url' => '/api/listings/{id}', 'verb' => 'GET'],
+		['name' => 'listings#update', 'url' => '/api/listings/{id}', 'verb' => 'PUT'],
+		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		// Federation (specific route - must be before wildcard catalog routes)

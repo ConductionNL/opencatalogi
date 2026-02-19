@@ -9,7 +9,7 @@ jobs:
   release-management:
     runs-on: ubuntu-latest
     steps:
-    
+
       # Stap 1: Code ophalen
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -29,16 +29,16 @@ jobs:
           # Get version from master branch
           git fetch origin main
           master_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
-          
+
           # Get current version from development branch
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
-          
+
           # Split master version into parts
           IFS='.' read -ra master_version_parts <<< "$master_version"
-          
+
           # Increment patch version by 1 from master
           next_patch=$((master_version_parts[2] + 1))
-          
+
           # Extract beta counter from current version if it exists
           beta_counter=1
           if [[ $current_version =~ -beta\.([0-9]+)$ ]]; then
@@ -48,9 +48,9 @@ jobs:
               beta_counter=$((BASH_REMATCH[1] + 1))
             fi
           fi
-          
+
           beta_version="${master_version_parts[0]}.${master_version_parts[1]}.${next_patch}-beta.${beta_counter}"
-          
+
           echo "NEW_VERSION=$beta_version" >> $GITHUB_ENV
           echo "new_version=$beta_version" >> $GITHUB_OUTPUT
           echo "Master version: $master_version"
@@ -175,6 +175,7 @@ jobs:
           name: Beta Release ${{ env.NEW_VERSION }}
           draft: false
           prerelease: true
+          skipIfReleaseExists: true
 
       # Stap 18: Voeg het tarball toe als asset aan de GitHub release
       - name: Attach tarball to GitHub release
