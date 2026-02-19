@@ -111,6 +111,56 @@ class PublicationService
 
 
     /**
+     * Set register/schema context on the ObjectService for a given object UUID.
+     *
+     * Searches all magic tables to find which register/schema an object belongs to,
+     * then sets that context on the ObjectService so subsequent operations can find the object.
+     *
+     * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
+     * @param string                                   $objectId     The UUID of the object to locate
+     *
+     * @return void
+     */
+    private function setObjectServiceContext($objectService, string $objectId): void
+    {
+        try {
+            $db = $this->container->get(\OCP\IDBConnection::class);
+
+            $result = $db->executeQuery(
+                "SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'oc_openregister_table_%' ORDER BY table_name"
+            );
+
+            $unionParts = [];
+            $quotedUuid = $db->quote($objectId);
+            while ($row = $result->fetch()) {
+                if (preg_match('/^oc_openregister_table_(\d+)_(\d+)$/', $row['table_name'], $matches)) {
+                    $register = (int) $matches[1];
+                    $schema   = (int) $matches[2];
+                    $unionParts[] = "(SELECT {$register} AS register_id, {$schema} AS schema_id FROM {$row['table_name']} WHERE _uuid = {$quotedUuid})";
+                }
+            }
+            $result->closeCursor();
+
+            if (empty($unionParts)) {
+                return;
+            }
+
+            $sql = implode(' UNION ALL ', $unionParts) . ' LIMIT 1';
+            $result = $db->executeQuery($sql);
+            $row = $result->fetch();
+            $result->closeCursor();
+
+            if ($row !== false) {
+                $objectService->setRegister(register: (string) $row['register_id']);
+                $objectService->setSchema(schema: (string) $row['schema_id']);
+            }
+        } catch (\Exception $e) {
+            // Silently fail — worst case we fall back to the old behavior.
+        }
+    }//end setObjectServiceContext()
+
+
+    /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
@@ -759,6 +809,9 @@ class PublicationService
             // Get the object service
             $objectService = $this->getObjectService();
 
+            // Set register/schema context so the object can be found in magic tables.
+            $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
             // Get the relations for the object
             $relationsArray = $objectService->find(id: $id)->getRelations();
             $relations      = array_values($relationsArray);
@@ -806,6 +859,9 @@ class PublicationService
         try {
             // Get the object service
             $objectService = $this->getObjectService();
+
+            // Set register/schema context so the object can be found in magic tables.
+            $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
             // Get the relations for the object
             $relationsArray = $objectService->findByRelations($id);
