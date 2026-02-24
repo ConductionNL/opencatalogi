@@ -99,6 +99,45 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									</div>
 								</VueDraggable>
 							</div>
+
+							<!-- Quote -->
+							<div v-if="contentsItem.type === 'Quote'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Title (bold text)"
+									:value.sync="contentsItem.quoteTitle"
+									placeholder="Enter the main quote text..." />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Subtitle"
+									:value.sync="contentsItem.quoteSubtitle"
+									placeholder="Enter the subtitle text..." />
+							</div>
+
+							<!-- ContentBlocks -->
+							<div v-if="contentsItem.type === 'ContentBlocks'">
+								<p class="content-blocks-help">
+									Add up to 3 content blocks. Each block has an icon, title, description, and link.
+								</p>
+								<VueDraggable v-model="contentsItem.contentBlocksData" easing="ease-in-out" draggable="div:not(:last-child)">
+									<div v-for="item in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
+										<div :class="`draggable-form-item draggable-form-item--vertical ${getTheme()}`">
+											<div class="draggable-form-item__header">
+												<Drag class="drag-handle" :size="40" />
+												<NcSelect
+													v-bind="iconOptions"
+													v-model="item.icon"
+													input-label="Icon"
+													style="min-width: 160px;" />
+											</div>
+											<NcTextField label="Title" :value.sync="item.title" />
+											<NcTextField label="Description" :value.sync="item.text" />
+											<NcTextField label="Link URL" :value.sync="item.linkUrl" placeholder="/zoeken" />
+											<NcTextField label="Link text" :value.sync="item.linkTitle" placeholder="Meer informatie" />
+										</div>
+									</div>
+								</VueDraggable>
+							</div>
 						</div>
 					</BTab>
 
@@ -206,6 +245,8 @@ export default {
 				textData: '',
 				imageUrl: '',
 				imageSrcset: '',
+				quoteTitle: '',
+				quoteSubtitle: '',
 				id: Math.random().toString(36).substring(2, 12),
 				faqData: [
 					{
@@ -214,12 +255,25 @@ export default {
 						answer: '',
 					},
 				],
+				contentBlocksData: [
+					{
+						id: Math.random().toString(36).substring(2, 12),
+						icon: '',
+						title: '',
+						text: '',
+						linkUrl: '',
+						linkTitle: '',
+					},
+				],
 				groups: [],
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
 			typeOptions: {
-				options: ['text', 'RichText', 'Image', 'Faq'],
+				options: ['text', 'RichText', 'Image', 'Faq', 'Quote', 'ContentBlocks'],
+			},
+			iconOptions: {
+				options: ['search', 'cubes', 'cube', 'users', 'building', 'document', 'gear', 'link', 'world', 'truck', 'scroll', 'themes', 'house'],
 			},
 			success: null,
 			error: false,
@@ -276,6 +330,34 @@ export default {
 			},
 			deep: true,
 		},
+		'contentsItem.contentBlocksData': {
+			handler(newVal) {
+				const len = newVal.length
+				const last = newVal[len - 1]
+
+				// Auto-add a new empty block when the last one has content
+				if (last.title !== '' && last.text !== '') {
+					newVal.push({
+						id: Math.random().toString(36).substring(2, 12),
+						icon: '',
+						title: '',
+						text: '',
+						linkUrl: '',
+						linkTitle: '',
+					})
+				}
+
+				// Remove empty blocks except the last one
+				if (len > 1) {
+					for (let i = len - 2; i >= 0; i--) {
+						if (newVal[i].title === '' && newVal[i].text === '') {
+							newVal.splice(i, 1)
+						}
+					}
+				}
+			},
+			deep: true,
+		},
 	},
 	mounted() {
 		// Fetch groups for the dropdown.
@@ -304,6 +386,20 @@ export default {
 			} else if (contentItem.type === 'Image') {
 				this.contentsItem.imageUrl = contentItem.data.url || ''
 				this.contentsItem.imageSrcset = contentItem.data.srcset || ''
+			} else if (contentItem.type === 'Quote') {
+				this.contentsItem.quoteTitle = contentItem.data.title || ''
+				this.contentsItem.quoteSubtitle = contentItem.data.subtitle || ''
+			} else if (contentItem.type === 'ContentBlocks') {
+				if (contentItem.data.blocks && contentItem.data.blocks.length > 0) {
+					this.contentsItem.contentBlocksData = contentItem.data.blocks.map((block) => ({
+						id: Math.random().toString(36).substring(2, 12),
+						icon: block.icon || '',
+						title: block.title || '',
+						text: block.text || '',
+						linkUrl: block.linkUrl || '',
+						linkTitle: block.linkTitle || '',
+					})).concat(this.contentsItem.contentBlocksData)
+				}
 			}
 
 			// If faqs are present, prepend them to the contentsItem.
@@ -392,6 +488,38 @@ export default {
 						faqs: this.contentsItem.faqData.slice(0, -1).map((faq) => ({
 							question: faq.question,
 							answer: faq.answer,
+						})),
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'Quote') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						title: this.contentsItem.quoteTitle,
+						subtitle: this.contentsItem.quoteSubtitle,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'ContentBlocks') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						// Remove the last item since it's a placeholder.
+						blocks: this.contentsItem.contentBlocksData.slice(0, -1).map((block) => ({
+							icon: block.icon,
+							title: block.title,
+							text: block.text,
+							linkUrl: block.linkUrl,
+							linkTitle: block.linkTitle,
 						})),
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
@@ -509,6 +637,23 @@ export default {
 
 .draggable-item-container:last-child .drag-handle {
     cursor: not-allowed;
+}
+
+.draggable-form-item--vertical {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.draggable-form-item__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.content-blocks-help {
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    margin-block-end: 8px;
 }
 
 .groups-section {
