@@ -384,8 +384,16 @@ class PublicationService
             $searchQuery['_ids'] = $ids;
         }
 
-        // Search objects using the new structure
-        $result = $objectService->searchObjectsPaginated($searchQuery);
+        // Search objects using the new structure with RBAC enforcement.
+        // _rbac: true ensures schema authorization rules are applied.
+        // _multitenancy: false allows cross-org access for public search results
+        // (RBAC rules determine what each user/anonymous can see).
+        $result = $objectService->searchObjectsPaginated(
+            query: $searchQuery,
+            _rbac: true,
+            _multitenancy: false,
+            published: false
+        );
 
         // Filter unwanted properties from results
         $result['results'] = $this->filterUnwantedProperties($result['results']);
