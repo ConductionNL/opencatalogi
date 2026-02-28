@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # WOO Compliance (Sitemaps, Robots, DIWOO)
 
 ## Purpose
@@ -15,7 +19,7 @@ OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML
 | WOO-005 | Paginate sitemaps (max 1000 entries per page) | Must | Implemented |
 | WOO-006 | Map publication + file metadata to DIWOO Document XML structure | Must | Implemented |
 | WOO-007 | Validate that requested category belongs to the catalog's schemas | Must | Implemented |
-| WOO-008 | Only catalogs with `hasWooSitemap: true` appear in robots.txt | Must | Implemented |
+| WOO-008 | Only catalogs with `hasWooSitemap: true` appear in robots.txt | Must | Bug (RobotsController does NOT check hasWooSitemap) |
 | WOO-009 | All sitemap/robots endpoints are public | Must | Implemented |
 | WOO-010 | Include file metadata: download URL, format, creation date, publisher, handling type | Must | Implemented |
 
@@ -97,7 +101,7 @@ Each file attached to a publication generates a `diwoo:Document` with:
 - GIVEN catalogs exist, some with hasWooSitemap=true
 - WHEN a GET request is made to `/api/robots.txt`
 - THEN all catalogs are fetched from the catalog register/schema
-- AND only catalogs with a slug and hasWooSitemap are included
+- AND only catalogs with a slug are included (**Bug**: `hasWooSitemap` is NOT checked by `RobotsController` -- all catalogs with a slug get sitemap entries. The `SitemapService.isValidSitemapRequest()` checks `hasWooSitemap` for individual sitemap requests, but the robots.txt generation does not.)
 - AND for each qualifying catalog, 17 sitemap URLs are generated (one per WOO category)
 - AND the response is plain text with "Sitemap: {url}" lines
 

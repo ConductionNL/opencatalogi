@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # CMS Tool (AI Agent Integration)
 
 ## Purpose

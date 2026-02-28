@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # Dashboard and Directory
 
 ## Purpose
@@ -13,7 +17,7 @@ The dashboard provides the main entry point for the OpenCatalogi Nextcloud app, 
 | DSH-001 | Serve the Vue SPA template for the main app page | Must | Implemented |
 | DSH-002 | Support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations) | Must | Implemented |
 | DSH-003 | Content Security Policy allows connect to all domains (for federation HTTP requests) | Must | Implemented |
-| DSH-004 | Dashboard data endpoint returns basic status info | Should | Bug |
+| DSH-004 | Dashboard data endpoint returns basic status info | Should | Dead Code (route exists but controller method removed) |
 | DSH-005 | Application.php bootstrap registers dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget) | Must | Implemented |
 | DSH-006 | Application.php bootstrap registers event listeners for OpenRegister events | Must | Implemented |
 | DSH-007 | Application.php bootstrap registers tool registration listener for AI agents | Must | Implemented |
@@ -46,21 +50,11 @@ The dashboard provides the main entry point for the OpenCatalogi Nextcloud app, 
 | DIR-010 | Listing staleness checking during directory sync | Should | Implemented |
 | DIR-011 | Catalog-to-listing conversion during sync | Should | Implemented |
 
-## DashboardController Dead Code / Bug (Gap 17)
+## DashboardController Dead Code (Gap 17)
 
-The `DashboardController::index()` method references an undefined constant `self::TEST_ARRAY`:
+The `DashboardController::index()` method has been **removed** from the controller class. The DashboardController now only has a `page()` method that renders the SPA template. However, the route `['name' => 'dashboard#index', 'url' => '/index', 'verb' => 'GET']` still exists in `routes.php`, which means the `/index` endpoint will return a method-not-found error at runtime.
 
-```php
-public function index(): JSONResponse
-{
-    $results = ["results" => self::TEST_ARRAY];
-    return new JSONResponse($results);
-}
-```
-
-`TEST_ARRAY` is not defined as a constant on the DashboardController class. This will throw a fatal error at runtime (`Undefined class constant 'TEST_ARRAY'`), which is caught by the try/catch and returned as a 500 error response. The `/index` endpoint is therefore non-functional.
-
-**Status**: Bug - endpoint always returns error 500.
+**Status**: Dead Code - route exists in routes.php but the controller method has been removed.
 
 ## Application.php Bootstrap (Gap 21)
 
@@ -182,7 +176,7 @@ When receiving directory data from a remote instance, catalogs from that instanc
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/` | Serve SPA template (dashboard page) |
-| GET | `/index` | Dashboard data endpoint (**Bug**: references undefined TEST_ARRAY) |
+| GET | `/index` | Dashboard data endpoint (**Dead Code**: route exists but controller method has been removed) |
 
 ### Listings
 
@@ -249,28 +243,9 @@ When receiving directory data from a remote instance, catalogs from that instanc
 - THEN the Broadcast job is never discovered or executed
 - AND no automatic broadcasting occurs
 
-## Dead Code: Flow/Events and Flow/Operations (Gap 11)
+## Flow/Events and Flow/Operations (Gap 11) - REMOVED
 
-The following files exist but are broken stubs that cannot function:
-
-### `lib/Flow/Operations/AutomatedPublishing.php`
-- **Bug**: `extends IOperation` but `IOperation` is an interface, not a class (should be `implements IOperation`)
-- **Bug**: References `$this->l` (translation service) but no constructor or property injects it
-- **Bug**: `isAvailableForScope()` uses `scope` without `$` (should be `$scope`)
-- **Bug**: Always returns `false` for all scopes
-- **Not registered**: No Flow operation registration in Application.php or info.xml
-- **Status**: Dead Code - completely non-functional
-
-### `lib/Flow/Events/PublicationEvent.php`
-- **Bug**: `extends IEntity` but `IEntity` is an interface, not a class (should be `implements IEntity`)
-- **Bug**: Empty class body with no method implementations
-- **Status**: Dead Code - completely non-functional
-
-### `lib/Flow/Events/ListingEvent.php`, `CatalogEvent.php`, `AttachmentEvent.php`
-- Likely similar broken stubs (same pattern as PublicationEvent)
-- **Status**: Dead Code
-
-These files appear to be early stubs for Nextcloud Workflow (Flow) integration that was never completed. They should be removed or properly implemented.
+The `lib/Flow/` directory and all its files (AutomatedPublishing, PublicationEvent, ListingEvent, CatalogEvent, AttachmentEvent) have been **deleted** from the codebase. These were previously broken stubs for Nextcloud Workflow (Flow) integration that were never completed. They no longer exist.
 
 ## Dependencies
 

@@ -1,8 +1,12 @@
+---
+status: reviewed
+---
+
 # Search
 
 ## Purpose
 
-The search feature provides an internal search API endpoint that queries publications across all available catalogs. Unlike the public publication endpoints (scoped by catalog slug), the internal search endpoint is for authenticated Nextcloud users and administrative purposes. The SearchService also provides the underlying search infrastructure used by federation, including distributed search across remote directories via Elasticsearch integration and async HTTP.
+The search feature provides an internal search API endpoint that queries publications across all available catalogs. Unlike the public publication endpoints (scoped by catalog slug), the internal search endpoint is for authenticated Nextcloud users and administrative purposes. The `SearchController` delegates to `PublicationService` for all search operations. Note: There is no separate `SearchService` or `ElasticSearchService` class in the OpenCatalogi codebase -- all search and federation logic is handled by `PublicationService`.
 
 ## Requirements
 
@@ -13,16 +17,16 @@ The search feature provides an internal search API endpoint that queries publica
 | SCH-003 | Support filtering by catalog ID | Should | Implemented |
 | SCH-004 | Support pagination (_limit, _page, _offset) | Must | Implemented |
 | SCH-005 | Support ordering (_order) | Must | Implemented |
-| SCH-006 | Integrate with ElasticSearch when configured | Should | Implemented |
-| SCH-007 | Support distributed search across remote directories via async HTTP | Should | Implemented |
-| SCH-008 | Merge facets/aggregations from multiple sources | Should | Implemented |
-| SCH-009 | Parse complex query strings with nested parameters | Should | Implemented |
-| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | Must | Implemented |
+| SCH-006 | Integrate with ElasticSearch when configured | Should | Not Implemented (no ElasticSearchService in OpenCatalogi) |
+| SCH-007 | Support distributed search across remote directories via async HTTP | Should | Implemented (via PublicationService federation) |
+| SCH-008 | Merge facets/aggregations from multiple sources | Should | Implemented (via PublicationService federation) |
+| SCH-009 | Parse complex query strings with nested parameters | Should | Implemented (via ObjectService.buildSearchQuery) |
+| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | Must | Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly) |
 | SCH-011 | SearchController has show(), attachments(), download(), uses(), used() methods with no routes | Nice | Dead Code |
 | SCH-012 | Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries) | Must | Implemented |
-| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters from request query parameters | Must | Implemented |
-| SCH-014 | Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`) | Must | Implemented |
-| SCH-015 | Unset all underscore-prefixed special parameters before passing to database filter layer | Must | Implemented |
+| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters from request query parameters | Must | Not Applicable (no SearchService exists in OpenCatalogi) |
+| SCH-014 | Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`) | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
+| SCH-015 | Unset all underscore-prefixed special parameters before passing to database filter layer | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
 
 ## Data Model
 
@@ -71,7 +75,7 @@ Only `SearchController::index()` has a route (`/api/search`). The other methods 
 
 ## Filter Syntax and Special Query Parameters (Gap 20)
 
-The SearchService provides filter parsing infrastructure used across the application:
+**Important**: There is no `SearchService` class in the OpenCatalogi codebase. The filter parsing, query building, and search infrastructure described below is provided by **OpenRegister's ObjectService** (`ObjectService::buildSearchQuery()`), not by OpenCatalogi itself. The SearchController delegates directly to `PublicationService`, which in turn uses OpenRegister's ObjectService for all search operations.
 
 ### Special Query Parameters
 
@@ -79,46 +83,21 @@ The SearchService provides filter parsing infrastructure used across the applica
 |-----------|---------|---------|
 | `_search` | Full-text search term | `?_search=klimaat` |
 | `_order` | Sort order (field to direction map) | `?_order[title]=asc&_order[date]=desc` |
-| `_limit` | Results per page (default: 30) | `?_limit=50` |
+| `_limit` | Results per page (default: 20) | `?_limit=50` |
 | `_page` | Current page number | `?_page=2` |
 | `_offset` | Skip N results | `?_offset=20` |
 | `_queries` | Fields to aggregate/facet | `?_queries[]=theme&_queries[]=organization` |
 | `_catalogi` | Filter by catalog IDs | `?_catalogi[]=cat1&_catalogi[]=cat2` |
 
-### MySQL Filter Generation
+### Query Building (via OpenRegister ObjectService)
 
-`createMySQLSearchConditions()` generates SQL WHERE conditions:
-- `_search` is converted to `LOWER(field) LIKE :search` for each searchable field (OR-joined)
-- Comma-separated filter values generate OR conditions: `field = :field_0 OR field = :field_1`
-- `IS NOT NULL` and `IS NULL` string values are converted to appropriate SQL conditions (MongoDB only)
+`ObjectService::buildSearchQuery()` handles:
+- PHP dot-to-underscore conversion (`@self.register` to `@self_register`)
+- Nested property conversion (`person.address.street` to `person_address_street`)
+- System parameter extraction (removes `id`, `_route`, `rbac`, `multi`, `published`, `deleted`)
+- Bracket notation parsing (e.g., `_order[title]=asc`, `themes[or]=1,2,3`)
 
-`createMySQLSearchParams()` generates parameter bindings:
-- `_search` becomes `%{lowercased_search_term}%` bound to `:search`
-
-`createSortForMySQL()` generates ORDER BY parameters:
-- Validates direction as ASC or DESC (defaults to ASC)
-- Returns `{ field: direction }` map
-
-### MongoDB Filter Generation
-
-`createMongoDBSearchFilter()` generates MongoDB query conditions:
-- `_search` is converted to `$regex` with case-insensitive `$options: 'i'`
-- Multiple search fields are joined with `$or`
-- `IS NOT NULL` becomes `$ne: null`, `IS NULL` becomes `$eq: null`
-
-`createSortForMongoDB()` generates MongoDB sort:
-- DESC becomes -1, ASC becomes 1
-
-### Query String Parsing
-
-`parseQueryString()` provides custom query string parsing that preserves bracket notation:
-- `_order[title]=asc` parses to `{ _order: { title: "asc" } }`
-- `themes[or]=1,2,3` parses to `{ themes: { or: "1,2,3" } }`
-- `queryParam[]` (trailing brackets) builds arrays: `{ queryParam: [value1, value2] }`
-- Supports deep nesting: `a[b][c]=val` parses to `{ a: { b: { c: "val" } } }`
-- Uses `recursiveRequestQueryKey()` for recursive bracket parsing
-
-`unsetSpecialQueryParams()` removes all underscore-prefixed parameters and `search` from filter arrays before they are passed to database queries, preventing system parameters from being treated as field filters.
+The actual search, filter generation, and pagination is handled internally by OpenRegister's `searchObjectsPaginated()` method, which supports both magic table (SQL) and blob storage backends.
 
 ## Scenarios
 
@@ -128,37 +107,28 @@ The SearchService provides filter parsing infrastructure used across the applica
 - THEN PublicationService.index() is called
 - AND results from all catalogs are returned with pagination
 
-### Scenario: Search with ElasticSearch
-- GIVEN ElasticSearch is configured with a non-empty location
-- WHEN a search is performed
-- THEN SearchService.search() queries ElasticSearch first for local results
-- AND directory listings are checked for federated search
+### Scenario: Search with federation
+- GIVEN federated directory listings exist with `default: true`
+- WHEN a search is performed via `/api/search` or `/api/federation/publications`
+- THEN PublicationService queries local catalogs for publications
 - AND remote directories are queried via async HTTP
 - AND all results are merged and sorted by relevance score
 
 ### Scenario: Facet merging from multiple sources
 - GIVEN local search returns facets {theme: [{_id: "milieu", count: 5}]}
 - AND a remote source returns facets {theme: [{_id: "milieu", count: 3}, {_id: "energie", count: 2}]}
-- WHEN SearchService.mergeAggregations() is called
+- WHEN PublicationService merges aggregations
 - THEN the merged result is {theme: [{_id: "milieu", count: 8}, {_id: "energie", count: 2}]}
 
-### Scenario: Complex query string parsing
+### Scenario: Query building via ObjectService
 - GIVEN a query string `_order[title]=asc&themes[or]=1,2,3&_search=test`
-- WHEN SearchService.parseQueryString() is called
-- THEN it returns `{_order: {title: "asc"}, themes: {or: "1,2,3"}, _search: "test"}`
-
-### Scenario: MySQL filter generation with comma-separated values
-- GIVEN filters `{ theme: "milieu,energie", _search: "klimaat" }`
-- AND fieldsToSearch = ["title", "description"]
-- WHEN createMySQLSearchConditions() is called
-- THEN searchConditions contains `(LOWER(title) LIKE :search OR LOWER(description) LIKE :search)`
-- AND `(theme = :theme_0 OR theme = :theme_1)` is added
-- AND searchParams contains `{ search: "%klimaat%", theme_0: "milieu", theme_1: "energie" }`
+- WHEN ObjectService.buildSearchQuery() is called with the request params
+- THEN it returns a normalized query with proper bracket/dot notation handled
+- AND the query is passed to searchObjectsPaginated() for execution
 
 ## Dependencies
 
-- **PublicationService** - index() for internal search
-- **ElasticSearchService** - Elasticsearch integration (optional, see [elasticsearch spec](../elasticsearch/spec.md))
-- **DirectoryService** - listDirectory() for remote search endpoints
-- **SearchService** - Query parsing, filter creation, facet merging, distributed search
-- **GuzzleHttp** - Async HTTP requests to remote directories
+- **PublicationService** - `index()` for internal search, `getAggregatedPublications()` for federated search with facet merging and result sorting
+- **OpenRegister ObjectService** - `buildSearchQuery()` for query parsing, `searchObjectsPaginated()` for paginated search with facets
+- **DirectoryService** - Provides remote listing data for federated search (used by PublicationService)
+- **GuzzleHttp** - Async HTTP requests to remote directories (used by PublicationService)

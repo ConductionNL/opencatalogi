@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # Admin Settings
 
 ## Purpose

@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # Federation
 
 ## Purpose
@@ -67,30 +71,29 @@ The `FederationController` delegates all business logic to `PublicationService`:
 | `/api/federation/publications/{id}/attachments` | `publicationAttachments()` | `attachments()` |
 | `/api/federation/publications/{id}/download` | `publicationDownload()` | `download()` |
 
-### Search Flow (Fast vs Distributed Path)
+### Search Flow
 
-The federated publication list uses `SearchService.search()` which has two execution paths:
+The federated publication list uses `PublicationService.getAggregatedPublications()` which:
 
-1. **Local-only path** (fast): When no directory listings exist or all listings are for the local instance, only the local Elasticsearch query runs.
-
-2. **Distributed path**: When remote directory listings exist:
-   - Local results are fetched from Elasticsearch (if configured)
-   - Directory listings with `default: true` are checked
+1. Queries local catalogs for publications via ObjectService
+2. When remote directory listings exist with `default: true`:
    - Listings pointing to the local instance are skipped
    - Remote search endpoints are queried via async HTTP (`GuzzleHttp\Promise\Utils::settle()`)
    - Results from all sources are merged and sorted by `_score` (relevance)
-   - Facets/aggregations from all sources are merged via `mergeAggregations()`
+   - Facets/aggregations from all sources are merged
 
 ### Facet Merging
 
-`SearchService.mergeAggregations()` combines facets from multiple sources:
+`PublicationService` merges facets from multiple sources:
 - For each aggregation key (e.g., "theme"), bucket items are merged
 - Items with the same `_id` have their `count` values summed
 - New items from remote sources are added to the aggregation
 
 ### Result Sorting
 
-Merged results are sorted by `_score` (relevance score from Elasticsearch) using `usort()` with `sortResultArray()`. This ensures that the most relevant results appear first regardless of which source they came from.
+Merged results are sorted by `_score` (relevance score) using `usort()`. This ensures that the most relevant results appear first regardless of which source they came from.
+
+Note: There is no separate `SearchService` or `ElasticSearchService` in the OpenCatalogi codebase. All federation logic lives in `PublicationService`.
 
 ## Federation Endpoints for Attachments and Download (Gap 24)
 
@@ -153,9 +156,7 @@ Both endpoints are fully registered in `routes.php` (lines 98-99) and delegate d
 
 ## Dependencies
 
-- **PublicationService** - getAggregatedPublications(), getFederatedPublication(), getFederatedUses(), getFederatedUsed(), attachments(), download()
+- **PublicationService** - getAggregatedPublications(), getFederatedPublication(), getFederatedUses(), getFederatedUsed(), attachments(), download(); also handles federated search, async HTTP to remote directories, facet merging, and result sorting
 - **DirectoryService** - Provides listing data for remote instances
-- **SearchService** - Federated search with async HTTP requests to remote directories, facet merging, result sorting
-- **ElasticSearchService** - Local search backend (optional, see [elasticsearch spec](../elasticsearch/spec.md))
 - **Listings** - Listing objects with `integrationLevel` determine which remote sources to include
 - **GuzzleHttp** - Async HTTP client for parallel requests to remote directories
