@@ -4,11 +4,43 @@ OpenCatalogi biedt een manier om meerdere catalogi samen te laten werken als é�
 
 In de zin van GEMMA/NORA-architectuur geeft OpenCatalogi hiermee invulling aan het concept generieke publicatievoorziening.
 
-![UML Diagram van OpenCatalogi](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/components_simple.svg "UML Diagram van OpenCatalogi")
+```mermaid
+graph TD
+    subgraph Internet
+        user["👤 Gebruiker"]
+    end
+    subgraph org1["Organisatie 1"]
+        cat1["Catalogus A"]
+        cat3["Catalogus B"]
+    end
+    subgraph org2["Organisatie 2"]
+        cat2["Catalogus"]
+    end
+    user -.->|Opzoeken| cat1
+    cat1 -.->|Gebruikt| cat2
+    cat1 -.->|Gebruikt| cat3
+```
 
 Als we vervolgens inzoomen op een catalogus bestaat die feitelijk uit vier functionele delen (Beheer-UI, Gebruikers-UI, Beheer-API, Zoeken-API) en twee opslag componenten (Zoekindex en Objectenopslag). Daarbij is het interactievlak van de API's gedefinieerd in de  en het gedrag in [architectuur](https://github.com/OpenCatalogi/.github/blob/main/docs/handleidingen/Architectuur.md).
 
-![UML Diagram van OpenCatalogi](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/components_commonground.svg "UML Diagram van OpenCatalogi")
+```mermaid
+graph TD
+    subgraph layer5["Layer 5 (interactie)"]
+        userUi["Publicatie platform"]
+        adminUI["Beheer Interface"]
+    end
+    subgraph layer2["Layer 2 (api)"]
+        searchAPI["Zoeken API"]
+        beheerAPI["Beheer API"]
+    end
+    subgraph layer1["Layer 1 (data)"]
+        ORC[("Objecten opslag\n(PostgreSQL)")]
+    end
+    adminUI -.->|Opslaan| beheerAPI
+    searchAPI -.->|Opzoeken| userUi
+    beheerAPI -.->|Opslaan| ORC
+    ORC -.->|Zoeken| searchAPI
+```
 
 Het is aan applicaties zelf om hier vervolgens invulling aan te geven. Vanuit de OpenCatalogi community leveren we een aantal componenten die hier invulling aan geven. Hierbij hebben we er voor gekozen om de componenten in twee varianten te ontwikkelen en een derde aan te bieden voor development en test doeleinden.
 
@@ -27,7 +59,51 @@ Om dit te realiseren is de onderliggende code opgedeeld in meerdere libaries die
 
 Dan komen we tot de volgende architectuurplaat:
 
-![UML Diagram van OpenCatalogi](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/components.svg "UML Diagram van OpenCatalogi")
+```mermaid
+graph TD
+    subgraph internet["Internet"]
+        user["👤 Burger"]
+        employee["👤 Medewerker"]
+        admin["👤 Beheerder"]
+    end
+    subgraph federation["Federatief netwerk"]
+        externalCatalogue["Externe Catalogus"]
+    end
+    subgraph external["Externe Applicaties"]
+        zaaksysteem["Zaaksysteem"]
+        overigebronnen["Etc."]
+    end
+    subgraph kubernetes["Kubernetes"]
+        subgraph layer5["Layer 5 (interactie)"]
+            userUi["Publicatie platform\n(React NL Design)"]
+            adminUi["Beheer Interface\n(Vue NL Design)"]
+        end
+        subgraph layer4["Layer 4 (logica)"]
+            service["Synchronisaties"]
+        end
+        subgraph layer2["Layer 2 (API) — Nextcloud"]
+            searchAPI["Zoeken API\n(Open Index)"]
+            objectsAPI["Beheer API\n(Open Registers)"]
+        end
+    end
+    subgraph layer1["Layer 1 (data)"]
+        objectsDb[("Open Register\n(PostgreSQL)")]
+        drc[("DRC")]
+    end
+    user <-.->|Browser ANONIEM| userUi
+    employee <-.->|Browser ANONIEM| userUi
+    admin <-.->|Browser JWT token| adminUi
+    userUi -.-> searchAPI
+    adminUi -.-> objectsAPI
+    objectsAPI -.->|Data opslaan| objectsDb
+    objectsAPI -.->|Documenten opslaan| drc
+    searchAPI -.->|Opzoeken| objectsDb
+    service -.->|Updaten| objectsAPI
+    externalCatalogue <-.->|Directory uitwisselen| searchAPI
+    externalCatalogue -.->|Opzoeken| searchAPI
+    zaaksysteem <-.->|Synchroniseren| service
+    overigebronnen <-.->|Synchroniseren| service
+```
 
 ## Basisconfiguratie
 
@@ -45,17 +121,14 @@ De APIs van OpenCatalogi zijn voor nu nog terug te vinden op [https://conduction
 | [Github](https://github.com/ConductionNL/opencatalogi)| Beheer API, Zoeken API, Beheerinterface    | OpenCatalogi            |  EUPL        |  
 | [Github](https://github.com/maykinmedia/objects-api)| ORC (objectenopslag)    | Maykin Media            |  EUPL        |  
 | [Github](https://github.com/open-zaak/open-zaak)        | DRC (documentenopslag)      | Maykin Media            |  EUPL        |  
-| [Github](https://github.com/elastic/elasticsearch)         | Elastic Search      | Elastic            |  SPL + EUPL        |  
 | [Github](https://github.com/OpenCatalogi/OpenCatalogiBundle)         | Synchronisatie Service      | Conduction            |  EUPL        |  
 
 Hierop zijn een paar opmerkingen te maken
 
 - We hebben recentelijk de keuze gemaakt om over te stappen op Nextcloud. Meer hierover kan je teruglezen op [https://documentatie.opencatalogi.nl/Handleidingen/Nextcloud/](https://documentatie.opencatalogi.nl/Handleidingen/Nextcloud/).
-- Het inzetten van ORC, DRC en Elastic zijn vanuit Open Catalogi gezien (geadviseerde) keuzes. Het is ook mogelijk om alles in een interne database of externe object store op te slaan.
+- Dataopslag wordt verzorgd door Open Register (PostgreSQL). Het is ook mogelijk om externe object stores te gebruiken.
 - De Synchronisatie service draait momenteel nog op het common gateway platform, er is echter voor gekozen om ook deze over te brengen naar Nextcloud.
 - Beheer API en Zoeken API worden samen met de beheerinterface geleverd door één code base, een praktische inrichtingskeuze die we hebben overgenomen van Open Zaak. Voor organisaties die componenten graag splitsen in containers zijn ze echter ook los installeerbaar.
-- Het is ook mogelijk om de zoeken API direct vanuit Elasticsearch uit te leveren, dat heeft een aanzienlijk performance voordeel. Maar verhinderd ook het federatief zoeken.
-- Voor het ORC en DRC zijn aanvullende componenten beschikbaar/benodigd (OTC, Notificaties etc.) die laten we hier voor het overzicht even weg
 
 ## Functionaliteit Beheeromgeving
 
@@ -82,17 +155,81 @@ Wanneer een nieuwe OpenCatalogi-installatie wordt ontdekt, zal de ontdekkende in
 
 Dit betekent dat een nieuwe installatie zich slechts bij één andere installatie bekend hoeft te maken om door te groeien naar alle andere installaties. Directory-updates worden uniek gemaakt door een event key om cirkelmeldingen en overbelasting van het netwerk te voorkomen.
 
-![Sequence Diagram network creation](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/createnetwork.svg "Sequence Diagram network creation")
+```mermaid
+sequenceDiagram
+    participant A as New Installation
+    participant B as Existing Installation
+    participant C as Other Installations
+
+    A->>B: Request directory
+    Note over A,B: New installation needs to know<br/>at least one existing installation
+    B-->>A: Provide directory
+    Note over B: Existing installation provides its directory
+
+    A->>B: Add itself to B's directory
+    Note over A,B: New installation is added to<br/>existing installation's directory
+
+    A->>C: Announce itself and request other unknown installations
+    Note over A,C: New installation communicates with<br/>all other installations in its directory
+    C-->>A: Provide other unknown installations
+    Note over C: Other installations provide their<br/>known installations to the new one
+
+    Note over A: Repeat the process at regular intervals
+```
 
 ## Onder de motorkap
 
-OpenCatalogi bestaat eigenlijk uit een paar technische componenten die samenwerken. Om te beginnen bestaat het uit verschillende objecten (Catalogi, Publicaties, Documenten en Index) die worden opgeslagen in een objectstore (of ORC in VNG-termen). Publicaties bieden een basis workflowmanagement setup. Wanneer een publicatie als gepubliceerd is gemarkeerd, wordt deze vervolgens overgebracht naar een zoekindex (Elasticsearch). Het OpenCatalogi zoek-endpoint gebruikt deze zoekindex vervolgens om vragen te beantwoorden. Dit betekent dat de gebruiksgerichte (publieke) frontend de zoekindex gebruikt (aangezien het vragen stelt aan het zoek-endpoint) en dat het administratie-endpoint de objectstore gebruikt.
+OpenCatalogi bestaat eigenlijk uit een paar technische componenten die samenwerken. Om te beginnen bestaat het uit verschillende objecten (Catalogi, Publicaties en Documenten) die worden opgeslagen in Open Register (PostgreSQL). Publicaties bieden een basis workflowmanagement setup. Het OpenCatalogi zoek-endpoint bevraagt de database direct via geoptimaliseerde queries om vragen te beantwoorden.
 
-Afzonderlijke synchronisatieservices kunnen publicaties maken van externe bronnen (bijvoorbeeld GitHub, of case handling systemen). Deze publicaties worden in de objectstore gemaakt en moeten als gepubliceerd worden gemarkeerd voordat ze worden gesynchroniseerd naar de zoekindex (en beschikbaar worden gemaakt onder het zoek-endpoint), hoewel dit proces geautomatiseerd kan worden in de configuratie. Deze strikte scheiding van gegevens op basis van de rol en context van verzoekers in een opslag- en zoekgedeelte voorkomt onbedoelde openbaarmaking van informatie. Dit is vooral belangrijk omdat OpenCatalogi ook wordt gebruikt door [OpenWoo.app](https://openwoo.app/).
+Afzonderlijke synchronisatieservices kunnen publicaties maken van externe bronnen (bijvoorbeeld GitHub, of case handling systemen). Deze publicaties worden in de database aangemaakt en moeten als gepubliceerd worden gemarkeerd voordat ze beschikbaar worden gemaakt onder het zoek-endpoint, hoewel dit proces geautomatiseerd kan worden in de configuratie. Toegangscontrole op basis van de rol en context van verzoekers voorkomt onbedoelde openbaarmaking van informatie. Dit is vooral belangrijk omdat OpenCatalogi ook wordt gebruikt door [OpenWoo.app](https://openwoo.app/).
 
-Normaal gesproken worden documenten (en bestanden in het algemeen) niet overgebracht naar de objectstore, maar verkregen van de bron wanneer een enkel object wordt opgevraagd. Je kunt er echter voor kiezen om dat object over te brengen (per configuratie) om te voorkomen dat de bronapplicatie te vaak wordt bevraagd. Dit is vooral handig bij oudere of minder presterende bronnen. Documenten worden echter NOOIT overgebracht naar de zoekindex om indirecte blootstelling te voorkomen. Documenten kunnen ook worden toegevoegd aan publicaties die handmatig zijn aangemaakt via de administratie-interface. Houd er echter rekening mee dat deze documenten mogelijk nog steeds moeten worden gearchiveerd volgens de archiefwet.
+Normaal gesproken worden documenten (en bestanden in het algemeen) niet overgebracht naar de objectstore, maar verkregen van de bron wanneer een enkel object wordt opgevraagd. Je kunt er echter voor kiezen om dat object over te brengen (per configuratie) om te voorkomen dat de bronapplicatie te vaak wordt bevraagd. Dit is vooral handig bij oudere of minder presterende bronnen. Documenten kunnen ook worden toegevoegd aan publicaties die handmatig zijn aangemaakt via de administratie-interface. Houd er echter rekening mee dat deze documenten mogelijk nog steeds moeten worden gearchiveerd volgens de archiefwet.
 
-![components](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/components.svg "components")
+```mermaid
+graph TD
+    subgraph internet["Internet"]
+        user["👤 Burger"]
+        employee["👤 Medewerker"]
+        admin["👤 Beheerder"]
+    end
+    subgraph federation["Federatief netwerk"]
+        externalCatalogue["Externe Catalogus"]
+    end
+    subgraph external["Externe Applicaties"]
+        zaaksysteem["Zaaksysteem"]
+        overigebronnen["Etc."]
+    end
+    subgraph kubernetes["Kubernetes"]
+        subgraph layer5["Layer 5 (interactie)"]
+            userUi["Publicatie platform\n(React NL Design)"]
+            adminUi["Beheer Interface\n(Vue NL Design)"]
+        end
+        subgraph layer4["Layer 4 (logica)"]
+            service["Synchronisaties"]
+        end
+        subgraph layer2["Layer 2 (API) — Nextcloud"]
+            searchAPI["Zoeken API\n(Open Index)"]
+            objectsAPI["Beheer API\n(Open Registers)"]
+        end
+    end
+    subgraph layer1["Layer 1 (data)"]
+        objectsDb[("Open Register\n(PostgreSQL)")]
+        drc[("DRC")]
+    end
+    user <-.->|Browser ANONIEM| userUi
+    employee <-.->|Browser ANONIEM| userUi
+    admin <-.->|Browser JWT token| adminUi
+    userUi -.-> searchAPI
+    adminUi -.-> objectsAPI
+    objectsAPI -.->|Data opslaan| objectsDb
+    objectsAPI -.->|Documenten opslaan| drc
+    searchAPI -.->|Opzoeken| objectsDb
+    service -.->|Updaten| objectsAPI
+    externalCatalogue <-.->|Directory uitwisselen| searchAPI
+    externalCatalogue -.->|Opzoeken| searchAPI
+    zaaksysteem <-.->|Synchroniseren| service
+    overigebronnen <-.->|Synchroniseren| service
+```
 
 ## Handmatige publicaties en ZGW
 
@@ -149,10 +286,6 @@ Het federatieve netwerk is een mooie manier om data bij de bron op te halen, maa
 - [ ] **SDG** (Roadmap) In ontwikkeling bij de gemeente Buren
 - [ ] **data.overheid** (Roadmap) gewenst bij de gemeente Rotterdam
 
-## Search up-to-date houden
-
-Bij wijzigingen in de publicatieopslag (ORC) of documentopslag (DRC) wordt de zoekindex (Elastic) op de hoogte gebracht van een wijziging (creëren, updaten of verwijderen), zodat deze wijziging in de index kan worden verwerkt. Dit betekent dat de zoekindex zichzelf up-to-date houdt met betrekking tot publicaties en documenten. Houd er hierbij rekening mee dat documenten NIET in de zoekindex worden opgenomen.
-
 ## Uniek maken van documenten
 
 OpenCatalogi maakt documenten onder publicaties uniek aan de hand van [hashing](https://stackoverflow.com/questions/2444321/how-are-hash-functions-like-md5-unique), hashing geeft een unieke code voor ieder document aan de hand van de documentinhoud + eigenschappen. Hierdoor kunnen we bijvoorbeeld vaststellen of een document voorkomt onder meerdere publicaties en deze informatie aan gebruiker terug te geven.
@@ -170,7 +303,7 @@ Om dit te illustreren, kunnen we een denkbeeldig WOO-verzoek aanhalen over het c
 - Metadata per e-mail gaat verloren, waardoor contextuele zoekinformatie verdwijnt.
 - Als in een van de e-mails ook over onderwerp D wordt gesproken en een journalist zoekt hiernaar, krijgt hij een document van 2000 pagina's terug.
 - Door het samenvoegen ontstaat een nieuwe unieke hash, waardoor de uniekheid van een document niet langer kan worden gegarandeerd (zie ook het uniek maken van documenten).
-- Voor de zoekindex willen we trefwoorden uit de e-mails zwaarder wegen als deze bijvoorbeeld vaak worden gezocht. Dit willen we per e-mail doen. Bij samenvoegen is de kans groot dat we te veel trefwoorden krijgen, waardoor het document in elke zoekopdracht met een hoge rating terugkomt.
+- Voor de zoekfunctionaliteit willen we trefwoorden uit de e-mails zwaarder wegen als deze bijvoorbeeld vaak worden gezocht. Dit willen we per e-mail doen. Bij samenvoegen is de kans groot dat we te veel trefwoorden krijgen, waardoor het document in elke zoekopdracht met een hoge rating terugkomt.
 
 Het geniet dus de absolute voorkeur om documenten niet samen te voegen en ze zo klein mogelijk te houden.
 
