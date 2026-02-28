@@ -174,39 +174,6 @@ class PagesController extends Controller
         // Set rbac=false, multi=false, published=true for public page access
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
 
-        // Build paginated response structure
-        /*
-            $responseData = [
-            'results' => $result['results'] ?? [],
-            'total' => $result['total'] ?? 0,
-            'limit' => $result['limit'] ?? 20,
-            'offset' => $result['offset'] ?? 0,
-            'page' => $result['page'] ?? 1,
-            'pages' => $result['pages'] ?? 1
-            ];
-
-            // Add pagination links if present
-            if (isset($result['next'])) {
-            $responseData['next'] = $result['next'];
-            }
-            if (isset($result['prev'])) {
-            $responseData['prev'] = $result['prev'];
-            }
-
-            // Add facets if present
-            if (isset($result['facets'])) {
-            $facetsData = $result['facets'];
-            // Unwrap nested facets if needed
-            if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
-                $facetsData = $facetsData['facets'];
-            }
-            $responseData['facets'] = $facetsData;
-            }
-            if (isset($result['facetable'])) {
-            $responseData['facetable'] = $result['facetable'];
-            }
-        */
-
         // Add CORS headers for public API access
         $response = new JSONResponse($result);
         $origin   = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');

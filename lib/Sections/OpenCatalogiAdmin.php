@@ -23,7 +23,7 @@ class OpenCatalogiAdmin implements IIconSection
 
     public function getIcon(): string
     {
-        return $this->urlGenerator->imagePath('core', 'actions/settings-dark.svg');
+        return $this->urlGenerator->imagePath(appName: 'opencatalogi', file: 'app-dark.svg');
 
     }//end getIcon()
 

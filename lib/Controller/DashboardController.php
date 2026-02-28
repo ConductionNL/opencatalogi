@@ -4,9 +4,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
 
 /**
  * Class DashboardController
@@ -49,11 +47,6 @@ class DashboardController extends Controller
                 []
             );
 
-            // Set up Content Security Policy
-            $csp = new ContentSecurityPolicy();
-            $csp->addAllowedConnectDomain('*');
-            $response->setContentSecurityPolicy($csp);
-
             return $response;
         } catch (\Exception $e) {
             // Return an error template response if an exception occurs
@@ -66,28 +59,6 @@ class DashboardController extends Controller
         }//end try
 
     }//end page()
-
-
-    /**
-     * Retrieve dashboard data.
-     *
-     * @return JSONResponse JSON response containing dashboard data
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
-    public function index(): JSONResponse
-    {
-        try {
-            // Prepare results using a test array
-            $results = ["results" => self::TEST_ARRAY];
-            return new JSONResponse($results);
-        } catch (\Exception $e) {
-            // Return an error JSON response if an exception occurs
-            return new JSONResponse(['error' => $e->getMessage()], 500);
-        }
-
-    }//end index()
 
 
 }//end class

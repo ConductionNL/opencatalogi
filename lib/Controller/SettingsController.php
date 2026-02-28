@@ -20,7 +20,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCP\IAppConfig;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
@@ -32,14 +31,6 @@ use OCA\OpenCatalogi\Service\SettingsService;
  */
 class SettingsController extends Controller
 {
-
-    /**
-     * The OpenRegister object service.
-     *
-     * @var \OCA\OpenRegister\Service\ObjectService|null The OpenRegister object service.
-     */
-    private $objectService;
-
 
     /**
      * SettingsController constructor.
@@ -62,45 +53,6 @@ class SettingsController extends Controller
         parent::__construct($appName, $request);
 
     }//end __construct()
-
-
-    /**
-     * Attempts to retrieve the OpenRegister service from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
-     * @throws \RuntimeException If the service is not available.
-     */
-    public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            $this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            return $this->objectService;
-        }
-
-        throw new \RuntimeException('OpenRegister service is not available.');
-
-    }//end getObjectService()
-
-
-    /**
-     * Attempts to retrieve the Configuration service from the container.
-     *
-     * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
-     * @throws \RuntimeException If the service is not available.
-     */
-    public function getConfigurationService(): ?\OCA\OpenRegister\Service\ConfigurationService
-    {
-        // Check if the 'openregister' app is installed.
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            // Retrieve the ConfigurationService from the container.
-            $configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
-            return $configurationService;
-        }
-
-        // Throw an exception if the service is not available.
-        throw new \RuntimeException('Configuration service is not available.');
-
-    }//end getConfigurationService()
 
 
     /**
