@@ -52,7 +52,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('glossary')"
-					label="External link"
+					label="External link (optional)"
 					:value.sync="glossary.externalLink"
 					:error="!!inputValidation.fieldErrors?.['externalLink']"
 					:helper-text="inputValidation.fieldErrors?.['externalLink']?.[0]" />

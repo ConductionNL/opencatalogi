@@ -349,7 +349,13 @@ class PublicationsController extends Controller
                     // Multi-register search: strip _order on non-universal fields
                     // since schemas may have different property names (e.g., 'name' vs 'naam').
                     // Only allow metadata fields that exist in all magic mapper tables.
-                    $universalOrderFields = ['uuid', 'created', 'updated', 'published', 'depublished'];
+                    // Keys arrive from the frontend with _ prefix (e.g., _order[_created]=desc).
+                    // _name, _description, _summary are metadata columns in every magic table.
+                    // _relevance is computed dynamically from search terms via pg_trgm similarity().
+                    $universalOrderFields = [
+                        '_uuid', '_created', '_updated', '_published', '_depublished',
+                        '_name', '_description', '_summary', '_relevance',
+                    ];
                     if (!empty($searchQuery['_order']) && is_array($searchQuery['_order'])) {
                         foreach (array_keys($searchQuery['_order']) as $orderField) {
                             if (!in_array($orderField, $universalOrderFields, true)) {
