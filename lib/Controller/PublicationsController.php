@@ -381,6 +381,26 @@ class PublicationsController extends Controller
                 published: false
             );
 
+            // Strip empty values from results unless _empty=true is set.
+            // This reduces response payload by omitting null/empty properties.
+            $includeEmpty = filter_var(
+                value: $this->request->getParam(key: '_empty', default: false),
+                filter: FILTER_VALIDATE_BOOLEAN
+            );
+            if ($includeEmpty === false && isset($result['results']) === true && is_array($result['results']) === true) {
+                $result['results'] = array_map(
+                    callback: function ($item) {
+                        // Serialize ObjectEntity instances to arrays before stripping empty values.
+                        if (is_array($item) === false && method_exists(object_or_class: $item, method: 'jsonSerialize') === true) {
+                            $item = $item->jsonSerialize();
+                        }
+
+                        return is_array($item) === true ? $this->stripEmptyValues(data: $item) : $item;
+                    },
+                    array: $result['results']
+                );
+            }
+
             // Add catalog information to the response
             $result['@catalog'] = [
                 'slug'      => $catalogSlug,
@@ -974,6 +994,58 @@ class PublicationsController extends Controller
         }//end try
 
     }//end used()
+
+    /**
+     * Recursively strips empty values (null, empty string, empty array) from an array.
+     *
+     * Used to reduce API response payload by omitting properties that have no value.
+     * Values of 0, false, and "0" are preserved as they are meaningful.
+     *
+     * @param array $data The data array to strip empty values from.
+     *
+     * @return array The data with empty values removed.
+     */
+    private function stripEmptyValues(array $data): array
+    {
+        $result = [];
+        foreach ($data as $key => $value) {
+            if (is_array($value) === true) {
+                $isSequential = array_is_list($value);
+
+                if ($isSequential === true) {
+                    $stripped = [];
+                    foreach ($value as $item) {
+                        if (is_array($item) === true) {
+                            $stripped[] = $this->stripEmptyValues(data: $item);
+                        } else {
+                            $stripped[] = $item;
+                        }
+                    }
+
+                    if (empty($stripped) === false) {
+                        $result[$key] = $stripped;
+                    }
+
+                    continue;
+                }
+
+                $stripped = $this->stripEmptyValues(data: $value);
+                if (empty($stripped) === false) {
+                    $result[$key] = $stripped;
+                }
+
+                continue;
+            }//end if
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $result[$key] = $value;
+        }//end foreach
+
+        return $result;
+    }//end stripEmptyValues()
 
 
 }//end class
