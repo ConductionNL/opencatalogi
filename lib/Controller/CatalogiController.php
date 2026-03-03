@@ -1,4 +1,20 @@
 <?php
+/**
+ * Catalogi controller for OpenCatalogi.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -13,7 +29,6 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * Class CatalogiController
  * Controller for handling catalog-related operations in the OpenCatalogi app.
  *
  * @category  Controller
@@ -28,35 +43,42 @@ class CatalogiController extends Controller
 {
 
     /**
-     * @var string Allowed CORS methods
+     * Allowed CORS methods.
+     *
+     * @var string
      */
     private string $corsMethods;
 
     /**
-     * @var string Allowed CORS headers
+     * Allowed CORS headers.
+     *
+     * @var string
      */
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * CORS max age.
+     *
+     * @var integer
      */
     private int $corsMaxAge;
+
 
     /**
      * CatalogiController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param CatalogiService    $catalogiService    The catalogi service
-     * @param IAppConfig         $config             App configuration interface
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param string             $appName            The name of the app.
+     * @param IRequest           $request            The request object.
+     * @param CatalogiService    $catalogiService    The catalogi service.
+     * @param IAppConfig         $config             App configuration interface.
+     * @param ContainerInterface $container          Server container for dependency injection.
+     * @param IAppManager        $appManager         App manager for checking installed apps.
+     * @param string             $corsMethods        Allowed CORS methods.
+     * @param string             $corsAllowedHeaders Allowed CORS headers.
+     * @param integer            $corsMaxAge         CORS max age.
      */
     public function __construct(
-        $appName,
+        string $appName,
         IRequest $request,
         private readonly CatalogiService $catalogiService,
         private readonly IAppConfig $config,
@@ -66,10 +88,10 @@ class CatalogiController extends Controller
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
     ) {
-        parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        parent::__construct(appName: $appName, request: $request);
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -78,7 +100,9 @@ class CatalogiController extends Controller
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      */
     private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -94,13 +118,13 @@ class CatalogiController extends Controller
     /**
      * Get the schema and register configuration for catalogs.
      *
-     * @return array<string, string> Array containing schema and register configuration
+     * @return array<string, string> Array containing schema and register configuration.
      */
     private function getCatalogConfiguration(): array
     {
-        // Get the catalog schema and register from configuration
-        $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
-        $register = $this->config->getValueString($this->appName, 'catalog_register', '');
+        // Get the catalog schema and register from configuration.
+        $schema   = $this->config->getValueString(app: $this->appName, key: 'catalog_schema', default: '');
+        $register = $this->config->getValueString(app: $this->appName, key: 'catalog_register', default: '');
 
         return [
             'schema'   => $schema,
@@ -113,7 +137,7 @@ class CatalogiController extends Controller
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return \OCP\AppFramework\Http\Response The CORS response.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -121,10 +145,14 @@ class CatalogiController extends Controller
      */
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
-        // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Determine the origin.
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
 
-        // Create and configure the response
+        // Create and configure the response.
         $response = new \OCP\AppFramework\Http\Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -133,15 +161,17 @@ class CatalogiController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
      * Retrieve a list of publications based on all available catalogs.
      *
-     * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
-     * @return JSONResponse JSON response containing the list of publications and total count
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse JSON response containing the list of publications and total count.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -149,37 +179,49 @@ class CatalogiController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get catalog configuration from settings
+        // Get catalog configuration from settings.
         $catalogConfig = $this->getCatalogConfiguration();
 
-        // Get all catalogs using configuration
+        // Get all catalogs using configuration.
         $config = [
-            'filters' => []
+            'filters' => [],
         ];
 
-        // Add schema filter if configured
-        if (!empty($catalogConfig['schema'])) {
+        // Add schema filter if configured.
+        if (empty($catalogConfig['schema']) === false) {
             $config['filters']['schema'] = $catalogConfig['schema'];
         }
 
-        // Add register filter if configured
-        if (!empty($catalogConfig['register'])) {
+        // Add register filter if configured.
+        if (empty($catalogConfig['register']) === false) {
             $config['filters']['register'] = $catalogConfig['register'];
         }
-        
+
         $result = $this->getObjectService()->findAll($config);
-        
-        // Convert objects to arrays
+
+        // Convert objects to arrays.
         $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+            'results' => array_map(
+                function ($object) {
+                    if ($object instanceof \OCP\AppFramework\Db\Entity) {
+                        return $object->jsonSerialize();
+                    }
+
+                    return $object;
+                },
+                ($result ?? [])
+            ),
+            'total'   => count(($result ?? [])),
         ];
 
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Add CORS headers for public API access.
+        $response = new JSONResponse(data: $data);
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -192,9 +234,12 @@ class CatalogiController extends Controller
     /**
      * Retrieve a list of catalogs based on provided filters and parameters.
      *
-     * @param  string|int $id The ID of the catalog to use as a filter
-     * @return JSONResponse JSON response containing the list of catalogs and total count
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @param string|integer $id The ID of the catalog to use as a filter.
+     *
+     * @return JSONResponse JSON response containing the list of catalogs and total count.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -202,11 +247,16 @@ class CatalogiController extends Controller
      */
     public function show(string | int $id): JSONResponse
     {
-        // Get all objects using the catalog's registers and schemas as filters
+        // Get all objects using the catalog's registers and schemas as filters.
         $response = $this->catalogiService->index($id);
 
-        // Add CORS headers for public API access
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Add CORS headers for public API access.
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

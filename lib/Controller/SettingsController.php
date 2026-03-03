@@ -44,15 +44,15 @@ class SettingsController extends Controller
     /**
      * SettingsController constructor.
      *
-     * @param string             $appName         The name of the app
-     * @param IRequest           $request         The request object
-     * @param IAppConfig         $config          The app configuration
-     * @param ContainerInterface $container       The container
-     * @param IAppManager        $appManager      The app manager
-     * @param SettingsService    $settingsService The settings service
+     * @param string             $appName         The name of the app.
+     * @param IRequest           $request         The request object.
+     * @param IAppConfig         $config          The app configuration.
+     * @param ContainerInterface $container       The container.
+     * @param IAppManager        $appManager      The app manager.
+     * @param SettingsService    $settingsService The settings service.
      */
     public function __construct(
-        $appName,
+        string $appName,
         IRequest $request,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
@@ -218,6 +218,7 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return new JSONResponse(['error' => $e->getMessage()], 500);
         }
+
     }//end getVersionInfo()
 
 
@@ -231,23 +232,27 @@ class SettingsController extends Controller
     public function manualImport(): JSONResponse
     {
         try {
-            $params = $this->request->getParams();
+            $params      = $this->request->getParams();
             $forceImport = isset($params['force']) && $params['force'] === true;
-            
+
             $result = $this->settingsService->manualImport($forceImport);
-            
-            if ($result['success']) {
+
+            if ($result['success'] === true) {
                 return new JSONResponse($result);
             } else {
                 return new JSONResponse($result, 400);
             }
         } catch (\Exception $e) {
-            return new JSONResponse([
-                'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage(),
-                'error' => $e->getMessage()
-            ], 500);
-        }
+            return new JSONResponse(
+                [
+                    'success' => false,
+                    'message' => 'Import failed: '.$e->getMessage(),
+                    'error'   => $e->getMessage(),
+                ],
+                500
+            );
+        }//end try
+
     }//end manualImport()
 
 

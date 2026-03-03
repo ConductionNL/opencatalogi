@@ -1,4 +1,20 @@
 <?php
+/**
+ * Menus controller for OpenCatalogi.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -12,9 +28,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * Class MenusController
- *
- * Controller for handling menu-related operations in the OpenCatalogi app.
+ * Controller for handling menus-related operations in the OpenCatalogi app.
  *
  * @category  Controller
  * @package   opencatalogi
@@ -28,34 +42,41 @@ class MenusController extends Controller
 {
 
     /**
-     * @var string Allowed CORS methods
+     * Allowed CORS methods.
+     *
+     * @var string
      */
     private string $corsMethods;
 
     /**
-     * @var string Allowed CORS headers
+     * Allowed CORS headers.
+     *
+     * @var string
      */
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * CORS max age.
+     *
+     * @var integer
      */
     private int $corsMaxAge;
+
 
     /**
      * MenusController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param IAppConfig         $config             App configuration interface
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param string             $appName            The name of the app.
+     * @param IRequest           $request            The request object.
+     * @param IAppConfig         $config             App configuration interface.
+     * @param ContainerInterface $container          Server container for dependency injection.
+     * @param IAppManager        $appManager         App manager for checking installed apps.
+     * @param string             $corsMethods        Allowed CORS methods.
+     * @param string             $corsAllowedHeaders Allowed CORS headers.
+     * @param integer            $corsMaxAge         CORS max age.
      */
     public function __construct(
-        $appName,
+        string $appName,
         IRequest $request,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
@@ -64,10 +85,10 @@ class MenusController extends Controller
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
     ) {
-        parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        parent::__construct(appName: $appName, request: $request);
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -76,12 +97,14 @@ class MenusController extends Controller
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      */
     private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
         if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
         }
 
         throw new \RuntimeException('OpenRegister service is not available.');
@@ -92,26 +115,26 @@ class MenusController extends Controller
     /**
      * Get the schema and register configuration for menus.
      *
-     * @return array<string, string> Array containing schema and register configuration
+     * @return array<string, string> Array containing schema and register configuration.
      */
-    private function getMenuConfiguration(): array
+    private function getMenusConfiguration(): array
     {
-        // Get the menu schema and register from configuration
-        $schema   = $this->config->getValueString($this->appName, 'menu_schema', '');
-        $register = $this->config->getValueString($this->appName, 'menu_register', '');
+        // Get the menus schema and register from configuration.
+        $schema   = $this->config->getValueString(app: $this->appName, key: 'menu_schema', default: '');
+        $register = $this->config->getValueString(app: $this->appName, key: 'menu_register', default: '');
 
         return [
             'schema'   => $schema,
             'register' => $register,
         ];
 
-    }//end getMenuConfiguration()
+    }//end getMenusConfiguration()
 
 
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return \OCP\AppFramework\Http\Response The CORS response.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -119,10 +142,14 @@ class MenusController extends Controller
      */
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
-        // Determine the origin
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        // Determine the origin.
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
 
-        // Create and configure the response
+        // Create and configure the response.
         $response = new \OCP\AppFramework\Http\Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -131,14 +158,17 @@ class MenusController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
-     * Get all menus.
+     * Get all menus items.
      *
-     * @return JSONResponse The JSON response containing the list of menus
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse The JSON response containing the list of menus items.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -146,36 +176,48 @@ class MenusController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get menu configuration from settings
-        $menuConfig = $this->getMenuConfiguration();
+        // Get menus configuration from settings.
+        $menusConfig = $this->getMenusConfiguration();
 
-        // Build config for findAll to get menus
+        // Build config for findAll to get menus items.
         $config = [
-            'filters' => []
+            'filters' => [],
         ];
 
-        // Add schema filter if configured
-        if (!empty($menuConfig['schema'])) {
-            $config['filters']['schema'] = $menuConfig['schema'];
+        // Add schema filter if configured.
+        if (empty($menusConfig['schema']) === false) {
+            $config['filters']['schema'] = $menusConfig['schema'];
         }
 
-        // Add register filter if configured
-        if (!empty($menuConfig['register'])) {
-            $config['filters']['register'] = $menuConfig['register'];
+        // Add register filter if configured.
+        if (empty($menusConfig['register']) === false) {
+            $config['filters']['register'] = $menusConfig['register'];
         }
 
         $result = $this->getObjectService()->findAll($config);
-        
+
         $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+            'results' => array_map(
+                function ($object) {
+                    if ($object instanceof \OCP\AppFramework\Db\Entity) {
+                        return $object->jsonSerialize();
+                    }
+
+                    return $object;
+                },
+                ($result ?? [])
+            ),
+            'total'   => count(($result ?? [])),
         ];
 
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Add CORS headers for public API access.
+        $response = new JSONResponse(data: $data);
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -186,12 +228,14 @@ class MenusController extends Controller
 
 
     /**
-     * Get a specific menu by its ID.
+     * Get a specific menus item by its ID.
      *
-     * @param string|int $id The ID of the menu to retrieve
+     * @param string|integer $id The ID of the menus item to retrieve.
      *
-     * @return JSONResponse The JSON response containing the menu details
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse The JSON response containing the menus item details.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -199,13 +243,22 @@ class MenusController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        $menu = $this->getObjectService()->find($id);
-        
-        $data = $menu instanceof \OCP\AppFramework\Db\Entity ? $menu->jsonSerialize() : $menu;
-        
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $item = $this->getObjectService()->find($id);
+
+        if ($item instanceof \OCP\AppFramework\Db\Entity) {
+            $data = $item->jsonSerialize();
+        } else {
+            $data = $item;
+        }
+
+        // Add CORS headers for public API access.
+        $response = new JSONResponse(data: $data);
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

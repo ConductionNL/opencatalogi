@@ -1,4 +1,18 @@
 <?php
+/**
+ * Main application bootstrap class for OpenCatalogi.
+ *
+ * @category AppInfo
+ * @package  OCA\OpenCatalogi\AppInfo
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
 
 declare(strict_types=1);
 
@@ -19,72 +33,111 @@ use OCP\IConfig;
 use OCP\App\IAppManager;
 
 /**
- * Main Application class for OpenCatalogi
+ * Main Application class for OpenCatalogi.
  */
-class Application extends App implements IBootstrap {
-	public const APP_ID = 'opencatalogi';
+class Application extends App implements IBootstrap
+{
 
-	/** @psalm-suppress PossiblyUnusedMethod */
-	public function __construct() {
-		parent::__construct(self::APP_ID);
-	}//end constructor
+    public const APP_ID = 'opencatalogi';
 
-	public function register(IRegistrationContext $context): void {
-		include_once __DIR__ . '/../../vendor/autoload.php';
-		
-		// Register dashboard widgets
-		$context->registerDashboardWidget(CatalogWidget::class);
-		$context->registerDashboardWidget(UnpublishedPublicationsWidget::class);
-		$context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
-				
-		// Register event listeners for OpenRegister events
-		$context->registerEventListener(ObjectCreatedEvent::class, ObjectCreatedEventListener::class);
-		$context->registerEventListener(ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class);
-	}//end register
 
-	public function boot(IBootContext $context): void {
-		$container = $context->getServerContainer();
+    /**
+     * Application constructor.
+     *
+     * @psalm-suppress PossiblyUnusedMethod
+     */
+    public function __construct()
+    {
+        parent::__construct(appName: self::APP_ID);
 
-		// Check if initialization is needed based on version
-		try {
-			$config = $container->get(IConfig::class);
-			$currentAppVersion = $container->get(IAppManager::class)->getAppVersion(self::APP_ID);
-			$lastInitializedVersion = $config->getAppValue(self::APP_ID, 'last_initialized_version', '');
-			
-			// Only initialize if we haven't initialized this version yet
-			if ($lastInitializedVersion !== $currentAppVersion) {
-				$settingsService = $container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
-				$settingsService->initialize();
-				
-				// Mark this version as initialized
-				$config->setAppValue(self::APP_ID, 'last_initialized_version', $currentAppVersion);
-			}
-		} catch (\Exception $e) {
-			// Log error but don't fail the boot process
-		}
+    }//end __construct()
 
-		// @TODO: This should only run if the app is enabled for the user
-		// @TODO: Lets in
-		//$appManager = $container->get(AppManager::class);
-		//if($appManager->isEnabledForUser('opencatalogi')){
-			// Get app config to check if initial sync has been done
-			$config = $container->get(IConfig::class);
-					$initialSyncDone = $config->getAppValue(self::APP_ID, 'initial_sync_done', 'false');
-			
-			// Only run if initial sync hasn't been done
-			if ($initialSyncDone === 'false') {
-				try {
-                    // @todo needs fixing
-					// Get DirectoryService and run sync
-					//$directoryService = $container->get(\OCA\OpenCatalogi\Service\DirectoryService::class);
-					//$directoryService->doCronSync();
-	
-					// Mark initial sync as done
-					// $config->setAppValue(self::APP_ID, 'initial_sync_done', 'true');
-				} catch (\Exception $e) {
-					// Removed redundant logging
-				}
-			}			
-		//}		
-	}//end boot
-}
+
+    /**
+     * Register services, widgets, and event listeners.
+     *
+     * @param IRegistrationContext $context The registration context.
+     *
+     * @return void
+     */
+    public function register(IRegistrationContext $context): void
+    {
+        include_once __DIR__.'/../../vendor/autoload.php';
+
+        // Register dashboard widgets.
+        $context->registerDashboardWidget(CatalogWidget::class);
+        $context->registerDashboardWidget(UnpublishedPublicationsWidget::class);
+        $context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
+
+        // Register event listeners for OpenRegister events.
+        $context->registerEventListener(
+            eventClass: ObjectCreatedEvent::class,
+            listenerClass: ObjectCreatedEventListener::class
+        );
+        $context->registerEventListener(
+            eventClass: ObjectUpdatedEvent::class,
+            listenerClass: ObjectUpdatedEventListener::class
+        );
+
+    }//end register()
+
+
+    /**
+     * Boot the application and perform version-based initialization.
+     *
+     * @param IBootContext $context The boot context.
+     *
+     * @return void
+     */
+    public function boot(IBootContext $context): void
+    {
+        $container = $context->getServerContainer();
+
+        // Check if initialization is needed based on version.
+        try {
+            $config                 = $container->get(IConfig::class);
+            $currentAppVersion      = $container->get(IAppManager::class)->getAppVersion(self::APP_ID);
+            $lastInitializedVersion = $config->getAppValue(
+                app: self::APP_ID,
+                key: 'last_initialized_version',
+                default: ''
+            );
+
+            // Only initialize if we haven't initialized this version yet.
+            if ($lastInitializedVersion !== $currentAppVersion) {
+                $settingsService = $container->get(\OCA\OpenCatalogi\Service\SettingsService::class);
+                $settingsService->initialize();
+
+                // Mark this version as initialized.
+                $config->setAppValue(
+                    app: self::APP_ID,
+                    key: 'last_initialized_version',
+                    value: $currentAppVersion
+                );
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the boot process.
+        }//end try
+
+        // Get app config to check if initial sync has been done.
+        $config          = $container->get(IConfig::class);
+        $initialSyncDone = $config->getAppValue(
+            app: self::APP_ID,
+            key: 'initial_sync_done',
+            default: 'false'
+        );
+
+        // Only run if initial sync hasn't been done.
+        if ($initialSyncDone === 'false') {
+            try {
+                // Mark initial sync as done.
+                // $config->setAppValue(self::APP_ID, 'initial_sync_done', 'true').
+            } catch (\Exception $e) {
+                // Removed redundant logging.
+            }
+        }
+
+    }//end boot()
+
+
+}//end class
