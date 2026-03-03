@@ -1,4 +1,20 @@
 <?php
+/**
+ * Glossary controller for OpenCatalogi.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -12,8 +28,6 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * Class GlossaryController
- *
  * Controller for handling glossary-related operations in the OpenCatalogi app.
  *
  * @category  Controller
@@ -28,17 +42,23 @@ class GlossaryController extends Controller
 {
 
     /**
-     * @var string Allowed CORS methods
+     * Allowed CORS methods.
+     *
+     * @var string
      */
     private string $corsMethods;
 
     /**
-     * @var string Allowed CORS headers
+     * Allowed CORS headers.
+     *
+     * @var string
      */
     private string $corsAllowedHeaders;
 
     /**
-     * @var integer CORS max age
+     * CORS max age.
+     *
+     * @var integer
      */
     private int $corsMaxAge;
 
@@ -46,17 +66,17 @@ class GlossaryController extends Controller
     /**
      * GlossaryController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param IAppConfig         $config             App configuration interface
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param integer            $corsMaxAge         CORS max age
+     * @param string             $appName            The name of the app.
+     * @param IRequest           $request            The request object.
+     * @param IAppConfig         $config             App configuration interface.
+     * @param ContainerInterface $container          Server container for dependency injection.
+     * @param IAppManager        $appManager         App manager for checking installed apps.
+     * @param string             $corsMethods        Allowed CORS methods.
+     * @param string             $corsAllowedHeaders Allowed CORS headers.
+     * @param integer            $corsMaxAge         CORS max age.
      */
     public function __construct(
-        $appName,
+        string $appName,
         IRequest $request,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
@@ -65,7 +85,7 @@ class GlossaryController extends Controller
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
         $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
         $this->corsMaxAge         = $corsMaxAge;
@@ -77,12 +97,14 @@ class GlossaryController extends Controller
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      */
     private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
         if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
         }
 
         throw new \RuntimeException('OpenRegister service is not available.');
@@ -93,13 +115,13 @@ class GlossaryController extends Controller
     /**
      * Get the schema and register configuration for glossary.
      *
-     * @return array<string, string> Array containing schema and register configuration
+     * @return array<string, string> Array containing schema and register configuration.
      */
     private function getGlossaryConfiguration(): array
     {
-        // Get the glossary schema and register from configuration
-        $schema   = $this->config->getValueString($this->appName, 'glossary_schema', '');
-        $register = $this->config->getValueString($this->appName, 'glossary_register', '');
+        // Get the glossary schema and register from configuration.
+        $schema   = $this->config->getValueString(app: $this->appName, key: 'glossary_schema', default: '');
+        $register = $this->config->getValueString(app: $this->appName, key: 'glossary_register', default: '');
 
         return [
             'schema'   => $schema,
@@ -112,7 +134,7 @@ class GlossaryController extends Controller
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return \OCP\AppFramework\Http\Response The CORS response.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -120,10 +142,14 @@ class GlossaryController extends Controller
      */
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
-        // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Determine the origin.
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
 
-        // Create and configure the response
+        // Create and configure the response.
         $response = new \OCP\AppFramework\Http\Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -137,10 +163,12 @@ class GlossaryController extends Controller
 
 
     /**
-     * Get all glossary terms.
+     * Get all glossary items.
      *
-     * @return JSONResponse The JSON response containing the list of glossary terms
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse The JSON response containing the list of glossary items.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -148,21 +176,21 @@ class GlossaryController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get glossary configuration from settings
+        // Get glossary configuration from settings.
         $glossaryConfig = $this->getGlossaryConfiguration();
 
-        // Build config for findAll to get glossary terms
+        // Build config for findAll to get glossary items.
         $config = [
             'filters' => [],
         ];
 
-        // Add schema filter if configured
-        if (!empty($glossaryConfig['schema'])) {
+        // Add schema filter if configured.
+        if (empty($glossaryConfig['schema']) === false) {
             $config['filters']['schema'] = $glossaryConfig['schema'];
         }
 
-        // Add register filter if configured
-        if (!empty($glossaryConfig['register'])) {
+        // Add register filter if configured.
+        if (empty($glossaryConfig['register']) === false) {
             $config['filters']['register'] = $glossaryConfig['register'];
         }
 
@@ -171,16 +199,25 @@ class GlossaryController extends Controller
         $data = [
             'results' => array_map(
                 function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+                    if ($object instanceof \OCP\AppFramework\Db\Entity) {
+                        return $object->jsonSerialize();
+                    }
+
+                    return $object;
                 },
                 ($result ?? [])
             ),
             'total'   => count(($result ?? [])),
         ];
 
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Add CORS headers for public API access.
+        $response = new JSONResponse(data: $data);
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -191,12 +228,14 @@ class GlossaryController extends Controller
 
 
     /**
-     * Get a specific glossary term by its ID.
+     * Get a specific glossary item by its ID.
      *
-     * @param string|integer $id The ID of the glossary term to retrieve
+     * @param string|integer $id The ID of the glossary item to retrieve.
      *
-     * @return JSONResponse The JSON response containing the glossary term details
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse The JSON response containing the glossary item details.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -204,13 +243,22 @@ class GlossaryController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        $glossaryTerm = $this->getObjectService()->find($id);
+        $item = $this->getObjectService()->find($id);
 
-        $data = $glossaryTerm instanceof \OCP\AppFramework\Db\Entity ? $glossaryTerm->jsonSerialize() : $glossaryTerm;
+        if ($item instanceof \OCP\AppFramework\Db\Entity) {
+            $data = $item->jsonSerialize();
+        } else {
+            $data = $item;
+        }
 
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Add CORS headers for public API access.
+        $response = new JSONResponse(data: $data);
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

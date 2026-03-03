@@ -36,6 +36,13 @@ class ElasticSearchService
 {
 
 
+    /**
+     * Create and return an Elasticsearch client instance.
+     *
+     * @param array $config The Elasticsearch configuration (location, key, index).
+     *
+     * @return Client The configured Elasticsearch client.
+     */
     private function getClient(array $config): Client
     {
         $uri    = $config['location'];
@@ -92,6 +99,14 @@ class ElasticSearchService
     }//end addObject()
 
 
+    /**
+     * Remove an object from Elasticsearch.
+     *
+     * @param string $id     The ID of the object to remove.
+     * @param array  $config The Elasticsearch configuration.
+     *
+     * @return array Empty array on success, exception details on failure.
+     */
     public function removeObject(string $id, array $config): array
     {
         $client = $this->getClient(config: $config);
@@ -116,6 +131,15 @@ class ElasticSearchService
     }//end removeObject()
 
 
+    /**
+     * Update an object in Elasticsearch.
+     *
+     * @param string $id     The ID of the object to update.
+     * @param array  $object The updated object data.
+     * @param array  $config The Elasticsearch configuration.
+     *
+     * @return array Empty array on success, exception details on failure.
+     */
     public function updateObject(string $id, array $object, array $config): array
     {
         $client = $this->getClient(config: $config);
@@ -145,6 +169,14 @@ class ElasticSearchService
     }//end updateObject()
 
 
+    /**
+     * Parse a single filter into an Elasticsearch query fragment.
+     *
+     * @param string       $name   The field name to filter on.
+     * @param array|string $filter The filter value or operator array.
+     *
+     * @return array The Elasticsearch query fragment.
+     */
     public function parseFilter(string $name, array|string $filter): array
     {
 
@@ -184,6 +216,13 @@ class ElasticSearchService
     }//end parseFilter()
 
 
+    /**
+     * Parse multiple filters into an Elasticsearch query body.
+     *
+     * @param array $filters The filters to parse into query parameters.
+     *
+     * @return array The complete Elasticsearch query body.
+     */
     public function parseFilters(array $filters): array
     {
         $body = [
@@ -249,6 +288,13 @@ class ElasticSearchService
     }//end parseFilters()
 
 
+    /**
+     * Format a single Elasticsearch hit result into a flat array.
+     *
+     * @param array $hit The raw Elasticsearch hit to format.
+     *
+     * @return array The formatted result array.
+     */
     public function formatResults(array $hit): array
     {
         $source = $hit['_source'];
@@ -264,7 +310,7 @@ class ElasticSearchService
     /**
      * Rename the items in an aggregation bucket according to the response standard for aggregations.
      *
-     * @param array $bucketItem The item to rewrite
+     * @param array $bucketItem The item to rewrite.
      *
      * @return array The rewritten array.
      */
@@ -296,6 +342,15 @@ class ElasticSearchService
     }//end mapAggregationResults()
 
 
+    /**
+     * Search for objects in Elasticsearch matching the given filters.
+     *
+     * @param array   $filters      The search filters and parameters.
+     * @param array   $config       The Elasticsearch configuration.
+     * @param integer $totalResults Reference to store the total result count.
+     *
+     * @return array The search results and facets.
+     */
     public function searchObject(array $filters, array $config, int &$totalResults = 0): array
     {
         $body = $this->parseFilters(filters: $filters);

@@ -1,4 +1,20 @@
 <?php
+/**
+ * Listings controller for OpenCatalogi.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -15,34 +31,33 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use OCP\AppFramework\Http\PublicPage;
 
 /**
- * Controller for handling Listing-related operations
+ * Controller for handling Listing-related operations.
  */
 class ListingsController extends Controller
 {
 
 
     /**
-     * Constructor for ListingsController
+     * Constructor for ListingsController.
      *
-     * @param string             $appName          The name of the app
-     * @param IRequest           $request          The request object
-     * @param IAppConfig         $config           The app configuration
-     * @param ContainerInterface $container        Server container for dependency injection
-     * @param IAppManager        $appManager       App manager for checking installed apps
-     * @param DirectoryService   $directoryService The directory service
+     * @param string             $appName          The name of the app.
+     * @param IRequest           $request          The request object.
+     * @param IAppConfig         $config           The app configuration.
+     * @param ContainerInterface $container        Server container for dependency injection.
+     * @param IAppManager        $appManager       App manager for checking installed apps.
+     * @param DirectoryService   $directoryService The directory service.
      */
     public function __construct(
-        $appName,
+        string $appName,
         IRequest $request,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
 
@@ -51,7 +66,9 @@ class ListingsController extends Controller
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      */
     private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -67,66 +84,74 @@ class ListingsController extends Controller
     /**
      * Retrieve a list of listings based on provided filters and parameters.
      *
-     * @return JSONResponse JSON response containing the list of listings and total count
-     * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse JSON response containing the list of listings and total count.
+     *
+     * @throws DoesNotExistException When the object does not exist.
+     * @throws MultipleObjectsReturnedException When multiple objects are returned.
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function index(): JSONResponse
     {
-        // Retrieve all request parameters
+        // Retrieve all request parameters.
         $requestParams = $this->request->getParams();
 
-        // Get listing schema and register from configuration
-        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
-        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+        // Get listing schema and register from configuration.
+        $listingSchema   = $this->config->getValueString(app: 'opencatalogi', key: 'listing_schema', default: '');
+        $listingRegister = $this->config->getValueString(app: 'opencatalogi', key: 'listing_register', default: '');
 
-        // Build config for findAll
+        // Build config for findAll.
         $config = [
             'filters' => [],
         ];
 
-        // Add schema filter if configured
-        if (!empty($listingSchema)) {
+        // Add schema filter if configured.
+        if (empty($listingSchema) === false) {
             $config['filters']['schema'] = $listingSchema;
         }
 
-        // Add register filter if configured
-        if (!empty($listingRegister)) {
+        // Add register filter if configured.
+        if (empty($listingRegister) === false) {
             $config['filters']['register'] = $listingRegister;
         }
 
-        // Add any additional filters from request params
-        if (isset($requestParams['filters'])) {
+        // Add any additional filters from request params.
+        if (isset($requestParams['filters']) === true) {
             $config['filters'] = array_merge($config['filters'], $requestParams['filters']);
         }
 
-        // Add pagination and other params
-        if (isset($requestParams['limit'])) {
+        // Add pagination and other params.
+        if (isset($requestParams['limit']) === true) {
             $config['limit'] = (int) $requestParams['limit'];
         }
 
-        if (isset($requestParams['offset'])) {
+        if (isset($requestParams['offset']) === true) {
             $config['offset'] = (int) $requestParams['offset'];
         }
 
-        // Fetch listing objects based on filters and order
+        // Fetch listing objects based on filters and order.
         $result = $this->getObjectService()->findAll($config);
 
-        // Convert objects to arrays
+        // Convert objects to arrays.
         $data = [
             'results' => array_map(
                 function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+                    if ($object instanceof \OCP\AppFramework\Db\Entity) {
+                        return $object->jsonSerialize();
+                    }
+
+                    return $object;
                 },
                 ($result['results'] ?? [])
             ),
             'total'   => ($result['total'] ?? count(($result['results'] ?? []))),
         ];
 
-        // Return JSON response
-        return new JSONResponse($data);
+        // Return JSON response.
+        return new JSONResponse(data: $data);
 
     }//end index()
 
@@ -134,10 +159,14 @@ class ListingsController extends Controller
     /**
      * Retrieve a specific listing by its ID.
      *
-     * @param string|integer $id The ID of the listing to retrieve
+     * @param string|integer $id The ID of the listing to retrieve.
      *
-     * @return JSONResponse JSON response containing the requested listing
-     * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return JSONResponse JSON response containing the requested listing.
+     *
+     * @throws DoesNotExistException When the object does not exist.
+     * @throws MultipleObjectsReturnedException When multiple objects are returned.
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @PublicPage
      * @NoAdminRequired
@@ -145,14 +174,18 @@ class ListingsController extends Controller
      */
     public function show(string | int $id): JSONResponse
     {
-        // Fetch the listing object by its ID
+        // Fetch the listing object by its ID.
         $object = $this->getObjectService()->find($id);
 
-        // Convert to array if it's an Entity
-        $data = $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
+        // Convert to array if it's an Entity.
+        if ($object instanceof \OCP\AppFramework\Db\Entity) {
+            $data = $object->jsonSerialize();
+        } else {
+            $data = $object;
+        }
 
-        // Return the listing as a JSON response
-        return new JSONResponse($data);
+        // Return the listing as a JSON response.
+        return new JSONResponse(data: $data);
 
     }//end show()
 
@@ -161,24 +194,28 @@ class ListingsController extends Controller
      * Create a new listing.
      *
      * @return JSONResponse The response containing the created listing object.
-     * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws DoesNotExistException When the object does not exist.
+     * @throws MultipleObjectsReturnedException When multiple objects are returned.
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function create(): JSONResponse
     {
-        // Get all parameters from the request
+        // Get all parameters from the request.
         $data = $this->request->getParams();
 
-        // Remove the 'id' field if it exists, as we're creating a new object
+        // Remove the 'id' field if it exists, as we're creating a new object.
         unset($data['id']);
 
-        // Save the new listing object
+        // Save the new listing object.
         $object = $this->getObjectService()->saveObject('listing', $data);
 
-        // Return the created object as a JSON response
-        return new JSONResponse($object);
+        // Return the created object as a JSON response.
+        return new JSONResponse(data: $object);
 
     }//end create()
 
@@ -189,24 +226,28 @@ class ListingsController extends Controller
      * @param string|integer $id The ID of the listing to update.
      *
      * @return JSONResponse The response containing the updated listing object.
-     * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws DoesNotExistException When the object does not exist.
+     * @throws MultipleObjectsReturnedException When multiple objects are returned.
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function update(string | int $id): JSONResponse
     {
-        // Get all parameters from the request
+        // Get all parameters from the request.
         $data = $this->request->getParams();
 
-        // Ensure the ID in the data matches the ID in the URL
+        // Ensure the ID in the data matches the ID in the URL.
         $data['id'] = $id;
 
-        // Save the updated listing object
+        // Save the updated listing object.
         $object = $this->getObjectService()->saveObject('listing', $data);
 
-        // Return the updated object as a JSON response
-        return new JSONResponse($object);
+        // Return the updated object as a JSON response.
+        return new JSONResponse(data: $object);
 
     }//end update()
 
@@ -217,18 +258,27 @@ class ListingsController extends Controller
      * @param string|integer $id The ID of the listing to delete.
      *
      * @return JSONResponse The response indicating the result of the deletion.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
+     * @throws \OCP\DB\Exception When a database error occurs.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function destroy(string | int $id): JSONResponse
     {
-        // Delete the listing object
+        // Delete the listing object.
         $result = $this->getObjectService()->deleteObject('listing', $id);
 
-        // Return the result as a JSON response
-        return new JSONResponse(['success' => $result], $result === true ? '200' : '404');
+        // Return the result as a JSON response.
+        if ($result === true) {
+            $statusCode = '200';
+        } else {
+            $statusCode = '404';
+        }
+
+        return new JSONResponse(data: ['success' => $result], statusCode: $statusCode);
 
     }//end destroy()
 
@@ -245,11 +295,11 @@ class ListingsController extends Controller
      */
     public function synchronise(?string $id = null): JSONResponse
     {
-        // Synchronize the specified listing or all listings
+        // Synchronize the specified listing or all listings.
         $result = $this->directoryService->doCronSync();
 
-        // Return the result as a JSON response
-        return new JSONResponse(['success' => $result]);
+        // Return the result as a JSON response.
+        return new JSONResponse(data: ['success' => $result]);
 
     }//end synchronise()
 
@@ -258,7 +308,8 @@ class ListingsController extends Controller
      * Add a new listing from a URL.
      *
      * @return JSONResponse The response indicating the result of adding the listing.
-     * @throws GuzzleException
+     *
+     * @throws GuzzleException When an HTTP error occurs.
      *
      * @PublicPage
      * @NoAdminRequired
@@ -266,10 +317,10 @@ class ListingsController extends Controller
      */
     public function add(): JSONResponse
     {
-        // Get the URL parameter from the request
+        // Get the URL parameter from the request.
         $url = $this->request->getParam('url');
 
-        // Add the new listing using the provided URL
+        // Add the new listing using the provided URL.
         try {
             $result = $this->directoryService->syncDirectory($url);
         } catch (DirectoryUrlException $exception) {
@@ -280,8 +331,8 @@ class ListingsController extends Controller
             return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
         }
 
-        // Return the result as a JSON response
-        return new JSONResponse(['success' => $result]);
+        // Return the result as a JSON response.
+        return new JSONResponse(data: ['success' => $result]);
 
     }//end add()
 

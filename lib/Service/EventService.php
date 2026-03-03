@@ -285,10 +285,10 @@ class EventService
 
             // Get catalogs (assuming they're stored in a specific register/schema).
             $settings        = $this->settingsService->getSettings();
-            $catalogRegister = $settings['configuration']['catalog_register'] ?? null;
-            $catalogSchema   = $settings['configuration']['catalog_schema'] ?? null;
+            $catalogRegister = ($settings['configuration']['catalog_register'] ?? null);
+            $catalogSchema   = ($settings['configuration']['catalog_schema'] ?? null);
 
-            if ($catalogRegister && $catalogSchema) {
+            if ($catalogRegister !== null && $catalogSchema !== null) {
                 // Get all catalog objects using findAll with proper filters.
                 $catalogObjects = $objectService->findAll(
                     [
@@ -310,7 +310,7 @@ class EventService
                     $objectSchemaInt   = (int) $objectSchema;
 
                     // Check if this catalog includes the object's register and schema.
-                    if (in_array($objectRegisterInt, $catalogRegisters) && in_array($objectSchemaInt, $catalogSchemas)) {
+                    if (in_array($objectRegisterInt, $catalogRegisters) === true && in_array($objectSchemaInt, $catalogSchemas) === true) {
                         return true;
                     }
                 }
@@ -338,8 +338,8 @@ class EventService
      */
     private function isObjectPublished(array $objectData): bool
     {
-        $published   = $objectData['@self']['published'] ?? null;
-        $depublished = $objectData['@self']['depublished'] ?? null;
+        $published   = ($objectData['@self']['published'] ?? null);
+        $depublished = ($objectData['@self']['depublished'] ?? null);
 
         // Object is published if it has a published date and no depublished date.
         if ($published !== null && $depublished === null) {
@@ -417,9 +417,9 @@ class EventService
             $fileService = $this->getFileService();
             $fileMapper  = $this->getFileMapper();
 
-            // Use FileMapper to get files directly from database without triggering object updates
-            // This completely avoids the infinite loop issue
-            // First, we need to get the ObjectEntity to use with FileMapper
+            // Use FileMapper to get files directly from database without triggering object updates.
+            // This completely avoids the infinite loop issue.
+            // First, we need to get the ObjectEntity to use with FileMapper.
             $objectService = $this->getObjectService();
             $objectEntity  = $objectService->find($objectId);
 
@@ -427,7 +427,7 @@ class EventService
                 return $result;
             }
 
-            // Use FileMapper to get files directly from database (no object updates triggered)
+            // Use FileMapper to get files directly from database (no object updates triggered).
             $files = $fileMapper->getFilesForObject($objectEntity);
 
             // Process each file from the FileMapper.
@@ -436,22 +436,25 @@ class EventService
                     $fileName = ($file['name'] ?? 'unknown');
                     $filePath = ($file['path'] ?? '');
 
-                    // Check if file is already published by checking if it has a share token
-                    // FileMapper already includes share information in the file data
-                    if (!empty($file['share_token'])) {
+                    // Check if file is already published by checking if it has a share token.
+                    // FileMapper already includes share information in the file data.
+                    if (empty($file['share_token']) === false) {
                         $result['skipped']++;
                         continue;
                     }
 
                     // Create share link directly without updating the object.
-                    // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix
+                    // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix.
                     $openRegisterPath = '/OpenRegister/'.$filePath;
 
                     try {
-                        // Use the converted OpenRegister path format
+                        // Use the converted OpenRegister path format.
                         $shareLink = $fileService->createShareLink($openRegisterPath);
 
-                        if ($shareLink && !str_contains($shareLink, 'not found') && !str_contains($shareLink, 'couldn\'t be found')) {
+                        $isShareLinkValid = ($shareLink !== ''
+                            && str_contains($shareLink, 'not found') === false
+                            && str_contains($shareLink, 'couldn\'t be found') === false);
+                        if ($isShareLinkValid === true) {
                             $result['published']++;
                         } else {
                             $result['errors'][] = "Failed to create share link for file {$fileName}";

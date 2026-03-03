@@ -1,4 +1,20 @@
 <?php
+/**
+ * Search controller for internal OpenCatalogi operations.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -10,9 +26,8 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * Class SearchController
- *
  * Controller for handling internal search-related operations in the OpenCatalogi app.
+ *
  * This controller is designed for internal/admin use and testing purposes.
  *
  * @category  Controller
@@ -30,16 +45,16 @@ class SearchController extends Controller
     /**
      * SearchController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param PublicationService $publicationService The publication service
+     * @param string             $appName            The name of the app.
+     * @param IRequest           $request            The request object.
+     * @param PublicationService $publicationService The publication service.
      */
     public function __construct(
-        $appName,
+        string $appName,
         IRequest $request,
         private readonly PublicationService $publicationService
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
 
@@ -51,9 +66,12 @@ class SearchController extends Controller
      * Unlike the public publications endpoint, this may include additional data
      * and is not subject to the same security restrictions.
      *
-     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
-     * @return JSONResponse JSON response containing the list of publications and total count
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @param string|integer|null $catalogId Optional ID of a specific catalog to filter by.
+     *
+     * @return JSONResponse JSON response containing the list of publications and total count.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -70,9 +88,12 @@ class SearchController extends Controller
      *
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param  string $id The ID of the publication to retrieve
-     * @return JSONResponse JSON response containing the requested publication
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @param string $id The ID of the publication to retrieve.
+     *
+     * @return JSONResponse JSON response containing the requested publication.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -89,9 +110,12 @@ class SearchController extends Controller
      *
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param  string $id Id of publication
+     * @param string $id Id of publication.
+     *
      * @return JSONResponse JSON response containing the requested attachments/files.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -108,9 +132,12 @@ class SearchController extends Controller
      *
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param  string $id Id of publication
+     * @param string $id Id of publication.
+     *
      * @return JSONResponse JSON response containing the download information.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -123,14 +150,18 @@ class SearchController extends Controller
 
 
     /**
-     * Retrieves all objects that this publication references
+     * Retrieves all objects that this publication references.
      *
-     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
+     * This method returns all objects that this publication uses/references.
+     * A to B means that A (This publication) references B (Another object).
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param  string $id The ID of the publication to retrieve relations for
-     * @return JSONResponse A JSON response containing the related objects
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @param string $id The ID of the publication to retrieve relations for.
+     *
+     * @return JSONResponse A JSON response containing the related objects.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -143,14 +174,18 @@ class SearchController extends Controller
 
 
     /**
-     * Retrieves all objects that use this publication
+     * Retrieves all objects that use this publication.
      *
-     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
+     * This method returns all objects that reference (use) this publication.
+     * B to A means that B (Another object) references A (This publication).
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param  string $id The ID of the publication to retrieve uses for
-     * @return JSONResponse A JSON response containing the referenced objects
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @param string $id The ID of the publication to retrieve uses for.
+     *
+     * @return JSONResponse A JSON response containing the referenced objects.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface When a service is not found.
      *
      * @NoAdminRequired
      * @NoCSRFRequired

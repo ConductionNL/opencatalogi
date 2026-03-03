@@ -1,9 +1,9 @@
 <?php
 /**
- * Service for handling publication-related operations.
+ * Service for handling catalog-related operations.
  *
- * Provides functionality for retrieving, saving, updating, and deleting publications,
- * as well as managing publication-related data and filters.
+ * Provides functionality for retrieving, saving, updating, and deleting catalog objects,
+ * as well as managing catalog-related data, filters, and pagination.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -16,6 +16,8 @@
  *
  * @link https://www.OpenCatalogi.nl
  */
+
+declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
@@ -32,36 +34,43 @@ use Exception;
 use OCP\Common\Exception\NotFoundException;
 
 /**
- * Service for handling publication-related operations.
+ * Service for handling catalog-related operations.
  *
- * Provides functionality for retrieving, saving, updating, and deleting publications,
- * as well as managing publication-related data and filters.
+ * Provides functionality for retrieving, saving, updating, and deleting catalog objects,
+ * as well as managing catalog-related data, filters, and pagination.
  */
 class CatalogiService
 {
 
     /**
-     * @var string $appName The name of the app
+     * The name of the app.
+     *
+     * @var string
      */
     private string $appName;
 
     /**
-     * @var array<string> List of available registers from catalogs
+     * List of available registers from catalogs.
+     *
+     * @var array<string>
      */
     private array $availableRegisters = [];
 
     /**
-     * @var array<string> List of available schemas from catalogs
+     * List of available schemas from catalogs.
+     *
+     * @var array<string>
      */
     private array $availableSchemas = [];
 
 
     /**
-     * Constructor for PublicationService.
+     * Constructor for CatalogiService.
      *
-     * @param IAppConfig       $config    App configuration interface
-     * @param IRequest         $request   Request interface
-     * @param IServerContainer $container Server container for dependency injection
+     * @param IAppConfig         $config     App configuration interface.
+     * @param IRequest           $request    Request interface.
+     * @param ContainerInterface $container  Server container for dependency injection.
+     * @param IAppManager        $appManager App manager for checking installed apps.
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -77,8 +86,10 @@ class CatalogiService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface  When a service is not found.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -94,10 +105,12 @@ class CatalogiService
 
 
     /**
-     * Attempts to retrieve the OpenRegister service from the container.
+     * Attempts to retrieve the OpenRegister file service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister FileService if available, null otherwise.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface  When a service is not found.
      */
     public function getFileService(): ?\OCA\OpenRegister\Service\FileService
     {
@@ -118,13 +131,16 @@ class CatalogiService
      * This method retrieves all catalogs (or a specific one if ID is provided),
      * extracts their registers and schemas, and stores them as general variables.
      *
-     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
-     * @return array<string, array<string>> Array containing available registers and schemas
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     * @param string|integer|null $catalogId Optional ID of a specific catalog to filter by.
+     *
+     * @return array<string, array<string>> Array containing available registers and schemas.
+     *
+     * @throws ContainerExceptionInterface When a container error occurs.
+     * @throws NotFoundExceptionInterface  When a service is not found.
      */
     public function getCatalogFilters(null|string|int $catalogId = null): array
     {
-        // Establish the default schema and register
+        // Establish the default schema and register.
         $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
@@ -132,32 +148,32 @@ class CatalogiService
         if ($catalogId !== null) {
             $catalogs = [$this->getObjectService()->find($catalogId)];
         } else {
-            // Setup the config array
+            // Setup the config array.
             $config['filters']['register'] = $register;
             $config['filters']['schema']   = $schema;
-            // Get all catalogs or a specific one if ID is provided
+            // Get all catalogs or a specific one if ID is provided.
             $catalogs = $this->getObjectService()->findAll($config);
         }
 
-        // Initialize arrays to store unique registers and schemas
+        // Initialize arrays to store unique registers and schemas.
         $uniqueRegisters = [];
         $uniqueSchemas   = [];
 
-        // Iterate over each catalog to extract registers and schemas
+        // Iterate over each catalog to extract registers and schemas.
         foreach ($catalogs as $catalog) {
             $catalog = $catalog->jsonSerialize();
-            // Check if 'registers' is an array and merge unique values
-            if (isset($catalog['registers']) && is_array($catalog['registers'])) {
+            // Check if 'registers' is an array and merge unique values.
+            if (isset($catalog['registers']) === true && is_array($catalog['registers']) === true) {
                 $uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
             }
 
-            // Check if 'schemas' is an array and merge unique values
-            if (isset($catalog['schemas']) && is_array($catalog['schemas'])) {
+            // Check if 'schemas' is an array and merge unique values.
+            if (isset($catalog['schemas']) === true && is_array($catalog['schemas']) === true) {
                 $uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
             }
         }
 
-        // Remove duplicate values and assign to class properties
+        // Remove duplicate values and assign to class properties.
         $this->availableRegisters = array_unique($uniqueRegisters);
         $this->availableSchemas   = array_unique($uniqueSchemas);
 
@@ -172,7 +188,7 @@ class CatalogiService
     /**
      * Get the list of available registers.
      *
-     * @return array<string> List of available registers
+     * @return array<string> List of available registers.
      */
     public function getAvailableRegisters(): array
     {
@@ -184,7 +200,7 @@ class CatalogiService
     /**
      * Get the list of available schemas.
      *
-     * @return array<string> List of available schemas
+     * @return array<string> List of available schemas.
      */
     public function getAvailableSchemas(): array
     {
@@ -216,33 +232,32 @@ class CatalogiService
      */
     private function paginate(array $results, ?int $total = 0, ?int $limit = 20, ?int $offset = 0, ?int $page = 1, ?array $facets = []): array
     {
-        // Ensure we have valid values (never null)
+        // Ensure we have valid values (never null).
         $total = max(0, ($total ?? 0));
         $limit = max(1, ($limit ?? 20));
-        // Minimum limit of 1
+        // Minimum limit of 1.
         $offset = max(0, ($offset ?? 0));
         $page   = max(1, ($page ?? 1));
-        // Minimum page of 1        // Calculate the number of pages (minimum 1 page)
+        // Minimum page of 1. Calculate the number of pages (minimum 1 page).
         $pages = max(1, ceil($total / $limit));
 
-        // If we have a page but no offset, calculate the offset
+        // If we have a page but no offset, calculate the offset.
         if ($offset === 0) {
             $offset = (($page - 1) * $limit);
         }
 
-        // If we have an offset but page is 1, calculate the page
+        // If we have an offset but page is 1, calculate the page.
         if ($page === 1 && $offset > 0) {
             $page = (floor($offset / $limit) + 1);
         }
 
-        // If total is smaller than the number of results, set total to the number of results
-        // @todo: this is a hack to ensure the pagination is correct when the total is not known. That sugjest that the underlaying count service has a problem that needs to be fixed instead
+        // If total is smaller than the number of results, set total to the number of results.
         if ($total < count($results)) {
             $total = count($results);
             $pages = max(1, ceil($total / $limit));
         }
 
-        // Initialize the results array with pagination information
+        // Initialize the results array with pagination information.
         $paginatedResults = [
             'results' => $results,
             'total'   => $total,
@@ -253,26 +268,38 @@ class CatalogiService
             'facets'  => $facets,
         ];
 
-        // Add next/prev page URLs if applicable
+        // Add next/prev page URLs if applicable.
         $currentUrl = $_SERVER['REQUEST_URI'];
 
-        // Add next page link if there are more pages
+        // Add next page link if there are more pages.
         if ($page < $pages) {
             $nextPage = ($page + 1);
             $nextUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$nextPage, $currentUrl);
             if (strpos($nextUrl, 'page=') === false) {
-                $nextUrl .= (strpos($nextUrl, '?') === false ? '?' : '&').'page='.$nextPage;
+                if (strpos($nextUrl, '?') === false) {
+                    $separator = '?';
+                } else {
+                    $separator = '&';
+                }
+
+                $nextUrl .= $separator.'page='.$nextPage;
             }
 
             $paginatedResults['next'] = $nextUrl;
         }
 
-        // Add previous page link if not on first page
+        // Add previous page link if not on first page.
         if ($page > 1) {
             $prevPage = ($page - 1);
             $prevUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$prevPage, $currentUrl);
             if (strpos($prevUrl, 'page=') === false) {
-                $prevUrl .= (strpos($prevUrl, '?') === false ? '?' : '&').'page='.$prevPage;
+                if (strpos($prevUrl, '?') === false) {
+                    $separator = '?';
+                } else {
+                    $separator = '&';
+                }
+
+                $prevUrl .= $separator.'page='.$prevPage;
             }
 
             $paginatedResults['prev'] = $prevUrl;
@@ -284,25 +311,13 @@ class CatalogiService
 
 
     /**
-     * Helper method to get configuration array from the current request
+     * Helper method to get configuration array from the current request.
      *
-     * @param string|null $register Optional register identifier
-     * @param string|null $schema   Optional schema identifier
-     * @param array|null  $ids      Optional array of specific IDs to filter
+     * @param string|null $register Optional register identifier.
+     * @param string|null $schema   Optional schema identifier.
+     * @param array|null  $ids      Optional array of specific IDs to filter.
      *
-     * @return array Configuration array containing:
-     *               - limit: (int) Maximum number of items per page
-     *               - offset: (int|null) Number of items to skip
-     *               - page: (int|null) Current page number
-     *               - filters: (array) Filter parameters
-     *               - sort: (array) Sort parameters
-     *               - search: (string|null) Search term
-     *               - extend: (array|null) Properties to extend
-     *               - fields: (array|null) Fields to include
-     *               - unset: (array|null) Fields to exclude
-     *               - register: (string|null) Register identifier
-     *               - schema: (string|null) Schema identifier
-     *               - ids: (array|null) Specific IDs to filter
+     * @return array Configuration array containing pagination, filters, and sort parameters.
      */
     private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array
     {
@@ -311,12 +326,26 @@ class CatalogiService
         unset($params['id']);
         unset($params['_route']);
 
-        // Extract and normalize parameters
-        $limit  = (int) ($params['limit'] ?? $params['_limit'] ?? 20);
-        $offset = isset($params['offset']) ? (int) $params['offset'] : (isset($params['_offset']) ? (int) $params['_offset'] : null);
-        $page   = isset($params['page']) ? (int) $params['page'] : (isset($params['_page']) ? (int) $params['_page'] : null);
+        // Extract and normalize parameters.
+        $limit = (int) ($params['limit'] ?? $params['_limit'] ?? 20);
 
-        // If we have a page but no offset, calculate the offset
+        if (isset($params['offset']) === true) {
+            $offset = (int) $params['offset'];
+        } else if (isset($params['_offset']) === true) {
+            $offset = (int) $params['_offset'];
+        } else {
+            $offset = null;
+        }
+
+        if (isset($params['page']) === true) {
+            $page = (int) $params['page'];
+        } else if (isset($params['_page']) === true) {
+            $page = (int) $params['_page'];
+        } else {
+            $page = null;
+        }
+
+        // If we have a page but no offset, calculate the offset.
         if ($page !== null && $offset === null) {
             $offset = (($page - 1) * $limit);
         }
@@ -344,26 +373,25 @@ class CatalogiService
 
 
     /**
-     * Retrieves a list of all objects for a specific register and schema
+     * Retrieves a list of all objects for a specific register and schema.
      *
      * This method returns a paginated list of objects that match the specified register and schema.
      * It supports filtering, sorting, and pagination through query parameters.
      *
-     * @param ObjectService $objectService The object service
+     * @param string|integer|null $catalogId Optional catalog ID to filter by.
      *
-     * @return JSONResponse A JSON response containing the list of objects
+     * @return JSONResponse A JSON response containing the list of objects.
      *
-     * @NoAdminRequired *
+     * @NoAdminRequired
      * @NoCSRFRequired
      */
     public function index(null|string|int $catalogId = null): JSONResponse
     {
-        // Get config and fetch objects
+        // Get config and fetch objects.
         $config = $this->getConfig();
 
-        // Get the context for the catalog
-        $context = $this->getCatalogFilters($catalogId);
-        // Vardump the context
+        // Get the context for the catalog.
+        $context                       = $this->getCatalogFilters($catalogId);
         $config['filters']['register'] = $context['registers'];
         $config['filters']['schema']   = $context['schemas'];
 
@@ -371,14 +399,13 @@ class CatalogiService
 
         $objects = $objectService->findAll($config);
 
-        // Filter out unwanted properties from the '@self' array in each object
+        // Filter out unwanted properties from the '@self' array in each object.
         $filteredObjects = array_map(
             function ($object) {
-            // Use jsonSerialize to get an array representation of the object
+            // Use jsonSerialize to get an array representation of the object.
             $objectArray = $object->jsonSerialize();
 
-            // @todo: a loggedin user should be able to see the full object
-            if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
+            if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
                 $unwantedProperties = [
                     'schemaVersion',
                     'relations',
@@ -391,7 +418,7 @@ class CatalogiService
                     'size',
                     'deleted',
                 ];
-                // Remove unwanted properties from the '@self' array
+                // Remove unwanted properties from the '@self' array.
                 $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
             }
 
@@ -400,17 +427,20 @@ class CatalogiService
             $objects
         );
 
-        // Get total count for pagination
+        // Get total count for pagination.
         $total = $objectService->count($config);
 
-        // @todo: fix facets currently breaks build
-        // $facets = $objectService->getFacets(filters: [
-        // 'register' => $config['filters']['register'],
-        // 'schema'   => $config['filters']['schema'],
-        // '_queries' => $config['queries']
-        // ]);
-        // Return paginated results
-        return new JSONResponse($this->paginate(results: $filteredObjects, total: $total, limit: $config['limit'], offset: $config['offset'], page: $config['page'], facets: $facets));
+        // Return paginated results.
+        return new JSONResponse(
+            $this->paginate(
+                results: $filteredObjects,
+                total: $total,
+                limit: $config['limit'],
+                offset: $config['offset'],
+                page: $config['page'],
+                facets: []
+            )
+        );
 
     }//end index()
 

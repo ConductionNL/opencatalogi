@@ -65,8 +65,12 @@ class SettingsService
      * @param ContainerInterface $container  Container for dependency injection.
      * @param IAppManager        $appManager App manager interface.
      */
-    public function __construct(private readonly IAppConfig $config, private readonly IRequest $request, private readonly ContainerInterface $container, private readonly IAppManager $appManager)
-    {
+    public function __construct(
+        private readonly IAppConfig $config,
+        private readonly IRequest $request,
+        private readonly ContainerInterface $container,
+        private readonly IAppManager $appManager
+    ) {
         // Indulge in setting the application name for identification and configuration purposes.
         $this->appName = 'opencatalogi';
 
@@ -258,12 +262,12 @@ class SettingsService
             }
 
             // Load settings from file only if needed.
-            if ($this->shouldLoadSettings()) {
+            if ($this->shouldLoadSettings() === true) {
                 $this->loadSettings();
                 $results['settingsLoaded'] = true;
             } else {
                 $results['settingsLoaded'] = true;
-// Already up to date
+                // Already up to date.
             }
         } catch (\Exception $e) {
             $results['errors'][] = $e->getMessage();
@@ -468,7 +472,12 @@ class SettingsService
                 // Check if this option is provided in the input data.
                 if (isset($options[$option]) === true) {
                     // Convert boolean or string to string format for storage.
-                    $value = $options[$option] === true || $options[$option] === 'true' ? 'true' : 'false';
+                    if ($options[$option] === true || $options[$option] === 'true') {
+                        $value = 'true';
+                    } else {
+                        $value = 'false';
+                    }
+
                     // Store the value in the configuration.
                     $this->config->setValueString($this->appName, $option, $value);
                     // Retrieve and convert back to boolean for the response.
@@ -518,7 +527,7 @@ class SettingsService
             // Get the configuration service and import the settings.
             $configurationService = $this->getConfigurationService();
 
-            // Get the current app version dynamically
+            // Get the current app version dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
             return $configurationService->importFromJson(
@@ -547,23 +556,23 @@ class SettingsService
     private function shouldLoadSettings(): bool
     {
         try {
-            // Get the current app version
+            // Get the current app version.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Get the configuration service to check stored version
+            // Get the configuration service to check stored version.
             $configurationService = $this->getConfigurationService();
             $storedVersion        = $configurationService->getConfiguredAppVersion(Application::APP_ID);
 
-            // If no stored version exists, we need to load settings
+            // If no stored version exists, we need to load settings.
             if ($storedVersion === null) {
                 return true;
             }
 
-            // Compare versions using semantic versioning
-            // Load settings if current version is newer than stored version
+            // Compare versions using semantic versioning.
+            // Load settings if current version is newer than stored version.
             return version_compare($currentAppVersion, $storedVersion, '>');
         } catch (\Exception $e) {
-            // If we can't determine versions, err on the side of loading settings
+            // If we can't determine versions, err on the side of loading settings.
             return true;
         }//end try
 
@@ -582,14 +591,14 @@ class SettingsService
     public function getVersionInfo(): array
     {
         try {
-            // Get the current app version
+            // Get the current app version.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Get the configuration service to check stored version
+            // Get the configuration service to check stored version.
             $configurationService = $this->getConfigurationService();
             $storedConfigVersion  = $configurationService->getConfiguredAppVersion(Application::APP_ID);
 
-            // Determine if versions match
+            // Determine if versions match.
             $versionsMatch = $storedConfigVersion !== null &&
                            version_compare($currentAppVersion, $storedConfigVersion, '=');
 
@@ -621,11 +630,11 @@ class SettingsService
     public function manualImport(bool $forceImport = false): array
     {
         try {
-            // Get version info first
+            // Get version info first.
             $versionInfo = $this->getVersionInfo();
 
-            // Check if import is needed (unless forced)
-            if (!$forceImport && $versionInfo['versionsMatch']) {
+            // Check if import is needed (unless forced).
+            if ($forceImport === false && $versionInfo['versionsMatch'] === true) {
                 return [
                     'success'     => false,
                     'message'     => 'Configuration is already up to date. Use force import if you want to reimport.',
@@ -633,10 +642,10 @@ class SettingsService
                 ];
             }
 
-            // Perform the import
+            // Perform the import.
             $importResult = $this->loadSettings($forceImport);
 
-            // Get updated version info
+            // Get updated version info.
             $updatedVersionInfo = $this->getVersionInfo();
 
             return [

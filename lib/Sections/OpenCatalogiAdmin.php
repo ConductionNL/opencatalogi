@@ -23,10 +23,18 @@ use OCP\Settings\IIconSection;
 class OpenCatalogiAdmin implements IIconSection
 {
 
-    /** @var IL10N Localization service. */
+    /**
+     * Localization service.
+     *
+     * @var IL10N
+     */
     private IL10N $l;
 
-    /** @var IURLGenerator URL generator service. */
+    /**
+     * URL generator service.
+     *
+     * @var IURLGenerator
+     */
     private IURLGenerator $urlGenerator;
 
 
@@ -61,11 +69,11 @@ class OpenCatalogiAdmin implements IIconSection
      *
      * @return string The section ID.
      */
-    public function getID(): string
+    public function getId(): string
     {
         return 'opencatalogi';
 
-    }//end getID()
+    }//end getId()
 
 
     /**
