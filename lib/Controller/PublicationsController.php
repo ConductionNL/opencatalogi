@@ -40,9 +40,10 @@ class PublicationsController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * PublicationsController constructor.
@@ -56,7 +57,7 @@ class PublicationsController extends Controller
      * @param IAppManager        $appManager         The app manager
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -71,10 +72,12 @@ class PublicationsController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
-    }
+        $this->corsMaxAge         = $corsMaxAge;
+
+    }//end __construct()
+
 
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
@@ -89,7 +92,9 @@ class PublicationsController extends Controller
         }
 
         throw new \RuntimeException('OpenRegister service is not available.');
-    }
+
+    }//end getObjectService()
+
 
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
@@ -114,14 +119,16 @@ class PublicationsController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
+
 
     /**
      * Retrieve all publications from this catalog and optionally from federated catalogs.
      *
      * This method handles both local and aggregated search results when the _aggregate
      * parameter is not set to false. It supports faceting when _facetable parameter is provided.
-     * 
+     *
      * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
      *
      * @NoAdminRequired
@@ -130,13 +137,20 @@ class PublicationsController extends Controller
      */
     public function index(): JSONResponse
     {
-        //@todo this is a temporary fix to map the parameters to _extend format
+        // @todo this is a temporary fix to map the parameters to _extend format
         // Define parameters that should be mapped to _extend format
-        $parametersToMap = ['extend', 'fields', 'facets','order','page','limit'];
-        
+        $parametersToMap = [
+            'extend',
+            'fields',
+            'facets',
+            'order',
+            'page',
+            'limit',
+        ];
+
         // Get all current query parameters
         $queryParams = $this->request->getParams();
-        
+
         // Map specified parameters to _extend format and unset originals
         foreach ($parametersToMap as $param) {
             if (isset($queryParams[$param])) {
@@ -146,36 +160,35 @@ class PublicationsController extends Controller
                 unset($queryParams[$param]);
             }
         }
-        
+
         // Build base URL for pagination links
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        $baseUrl = $protocol . '://' . $host . strtok($uri, '?');
-        
+        $host     = ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $uri      = ($_SERVER['REQUEST_URI'] ?? '/');
+        $baseUrl  = $protocol.'://'.$host.strtok($uri, '?');
+
         try {
             // Use the service method to get aggregated publications
             $responseData = $this->publicationService->getAggregatedPublications(
-                $queryParams, 
-                $this->request->getParams(), 
+                $queryParams,
+                $this->request->getParams(),
                 $baseUrl
             );
-            
+
             // Set appropriate HTTP status based on results
             $statusCode = 200;
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($responseData, $statusCode);
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publications: ' . $e->getMessage()], 500);
-        }
+            return new JSONResponse(['error' => 'Failed to retrieve publications: '.$e->getMessage()], 500);
+        }//end try
 
     }//end index()
 
@@ -200,18 +213,17 @@ class PublicationsController extends Controller
         try {
             // Use the service method to get the publication with federation support
             $result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result['data'], $result['status']);
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication: ' . $e->getMessage()], 500);
+            return new JSONResponse(['error' => 'Failed to retrieve publication: '.$e->getMessage()], 500);
         }
 
     }//end show()
@@ -220,7 +232,7 @@ class PublicationsController extends Controller
     /**
      * Retrieve attachments/files of a publication.
      *
-     * @param  string $id Id of publication
+     * @param string $id Id of publication
      *
      * @return JSONResponse JSON response containing the requested attachments/files.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -233,13 +245,13 @@ class PublicationsController extends Controller
     {
         return $this->publicationService->attachments(id: $id);
 
-    }//end show()
+    }//end attachments()
 
 
     /**
      * Retrieve attachments/files of a publication.
      *
-     * @param  string $id Id of publication
+     * @param string $id Id of publication
      *
      * @return JSONResponse JSON response containing the requested attachments/files.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -252,7 +264,7 @@ class PublicationsController extends Controller
     {
         return $this->publicationService->download(id: $id);
 
-    }//end show()
+    }//end download()
 
 
     /**
@@ -261,7 +273,7 @@ class PublicationsController extends Controller
      * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
      * When aggregation is enabled, it also searches federated catalogs.
      *
-     * @param string $id The ID of the publication to retrieve relations for
+     * @param  string $id The ID of the publication to retrieve relations for
      * @return JSONResponse A JSON response containing the related objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -274,20 +286,20 @@ class PublicationsController extends Controller
         try {
             // Use the service method to get the publication uses with federation support
             $result = $this->publicationService->getFederatedUses($id, $this->request->getParams());
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result['data'], $result['status']);
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication uses: ' . $e->getMessage()], 500);
+            return new JSONResponse(['error' => 'Failed to retrieve publication uses: '.$e->getMessage()], 500);
         }
-    }
+
+    }//end uses()
 
 
     /**
@@ -296,7 +308,7 @@ class PublicationsController extends Controller
      * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
      * When aggregation is enabled, it also searches federated catalogs.
      *
-     * @param string $id The ID of the publication to retrieve uses for
+     * @param  string $id The ID of the publication to retrieve uses for
      * @return JSONResponse A JSON response containing the referenced objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -309,19 +321,20 @@ class PublicationsController extends Controller
         try {
             // Use the service method to get the publication used with federation support
             $result = $this->publicationService->getFederatedUsed($id, $this->request->getParams());
-            
+
             // Add CORS headers for public API access
             $response = new JSONResponse($result['data'], $result['status']);
-            $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+            $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
             $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-            
+
             return $response;
-            
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication used: ' . $e->getMessage()], 500);
+            return new JSONResponse(['error' => 'Failed to retrieve publication used: '.$e->getMessage()], 500);
         }
-    }
+
+    }//end used()
+
 
 }//end class

@@ -296,7 +296,7 @@ class ElasticSearchService
     }//end mapAggregationResults()
 
 
-    public function searchObject(array $filters, array $config, int &$totalResults=0): array
+    public function searchObject(array $filters, array $config, int &$totalResults = 0): array
     {
         $body = $this->parseFilters(filters: $filters);
 

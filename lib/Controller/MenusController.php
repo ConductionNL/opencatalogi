@@ -38,9 +38,10 @@ class MenusController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * MenusController constructor.
@@ -52,7 +53,7 @@ class MenusController extends Controller
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -65,9 +66,9 @@ class MenusController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -131,7 +132,8 @@ class MenusController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
@@ -151,7 +153,7 @@ class MenusController extends Controller
 
         // Build config for findAll to get menus
         $config = [
-            'filters' => []
+            'filters' => [],
         ];
 
         // Add schema filter if configured
@@ -165,17 +167,20 @@ class MenusController extends Controller
         }
 
         $result = $this->getObjectService()->findAll($config);
-        
+
         $data = [
-            'results' => array_map(function ($object) {
+            'results' => array_map(
+                function ($object) {
                 return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+                },
+                ($result ?? [])
+            ),
+            'total'   => count(($result ?? [])),
         ];
 
         // Add CORS headers for public API access
         $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -188,7 +193,7 @@ class MenusController extends Controller
     /**
      * Get a specific menu by its ID.
      *
-     * @param string|int $id The ID of the menu to retrieve
+     * @param string|integer $id The ID of the menu to retrieve
      *
      * @return JSONResponse The JSON response containing the menu details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -200,12 +205,12 @@ class MenusController extends Controller
     public function show(string|int $id): JSONResponse
     {
         $menu = $this->getObjectService()->find($id);
-        
+
         $data = $menu instanceof \OCP\AppFramework\Db\Entity ? $menu->jsonSerialize() : $menu;
-        
+
         // Add CORS headers for public API access
         $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin   = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

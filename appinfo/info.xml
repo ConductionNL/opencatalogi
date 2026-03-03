@@ -2,26 +2,43 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>opencatalogi</id>
-	<name>OpenCatalogi</name>
-	<summary>Framework for federated catalogi to work togethe</summary>
-	<description><![CDATA[📰 A OpenCatalogi App for Nextcloud
+	<name lang="en">OpenCatalogi</name>
+	<name lang="nl">OpenCatalogi</name>
+	<summary lang="en">Publish, manage, and federate open data catalogs with WOO compliance</summary>
+	<summary lang="nl">Publiceer, beheer en federeer open data catalogi met WOO-compliance</summary>
+	<description lang="en"><![CDATA[OpenCatalogi makes publishing open data simple and compliant. Manage publications across multiple catalogs, federate with other organizations, and meet Dutch transparency requirements (WOO) — all from within Nextcloud.
 
-The OpenCatalogi Nextcloud app provides a framework for federated catalogi to work together in an open data ecosystem
+**Key Features**
 
-- 📲 Synchronize your sources with multiple catalogi
-- 🔄 Automatic publications of your open data
-- 🆓 Free and open source under EUPL
-- ⚙️ Automatically installs and enables [OpenRegister](https://apps.nextcloud.com/apps/openregister) (required dependency)
+- **Multi-catalog support** — Run multiple catalogs with different scopes, each with their own registers and schemas
+- **Publication management** — Create, edit, and publish documents with file attachments and metadata
+- **Federated discovery** — Aggregate publications from local and remote OpenCatalogi instances into unified search results
+- **WOO compliance** — Automatic DIWOO sitemap generation for discovery by KOOP and other government search indexes
+- **Auto-publishing** — Automatically generate public share links for publication files
+- **Faceted search** — Filter publications by category, status, organization, and custom facets
+- **Public and internal endpoints** — Separate search for citizens (public) and employees (authenticated)
+- **File management** — Upload, organize, and attach documents to publications with version tracking
 
-**System Cron is currently required for this app to work**
+**Requires:** [OpenRegister](https://apps.nextcloud.com/apps/openregister) (install from the [Nextcloud App Store](https://apps.nextcloud.com/apps/openregister)).
 
-Requirements can be found [here](https://conduction.gitbook.io/opencatalogi-nextcloud/installatie)
+Free and open source under the EUPL license.
+    ]]></description>
+	<description lang="nl"><![CDATA[OpenCatalogi maakt het publiceren van open data eenvoudig en compliant. Beheer publicaties in meerdere catalogi, federeer met andere organisaties en voldoe aan de Nederlandse transparantie-eisen (WOO) — allemaal vanuit Nextcloud.
 
-The Roadmap is available [here](https://github.com/orgs/OpenCatalogi/projects/1/views/2)
+**Belangrijkste functies**
 
-Create a [bug report](https://github.com/OpenCatalogi/.github/issues/new/choose)
+- **Multi-catalogus ondersteuning** — Beheer meerdere catalogi met verschillende scopes, elk met eigen registers en schema's
+- **Publicatiebeheer** — Maak, bewerk en publiceer documenten met bijlagen en metadata
+- **Gefedereerde vindbaarheid** — Combineer publicaties van lokale en externe OpenCatalogi-instanties in uniforme zoekresultaten
+- **WOO-compliance** — Automatische DIWOO-sitemapgeneratie voor vindbaarheid via KOOP en andere overheidszoekdiensten
+- **Automatisch publiceren** — Genereer automatisch publieke deellinks voor publicatiebestanden
+- **Zoeken met facetten** — Filter publicaties op categorie, status, organisatie en aangepaste facetten
+- **Publieke en interne endpoints** — Apart zoeken voor burgers (publiek) en medewerkers (geauthenticeerd)
+- **Bestandsbeheer** — Upload, organiseer en koppel documenten aan publicaties met versiebeheer
 
-Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/choose)
+**Vereist:** [OpenRegister](https://apps.nextcloud.com/apps/openregister) (installeer via de [Nextcloud App Store](https://apps.nextcloud.com/apps/openregister)).
+
+Vrij en open source onder de EUPL-licentie.
     ]]></description>
 	<version>0.7.4</version>
 	<licence>agpl</licence>
@@ -34,10 +51,14 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
         <developer>https://conduction.gitbook.io/opencatalogi-nextcloud/developers</developer>
     </documentation>
     <category>integration</category>
+    <category>organization</category>
+    <category>office</category>
     <website>https://documentatie.opencatalogi.nl/</website>
+    <discussion>https://github.com/ConductionNL/opencatalogi/discussions</discussion>
 	<bugs>https://github.com/OpenCatalogi/.github/issues</bugs>
     <repository type="git">https://github.com/ConductionNL/opencatalogi.git</repository>
 
+	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/main/img/app-store.svg</screenshot>
 	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/assets/logo.png</screenshot>
 	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/1.png</screenshot>
     <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/2.png</screenshot>
@@ -67,7 +88,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 			<icon>app.svg</icon>
 			<type>link</type>
 		</navigation>
-	</navigations>	
+	</navigations>
 
 	<settings>
 		<admin>OCA\OpenCatalogi\Settings\OpenCatalogiAdmin</admin>

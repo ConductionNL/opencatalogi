@@ -79,8 +79,8 @@ class DashboardController extends Controller
     public function index(): JSONResponse
     {
         try {
-            // Prepare results using a test array
-            $results = ["results" => self::TEST_ARRAY];
+            // Prepare results
+            $results = ['results' => []];
             return new JSONResponse($results);
         } catch (\Exception $e) {
             // Return an error JSON response if an exception occurs

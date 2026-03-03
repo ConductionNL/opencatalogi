@@ -38,21 +38,22 @@ class PagesController extends Controller
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
+
 
     /**
      * PagesController constructor.
      *
      * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object  
+     * @param IRequest           $request            The request object
      * @param IAppConfig         $config             App configuration interface
      * @param ContainerInterface $container          Server container for dependency injection
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -65,9 +66,9 @@ class PagesController extends Controller
         int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
 
@@ -131,7 +132,8 @@ class PagesController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
+
+    }//end preflightedCors()
 
 
     /**
@@ -149,10 +151,9 @@ class PagesController extends Controller
         // Get page configuration from settings
         $pageConfig = $this->getPageConfiguration();
 
-
         // Build config for findAll to get pages
         $config = [
-            'filters' => []
+            'filters' => [],
         ];
 
         // Add schema filter if configured
@@ -166,18 +167,21 @@ class PagesController extends Controller
         }
 
         $result = $this->getObjectService()->findAll($config);
-        
+
         // Convert objects to arrays
         $data = [
-            'results' => array_map(function ($object) {
+            'results' => array_map(
+                function ($object) {
                 return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+                },
+                ($result ?? [])
+            ),
+            'total'   => count(($result ?? [])),
         ];
 
         // Add CORS headers for public API access
         $response = new JSONResponse($data);
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $origin   = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -206,9 +210,7 @@ class PagesController extends Controller
 
         // Build config to find page by slug
         $config = [
-            'filters' => [
-                'slug' => $slug
-            ]
+            'filters' => ['slug' => $slug],
         ];
 
         // Add schema filter if configured
@@ -222,15 +224,15 @@ class PagesController extends Controller
         }
 
         $pages = $this->getObjectService()->findAll($config);
-        
+
         if (empty($pages)) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
         } else {
             // Return the first matching page
-            $page = $pages[0] instanceof \OCP\AppFramework\Db\Entity ? $pages[0]->jsonSerialize() : $pages[0];
+            $page     = $pages[0] instanceof \OCP\AppFramework\Db\Entity ? $pages[0]->jsonSerialize() : $pages[0];
             $response = new JSONResponse($page);
         }
-        
+
         // Add CORS headers for public API access
         $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
         $response->addHeader('Access-Control-Allow-Origin', $origin);

@@ -92,6 +92,7 @@ class CatalogiService
 
     }//end getObjectService()
 
+
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
@@ -108,7 +109,7 @@ class CatalogiService
 
         throw new \RuntimeException('OpenRegister service is not available.');
 
-    }//end getObjectService()
+    }//end getFileService()
 
 
     /**
@@ -117,7 +118,7 @@ class CatalogiService
      * This method retrieves all catalogs (or a specific one if ID is provided),
      * extracts their registers and schemas, and stores them as general variables.
      *
-     * @param  string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
@@ -199,12 +200,12 @@ class CatalogiService
      * It calculates the number of pages, sets the appropriate offset and page values, and returns the paginated results
      * along with metadata such as total items, current page, total pages, limit, and offset.
      *
-     * @param array    $results The array of objects to paginate.
-     * @param int|null $total   The total number of items (before pagination). Defaults to 0.
-     * @param int|null $limit   The number of items per page. Defaults to 20.
-     * @param int|null $offset  The offset of items. Defaults to 0.
-     * @param int|null $page    The current page number. Defaults to 1.
-     * @param array|null $facets    The already fetched facets. Defaults to empty array.
+     * @param array        $results The array of objects to paginate.
+     * @param integer|null $total   The total number of items (before pagination). Defaults to 0.
+     * @param integer|null $limit   The number of items per page. Defaults to 20.
+     * @param integer|null $offset  The offset of items. Defaults to 0.
+     * @param integer|null $page    The current page number. Defaults to 1.
+     * @param array|null   $facets  The already fetched facets. Defaults to empty array.
      *
      * @return array The paginated results with metadata.
      *
@@ -213,7 +214,7 @@ class CatalogiService
      * @psalm-param    array<int, mixed> $results
      * @psalm-return   array<string, mixed>
      */
-    private function paginate(array $results, ?int $total=0, ?int $limit=20, ?int $offset=0, ?int $page=1, ?array $facets = []): array
+    private function paginate(array $results, ?int $total = 0, ?int $limit = 20, ?int $offset = 0, ?int $page = 1, ?array $facets = []): array
     {
         // Ensure we have valid values (never null)
         $total = max(0, ($total ?? 0));
@@ -303,7 +304,7 @@ class CatalogiService
      *               - schema: (string|null) Schema identifier
      *               - ids: (array|null) Specific IDs to filter
      */
-    private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
+    private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array
     {
         $params = $this->request->getParams();
 
@@ -352,7 +353,7 @@ class CatalogiService
      *
      * @return JSONResponse A JSON response containing the list of objects
      *
-     * @NoAdminRequired     *
+     * @NoAdminRequired *
      * @NoCSRFRequired
      */
     public function index(null|string|int $catalogId = null): JSONResponse
@@ -361,46 +362,57 @@ class CatalogiService
         $config = $this->getConfig();
 
         // Get the context for the catalog
-        $context                       = $this->getCatalogFilters($catalogId);
-        //Vardump the context
+        $context = $this->getCatalogFilters($catalogId);
+        // Vardump the context
         $config['filters']['register'] = $context['registers'];
         $config['filters']['schema']   = $context['schemas'];
 
         $objectService = $this->getObjectService();
 
         $objects = $objectService->findAll($config);
-        
+
         // Filter out unwanted properties from the '@self' array in each object
-        $filteredObjects = array_map(function ($object) {
+        $filteredObjects = array_map(
+            function ($object) {
             // Use jsonSerialize to get an array representation of the object
             $objectArray = $object->jsonSerialize();
 
-            //@todo: a loggedin user should be able to see the full object
+            // @todo: a loggedin user should be able to see the full object
             if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
                 $unwantedProperties = [
-                    'schemaVersion', 'relations', 'locked', 'owner', 'folder',
-                    'application', 'validation', 'retention',
-                    'size', 'deleted'
+                    'schemaVersion',
+                    'relations',
+                    'locked',
+                    'owner',
+                    'folder',
+                    'application',
+                    'validation',
+                    'retention',
+                    'size',
+                    'deleted',
                 ];
                 // Remove unwanted properties from the '@self' array
                 $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
             }
+
             return $objectArray;
-        }, $objects);
-        
+            },
+            $objects
+        );
 
         // Get total count for pagination
         $total = $objectService->count($config);
 
-        //@todo: fix facets currently breaks build
-        //$facets = $objectService->getFacets(filters: [
-        //    'register' => $config['filters']['register'],
-        //    'schema'   => $config['filters']['schema'],
-        //    '_queries' => $config['queries']
-        //]);
-
+        // @todo: fix facets currently breaks build
+        // $facets = $objectService->getFacets(filters: [
+        // 'register' => $config['filters']['register'],
+        // 'schema'   => $config['filters']['schema'],
+        // '_queries' => $config['queries']
+        // ]);
         // Return paginated results
         return new JSONResponse($this->paginate(results: $filteredObjects, total: $total, limit: $config['limit'], offset: $config['offset'], page: $config['page'], facets: $facets));
+
     }//end index()
+
 
 }//end class

@@ -26,6 +26,7 @@ use Psr\Container\NotFoundExceptionInterface;
 class SearchController extends Controller
 {
 
+
     /**
      * SearchController constructor.
      *
@@ -39,7 +40,9 @@ class SearchController extends Controller
         private readonly PublicationService $publicationService
     ) {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
 
     /**
      * Retrieve a list of publications based on all available catalogs.
@@ -48,7 +51,7 @@ class SearchController extends Controller
      * Unlike the public publications endpoint, this may include additional data
      * and is not subject to the same security restrictions.
      *
-     * @param string|int|null $catalogId Optional ID of a specific catalog to filter by
+     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
      * @return JSONResponse JSON response containing the list of publications and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -58,14 +61,16 @@ class SearchController extends Controller
     public function index(?string $catalogId = null): JSONResponse
     {
         return $this->publicationService->index($catalogId);
-    }
+
+    }//end index()
+
 
     /**
      * Retrieve a specific publication by its ID.
      *
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param string $id The ID of the publication to retrieve
+     * @param  string $id The ID of the publication to retrieve
      * @return JSONResponse JSON response containing the requested publication
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -75,14 +80,16 @@ class SearchController extends Controller
     public function show(string $id): JSONResponse
     {
         return $this->publicationService->show(id: $id);
-    }
+
+    }//end show()
+
 
     /**
      * Retrieve attachments/files of a publication.
      *
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param string $id Id of publication
+     * @param  string $id Id of publication
      * @return JSONResponse JSON response containing the requested attachments/files.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -92,14 +99,16 @@ class SearchController extends Controller
     public function attachments(string $id): JSONResponse
     {
         return $this->publicationService->attachments(id: $id);
-    }
+
+    }//end attachments()
+
 
     /**
      * Download files of a publication.
      *
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param string $id Id of publication
+     * @param  string $id Id of publication
      * @return JSONResponse JSON response containing the download information.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -109,7 +118,9 @@ class SearchController extends Controller
     public function download(string $id): JSONResponse
     {
         return $this->publicationService->download(id: $id);
-    }
+
+    }//end download()
+
 
     /**
      * Retrieves all objects that this publication references
@@ -117,7 +128,7 @@ class SearchController extends Controller
      * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param string $id The ID of the publication to retrieve relations for
+     * @param  string $id The ID of the publication to retrieve relations for
      * @return JSONResponse A JSON response containing the related objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -127,7 +138,9 @@ class SearchController extends Controller
     public function uses(string $id): JSONResponse
     {
         return $this->publicationService->uses(id: $id);
-    }
+
+    }//end uses()
+
 
     /**
      * Retrieves all objects that use this publication
@@ -135,7 +148,7 @@ class SearchController extends Controller
      * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
      * This is an internal endpoint for testing and administrative purposes.
      *
-     * @param string $id The ID of the publication to retrieve uses for
+     * @param  string $id The ID of the publication to retrieve uses for
      * @return JSONResponse A JSON response containing the referenced objects
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -145,6 +158,8 @@ class SearchController extends Controller
     public function used(string $id): JSONResponse
     {
         return $this->publicationService->used(id: $id);
-    }
+
+    }//end used()
+
 
 }//end class

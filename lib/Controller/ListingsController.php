@@ -84,7 +84,7 @@ class ListingsController extends Controller
 
         // Build config for findAll
         $config = [
-            'filters' => []
+            'filters' => [],
         ];
 
         // Add schema filter if configured
@@ -96,29 +96,33 @@ class ListingsController extends Controller
         if (!empty($listingRegister)) {
             $config['filters']['register'] = $listingRegister;
         }
-        
+
         // Add any additional filters from request params
         if (isset($requestParams['filters'])) {
             $config['filters'] = array_merge($config['filters'], $requestParams['filters']);
         }
-        
+
         // Add pagination and other params
         if (isset($requestParams['limit'])) {
             $config['limit'] = (int) $requestParams['limit'];
         }
+
         if (isset($requestParams['offset'])) {
             $config['offset'] = (int) $requestParams['offset'];
         }
 
         // Fetch listing objects based on filters and order
         $result = $this->getObjectService()->findAll($config);
-        
+
         // Convert objects to arrays
         $data = [
-            'results' => array_map(function ($object) {
+            'results' => array_map(
+                function ($object) {
                 return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result['results'] ?? []),
-            'total' => $result['total'] ?? count($result['results'] ?? [])
+                },
+                ($result['results'] ?? [])
+            ),
+            'total'   => ($result['total'] ?? count(($result['results'] ?? []))),
         ];
 
         // Return JSON response
@@ -130,7 +134,7 @@ class ListingsController extends Controller
     /**
      * Retrieve a specific listing by its ID.
      *
-     * @param string|int $id The ID of the listing to retrieve
+     * @param string|integer $id The ID of the listing to retrieve
      *
      * @return JSONResponse JSON response containing the requested listing
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
@@ -182,7 +186,7 @@ class ListingsController extends Controller
     /**
      * Update an existing listing.
      *
-     * @param string|int $id The ID of the listing to update.
+     * @param string|integer $id The ID of the listing to update.
      *
      * @return JSONResponse The response containing the updated listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
@@ -210,7 +214,7 @@ class ListingsController extends Controller
     /**
      * Delete a listing.
      *
-     * @param string|int $id The ID of the listing to delete.
+     * @param string|integer $id The ID of the listing to delete.
      *
      * @return JSONResponse The response indicating the result of the deletion.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
@@ -239,10 +243,10 @@ class ListingsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function synchronise(?string $id=null): JSONResponse
+    public function synchronise(?string $id = null): JSONResponse
     {
         // Synchronize the specified listing or all listings
-        $result = $this->directoryService->synchronise($id);
+        $result = $this->directoryService->doCronSync();
 
         // Return the result as a JSON response
         return new JSONResponse(['success' => $result]);
@@ -267,7 +271,7 @@ class ListingsController extends Controller
 
         // Add the new listing using the provided URL
         try {
-            $result = $this->directoryService->syncExternalDirectory($url);
+            $result = $this->directoryService->syncDirectory($url);
         } catch (DirectoryUrlException $exception) {
             if ($exception->getMessage() === 'URL is required') {
                 $exception->setMessage('Property "url" is required');

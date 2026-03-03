@@ -60,13 +60,14 @@ class DownloadService
     /**
      * Creates a pdf file containing all metadata of the given publication.
      *
-     * @param ObjectService $objectService The ObjectService, used to connect to a MongoDB database.
-     * @param string|int    $id            The id of a Publication we want to create / update a pdf file for.
-     * @param array|null    $options       A few options for this function, "download" & "saveToNextCloud" can't be both false!
-     *                                     "download" = If we should return a download response (true = default).
-     *                                     "saveToNextCloud" = If we should create and save the file in NextCloud (true =
-     *                                     default). "publication" = If we already have a publication body prevent extra
-     *                                     database requests by passing it along.                                   database requests by passing it along.
+     * @param ObjectService  $objectService The ObjectService, used to connect to a MongoDB database.
+     * @param string|integer $id            The id of a Publication we want to create / update a pdf file for.
+     * @param array|null     $options       A few options for this function, "download" & "saveToNextCloud" can't be both false!
+     *                                      "download" = If we should return a download response (true = default).
+     *                                      "saveToNextCloud" = If we should create and save the file in NextCloud (true =
+     *                                      default). "publication" = If we already have a publication body prevent extra
+     *                                      database requests by passing it along.                                   database
+     *                                      requests by passing it along.
      *
      * @return JSONResponse A JSONResponse for downloading the pdf file. Or a JSONResponse containing a downloadUrl for a nextCloud file. Or an error response.
      * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
@@ -74,7 +75,7 @@ class DownloadService
     public function createPublicationFile(
         ObjectService $objectService,
         string|int $id,
-        ?array $options=[
+        ?array $options = [
             'download'        => true,
             'saveToNextCloud' => true,
             'publication'     => null,
@@ -136,8 +137,8 @@ class DownloadService
     /**
      * Gets a publication and returns it as serialized array.
      *
-     * @param string|int    $id            The id of a publication.
-     * @param ObjectService $objectService The objectService.
+     * @param string|integer $id            The id of a publication.
+     * @param ObjectService  $objectService The objectService.
      *
      * @return array|JSONResponse The publication found as array or an error JSONResponse.
      */
@@ -241,8 +242,8 @@ class DownloadService
     /**
      * Creates a ZIP archive containing a pdf file with all metadata of the publication and its attachments
      *
-     * @param ObjectService $objectService The ObjectService, used to connect to a MongoDB database.
-     * @param string|int    $id            The id of a Publication we want to download a ZIP archive for.
+     * @param ObjectService  $objectService The ObjectService, used to connect to a MongoDB database.
+     * @param string|integer $id            The id of a Publication we want to download a ZIP archive for.
      *
      * @return JSONResponse A JSONResponse for downloading the ZIP archive. Or an error response.
      * @throws LoaderError|MpdfException|RuntimeError|SyntaxError
@@ -300,8 +301,8 @@ class DownloadService
     /**
      * Gets all attachments for a publication.
      *
-     * @param string|int    $id            The id of a publication.
-     * @param ObjectService $objectService The objectService.
+     * @param string|integer $id            The id of a publication.
+     * @param ObjectService  $objectService The objectService.
      *
      * @return array|JSONResponse An array containing all attachments for the publication or an error JSONResponse.
      */
