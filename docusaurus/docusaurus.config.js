@@ -36,9 +36,10 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
-            'https://github.com/conductionnl/opencatalogi/tree/main/website/',
+            'https://github.com/conductionnl/opencatalogi/tree/main/docusaurus/',
         },
         blog: false,
         theme: {
