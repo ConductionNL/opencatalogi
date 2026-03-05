@@ -78,7 +78,6 @@ class CMSTool implements ToolInterface
      */
     private IUserSession $userSession;
 
-
     /**
      * Constructor
      *
@@ -97,7 +96,6 @@ class CMSTool implements ToolInterface
 
     }//end __construct()
 
-
     /**
      * Get tool name
      *
@@ -108,7 +106,6 @@ class CMSTool implements ToolInterface
         return 'CMS Tool';
 
     }//end getName()
-
 
     /**
      * Get tool description
@@ -121,7 +118,6 @@ class CMSTool implements ToolInterface
 
     }//end getDescription()
 
-
     /**
      * Set agent context
      *
@@ -133,12 +129,18 @@ class CMSTool implements ToolInterface
     {
         $this->agent = $agent;
 
-        // Determine user ID for operations
-        // Prioritize session user, fallback to agent's configured user
-        $this->currentUserId = $this->userSession->getUser() ? $this->userSession->getUser()->getUID() : ($agent ? $agent->getUser() : null);
+        // Determine user ID for operations.
+        // Prioritize session user, fallback to agent's configured user.
+        $user = $this->userSession->getUser();
+        if ($user !== null) {
+            $this->currentUserId = $user->getUID();
+        } else if ($agent !== null) {
+            $this->currentUserId = $agent->getUser();
+        } else {
+            $this->currentUserId = null;
+        }
 
     }//end setAgent()
-
 
     /**
      * Get function definitions
@@ -150,7 +152,7 @@ class CMSTool implements ToolInterface
     public function getFunctions(): array
     {
         return [
-            // Page functions
+            // Page functions.
             [
                 'name'        => 'cms_create_page',
                 'description' => 'Create a new page with title and content. Returns the page UUID.',
@@ -192,9 +194,10 @@ class CMSTool implements ToolInterface
                 ],
             ],
 
-            // Menu functions
+            // Menu functions.
             [
                 'name'        => 'cms_create_menu',
+                // phpcs:ignore Generic.Files.LineLength.MaxExceeded
                 'description' => 'Create a new menu with items. Ask the user for menu position, menu items (with names, links, order), and access groups if not provided. Each menu MUST have at least one item.',
                 'parameters'  => [
                     'type'       => 'object',
@@ -209,6 +212,7 @@ class CMSTool implements ToolInterface
                         ],
                         'items'           => [
                             'type'        => 'array',
+                            // phpcs:ignore Generic.Files.LineLength.MaxExceeded
                             'description' => 'Array of menu items. Each item MUST have: order (number), name (string), link (string). ASK THE USER what items they want.',
                             'items'       => [
                                 'type'       => 'object',
@@ -272,7 +276,7 @@ class CMSTool implements ToolInterface
                 ],
             ],
 
-            // Menu item functions
+            // Menu item functions.
             [
                 'name'        => 'cms_add_menu_item',
                 'description' => 'Add an item to a menu. Can link to a page or external URL.',
@@ -310,7 +314,6 @@ class CMSTool implements ToolInterface
 
     }//end getFunctions()
 
-
     /**
      * Execute a function
      *
@@ -322,7 +325,7 @@ class CMSTool implements ToolInterface
      *
      * @throws \Exception If function execution fails
      */
-    public function executeFunction(string $functionName, array $parameters, ?string $userId = null): array
+    public function executeFunction(string $functionName, array $parameters, ?string $userId=null): array
     {
         $this->logger->info(
             '[CMSTool] Executing function',
@@ -335,12 +338,15 @@ class CMSTool implements ToolInterface
 
         try {
             return match ($functionName) {
-                'cms_create_page' => $this->createPage($parameters),
-                'cms_list_pages' => $this->listPages($parameters),
-                'cms_create_menu' => $this->createMenu($parameters),
+                'cms_create_page' => $this->createPage(parameters: $parameters),
+                'cms_list_pages' => $this->listPages(parameters: $parameters),
+                'cms_create_menu' => $this->createMenu(parameters: $parameters),
                 'cms_list_menus' => $this->listMenus(),
-                'cms_add_menu_item' => $this->addMenuItem($parameters),
-                default => $this->errorResponse('Unknown function: '.$functionName, 404)
+                'cms_add_menu_item' => $this->addMenuItem(parameters: $parameters),
+                default => $this->errorResponse(
+                    message: 'Unknown function: '.$functionName,
+                    statusCode: 404
+                )
             };
         } catch (\Exception $e) {
             $this->logger->error(
@@ -352,11 +358,10 @@ class CMSTool implements ToolInterface
                 ]
             );
 
-            return $this->errorResponse($e->getMessage());
+            return $this->errorResponse(message: $e->getMessage());
         }//end try
 
     }//end executeFunction()
-
 
     /**
      * Create a new page
@@ -367,15 +372,15 @@ class CMSTool implements ToolInterface
      */
     public function createPage(array $parameters): array
     {
-        // Validate required parameters
-        if (empty($parameters['title'])) {
-            return $this->errorResponse('Title is required', 400);
+        // Validate required parameters.
+        if (empty($parameters['title']) === true) {
+            return $this->errorResponse(message: 'Title is required', statusCode: 400);
         }
 
-        // Generate slug if not provided
-        $slug = ($parameters['slug'] ?? $this->generateSlug($parameters['title']));
+        // Generate slug if not provided.
+        $slug = ($parameters['slug'] ?? $this->generateSlug(text: $parameters['title']));
 
-        // Create page object
+        // Create page object.
         $pageData = [
             'title'        => $parameters['title'],
             'slug'         => $slug,
@@ -385,14 +390,14 @@ class CMSTool implements ToolInterface
             'organisation' => $this->agent?->getOrganisation(),
         ];
 
-        // Use ObjectService to create page (it handles RBAC and validation)
-        // Using the publication register from OpenCatalogi configuration
-        // Use positional parameters for compatibility with different ObjectService versions
+        // Use ObjectService to create page (it handles RBAC and validation).
+        // Using the publication register from OpenCatalogi configuration.
+        // Use positional parameters for compatibility with different ObjectService versions.
         $page = $this->objectService->saveObject($pageData, [], 'publication', 'page');
 
         return $this->successResponse(
-            'Page created successfully',
-            [
+            message: 'Page created successfully',
+            data: [
                 'pageId' => $page->getUuid(),
                 'title'  => $page->getTitle(),
                 'slug'   => $slug,
@@ -400,7 +405,6 @@ class CMSTool implements ToolInterface
         );
 
     }//end createPage()
-
 
     /**
      * List all pages
@@ -413,7 +417,7 @@ class CMSTool implements ToolInterface
     {
         $limit = ($parameters['limit'] ?? 50);
 
-        // Get pages from ObjectService
+        // Get pages from ObjectService.
         $filters = [
             'organisation' => $this->agent?->getOrganisation(),
         ];
@@ -422,12 +426,12 @@ class CMSTool implements ToolInterface
             filters: $filters,
             limit: $limit,
             schema: 'page'
-            // Schema name without register prefix
+            // Schema name without register prefix.
         );
 
         return $this->successResponse(
-            'Pages retrieved successfully',
-            [
+            message: 'Pages retrieved successfully',
+            data: [
                 'count' => count($pages),
                 'pages' => array_map(
                     function ($page) {
@@ -445,7 +449,6 @@ class CMSTool implements ToolInterface
 
     }//end listPages()
 
-
     /**
      * Create a new menu with proper schema structure.
      *
@@ -456,56 +459,68 @@ class CMSTool implements ToolInterface
     public function createMenu(array $parameters): array
     {
         // Validate required parameters.
-        if (empty($parameters['title'])) {
-            return $this->errorResponse('Menu title is required', 400);
+        if (empty($parameters['title']) === true) {
+            return $this->errorResponse(message: 'Menu title is required', statusCode: 400);
         }
 
         // Validate that items array is provided and not empty.
-        if (empty($parameters['items']) || !is_array($parameters['items'])) {
-            return $this->errorResponse('Menu must have at least one item. Please provide an items array.', 400);
+        if (empty($parameters['items']) === true || is_array($parameters['items']) === false) {
+            return $this->errorResponse(
+                message: 'Menu must have at least one item. Please provide an items array.',
+                statusCode: 400
+            );
         }
 
         // Validate each menu item has required fields.
         foreach ($parameters['items'] as $index => $item) {
-            if (empty($item['order']) && $item['order'] !== 0) {
-                return $this->errorResponse("Menu item {$index} is missing 'order' field", 400);
+            if (empty($item['order']) === true && $item['order'] !== 0) {
+                return $this->errorResponse(
+                    message: "Menu item {$index} is missing 'order' field",
+                    statusCode: 400
+                );
             }
 
-            if (empty($item['name'])) {
-                return $this->errorResponse("Menu item {$index} is missing 'name' field", 400);
+            if (empty($item['name']) === true) {
+                return $this->errorResponse(
+                    message: "Menu item {$index} is missing 'name' field",
+                    statusCode: 400
+                );
             }
 
-            if (empty($item['link'])) {
-                return $this->errorResponse("Menu item {$index} is missing 'link' field", 400);
+            if (empty($item['link']) === true) {
+                return $this->errorResponse(
+                    message: "Menu item {$index} is missing 'link' field",
+                    statusCode: 400
+                );
             }
-        }
+        }//end foreach
 
         // Create menu object with proper schema fields.
         $menuData = [
             'title'        => $parameters['title'],
             'position'     => ($parameters['position'] ?? 0),
             'items'        => $parameters['items'],
-// Array of menu items
+        // Array of menu items.
             'owner'        => $this->currentUserId,
             'organisation' => $this->agent?->getOrganisation(),
         ];
 
         // Add optional fields if provided.
-        if (isset($parameters['groups']) && is_array($parameters['groups'])) {
+        if (isset($parameters['groups']) === true && is_array($parameters['groups']) === true) {
             $menuData['groups'] = $parameters['groups'];
         }
 
-        if (isset($parameters['hideBeforeLogin'])) {
+        if (isset($parameters['hideBeforeLogin']) === true) {
             $menuData['hideBeforeLogin'] = (bool) $parameters['hideBeforeLogin'];
         }
 
         // Use ObjectService to create menu.
-        // Use positional parameters for compatibility with different ObjectService versions
+        // Use positional parameters for compatibility with different ObjectService versions.
         $menu = $this->objectService->saveObject($menuData, [], 'publication', 'menu');
 
         return $this->successResponse(
-            'Menu created successfully',
-            [
+            message: 'Menu created successfully',
+            data: [
                 'menuId'    => $menu->getUuid(),
                 'title'     => $parameters['title'],
                 'position'  => $menuData['position'],
@@ -515,7 +530,6 @@ class CMSTool implements ToolInterface
 
     }//end createMenu()
 
-
     /**
      * List all menus
      *
@@ -523,7 +537,7 @@ class CMSTool implements ToolInterface
      */
     public function listMenus(): array
     {
-        // Get menus from ObjectService
+        // Get menus from ObjectService.
         $filters = [
             'organisation' => $this->agent?->getOrganisation(),
         ];
@@ -531,12 +545,12 @@ class CMSTool implements ToolInterface
         $menus = $this->objectService->findObjects(
             filters: $filters,
             schema: 'menu'
-            // Schema name without register prefix
+            // Schema name without register prefix.
         );
 
         return $this->successResponse(
-            'Menus retrieved successfully',
-            [
+            message: 'Menus retrieved successfully',
+            data: [
                 'count' => count(($menus['results'] ?? [])),
                 'menus' => array_map(
                     function ($menu) {
@@ -555,7 +569,6 @@ class CMSTool implements ToolInterface
 
     }//end listMenus()
 
-
     /**
      * Add a menu item to a menu
      *
@@ -565,21 +578,21 @@ class CMSTool implements ToolInterface
      */
     public function addMenuItem(array $parameters): array
     {
-        // Validate required parameters
-        if (empty($parameters['menuId'])) {
-            return $this->errorResponse('Menu ID is required', 400);
+        // Validate required parameters.
+        if (empty($parameters['menuId']) === true) {
+            return $this->errorResponse(message: 'Menu ID is required', statusCode: 400);
         }
 
-        if (empty($parameters['name'])) {
-            return $this->errorResponse('Menu item name is required', 400);
+        if (empty($parameters['name']) === true) {
+            return $this->errorResponse(message: 'Menu item name is required', statusCode: 400);
         }
 
-        // Must provide either link or pageId
-        if (empty($parameters['link']) && empty($parameters['pageId'])) {
-            return $this->errorResponse('Either link or pageId must be provided', 400);
+        // Must provide either link or pageId.
+        if (empty($parameters['link']) === true && empty($parameters['pageId']) === true) {
+            return $this->errorResponse(message: 'Either link or pageId must be provided', statusCode: 400);
         }
 
-        // Create menu item object
+        // Create menu item object.
         $menuItemData = [
             'name'         => $parameters['name'],
             'menu'         => $parameters['menuId'],
@@ -590,13 +603,13 @@ class CMSTool implements ToolInterface
             'organisation' => $this->agent?->getOrganisation(),
         ];
 
-        // Use ObjectService to create menu item
-        // Use positional parameters for compatibility with different ObjectService versions
+        // Use ObjectService to create menu item.
+        // Use positional parameters for compatibility with different ObjectService versions.
         $menuItem = $this->objectService->saveObject($menuItemData, [], 'publication', 'menuItem');
 
         return $this->successResponse(
-            'Menu item added successfully',
-            [
+            message: 'Menu item added successfully',
+            data: [
                 'menuItemId' => $menuItem->getUuid(),
                 'name'       => $menuItem->getName(),
                 'menuId'     => $parameters['menuId'],
@@ -604,7 +617,6 @@ class CMSTool implements ToolInterface
         );
 
     }//end addMenuItem()
-
 
     /**
      * Generate URL-friendly slug from title
@@ -615,19 +627,18 @@ class CMSTool implements ToolInterface
      */
     private function generateSlug(string $title): string
     {
-        // Convert to lowercase
+        // Convert to lowercase.
         $slug = strtolower($title);
 
-        // Replace non-alphanumeric characters with hyphens
+        // Replace non-alphanumeric characters with hyphens.
         $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
 
-        // Remove leading/trailing hyphens
+        // Remove leading/trailing hyphens.
         $slug = trim($slug, '-');
 
         return $slug;
 
     }//end generateSlug()
-
 
     /**
      * Create error response
@@ -637,7 +648,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Error response
      */
-    private function errorResponse(string $message, int $code = 500): array
+    private function errorResponse(string $message, int $code=500): array
     {
         $this->logger->error('[CMSTool] Error', ['message' => $message, 'code' => $code]);
 
@@ -649,7 +660,6 @@ class CMSTool implements ToolInterface
 
     }//end errorResponse()
 
-
     /**
      * Create success response
      *
@@ -658,7 +668,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Success response
      */
-    private function successResponse(string $message, array $data = []): array
+    private function successResponse(string $message, array $data=[]): array
     {
         return [
             'success' => true,
@@ -667,7 +677,6 @@ class CMSTool implements ToolInterface
         ];
 
     }//end successResponse()
-
 
     /**
      * Magic method to support snake_case method calls for LLPhant compatibility
@@ -684,40 +693,44 @@ class CMSTool implements ToolInterface
      */
     public function __call(string $name, array $arguments)
     {
-        // Strip 'cms_' prefix if present (function names are cms_* but methods are not)
+        // Strip 'cms_' prefix if present (function names are cms_* but methods are not).
         $methodName = preg_replace('/^cms_/', '', $name);
 
-        // Convert snake_case to camelCase
+        // Convert snake_case to camelCase.
         $camelCaseMethod = lcfirst(str_replace('_', '', ucwords($methodName, '_')));
 
-        if (method_exists($this, $camelCaseMethod)) {
-            // Get method reflection to understand parameter types
+        if (method_exists($this, $camelCaseMethod) === true) {
+            // Get method reflection to understand parameter types.
             $reflection = new \ReflectionMethod($this, $camelCaseMethod);
             $parameters = $reflection->getParameters();
 
-            // Type-cast arguments based on method signature
-            // Handle both positional and named arguments from LLPhant
+            // Type-cast arguments based on method signature.
+            // Handle both positional and named arguments from LLPhant.
             $isAssociative = array_keys($arguments) !== range(0, (count($arguments) - 1));
 
             $typedArguments = [];
             foreach ($parameters as $index => $param) {
                 $paramName = $param->getName();
 
-                // Get value from either named argument or positional argument
-                if ($isAssociative && isset($arguments[$paramName])) {
+                // Get value from either named argument or positional argument.
+                if ($isAssociative !== null && isset($arguments[$paramName]) === true) {
                     $value = $arguments[$paramName];
                 } else {
                     $value = $arguments[$index] ?? null;
                 }
 
-                // Handle string 'null' from LLM
+                // Handle string 'null' from LLM.
                 if ($value === 'null' || $value === null) {
-                    // Use default value if available, otherwise null
-                    $value = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
-                } else if ($param->hasType()) {
-                    // Cast to the expected type
+                    // Use default value if available, otherwise null.
+                    if ($param->isDefaultValueAvailable() === true) {
+                        $value = $param->getDefaultValue();
+                    } else {
+                        $value = null;
+                    }
+                } else if ($param->hasType() === true) {
+                    // Cast to the expected type.
                     $type = $param->getType();
-                    if ($type && $type instanceof \ReflectionNamedType) {
+                    if ($type !== null && $type instanceof \ReflectionNamedType) {
                         $typeName = $type->getName();
                         if ($typeName === 'int') {
                             $value = (int) $value;
@@ -728,7 +741,11 @@ class CMSTool implements ToolInterface
                         } else if ($typeName === 'string') {
                             $value = (string) $value;
                         } else if ($typeName === 'array') {
-                            $value = is_array($value) ? $value : [];
+                            if (is_array($value) === true) {
+                                $value = $value;
+                            } else {
+                                $value = [];
+                            }
                         }
                     }
                 }//end if
@@ -736,19 +753,19 @@ class CMSTool implements ToolInterface
                 $typedArguments[] = $value;
             }//end foreach
 
-            // CMSTool methods expect a single array parameter, not individual args
-            // Combine all typed arguments back into a single associative array
-            if ($isAssociative) {
-                // If original was associative, pass it as-is
+            // CMSTool methods expect a single array parameter, not individual args.
+            // Combine all typed arguments back into a single associative array.
+            if ($isAssociative !== null) {
+                // If original was associative, pass it as-is.
                 $result = $this->$camelCaseMethod($arguments);
             } else {
-                // If original was positional, wrap in array
+                // If original was positional, wrap in array.
                 $result = $this->$camelCaseMethod($typedArguments);
             }
 
-            // LLPhant expects tool results to be JSON strings, not arrays
-            // Convert array results to JSON for LLM consumption
-            if (is_array($result)) {
+            // LLPhant expects tool results to be JSON strings, not arrays.
+            // Convert array results to JSON for LLM consumption.
+            if (is_array($result) === true) {
                 return json_encode($result);
             }
 
@@ -758,6 +775,4 @@ class CMSTool implements ToolInterface
         throw new \BadMethodCallException("Method {$name} (or {$camelCaseMethod}) does not exist");
 
     }//end __call()
-
-
 }//end class

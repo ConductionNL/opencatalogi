@@ -13,7 +13,7 @@ const config = {
   projectName: 'opencatalogi',
   trailingSlash: false,
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -73,7 +73,7 @@ const config = {
     ({
       // Add mermaid configuration to themeConfig
       mermaid: {
-        theme: {light: 'neutral', dark: 'forest'},
+        theme: { light: 'default', dark: 'dark' },
       },
       navbar: {
         title: 'Open Catalogi',
@@ -122,7 +122,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Open Catalogi. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} for <a href="https://openwebconcept.nl">Open Webconcept</a> by <a href="https://conduction.nl">Conduction B.V.</a>`,
       },
       prism: {
         theme: require('prism-react-renderer/themes/github'),
