@@ -5,16 +5,6 @@ import { objectStore } from '../../store/store.js'
 /** @typedef {import('../../entities/catalogi/catalogi.ts').Catalogi} CatalogEntity */
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
 
-/**
- * Store for managing catalogs and their publications in OpenCatalogi.
- * @module Store
- * @package
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @see {@link https://github.com/opencatalogi/opencatalogi}
- */
 export const useCatalogStore = defineStore('catalog', {
 	state: () => ({
 		/** @type {import('../../entities/catalogi/catalogi.ts').Catalogi|null} */
@@ -105,6 +95,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @param {object} params - Optional parameters for pagination and filtering
 		 * @param {number} params.page - Page number (default: 1)
 		 * @param {number} params.limit - Items per page (default: 20)
+		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @return {Promise<void>}
 		 */
 		async fetchPublications(params = {}) {

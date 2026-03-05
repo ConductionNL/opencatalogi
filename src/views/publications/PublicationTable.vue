@@ -579,11 +579,11 @@ export default {
 		},
 		onPageChanged(page) {
 			console.info('Page changed to:', page)
-			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 })
+			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 }, this.$route.params.catalogSlug)
 		},
 		onPageSizeChanged(pageSize) {
 			console.info('Page size changed to:', pageSize)
-			catalogStore.fetchPublications({ page: 1, limit: pageSize })
+			catalogStore.fetchPublications({ page: 1, limit: pageSize }, this.$route.params.catalogSlug)
 		},
 		getPublicationStatus(publication) {
 			if (publication['@self']?.published) {
@@ -610,7 +610,7 @@ export default {
 		},
 		refreshPublications() {
 			// Refresh the publication list
-			catalogStore.fetchPublications()
+			catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
 			// Clear selection after refresh
 			objectStore.setSelectedObjects([])
 		},
