@@ -1,4 +1,19 @@
 <?php
+/**
+ * ThemesController for OpenCatalogi.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -28,17 +43,23 @@ class ThemesController extends Controller
 {
 
     /**
+     * Allowed CORS methods.
+     *
      * @var string Allowed CORS methods
      */
     private string $corsMethods;
 
     /**
+     * Allowed CORS headers.
+     *
      * @var string Allowed CORS headers
      */
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * CORS max age.
+     *
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
 
@@ -52,7 +73,7 @@ class ThemesController extends Controller
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -60,17 +81,16 @@ class ThemesController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-        string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-        int $corsMaxAge = 1728000
+        string $corsMethods='PUT, POST, GET, DELETE, PATCH',
+        string $corsAllowedHeaders='Authorization, Content-Type, Accept',
+        int $corsMaxAge=1728000
     ) {
-        parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        parent::__construct(appName: $appName, request: $request);
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
-
 
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
@@ -88,7 +108,6 @@ class ThemesController extends Controller
 
     }//end getObjectService()
 
-
     /**
      * Get the schema and register configuration for themes.
      *
@@ -96,7 +115,7 @@ class ThemesController extends Controller
      */
     private function getThemeConfiguration(): array
     {
-        // Get the theme schema and register from configuration
+        // Get the theme schema and register from configuration.
         $schema   = $this->config->getValueString($this->appName, 'theme_schema', '');
         $register = $this->config->getValueString($this->appName, 'theme_register', '');
 
@@ -106,7 +125,6 @@ class ThemesController extends Controller
         ];
 
     }//end getThemeConfiguration()
-
 
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
@@ -119,10 +137,14 @@ class ThemesController extends Controller
      */
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
-        // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Determine the origin.
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
 
-        // Create and configure the response
+        // Create and configure the response.
         $response = new \OCP\AppFramework\Http\Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -131,11 +153,11 @@ class ThemesController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
 
+    }//end preflightedCors()
 
     /**
-     * Get all themes.
+     * Get all themes - OPTIMIZED with searchObjectsPaginated.
      *
      * @return JSONResponse The JSON response containing the list of themes
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -146,36 +168,74 @@ class ThemesController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get theme configuration from settings
+        // Get theme configuration from settings.
         $themeConfig = $this->getThemeConfiguration();
 
-        // Build config for findAll to get themes
-        $config = [
-            'filters' => []
-        ];
+        // Get query parameters from request.
+        $queryParams = $this->request->getParams();
 
-        // Add schema filter if configured
-        if (!empty($themeConfig['schema'])) {
-            $config['filters']['schema'] = $themeConfig['schema'];
+        // Build search query.
+        $searchQuery = $queryParams;
+
+        // Clean up unwanted parameters.
+        unset($searchQuery['id'], $searchQuery['_route']);
+
+        // Add schema filter if configured - use proper OpenRegister syntax.
+        if (empty($themeConfig['schema']) === false) {
+            $searchQuery['@self']['schema'] = $themeConfig['schema'];
         }
 
-        // Add register filter if configured
-        if (!empty($themeConfig['register'])) {
-            $config['filters']['register'] = $themeConfig['register'];
+        // Add register filter if configured - use proper OpenRegister syntax.
+        if (empty($themeConfig['register']) === false) {
+            $searchQuery['@self']['register'] = $themeConfig['register'];
         }
 
-        $result = $this->getObjectService()->findAll($config);
-        
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
+        // Use searchObjectsPaginated for better performance and pagination support.
+        // Set _rbac=false, _multitenancy=false for public theme access.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
+
+        // Build paginated response structure.
+        $responseData = [
+            'results' => ($result['results'] ?? []),
+            'total'   => ($result['total'] ?? 0),
+            'limit'   => ($result['limit'] ?? 20),
+            'offset'  => ($result['offset'] ?? 0),
+            'page'    => ($result['page'] ?? 1),
+            'pages'   => ($result['pages'] ?? 1),
         ];
 
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        // Add pagination links if present.
+        if (isset($result['next']) === true) {
+            $responseData['next'] = $result['next'];
+        }
+
+        if (isset($result['prev']) === true) {
+            $responseData['prev'] = $result['prev'];
+        }
+
+        // Add facets if present.
+        if (isset($result['facets']) === true) {
+            $facetsData = $result['facets'];
+            // Unwrap nested facets if needed.
+            if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
+                $facetsData = $facetsData['facets'];
+            }
+
+            $responseData['facets'] = $facetsData;
+        }
+
+        if (isset($result['facetable']) === true) {
+            $responseData['facetable'] = $result['facetable'];
+        }
+
+        // Add CORS headers for public API access.
+        $response = new JSONResponse($responseData);
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -184,11 +244,10 @@ class ThemesController extends Controller
 
     }//end index()
 
-
     /**
      * Get a specific theme by its ID.
      *
-     * @param string|int $id The ID of the theme to retrieve
+     * @param string|integer $id The ID of the theme to retrieve
      *
      * @return JSONResponse The JSON response containing the theme details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -199,13 +258,23 @@ class ThemesController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        $theme = $this->getObjectService()->find($id);
-        
-        $data = $theme instanceof \OCP\AppFramework\Db\Entity ? $theme->jsonSerialize() : $theme;
-        
-        // Add CORS headers for public API access
+        // Set _rbac=false, _multitenancy=false for public theme access.
+        $theme = $this->getObjectService()->find($id, _rbac: false, _multitenancy: false);
+
+        if ($theme instanceof \OCP\AppFramework\Db\Entity) {
+            $data = $theme->jsonSerialize();
+        } else {
+            $data = $theme;
+        }
+
+        // Add CORS headers for public API access.
         $response = new JSONResponse($data);
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
+            $origin = $this->request->server['HTTP_ORIGIN'];
+        } else {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -213,6 +282,4 @@ class ThemesController extends Controller
         return $response;
 
     }//end show()
-
-
 }//end class

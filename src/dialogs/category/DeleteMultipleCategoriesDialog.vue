@@ -9,10 +9,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:can-close="false">
 		<div v-if="objectStore.getState('category').success !== null || objectStore.getState('category').error">
 			<NcNoteCard v-if="objectStore.getState('category').success" type="success">
-				<p>Categorieën succesvol verwijderd</p>
+				<p>Categories successfully deleted</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('category').success" type="error">
-				<p>Er is iets fout gegaan bij het verwijderen van categorieën</p>
+				<p>Something went wrong while deleting the categories</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('category').error" type="error">
 				<p>{{ objectStore.getState('category').error }}</p>
@@ -20,10 +20,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('category')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Categorieën worden verwijderd...</span>
+			<span>Categories are being deleted...</span>
 		</div>
 		<p v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')">
-			Wil je de geselecteerde categorieën definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+			Do you want to delete the selected categories? This action cannot be undone.
 		</p>
 		<template v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')" #actions>
 			<NcButton
@@ -33,7 +33,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Annuleer
+				Cancel
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Verwijderen
+				Delete
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -53,7 +53,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				Close
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -112,11 +112,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
     margin-inline-start: var(--OC-margin-20);

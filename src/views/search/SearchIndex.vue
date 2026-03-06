@@ -1,15 +1,3 @@
-/**
- * SearchIndex.vue
- * Component for displaying the search index
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { useSearchStore } from '../../store/modules/search.ts'
 </script>
@@ -44,6 +32,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 							v-tooltip="'See publications as cards'"
 							:checked="searchStore.getViewMode === 'cards'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							value="cards"
 							name="publications_view_mode"
 							type="radio"
@@ -55,6 +44,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 							v-tooltip="'See publications as a table'"
 							:checked="searchStore.getViewMode === 'table'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							value="table"
 							name="publications_view_mode"
 							type="radio"

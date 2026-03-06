@@ -45,6 +45,8 @@ describe('Catalogi Store', () => {
 			schemas: [],
 			filters: {},
 			status: 'development',
+			slug: '',
+			hasWooSitemap: false,
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)

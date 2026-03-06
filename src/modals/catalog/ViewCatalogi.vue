@@ -221,9 +221,12 @@ export default {
 			navigationStore.setModal('catalog')
 		},
 		viewCatalog() {
+			if (!this.activeCatalog?.slug) {
+				console.error('[ViewCatalogi#viewCatalog] Cannot navigate: catalog or slug is missing')
+				return
+			}
 			navigationStore.setModal(false)
-			navigationStore.setSelected('publication')
-			navigationStore.setSelectedCatalogus(this.activeCatalog?.id)
+			this.$router.push(`/publications/${this.activeCatalog.slug}`)
 		},
 		deleteCatalog() {
 			navigationStore.setModal(false)
@@ -241,7 +244,7 @@ export default {
 			if (this.organization) {
 				objectStore.setActiveObject('organization', this.organization)
 				navigationStore.setModal(false)
-				navigationStore.setSelected('organizations')
+				this.$router.push('/organizations')
 			}
 		},
 	},

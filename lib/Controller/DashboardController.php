@@ -1,4 +1,16 @@
 <?php
+/**
+ * Dashboard controller for OpenCatalogi.
+ *
+ * Handles dashboard-related operations in the OpenCatalogi app.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ */
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -15,8 +27,6 @@ use OCP\AppFramework\Http\ContentSecurityPolicy;
  */
 class DashboardController extends Controller
 {
-
-
     /**
      * DashboardController constructor.
      *
@@ -25,15 +35,15 @@ class DashboardController extends Controller
      */
     public function __construct($appName, IRequest $request)
     {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
-
 
     /**
      * Render the dashboard page.
      *
-     * @param  string|null $getParameter Optional GET parameter
+     * @param string|null $getParameter Optional GET parameter
+     *
      * @return TemplateResponse The rendered template response
      *
      * @NoAdminRequired
@@ -42,21 +52,21 @@ class DashboardController extends Controller
     public function page(?string $getParameter): TemplateResponse
     {
         try {
-            // Create a new TemplateResponse for the index page
+            // Create a new TemplateResponse for the index page.
             $response = new TemplateResponse(
                 $this->appName,
                 'index',
                 []
             );
 
-            // Set up Content Security Policy
+            // Set up Content Security Policy.
             $csp = new ContentSecurityPolicy();
             $csp->addAllowedConnectDomain('*');
             $response->setContentSecurityPolicy($csp);
 
             return $response;
         } catch (\Exception $e) {
-            // Return an error template response if an exception occurs
+            // Return an error template response if an exception occurs.
             return new TemplateResponse(
                 $this->appName,
                 'error',
@@ -66,7 +76,6 @@ class DashboardController extends Controller
         }//end try
 
     }//end page()
-
 
     /**
      * Retrieve dashboard data.
@@ -79,15 +88,13 @@ class DashboardController extends Controller
     public function index(): JSONResponse
     {
         try {
-            // Prepare results using a test array
+            // Prepare results using a test array.
             $results = ["results" => self::TEST_ARRAY];
             return new JSONResponse($results);
         } catch (\Exception $e) {
-            // Return an error JSON response if an exception occurs
+            // Return an error JSON response if an exception occurs.
             return new JSONResponse(['error' => $e->getMessage()], 500);
         }
 
     }//end index()
-
-
 }//end class

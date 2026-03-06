@@ -17,16 +17,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'glossary'"
 		ref="modalRef"
+		:name="isEdit ? 'Edit term' : 'Add term'"
 		:label-id="isEdit ? 'editGlossaryModal' : 'addGlossaryModal'"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Term {{ isEdit ? 'bewerken' : 'toevoegen' }}</h2>
 			<div v-if="objectStore.getState('glossary').success !== null || objectStore.getState('glossary').error">
 				<NcNoteCard v-if="objectStore.getState('glossary').success" type="success">
-					<p>{{ isEdit ? 'Term succesvol bewerkt' : 'Term succesvol toegevoegd' }}</p>
+					<p>{{ isEdit ? 'Term successfully edited' : 'Term successfully added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('glossary').success" type="error">
-					<p>{{ isEdit ? 'Er is iets fout gegaan bij het bewerken van de term' : 'Er is iets fout gegaan bij het toevoegen van de term' }}</p>
+					<p>{{ isEdit ? 'Something went wrong while editing the term' : 'Something went wrong while adding the term' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('glossary').error" type="error">
 					<p>{{ objectStore.getState('glossary').error }}</p>
@@ -34,25 +34,25 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 			<div v-if="objectStore.getState('glossary').success === null && !objectStore.isLoading('glossary')" class="form-group">
 				<NcTextField :disabled="objectStore.isLoading('glossary')"
-					label="Titel*"
+					label="Title*"
 					maxlength="255"
 					:value.sync="glossary.title"
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('glossary')"
-					label="Samenvatting"
+					label="Summary"
 					maxlength="255"
 					:value.sync="glossary.summary"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('glossary')"
-					label="Beschrijving"
+					label="Description"
 					type="textarea"
 					:value.sync="glossary.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('glossary')"
-					label="Externe link"
+					label="External link"
 					:value.sync="glossary.externalLink"
 					:error="!!inputValidation.fieldErrors?.['externalLink']"
 					:helper-text="inputValidation.fieldErrors?.['externalLink']?.[0]" />
@@ -61,23 +61,30 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					label="Keywords"
 					:error="!!inputValidation.fieldErrors?.['keywords']"
 					:helper-text="inputValidation.fieldErrors?.['keywords']?.[0]"
-					placeholder="Voeg keywords toe" />
+					placeholder="Add keywords" />
 			</div>
 			<div v-if="objectStore.isLoading('glossary')" class="loading-status">
 				<NcLoadingIcon :size="20" />
-				<span>{{ isEdit ? 'Term wordt bewerkt...' : 'Term wordt toegevoegd...' }}</span>
+				<span>{{ isEdit ? 'Term is being edited...' : 'Term is being added...' }}</span>
 			</div>
-			<NcButton v-if="objectStore.getState('glossary').success === null && !objectStore.isLoading('glossary')"
-				v-tooltip="inputValidation.errorMessages?.[0]"
-				:disabled="!inputValidation.success || objectStore.isLoading('glossary')"
-				type="primary"
-				class="glossary-submit-button"
-				@click="saveGlossary">
-				<template #icon>
-					<ContentSaveOutline :size="20" />
-				</template>
-				{{ isEdit ? 'Opslaan' : 'Toevoegen' }}
-			</NcButton>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{ isEdit ? 'Close' : 'Cancel' }}
+				</NcButton>
+				<NcButton v-if="objectStore.getState('glossary').success === null && !objectStore.isLoading('glossary')"
+					v-tooltip="inputValidation.errorMessages?.[0]"
+					:disabled="!inputValidation.success || objectStore.isLoading('glossary')"
+					type="primary"
+					@click="saveGlossary">
+					<template #icon>
+						<ContentSaveOutline :size="20" />
+					</template>
+					{{ isEdit ? 'Save' : 'Add' }}
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -85,7 +92,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <script>
 import { NcButton, NcModal, NcTextField, NcLoadingIcon, NcNoteCard, NcSelectTags } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { Glossary } from '../../entities/index.js'
 
 export default {
@@ -98,6 +105,7 @@ export default {
 		NcNoteCard,
 		NcSelectTags,
 		ContentSaveOutline,
+		Cancel,
 	},
 	data() {
 		return {
@@ -174,15 +182,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
-.glossary-submit-button {
-    margin-block-start: 1rem;
-}
-
 .loading-status {
     display: flex;
     align-items: center;

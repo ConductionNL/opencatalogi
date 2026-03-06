@@ -1,14 +1,6 @@
-/**
- * @file ViewObject.vue
- * @module Modals/Object
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- */
-
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
+import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
@@ -210,7 +202,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 														:min="getPropertyMinimum(key)"
 														:max="getPropertyMaximum(key)"
 														:step="getPropertyStep(key)"
-														@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
+														@update:value="updatePropertyValue(key, $event)" />
 													<InformationOutline
 														v-tooltip="'Array values should be separated by commas'"
 														:size="25"
@@ -553,31 +545,34 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 												<FormatListChecks :size="20" />
 											</template>
 											<NcActionButton
-												:disabled="publishLoading.length > 0 || selectedAttachments.length === 0"
+												:disabled="publishLoading.length > 0 || publishableCount === 0"
+												close-after-click
 												@click="publishSelectedFiles">
 												<template #icon>
 													<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
 													<FileOutline v-else :size="20" />
 												</template>
-												Publish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+												Publish {{ publishableCount }} attachment{{ publishableCount === 1 ? '' : 's' }}
 											</NcActionButton>
 											<NcActionButton
-												:disabled="depublishLoading.length > 0 || selectedAttachments.length === 0"
+												:disabled="depublishLoading.length > 0 || depublishableCount === 0"
+												close-after-click
 												@click="depublishSelectedFiles">
 												<template #icon>
 													<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
 													<LockOutline v-else :size="20" />
 												</template>
-												Depublish {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+												Depublish {{ depublishableCount }} attachment{{ depublishableCount === 1 ? '' : 's' }}
 											</NcActionButton>
 											<NcActionButton
 												:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
+												close-after-click
 												@click="deleteSelectedFiles">
 												<template #icon>
 													<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
 													<Delete v-else :size="20" />
 												</template>
-												Delete {{ selectedAttachments.length }} file{{ selectedAttachments.length > 1 ? 's' : '' }}
+												Delete {{ selectedAttachments.length }} attachment{{ selectedAttachments.length === 1 ? '' : 's' }}
 											</NcActionButton>
 										</NcActions>
 									</div>
@@ -617,7 +612,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 													}">
 													<td class="tableColumnCheckbox">
 														<NcCheckboxRadioSwitch
-															:checked="selectedAttachments.includes(attachment.id)"
+															:checked="objectStore.selectedAttachments.includes(attachment.id)"
 															@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
 													</td>
 													<td class="tableColumnExpanded table-row-title">
@@ -661,9 +656,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 																	v-model="editedTags"
 																	:disabled="tagsLoading"
 																	:loading="tagsLoading"
+																	:taggable="true"
 																	:multiple="true"
 																	:aria-label-combobox="labelOptionsEdit.inputLabel"
-																	:options="labelOptionsEdit.options" />
+																	:options="labelOptionsEdit.options"
+																	@tag="addNewTag" />
 																<NcButton
 																	v-tooltip="'Save labels'"
 																	type="primary"
@@ -923,7 +920,6 @@ export default {
 
 			// Files tab properties
 			activeAttachment: null,
-			selectedAttachments: [],
 			publishLoading: [],
 			depublishLoading: [],
 			fileIdsLoading: [],
@@ -1217,6 +1213,9 @@ export default {
 			}
 			return files
 		},
+		selectedAttachments() {
+			return objectStore.selectedAttachments
+		},
 		filesTotalPages() {
 			const filesPagination = objectStore.getPagination('publication_files')
 			return filesPagination.pages
@@ -1230,10 +1229,10 @@ export default {
 			return filesPagination.limit
 		},
 		allFilesSelected() {
-			return this.paginatedFiles.length > 0 && this.paginatedFiles.every(file => this.selectedAttachments.includes(file.id))
+			return this.paginatedFiles.length > 0 && this.paginatedFiles.every(file => objectStore.selectedAttachments.includes(file.id))
 		},
 		someFilesSelected() {
-			return this.selectedAttachments.length > 0 && !this.allFilesSelected
+			return objectStore.selectedAttachments.length > 0 && !this.allFilesSelected
 		},
 		catalogOptions() {
 			return objectStore.getCollection('catalog').results.map(catalog => ({
@@ -1321,6 +1320,18 @@ export default {
 				this.$set(this.formData, 'themes', themeIds)
 			},
 		},
+		publishableCount() {
+			const selected = objectStore.selectedAttachments || []
+			if (selected.length === 0) return 0
+			const files = this.paginatedFiles || []
+			return files.filter(f => selected.includes(f.id)).filter(f => !f.accessUrl && !f.downloadUrl).length
+		},
+		depublishableCount() {
+			const selected = objectStore.selectedAttachments || []
+			if (selected.length === 0) return 0
+			const files = this.paginatedFiles || []
+			return files.filter(f => selected.includes(f.id)).filter(f => (f.accessUrl || f.downloadUrl)).length
+		},
 	},
 	watch: {
 		currentObject: {
@@ -1390,8 +1401,60 @@ export default {
 		objectStore.fetchCollection('theme')
 		// Fetch tags for the label options dropdown
 		this.getAllTags()
+		// Listen to tags updates from UploadFiles modal
+		EventBus.$on('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
+		EventBus.$on('upload-files:closed', this.onUploadFilesClosed)
+	},
+	destroyed() {
+		try {
+			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
+			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
+		} catch (e) {
+			// ignore
+		}
 	},
 	methods: {
+		onUploadFilesTagsUpdated(payload) {
+			try {
+				const tags = Array.isArray(payload && payload.tags) ? payload.tags : []
+				const newTags = Array.isArray(payload && payload.newTags) ? payload.newTags : []
+				console.info('>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES', {
+					total: tags.length,
+					newTags,
+				})
+				if (!this.labelOptionsEdit) {
+					this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+				}
+				this.labelOptionsEdit.options = [...tags]
+			} catch (e) {
+				console.error('Failed to apply updated tags from UploadFiles', e)
+			}
+		},
+		onUploadFilesClosed(payload) {
+			try {
+				// prefer payload tags
+				const tagsFromPayload = Array.isArray(payload && payload.tags) ? payload.tags : null
+				if (tagsFromPayload) {
+					if (!this.labelOptionsEdit) {
+						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					}
+					this.labelOptionsEdit.options = [...tagsFromPayload]
+					return
+				}
+				// fallback: from store or re-fetch
+				const stored = objectStore.getCollection('tags')
+				if (Array.isArray(stored)) {
+					if (!this.labelOptionsEdit) {
+						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					}
+					this.labelOptionsEdit.options = [...stored]
+				} else {
+					this.getAllTags()
+				}
+			} catch (e) {
+				console.error('Failed to handle UploadFiles closed', e)
+			}
+		},
 		getModalTitle() {
 			// For new objects, show "Create Publication"
 			if (this.isNewObject) {
@@ -1439,7 +1502,7 @@ export default {
 
 			// Clear Files tab state
 			this.activeAttachment = null
-			this.selectedAttachments = []
+			objectStore.selectedAttachments = []
 			this.publishLoading = []
 			this.depublishLoading = []
 			this.fileIdsLoading = []
@@ -1471,29 +1534,41 @@ export default {
 				this.formData = {}
 				this.jsonData = JSON.stringify({}, null, 2)
 
-				// Auto-select catalog if there's only one
 				const catalogs = objectStore.getCollection('catalog').results
-				if (catalogs.length === 1) {
+
+				// Check if we have a catalogSlug route param
+				const catalogSlug = this.$route.params.catalogSlug
+				if (catalogSlug) {
+					// Find catalog by slug
+					const matchingCatalog = catalogs.find(catalog => catalog.slug === catalogSlug)
+					if (matchingCatalog) {
+						this.selectedCatalog = {
+							id: matchingCatalog.id,
+							label: matchingCatalog.title,
+						}
+					}
+				} else if (catalogs.length === 1) {
+					// If no catalog found by slug and only one catalog exists, auto-select it
 					this.selectedCatalog = {
 						id: catalogs[0].id,
 						label: catalogs[0].title,
 					}
-
-					// Use nextTick to ensure the computed properties are updated
-					this.$nextTick(() => {
-						// Auto-select register if there's only one
-						if (this.registerOptions.length === 1) {
-							this.selectedRegister = this.registerOptions[0]
-
-							this.$nextTick(() => {
-								// Auto-select schema if there's only one
-								if (this.schemaOptions.length === 1) {
-									this.selectedSchema = this.schemaOptions[0]
-								}
-							})
-						}
-					})
 				}
+
+				// Use nextTick to ensure the computed properties are updated
+				this.$nextTick(() => {
+					// Auto-select register if there's only one
+					if (this.registerOptions.length === 1) {
+						this.selectedRegister = this.registerOptions[0]
+
+						this.$nextTick(() => {
+							// Auto-select schema if there's only one
+							if (this.schemaOptions.length === 1) {
+								this.selectedSchema = this.schemaOptions[0]
+							}
+						})
+					}
+				})
 
 				return
 			}
@@ -2595,23 +2670,23 @@ export default {
 			if (checked) {
 				// Add all current page files to selection
 				this.paginatedFiles.forEach(file => {
-					if (!this.selectedAttachments.includes(file.id)) {
-						this.selectedAttachments.push(file.id)
+					if (!objectStore.selectedAttachments.includes(file.id)) {
+						objectStore.selectedAttachments.push(file.id)
 					}
 				})
 			} else {
 				// Remove all current page files from selection
 				const currentPageIds = this.paginatedFiles.map(file => file.id)
-				this.selectedAttachments = this.selectedAttachments.filter(id => !currentPageIds.includes(id))
+				objectStore.selectedAttachments = objectStore.selectedAttachments.filter(id => !currentPageIds.includes(id))
 			}
 		},
 		toggleFileSelection(fileId, checked) {
 			if (checked) {
-				if (!this.selectedAttachments.includes(fileId)) {
-					this.selectedAttachments.push(fileId)
+				if (!objectStore.selectedAttachments.includes(fileId)) {
+					objectStore.selectedAttachments.push(fileId)
 				}
 			} else {
-				this.selectedAttachments = this.selectedAttachments.filter(id => id !== fileId)
+				objectStore.selectedAttachments = objectStore.selectedAttachments.filter(id => id !== fileId)
 			}
 		},
 		async onFilesPageChanged(page) {
@@ -2646,105 +2721,37 @@ export default {
 				_limit: pageSize,
 			}, publicationData)
 		},
-		async publishSelectedFiles() {
-			if (this.selectedAttachments.length === 0) return
-
-			try {
-				this.publishLoading = [...this.selectedAttachments]
-
-				// Get the selected files
-				const selectedFiles = this.paginatedFiles.filter(file =>
-					this.selectedAttachments.includes(file.id),
-				)
-
-				// Publish each file individually
-				for (const file of selectedFiles) {
-					const publication = this.currentObject
-					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/publish`
-
-					const response = await fetch(endpoint, {
-						method: 'POST',
-					})
-
-					if (!response.ok) {
-						throw new Error(`Failed to publish file ${file.title || file.name}: ${response.statusText}`)
-					}
-				}
-
-				// Refresh files list once after all operations with publication data
-				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const publicationData = {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
-
-				// Clear selection after successful operation
-				this.selectedAttachments = []
-
-			} catch (error) {
-				console.error('Error publishing files:', error)
-			} finally {
-				this.publishLoading = []
-			}
+		publishSelectedFiles() {
+			const selected = objectStore.selectedAttachments || []
+			if (selected.length === 0) return
+			const files = this.paginatedFiles || []
+			const idsToPublish = files
+				.filter(f => selected.includes(f.id))
+				.filter(f => !f.accessUrl && !f.downloadUrl)
+				.map(f => f.id)
+			if (idsToPublish.length === 0) return
+			navigationStore.setDialog('massAttachment', { operation: 'publish', attachments: idsToPublish })
 		},
-		async depublishSelectedFiles() {
-			if (this.selectedAttachments.length === 0) return
-
-			try {
-				this.depublishLoading = [...this.selectedAttachments]
-
-				// Get the selected files
-				const selectedFiles = this.paginatedFiles.filter(file =>
-					this.selectedAttachments.includes(file.id),
-				)
-
-				// Depublish each file individually
-				for (const file of selectedFiles) {
-					const publication = this.currentObject
-					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/depublish`
-
-					const response = await fetch(endpoint, {
-						method: 'POST',
-					})
-
-					if (!response.ok) {
-						throw new Error(`Failed to depublish file ${file.title || file.name}: ${response.statusText}`)
-					}
-				}
-
-				// Refresh files list once after all operations with publication data
-				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const publicationData = {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
-
-				// Clear selection after successful operation
-				this.selectedAttachments = []
-
-			} catch (error) {
-				console.error('Error depublishing files:', error)
-			} finally {
-				this.depublishLoading = []
-			}
+		depublishSelectedFiles() {
+			const selected = objectStore.selectedAttachments || []
+			if (selected.length === 0) return
+			const files = this.paginatedFiles || []
+			const idsToDepublish = files
+				.filter(f => selected.includes(f.id))
+				.filter(f => (f.accessUrl || f.downloadUrl))
+				.map(f => f.id)
+			if (idsToDepublish.length === 0) return
+			navigationStore.setDialog('massAttachment', { operation: 'depublish', attachments: idsToDepublish })
 		},
 		async deleteSelectedFiles() {
-			if (this.selectedAttachments.length === 0) return
+			if (objectStore.selectedAttachments.length === 0) return
 
 			try {
-				this.fileIdsLoading = [...this.selectedAttachments]
+				this.fileIdsLoading = [...objectStore.selectedAttachments]
 
 				// Get the selected files
 				const selectedFiles = this.paginatedFiles.filter(item =>
-					this.selectedAttachments.includes(item.id),
+					objectStore.selectedAttachments.includes(item.id),
 				)
 
 				// Delete each selected file
@@ -2771,9 +2778,10 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 
 				// Clear selection - files list is automatically refreshed by the store methods
-				this.selectedAttachments = []
+				objectStore.selectedAttachments = []
 			} catch (error) {
 				console.error('Failed to delete selected files:', error)
 			} finally {
@@ -2803,6 +2811,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error('Failed to publish file:', error)
 			} finally {
@@ -2832,6 +2841,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error('Failed to depublish file:', error)
 			} finally {
@@ -2861,6 +2871,7 @@ export default {
 					register: registerId,
 				}
 				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				catalogStore.fetchPublications()
 			} catch (error) {
 				console.error('Failed to delete file:', error)
 			} finally {
@@ -2874,6 +2885,21 @@ export default {
 		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
+		},
+		addNewTag(newTag) {
+			if (!newTag) return
+			if (!this.labelOptionsEdit.options || !Array.isArray(this.labelOptionsEdit.options)) {
+				this.labelOptionsEdit.options = []
+			}
+			if (!this.labelOptionsEdit.options.includes(newTag)) {
+				this.labelOptionsEdit.options = [...this.labelOptionsEdit.options, newTag]
+			}
+			if (!this.editedTags || !Array.isArray(this.editedTags)) {
+				this.editedTags = []
+			}
+			if (!this.editedTags.includes(newTag)) {
+				this.editedTags = [...this.editedTags, newTag]
+			}
 		},
 		async getAllTags() {
 			this.tagsLoading = true
@@ -3141,8 +3167,26 @@ export default {
 						// This effectively removes the property from the payload
 						delete objectData[propertyKey]
 					} else {
-						// Use edited value from formData
-						objectData[propertyKey] = cleanedFormData[propertyKey]
+						// Use edited value from formData; normalize arrays if schema type is array
+						const formValue = cleanedFormData[propertyKey]
+						if (schemaProperty.type === 'array') {
+							let normalized
+							if (Array.isArray(formValue)) {
+								normalized = formValue
+							} else if (typeof formValue === 'string') {
+								normalized = formValue.split(/ *, */g).filter(Boolean)
+							} else if (formValue === null) {
+								normalized = null
+							} else if (formValue === false) {
+								// Edge case: some inputs may pass boolean false; treat as empty array
+								normalized = []
+							} else {
+								normalized = [String(formValue)].filter(Boolean)
+							}
+							objectData[propertyKey] = normalized
+						} else {
+							objectData[propertyKey] = formValue
+						}
 					}
 				} else if (Object.prototype.hasOwnProperty.call(currentObjectData, propertyKey)) {
 					// Keep existing value from current object

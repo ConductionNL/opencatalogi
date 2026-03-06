@@ -29,6 +29,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							v-tooltip="'See catalogs as cards'"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							value="cards"
 							name="catalogs_view_mode"
 							type="radio"
@@ -40,6 +41,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							v-tooltip="'See catalogs as a table'"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
+							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							value="table"
 							name="catalogs_view_mode"
 							type="radio"
@@ -124,7 +126,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										</template>
 										Edit
 									</NcActionButton>
-									<NcActionButton close-after-click @click="navigationStore.setSelected('publication'); navigationStore.setSelectedCatalogus(catalog?.id)">
+									<NcActionButton close-after-click @click="$router.push(`/publications/${catalog?.slug}`)">
 										<template #icon>
 											<OpenInApp :size="20" />
 										</template>
@@ -259,7 +261,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 												</template>
 												Edit
 											</NcActionButton>
-											<NcActionButton close-after-click @click="navigationStore.setSelected('publication'); navigationStore.setSelectedCatalogus(catalog?.id)">
+											<NcActionButton close-after-click @click="$router.push(`/publications/${catalog?.slug}`)">
 												<template #icon>
 													<OpenInApp :size="20" />
 												</template>

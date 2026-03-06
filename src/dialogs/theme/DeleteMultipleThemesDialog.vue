@@ -5,14 +5,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteMultipleThemes'"
-		name="Thema's verwijderen"
+		name="Delete Themes"
 		:can-close="false">
 		<div v-if="objectStore.getState('theme').success !== null || objectStore.getState('theme').error">
 			<NcNoteCard v-if="objectStore.getState('theme').success" type="success">
-				<p>Thema's succesvol verwijderd</p>
+				<p>Themes successfully deleted</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('theme').success" type="error">
-				<p>Er is iets fout gegaan bij het verwijderen van thema's</p>
+				<p>Something went wrong while deleting the themes</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('theme').error" type="error">
 				<p>{{ objectStore.getState('theme').error }}</p>
@@ -20,10 +20,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('theme')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Thema's worden verwijderd...</span>
+			<span>Themes are being deleted...</span>
 		</div>
 		<p v-if="objectStore.getState('theme').success === null && !objectStore.isLoading('theme')">
-			Wil je de geselecteerde thema's definitief verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+			Do you want to delete the selected themes? This action cannot be undone.
 		</p>
 		<template v-if="objectStore.getState('theme').success === null && !objectStore.isLoading('theme')" #actions>
 			<NcButton
@@ -33,7 +33,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Annuleer
+				Cancel
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading('theme')"
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Verwijderen
+				Delete
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -53,7 +53,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				Close
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -112,11 +112,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
     margin-inline-start: var(--OC-margin-20);

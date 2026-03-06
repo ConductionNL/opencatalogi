@@ -1,15 +1,3 @@
-/**
- * SideBars.vue
- * Component for displaying sidebars
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { computed, ref } from 'vue'
 import { objectStore, navigationStore } from '../store/store.js'
@@ -34,7 +22,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcButton>
 			</template>
 		</NcAppSidebar>
@@ -49,7 +37,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Bewerken
+					Edit
 				</NcButton>
 			</template>
 		</NcAppSidebar>
@@ -79,7 +67,7 @@ const listing = computed(() => objectStore.getActiveObject('listing'))
  * Check if we're on the search page
  * @return {boolean}
  */
-const isSearchPage = computed(() => navigationStore.selected === 'search')
+const isSearchPage = computed(() => this.$route.path === '/search')
 
 export default {
 	name: 'SideBars',

@@ -6,6 +6,8 @@ interface DialogProperties {
     dialogName?: string;
     displayName?: string;
     isMultiple?: boolean;
+    operation?: 'publish' | 'depublish';
+    attachments?: Array<any>;
 }
 
 interface NavigationStoreState {

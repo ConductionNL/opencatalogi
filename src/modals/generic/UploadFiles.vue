@@ -8,7 +8,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
-			<h2>Bijlage toevoegen</h2>
+			<h2>Add attachment</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					label="Automatisch delen"
+					label="Automatically share"
 					type="switch"
 					:checked.sync="share">
-					Automatisch delen
+					Automatically share
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -30,22 +30,22 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Selecteer of maak labels aan of selecteer "Geen label" om bestanden toe te voegen</p>
+							<p>Select or create labels or select "No label" to add files</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
-							<p>Bestanden succesvol toegevoegd</p>
+							<p>Files added successfully</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Er is iets fout gegaan bij het toevoegen van bestanden</p>
+							<p>Something went wrong when adding files</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Selecteer bestanden met de juiste extensie</p>
+								<p>Select files with the correct extension</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -53,12 +53,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Sleep een bestand of bestanden hierheen
+								Drag a file or files here
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Of
+							Or
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -69,7 +69,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Een bestand of bestanden toevoegen
+								Add a file or files
 							</NcButton>
 						</div>
 					</div>
@@ -80,13 +80,13 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Selecteer of maak labels aan of selecteer "Geen label" om bestanden toe te voegen</p>
+							<p>Select or create labels or select "No label" to add files</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="checkForTooBigFiles(files)">
 						<NcNoteCard type="warning">
 							<p class="folderLink">
-								Als je bestanden groter of gelijk aan 512MB wilt toevoegen, ga dan naar de
+								If you want to add files larger than or equal to 512MB, go to the
 								<NcButton type="secondary"
 									class="folderLinkButton"
 									aria-label="Open map"
@@ -96,23 +96,23 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</template>
 									map
 								</NcButton>
-								en voeg de bestanden daar toe.
+								and add the files there.
 							</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
-							<p>Bestanden succesvol toegevoegd</p>
+							<p>Files added successfully</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Er is iets fout gegaan bij het toevoegen van bestanden</p>
+							<p>Something went wrong when adding files</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Selecteer bestanden met de juiste extensie</p>
+								<p>Select files with the correct extension</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -120,12 +120,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Sleep een bestand of bestanden hierheen
+								Drag a file or files here
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Of
+							Or
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -136,16 +136,16 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Een bestand of bestanden toevoegen
+								Add a file or files
 							</NcButton>
 						</div>
 					</div>
 				</div>
 				<div v-if="!files">
-					Geen bestanden geselecteerd
+					No files selected
 				</div>
 				<div v-if="files" class="uploadSummaryContainer">
-					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} bestanden geüpload</span>
+					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} files uploaded</span>
 					<div class="buttonContainer">
 						<NcButton v-if="failedCount > 0"
 							type="primary"
@@ -163,10 +163,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<tr class="files-table-tr">
 							<th class="files-table-td-status" />
 							<th>
-								Bestandsnaam
+								File name
 							</th>
 							<th>
-								Grootte
+								Size
 							</th>
 							<th>
 								Labels
@@ -200,7 +200,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 										</li>
 									</ul>
 									<span v-if="!file.tags || file.tags.length === 0">
-										Geen labels
+										No labels
 									</span>
 								</span>
 								<NcSelect
@@ -217,7 +217,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<!-- Tags Buttons -->
 									<NcButton
 										v-if="editingTags !== file.name"
-										v-tooltip="'Labels bewerken'"
+										v-tooltip="'Edit labels'"
 										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
 										:aria-label="`edit tags for ${file.name}`"
 										type="secondary"
@@ -229,7 +229,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="'Labels opslaan'"
+										v-tooltip="'Save labels'"
 										type="primary"
 										:aria-label="`save tags for ${file.name}`"
 										class="editTagsButton"
@@ -238,10 +238,19 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 											<ContentSaveOutline :size="20" />
 										</template>
 									</NcButton>
+									<NcButton
+										v-if="editingTags === file.name"
+										v-tooltip="'Cancel'"
+										type="secondary"
+										@click="cancelFileLabelEditing">
+										<template #icon>
+											<Cancel :size="20" />
+										</template>
+									</NcButton>
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
-										v-tooltip="'Opnieuw uploaden'"
+										v-tooltip="'Retry upload'"
 										type="primary"
 										@click="addAttachments(file)">
 										<template #icon>
@@ -250,7 +259,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
-										v-tooltip="'Verwijder uit lijst'"
+										v-tooltip="'Remove from list'"
 										type="primary"
 										@click="removeFile(file.name)">
 										<template #icon>
@@ -273,6 +282,7 @@ import { useFileSelection } from './../../composables/UseFileSelection.js'
 import axios from 'axios'
 import { ref, isRef } from 'vue'
 import { Attachment } from '../../entities/index.js'
+import { EventBus } from '../../eventBus.js'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
@@ -284,6 +294,7 @@ import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Exclamation from 'vue-material-design-icons/Exclamation.vue'
 import Minus from 'vue-material-design-icons/Minus.vue'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 const dropZoneRef = ref()
 
@@ -300,6 +311,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
+		Cancel,
 	},
 	props: {
 		dropFiles: {
@@ -328,6 +340,9 @@ export default {
 			tagsLoading: false,
 			uploadedCount: 0,
 			failedCount: 0,
+			initialTags: [],
+			latestTags: [],
+			newTags: [],
 		}
 	},
 	computed: {
@@ -375,15 +390,47 @@ export default {
 		objectStore.setActiveObject('attachment', [])
 		this.getAllTags()
 		this.updateUploadCounts()
+		// watch for dialog open/close toggles to fire every time
+		if (this._uploadFilesDialogUnwatch) this._uploadFilesDialogUnwatch()
+		this._uploadFilesDialogUnwatch = this.$watch(() => navigationStore.dialog, (newVal, oldVal) => {
+			if (newVal === 'uploadFiles' && oldVal !== 'uploadFiles') {
+				this.onOpenModal()
+			}
+			if (oldVal === 'uploadFiles' && newVal !== 'uploadFiles') {
+				this.onExternalClose()
+			}
+		}, { immediate: true })
+	},
+	destroyed() {
+		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
 	},
 	methods: {
 		closeDialog() {
+			// mark internal close to avoid duplicate external watcher emission
+			this.__uploadFilesClosingInternally = true
+			// compute safe tags to emit
+			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			if (tagsToEmit.length === 0) {
+				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
+			}
+			// ensure latest tags are saved globally
+			try { objectStore.setCollection('tags', tagsToEmit) } catch (e) {}
+			// emit closed and tags-updated once
+			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags })
+			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags })
+			}
 			navigationStore.setDialog(null)
 			objectStore.setActiveObject('publication', objectStore.getActiveObject('publication'))
 			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
 			reset()
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
+			setTimeout(() => { this.__uploadFilesClosingInternally = false }, 0)
 		},
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
@@ -419,17 +466,17 @@ export default {
 		},
 
 		isSelectable(option) {
-			if (this.labelOptions.value?.includes('Geen label') && option !== 'Geen label') {
+			if (this.labelOptions.value?.includes('No label') && option !== 'No label') {
 				return false
 			}
-			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('Geen label') && option === 'Geen label') {
+			if (this.labelOptions.value?.length >= 1 && !this.labelOptions.value?.includes('No label') && option === 'No label') {
 				return false
 			}
 			return true
 		},
 
 		getLabels() {
-			if (this.labelOptions.value?.includes('Geen label')) {
+			if (this.labelOptions.value?.includes('No label')) {
 				return null
 			} else {
 				return this.labelOptions.value
@@ -437,26 +484,84 @@ export default {
 		},
 		async getAllTags() {
 			this.tagsLoading = true
-			const response = await fetch(
-				'/index.php/apps/openregister/api/tags',
-				{ method: 'get' },
-			)
-			const data = await response.json()
+			try {
+				const response = await fetch(
+					'/index.php/apps/openregister/api/tags',
+					{ method: 'get' },
+				)
+				const data = await response.json().catch(() => [])
 
-			const newLabelOptions = []
-			const newLabelOptionsEdit = []
+				const tagSet = new Set(Array.isArray(data) ? data : [])
+				// merge with tags from current publication attachments (if collection exists and is array)
+				let attachmentsCollection = []
+				try {
+					const attCol = objectStore.getCollection && objectStore.getCollection('publicationAttachments')
+					attachmentsCollection = Array.isArray(attCol?.results) ? attCol.results : []
+				} catch (_) {
+					attachmentsCollection = []
+				}
+				for (const att of attachmentsCollection) {
+					if (Array.isArray(att?.labels)) {
+						for (const label of att.labels) tagSet.add(label)
+					}
+				}
+				// also merge with previously stored tags in store, if present
+				try {
+					const storedTags = objectStore.getCollection && objectStore.getCollection('tags')
+					if (Array.isArray(storedTags)) {
+						for (const t of storedTags) tagSet.add(t)
+					}
+				} catch (_) {}
 
-			newLabelOptions.push('Geen label')
+				const tags = Array.from(tagSet).sort()
 
-			const tags = data.map((tag) => tag)
+				const newLabelOptions = ['No label', ...tags]
+				const newLabelOptionsEdit = [...tags]
 
-			newLabelOptions.push(...tags)
-			newLabelOptionsEdit.push(...tags)
+				this.labelOptions.options = newLabelOptions
+				this.labelOptionsEdit.options = newLabelOptionsEdit
 
-			this.labelOptions.options = newLabelOptions
-			this.labelOptionsEdit.options = newLabelOptionsEdit
-
-			this.tagsLoading = false
+				if (this.initialTags.length === 0) {
+					this.initialTags = [...newLabelOptionsEdit]
+				}
+				this.latestTags = [...newLabelOptionsEdit]
+				this.newTags = this.latestTags.filter(t => !this.initialTags.includes(t))
+				// save globally so other views may pull
+				try { objectStore.setCollection('tags', this.latestTags) } catch (e) {}
+				// notify listeners about fresh tags
+				EventBus.$emit('upload-files:tags-fetched', { tags: this.latestTags, newTags: this.newTags })
+			} catch (e) {
+				console.error('Failed to fetch tags', e)
+			} finally {
+				this.tagsLoading = false
+			}
+		},
+		onOpenModal() {
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
+			EventBus.$emit('upload-files:opened')
+			this.getAllTags()
+		},
+		onExternalClose() {
+			if (this.__uploadFilesClosingInternally) {
+				this.__uploadFilesClosingInternally = false
+				return
+			}
+			// compute safe tags source
+			let tagsToEmit = Array.isArray(this.latestTags) && this.latestTags.length > 0 ? this.latestTags : []
+			if (tagsToEmit.length === 0) {
+				const stored = objectStore.getCollection && objectStore.getCollection('tags')
+				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
+			}
+			// mirror close behavior when dialog is toggled from outside
+			EventBus.$emit('upload-files:closed', { tags: tagsToEmit, newTags: this.newTags || [] })
+			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', { tags: tagsToEmit, newTags: this.newTags || [] })
+			}
+			this.initialTags = []
+			this.latestTags = []
+			this.newTags = []
 		},
 
 		/**
@@ -478,11 +583,50 @@ export default {
 			window.open(nextcloudUrl, '_blank')
 		},
 
-		saveTags(file, editedTags) {
-			file.tags = editedTags
-			file.status = 'pending'
-			this.addAttachments(file)
+		async saveTags(file, editedTags) {
+			try {
+				if (file && file.id) {
+					const publication = objectStore.getActiveObject('publication')
+					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
 
+					const response = await fetch(endpoint, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ tags: editedTags }),
+					})
+
+					if (!response.ok) {
+						throw new Error(`Failed to update file tags: ${response.statusText}`)
+					}
+
+					try { file.tags = Array.isArray(editedTags) ? [...editedTags] : [] } catch (_) {}
+
+					const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+					const attachments = await getAttachments.json().catch(() => null)
+					try { objectStore.setCollection('publicationAttachments', attachments) } catch (_) {}
+					catalogStore.fetchPublications()
+
+					this.success = 'File labels updated successfully'
+					setTimeout(() => { this.success = null }, 3000)
+				} else {
+					file.tags = editedTags
+					file.status = 'pending'
+					const idMap = await this.addAttachments(file)
+					const newId = idMap && (idMap[file.name] || idMap[file.title] || null)
+					try { if (newId) file.id = newId } catch (_) {}
+				}
+			} catch (error) {
+				console.error('Error saving tags:', error)
+				this.error = 'Failed to save file labels: ' + (error?.message || error)
+				setTimeout(() => { this.error = null }, 5000)
+			} finally {
+				this.editingTags = null
+				this.editedTags = []
+			}
+		},
+
+		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
 		},
@@ -505,6 +649,7 @@ export default {
 
 			try {
 				let filesToUpload = []
+				const idMap = {}
 
 				if (specificFile) {
 					filesToUpload = [specificFile]
@@ -528,6 +673,14 @@ export default {
 						.then(response => {
 							if (response.status === 200) {
 								file.status = 'uploaded'
+								try {
+									const payload = Array.isArray(response?.data) ? response.data : []
+									const created = payload && payload[0]
+									if (created && created.id) {
+										file.id = created.id
+										idMap[file.name] = created.id
+									}
+								} catch (_) {}
 							} else {
 								file.status = 'failed'
 							}
@@ -551,6 +704,8 @@ export default {
 				const attachments = await getAttachments.json()
 				objectStore.setCollection('publicationAttachments', attachments)
 
+				catalogStore.fetchPublications()
+
 				const rejected = results.filter(r => r.status === 'rejected')
 				if (rejected.length > 0) {
 					const firstError = rejected[0].reason
@@ -560,10 +715,12 @@ export default {
 				}
 
 				this.updateUploadCounts()
+				if (specificFile) return idMap
 			} catch (err) {
 				this.error = err.response?.data?.error ?? err
 			} finally {
 				this.loading = false
+				this.tagsLoading = false
 			}
 		},
 
@@ -668,10 +825,22 @@ export default {
 <style>
 div[class='modal-container']:has(.TestMappingMainModal) {
     width: clamp(1000px, 100%, 1200px) !important;
+    z-index: 13000 !important;
 }
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
+div[class='modal-container']:has(.TestMappingMainModal) .modal-mask {
+    z-index: 12999 !important;
+}
+div[class='modal-container']:has(.TestMappingMainModal) .modal,
+div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
+    z-index: 13000 !important;
+}
+.modal-mask[aria-labelledby='AddAttachmentModal'] {
+    z-index: 13020 !important;
+}
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal-container,
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal,
+.modal-mask[aria-labelledby='AddAttachmentModal'] .modal__content {
+    z-index: 13021 !important;
 }
 </style>
 

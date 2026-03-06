@@ -1,15 +1,3 @@
-/**
- * UnpublishedAttachmentsWidget.vue
- * Widget component for displaying unpublished attachments
- * @category Components
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
 import { objectStore } from '../../store/store.js'
 </script>
@@ -39,19 +27,16 @@ import { getTheme } from '../../services/getTheme.js'
 
 export default {
 	name: 'UnpublishedAttachmentsWidget',
-
 	components: {
 		NcDashboardWidget,
 		NcEmptyContent,
 	},
-
 	props: {
 		title: {
 			type: String,
 			required: true,
 		},
 	},
-
 	data() {
 		return {
 			loading: false,

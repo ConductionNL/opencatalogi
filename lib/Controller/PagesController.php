@@ -1,4 +1,19 @@
 <?php
+/**
+ * PagesController for OpenCatalogi.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -28,17 +43,23 @@ class PagesController extends Controller
 {
 
     /**
+     * Allowed CORS methods.
+     *
      * @var string Allowed CORS methods
      */
     private string $corsMethods;
 
     /**
+     * Allowed CORS headers.
+     *
      * @var string Allowed CORS headers
      */
     private string $corsAllowedHeaders;
 
     /**
-     * @var int CORS max age
+     * CORS max age.
+     *
+     * @var integer CORS max age
      */
     private int $corsMaxAge;
 
@@ -46,13 +67,13 @@ class PagesController extends Controller
      * PagesController constructor.
      *
      * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object  
+     * @param IRequest           $request            The request object
      * @param IAppConfig         $config             App configuration interface
      * @param ContainerInterface $container          Server container for dependency injection
      * @param IAppManager        $appManager         App manager for checking installed apps
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param int                $corsMaxAge         CORS max age
+     * @param integer            $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -60,17 +81,16 @@ class PagesController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-        string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-        int $corsMaxAge = 1728000
+        string $corsMethods='PUT, POST, GET, DELETE, PATCH',
+        string $corsAllowedHeaders='Authorization, Content-Type, Accept',
+        int $corsMaxAge=1728000
     ) {
-        parent::__construct($appName, $request);
-        $this->corsMethods = $corsMethods;
+        parent::__construct(appName: $appName, request: $request);
+        $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
-        $this->corsMaxAge = $corsMaxAge;
+        $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
-
 
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
@@ -88,7 +108,6 @@ class PagesController extends Controller
 
     }//end getObjectService()
 
-
     /**
      * Get the schema and register configuration for pages.
      *
@@ -96,7 +115,7 @@ class PagesController extends Controller
      */
     private function getPageConfiguration(): array
     {
-        // Get the page schema and register from configuration
+        // Get the page schema and register from configuration.
         $schema   = $this->config->getValueString($this->appName, 'page_schema', '');
         $register = $this->config->getValueString($this->appName, 'page_register', '');
 
@@ -106,7 +125,6 @@ class PagesController extends Controller
         ];
 
     }//end getPageConfiguration()
-
 
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
@@ -119,10 +137,14 @@ class PagesController extends Controller
      */
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
-        // Determine the origin
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        // Determine the origin.
+        if (empty($this->request->getHeader('Origin')) === false) {
+            $origin = $this->request->getHeader('Origin');
+        } else {
+            $origin = ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        }
 
-        // Create and configure the response
+        // Create and configure the response.
         $response = new \OCP\AppFramework\Http\Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -131,11 +153,11 @@ class PagesController extends Controller
         $response->addHeader('Access-Control-Allow-Credentials', 'false');
 
         return $response;
-    }
 
+    }//end preflightedCors()
 
     /**
-     * Get all pages.
+     * Get all pages - OPTIMIZED with searchObjectsPaginated.
      *
      * @return JSONResponse The JSON response containing the list of pages
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -146,38 +168,78 @@ class PagesController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get page configuration from settings
+        // Get page configuration from settings.
         $pageConfig = $this->getPageConfiguration();
 
+        // Get query parameters from request.
+        $queryParams = $this->request->getParams();
 
-        // Build config for findAll to get pages
-        $config = [
-            'filters' => []
-        ];
+        // Build search query.
+        $searchQuery = $queryParams;
 
-        // Add schema filter if configured
-        if (!empty($pageConfig['schema'])) {
-            $config['filters']['schema'] = $pageConfig['schema'];
+        // Clean up unwanted parameters.
+        unset($searchQuery['id'], $searchQuery['_route']);
+
+        // Add schema filter if configured - use _schema for magic mapper routing.
+        if (empty($pageConfig['schema']) === false) {
+            $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured
-        if (!empty($pageConfig['register'])) {
-            $config['filters']['register'] = $pageConfig['register'];
+        // Add register filter if configured - use _register for magic mapper routing.
+        if (empty($pageConfig['register']) === false) {
+            $searchQuery['_register'] = $pageConfig['register'];
         }
 
-        $result = $this->getObjectService()->findAll($config);
-        
-        // Convert objects to arrays
-        $data = [
-            'results' => array_map(function ($object) {
-                return $object instanceof \OCP\AppFramework\Db\Entity ? $object->jsonSerialize() : $object;
-            }, $result ?? []),
-            'total' => count($result ?? [])
-        ];
+        // Use searchObjectsPaginated for better performance and pagination support.
+        // Set rbac=false, multi=false, published=true for public page access.
+        $result = $this->getObjectService()->searchObjectsPaginated(
+            $searchQuery,
+            _rbac: false,
+            _multitenancy: false,
+            published: false
+        );
 
-        // Add CORS headers for public API access
-        $response = new JSONResponse($data);
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        /*
+         * Build paginated response structure.
+         * $responseData = [
+         * 'results' => $result['results'] ?? [],
+         * 'total' => $result['total'] ?? 0,
+         * 'limit' => $result['limit'] ?? 20,
+         * 'offset' => $result['offset'] ?? 0,
+         * 'page' => $result['page'] ?? 1,
+         * 'pages' => $result['pages'] ?? 1
+         * ];
+         *
+         * // Add pagination links if present.
+         * if (isset($result['next']) === true) {
+         * $responseData['next'] = $result['next'];
+         * }
+         * if (isset($result['prev']) === true) {
+         * $responseData['prev'] = $result['prev'];
+         * }
+         *
+         * // Add facets if present.
+         * if (isset($result['facets']) === true) {
+         * $facetsData = $result['facets'];
+         * // Unwrap nested facets if needed.
+         * if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
+         *     $facetsData = $facetsData['facets'];
+         * }
+         * $responseData['facets'] = $facetsData;
+         * }
+         * if (isset($result['facetable']) === true) {
+         * $responseData['facetable'] = $result['facetable'];
+         * }
+         */
+
+        // Add CORS headers for public API access.
+        $response = new JSONResponse($result);
+        if (empty($this->request->getHeader('Origin')) === false) {
+            $origin = $this->request->getHeader('Origin');
+        } else {
+            $origin = ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -186,9 +248,8 @@ class PagesController extends Controller
 
     }//end index()
 
-
     /**
-     * Get a specific page by its slug.
+     * Get a specific page by its slug - OPTIMIZED with searchObjectsPaginated.
      *
      * @param string $slug The slug of the page to retrieve
      *
@@ -201,38 +262,51 @@ class PagesController extends Controller
      */
     public function show(string $slug): JSONResponse
     {
-        // Get page configuration from settings
+        // Get page configuration from settings.
         $pageConfig = $this->getPageConfiguration();
 
-        // Build config to find page by slug
-        $config = [
-            'filters' => [
-                'slug' => $slug
-            ]
+        // Build search query to find page by slug.
+        $searchQuery = [
+            'slug'    => $slug,
+            '_limit'  => 1,
+        // We only need one result.
+            '_source' => 'database',
         ];
 
-        // Add schema filter if configured
-        if (!empty($pageConfig['schema'])) {
-            $config['filters']['schema'] = $pageConfig['schema'];
+        // Add schema filter if configured - use _schema for magic mapper routing.
+        if (empty($pageConfig['schema']) === false) {
+            $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured
-        if (!empty($pageConfig['register'])) {
-            $config['filters']['register'] = $pageConfig['register'];
+        // Add register filter if configured - use _register for magic mapper routing.
+        if (empty($pageConfig['register']) === false) {
+            $searchQuery['_register'] = $pageConfig['register'];
         }
 
-        $pages = $this->getObjectService()->findAll($config);
-        
-        if (empty($pages)) {
+        // Use searchObjectsPaginated for better performance.
+        // Set rbac=false, multi=false, published=false (schema authorization handles access).
+        $result = $this->getObjectService()->searchObjectsPaginated(
+            $searchQuery,
+            _rbac: false,
+            _multitenancy: false,
+            published: false
+        );
+
+        if (empty($result['results']) === true) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
         } else {
-            // Return the first matching page
-            $page = $pages[0] instanceof \OCP\AppFramework\Db\Entity ? $pages[0]->jsonSerialize() : $pages[0];
+            // Return the first matching page.
+            $page     = $result['results'][0];
             $response = new JSONResponse($page);
         }
-        
-        // Add CORS headers for public API access
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+
+        // Add CORS headers for public API access.
+        if (empty($this->request->getHeader('Origin')) === false) {
+            $origin = $this->request->getHeader('Origin');
+        } else {
+            $origin = ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -240,6 +314,4 @@ class PagesController extends Controller
         return $response;
 
     }//end show()
-
-
 }//end class

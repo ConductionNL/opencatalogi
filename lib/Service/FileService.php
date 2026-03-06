@@ -55,8 +55,6 @@ use ZipArchive;
 
 class FileService
 {
-
-
     /**
      * Constructor for FileService
      *
@@ -74,7 +72,6 @@ class FileService
 
     }//end __construct()
 
-
     /**
      * Get the name for the folder used for storing files of the given publication.
      *
@@ -89,7 +86,6 @@ class FileService
 
     }//end getPublicationFolderName()
 
-
     /**
      * Returns a share link for the given IShare object.
      *
@@ -103,7 +99,6 @@ class FileService
 
     }//end getShareLink()
 
-
     /**
      * Gets and returns the current host / domain with correct protocol.
      *
@@ -111,24 +106,27 @@ class FileService
      */
     private function getCurrentDomain(): string
     {
-        // Check if the request is over HTTPS
-        $isHttps  = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-        $protocol = $isHttps ? 'https://' : 'http://';
+        // Check if the request is over HTTPS.
+        $isHttps = empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off';
+        if ($isHttps !== null) {
+            $protocol = 'https://';
+        } else {
+            $protocol = 'http://';
+        }
 
-        // Get the host (domain)
+        // Get the host (domain).
         $host = $_SERVER['HTTP_HOST'];
 
-        // Construct the full URL
+        // Construct the full URL.
         return $protocol.$host;
 
     }//end getCurrentDomain()
 
-
     /**
      * Try to find a IShare object with given $path & $shareType.
      *
-     * @param string   $path      The path to a file we are trying to find a IShare object for.
-     * @param int|null $shareType The shareType of the share we are trying to find.
+     * @param string       $path      The path to a file we are trying to find a IShare object for.
+     * @param integer|null $shareType The shareType of the share we are trying to find.
      *
      * @return IShare|null An IShare object or null.
      */
@@ -138,7 +136,12 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userId      = $currentUser ? $currentUser->getUID() : 'Guest';
+        if ($currentUser !== null) {
+            $userId = $currentUser->getUID();
+        } else {
+            $userId = 'Guest';
+        }
+
         try {
             $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
         } catch (NotPermittedException) {
@@ -167,7 +170,6 @@ class FileService
 
     }//end findShare()
 
-
     /**
      * Creates a IShare object using the $shareData array data.
      *
@@ -178,7 +180,7 @@ class FileService
      */
     private function createShare(array $shareData) :IShare
     {
-        // Create a new share
+        // Create a new share.
         $share = $this->shareManager->newShare();
         $share->setTarget(target: '/'.$shareData['path']);
         $share->setNodeId(fileId: $shareData['file']->getId());
@@ -197,14 +199,13 @@ class FileService
 
     }//end createShare()
 
-
     /**
      * Creates and returns a share link for a file (or folder).
      * (https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html#create-a-new-share)
      *
-     * @param string   $path        Path (from root) to the file/folder which should be shared.
-     * @param int|null $shareType   0 = user; 1 = group; 3 = public link; 4 = email; 6 = federated cloud share; 7 = circle; 10 = Talk conversation
-     * @param int|null $permissions 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1)
+     * @param string       $path        Path (from root) to the file/folder which should be shared.
+     * @param integer|null $shareType   0 = user; 1 = group; 3 = public link; 4 = email; 6 = federated cloud share; 7 = circle; 10 = Talk conversation
+     * @param integer|null $permissions 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1)
      *
      * @return string The share link.
      * @throws Exception In case creating the share(link) fails.
@@ -221,7 +222,12 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userId      = $currentUser ? $currentUser->getUID() : 'Guest';
+        if ($currentUser !== null) {
+            $userId = $currentUser->getUID();
+        } else {
+            $userId = 'Guest';
+        }
+
         try {
             $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
         } catch (NotPermittedException) {
@@ -231,7 +237,8 @@ class FileService
         }
 
         try {
-            // Note: if we ever want to create share links for folders instead of files, just remove this try catch and only use setTarget, not setNodeId.
+            // Note: if we ever want to create share links for folders instead of files,
+            // just remove this try catch and only use setTarget, not setNodeId.
             $file = $userFolder->get(path: $path);
         } catch (NotFoundException $e) {
             $this->logger->error("Can't create share link for $path because file doesn't exist");
@@ -241,7 +248,7 @@ class FileService
 
         try {
             $share = $this->createShare(
-                [
+                shareData: [
                     'path'        => $path,
                     'file'        => $file,
                     'shareType'   => $shareType,
@@ -250,7 +257,7 @@ class FileService
                 ]
             );
 
-            return $this->getShareLink($share);
+            return $this->getShareLink(share: $share);
         } catch (Exception $exception) {
             $this->logger->error("Can't create share link for $path: ".$exception->getMessage());
 
@@ -259,25 +266,24 @@ class FileService
 
     }//end createShareLink()
 
-
     /**
      * Handles file upload and creates the necessary folder structure in NextCloud.
      *
      * @param IRequest $request The request object containing the uploaded file.
      * @param array    $data    The data array containing all parameters from the request.
      *
-     * @return JSONResponse|string An error response if creating the file in NextCloud failed or the updated data array containing info about the created file.
+     * @return JSONResponse|string An error response or the updated data array with file info.
      * @throws Exception In case creating a folder or new file fails.
      */
     public function handleFile(IRequest $request, array $data): JSONResponse|array
     {
         // Uploaded _file and downloadURL are mutually exclusive.
-        $uploadedFile = $this->checkUploadedFile($request);
+        $uploadedFile = $this->checkUploadedFile(request: $request);
         if ($uploadedFile instanceof JSONResponse) {
             return $uploadedFile;
         }
 
-        // Get the publication folder name
+        // Get the publication folder name.
         $publicationFolder = $this->getPublicationFolderName(
             publicationId: $request->getHeader('Publication-Id'),
             publicationTitle: $request->getHeader('Publication-Title')
@@ -288,15 +294,15 @@ class FileService
         $this->createFolder(folderPath: "Publicaties/$publicationFolder");
         $this->createFolder(folderPath: "Publicaties/$publicationFolder/Bijlagen");
 
-        // Construct the file path
+        // Construct the file path.
         $filePath = "Publicaties/$publicationFolder/Bijlagen/".$uploadedFile['name'];
-// TODO: Consider adding a file version to the file name        // Upload the file
+        // TODO: Consider adding a file version to the file name        // Upload the file.
         $created = $this->uploadFile(
             content: file_get_contents(filename: $uploadedFile['tmp_name']),
             filePath: $filePath
         );
 
-        // Check if the file was created successfully
+        // Check if the file was created successfully.
         if ($created === false) {
             return new JSONResponse(data: ['error' => "Failed to upload file. This file: $filePath might already exist"], statusCode: 400);
         }
@@ -310,24 +316,27 @@ class FileService
 
     }//end handleFile()
 
-
     /**
-     * Gets info about the uploaded file from the request body, looks specifically for the field '_file'.
+     * Gets info about the uploaded file from the request body.
+     *
+     * Looks specifically for the field '_file'.
      * If there is no file or there is an error loading it this will return an error response.
      *
-     * @return JSONResponse|array An error response or an array containing the info about the uploaded file.
+     * @param IRequest $request The request object containing the uploaded file.
+     *
+     * @return JSONResponse|array An error response or an array with uploaded file info.
      */
     private function checkUploadedFile(IRequest $request): JSONResponse|array
     {
-        // Get the uploaded file from the request
+        // Get the uploaded file from the request.
         $uploadedFile = $request->getUploadedFile(key: '_file');
 
-        // Check if a file was uploaded
+        // Check if a file was uploaded.
         if (empty($uploadedFile) === true) {
             return new JSONResponse(data: ['error' => 'Please upload a file using key "_file" or give a "downloadUrl"'], statusCode: 400);
         }
 
-        // Check for upload errors
+        // Check for upload errors.
         if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
             return new JSONResponse(data: ['error' => 'File upload error: '.$uploadedFile['error']], statusCode: 400);
         }
@@ -336,13 +345,12 @@ class FileService
 
     }//end checkUploadedFile()
 
-
     /**
      * Creates a new folder in NextCloud, unless it already exists.
      *
      * @param string $folderPath Path (from root) to where you want to create a folder, include the name of the folder. (/Media/exampleFolder)
      *
-     * @return bool True if successfully created a new folder.
+     * @return boolean True if successfully created a new folder.
      * @throws Exception In case we can't create the folder because it is not permitted.
      */
     public function createFolder(string $folderPath): bool
@@ -351,7 +359,11 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userFolder  = $this->rootFolder->getUserFolder(userId: $currentUser ? $currentUser->getUID() : 'Guest');
+        if ($currentUser !== null) {
+            $userFolder = $this->rootFolder->getUserFolder(userId: $currentUser->getUID());
+        } else {
+            $userFolder = $this->rootFolder->getUserFolder(userId: 'Guest');
+        }
 
         // Check if folder exists and if not create it.
         try {
@@ -374,7 +386,6 @@ class FileService
 
     }//end createFolder()
 
-
     /**
      * Adds information about the uploaded file to the appropriate Attachment fields. Inclusive share link.
      *
@@ -387,11 +398,15 @@ class FileService
      */
     public function AddFileInfoToData(array $data, array $uploadedFile, string $filePath): array
     {
-        // Get the current user
+        // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userId      = $currentUser ? $currentUser->getUID() : 'Guest';
+        if ($currentUser !== null) {
+            $userId = $currentUser->getUID();
+        } else {
+            $userId = 'Guest';
+        }
 
-        // Update Attachment data
+        // Update Attachment data.
         $data['reference'] = "$userId/$filePath";
         $data['type']      = $uploadedFile['type'];
         $data['size']      = $uploadedFile['size'];
@@ -399,15 +414,15 @@ class FileService
         $data['title']     = $explodedName[0];
         $data['extension'] = end(array: $explodedName);
 
-        // Create ShareLink
+        // Create ShareLink.
         $shareLink = $this->createShareLink(path: $filePath);
 
-        // Set accessUrl if not already set
+        // Set accessUrl if not already set.
         if (empty($data['accessUrl']) === true) {
             $data['accessUrl'] = $shareLink;
         }
 
-        // Set downloadUrl if not already set
+        // Set downloadUrl if not already set.
         if (empty($data['downloadUrl']) === true) {
             $data['downloadUrl'] = "$shareLink/download";
         }
@@ -416,14 +431,13 @@ class FileService
 
     }//end AddFileInfoToData()
 
-
     /**
      * Uploads a file to NextCloud. Will create a new file if it doesn't exist yet.
      *
      * @param mixed  $content  The content of the file.
-     * @param string $filePath Path (from root) where to save the file. NOTE: this should include the name and extension/format of the file as well! (example.pdf)
+     * @param string $filePath Path (from root) where to save the file, including name and extension.
      *
-     * @return bool True if successful.
+     * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
      */
     public function uploadFile(mixed $content, string $filePath): bool
@@ -432,7 +446,11 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userFolder  = $this->rootFolder->getUserFolder(userId: $currentUser ? $currentUser->getUID() : 'Guest');
+        if ($currentUser !== null) {
+            $userFolder = $this->rootFolder->getUserFolder(userId: $currentUser->getUID());
+        } else {
+            $userFolder = $this->rootFolder->getUserFolder(userId: 'Guest');
+        }
 
         // Check if file exists and create it if not.
         try {
@@ -458,15 +476,14 @@ class FileService
 
     }//end uploadFile()
 
-
     /**
      * Overwrites an existing file in NextCloud.
      *
-     * @param mixed  $content   The content of the file.
-     * @param string $filePath  Path (from root) where to save the file. NOTE: this should include the name and extension/format of the file as well! (example.pdf)
-     * @param bool   $createNew Default = false. If set to true this function will create a new file if it doesn't exist yet.
+     * @param mixed   $content   The content of the file.
+     * @param string  $filePath  Path (from root) where to save the file, including name and extension.
+     * @param boolean $createNew If true, creates a new file if it doesn't exist yet.
      *
-     * @return bool True if successful.
+     * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
      */
     public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
@@ -475,7 +492,11 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userFolder  = $this->rootFolder->getUserFolder(userId: $currentUser ? $currentUser->getUID() : 'Guest');
+        if ($currentUser !== null) {
+            $userFolder = $this->rootFolder->getUserFolder(userId: $currentUser->getUID());
+        } else {
+            $userFolder = $this->rootFolder->getUserFolder(userId: 'Guest');
+        }
 
         // Check if file exists and overwrite it if it does.
         try {
@@ -508,13 +529,12 @@ class FileService
 
     }//end updateFile()
 
-
     /**
      * Deletes a file from NextCloud.
      *
      * @param string $filePath Path (from root) to the file you want to delete.
      *
-     * @return bool True if successful.
+     * @return boolean True if successful.
      * @throws Exception In case deleting the file is not permitted.
      */
     public function deleteFile(string $filePath): bool
@@ -523,7 +543,11 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
-        $userFolder  = $this->rootFolder->getUserFolder(userId: $currentUser ? $currentUser->getUID() : 'Guest');
+        if ($currentUser !== null) {
+            $userFolder = $this->rootFolder->getUserFolder(userId: $currentUser->getUID());
+        } else {
+            $userFolder = $this->rootFolder->getUserFolder(userId: 'Guest');
+        }
 
         // Check if file exists and delete it if it does.
         try {
@@ -546,7 +570,6 @@ class FileService
 
     }//end deleteFile()
 
-
     /**
      * Creates a pdf file in a /tmp folder using a twig template and given context.
      *
@@ -560,31 +583,30 @@ class FileService
      */
     public function createPdf(string $twigTemplate, array $context): Mpdf
     {
-        // Initialize Twig
+        // Initialize Twig.
         $loader = new FilesystemLoader(paths: 'lib/Templates', rootPath: __DIR__.'/../../');
         $twig   = new Environment($loader);
 
-        // Render the Twig template
+        // Render the Twig template.
         $html = $twig->render(name: $twigTemplate, context: $context);
 
-        // Check if the directory exists, if not, create it
+        // Check if the directory exists, if not, create it.
         if (file_exists(filename: '/tmp/mpdf') === false) {
             mkdir(directory: '/tmp/mpdf', recursive: true);
         }
 
-        // Set permissions for the directory (ensure it's writable)
+        // Set permissions for the directory (ensure it's writable).
         chmod(filename: '/tmp/mpdf', permissions: 0777);
 
-        // Initialize mPDF
+        // Initialize mPDF.
         $mpdf = new Mpdf(config: ['tempDir' => '/tmp/mpdf']);
 
-        // Write HTML to PDF
+        // Write HTML to PDF.
         $mpdf->WriteHTML(html: $html);
 
         return $mpdf;
 
     }//end createPdf()
-
 
     /**
      * Creates a ZIP archive at the $tempZip location using the $tempFolder location as input for the ZIP archive.
@@ -606,12 +628,12 @@ class FileService
             );
 
             foreach ($files as $name => $file) {
-                // Skip directories (they would be added automatically)
+                // Skip directories (they would be added automatically).
                 if ($file->isDir() === false) {
                     $filePath     = $file->getRealPath();
                     $relativePath = substr(string: $filePath, offset: (strlen(string: $inputFolder) + 1));
 
-                    // Add file to zip
+                    // Add file to zip.
                     $zip->addFile(filepath: $filePath, entryname: $relativePath);
                 }
             }
@@ -624,7 +646,6 @@ class FileService
         return null;
 
     }//end createZip()
-
 
     /**
      * A function that outputs a downloadable ZIP to the response body of the current api request.
@@ -656,6 +677,4 @@ class FileService
         unlink(filename: $tempZip);
 
     }//end downloadZip()
-
-
 }//end class

@@ -64,6 +64,8 @@ export const useObjectStore = defineStore('object', {
 		objectTypeRegistry: {},
 		/** @type {Array<string>} */
 		selectedObjects: [],
+		/** @type {Array<string>} */
+		selectedAttachments: [],
 		/** @type {{[key: string]: string}} */
 		objectErrors: {},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
@@ -501,67 +503,77 @@ export const useObjectStore = defineStore('object', {
 			}
 		},
 
-		/**
-		 * Set active object for type and fetch related data
-		 * @param {string} type - Object type
-		 * @param {object} object - Object to set as active
-		 * @return {Promise<void>}
-		 */
-		async setActiveObject(type, object) {
-			console.info('setActiveObject called with:', { type, object })
-			// Log the current state before update
-			console.info('Current activeObjects state:', { ...this.activeObjects })
-			// Update using reactive assignment
-			this.activeObjects = {
-				...this.activeObjects,
-				[type]: object,
-			}
-			// Log the state after update
-			console.info('Updated activeObjects state:', { ...this.activeObjects })
+	/**
+	 * Set active object for type and fetch related data
+	 * @param {string} type - Object type
+	 * @param {object} object - Object to set as active
+	 * @return {Promise<void>}
+	 */
+	async setActiveObject(type, object) {
+		console.info('setActiveObject called with:', { type, object })
+		// Log the current state before update
+		console.info('Current activeObjects state:', { ...this.activeObjects })
+		// Update using reactive assignment
+		this.activeObjects = {
+			...this.activeObjects,
+			[type]: object,
+		}
+		// Log the state after update
+		console.info('Updated activeObjects state:', { ...this.activeObjects })
 
-			// Initialize related data structure if not exists
-			console.info('Initializing relatedData for type:', type)
-			this.relatedData = {
-				...this.relatedData,
-				[type]: {
-					logs: null,
-					uses: null,
-					used: null,
-					files: null,
-				},
-			}
+		// List of virtual types that don't have API schemas and should not fetch related data
+		const virtualTypes = ['pageContent']
 
-			// Fetch related data in parallel
-			if (object?.id) {
-				console.info('Fetching related data for:', { type, objectId: object.id })
-
-				// For publications, extract schema and register info from the object itself
-				let publicationData = null
-				if (type === 'publication' && object['@self']) {
-					publicationData = {
-						source: 'openregister',
-						schema: object['@self'].schema,
-						register: object['@self'].register,
-					}
-					console.info('Using publication-specific config:', publicationData)
-				}
-
-				const fetchPromises = []
-				const dataTypes = ['logs', 'uses', 'used', 'files']
-				for (const dataType of dataTypes) {
-					if (!this.relatedData[type][dataType]) {
-						// Set default limit to 500 for files, 20 for other data types
-						const defaultLimit = dataType === 'files' ? 500 : 20
-						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
-					}
-				}
-				await Promise.all(fetchPromises)
-				console.info('Finished fetching related data')
-			} else {
-				console.info('No object ID provided, skipping related data fetch')
-			}
+		// Skip fetching related data for virtual types
+		if (virtualTypes.includes(type)) {
+			console.info('Skipping related data fetch for virtual type:', type)
 			console.info('setActiveObject completed')
-		},
+			return
+		}
+
+		// Initialize related data structure if not exists
+		console.info('Initializing relatedData for type:', type)
+		this.relatedData = {
+			...this.relatedData,
+			[type]: {
+				logs: null,
+				uses: null,
+				used: null,
+				files: null,
+			},
+		}
+
+		// Fetch related data in parallel
+		if (object?.id) {
+			console.info('Fetching related data for:', { type, objectId: object.id })
+
+			// For publications, extract schema and register info from the object itself
+			let publicationData = null
+			if (type === 'publication' && object['@self']) {
+				publicationData = {
+					source: 'openregister',
+					schema: object['@self'].schema,
+					register: object['@self'].register,
+				}
+				console.info('Using publication-specific config:', publicationData)
+			}
+
+			const fetchPromises = []
+			const dataTypes = ['logs', 'uses', 'used', 'files']
+			for (const dataType of dataTypes) {
+				if (!this.relatedData[type][dataType]) {
+					// Set default limit to 500 for files, 20 for other data types
+					const defaultLimit = dataType === 'files' ? 500 : 20
+					fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
+				}
+			}
+			await Promise.all(fetchPromises)
+			console.info('Finished fetching related data')
+		} else {
+			console.info('No object ID provided, skipping related data fetch')
+		}
+		console.info('setActiveObject completed')
+	},
 
 		/**
 		 * Clear active object for type
@@ -725,8 +737,8 @@ export const useObjectStore = defineStore('object', {
 				...params,
 			})
 
-			// Remove source, schema, and register from query params as they're now in the URL
-			queryParams.delete('_source')
+			// Remove schema and register from query params as they're now in the URL
+			// Note: Keep _source parameter as it's needed for database queries
 			queryParams.delete('_schema')
 			queryParams.delete('_register')
 			// Remove the old extend parameter to avoid duplication
@@ -756,7 +768,14 @@ export const useObjectStore = defineStore('object', {
 				// Add _extend parameter if not explicitly set
 				const queryParams = {
 					...params,
-					_extend: params._extend || params.extend || '@self.schema',
+					_extend: params?._extend || params?.extend || '@self.schema',
+				}
+
+				// Add _source=database for types that aren't indexed in Solr
+				// This includes: menu, page, glossary, theme, organization, listing, catalog, audit-trails, uses, used, files
+				const nonIndexedTypes = ['menu', 'page', 'glossary', 'theme', 'organization', 'listing', 'catalog', 'audit-trails', 'uses', 'used', 'files']
+				if (nonIndexedTypes.includes(type) && !params?._source && !params?.source) {
+					queryParams._source = 'database'
 				}
 
 				const response = await fetch(this._constructApiUrl(type, null, null, queryParams))
@@ -1685,6 +1704,14 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Set selected attachments
+		 * @param {Array<string>} attachments - Array of attachment IDs
+		 */
+		setSelectedAttachments(attachments) {
+			this.selectedAttachments = attachments
+		},
+
+		/**
 		 * Set error for a specific object
 		 * @param {string} objectId - The object ID
 		 * @param {string} error - The error message
@@ -2159,6 +2186,169 @@ export const useObjectStore = defineStore('object', {
 				const successfulIds = successful.map(r => r.id)
 				const remainingSelected = this.selectedObjects.filter(id => !successfulIds.includes(id))
 				this.setSelectedObjects(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Refresh files (attachments) for the active publication
+		 * @return {Promise<void>}
+		 */
+		async refreshActivePublicationFiles() {
+			const activePublication = this.activeObjects?.publication
+			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+				return
+			}
+			const publicationData = {
+				source: 'openregister',
+				schema: this.extractId(activePublication['@self'].schema),
+				register: this.extractId(activePublication['@self'].register),
+			}
+			await this.fetchRelatedData('publication', activePublication.id, 'files', {}, publicationData)
+		},
+
+		/**
+		 * Publish a single attachment (file) for the active publication
+		 * @param {string|number} fileId - Attachment ID
+		 * @return {Promise<void>}
+		 */
+		async publishAttachment(fileId) {
+			const activePublication = this.activeObjects?.publication
+			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+				throw new Error('Active publication is not set or missing register/schema')
+			}
+
+			const registerId = this.extractId(activePublication['@self'].register)
+			const schemaId = this.extractId(activePublication['@self'].schema)
+			const publicationId = activePublication.id
+
+			this.setLoading(`publish_file_${fileId}`, true)
+			this.setError(`publish_file_${fileId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/publish`
+				const response = await fetch(endpoint, { method: 'POST' })
+				if (!response.ok) {
+					throw new Error(`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`)
+				}
+				// Refresh files list for active publication
+				await this.refreshActivePublicationFiles()
+				return true
+			} catch (error) {
+				console.error('Error publishing attachment:', error)
+				this.setError(`publish_file_${fileId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`publish_file_${fileId}`, false)
+			}
+		},
+
+		/**
+		 * Depublish a single attachment (file) for the active publication
+		 * @param {string|number} fileId - Attachment ID
+		 * @return {Promise<void>}
+		 */
+		async depublishAttachment(fileId) {
+			const activePublication = this.activeObjects?.publication
+			if (!activePublication?.id || !activePublication['@self']?.register || !activePublication['@self']?.schema) {
+				throw new Error('Active publication is not set or missing register/schema')
+			}
+
+			const registerId = this.extractId(activePublication['@self'].register)
+			const schemaId = this.extractId(activePublication['@self'].schema)
+			const publicationId = activePublication.id
+
+			this.setLoading(`depublish_file_${fileId}`, true)
+			this.setError(`depublish_file_${fileId}`, null)
+
+			try {
+				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/depublish`
+				const response = await fetch(endpoint, { method: 'POST' })
+				if (!response.ok) {
+					throw new Error(`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`)
+				}
+				// Refresh files list for active publication
+				await this.refreshActivePublicationFiles()
+				return true
+			} catch (error) {
+				console.error('Error depublishing attachment:', error)
+				this.setError(`depublish_file_${fileId}`, error.message)
+				throw error
+			} finally {
+				this.setLoading(`depublish_file_${fileId}`, false)
+			}
+		},
+
+		/**
+		 * Mass publish attachments for the active publication
+		 * @param {Array<string|number>} fileIds - List of attachment IDs
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @return {Promise<{successful: Array, failed: Array}>}
+		 */
+		async massPublishAttachments(fileIds, onProgress = null) {
+			if (!Array.isArray(fileIds) || fileIds.length === 0) {
+				return { successful: [], failed: [] }
+			}
+
+			const results = await Promise.allSettled(
+				fileIds.map(async (fileId) => {
+					try {
+						await this.publishAttachment(fileId)
+						if (onProgress) onProgress(fileId, true)
+						return { success: true, id: fileId }
+					} catch (error) {
+						if (onProgress) onProgress(fileId, false, error.message)
+						return { success: false, id: fileId, error: error.message }
+					}
+				}),
+			)
+
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed attachments
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				this.setSelectedAttachments(remainingSelected)
+			}
+
+			return { successful, failed }
+		},
+
+		/**
+		 * Mass depublish attachments for the active publication
+		 * @param {Array<string|number>} fileIds - List of attachment IDs
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @return {Promise<{successful: Array, failed: Array}>}
+		 */
+		async massDepublishAttachments(fileIds, onProgress = null) {
+			if (!Array.isArray(fileIds) || fileIds.length === 0) {
+				return { successful: [], failed: [] }
+			}
+
+			const results = await Promise.allSettled(
+				fileIds.map(async (fileId) => {
+					try {
+						await this.depublishAttachment(fileId)
+						if (onProgress) onProgress(fileId, true)
+						return { success: true, id: fileId }
+					} catch (error) {
+						if (onProgress) onProgress(fileId, false, error.message)
+						return { success: false, id: fileId, error: error.message }
+					}
+				}),
+			)
+
+			const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).map(r => r.value)
+			const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).map(r => r.value || { success: false, error: 'Unknown error' })
+
+			// Clear selection of successfully processed attachments
+			if (successful.length > 0) {
+				const successfulIds = successful.map(r => r.id)
+				const remainingSelected = (this.selectedAttachments || []).filter(id => !successfulIds.includes(id))
+				this.setSelectedAttachments(remainingSelected)
 			}
 
 			return { successful, failed }

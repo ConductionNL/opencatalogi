@@ -35,9 +35,8 @@ use Psr\Log\LoggerInterface;
  *
  * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
-class Broadcast extends TimedJob 
+class Broadcast extends TimedJob
 {
-
     /**
      * Constructor for Broadcast cron job
      *
@@ -50,19 +49,18 @@ class Broadcast extends TimedJob
         private readonly BroadcastService $broadcastService,
         private readonly LoggerInterface $logger
     ) {
-        parent::__construct($time);
-        
-        // Set interval to 4 hours (4 * 60 * 60 = 14400 seconds)
-        $this->setInterval(14400);
+        parent::__construct(time: $time);
 
-        // Set job to run during low-load times to minimize system impact
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+        // Set interval to 4 hours (4 * 60 * 60 = 14400 seconds).
+        $this->setInterval(interval: 14400);
 
-        // Prevent parallel runs to avoid duplicate broadcasts
-        $this->setAllowParallelRuns(false);
-        
+        // Set job to run during low-load times to minimize system impact.
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+
+        // Prevent parallel runs to avoid duplicate broadcasts.
+        $this->setAllowParallelRuns(allow: false);
+
     }//end __construct()
-
 
     /**
      * Execute the broadcast job
@@ -76,31 +74,31 @@ class Broadcast extends TimedJob
      *
      * @throws \Exception When broadcasting fails critically
      */
-    protected function run($arguments): void 
+    protected function run($arguments): void
     {
         try {
-            // Log the start of the broadcast process
+            // Log the start of the broadcast process.
             $this->logger->info('Starting scheduled broadcast of OpenCatalogi directory');
-            
-            // Perform the broadcast to all known directories
-            // Passing null means broadcast to all known instances
+
+            // Perform the broadcast to all known directories.
+            // Passing null means broadcast to all known instances.
             $this->broadcastService->broadcast(null);
-            
-            // Log successful completion
+
+            // Log successful completion.
             $this->logger->info('Successfully completed scheduled broadcast of OpenCatalogi directory');
-            
         } catch (\Exception $e) {
-            // Log the error for debugging purposes
-            $this->logger->error('Failed to complete scheduled broadcast: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // Re-throw the exception to mark the job as failed
+            // Log the error for debugging purposes.
+            $this->logger->error(
+                'Failed to complete scheduled broadcast: '.$e->getMessage(),
+                [
+                    'exception' => $e,
+                    'trace'     => $e->getTraceAsString(),
+                ]
+            );
+
+            // Re-throw the exception to mark the job as failed.
             throw $e;
-        }
-        
+        }//end try
+
     }//end run()
-
-
 }//end class

@@ -22,59 +22,59 @@ import { navigationStore } from '../../store/store.js'
 		label-id="addDirectoryModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Directory synchroniseren</h2>
+			<h2>Synchronize Directory</h2>
 			<p class="description">
-				Voer de URL van een OpenCatalogi directory in om te synchroniseren met hun catalogi en publicaties.
+				Enter the URL of an OpenCatalogi directory to synchronize with their catalogs and publications.
 			</p>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p><strong>Directory succesvol gesynchroniseerd</strong></p>
+					<p><strong>Directory successfully synchronized</strong></p>
 					<div v-if="syncResults" class="sync-report">
-						<h4>Synchronisatie rapport</h4>
+						<h4>Synchronization report</h4>
 						<div class="sync-stats">
 							<div class="stat-item">
 								<span class="stat-label">Directory URL:</span>
 								<span class="stat-value">{{ syncResults.directory_url }}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">Sync tijd:</span>
+								<span class="stat-label">Sync time:</span>
 								<span class="stat-value">{{ formatDateTime(syncResults.sync_time) }}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">Totaal verwerkt:</span>
+								<span class="stat-label">Total processed:</span>
 								<span class="stat-value">{{ syncResults.total_processed }}</span>
 							</div>
 							<div class="stat-item success">
-								<span class="stat-label">Nieuwe listings:</span>
+								<span class="stat-label">New listings:</span>
 								<span class="stat-value">{{ syncResults.listings_created }}</span>
 							</div>
 							<div class="stat-item warning">
-								<span class="stat-label">Bijgewerkte listings:</span>
+								<span class="stat-label">Updated listings:</span>
 								<span class="stat-value">{{ syncResults.listings_updated }}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">Ongewijzigde listings:</span>
+								<span class="stat-label">Unchanged listings:</span>
 								<span class="stat-value">{{ syncResults.listings_unchanged }}</span>
 							</div>
 							<div v-if="syncResults.listings_failed > 0" class="stat-item error">
-								<span class="stat-label">Gefaalde listings:</span>
+								<span class="stat-label">Failed listings:</span>
 								<span class="stat-value">{{ syncResults.listings_failed }}</span>
 							</div>
 						</div>
 
 						<!-- Show errors if any -->
 						<div v-if="syncResults.errors && syncResults.errors.length > 0" class="sync-errors">
-							<h5>Fouten tijdens synchronisatie:</h5>
+							<h5>Errors during synchronization:</h5>
 							<ul>
-															<li v-for="(syncError, index) in syncResults.errors" :key="index" class="error-item">
-								{{ syncError }}
-							</li>
+								<li v-for="(syncError, index) in syncResults.errors" :key="index" class="error-item">
+									{{ syncError }}
+								</li>
 							</ul>
 						</div>
 
 						<!-- Show detailed listing results if available -->
 						<div v-if="showDetails && syncResults.listing_details && syncResults.listing_details.length > 0" class="listing-details">
-							<h5>Gedetailleerde resultaten:</h5>
+							<h5>Detailed results:</h5>
 							<div class="listing-list">
 								<div v-for="listing in syncResults.listing_details"
 									:key="listing.listing_id"
@@ -91,12 +91,12 @@ import { navigationStore } from '../../store/store.js'
 							type="tertiary"
 							class="toggle-details"
 							@click="showDetails = !showDetails">
-							{{ showDetails ? 'Verberg details' : 'Toon details' }}
+							{{ showDetails ? 'Hide details' : 'Show details' }}
 						</NcButton>
 					</div>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success && error" type="error">
-					<p><strong>Synchronisatie mislukt</strong></p>
+					<p><strong>Synchronization failed</strong></p>
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
@@ -107,13 +107,13 @@ import { navigationStore } from '../../store/store.js'
 					placeholder="https://directory.opencatalogi.nl/apps/opencatalogi/api/directory"
 					:disabled="loading"
 					:loading="loading"
-					helper-text="De URL van de OpenCatalogi directory API endpoint" />
+					helper-text="The URL of the OpenCatalogi directory API endpoint" />
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="closeModal">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading || !directoryUrl"
@@ -125,7 +125,7 @@ import { navigationStore } from '../../store/store.js'
 							<Sync v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Synchroniseren
+					Sync
 				</NcButton>
 			</span>
 		</div>
@@ -241,11 +241,11 @@ export default {
 		 * @return {string} Formatted date/time string
 		 */
 		formatDateTime(dateTime) {
-			if (!dateTime) return 'Onbekend'
+			if (!dateTime) return 'Unknown'
 
 			try {
 				const date = new Date(dateTime)
-				if (isNaN(date.getTime())) return 'Onbekend'
+				if (isNaN(date.getTime())) return 'Unknown'
 
 				return date.toLocaleString('nl-NL', {
 					year: 'numeric',
@@ -256,7 +256,7 @@ export default {
 					second: '2-digit',
 				})
 			} catch (e) {
-				return 'Onbekend'
+				return 'Unknown'
 			}
 		},
 
@@ -267,11 +267,11 @@ export default {
 		 */
 		getActionLabel(action) {
 			const labels = {
-				created: 'Nieuw',
-				updated: 'Bijgewerkt',
-				unchanged: 'Ongewijzigd',
-				failed: 'Gefaald',
-				none: 'Geen actie',
+				created: 'New',
+				updated: 'Updated',
+				unchanged: 'Unchanged',
+				failed: 'Failed',
+				none: 'No action',
 			}
 			return labels[action] || action
 		},

@@ -13,23 +13,23 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			<h2>{{ publication.title }} {{ publication.status === 'Published' ? 'depubliceren' : 'publiceren' }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Publicatie succesvol gepubliceerd</p>
+					<p>Publication successfully published</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Er is iets fout gegaan bij het publiceren van publicatie</p>
+					<p>Something went wrong while publishing the publication</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Weet je zeker dat je de publicatie '{{ publication.title }}' wilt publiceren?</p>
+				<p>Do you want to publish the publication '{{ publication.title }}'?</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="navigationStore.setDialog(false)">
-					{{ success ? 'Sluiten' : 'Annuleer' }}
+					{{ success ? 'Close' : 'Cancel' }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -41,7 +41,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<ContentCopy v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Kopiëren
+					Publish
 				</NcButton>
 			</span>
 		</div>

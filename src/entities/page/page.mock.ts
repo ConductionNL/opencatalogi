@@ -8,33 +8,28 @@ import { TPage } from './page.types'
 export const mockPageData = (): TPage[] => [
 	{ // full data
 		id: '1',
-		uuid: '123e4567-e89b-12d3-a456-426614174000',
 		title: 'Test Page',
 		slug: 'test-page',
 		contents: [
-			{ type: 'text', id: '1', data: { text: 'Test content' } },
-			{ type: 'image', id: '2', data: { url: 'https://example.com/image.jpg' } },
+			{ type: 'text', id: '1', data: { text: 'Test content' }, groups: ['admin'], hideAfterLogin: false, hideBeforeLogin: false },
+			{ type: 'image', id: '2', data: { url: 'https://example.com/image.jpg' }, groups: [], hideAfterLogin: false, hideBeforeLogin: false },
 		],
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
+		groups: ['users'],
+
+		hideAfterLogin: false,
+		hideBeforeLogin: true,
 	},
 	// @ts-expect-error -- expected missing contents
 	{ // partial data
 		id: '2',
-		uuid: '123e4567-e89b-12d3-a456-426614174001',
 		title: 'Another Page',
 		slug: 'another-page',
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
 	},
 	{ // invalid data
 		id: '3',
-		uuid: '123e4567-e89b-12d3-a456-426614174002',
 		title: '',
 		slug: '',
 		contents: [],
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
 	},
 ]
 

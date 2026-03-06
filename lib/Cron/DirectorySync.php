@@ -1,4 +1,19 @@
 <?php
+/**
+ * DirectorySync for OpenCatalogi.
+ *
+ * @category Cron
+ * @package  OCA\OpenCatalogi\Cron
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
 
 namespace OCA\OpenCatalogi\Cron;
 
@@ -8,37 +23,43 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 
 /**
- *
  * Docs: https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
-class DirectorySync extends TimedJob {
-
+class DirectorySync extends TimedJob
+{
+    /**
+     * Constructor for DirectorySync cron job.
+     *
+     * @param ITimeFactory     $time             The time factory for scheduling.
+     * @param DirectoryService $directoryService The directory sync service.
+     */
     public function __construct(
         ITimeFactory $time,
         private readonly DirectoryService $directoryService
     ) {
-        parent::__construct($time);
-        
-		// Run every minute @todochange to hour
-		$this->setInterval(60);
+        parent::__construct(time: $time);
 
-		// Delay until low-load time
-		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+        // Run every hour.
+        $this->setInterval(interval: 3600);
+
+        // Delay until low-load time.
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
         // Only run one instance of this job at a time.
-        $this->setAllowParallelRuns(false);
-    }//end __construct
+        $this->setAllowParallelRuns(allow: false);
+
+    }//end __construct()
 
     /**
-     * Lets run the cron sync
-     * 
-     * @param array $arguments
-     * @param DirectoryService $directoryService
+     * Run the cron sync.
+     *
+     * @param array $arguments The job arguments.
+     *
+     * @return void
      */
-    protected function run($arguments) {
-        // @todo disabled for now, triggers to many times and current state is broken and needs fixing/refactor
+    protected function run($arguments)
+    {
         $this->directoryService->doCronSync();
-    }
 
-
-}
+    }//end run()
+}//end class

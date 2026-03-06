@@ -28,7 +28,7 @@
 
 			<div class="graphs">
 				<div>
-					<h5>Zoek aanvragen per dag</h5>
+					<h5>Search requests per day</h5>
 					<div class="content">
 						<apexchart
 							width="500"
@@ -37,7 +37,7 @@
 					</div>
 				</div>
 				<div>
-					<h5>Zoek aanvragen per uur</h5>
+					<h5>Search requests per hour</h5>
 					<div class="content">
 						<apexchart
 							width="500"
@@ -46,7 +46,7 @@
 					</div>
 				</div>
 				<div>
-					<h5>Detail bevragingen per dag</h5>
+					<h5>Detail searches per day</h5>
 					<div class="content">
 						<apexchart
 							width="500"
@@ -55,7 +55,7 @@
 					</div>
 				</div>
 				<div>
-					<h5>Meest opgevraagde publicaties</h5>
+					<h5>Most searched publications</h5>
 					<ul class="content dashboard-small-list">
 						<li v-for="(value, index) in topFivePublications" :key="value + index">
 							{{ value }}
@@ -110,7 +110,7 @@ export default {
 						},
 					},
 					series: [{
-						name: 'Zoek aanvragen per dag',
+						name: 'Search requests per day',
 						data: [
 							432, 2954, 3287, 3278, 5893, 6839, 7751, 5223, 4332, 4343,
 							4324, 2234, 4902, 4321, 5325, 5324, 3211, 3223, 4432, 2243,
@@ -145,7 +145,7 @@ export default {
 						},
 					},
 					series: [{
-						name: 'Zoek aanvragen per uur',
+						name: 'Search requests per hour',
 						data: [
 							32, 43, 12, 23, 32, 45, 32, 12, 31, 42,
 							43, 64, 34, 32, 32, 23, 25, 13, 35, 24,
@@ -183,7 +183,7 @@ export default {
 						},
 					},
 					series: [{
-						name: 'Detail bevragingen per dag',
+						name: 'Detail searches per day',
 						data: [
 							51434, 32559, 32264, 39290, 32854, 54697, 37360, 56957, 34450, 55016,
 							34219, 30221, 23969, 59032, 53820, 39792, 52498, 22735, 42846, 50663,

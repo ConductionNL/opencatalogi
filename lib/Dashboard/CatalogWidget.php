@@ -1,4 +1,19 @@
 <?php
+/**
+ * CatalogWidget for OpenCatalogi.
+ *
+ * @category Dashboard
+ * @package  OCA\OpenCatalogi\Dashboard
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
 
 
 namespace OCA\OpenCatalogi\Dashboard;
@@ -10,60 +25,88 @@ use OCP\Util;
 
 use OCA\OpenCatalogi\AppInfo\Application;
 
+/**
+ * Catalog dashboard widget for Nextcloud.
+ */
 class CatalogWidget implements IWidget
 {
-
+    /**
+     * Constructor for CatalogWidget.
+     *
+     * @param IL10N         $l10n The localization service.
+     * @param IURLGenerator $url  The URL generator service.
+     */
     public function __construct(
         private IL10N $l10n,
         private IURLGenerator $url
-    ) {}
+    ) {
+
+    }//end __construct()
 
     /**
-     * @inheritDoc
+     * Get the widget identifier.
+     *
+     * @return string The widget ID.
      */
     public function getId(): string
     {
         return 'opencatalogi_catalogi_widget';
-    }
+
+    }//end getId()
 
     /**
-     * @inheritDoc
+     * Get the widget title.
+     *
+     * @return string The widget title.
      */
     public function getTitle(): string
     {
         return $this->l10n->t('Catalogi Overview');
-    }
+
+    }//end getTitle()
 
     /**
-     * @inheritDoc
+     * Get the widget display order.
+     *
+     * @return integer The display order.
      */
     public function getOrder(): int
     {
         return 10;
-    }
+
+    }//end getOrder()
 
     /**
-     * @inheritDoc
+     * Get the widget icon CSS class.
+     *
+     * @return string The icon class.
      */
     public function getIconClass(): string
     {
         return 'icon-catalogi-widget';
-    }
+
+    }//end getIconClass()
 
     /**
-     * @inheritDoc
+     * Get the widget URL.
+     *
+     * @return string|null The widget URL or null.
      */
     public function getUrl(): ?string
     {
         return null;
-    }
+
+    }//end getUrl()
 
     /**
-     * @inheritDoc
+     * Load the widget scripts and styles.
+     *
+     * @return void
      */
     public function load(): void
     {
-        Util::addScript(Application::APP_ID, Application::APP_ID . '-catalogiWidget');
+        Util::addScript(Application::APP_ID, Application::APP_ID.'-catalogiWidget');
         Util::addStyle(Application::APP_ID, 'dashboardWidgets');
-    }
-}
+
+    }//end load()
+}//end class

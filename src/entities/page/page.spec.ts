@@ -8,12 +8,15 @@ describe('Page Store', () => {
 
 		expect(page).toBeInstanceOf(Page)
 		expect(page).toEqual(mockPage()[0])
-		expect(page.uuid).toBe(mockPage()[0].uuid)
+		// uuid is not tracked on the entity
 		expect(page.title).toBe(mockPage()[0].title)
 		expect(page.slug).toBe(mockPage()[0].slug)
 		expect(page.contents).toEqual(mockPage()[0].contents)
-		expect(page.createdAt).toBe(mockPage()[0].createdAt)
-		expect(page.updatedAt).toBe(mockPage()[0].updatedAt)
+		expect(page.groups).toEqual(mockPage()[0].groups)
+
+		expect(page.hideAfterLogin).toBe(mockPage()[0].hideAfterLogin)
+		expect(page.hideBeforeLogin).toBe(mockPage()[0].hideBeforeLogin)
+		// created/updated are not tracked on the entity
 
 		expect(page.validate().success).toBe(true)
 	})
@@ -23,12 +26,11 @@ describe('Page Store', () => {
 
 		expect(page).toBeInstanceOf(Page)
 		expect(page.id).toBe(mockPage()[1].id)
-		expect(page.uuid).toBe(mockPage()[1].uuid)
+		// uuid is not tracked on the entity
 		expect(page.title).toBe(mockPage()[1].title)
 		expect(page.slug).toBe(mockPage()[1].slug)
 		expect(page.contents).toBeNull()
-		expect(page.createdAt).toBe(mockPage()[1].createdAt)
-		expect(page.updatedAt).toBe(mockPage()[1].updatedAt)
+		// created/updated are not tracked on the entity
 
 		expect(page.validate().success).toBe(true)
 	})
@@ -38,7 +40,7 @@ describe('Page Store', () => {
 
 		expect(page).toBeInstanceOf(Page)
 		expect(page).toEqual(mockPage()[2])
-		expect(page.uuid).toBe(mockPage()[2].uuid)
+		// uuid is not tracked on the entity
 		expect(page.title).toBe('')
 		expect(page.contents).toBeNull()
 
