@@ -372,6 +372,10 @@ class SitemapService
             }
         }
 
+        if (empty($schemas) === true) {
+            return new XMLResponse('Could net fetch settings', 500);
+        }
+
         if (isset($this::INFO_CAT[$categoryCode]) === false) {
             return new XMLResponse(data: 'Invalid category code', statusCode: 400);
         }
