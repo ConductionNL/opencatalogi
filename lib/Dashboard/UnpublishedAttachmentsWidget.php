@@ -1,4 +1,19 @@
 <?php
+/**
+ * UnpublishedAttachmentsWidget for OpenCatalogi.
+ *
+ * @category Dashboard
+ * @package  OCA\OpenCatalogi\Dashboard
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
 
 
 namespace OCA\OpenCatalogi\Dashboard;
@@ -10,10 +25,17 @@ use OCP\Util;
 
 use OCA\OpenCatalogi\AppInfo\Application;
 
+/**
+ * Unpublished attachments dashboard widget for Nextcloud.
+ */
 class UnpublishedAttachmentsWidget implements IWidget
 {
-
-
+    /**
+     * Constructor for UnpublishedAttachmentsWidget.
+     *
+     * @param IL10N         $l10n The localization service.
+     * @param IURLGenerator $url  The URL generator service.
+     */
     public function __construct(
         private IL10N $l10n,
         private IURLGenerator $url
@@ -21,9 +43,10 @@ class UnpublishedAttachmentsWidget implements IWidget
 
     }//end __construct()
 
-
     /**
-     * @inheritDoc
+     * Get the widget identifier.
+     *
+     * @return string The widget ID.
      */
     public function getId(): string
     {
@@ -31,9 +54,10 @@ class UnpublishedAttachmentsWidget implements IWidget
 
     }//end getId()
 
-
     /**
-     * @inheritDoc
+     * Get the widget title.
+     *
+     * @return string The widget title.
      */
     public function getTitle(): string
     {
@@ -41,9 +65,10 @@ class UnpublishedAttachmentsWidget implements IWidget
 
     }//end getTitle()
 
-
     /**
-     * @inheritDoc
+     * Get the widget display order.
+     *
+     * @return integer The display order.
      */
     public function getOrder(): int
     {
@@ -51,9 +76,10 @@ class UnpublishedAttachmentsWidget implements IWidget
 
     }//end getOrder()
 
-
     /**
-     * @inheritDoc
+     * Get the widget icon CSS class.
+     *
+     * @return string The icon class.
      */
     public function getIconClass(): string
     {
@@ -61,9 +87,10 @@ class UnpublishedAttachmentsWidget implements IWidget
 
     }//end getIconClass()
 
-
     /**
-     * @inheritDoc
+     * Get the widget URL.
+     *
+     * @return string|null The widget URL or null.
      */
     public function getUrl(): ?string
     {
@@ -71,9 +98,10 @@ class UnpublishedAttachmentsWidget implements IWidget
 
     }//end getUrl()
 
-
     /**
-     * @inheritDoc
+     * Load the widget scripts and styles.
+     *
+     * @return void
      */
     public function load(): void
     {
@@ -81,6 +109,4 @@ class UnpublishedAttachmentsWidget implements IWidget
         Util::addStyle(Application::APP_ID, 'dashboardWidgets');
 
     }//end load()
-
-
 }//end class

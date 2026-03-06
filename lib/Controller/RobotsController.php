@@ -1,4 +1,16 @@
 <?php
+/**
+ * Robots controller for OpenCatalogi.
+ *
+ * Generates robots.txt content with sitemap references for catalogs.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ */
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -28,8 +40,6 @@ use OCA\OpenCatalogi\Service\SitemapService;
  */
 class RobotsController extends Controller
 {
-
-
     /**
      * PublicationsController constructor.
      *
@@ -48,10 +58,9 @@ class RobotsController extends Controller
         private readonly IAppManager $appManager,
         private readonly IURLGenerator $urlGenerator,
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
-
 
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
@@ -66,8 +75,10 @@ class RobotsController extends Controller
     {
         $settings = $this->settingsService->getSettings();
 
-        if (isset($settings['configuration']['catalog_register']) === false || isset($settings['configuration']['catalog_schema']) === false) {
-            return new TextResponse('Could net fetch settings', 500);
+        if (isset($settings['configuration']['catalog_register']) === false
+            || isset($settings['configuration']['catalog_schema']) === false
+        ) {
+            return new TextResponse(text: 'Could net fetch settings', statusCode: 500);
         }
 
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
@@ -86,7 +97,7 @@ class RobotsController extends Controller
         $text  = '';
         $count = 0;
         foreach ($catalogs as $catalog) {
-            if (!$catalog->getSlug()) {
+            if ($catalog->getSlug() === false) {
                 continue;
             }
 
@@ -101,10 +112,9 @@ class RobotsController extends Controller
             $count++;
         }
 
-        return new TextResponse($text);
+        return new TextResponse(text: $text);
 
     }//end index()
-
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.
@@ -123,6 +133,4 @@ class RobotsController extends Controller
         throw new \RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
-
-
 }//end class

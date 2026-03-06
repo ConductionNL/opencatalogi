@@ -43,7 +43,6 @@ class ToolRegistrationListener implements IEventListener
      */
     private CMSTool $cmsTool;
 
-
     /**
      * Constructor
      *
@@ -55,7 +54,6 @@ class ToolRegistrationListener implements IEventListener
 
     }//end __construct()
 
-
     /**
      * Handle the event
      *
@@ -65,12 +63,12 @@ class ToolRegistrationListener implements IEventListener
      */
     public function handle(Event $event): void
     {
-        if (!($event instanceof ToolRegistrationEvent)) {
+        if (($event instanceof ToolRegistrationEvent) === false) {
             return;
         }
 
-        // Register OpenCatalogi CMS tool
-        // Using tool's getName() and getDescription() to avoid duplication
+        // Register OpenCatalogi CMS tool.
+        // Using tool's getName() and getDescription() to avoid duplication.
         $event->registerTool(
             'opencatalogi.cms',
             $this->cmsTool,
@@ -83,6 +81,4 @@ class ToolRegistrationListener implements IEventListener
         );
 
     }//end handle()
-
-
 }//end class

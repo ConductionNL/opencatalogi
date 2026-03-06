@@ -40,7 +40,6 @@ class SettingsController extends Controller
      */
     private $objectService;
 
-
     /**
      * SettingsController constructor.
      *
@@ -59,10 +58,9 @@ class SettingsController extends Controller
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
-
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.
@@ -80,7 +78,6 @@ class SettingsController extends Controller
         throw new \RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
-
 
     /**
      * Attempts to retrieve the Configuration service from the container.
@@ -102,7 +99,6 @@ class SettingsController extends Controller
 
     }//end getConfigurationService()
 
-
     /**
      * Retrieve the current settings.
      *
@@ -121,7 +117,6 @@ class SettingsController extends Controller
         }
 
     }//end index()
-
 
     /**
      * Handle the post request to update settings.
@@ -142,7 +137,6 @@ class SettingsController extends Controller
 
     }//end create()
 
-
     /**
      * Load the settings from the publication_register.json file.
      *
@@ -160,7 +154,6 @@ class SettingsController extends Controller
         }
 
     }//end load()
-
 
     /**
      * Get the current publishing options.
@@ -181,7 +174,6 @@ class SettingsController extends Controller
 
     }//end getPublishingOptions()
 
-
     /**
      * Update the publishing options.
      *
@@ -200,7 +192,6 @@ class SettingsController extends Controller
         }
 
     }//end updatePublishingOptions()
-
 
     /**
      * Get version information for the app and configuration.
@@ -221,7 +212,6 @@ class SettingsController extends Controller
 
     }//end getVersionInfo()
 
-
     /**
      * Manually trigger configuration import.
      *
@@ -233,11 +223,11 @@ class SettingsController extends Controller
     {
         try {
             $params      = $this->request->getParams();
-            $forceImport = isset($params['force']) && $params['force'] === true;
+            $forceImport = isset($params['force']) === true && $params['force'] === true;
 
             $result = $this->settingsService->manualImport($forceImport);
 
-            if ($result['success']) {
+            if ($result['success'] === true) {
                 return new JSONResponse($result);
             } else {
                 return new JSONResponse($result, 400);
@@ -254,6 +244,4 @@ class SettingsController extends Controller
         }//end try
 
     }//end manualImport()
-
-
 }//end class

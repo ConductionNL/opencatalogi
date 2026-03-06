@@ -1,11 +1,16 @@
 <?php
+/**
+ * Initial migration to create all OpenCatalogi tables.
+ *
+ * @category Migration
+ * @package  OCA\OpenCatalogi\Migration
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ */
 
 declare(strict_types=1);
-
-/*
- * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
- */
 
 namespace OCA\OpenCatalogi\Migration;
 
@@ -20,30 +25,32 @@ use OCP\Migration\SimpleMigrationStep;
  */
 class Version6Date20241011085015 extends SimpleMigrationStep
 {
-
-
     /**
-     * @param IOutput                   $output
-     * @param Closure(): ISchemaWrapper $schemaClosure
-     * @param array                     $options
+     * Pre-schema change handler.
+     *
+     * @param IOutput                   $output        The output handler.
+     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                     $options       Migration options.
+     *
+     * @return void
      */
     public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
     {
 
     }//end preSchemaChange()
 
-
     /**
-     * @param  IOutput                   $output
-     * @param  Closure(): ISchemaWrapper $schemaClosure
-     * @param  array                     $options
-     * @return null|ISchemaWrapper
+     * Apply schema changes to create all tables.
+     *
+     * @param IOutput                   $output        The output handler.
+     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                     $options       Migration options.
+     *
+     * @return null|ISchemaWrapper The updated schema or null.
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {
-        /*
-         * @var ISchemaWrapper $schema
-         */
+        // Get the schema from the closure.
         $schema = $schemaClosure();
 
         if ($schema->hasTable(tableName: 'ocat_attachments') === false) {
@@ -158,7 +165,7 @@ class Version6Date20241011085015 extends SimpleMigrationStep
             $table->addColumn(name: 'portal', typeName: TYPES::STRING, options: ['notnull' => false]);
             $table->addColumn(name: 'featured', typeName: TYPES::BOOLEAN, options: ['notnull' => false]);
             $table->addColumn(name: 'publication_type', typeName: TYPES::STRING, options: ['notnull' => false]);
-// <- Should be changed in Stoplight
+            // <- Should be changed in Stoplight.
             $table->addColumn(name: 'attachments', typeName: TYPES::JSON, options: ['notnull' => false, 'default' => '{}']);
             $table->addColumn(name: 'attachment_count', typeName: TYPES::INTEGER, options: ['notnull' => false, 'default' => 0]);
             $table->addColumn(name: 'themes', typeName: TYPES::JSON, options: ['notnull' => false]);
@@ -171,9 +178,10 @@ class Version6Date20241011085015 extends SimpleMigrationStep
             $table->addColumn(name: 'source', typeName: TYPES::STRING, options: ['notnull' => false]);
             $table->addColumn(name: 'validation', typeName: TYPES::JSON, options: ['notnull' => false]);
             $table->addColumn(name: 'catalog', typeName: TYPES::STRING, options: ['notnull' => true]);
-            // $table->addColumn(name: 'modified', typeName: TYPES::DATETIME, options: ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']); <- Should be changed in Stoplight
+            // phpcs:ignore Generic.Files.LineLength.TooLong, Generic.Files.LineLength.MaxExceeded
+            // $table->addColumn(name: 'modified', typeName: TYPES::DATETIME, options: ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
             $table->addColumn(name: 'organization', typeName: TYPES::STRING, options: ['notnull' => false, 'default' => '{}']);
-            // $table->addColumn(name: 'schema', typeName: TYPES::STRING, options: ['notnull' => false]); <- Should be changed in Stoplight
+            // $table->addColumn(name: 'schema', typeName: TYPES::STRING, options: ['notnull' => false]); <- Should be changed in Stoplight.
             $table->addColumn(name: 'status', typeName: TYPES::STRING, options: ['notnull' => true, 'default' => 'Concept']);
             $table->addColumn(name: 'published', typeName: Types::DATETIME, options: ['notnull' => false]);
             $table->addColumn(name: 'updated', typeName: Types::DATETIME, options: ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
@@ -224,16 +232,17 @@ class Version6Date20241011085015 extends SimpleMigrationStep
 
     }//end changeSchema()
 
-
     /**
-     * @param IOutput                   $output
-     * @param Closure(): ISchemaWrapper $schemaClosure
-     * @param array                     $options
+     * Post-schema change handler.
+     *
+     * @param IOutput                   $output        The output handler.
+     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                     $options       Migration options.
+     *
+     * @return void
      */
     public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
     {
 
     }//end postSchemaChange()
-
-
 }//end class
