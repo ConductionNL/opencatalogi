@@ -28,9 +28,15 @@ jobs:
       - name: Update development-release branch
         run: |
           git fetch origin
-
+          
           COMMIT_MSG=$(git log -1 --pretty=%B)
-
+          
+          # Check if original commit has [skip ci]
+          SKIP_CI=""
+          if [[ "$COMMIT_MSG" == *"[skip ci]"* ]]; then
+            SKIP_CI=" [skip ci]"
+          fi
+          
           # Preserve existing version on development-release
           DEV_RELEASE_VERSION=""
           if git show-ref --quiet refs/remotes/origin/development-release; then
@@ -38,7 +44,7 @@ jobs:
             DEV_RELEASE_VERSION=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
             echo "Found existing development-release version: $DEV_RELEASE_VERSION"
           fi
-
+          
           # Reset or create development-release from development
           if git show-ref --quiet refs/remotes/origin/development-release; then
             git checkout development-release
@@ -46,14 +52,14 @@ jobs:
           else
             git checkout -b development-release origin/development
           fi
-
+          
           # Restore preserved version
           if [ ! -z "$DEV_RELEASE_VERSION" ]; then
             sed -i "s|<version>.*</version>|<version>${DEV_RELEASE_VERSION}</version>|" appinfo/info.xml
             git add appinfo/info.xml
             git commit -m "${COMMIT_MSG}
 
-            Restored development-release version to ${DEV_RELEASE_VERSION} [skip ci]"
+            Restored development-release version to ${DEV_RELEASE_VERSION}${SKIP_CI}"
           fi
-
+          
           git push -f origin development-release
