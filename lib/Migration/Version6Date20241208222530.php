@@ -118,7 +118,7 @@ class Version6Date20241208222530 extends SimpleMigrationStep
                     'length'  => 255,
                 ]
             )->setDefault('');
-            if ($table === false->hasIndex('ocat_publication_uuid_index')) {
+            if ($table->hasIndex('ocat_publication_uuid_index') === false) {
                 $table->addIndex(['uuid'], 'ocat_publication_uuid_index');
             }
         }
@@ -134,7 +134,7 @@ class Version6Date20241208222530 extends SimpleMigrationStep
                     'length'  => 255,
                 ]
             )->setDefault('');
-            if ($table === false->hasIndex('ocat_themes_uuid_index')) {
+            if ($table->hasIndex('ocat_themes_uuid_index') === false) {
                 $table->addIndex(['uuid'], 'ocat_themes_uuid_index');
             }
         }
