@@ -3,7 +3,7 @@ name: Beta Release
 on:
   push:
     branches:
-      # - development-release
+      # - beta
       - never
 
 jobs:
