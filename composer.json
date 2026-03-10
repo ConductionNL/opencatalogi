@@ -37,11 +37,19 @@
 		"phpcs": "./vendor/bin/phpcs --standard=phpcs.xml",
 		"phpcs:fix": "./vendor/bin/phpcbf --standard=phpcs.xml",
 		"phpcs:output": "./vendor/bin/phpcs --standard=phpcs.xml --report=json lib/ 2>/dev/null | tail -1 > phpcs-output.json",
+<<<<<<< HEAD
+		"phpcs:named-params": "./vendor/bin/phpcs --standard=phpcs.xml --sniffs=CustomSniffs.Functions.NamedParameters lib/",
+=======
+>>>>>>> origin/development
 		"phpmd": "phpmd lib text phpmd.xml || echo 'PHPMD not installed, skipping...'",
 		"phpmetrics": "./vendor/bin/phpmetrics --report-html=phpmetrics lib/",
 		"phpmetrics:violations": "./vendor/bin/phpmetrics --violations-xml=phpmetrics/violations.xml lib/",
 		"psalm": "./vendor/bin/psalm --threads=1 --no-cache || echo 'Psalm not installed, skipping...'",
 		"phpstan": "./vendor/bin/phpstan analyse --memory-limit=1G || echo 'PHPStan not installed, skipping...'",
+<<<<<<< HEAD
+		"test:unit": "phpunit tests -c phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
+		"test:all": "./vendor/bin/phpunit --colors=always || echo 'Tests require Nextcloud environment, skipping...'",
+=======
 		"test:unit": "./vendor/bin/phpunit --colors=always || echo 'Tests require Nextcloud environment, skipping...'",
 		"test:all": "./vendor/bin/phpunit --colors=always || echo 'Tests require Nextcloud environment, skipping...'",
 		"check": "E=0; for CMD in lint phpcs psalm test:unit; do echo; echo \"=== $CMD ===\"; composer $CMD || E=1; done; echo; if [ $E -eq 0 ]; then echo \"ALL CHECKS PASSED\"; else echo \"SOME CHECKS FAILED (see above)\"; fi; exit $E",
@@ -50,6 +58,7 @@
 		"fix": [
 			"@cs:fix"
 		],
+>>>>>>> origin/development
 		"openapi": "generate-spec",
 		"phpqa": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa",
 		"phpqa:full": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs:0,phpmd:0,phploc:0,phpmetrics,phpcpd:0,parallel-lint:0",
@@ -59,6 +68,8 @@
 		],
 		"qa:full": [
 			"@phpqa:full"
+<<<<<<< HEAD
+=======
 		],
 		"test:coverage": "./vendor/bin/phpunit --coverage-html=coverage/html --coverage-clover=coverage/clover.xml --colors=always",
 		"coverage:check": "php -r \"\\$xml = simplexml_load_file('coverage/clover.xml'); \\$metrics = \\$xml->project->metrics; \\$statements = (int)\\$metrics['statements']; \\$covered = (int)\\$metrics['coveredstatements']; \\$percentage = \\$statements > 0 ? round((\\$covered / \\$statements) * 100, 2) : 0; echo 'Coverage: ' . \\$percentage . '%' . PHP_EOL; exit(\\$percentage < 75 ? 1 : 0);\"",
@@ -71,6 +82,7 @@
 			"@quality:phpmd-score",
 			"@quality:psalm-score",
 			"@quality:phpstan-score"
+>>>>>>> origin/development
 		]
 	},
 	"require": {
@@ -97,14 +109,23 @@
 		"phpstan/phpstan": "^1.10",
 		"phpunit/phpunit": "^10.5",
 		"roave/security-advisories": "dev-latest",
+<<<<<<< HEAD
+		"squizlabs/php_codesniffer": "^3.9.0",
+=======
 		"squizlabs/php_codesniffer": "^3.9",
+>>>>>>> origin/development
 		"vimeo/psalm": "^5.26"
 	},
 	"config": {
 		"allow-plugins": {
 			"bamarni/composer-bin-plugin": true,
+<<<<<<< HEAD
+			"dealerdirect/phpcodesniffer-composer-installer": true,
+			"php-http/discovery": true
+=======
 			"php-http/discovery": true,
 			"dealerdirect/phpcodesniffer-composer-installer": true
+>>>>>>> origin/development
 		},
 		"optimize-autoloader": true,
 		"sort-packages": true,
