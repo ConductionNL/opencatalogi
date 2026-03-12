@@ -236,8 +236,14 @@ class CatalogiService
      * @psalm-param    array<int, mixed> $results
      * @psalm-return   array<string, mixed>
      */
-    private function paginate(array $results, ?int $total=0, ?int $limit=20, ?int $offset=0, ?int $page=1, ?array $facets=[]): array
-    {
+    private function paginate(
+        array $results,
+        ?int $total=0,
+        ?int $limit=20,
+        ?int $offset=0,
+        ?int $page=1,
+        ?array $facets=[]
+    ): array {
         // Ensure we have valid values (never null, limit=0 is valid for count/facets-only requests).
         $total  = max(0, ($total ?? 0));
         $limit  = max(0, ($limit ?? 20));

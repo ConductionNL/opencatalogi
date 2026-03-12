@@ -208,7 +208,7 @@ class CMSTool implements ToolInterface
                         ],
                         'position'        => [
                             'type'        => 'number',
-                            'description' => 'Menu display position/order (0 = first, higher = later). ASK THE USER for this if not provided.',
+                            'description' => 'Menu display position (0=first, higher=later). ASK USER.',
                         ],
                         'items'           => [
                             'type'        => 'array',
@@ -252,7 +252,7 @@ class CMSTool implements ToolInterface
                         ],
                         'groups'          => [
                             'type'        => 'array',
-                            'description' => 'Nextcloud groups that can access this entire menu (RBAC). Ask user if they want to restrict access.',
+                            'description' => 'Nextcloud groups that can access this menu (RBAC).',
                             'items'       => ['type' => 'string'],
                         ],
                         'hideBeforeLogin' => [

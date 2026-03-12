@@ -381,7 +381,8 @@ class DirectoryService
                         }
 
                         // Skip if listing has a local URL (localhost, .local, private IPs).
-                        if (isset($listingData['directory']) === true && $this->isLocalUrl(url: $listingData['directory']) === true) {
+                        $hasDirectory = isset($listingData['directory']) === true;
+                        if ($hasDirectory === true && $this->isLocalUrl(url: $listingData['directory']) === true) {
                             return false;
                         }
 
@@ -612,7 +613,8 @@ class DirectoryService
 
             // Extract API endpoints from @self.relations BEFORE we unset @self.
             // These endpoints tell us where the actual catalog's API is hosted.
-            if (isset($listingData['@self']['relations']) === true && is_array($listingData['@self']['relations']) === true) {
+            $hasRelations = isset($listingData['@self']['relations']) === true;
+            if ($hasRelations === true && is_array($listingData['@self']['relations']) === true) {
                 $relations = $listingData['@self']['relations'];
 
                 // Extract publications endpoint.
@@ -638,7 +640,7 @@ class DirectoryService
             // Detect or generate publication endpoint BEFORE we overwrite directory field.
             // If not already extracted from relations, try to detect from available data.
             if (empty($listingData['publications']) === true) {
-                $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
+                $listingData['publications'] = $this->detectPublicationEndpoint(listingData: $listingData);
             }
 
             // Set sourceDirectory URL in listing data for reference (where we got this listing from).
@@ -681,7 +683,8 @@ class DirectoryService
                 $existingObject      = ($existingListingData['object'] ?? []);
 
                 // Preserve existing availability and default status, but set smart defaults for missing fields.
-                $listingData['default']    = ($existingObject['default'] ?? ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'));
+                $defaultDirectory          = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+                $listingData['default']    = ($existingObject['default'] ?? ($sourceDirectoryUrl === $defaultDirectory));
                 $listingData['statusCode'] = 200;
                 // Update status code to show successful fetch.
                 $listingData['status'] = ($existingObject['status'] ?? 'development');
@@ -689,7 +692,8 @@ class DirectoryService
                 $listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
             } else {
                 // For new listings, mark as available since we successfully fetched and validated the data.
-                $listingData['default'] = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+                $defaultDir = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+                $listingData['default'] = ($sourceDirectoryUrl === $defaultDir);
                 // Only default OpenCatalogi directory is default.
                 $listingData['statusCode'] = 200;
                 // Successful fetch.
@@ -702,7 +706,7 @@ class DirectoryService
                 // For updates, check for race conditions and data changes.
                 // (existingListing and existingListingData already retrieved above).
                 // Check for race condition: skip if incoming data is older than our last sync.
-                if ($this->isListingDataOutdated($listingData, $existingListingData)) {
+                if ($this->isListingDataOutdated(incomingData: $listingData, existingData: $existingListingData) === true) {
                     $result['action']  = 'skipped_outdated';
                     $result['success'] = true;
                     $result['reason']  = 'Incoming listing data is older than existing data';
@@ -829,7 +833,7 @@ class DirectoryService
                 continue;
             }
 
-            if ($this->isLocalUrl($directoryUrl)) {
+            if ($this->isLocalUrl(url: $directoryUrl) === true) {
                 // Removed redundant logging.
                 continue;
             }
@@ -843,10 +847,15 @@ class DirectoryService
 
                             // Removed redundant logging.
             // Store mapping for later source tracking.
+            $parsedHost = parse_url($directoryUrl, PHP_URL_HOST);
+            if ($parsedHost === false || $parsedHost === null || $parsedHost === '') {
+                $parsedHost = $directoryUrl;
+            }
+
             $urlToDirectoryMap[count($promises)] = [
                 'url'          => $publicationsUrl,
                 'directoryUrl' => $directoryUrl,
-                'name'         => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl,
+                'name'         => $parsedHost,
             ];
 
             $promises[] = new Promise(
@@ -918,7 +927,7 @@ class DirectoryService
         foreach ($allResults as $index => $result) {
             $directoryInfo = $urlToDirectoryMap[$index];
 
-            if ($result['success'] && empty($result['results']) === false) {
+            if ($result['success'] === true && empty($result['results']) === false) {
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
                 $combinedTotal += $result['total'];
                 // Removed redundant logging.
@@ -941,7 +950,7 @@ class DirectoryService
 
                 // Aggregate facets if they exist.
                 if (empty($result['facets']) === false) {
-                    $combinedFacets = $this->aggregateFacets($combinedFacets, $result['facets']);
+                    $combinedFacets = $this->aggregateFacets(existingFacets: $combinedFacets, newFacets: $result['facets']);
                 }
             } else {
                                     // Removed redundant logging.
@@ -973,8 +982,14 @@ class DirectoryService
      *
      * @return void
      */
-    private function updateListingStatus($objectService, string $listingRegister, string $listingSchema, string $listingId, int $statusCode, bool $success): void
-    {
+    private function updateListingStatus(
+        $objectService,
+        string $listingRegister,
+        string $listingSchema,
+        string $listingId,
+        int $statusCode,
+        bool $success
+    ): void {
         try {
             // Get the existing listing.
             $existingListings = $objectService->searchObjects(
@@ -1157,8 +1172,8 @@ class DirectoryService
             }
 
             // Get timestamps for comparison.
-            $incomingUpdated = $this->extractTimestamp($incomingData);
-            $existingUpdated = $this->extractTimestamp($existingObject);
+            $incomingUpdated = $this->extractTimestamp(data: $incomingData);
+            $existingUpdated = $this->extractTimestamp(data: $existingObject);
 
             // If we can't determine timestamps, allow the update to be safe.
             if ($incomingUpdated === null || $existingUpdated === null) {
@@ -1358,7 +1373,7 @@ class DirectoryService
         }
 
         // Check for private IP ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
-        if (filter_var($host, FILTER_VALIDATE_IP)) {
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
             if (filter_var($host, FILTER_VALIDATE_IP, (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) === false) {
                 return true;
             }
@@ -1430,7 +1445,7 @@ class DirectoryService
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs.
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
+            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl(url: $directoryUrl) === true) {
                 continue;
             }
 
@@ -1444,10 +1459,15 @@ class DirectoryService
             }
 
             // Store mapping for later source tracking.
+            $parsedHost = parse_url($directoryUrl, PHP_URL_HOST);
+            if ($parsedHost === false || $parsedHost === null || $parsedHost === '') {
+                $parsedHost = $directoryUrl;
+            }
+
             $urlToDirectoryMap[count($promises)] = [
                 'url'          => $usedUrl,
                 'directoryUrl' => $directoryUrl,
-                'name'         => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl,
+                'name'         => $parsedHost,
             ];
 
             $promises[] = new Promise(
@@ -1491,7 +1511,7 @@ class DirectoryService
         foreach ($allResults as $index => $result) {
             $directoryInfo = $urlToDirectoryMap[$index];
 
-            if ($result['success'] && empty($result['results']) === false) {
+            if ($result['success'] === true && empty($result['results']) === false) {
                 $sources[$directoryInfo['name']] = $directoryInfo['url'];
 
                 foreach ($result['results'] as $item) {
@@ -1565,7 +1585,7 @@ class DirectoryService
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
             // Skip our own directory and local URLs.
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl)) {
+            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl(url: $directoryUrl) === true) {
                 continue;
             }
 
@@ -1579,10 +1599,15 @@ class DirectoryService
             }
 
             // Store mapping for later source tracking.
+            $parsedHost = parse_url($directoryUrl, PHP_URL_HOST);
+            if ($parsedHost === false || $parsedHost === null || $parsedHost === '') {
+                $parsedHost = $directoryUrl;
+            }
+
             $urlToDirectoryMap[count($promises)] = [
                 'url'          => $publicationUrl,
                 'directoryUrl' => $directoryUrl,
-                'name'         => parse_url($directoryUrl, PHP_URL_HOST) ?: $directoryUrl,
+                'name'         => $parsedHost,
             ];
 
             $promises[] = new Promise(
@@ -1612,7 +1637,7 @@ class DirectoryService
 
                  // Return the first successful result with source information.
         foreach ($allResults as $index => $result) {
-            if ($result['success'] && $result['data'] !== null) {
+            if ($result['success'] === true && $result['data'] !== null) {
                 $directoryInfo = $urlToDirectoryMap[$index];
                 return [
                     'result' => $result['data'],
@@ -1707,7 +1732,7 @@ class DirectoryService
                 $listingResult = $objectService->searchObjects($query);
 
                 // Convert listing objects to arrays and filter out internal properties.
-                // Note: Don't expand schemas for listings as they already come with expanded schemas from external directories.
+                // Schemas already come expanded from external directories.
                 $listings = array_map(
                     function ($object) {
                         if ($object instanceof \OCP\AppFramework\Db\Entity) {
@@ -1716,7 +1741,7 @@ class DirectoryService
                             $listingData = $object;
                         }
 
-                        return $this->filterListingProperties($listingData);
+                        return $this->filterListingProperties(listing: $listingData);
                     },
                     $listingResult
                 );
@@ -1760,8 +1785,8 @@ class DirectoryService
                 // Convert catalog objects to listing format and expand schemas.
                 $catalogsAsListings = array_map(
                     function ($catalogObject) {
-                        $listing = $this->convertCatalogToListing($catalogObject);
-                        return $this->processSchemaExpansion($listing);
+                        $listing = $this->convertCatalogToListing(catalogObject: $catalogObject);
+                        return $this->processSchemaExpansion(data: $listing);
                     },
                     $catalogResult
                 );
@@ -1901,8 +1926,8 @@ class DirectoryService
     {
         return array_map(
             function ($catalogObject) {
-                $listing = $this->convertCatalogToListing($catalogObject);
-                return $this->processSchemaExpansion($listing);
+                $listing = $this->convertCatalogToListing(catalogObject: $catalogObject);
+                return $this->processSchemaExpansion(data: $listing);
             },
             $catalogs
         );
@@ -1974,7 +1999,7 @@ class DirectoryService
 
         // Expand schemas if they exist and are an array of IDs.
         if (isset($objectData['schemas']) === true && is_array($objectData['schemas']) === true) {
-            $objectData['schemas'] = $this->expandSchemas($objectData['schemas']);
+            $objectData['schemas'] = $this->expandSchemas(schemaIds: $objectData['schemas']);
         }
 
         // If this was a nested object structure, maintain it.
@@ -2132,7 +2157,9 @@ class DirectoryService
                     $mergedFacets[$field],
                     function ($a, $b) {
                         // Ensure both items are arrays with required fields.
-                        if (is_array($a) === false || is_array($b) === false || isset($a['_id']) === false || isset($b['_id']) === false) {
+                        $validArrays = is_array($a) === true && is_array($b) === true;
+                        $hasIds      = isset($a['_id']) === true && isset($b['_id']) === true;
+                        if ($validArrays === false || $hasIds === false) {
                             return 0;
                         }
 
@@ -2146,7 +2173,7 @@ class DirectoryService
                         return ($countB <=> $countA);
                     }
                 );
-            }
+            }//end if
         }//end foreach
 
         return $mergedFacets;

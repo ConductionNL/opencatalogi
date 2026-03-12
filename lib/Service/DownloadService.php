@@ -76,7 +76,7 @@ class DownloadService
         // Validate options.
         if ($options['download'] === false && $options['saveToNextCloud'] === false) {
             return new JSONResponse(
-                data: ['error' => '$options "download" & "saveToNextCloud" for function createPublicationFile should not be both set to false'],
+                data: ['error' => 'Options "download" and "saveToNextCloud" should not both be false'],
                 statusCode: 500
             );
         }
@@ -137,8 +137,11 @@ class DownloadService
     {
         try {
             return $objectService->getObject('publication', $id);
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+        } catch (\Exception $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
         }
 
     }//end getPublicationData()
@@ -175,7 +178,10 @@ class DownloadService
 
         // Check if file creation was successful.
         if ($created === false) {
-            return new JSONResponse(data: ['error' => "Failed to upload this file: $filePath to NextCloud"], statusCode: 500);
+            return new JSONResponse(
+                data: ['error' => "Failed to upload file: $filePath"],
+                statusCode: 500
+            );
         }
 
         // Create or find ShareLink.
@@ -302,8 +308,11 @@ class DownloadService
 
             // Fetch attachment objects.
             return $objectService->getMultipleObjects(objectType: 'attachment', ids: $object['attachments']);
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+        } catch (\Exception $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
         }
 
     }//end publicationAttachments()

@@ -184,7 +184,11 @@ class SearchService
 
         // Perform local search if Elasticsearch is configured.
         if ($elasticConfig['location'] !== '') {
-            $localResults = $this->elasticService->searchObject(filters: $parameters, config: $elasticConfig, totalResults: $totalResults,);
+            $localResults = $this->elasticService->searchObject(
+                filters: $parameters,
+                config: $elasticConfig,
+                totalResults: $totalResults,
+            );
         }
 
         $directory = $this->directoryService->listDirectory(limit: 1000);

@@ -509,22 +509,28 @@ class SettingsService
             $publishingOptions = [
                 // Convert string 'true'/'false' to boolean for auto publish attachments.
                 'auto_publish_attachments'      => $this->config->getValueString(
-                    $this->appName, 'auto_publish_attachments', 'false'
+                    $this->appName,
+                        'auto_publish_attachments',
+                        'false'
                 ) === 'true',
                 // Convert string 'true'/'false' to boolean for auto publish objects.
                 'auto_publish_objects'          => $this->config->getValueString(
-                    $this->appName, 'auto_publish_objects', 'false'
+                    $this->appName,
+                        'auto_publish_objects',
+                        'false'
                 ) === 'true',
                 // Convert string 'true'/'false' to boolean for old style publishing view.
                 'use_old_style_publishing_view' => $this->config->getValueString(
-                    $this->appName, 'use_old_style_publishing_view', 'false'
+                    $this->appName,
+                        'use_old_style_publishing_view',
+                        'false'
                 ) === 'true',
             ];
 
             return $publishingOptions;
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to retrieve publishing options: '.$e->getMessage());
-        }
+        }//end try
 
     }//end getPublishingOptions()
 

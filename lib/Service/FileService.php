@@ -173,7 +173,7 @@ class FileService
     /**
      * Creates a IShare object using the $shareData array data.
      *
-     * @param array $shareData The data to create a IShare with, should contain 'path', 'file', 'shareType', 'permissions' and 'userid'.
+     * @param array $shareData Data to create IShare with: path, file, shareType, permissions, userid.
      *
      * @return IShare The Created IShare object.
      * @throws Exception
@@ -204,8 +204,8 @@ class FileService
      * (https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html#create-a-new-share)
      *
      * @param string       $path        Path (from root) to the file/folder which should be shared.
-     * @param integer|null $shareType   0 = user; 1 = group; 3 = public link; 4 = email; 6 = federated cloud share; 7 = circle; 10 = Talk conversation
-     * @param integer|null $permissions 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1)
+     * @param integer|null $shareType   Share type (0=user;1=group;3=public;4=email;6=federated;7=circle;10=Talk).
+     * @param integer|null $permissions Permissions (1=read;2=update;4=create;8=delete;16=share;31=all).
      *
      * @return string The share link.
      * @throws Exception In case creating the share(link) fails.
@@ -231,7 +231,9 @@ class FileService
         try {
             $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
         } catch (NotPermittedException) {
-            $this->logger->error("Can't create share link for $path because user (folder) for user $userId couldn't be found");
+            $this->logger->error(
+                "Can't create share link for $path because user folder for user $userId was not found"
+            );
 
             return "User (folder) couldn't be found";
         }
@@ -304,7 +306,10 @@ class FileService
 
         // Check if the file was created successfully.
         if ($created === false) {
-            return new JSONResponse(data: ['error' => "Failed to upload file. This file: $filePath might already exist"], statusCode: 400);
+            return new JSONResponse(
+                data: ['error' => "Failed to upload file. File $filePath might already exist"],
+                statusCode: 400
+            );
         }
 
         // Update the data array with file info, to create Attachment with.
@@ -333,7 +338,10 @@ class FileService
 
         // Check if a file was uploaded.
         if (empty($uploadedFile) === true) {
-            return new JSONResponse(data: ['error' => 'Please upload a file using key "_file" or give a "downloadUrl"'], statusCode: 400);
+            return new JSONResponse(
+                data: ['error' => 'Please upload a file using key "_file" or give a "downloadUrl"'],
+                statusCode: 400
+            );
         }
 
         // Check for upload errors.
@@ -348,7 +356,7 @@ class FileService
     /**
      * Creates a new folder in NextCloud, unless it already exists.
      *
-     * @param string $folderPath Path (from root) to where you want to create a folder, include the name of the folder. (/Media/exampleFolder)
+     * @param string $folderPath Path from root to where you want to create a folder, include the folder name.
      *
      * @return boolean True if successfully created a new folder.
      * @throws Exception In case we can't create the folder because it is not permitted.
@@ -389,7 +397,7 @@ class FileService
     /**
      * Adds information about the uploaded file to the appropriate Attachment fields. Inclusive share link.
      *
-     * @param array  $data         The form-data fields and their values (/request body) that we are going to update before posting the Attachment.
+     * @param array  $data         The form-data fields and values to update before posting the Attachment.
      * @param array  $uploadedFile Information about the uploaded file from the request body.
      * @param string $filePath     The full file path to where the file is stored in NextCloud.
      *
@@ -577,7 +585,7 @@ class FileService
      * @param array  $context      The context to pass along while rendering the pdf with the given twig template.
      *
      * @return Mpdf A Mpdf object.
-     * Use "$mpdf->Output(name: $filename, dest: Destination::FILE)" to create the actual file or use one of the other Destination::X options.
+     * Use "$mpdf->Output(name: $filename, dest: Destination::FILE)" to create the file.
      * Please use the "rmdir(directory: '/tmp/mpdf');" function after this to clean up temporary files.
      * @throws MpdfException|LoaderError|RuntimeError|SyntaxError
      */
@@ -610,10 +618,10 @@ class FileService
 
     /**
      * Creates a ZIP archive at the $tempZip location using the $tempFolder location as input for the ZIP archive.
-     * Please use "unlink(filename: $tempZip);" or the downloadZip() function after calling this function to clean up temporary files.
+     * Use "unlink(filename: $tempZip);" or downloadZip() after this to clean up.
      *
      * @param string $inputFolder The (tmp) location used as input for creating the ZIP archive.
-     * @param string $tempZip     The tmp location where the ZIP will be saved. Please start this with '/tmp/..' and end with '../zipName.zip'.
+     * @param string $tempZip     The tmp location where the ZIP will be saved (e.g. /tmp/zipName.zip).
      *
      * @return string|null Returns null if created successfully and a string in case of an error.
      */
@@ -656,7 +664,7 @@ class FileService
      *                                 will be called at the end of this
      *                                 function.                    function.
      * @param string|null $inputFolder The tmp location used as input for creating the ZIP archive.
-     *                                 Will unlink all files in this folder and remove this folder at the end of this function.
+     *                                 Will unlink all files and remove folder at the end of this function.
      *
      * @return void
      */

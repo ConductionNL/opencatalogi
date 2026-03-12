@@ -308,7 +308,9 @@ class EventService
                     $objectSchemaInt   = (int) $objectSchema;
 
                     // Check if this catalog includes the object's register and schema.
-                    if (in_array($objectRegisterInt, $catalogRegisters) === true && in_array($objectSchemaInt, $catalogSchemas) === true) {
+                    $inRegister = in_array($objectRegisterInt, $catalogRegisters) === true;
+                    $inSchema   = in_array($objectSchemaInt, $catalogSchemas) === true;
+                    if ($inRegister === true && $inSchema === true) {
                         return true;
                     }
                 }
@@ -457,7 +459,8 @@ class EventService
                             $result['errors'][] = "Failed to create share link for file {$fileName}";
                         }
                     } catch (\Exception $shareException) {
-                        $result['errors'][] = "Exception creating share link for file {$fileName}: ".$shareException->getMessage();
+                        $msg = $shareException->getMessage();
+                        $result['errors'][] = "Exception creating share link for file {$fileName}: ".$msg;
                     }
                 } catch (\Exception $e) {
                     $fileName           = ($file['name'] ?? 'unknown');
