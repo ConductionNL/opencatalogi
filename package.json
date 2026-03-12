@@ -89,8 +89,7 @@
     "ts-jest": "^29.2.4",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.4",
-    "vue-eslint-parser": "^10.2.0",
-    "vue-jest": "^3.0.7"
+    "vue-eslint-parser": "^10.2.0"
   },
   "overrides": {
     "braces": "^3.0.3",
