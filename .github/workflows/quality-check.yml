@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 name: Code Quality
 
 on:
@@ -5,6 +6,15 @@ on:
     branches: [main, development, feature/**, bugfix/**, hotfix/**]
   pull_request:
     branches: [main, beta, development]
+=======
+name: Quality
+
+on:
+  push:
+    branches: [main, master, development, dev, feature/**, bugfix/**, hotfix/**]
+  pull_request:
+    branches: [main, master, development, dev]
+>>>>>>> Stashed changes
 
 jobs:
   quality:
@@ -12,8 +22,20 @@ jobs:
     with:
       app-name: opencatalogi
       php-version: "8.3"
+<<<<<<< Updated upstream
       enable-psalm: false
       enable-phpstan: false
       enable-phpmetrics: true
       enable-frontend: true
       enable-eslint: true
+=======
+      nextcloud-ref: stable32
+      enable-psalm: true
+      enable-phpstan: true
+      enable-phpmetrics: true
+      enable-frontend: true
+      enable-eslint: true
+      enable-phpunit: true
+      enable-newman: true
+      newman-collection-path: "docs/assets"
+>>>>>>> Stashed changes
