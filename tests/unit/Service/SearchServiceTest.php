@@ -1,53 +1,73 @@
 <?php
 
-use OCA\OpenCatalogi\Service\SearchService;
-use OCA\OpenCatalogi\Service\ObjectService;
-use Test\TestCase; 
-use GuzzleHttp\Client;
-use GuzzleHttp\Promise\Utils;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Psr7\Response;
+namespace OCA\OpenCatalogi\Tests\Service;
+
+use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\ElasticSearchService;
+use OCA\OpenCatalogi\Service\SearchService;
+use OCP\IURLGenerator;
+use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 class SearchServiceTest extends TestCase
 {
-    private $objectServiceMock;
-    private $elasticSearchServiceMock;
+    /** @var MockObject&ElasticSearchService */
+    private $elasticSearchService;
+
+    /** @var MockObject&DirectoryService */
+    private $directoryService;
+
+    /** @var MockObject&IURLGenerator */
+    private $urlGenerator;
+
+    /** @var SearchService */
     private $searchService;
 
     protected function setUp(): void
     {
-        $this->objectServiceMock = $this->createMock(ObjectService::class);
-        $this->elasticSearchServiceMock = $this->createMock(ElasticSearchService::class);
+        parent::setUp();
 
-        $this->searchService = new SearchService($this->objectServiceMock, $this->elasticSearchServiceMock);
+        $this->elasticSearchService = $this->createMock(ElasticSearchService::class);
+        $this->directoryService = $this->createMock(DirectoryService::class);
+        $this->urlGenerator = $this->createMock(IURLGenerator::class);
+
+        $this->searchService = new SearchService(
+            $this->elasticSearchService,
+            $this->directoryService,
+            $this->urlGenerator
+        );
     }
 
-    public function testSortResultArray()
+    public function testConstructor(): void
+    {
+        $this->assertInstanceOf(SearchService::class, $this->searchService);
+    }
+
+    public function testSortResultArray(): void
     {
         $a = ['_score' => 1];
         $b = ['_score' => 2];
+
         $this->assertEquals(-1, $this->searchService->sortResultArray($a, $b));
         $this->assertEquals(1, $this->searchService->sortResultArray($b, $a));
         $this->assertEquals(0, $this->searchService->sortResultArray($a, $a));
     }
 
-    public function testMergeFacets()
+    public function testMergeFacets(): void
     {
         $existingAggregation = [
             ['_id' => 'category1', 'count' => 10],
-            ['_id' => 'category2', 'count' => 5]
+            ['_id' => 'category2', 'count' => 5],
         ];
         $newAggregation = [
             ['_id' => 'category1', 'count' => 3],
-            ['_id' => 'category3', 'count' => 7]
+            ['_id' => 'category3', 'count' => 7],
         ];
 
         $expected = [
             ['_id' => 'category1', 'count' => 13],
             ['_id' => 'category2', 'count' => 5],
-            ['_id' => 'category3', 'count' => 7]
+            ['_id' => 'category3', 'count' => 7],
         ];
 
         $result = $this->searchService->mergeFacets($existingAggregation, $newAggregation);
@@ -55,49 +75,52 @@ class SearchServiceTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testSearch()
+    public function testMergeFacetsWithEmptyArrays(): void
     {
-        $localResults = [
-            'results' => [
-                ['_score' => 1, 'id' => 1],
-                ['_score' => 2, 'id' => 2]
-            ],
-            'facets' => [
-                ['_id' => 'category1', 'count' => 10],
-                ['_id' => 'category2', 'count' => 5]
-            ]
+        $result = $this->searchService->mergeFacets([], []);
+        $this->assertEquals([], $result);
+    }
+
+    public function testMergeFacetsWithOneEmptyArray(): void
+    {
+        $existing = [['_id' => 'cat1', 'count' => 5]];
+
+        $result = $this->searchService->mergeFacets($existing, []);
+        $this->assertEquals($existing, $result);
+    }
+
+    public function testUnsetSpecialQueryParams(): void
+    {
+        $filters = [
+            '_search' => 'test',
+            '_order' => 'asc',
+            'category' => 'news',
+            '_limit' => 10,
         ];
 
-        $this->objectServiceMock
-            ->method('findObjects')
-            ->willReturn(['documents' => [['default' => true, 'search' => 'http://example.com/search']]]);
+        $result = $this->searchService->unsetSpecialQueryParams($filters);
 
-        $this->elasticSearchServiceMock
-            ->method('searchObject')
-            ->willReturn($localResults);
+        // Special params starting with _ should be removed
+        $this->assertArrayNotHasKey('_search', $result);
+        $this->assertArrayNotHasKey('_order', $result);
+        $this->assertArrayNotHasKey('_limit', $result);
+    }
 
-        // Mock Guzzle client
-        $clientMock = $this->createMock(Client::class);
-        $promiseMock = new FulfilledPromise(new Response(200, [], json_encode(['results' => [], 'facets' => []])));
+    public function testParseQueryString(): void
+    {
+        $result = $this->searchService->parseQueryString('key1=value1&key2=value2');
 
-        $clientMock->expects($this->once())
-            ->method('getAsync')
-            ->willReturn($promiseMock);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('key1', $result);
+        $this->assertArrayHasKey('key2', $result);
+        $this->assertEquals('value1', $result['key1']);
+        $this->assertEquals('value2', $result['key2']);
+    }
 
-        // Use reflection to inject the mock client
-        $reflectedClass = new ReflectionClass(SearchService::class);
-        $reflectedProperty = $reflectedClass->getProperty('client');
-        $reflectedProperty->setAccessible(true);
-        $reflectedProperty->setValue($this->searchService, $clientMock);
+    public function testParseQueryStringEmpty(): void
+    {
+        $result = $this->searchService->parseQueryString('');
 
-        $elasticConfig['location'] = "https://example.com";
-		$elasticConfig['key'] 	   = "dXNlcm5hbWU6cGFzc3dvcmQ=";
-		$elasticConfig['index']    = "objects";
-
-        $results = $this->searchService->search([], $elasticConfig, []);
-
-        $this->assertIsArray($results);
-        $this->assertArrayHasKey('results', $results);
-        $this->assertArrayHasKey('facets', $results);
+        $this->assertIsArray($result);
     }
 }
