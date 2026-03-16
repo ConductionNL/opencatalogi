@@ -16,6 +16,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\AppInfo;
 
+use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -73,6 +74,10 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(ObjectCreatedEvent::class, CatalogCacheEventListener::class);
         $context->registerEventListener(ObjectUpdatedEvent::class, CatalogCacheEventListener::class);
         $context->registerEventListener(ObjectDeletedEvent::class, CatalogCacheEventListener::class);
+
+        // Register catalog rewrite event listeners.
+        $context->registerEventListener(ObjectCreatedEvent::class, CatalogSchemaEventListener::class);
+        $context->registerEventListener(ObjectUpdatedEvent::class, CatalogSchemaEventListener::class);
 
         // Register tool registration listener for OpenRegister agents.
         $context->registerEventListener(ToolRegistrationEvent::class, ToolRegistrationListener::class);
