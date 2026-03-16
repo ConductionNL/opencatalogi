@@ -153,7 +153,6 @@ class SitemapService
             query: $searchQuery,
             _rbac: false,
             _multitenancy: false,
-            published: false,
             deleted: false
         );
 
@@ -195,7 +194,6 @@ class SitemapService
                 query: $searchQuery,
                 _rbac: false,
                 _multitenancy: false,
-                published: false,
                 deleted: false
             );
 
@@ -262,7 +260,6 @@ class SitemapService
             query: $searchQuery,
             _rbac: false,
             _multitenancy: false,
-            published: false,
             deleted: false
         )['results'] ?? []);
 
@@ -370,7 +367,6 @@ class SitemapService
             query: $searchQuery,
             _rbac: false,
             _multitenancy: false,
-            published: false,
             deleted: false
         )['results'][0] ?? []);
 

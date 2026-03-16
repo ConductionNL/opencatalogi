@@ -377,8 +377,7 @@ class PublicationsController extends Controller
             $result = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
                 _rbac: true,
-                _multitenancy: false,
-                published: false
+                _multitenancy: false
             );
 
             // Strip empty values from results unless _empty=true is set.

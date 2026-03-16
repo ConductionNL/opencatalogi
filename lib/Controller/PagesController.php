@@ -172,7 +172,7 @@ class PagesController extends Controller
 
         // Use searchObjectsPaginated for better performance and pagination support
         // Set rbac=false, multi=false, published=true for public page access
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         // Add CORS headers for public API access
         $response = new JSONResponse($result);
@@ -223,7 +223,7 @@ class PagesController extends Controller
 
         // Use searchObjectsPaginated for better performance
         // Set rbac=false, multi=false, published=false (schema authorization handles access)
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);
