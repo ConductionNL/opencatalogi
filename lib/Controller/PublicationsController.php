@@ -863,7 +863,7 @@ class PublicationsController extends Controller
             $result = $objectService->getObjectUses(
                 objectId: $id,
                 query: $queryParams,
-                rbac: true,
+                _rbac: true,
                 _multitenancy: true
             );
 
@@ -921,7 +921,7 @@ class PublicationsController extends Controller
             $result = $objectService->getObjectUsedBy(
                 objectId: $id,
                 query: $queryParams,
-                rbac: true,
+                _rbac: true,
                 _multitenancy: true
             );
 
