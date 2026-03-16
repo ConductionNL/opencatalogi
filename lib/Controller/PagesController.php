@@ -171,8 +171,8 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support
-        // Set rbac=false, multi=false, published=true for public page access
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+        // Set rbac=false, multi=false for public page access
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         // Build paginated response structure
         /*
@@ -255,8 +255,8 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance
-        // Set rbac=false, multi=false, published=false (schema authorization handles access)
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+        // Set rbac=false, multi=false (schema authorization handles access)
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         if (empty($result['results'])) {
             $response = new JSONResponse(['error' => 'Page not found'], 404);

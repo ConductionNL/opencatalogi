@@ -169,8 +169,8 @@ class MenusController extends Controller
         $searchQuery['_register'] = !empty($menuConfig['register']) ? $menuConfig['register'] : '1';
 
         // Use searchObjectsPaginated for better performance and pagination support.
-        // Set rbac=false, multi=false, published=false to get all menus regardless of published status.
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+        // Set rbac=false, multi=false to get all menus regardless of published status.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         // Build paginated response structure
         /*
@@ -237,7 +237,7 @@ class MenusController extends Controller
             '_limit'  => 1,
             '_source' => 'database',
         ];
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false, published: false);
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         if (empty($result['results'])) {
             return new JSONResponse(['error' => 'Menu not found'], 404);

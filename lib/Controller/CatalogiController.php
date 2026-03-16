@@ -175,7 +175,6 @@ class CatalogiController extends Controller
             query: $searchQuery,
             _rbac: false,
             _multitenancy: false,
-            published: false,
             deleted: false
         );
 
