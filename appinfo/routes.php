@@ -88,6 +88,10 @@ return [
 		['name' => 'listings#show', 'url' => '/api/listings/{id}', 'verb' => 'GET'],
 		['name' => 'listings#update', 'url' => '/api/listings/{id}', 'verb' => 'PUT'],
 		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
+		// Prometheus metrics endpoint (specific route - must be before wildcard catalog routes).
+		['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+		// Health check endpoint (specific route - must be before wildcard catalog routes).
+		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		// Federation (specific route - must be before wildcard catalog routes)
@@ -117,5 +121,7 @@ return [
 		['name' => 'ui#pages', 'url' => '/pages', 'verb' => 'GET'],
 		['name' => 'ui#menus', 'url' => '/menus', 'verb' => 'GET'],
 		['name' => 'ui#directory', 'url' => '/directory', 'verb' => 'GET'],
+		// SPA catch-all — serves the Vue app for any frontend route (history mode routing)
+		['name' => 'dashboard#page', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
 ];
