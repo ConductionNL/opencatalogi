@@ -1,4 +1,16 @@
 <?php
+/**
+ * Sitemap controller for OpenCatalogi.
+ *
+ * Generates XML sitemaps for catalogs and categories.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ */
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -21,8 +33,6 @@ use OCA\OpenCatalogi\Service\SitemapService;
  */
 class SitemapController extends Controller
 {
-
-
     /**
      * SitemapController constructor.
      *
@@ -35,12 +45,18 @@ class SitemapController extends Controller
         IRequest $request,
         private readonly SitemapService $sitemapService,
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
 
-
     /**
+     * Build a sitemap index for the given catalog and category.
+     *
+     * @param string $catalogSlug  The catalog slug.
+     * @param string $categoryCode The category code.
+     *
+     * @return XMLResponse The XML sitemap index response.
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
@@ -51,8 +67,14 @@ class SitemapController extends Controller
 
     }//end index()
 
-
     /**
+     * Build a sitemap page for the given catalog and category.
+     *
+     * @param string $catalogSlug  The catalog slug.
+     * @param string $categoryCode The category code.
+     *
+     * @return XMLResponse The XML sitemap response.
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
@@ -63,6 +85,4 @@ class SitemapController extends Controller
         return $this->sitemapService->buildSitemap(catalogSlug: $catalogSlug, categoryCode: $categoryCode, page: $page);
 
     }//end sitemap()
-
-
 }//end class

@@ -34,8 +34,13 @@ use Symfony\Component\Uid\Uuid;
 
 class ElasticSearchService
 {
-
-
+    /**
+     * Get an Elasticsearch client instance.
+     *
+     * @param array $config The configuration for the client.
+     *
+     * @return Client The Elasticsearch client.
+     */
     private function getClient(array $config): Client
     {
         $uri    = $config['location'];
@@ -47,7 +52,6 @@ class ElasticSearchService
             ->build();
 
     }//end getClient()
-
 
     /**
      * Add an object to ElasticSearch
@@ -91,7 +95,14 @@ class ElasticSearchService
 
     }//end addObject()
 
-
+    /**
+     * Remove an object from Elasticsearch.
+     *
+     * @param string $id     The object ID to remove.
+     * @param array  $config The Elasticsearch configuration.
+     *
+     * @return array The result or exception details.
+     */
     public function removeObject(string $id, array $config): array
     {
         $client = $this->getClient(config: $config);
@@ -115,7 +126,15 @@ class ElasticSearchService
 
     }//end removeObject()
 
-
+    /**
+     * Update an object in Elasticsearch.
+     *
+     * @param string $id     The object ID to update.
+     * @param array  $object The updated object data.
+     * @param array  $config The Elasticsearch configuration.
+     *
+     * @return array The result or exception details.
+     */
     public function updateObject(string $id, array $object, array $config): array
     {
         $client = $this->getClient(config: $config);
@@ -144,7 +163,14 @@ class ElasticSearchService
 
     }//end updateObject()
 
-
+    /**
+     * Parse a single filter into an Elasticsearch query clause.
+     *
+     * @param string       $name   The field name.
+     * @param array|string $filter The filter value or configuration.
+     *
+     * @return array The parsed filter clause.
+     */
     public function parseFilter(string $name, array|string $filter): array
     {
 
@@ -154,28 +180,28 @@ class ElasticSearchService
 
         foreach ($filter as $key => $value) {
             switch ($key) {
-            case 'regexp':
-            case 'like':
-                if (preg_match("/^\/.+\/[a-z]*$/i", $value) !== false) {
-                    return ['regexp' => [$name => strtolower($value)]];
-                } else {
-                    return ['match' => [$name => $value]];
-                }
+                case 'regexp':
+                case 'like':
+                    if (preg_match("/^\/.+\/[a-z]*$/i", $value) !== false) {
+                        return ['regexp' => [$name => strtolower($value)]];
+                    } else {
+                        return ['match' => [$name => $value]];
+                    }
 
-            case '>=':
-            case 'after':
-                return ['range' => [$key => ['gte' => $value]]];
-            case '>':
-            case 'strictly_after':
-                return ['range' => [$key => ['gt' => $value]]];
-            case '<=':
-            case 'before':
-                return ['range' => [$key => ['lte' => $value]]];
-            case '<':
-            case 'strictly_before':
-                return ['range' => [$key => ['lt' => $value]]];
-            default:
-                return ['match' => [$name => $value]];
+                case '>=':
+                case 'after':
+                    return ['range' => [$key => ['gte' => $value]]];
+                case '>':
+                case 'strictly_after':
+                    return ['range' => [$key => ['gt' => $value]]];
+                case '<=':
+                case 'before':
+                    return ['range' => [$key => ['lte' => $value]]];
+                case '<':
+                case 'strictly_before':
+                    return ['range' => [$key => ['lt' => $value]]];
+                default:
+                    return ['match' => [$name => $value]];
             }//end switch
         }//end foreach
 
@@ -183,7 +209,13 @@ class ElasticSearchService
 
     }//end parseFilter()
 
-
+    /**
+     * Parse all filters into an Elasticsearch query body.
+     *
+     * @param array $filters The filters to parse.
+     *
+     * @return array The parsed query body.
+     */
     public function parseFilters(array $filters): array
     {
         $body = [
@@ -201,7 +233,7 @@ class ElasticSearchService
         if (isset($filters['_queries']) === true) {
             foreach ($filters['_queries'] as $query) {
                 $body['runtime_mappings'][$query] = ['type' => 'keyword'];
-                $body['aggs'][$query]             = ['terms' => ['field' => $query]];
+                $body['aggs'][$query] = ['terms' => ['field' => $query]];
             }
         }
 
@@ -241,14 +273,20 @@ class ElasticSearchService
         unset($filters['_search'], $filters['_queries'], $filters['_catalogi']);
 
         foreach ($filters as $name => $filter) {
-            $body['query']['bool']['must'][] = $this->parseFilter($name, $filter);
+            $body['query']['bool']['must'][] = $this->parseFilter(name: $name, filter: $filter);
         }
 
         return $body;
 
     }//end parseFilters()
 
-
+    /**
+     * Format a single search hit result.
+     *
+     * @param array $hit The raw hit from Elasticsearch.
+     *
+     * @return array The formatted result.
+     */
     public function formatResults(array $hit): array
     {
         $source = $hit['_source'];
@@ -259,7 +297,6 @@ class ElasticSearchService
         return $hit;
 
     }//end formatResults()
-
 
     /**
      * Rename the items in an aggregation bucket according to the response standard for aggregations.
@@ -276,7 +313,6 @@ class ElasticSearchService
         ];
 
     }//end renameBucketItems()
-
 
     /**
      * Map aggregation results to comply to the existing standard for aggregation results.
@@ -295,8 +331,16 @@ class ElasticSearchService
 
     }//end mapAggregationResults()
 
-
-    public function searchObject(array $filters, array $config, int &$totalResults = 0): array
+    /**
+     * Search for objects in Elasticsearch.
+     *
+     * @param array   $filters      The search filters.
+     * @param array   $config       The Elasticsearch configuration.
+     * @param integer $totalResults Reference to store total result count.
+     *
+     * @return array The search results with facets.
+     */
+    public function searchObject(array $filters, array $config, int &$totalResults=0): array
     {
         $body = $this->parseFilters(filters: $filters);
 
@@ -320,6 +364,4 @@ class ElasticSearchService
         return $return;
 
     }//end searchObject()
-
-
 }//end class

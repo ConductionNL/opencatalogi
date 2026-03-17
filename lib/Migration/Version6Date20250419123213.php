@@ -1,11 +1,16 @@
 <?php
+/**
+ * Migration to clean up old tables.
+ *
+ * @category Migration
+ * @package  OCA\OpenCatalogi\Migration
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ */
 
 declare(strict_types=1);
-
-/*
- * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
- */
 
 namespace OCA\OpenCatalogi\Migration;
 
@@ -25,30 +30,32 @@ use OCP\Migration\SimpleMigrationStep;
  */
 class Version6Date20250419123213 extends SimpleMigrationStep
 {
-
-
     /**
-     * @param IOutput                   $output
-     * @param Closure(): ISchemaWrapper $schemaClosure
-     * @param array                     $options
+     * Pre-schema change handler.
+     *
+     * @param IOutput                   $output        The output handler.
+     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                     $options       Migration options.
+     *
+     * @return void
      */
     public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
     {
 
     }//end preSchemaChange()
 
-
     /**
-     * @param  IOutput                   $output
-     * @param  Closure(): ISchemaWrapper $schemaClosure
-     * @param  array                     $options
-     * @return null|ISchemaWrapper
+     * Apply schema changes.
+     *
+     * @param IOutput                   $output        The output handler.
+     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                     $options       Migration options.
+     *
+     * @return null|ISchemaWrapper The updated schema or null.
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {
-        /*
-         * @var ISchemaWrapper $schema
-         */
+        // Get the schema from the closure.
         $schema = $schemaClosure();
 
         // Remove old tables that are no longer used.
@@ -64,7 +71,7 @@ class Version6Date20250419123213 extends SimpleMigrationStep
         ];
 
         foreach ($tablesToRemove as $tableName) {
-            if ($schema->hasTable($tableName)) {
+            if ($schema->hasTable($tableName) === true) {
                 $schema->dropTable($tableName);
             }
         }
@@ -73,16 +80,17 @@ class Version6Date20250419123213 extends SimpleMigrationStep
 
     }//end changeSchema()
 
-
     /**
-     * @param IOutput                   $output
-     * @param Closure(): ISchemaWrapper $schemaClosure
-     * @param array                     $options
+     * Post-schema change handler.
+     *
+     * @param IOutput                   $output        The output handler.
+     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                     $options       Migration options.
+     *
+     * @return void
      */
     public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
     {
 
     }//end postSchemaChange()
-
-
 }//end class

@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class Broadcast extends TimedJob
 {
-
-
     /**
      * Constructor for Broadcast cron job
      *
@@ -51,19 +49,18 @@ class Broadcast extends TimedJob
         private readonly BroadcastService $broadcastService,
         private readonly LoggerInterface $logger
     ) {
-        parent::__construct($time);
+        parent::__construct(time: $time);
 
-        // Set interval to 4 hours (4 * 60 * 60 = 14400 seconds)
-        $this->setInterval(14400);
+        // Set interval to 4 hours (4 * 60 * 60 = 14400 seconds).
+        $this->setInterval(interval: 14400);
 
-        // Set job to run during low-load times to minimize system impact
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+        // Set job to run during low-load times to minimize system impact.
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
-        // Prevent parallel runs to avoid duplicate broadcasts
-        $this->setAllowParallelRuns(false);
+        // Prevent parallel runs to avoid duplicate broadcasts.
+        $this->setAllowParallelRuns(allow: false);
 
     }//end __construct()
-
 
     /**
      * Execute the broadcast job
@@ -80,17 +77,17 @@ class Broadcast extends TimedJob
     protected function run($arguments): void
     {
         try {
-            // Log the start of the broadcast process
+            // Log the start of the broadcast process.
             $this->logger->info('Starting scheduled broadcast of OpenCatalogi directory');
 
-            // Perform the broadcast to all known directories
-            // Passing null means broadcast to all known instances
+            // Perform the broadcast to all known directories.
+            // Passing null means broadcast to all known instances.
             $this->broadcastService->broadcast(null);
 
-            // Log successful completion
+            // Log successful completion.
             $this->logger->info('Successfully completed scheduled broadcast of OpenCatalogi directory');
         } catch (\Exception $e) {
-            // Log the error for debugging purposes
+            // Log the error for debugging purposes.
             $this->logger->error(
                 'Failed to complete scheduled broadcast: '.$e->getMessage(),
                 [
@@ -99,11 +96,9 @@ class Broadcast extends TimedJob
                 ]
             );
 
-            // Re-throw the exception to mark the job as failed
+            // Re-throw the exception to mark the job as failed.
             throw $e;
         }//end try
 
     }//end run()
-
-
 }//end class

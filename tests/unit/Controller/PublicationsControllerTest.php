@@ -2,29 +2,48 @@
 
 namespace OCA\OpenCatalogi\Tests\Controller;
 
-use Test\TestCase; 
 use OCA\OpenCatalogi\Controller\PublicationsController;
-use OCA\OpenCatalogi\Service\ObjectService;
-use OCA\OpenCatalogi\Service\ElasticSearchService;
-use OCP\AppFramework\Http\TemplateResponse;
+use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
+use OCP\App\IAppManager;
+use OCP\IDBConnection;
+use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 class PublicationsControllerTest extends TestCase
 {
-    /** @var MockObject|IRequest */
+    /** @var MockObject&IRequest */
     private $request;
 
-    /** @var MockObject|IAppConfig */
+    /** @var MockObject&PublicationService */
+    private $publicationService;
+
+    /** @var MockObject&DirectoryService */
+    private $directoryService;
+
+    /** @var MockObject&CatalogiService */
+    private $catalogiService;
+
+    /** @var MockObject&IAppConfig */
     private $config;
 
-    /** @var MockObject|ObjectService */
-    private $objectService;
+    /** @var MockObject&ContainerInterface */
+    private $container;
 
-    /** @var MockObject|ElasticSearchService */
-    private $elasticSearchService;
+    /** @var MockObject&IAppManager */
+    private $appManager;
+
+    /** @var MockObject&LoggerInterface */
+    private $logger;
+
+    /** @var MockObject&IDBConnection */
+    private $db;
 
     /** @var PublicationsController */
     private $controller;
@@ -34,210 +53,140 @@ class PublicationsControllerTest extends TestCase
         parent::setUp();
 
         $this->request = $this->createMock(IRequest::class);
+        $this->publicationService = $this->createMock(PublicationService::class);
+        $this->directoryService = $this->createMock(DirectoryService::class);
+        $this->catalogiService = $this->createMock(CatalogiService::class);
         $this->config = $this->createMock(IAppConfig::class);
-        $this->objectService = $this->createMock(ObjectService::class);
-        $this->elasticSearchService = $this->createMock(ElasticSearchService::class);
+        $this->container = $this->createMock(ContainerInterface::class);
+        $this->appManager = $this->createMock(IAppManager::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->db = $this->createMock(IDBConnection::class);
 
         $this->controller = new PublicationsController(
             'opencatalogi',
             $this->request,
-            $this->config
+            $this->publicationService,
+            $this->directoryService,
+            $this->catalogiService,
+            $this->config,
+            $this->container,
+            $this->appManager,
+            $this->logger,
+            $this->db
         );
     }
 
-    public function testPage()
+    public function testConstructor(): void
     {
-        $response = $this->controller->page(null);
-        $this->assertInstanceOf(TemplateResponse::class, $response);
+        $this->assertInstanceOf(PublicationsController::class, $this->controller);
     }
 
-    public function testPageWithError()
+    public function testPreflightedCorsWithOrigin(): void
     {
-        $this->controller = $this->getMockBuilder(PublicationsController::class)
-            ->setConstructorArgs(['opencatalogi', $this->request, $this->config])
-            ->onlyMethods(['page'])
-            ->getMock();
+        $this->request->server = ['HTTP_ORIGIN' => 'https://example.com'];
 
-        $this->controller->method('page')
-            ->will($this->throwException(new \Exception('Template load error')));
+        $response = $this->controller->preflightedCors();
 
-        try {
-            $this->controller->page(null);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Template load error', $e->getMessage());
-        }
+        $headers = $response->getHeaders();
+        $this->assertEquals('https://example.com', $headers['Access-Control-Allow-Origin']);
+        $this->assertStringContainsString('PUT', $headers['Access-Control-Allow-Methods']);
     }
 
-    public function testIndex()
+    public function testPreflightedCorsWithoutOrigin(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('findObjects')->willReturn(['documents' => []]);
+        $this->request->server = [];
 
-        $response = $this->controller->index($this->objectService);
+        $response = $this->controller->preflightedCors();
+
+        $headers = $response->getHeaders();
+        $this->assertEquals('*', $headers['Access-Control-Allow-Origin']);
+    }
+
+    public function testIndex(): void
+    {
+        $expectedResponse = new JSONResponse([
+            'results' => [['id' => '1', 'title' => 'Publication 1']],
+            'total' => 1,
+        ]);
+
+        $this->publicationService->method('index')
+            ->with('test-catalog')
+            ->willReturn($expectedResponse);
+
+        $this->request->server = [];
+
+        $response = $this->controller->index('test-catalog');
+
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(['results' => []], $response->getData());
     }
 
-    public function testIndexWithError()
+    public function testShow(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('findObjects')->willThrowException(new \Exception('Database error'));
+        $expectedResponse = new JSONResponse(['id' => 'pub-1', 'title' => 'Test Publication']);
 
-        try {
-            $this->controller->index($this->objectService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Database error', $e->getMessage());
-        }
-    }
+        $this->publicationService->method('show')
+            ->willReturn($expectedResponse);
 
-    public function testShow()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('findObject')->willReturn(['key' => 'value']);
+        $this->request->server = [];
 
-        $response = $this->controller->show('some-id', $this->objectService);
+        $response = $this->controller->show('test-catalog', 'pub-1');
+
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(['key' => 'value'], $response->getData());
     }
 
-    public function testShowWithError()
+    public function testAttachments(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('findObject')->willThrowException(new \Exception('Object not found'));
+        $expectedResponse = new JSONResponse(['results' => []]);
 
-        try {
-            $this->controller->show('non-existent-id', $this->objectService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Object not found', $e->getMessage());
-        }
-    }
+        $this->publicationService->method('attachments')
+            ->willReturn($expectedResponse);
 
-    public function testCreate()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('saveObject')->willReturn(['id' => 'some-id']);
-        $this->elasticSearchService->method('addObject')->willReturn(['id' => 'some-id']);
+        $this->request->server = [];
 
-        $this->request->method('getParams')->willReturn(['_schema' => 'publication']);
+        $response = $this->controller->attachments('test-catalog', 'pub-1');
 
-        $response = $this->controller->create($this->objectService, $this->elasticSearchService);
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(['id' => 'some-id'], $response->getData());
     }
 
-    public function testCreateWithError()
+    public function testDownload(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('saveObject')->willThrowException(new \Exception('Save failed'));
+        $expectedResponse = new JSONResponse(['results' => []]);
 
-        $this->request->method('getParams')->willReturn(['_schema' => 'publication']);
+        $this->publicationService->method('download')
+            ->willReturn($expectedResponse);
 
-        try {
-            $this->controller->create($this->objectService, $this->elasticSearchService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Save failed', $e->getMessage());
-        }
-    }
+        $this->request->server = [];
 
-    public function testUpdate()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('updateObject')->willReturn(['id' => 'some-id']);
-        $this->elasticSearchService->method('updateObject')->willReturn(['id' => 'some-id']);
+        $response = $this->controller->download('test-catalog', 'pub-1');
 
-        $this->request->method('getParams')->willReturn(['_schema' => 'publication']);
-
-        $response = $this->controller->update('some-id', $this->objectService, $this->elasticSearchService);
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(['id' => 'some-id'], $response->getData());
     }
 
-    public function testUpdateWithError()
+    public function testUses(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('updateObject')->willThrowException(new \Exception('Update failed'));
+        $expectedResponse = new JSONResponse(['results' => []]);
 
-        $this->request->method('getParams')->willReturn(['_schema' => 'publication']);
+        $this->publicationService->method('uses')
+            ->willReturn($expectedResponse);
 
-        try {
-            $this->controller->update('some-id', $this->objectService, $this->elasticSearchService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Update failed', $e->getMessage());
-        }
-    }
+        $this->request->server = [];
 
-    public function testDestroy()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('deleteObject')->willReturn([]);
-        $this->elasticSearchService->method('removeObject')->willReturn([]);
+        $response = $this->controller->uses('test-catalog', 'pub-1');
 
-        $response = $this->controller->destroy('some-id', $this->objectService, $this->elasticSearchService);
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals([], $response->getData());
     }
 
-    public function testDestroyWithError()
+    public function testUsed(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('deleteObject')->willThrowException(new \Exception('Delete failed'));
+        $expectedResponse = new JSONResponse(['results' => []]);
 
-        try {
-            $this->controller->destroy('some-id', $this->objectService, $this->elasticSearchService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Delete failed', $e->getMessage());
-        }
-    }
+        $this->publicationService->method('used')
+            ->willReturn($expectedResponse);
 
-    // Unhappy flow tests
+        $this->request->server = [];
 
-    public function testShowWithNonExistentId()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('findObject')->willReturn([]);
+        $response = $this->controller->used('test-catalog', 'pub-1');
 
-        $response = $this->controller->show('non-existent-id', $this->objectService);
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals([], $response->getData());
-    }
-
-    public function testCreateWithInvalidData()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('saveObject')->willReturn([]);
-
-        $this->request->method('getParams')->willReturn([]);
-
-        $response = $this->controller->create($this->objectService, $this->elasticSearchService);
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals([], $response->getData());
-    }
-
-    public function testUpdateWithNonExistentId()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('updateObject')->willReturn([]);
-
-        $this->request->method('getParams')->willReturn([]);
-
-        $response = $this->controller->update('non-existent-id', $this->objectService, $this->elasticSearchService);
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals([], $response->getData());
-    }
-
-    public function testDestroyWithNonExistentId()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->objectService->method('deleteObject')->willReturn([]);
-
-        $response = $this->controller->destroy('non-existent-id', $this->objectService, $this->elasticSearchService);
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals([], $response->getData());
     }
 }

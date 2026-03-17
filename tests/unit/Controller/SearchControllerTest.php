@@ -3,136 +3,136 @@
 namespace OCA\OpenCatalogi\Tests\Controller;
 
 use OCA\OpenCatalogi\Controller\SearchController;
-use OCA\OpenCatalogi\Service\SearchService;
+use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Http\TemplateResponse;
-use OCP\IAppConfig;
 use OCP\IRequest;
-use Test\TestCase;
+use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class SearchControllerTest extends TestCase
 {
-    private $appName = 'opencatalogi';
+    /** @var MockObject&IRequest */
     private $request;
-    private $config;
-    private $searchService;
+
+    /** @var MockObject&PublicationService */
+    private $publicationService;
+
+    /** @var SearchController */
     private $controller;
 
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->request = $this->createMock(IRequest::class);
-        $this->config = $this->createMock(IAppConfig::class);
-        $this->searchService = $this->createMock(SearchService::class);
+        $this->publicationService = $this->createMock(PublicationService::class);
 
         $this->controller = new SearchController(
-            $this->appName,
+            'opencatalogi',
             $this->request,
-            $this->config
+            $this->publicationService
         );
     }
 
-    public function testPage()
+    public function testConstructor(): void
     {
-        $response = $this->controller->page(null);
-        $this->assertInstanceOf(TemplateResponse::class, $response);
+        $this->assertInstanceOf(SearchController::class, $this->controller);
     }
 
-    public function testPageWithError()
+    public function testIndex(): void
     {
-        $this->controller = $this->getMockBuilder(SearchController::class)
-            ->setConstructorArgs([$this->appName, $this->request, $this->config])
-            ->onlyMethods(['page'])
-            ->getMock();
+        $expectedResponse = new JSONResponse([
+            'results' => [['id' => '1', 'title' => 'Test']],
+            'total' => 1,
+        ]);
 
-        $this->controller->method('page')
-            ->will($this->throwException(new \Exception('Template load error')));
+        $this->publicationService->method('index')
+            ->with(null)
+            ->willReturn($expectedResponse);
 
-        try {
-            $this->controller->page(null);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Template load error', $e->getMessage());
-        }
-    }
+        $response = $this->controller->index();
 
-    public function testIndex()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->request->method('getParams')->willReturn(['_route' => 'test', 'param1' => 'value1']);
-
-        $this->searchService->method('search')->willReturn(['results' => SearchController::TEST_ARRAY]);
-
-        $response = $this->controller->index($this->searchService);
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(['results' => SearchController::TEST_ARRAY], $response->getData());
+        $this->assertEquals(
+            ['results' => [['id' => '1', 'title' => 'Test']], 'total' => 1],
+            $response->getData()
+        );
     }
 
-    public function testIndexWithError()
+    public function testIndexWithCatalogId(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->request->method('getParams')->willReturn(['_route' => 'test', 'param1' => 'value1']);
+        $expectedResponse = new JSONResponse(['results' => [], 'total' => 0]);
 
-        $this->searchService->method('search')->willThrowException(new \Exception('Search error'));
+        $this->publicationService->method('index')
+            ->with('catalog-123')
+            ->willReturn($expectedResponse);
 
-        try {
-            $this->controller->index($this->searchService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Search error', $e->getMessage());
-        }
-    }
+        $response = $this->controller->index('catalog-123');
 
-    public function testIndexWithNoResults()
-    {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $this->request->method('getParams')->willReturn(['_route' => 'test', 'param1' => 'value1']);
-
-        $this->searchService->method('search')->willReturn(['results' => []]);
-
-        $response = $this->controller->index($this->searchService);
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(['results' => []], $response->getData());
     }
 
-    public function testShow()
+    public function testShow(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $id = 'd9e1467e-fc55-44c8-bf5c-bf139ac10eda';
+        $expectedResponse = new JSONResponse(['id' => 'pub-1', 'title' => 'Test Publication']);
 
-        $this->searchService->method('search')->willReturn(['results' => [SearchController::TEST_ARRAY[$id]]]);
+        $this->publicationService->method('show')
+            ->willReturn($expectedResponse);
 
-        $response = $this->controller->show($id, $this->searchService);
+        $response = $this->controller->show('pub-1');
+
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(SearchController::TEST_ARRAY[$id], $response->getData());
+        $this->assertEquals(
+            ['id' => 'pub-1', 'title' => 'Test Publication'],
+            $response->getData()
+        );
     }
 
-    public function testShowWithNonExistentId()
+    public function testAttachments(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $id = 'non-existent-id';
+        $expectedResponse = new JSONResponse(['results' => []]);
 
-        $this->searchService->method('search')->willReturn(['results' => []]);
+        $this->publicationService->method('attachments')
+            ->willReturn($expectedResponse);
 
-        $response = $this->controller->show($id, $this->searchService);
+        $response = $this->controller->attachments('pub-1');
+
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(['error' => ['code' => 404, 'message' => 'the requested resource could not be found']], $response->getData());
-        $this->assertEquals(404, $response->getStatus());
     }
 
-    public function testShowWithError()
+    public function testDownload(): void
     {
-        $this->config->method('getValueString')->willReturn('someValue');
-        $id = 'd9e1467e-fc55-44c8-bf5c-bf139ac10eda';
+        $expectedResponse = new JSONResponse(['url' => 'https://example.com/file.pdf']);
 
-        $this->searchService->method('search')->willThrowException(new \Exception('Search error'));
+        $this->publicationService->method('download')
+            ->willReturn($expectedResponse);
 
-        try {
-            $this->controller->show($id, $this->searchService);
-            $this->fail('Expected exception not thrown');
-        } catch (\Exception $e) {
-            $this->assertEquals('Search error', $e->getMessage());
-        }
+        $response = $this->controller->download('pub-1');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    public function testUses(): void
+    {
+        $expectedResponse = new JSONResponse(['results' => []]);
+
+        $this->publicationService->method('uses')
+            ->willReturn($expectedResponse);
+
+        $response = $this->controller->uses('pub-1');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    public function testUsed(): void
+    {
+        $expectedResponse = new JSONResponse(['results' => []]);
+
+        $this->publicationService->method('used')
+            ->willReturn($expectedResponse);
+
+        $response = $this->controller->used('pub-1');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
     }
 }
