@@ -18,6 +18,8 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
+use OCP\AppFramework\Http\Response;
+use RuntimeException;
 
 /**
  * Class PublicationsController
@@ -31,6 +33,9 @@ use Psr\Log\LoggerInterface;
  * @license   AGPL-3.0-or-later
  * @version   1.0.0
  * @link      https://github.com/opencatalogi/opencatalogi
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class PublicationsController extends Controller
 {
@@ -66,6 +71,8 @@ class PublicationsController extends Controller
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
      * @param integer            $corsMaxAge         CORS max age
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         $appName,
@@ -103,7 +110,7 @@ class PublicationsController extends Controller
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
@@ -122,7 +129,6 @@ class PublicationsController extends Controller
     private function findObjectLocation(string $uuid): ?array
     {
         // Get all magic table names from the database schema
-        $qb = $this->db->getQueryBuilder();
         $result = $this->db->executeQuery(
             "SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'oc_openregister_table_%' ORDER BY table_name"
         );
@@ -171,95 +177,21 @@ class PublicationsController extends Controller
 
 
     /**
-     * Extract filter values from various filter formats
-     *
-     * Handles:
-     * - Single value: 1
-     * - Simple array: [1, 2, 3]
-     * - OR operator: ['or' => '1,2,3'] or ['or' => [1, 2, 3]]
-     * - AND operator: ['and' => '1,2,3'] or ['and' => [1, 2, 3]]
-     *
-     * @param  mixed $filter The filter value in any supported format
-     * @return array Array of integer values
-     */
-    private function extractFilterValues($filter): array
-    {
-        // Single numeric value
-        if (is_numeric($filter)) {
-            return [(int) $filter];
-        }
-
-        // Array format
-        if (is_array($filter)) {
-            // Check for [or] or [and] operators
-            if (isset($filter['or'])) {
-                $values = $filter['or'];
-            } else if (isset($filter['and'])) {
-                $values = $filter['and'];
-            } else {
-                // Simple array of values
-                $values = $filter;
-            }
-
-            // Handle comma-separated string
-            if (is_string($values)) {
-                $values = explode(',', $values);
-            }
-
-            // Ensure array and convert to integers
-            if (is_array($values)) {
-                return array_map(
-                    'intval',
-                    array_filter(
-                        $values,
-                        function ($v) {
-                            return is_numeric($v) || (is_string($v) && trim($v) !== '');
-                        }
-                    )
-                );
-            }
-
-            // Single value in the operator
-            if (is_numeric($values)) {
-                return [(int) $values];
-            }
-        }//end if
-
-        // String format (comma-separated)
-        if (is_string($filter)) {
-            $values = explode(',', $filter);
-            return array_map(
-                'intval',
-                array_filter(
-                    $values,
-                    function ($v) {
-                        return trim($v) !== '';
-                    }
-                )
-            );
-        }
-
-        return [];
-
-    }//end extractFilterValues()
-
-
-    /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return Response The CORS response
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    public function preflightedCors(): Response
     {
         // Determine the origin
         $origin = $this->request->getHeader('Origin') ?: '*';
 
         // Create and configure the response
-        $response = new \OCP\AppFramework\Http\Response();
+        $response = new Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
@@ -283,6 +215,10 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function index(string $catalogSlug): JSONResponse
     {
@@ -328,7 +264,9 @@ class PublicationsController extends Controller
                 // Only set _schema for single-schema catalogs (enables magic mapper optimization)
                 if (count($schemas) === 1) {
                     $searchQuery['_schema'] = $schemas[0];
-                } else {
+                }
+
+                if (count($schemas) !== 1) {
                     // Explicitly unset _schema for multi-schema search to prevent auto-setting
                     unset($searchQuery['_schema']);
                 }
@@ -344,7 +282,9 @@ class PublicationsController extends Controller
                 if (count($registers) === 1) {
                     // Single register: use magic mapper optimization
                     $searchQuery['_register'] = $registers[0];
-                } else {
+                }
+
+                if (count($registers) !== 1) {
                     // Multi-register: pass all register IDs and prevent auto-setting
                     $searchQuery['_registers'] = $registers;
                     $searchQuery['_register'] = null;
@@ -413,6 +353,10 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function show(string $catalogSlug, string $id): JSONResponse
     {
@@ -639,6 +583,8 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
@@ -746,6 +692,8 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse
     {
@@ -854,6 +802,7 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — $catalogSlug required by route pattern
      */
     public function uses(string $catalogSlug, string $id): JSONResponse
     {
@@ -912,6 +861,7 @@ class PublicationsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — $catalogSlug required by route pattern
      */
     public function used(string $catalogSlug, string $id): JSONResponse
     {

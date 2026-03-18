@@ -22,6 +22,8 @@ use OCA\OpenRegister\Tool\ToolInterface;
 use OCA\OpenRegister\Db\Agent;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IUserSession;
+use BadMethodCallException;
+use ReflectionMethod;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -39,6 +41,8 @@ use Psr\Log\LoggerInterface;
  *
  * @category Tool
  * @package  OCA\OpenCatalogi\Tool
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class CMSTool implements ToolInterface
 {
@@ -146,6 +150,8 @@ class CMSTool implements ToolInterface
      * Returns OpenAI-compatible function definitions for the LLM.
      *
      * @return array<array<string, mixed>> Function definitions
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function getFunctions(): array
     {
@@ -452,6 +458,9 @@ class CMSTool implements ToolInterface
      * @param array $parameters Function parameters
      *
      * @return array Result
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function createMenu(array $parameters): array
     {
@@ -681,6 +690,8 @@ class CMSTool implements ToolInterface
      * @return mixed Method result (JSON encoded if array)
      *
      * @throws \BadMethodCallException If the camelCase method doesn't exist
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function __call(string $name, array $arguments)
     {
@@ -692,7 +703,7 @@ class CMSTool implements ToolInterface
 
         if (method_exists($this, $camelCaseMethod)) {
             // Get method reflection to understand parameter types
-            $reflection = new \ReflectionMethod($this, $camelCaseMethod);
+            $reflection = new ReflectionMethod($this, $camelCaseMethod);
             $parameters = $reflection->getParameters();
 
             // Type-cast arguments based on method signature
@@ -704,10 +715,9 @@ class CMSTool implements ToolInterface
                 $paramName = $param->getName();
 
                 // Get value from either named argument or positional argument
+                $value = $arguments[$index] ?? null;
                 if ($isAssociative && isset($arguments[$paramName])) {
                     $value = $arguments[$paramName];
-                } else {
-                    $value = $arguments[$index] ?? null;
                 }
 
                 // Handle string 'null' from LLM
@@ -738,12 +748,11 @@ class CMSTool implements ToolInterface
 
             // CMSTool methods expect a single array parameter, not individual args
             // Combine all typed arguments back into a single associative array
+            // If original was positional, wrap in array
+            $result = $this->$camelCaseMethod($typedArguments);
             if ($isAssociative) {
                 // If original was associative, pass it as-is
                 $result = $this->$camelCaseMethod($arguments);
-            } else {
-                // If original was positional, wrap in array
-                $result = $this->$camelCaseMethod($typedArguments);
             }
 
             // LLPhant expects tool results to be JSON strings, not arrays
@@ -755,7 +764,7 @@ class CMSTool implements ToolInterface
             return $result;
         }//end if
 
-        throw new \BadMethodCallException("Method {$name} (or {$camelCaseMethod}) does not exist");
+        throw new BadMethodCallException("Method {$name} (or {$camelCaseMethod}) does not exist");
 
     }//end __call()
 

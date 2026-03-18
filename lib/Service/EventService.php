@@ -27,12 +27,15 @@ use Psr\Container\NotFoundExceptionInterface;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Log\LoggerInterface;
 use Exception;
+use RuntimeException;
 
 /**
  * Service for handling events and auto-publishing logic.
  *
  * Provides functionality for processing object creation and update events,
  * implementing auto-publishing features based on configuration settings.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class EventService
 {
@@ -81,7 +84,7 @@ class EventService
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister object service is not available.');
+        throw new RuntimeException('OpenRegister object service is not available.');
 
     }//end getObjectService()
 
@@ -98,7 +101,7 @@ class EventService
             return $this->container->get('OCA\OpenRegister\Service\FileService');
         }
 
-        throw new \RuntimeException('OpenRegister file service is not available.');
+        throw new RuntimeException('OpenRegister file service is not available.');
 
     }//end getFileService()
 
@@ -118,7 +121,7 @@ class EventService
             return $this->container->get('OCA\OpenRegister\Db\FileMapper');
         }
 
-        throw new \RuntimeException('OpenRegister FileMapper is not available.');
+        throw new RuntimeException('OpenRegister FileMapper is not available.');
 
     }//end getFileMapper()
 
@@ -133,6 +136,8 @@ class EventService
      *
      * @return array Results of the event processing including any auto-publishing actions.
      * @throws \RuntimeException If event processing fails.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function handleObjectCreateEvents(array $objects): array
     {
@@ -166,7 +171,9 @@ class EventService
                             if ($publishResult['success'] === true) {
                                 $objectResult['actions'][] = 'object_published';
                                 $results['published']++;
-                            } else {
+                            }
+
+                            if ($publishResult['success'] !== true) {
                                 $objectResult['errors'][] = 'Failed to auto-publish object: '.$publishResult['error'];
                             }
                         }
@@ -194,7 +201,7 @@ class EventService
 
             return $results;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to handle object create events: '.$e->getMessage());
+            throw new RuntimeException('Failed to handle object create events: '.$e->getMessage());
         }//end try
 
     }//end handleObjectCreateEvents()
@@ -256,7 +263,7 @@ class EventService
 
             return $results;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to handle object update events: '.$e->getMessage());
+            throw new RuntimeException('Failed to handle object update events: '.$e->getMessage());
         }//end try
 
     }//end handleObjectUpdateEvents()
@@ -405,6 +412,8 @@ class EventService
      * @param array $objectData The object data containing object information.
      *
      * @return array Result of the attachment publishing operation.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function publishObjectAttachments(array $objectData): array
     {
@@ -456,7 +465,9 @@ class EventService
 
                         if ($shareLink && !str_contains($shareLink, 'not found') && !str_contains($shareLink, 'couldn\'t be found')) {
                             $result['published']++;
-                        } else {
+                        }
+
+                        if (!$shareLink || str_contains($shareLink, 'not found') || str_contains($shareLink, 'couldn\'t be found')) {
                             $result['errors'][] = "Failed to create share link for file {$fileName}";
                         }
                     } catch (\Exception $shareException) {

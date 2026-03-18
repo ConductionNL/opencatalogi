@@ -22,6 +22,8 @@ use OCA\OpenRegister\Event\ToolRegistrationEvent;
 
 /**
  * Main Application class for OpenCatalogi
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Application extends App implements IBootstrap
 {
@@ -63,6 +65,9 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(ToolRegistrationEvent::class, ToolRegistrationListener::class);
     }//end register
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — required by IBootstrap interface
+     */
     public function boot(IBootContext $context): void
     {
         // Initialization is now handled by the Repair step (InitializeSettings)

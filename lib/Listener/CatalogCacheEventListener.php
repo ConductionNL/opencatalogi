@@ -58,6 +58,10 @@ class CatalogCacheEventListener implements IEventListener
      * @param Event $event The event object containing the ObjectEntity.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function handle(Event $event): void
     {

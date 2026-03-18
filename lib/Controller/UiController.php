@@ -11,6 +11,8 @@ use OCP\IRequest;
  * UiController that serves SPA entry for history-mode deep links.
  *
  * @psalm-type TemplateName = 'index'
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
 class UiController extends Controller
 {

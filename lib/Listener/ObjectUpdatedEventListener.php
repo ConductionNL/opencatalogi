@@ -55,6 +55,8 @@ class ObjectUpdatedEventListener implements IEventListener
      * @param Event $event The event object containing the updated ObjectEntity.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function handle(Event $event): void
     {

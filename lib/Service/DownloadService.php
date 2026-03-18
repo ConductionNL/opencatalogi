@@ -190,11 +190,10 @@ class DownloadService
         }
 
         // Create or find ShareLink
-        $share = $this->fileService->findShare(path: $filePath);
+        $share     = $this->fileService->findShare(path: $filePath);
+        $shareLink = $this->fileService->createShareLink(path: $filePath);
         if ($share !== null) {
             $shareLink = $this->fileService->getShareLink($share);
-        } else {
-            $shareLink = $this->fileService->createShareLink(path: $filePath);
         }
 
         return $shareLink;

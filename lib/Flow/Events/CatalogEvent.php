@@ -6,6 +6,9 @@ use OCP\EventDispatcher\Event;
 use OCP\WorkflowEngine\IEntity;
 use OCP\WorkflowEngine\IRuleMatcher;
 
+/**
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter) — parameters required by IEntity interface
+ */
 class CatalogEvent implements IEntity
 {
 

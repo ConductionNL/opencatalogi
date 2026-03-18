@@ -32,6 +32,8 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
+use RuntimeException;
+use InvalidArgumentException;
 
 /**
  * BroadcastService Class
@@ -39,6 +41,8 @@ use Symfony\Component\Uid\Uuid;
  * This class provides functionality to broadcast this OpenCatalogi directory to other instances.
  * It allows for broadcasting to a specific URL or to all known directories.
  * The service uses dynamic versioning in User-Agent headers for proper identification.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class BroadcastService
 {
@@ -120,7 +124,7 @@ class BroadcastService
         }
 
         // Throw exception when OpenRegister is not available
-        throw new \RuntimeException('OpenRegister service is not available. Ensure OpenRegister app is installed and enabled.');
+        throw new RuntimeException('OpenRegister service is not available. Ensure OpenRegister app is installed and enabled.');
 
     }//end getObjectService()
 
@@ -251,10 +255,11 @@ class BroadcastService
                 // If this was the last attempt, log as error
                 if ($attempt === self::MAX_RETRIES) {
                     $this->logger->error("All {$attempt} broadcast attempts to {$url} failed. Final error: ".$e->getMessage());
-                } else {
-                    // Wait before retrying (exponential backoff)
-                    sleep($attempt * 2);
+                    continue;
                 }
+
+                // Wait before retrying (exponential backoff)
+                sleep($attempt * 2);
             }//end try
         }//end while
 
@@ -288,16 +293,14 @@ class BroadcastService
         $results = [];
 
         // Determine target URLs for broadcasting
+        $targetUrls = $this->getDirectoryUrls();
         if ($url !== null) {
             // Validate the provided URL
             if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                throw new \InvalidArgumentException("Invalid URL provided for broadcast: {$url}");
+                throw new InvalidArgumentException("Invalid URL provided for broadcast: {$url}");
             }
 
             $targetUrls = [$url];
-        } else {
-            // Get all known directory URLs
-            $targetUrls = $this->getDirectoryUrls();
         }
 
         // If no target URLs found, log warning and return empty results

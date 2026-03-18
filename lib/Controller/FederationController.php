@@ -62,6 +62,8 @@ class FederationController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.Superglobals)
      */
     public function publications(): JSONResponse
     {

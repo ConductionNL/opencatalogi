@@ -14,9 +14,12 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use RuntimeException;
 
 /**
  * Controller for handling Listing-related operations
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class ListingsController extends Controller
 {
@@ -58,7 +61,7 @@ class ListingsController extends Controller
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
@@ -71,6 +74,8 @@ class ListingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function index(): JSONResponse
     {
@@ -271,7 +276,9 @@ class ListingsController extends Controller
                 }
 
                 $result = $this->directoryService->syncDirectory($directoryUrl);
-            } else {
+            }
+
+            if ($id === null) {
                 // Sync all known directories
                 $result = $this->directoryService->doCronSync();
             }

@@ -74,6 +74,8 @@ class UnpublishedPublicationsWidget implements IWidget
 
     /**
      * @inheritDoc
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public function load(): void
     {

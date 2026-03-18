@@ -8,6 +8,8 @@ use OCP\WorkflowEngine\IRuleMatcher;
 
 /**
  * DOCS: https://docs.nextcloud.com/server/latest/developer_manual/digging_deeper/flow.html#entities
+ *
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter) — parameters required by IEntity interface
  */
 class AttachmentEvent implements IEntity
 {

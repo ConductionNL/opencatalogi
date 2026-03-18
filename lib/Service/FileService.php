@@ -51,6 +51,10 @@ use ZipArchive;
  *
  * Provides functionalities for managing files and folders in NextCloud, creating and managing
  * share links, handling uploaded files, generating PDF and ZIP files, and managing temporary files.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 
 class FileService
@@ -108,6 +112,8 @@ class FileService
      * Gets and returns the current host / domain with correct protocol.
      *
      * @return string The current http/https domain url.
+     *
+     * @SuppressWarnings(PHPMD.Superglobals) — $_SERVER access needed for domain detection
      */
     private function getCurrentDomain(): string
     {
@@ -302,7 +308,7 @@ class FileService
         }
 
         // Update the data array with file info, to create Attachment with.
-        return $this->AddFileInfoToData(
+        return $this->addFileInfoToData(
             data: $data,
             uploadedFile: $uploadedFile,
             filePath: $filePath
@@ -385,7 +391,7 @@ class FileService
      * @return array The updated $data array
      * @throws Exception In case creating the share(link) fails.
      */
-    public function AddFileInfoToData(array $data, array $uploadedFile, string $filePath): array
+    public function addFileInfoToData(array $data, array $uploadedFile, string $filePath): array
     {
         // Get the current user
         $currentUser = $this->userSession->getUser();
@@ -414,7 +420,7 @@ class FileService
 
         return $data;
 
-    }//end AddFileInfoToData()
+    }//end addFileInfoToData()
 
 
     /**
@@ -469,6 +475,8 @@ class FileService
      *
      * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function updateFile(mixed $content, string $filePath, bool $createNew = false): bool
     {
@@ -602,27 +610,27 @@ class FileService
     {
         // Create ZIP archive.
         $zip = new ZipArchive();
-        if ($zip->open(filename: $tempZip, flags: (ZipArchive::CREATE | ZipArchive::OVERWRITE)) === true) {
-            $files = new RecursiveIteratorIterator(
-                iterator: new RecursiveDirectoryIterator($inputFolder),
-                mode: RecursiveIteratorIterator::LEAVES_ONLY
-            );
-
-            foreach ($files as $name => $file) {
-                // Skip directories (they would be added automatically)
-                if ($file->isDir() === false) {
-                    $filePath     = $file->getRealPath();
-                    $relativePath = substr(string: $filePath, offset: (strlen(string: $inputFolder) + 1));
-
-                    // Add file to zip
-                    $zip->addFile(filepath: $filePath, entryname: $relativePath);
-                }
-            }
-
-            $zip->close();
-        } else {
+        if ($zip->open(filename: $tempZip, flags: (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
             return "failed to create ZIP archive";
-        }//end if
+        }
+
+        $files = new RecursiveIteratorIterator(
+            iterator: new RecursiveDirectoryIterator($inputFolder),
+            mode: RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($files as $file) {
+            // Skip directories (they would be added automatically)
+            if ($file->isDir() === false) {
+                $filePath     = $file->getRealPath();
+                $relativePath = substr(string: $filePath, offset: (strlen(string: $inputFolder) + 1));
+
+                // Add file to zip
+                $zip->addFile(filepath: $filePath, entryname: $relativePath);
+            }
+        }
+
+        $zip->close();
 
         return null;
 

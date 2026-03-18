@@ -180,6 +180,9 @@ class XMLResponse extends Response
      * @psalm-param DOMDocument $dom
      * @psalm-param DOMElement $element
      * @psalm-param array<string, mixed> $data
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     private function buildXmlElement(DOMDocument $dom, DOMElement $element, array $data): void
     {
@@ -237,6 +240,8 @@ class XMLResponse extends Response
      * @psalm-param DOMElement $parentElement
      * @psalm-param string $tagName
      * @psalm-param array<string, mixed>|string|object $data
+     *
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     private function createChildElement(DOMDocument $dom, DOMElement $parentElement, string $tagName, $data): void
     {

@@ -22,6 +22,8 @@ use OCP\Migration\SimpleMigrationStep;
  * 1. Add uri columns to all tables
  * 2. Remove old tables that are no longer used
  * 3. Install and enable OpenRegister
+ *
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class Version6Date20250419123213 extends SimpleMigrationStep
 {

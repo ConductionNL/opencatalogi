@@ -31,6 +31,9 @@ use Symfony\Component\Uid\Uuid;
  * Provides methods for performing search queries, merging search results and aggregations,
  * and creating database-specific filters and sort parameters. Handles both local and
  * distributed search queries across multiple directories.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 
 class SearchService
@@ -77,25 +80,24 @@ class SearchService
     public function mergeFacets(array $existingAggregation, array $newAggregation): array
     {
         $results                   = [];
-        $existingAggregationMapped = [];
+        $existingAggMap = [];
         $newAggregationMapped      = [];
 
         // Map existing aggregation
         foreach ($existingAggregation as $value) {
-            $existingAggregationMapped[$value['_id']] = $value['count'];
+            $existingAggMap[$value['_id']] = $value['count'];
         }
 
         // Merge new aggregation with existing
         foreach ($newAggregation as $value) {
-            if (isset($existingAggregationMapped[$value['_id']]) === true) {
-                $newAggregationMapped[$value['_id']] = ($existingAggregationMapped[$value['_id']] + $value['count']);
-            } else {
-                $newAggregationMapped[$value['_id']] = $value['count'];
+            $newAggregationMapped[$value['_id']] = $value['count'];
+            if (isset($existingAggMap[$value['_id']]) === true) {
+                $newAggregationMapped[$value['_id']] = ($existingAggMap[$value['_id']] + $value['count']);
             }
         }
 
         // Combine results
-        foreach (array_merge(array_diff($existingAggregationMapped, $newAggregationMapped), array_diff($newAggregationMapped, $existingAggregationMapped)) as $key => $value) {
+        foreach (array_merge(array_diff($existingAggMap, $newAggregationMapped), array_diff($newAggregationMapped, $existingAggMap)) as $key => $value) {
             $results[] = [
                 '_id'   => $key,
                 'count' => $value,
@@ -125,9 +127,10 @@ class SearchService
         foreach ($newAggregations as $key => $aggregation) {
             if (isset($result[$key]) === false) {
                 $result[$key] = $aggregation;
-            } else {
-                $result[$key] = $this->mergeFacets($result[$key], $aggregation);
+                continue;
             }
+
+            $result[$key] = $this->mergeFacets($result[$key], $aggregation);
         }
 
         return $result;
@@ -157,6 +160,10 @@ class SearchService
      * @param  array $dbConfig      Database configuration
      * @param  array $catalogi      Catalogi configuration
      * @return array Search results
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — $dbConfig reserved for future database search
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function search(array $parameters, array $elasticConfig, array $dbConfig, array $catalogi = []): array
     {
@@ -199,7 +206,7 @@ class SearchService
             if ($instance['default'] === false
                 || isset($parameters['_catalogi']) === true
                 && in_array($instance['catalog'], $parameters['_catalogi']) === false
-                || $instance['search'] = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute(routeName:"opencatalogi.directory.index"))
+                || $instance['search'] === $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute(routeName:"opencatalogi.directory.index"))
             ) {
                 continue;
             }
@@ -300,17 +307,21 @@ class SearchService
      * @param array|null $searchParams   Search params for sql.
      *
      * @return array $searchConditions
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function createMySQLSearchConditions(array &$filters, array $fieldsToSearch, ?array &$searchParams = []): array
     {
         $searchConditions = [];
         if (isset($filters['_search']) === true) {
             foreach ($fieldsToSearch as $field) {
-                if (isset($searchConditions[0]) === true) {
-                    $searchConditions[0] = $searchConditions[0]." OR LOWER($field) LIKE :search";
-                } else {
+                if (isset($searchConditions[0]) !== true) {
                     $searchConditions[] = "LOWER($field) LIKE :search";
+                    continue;
                 }
+
+                $searchConditions[0] = $searchConditions[0]." OR LOWER($field) LIKE :search";
             }
 
             if (isset($searchConditions[0]) === true) {
@@ -374,7 +385,7 @@ class SearchService
      */
     public function unsetSpecialQueryParams(array $filters): array
     {
-        foreach ($filters as $key => $value) {
+        foreach (array_keys($filters) as $key) {
             if (str_starts_with($key, '_')) {
                 unset($filters[$key]);
             }
@@ -470,6 +481,7 @@ class SearchService
      */
     private function recursiveRequestQueryKey(array &$vars, string $name, string $nameKey, string $value): void
     {
+        $matches      = [];
         $matchesCount = preg_match(pattern: '/(\[[^[\]]*])/', subject: $name, matches:$matches);
         if ($matchesCount > 0) {
             $key  = $matches[0];
@@ -483,12 +495,14 @@ class SearchService
                     nameKey: $key,
                     value: $value
                 );
-            } else {
-                $vars[$nameKey][] = $value;
+                return;
             }
-        } else {
-            $vars[$nameKey] = $value;
+
+            $vars[$nameKey][] = $value;
+            return;
         }
+
+        $vars[$nameKey] = $value;
 
     }//end recursiveRequestQueryKey()
 

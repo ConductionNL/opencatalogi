@@ -66,7 +66,7 @@ class ElasticSearchService
         }
 
         try {
-            $result = $client->index(
+            $client->index(
                 params: [
                     'index' => $config['index'],
                     'id'    => $object['id'],
@@ -145,6 +145,9 @@ class ElasticSearchService
     }//end updateObject()
 
 
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
     public function parseFilter(string $name, array|string $filter): array
     {
 
@@ -158,9 +161,9 @@ class ElasticSearchService
             case 'like':
                 if (preg_match("/^\/.+\/[a-z]*$/i", $value) !== false) {
                     return ['regexp' => [$name => strtolower($value)]];
-                } else {
-                    return ['match' => [$name => $value]];
                 }
+
+                return ['match' => [$name => $value]];
 
             case '>=':
             case 'after':
@@ -184,6 +187,10 @@ class ElasticSearchService
     }//end parseFilter()
 
 
+    /**
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     */
     public function parseFilters(array $filters): array
     {
         $body = [
@@ -311,10 +318,9 @@ class ElasticSearchService
         $totalResults = $result['hits']['total']['value'];
 
         $return = ['results' => array_map(callback: [$this, 'formatResults'], array: $result['hits']['hits'])];
+        $return['facets'] = [];
         if (isset($result['aggregations']) === true) {
             $return['facets'] = array_map([$this, 'mapAggregationResults'], $result['aggregations']);
-        } else {
-            $return['facets'] = [];
         }
 
         return $return;

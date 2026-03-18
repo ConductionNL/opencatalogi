@@ -126,6 +126,8 @@ class SitemapService
      * @param string $categoryCode
      *
      * @return XMLResponse
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -202,14 +204,12 @@ class SitemapService
 
             // Determine lastMod for this specific batch
             $lastMod = null;
-            if (empty($results) === false) {
-                $lastModObject = $results[0];
-// first item, sorted DESC
-                $lastMod = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
-            } else {
-                // If no results, break
+            if (empty($results) === true) {
                 break;
             }
+
+            $lastModObject = $results[0];
+            $lastMod       = $lastModObject->jsonSerialize()['@self']['updated'] ?? null;
 
             // Add sitemap entry
             $sitemaps[] = [
@@ -352,16 +352,20 @@ class SitemapService
 
         // Have to trim whitespcae because of typo in schema title definition..
         $needle   = trim($this::INFO_CAT[$categoryCode]);
-        $haystack = array_map(fn($s) => trim($s['title']), $schemas);
+        $haystack = array_map(fn($sch) => trim($sch['title']), $schemas);
 
         // Get current schema belonging to requested category code.
         $index    = array_search(needle: $needle, haystack: $haystack);
         $schemaId = $index !== false ? $schemas[$index]['id'] : null;
 
-        $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
-        $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
-        $searchQuery['slug']              = $catalogSlug;
-        $searchQuery['hasWooSitemap']     = true;
+        $searchQuery = [
+            '@self' => [
+                'register' => $settings['configuration']['catalog_register'],
+                'schema'   => $settings['configuration']['catalog_schema'],
+            ],
+            'slug'          => $catalogSlug,
+            'hasWooSitemap' => true,
+        ];
 
         $catalog = ($objectService->searchObjectsPaginated(
             query: $searchQuery,

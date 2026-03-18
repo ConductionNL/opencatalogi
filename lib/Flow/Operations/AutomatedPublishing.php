@@ -5,6 +5,9 @@ namespace OCA\OpenCatalogi\Flow\Operations;
 use OCP\EventDispatcher\Event;
 use OCP\WorkflowEngine\IOperation;
 
+/**
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter) — parameters required by IOperation interface
+ */
 class AutomatedPublishing implements IOperation
 {
 

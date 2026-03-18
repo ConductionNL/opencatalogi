@@ -27,6 +27,7 @@ use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use OCP\App\IAppManager;
 use OCA\OpenCatalogi\Service\SettingsService;
+use RuntimeException;
 
 /**
  * Controller for handling settings-related operations in the OpenCatalogi.
@@ -79,7 +80,7 @@ class SettingsController extends Controller
             return $this->objectService;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
@@ -100,7 +101,7 @@ class SettingsController extends Controller
         }
 
         // Throw an exception if the service is not available.
-        throw new \RuntimeException('Configuration service is not available.');
+        throw new RuntimeException('Configuration service is not available.');
 
     }//end getConfigurationService()
 
@@ -241,9 +242,9 @@ class SettingsController extends Controller
 
             if ($result['success']) {
                 return new JSONResponse($result);
-            } else {
-                return new JSONResponse($result, 400);
             }
+
+            return new JSONResponse($result, 400);
         } catch (\Exception $e) {
             return new JSONResponse(
                 [
