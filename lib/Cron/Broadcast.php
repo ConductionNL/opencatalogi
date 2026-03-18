@@ -76,8 +76,10 @@ class Broadcast extends TimedJob
      * @return void
      *
      * @throws \Exception When broadcasting fails critically
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    protected function run($arguments): void
+    protected function run($argument): void
     {
         try {
             // Log the start of the broadcast process

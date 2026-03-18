@@ -43,6 +43,8 @@ use OCP\IServerContainer;
 class PublicationService
 {
 
+    private ?object $objectService = null;
+
     /**
      * @var string $appName The name of the app
      */

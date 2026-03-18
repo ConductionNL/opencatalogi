@@ -37,8 +37,10 @@ class DirectorySync extends TimedJob
      *
      * @param array            $arguments
      * @param DirectoryService $directoryService
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    protected function run($arguments)
+    protected function run($argument)
     {
         $this->directoryService->doCronSync();
 

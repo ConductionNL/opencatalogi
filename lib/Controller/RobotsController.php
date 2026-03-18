@@ -13,6 +13,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use OCA\OpenCatalogi\Service\SitemapService;
+use RuntimeException;
 
 /**
  * Class RobotsController
@@ -30,6 +31,7 @@ use OCA\OpenCatalogi\Service\SitemapService;
 class RobotsController extends Controller
 {
 
+    private ?object $objectService = null;
 
     /**
      * PublicationsController constructor.
@@ -59,7 +61,7 @@ class RobotsController extends Controller
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return TextResponse The CORS response
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -73,6 +75,7 @@ class RobotsController extends Controller
             return new TextResponse($this->l10n->t('Could not fetch settings'), 500);
         }
 
+        $searchQuery = [];
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
         $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
 
@@ -96,7 +99,7 @@ class RobotsController extends Controller
                 $text .= '\n';
             }
 
-            foreach (SitemapService::INFO_CAT as $categoryCode => $categoryName) {
+            foreach (array_keys(SitemapService::INFO_CAT) as $categoryCode) {
                 $text .= "Sitemap: $baseUrl/apps/opencatalogi/api/{$catalog->getSlug()}/sitemaps/$categoryCode\n";
             }
 
@@ -122,7 +125,7 @@ class RobotsController extends Controller
             return $this->objectService;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 

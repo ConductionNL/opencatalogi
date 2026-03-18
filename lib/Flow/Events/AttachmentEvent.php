@@ -1,18 +1,20 @@
 <?php
 
-namespace OCA\OpenCatalogi\Cron;
+namespace OCA\OpenCatalogi\Flow\Events;
 
+use OCP\EventDispatcher\Event;
 use OCP\WorkflowEngine\IEntity;
+use OCP\WorkflowEngine\IRuleMatcher;
 
 /**
  * DOCS: https://docs.nextcloud.com/server/latest/developer_manual/digging_deeper/flow.html#entities
  */
 class AttachmentEvent implements IEntity
 {
-    
+
     public function getName(): string
     {
-        return $this->l10n-t('Attachment');
+        return 'Attachment';
     }
 
     public function getIcon(): string
@@ -20,15 +22,19 @@ class AttachmentEvent implements IEntity
         return \OC::$server->getURLGenerator()->imagePath('opencatalogi', 'app.svg');
     }
 
-    public function getEvents(): string
+    /**
+     * @return array<array-key, \OCP\WorkflowEngine\IEntityEvent>
+     */
+    public function getEvents(): array
     {
-        return '';
+        return [];
     }
 
-    /**
-     * will check whether the passed user is allowed to see the current event 
-     */
-    public function isLegitimatedForUserId(): bool
+    public function prepareRuleMatcher(IRuleMatcher $ruleMatcher, string $eventName, Event $event): void
+    {
+    }
+
+    public function isLegitimatedForUserId(string $userId): bool
     {
         return true;
     }

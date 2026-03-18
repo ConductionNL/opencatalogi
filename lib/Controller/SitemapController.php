@@ -59,7 +59,7 @@ class SitemapController extends Controller
      */
     public function sitemap(string $catalogSlug, string $categoryCode): XMLResponse
     {
-        $page = ((int) $this->request->getParams()['page'] ?? 1);
+        $page = (int) ($this->request->getParams()['page'] ?? 1);
         return $this->sitemapService->buildSitemap(catalogSlug: $catalogSlug, categoryCode: $categoryCode, page: $page);
 
     }//end sitemap()

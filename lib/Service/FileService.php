@@ -266,7 +266,7 @@ class FileService
      * @param IRequest $request The request object containing the uploaded file.
      * @param array    $data    The data array containing all parameters from the request.
      *
-     * @return JSONResponse|string An error response if creating the file in NextCloud failed or the updated data array containing info about the created file.
+     * @return JSONResponse|array An error response if creating the file in NextCloud failed or the updated data array containing info about the created file.
      * @throws Exception In case creating a folder or new file fails.
      */
     public function handleFile(IRequest $request, array $data): JSONResponse|array
@@ -652,7 +652,9 @@ class FileService
 
         // Cleanup temporary files.
         if ($inputFolder !== null) {
-            array_map('unlink', glob("$inputFolder/*.*"));
+            foreach (glob("$inputFolder/*.*") ?: [] as $file) {
+                unlink($file);
+            }
             rmdir(directory: $inputFolder);
         }
 

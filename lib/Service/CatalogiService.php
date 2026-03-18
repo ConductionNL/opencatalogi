@@ -33,15 +33,21 @@ use OCP\Common\Exception\NotFoundException;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Service for handling publication-related operations.
  *
  * Provides functionality for retrieving, saving, updating, and deleting publications,
  * as well as managing publication-related data and filters.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class CatalogiService
 {
+
+    private ?object $objectService = null;
 
     /**
      * @var string $appName The name of the app
@@ -102,7 +108,7 @@ class CatalogiService
             return $this->objectService;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
@@ -121,7 +127,7 @@ class CatalogiService
             return $this->objectService;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getFileService()
 
@@ -142,7 +148,6 @@ class CatalogiService
         $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
-        $config = [];
         // Setup the base query for searchObjects
         $query = [
             '@self' => [
@@ -214,102 +219,13 @@ class CatalogiService
 
 
     /**
-     * Private helper method to handle pagination of results.
-     *
-     * This method paginates the given results array based on the provided total, limit, offset, and page parameters.
-     * It calculates the number of pages, sets the appropriate offset and page values, and returns the paginated results
-     * along with metadata such as total items, current page, total pages, limit, and offset.
-     *
-     * @param array        $results The array of objects to paginate.
-     * @param integer|null $total   The total number of items (before pagination). Defaults to 0.
-     * @param integer|null $limit   The number of items per page. Defaults to 20.
-     * @param integer|null $offset  The offset of items. Defaults to 0.
-     * @param integer|null $page    The current page number. Defaults to 1.
-     * @param array|null   $facets  The already fetched facets. Defaults to empty array.
-     *
-     * @return array The paginated results with metadata.
-     *
-     * @phpstan-param  array<int, mixed> $results
-     * @phpstan-return array<string, mixed>
-     * @psalm-param    array<int, mixed> $results
-     * @psalm-return   array<string, mixed>
-     */
-    private function paginate(array $results, ?int $total = 0, ?int $limit = 20, ?int $offset = 0, ?int $page = 1, ?array $facets = []): array
-    {
-        // Ensure we have valid values (never null, limit=0 is valid for count/facets-only requests)
-        $total = max(0, ($total ?? 0));
-        $limit = max(0, ($limit ?? 20));
-        $offset = max(0, ($offset ?? 0));
-        $page   = max(1, ($page ?? 1));
-
-        // Calculate the number of pages (avoid division by zero when limit=0)
-        $pages = $limit > 0 ? max(1, ceil($total / $limit)) : 0;
-
-        // If we have a page but no offset, calculate the offset
-        if ($offset === 0) {
-            $offset = (($page - 1) * $limit);
-        }
-
-        // If we have an offset but page is 1, calculate the page (avoid division by zero)
-        if ($page === 1 && $offset > 0 && $limit > 0) {
-            $page = (floor($offset / $limit) + 1);
-        }
-
-        // If total is smaller than the number of results, set total to the number of results
-        // @todo: this is a hack to ensure the pagination is correct when the total is not known. That sugjest that the underlaying count service has a problem that needs to be fixed instead
-        if ($total < count($results)) {
-            $total = count($results);
-            $pages = $limit > 0 ? max(1, ceil($total / $limit)) : 0;
-        }
-
-        // Initialize the results array with pagination information
-        $paginatedResults = [
-            'results' => $results,
-            'total'   => $total,
-            'page'    => $page,
-            'pages'   => $pages,
-            'limit'   => $limit,
-            'offset'  => $offset,
-            'facets'  => $facets,
-        ];
-
-        // Add next/prev page URLs if applicable
-        $currentUrl = $_SERVER['REQUEST_URI'];
-
-        // Add next page link if there are more pages
-        if ($page < $pages) {
-            $nextPage = ($page + 1);
-            $nextUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$nextPage, $currentUrl);
-            if (strpos($nextUrl, 'page=') === false) {
-                $nextUrl .= (strpos($nextUrl, '?') === false ? '?' : '&').'page='.$nextPage;
-            }
-
-            $paginatedResults['next'] = $nextUrl;
-        }
-
-        // Add previous page link if not on first page
-        if ($page > 1) {
-            $prevPage = ($page - 1);
-            $prevUrl  = preg_replace('/([?&])page=\d+/', '$1page='.$prevPage, $currentUrl);
-            if (strpos($prevUrl, 'page=') === false) {
-                $prevUrl .= (strpos($prevUrl, '?') === false ? '?' : '&').'page='.$prevPage;
-            }
-
-            $paginatedResults['prev'] = $prevUrl;
-        }
-
-        return $paginatedResults;
-
-    }//end paginate()
-
-
-    /**
      * Helper method to get configuration array from the current request
      *
      * @param string|null $register Optional register identifier
      * @param string|null $schema   Optional schema identifier
      * @param array|null  $ids      Optional array of specific IDs to filter
      *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — parameters reserved for future filter use
      * @return array Configuration array containing:
      *               - limit: (int) Maximum number of items per page
      *               - offset: (int|null) Number of items to skip
@@ -577,6 +493,9 @@ class CatalogiService
      *
      * @NoAdminRequired *
      * @NoCSRFRequired
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function index(null|string|int $catalogId = null): JSONResponse
     {

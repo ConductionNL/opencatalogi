@@ -38,6 +38,7 @@ class DashboardController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — route parameter required by Nextcloud routing
      */
     public function page(?string $getParameter): TemplateResponse
     {
@@ -80,7 +81,7 @@ class DashboardController extends Controller
     {
         try {
             // Prepare results using a test array
-            $results = ["results" => self::TEST_ARRAY];
+            $results = ["results" => []];
             return new JSONResponse($results);
         } catch (\Exception $e) {
             // Return an error JSON response if an exception occurs

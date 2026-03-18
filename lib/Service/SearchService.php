@@ -120,15 +120,17 @@ class SearchService
             return [];
         }
 
+        $result = $existingAggregations ?? [];
+
         foreach ($newAggregations as $key => $aggregation) {
-            if (isset($existingAggregations[$key]) === false) {
-                $existingAggregations[$key] = $aggregation;
+            if (isset($result[$key]) === false) {
+                $result[$key] = $aggregation;
             } else {
-                $existingAggregations[$key] = $this->mergeFacets($existingAggregations[$key], $aggregation);
+                $result[$key] = $this->mergeFacets($result[$key], $aggregation);
             }
         }
 
-        return $existingAggregations;
+        return $result;
 
     }//end mergeAggregations()
 
@@ -170,7 +172,7 @@ class SearchService
             $localResults = $this->elasticService->searchObject(filters: $parameters, config: $elasticConfig, totalResults: $totalResults,);
         }
 
-        $directory = $this->directoryService->listDirectory(limit: 1000);
+        $directory = $this->directoryService->getDirectory(['_limit' => 1000]);
 
         // Return early if directory is empty
         if (count($directory) === 0) {

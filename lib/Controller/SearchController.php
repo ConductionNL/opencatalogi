@@ -52,7 +52,7 @@ class SearchController extends Controller
      * Unlike the public publications endpoint, this may include additional data
      * and is not subject to the same security restrictions.
      *
-     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
+     * @param  string|null $catalogId Optional ID of a specific catalog to filter by
      * @return JSONResponse JSON response containing the list of publications and total count
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
