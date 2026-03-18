@@ -8,6 +8,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -58,6 +59,7 @@ class DirectoryController extends Controller
         $appName,
         IRequest $request,
         private readonly DirectoryService $directoryService,
+        private readonly IL10N $l10n,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -128,7 +130,7 @@ class DirectoryController extends Controller
             // Handle errors gracefully with CORS headers
             $response = new JSONResponse(
                 [
-                    'message' => 'Failed to retrieve directory data',
+                    'message' => $this->l10n->t('Failed to retrieve directory data'),
                     'error'   => $e->getMessage(),
                 ],
                 500
@@ -167,8 +169,8 @@ class DirectoryController extends Controller
         if (empty($directoryUrl)) {
             $response = new JSONResponse(
                 [
-                    'message' => 'Property "directory" is required',
-                    'error'   => 'Missing directory URL parameter',
+                    'message' => $this->l10n->t('Property "directory" is required'),
+                    'error'   => $this->l10n->t('Missing directory URL parameter'),
                 ],
                 400
             );
@@ -180,7 +182,7 @@ class DirectoryController extends Controller
                 // Return success response with sync results
                 $response = new JSONResponse(
                     [
-                        'message' => 'Directory synchronized successfully',
+                        'message' => $this->l10n->t('Directory synchronized successfully'),
                         'data'    => $data,
                     ]
                 );
@@ -188,7 +190,7 @@ class DirectoryController extends Controller
                 // Handle validation errors (invalid URL, etc.)
                 $response = new JSONResponse(
                     [
-                        'message' => 'Invalid directory URL',
+                        'message' => $this->l10n->t('Invalid directory URL'),
                         'error'   => $e->getMessage(),
                     ],
                     400
@@ -197,7 +199,7 @@ class DirectoryController extends Controller
                 // Handle HTTP/network errors
                 $response = new JSONResponse(
                     [
-                        'message' => 'Failed to fetch directory data',
+                        'message' => $this->l10n->t('Failed to fetch directory data'),
                         'error'   => $e->getMessage(),
                     ],
                     502
@@ -206,7 +208,7 @@ class DirectoryController extends Controller
                 // Handle other unexpected errors
                 $response = new JSONResponse(
                     [
-                        'message' => 'Directory synchronization failed',
+                        'message' => $this->l10n->t('Directory synchronization failed'),
                         'error'   => $e->getMessage(),
                     ],
                     500

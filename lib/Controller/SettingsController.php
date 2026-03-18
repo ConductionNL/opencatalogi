@@ -22,6 +22,7 @@ use OCP\IAppConfig;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use OCP\App\IAppManager;
@@ -58,6 +59,7 @@ class SettingsController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
+        private readonly IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
 
@@ -246,7 +248,7 @@ class SettingsController extends Controller
             return new JSONResponse(
                 [
                     'success' => false,
-                    'message' => 'Import failed: '.$e->getMessage(),
+                    'message' => $this->l10n->t('Import failed') . ': '.$e->getMessage(),
                     'error'   => $e->getMessage(),
                 ],
                 500

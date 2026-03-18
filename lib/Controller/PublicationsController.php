@@ -8,6 +8,7 @@ use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
@@ -76,6 +77,7 @@ class PublicationsController extends Controller
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
         private readonly IDBConnection $db,
+        private readonly IL10N $l10n,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -288,7 +290,7 @@ class PublicationsController extends Controller
             $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
 
             if ($catalogData === null) {
-                return new JSONResponse(['error' => 'Catalog not found'], 404);
+                return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
             }
 
             // Convert ObjectEntity to array if needed (cache may return array directly)
@@ -390,7 +392,7 @@ class PublicationsController extends Controller
 
             return $response;
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publications: '.$e->getMessage()], 500);
+            return new JSONResponse(['error' => $this->l10n->t('Failed to retrieve publications') . ': '.$e->getMessage()], 500);
         }//end try
 
     }//end index()
@@ -420,8 +422,8 @@ class PublicationsController extends Controller
             if ($catalogData === null) {
                 return new JSONResponse(
                     [
-                        'error'       => 'Catalog not found',
-                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'error'       => $this->l10n->t('Catalog not found'),
+                        'message'     => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
                         'catalogSlug' => $catalogSlug,
                     ],
                     404
@@ -536,8 +538,8 @@ class PublicationsController extends Controller
                 );
                 return new JSONResponse(
                     [
-                        'error'       => 'Publication not found',
-                        'message'     => 'The publication with ID "'.$id.'" does not exist or is not accessible.',
+                        'error'       => $this->l10n->t('Publication not found'),
+                        'message'     => $this->l10n->t('The publication with ID "%s" does not exist or is not accessible.', [$id]),
                         'id'          => $id,
                         'catalogSlug' => $catalogSlug,
                     ],
@@ -591,8 +593,8 @@ class PublicationsController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(
                 [
-                    'error'       => 'Publication not found',
-                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
+                    'error'       => $this->l10n->t('Publication not found'),
+                    'message'     => $this->l10n->t('The publication with ID "%s" does not exist in the database.', [$id]),
                     'id'          => $id,
                     'catalogSlug' => $catalogSlug,
                     'exception'   => 'DoesNotExistException',
@@ -611,11 +613,11 @@ class PublicationsController extends Controller
             );
             return new JSONResponse(
                 [
-                    'error'       => 'Failed to retrieve publication',
+                    'error'       => $this->l10n->t('Failed to retrieve publication'),
                     'message'     => $e->getMessage(),
                     'id'          => $id,
                     'catalogSlug' => $catalogSlug,
-                    'hint'        => 'Check server logs for more details.',
+                    'hint'        => $this->l10n->t('Check server logs for more details.'),
                 ],
                 500
             );
@@ -646,8 +648,8 @@ class PublicationsController extends Controller
             if ($catalogData === null) {
                 return new JSONResponse(
                     [
-                        'error'       => 'Catalog not found',
-                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'error'       => $this->l10n->t('Catalog not found'),
+                        'message'     => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
                         'catalogSlug' => $catalogSlug,
                     ],
                     404
@@ -698,8 +700,8 @@ class PublicationsController extends Controller
             if ($object === null) {
                 return new JSONResponse(
                     [
-                        'error'       => 'Publication not found',
-                        'message'     => 'The publication with ID "'.$id.'" does not exist.',
+                        'error'       => $this->l10n->t('Publication not found'),
+                        'message'     => $this->l10n->t('The publication with ID "%s" does not exist.', [$id]),
                         'id'          => $id,
                         'catalogSlug' => $catalogSlug,
                     ],
@@ -711,8 +713,8 @@ class PublicationsController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(
                 [
-                    'error'       => 'Publication not found',
-                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
+                    'error'       => $this->l10n->t('Publication not found'),
+                    'message'     => $this->l10n->t('The publication with ID "%s" does not exist in the database.', [$id]),
                     'id'          => $id,
                     'catalogSlug' => $catalogSlug,
                 ],
@@ -721,7 +723,7 @@ class PublicationsController extends Controller
         } catch (\Exception $e) {
             return new JSONResponse(
                 [
-                    'error'   => 'Failed to retrieve attachments',
+                    'error'   => $this->l10n->t('Failed to retrieve attachments'),
                     'message' => $e->getMessage(),
                 ],
                 500
@@ -753,8 +755,8 @@ class PublicationsController extends Controller
             if ($catalogData === null) {
                 return new JSONResponse(
                     [
-                        'error'       => 'Catalog not found',
-                        'message'     => 'The catalog "'.$catalogSlug.'" does not exist.',
+                        'error'       => $this->l10n->t('Catalog not found'),
+                        'message'     => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
                         'catalogSlug' => $catalogSlug,
                     ],
                     404
@@ -805,8 +807,8 @@ class PublicationsController extends Controller
             if ($object === null) {
                 return new JSONResponse(
                     [
-                        'error'       => 'Publication not found',
-                        'message'     => 'The publication with ID "'.$id.'" does not exist.',
+                        'error'       => $this->l10n->t('Publication not found'),
+                        'message'     => $this->l10n->t('The publication with ID "%s" does not exist.', [$id]),
                         'id'          => $id,
                         'catalogSlug' => $catalogSlug,
                     ],
@@ -818,8 +820,8 @@ class PublicationsController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(
                 [
-                    'error'       => 'Publication not found',
-                    'message'     => 'The publication with ID "'.$id.'" does not exist in the database.',
+                    'error'       => $this->l10n->t('Publication not found'),
+                    'message'     => $this->l10n->t('The publication with ID "%s" does not exist in the database.', [$id]),
                     'id'          => $id,
                     'catalogSlug' => $catalogSlug,
                 ],
@@ -828,7 +830,7 @@ class PublicationsController extends Controller
         } catch (\Exception $e) {
             return new JSONResponse(
                 [
-                    'error'   => 'Failed to download publication',
+                    'error'   => $this->l10n->t('Failed to download publication'),
                     'message' => $e->getMessage(),
                 ],
                 500
@@ -885,7 +887,7 @@ class PublicationsController extends Controller
             );
             return new JSONResponse(
                 [
-                    'error'   => 'Failed to retrieve publication uses',
+                    'error'   => $this->l10n->t('Failed to retrieve publication uses'),
                     'message' => $e->getMessage(),
                     'id'      => $id,
                 ],
@@ -943,7 +945,7 @@ class PublicationsController extends Controller
             );
             return new JSONResponse(
                 [
-                    'error'   => 'Failed to retrieve publication used',
+                    'error'   => $this->l10n->t('Failed to retrieve publication used'),
                     'message' => $e->getMessage(),
                     'id'      => $id,
                 ],

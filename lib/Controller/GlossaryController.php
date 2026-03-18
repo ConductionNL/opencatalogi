@@ -4,6 +4,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
@@ -61,6 +62,7 @@ class GlossaryController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
+        private readonly IL10N $l10n,
         string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
         int $corsMaxAge = 1728000
@@ -246,7 +248,7 @@ class GlossaryController extends Controller
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         if (empty($result['results'])) {
-            return new JSONResponse(['error' => 'Glossary term not found'], 404);
+            return new JSONResponse(['error' => $this->l10n->t('Glossary term not found')], 404);
         }
 
         $glossaryTerm = $result['results'][0];

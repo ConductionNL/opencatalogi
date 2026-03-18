@@ -7,6 +7,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\App\IAppManager;
@@ -37,7 +38,8 @@ class ListingsController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        private readonly DirectoryService $directoryService
+        private readonly DirectoryService $directoryService,
+        private readonly IL10N $l10n
     ) {
         parent::__construct($appName, $request);
 
@@ -263,7 +265,7 @@ class ListingsController extends Controller
                 $directoryUrl = $listingData['directory'] ?? null;
                 if (empty($directoryUrl)) {
                     return new JSONResponse(
-                        data: ['message' => 'Listing has no directory URL configured'],
+                        data: ['message' => $this->l10n->t('Listing has no directory URL configured')],
                         statusCode: 400
                     );
                 }
@@ -277,7 +279,7 @@ class ListingsController extends Controller
             return new JSONResponse($result);
         } catch (\Exception $e) {
             return new JSONResponse(
-                data: ['message' => 'Synchronization failed: ' . $e->getMessage()],
+                data: ['message' => $this->l10n->t('Synchronization failed') . ': ' . $e->getMessage()],
                 statusCode: 500
             );
         }
@@ -300,7 +302,7 @@ class ListingsController extends Controller
         $url = $this->request->getParam('url');
 
         if (empty($url)) {
-            return new JSONResponse(data: ['message' => 'Property "url" is required'], statusCode: 400);
+            return new JSONResponse(data: ['message' => $this->l10n->t('Property "url" is required')], statusCode: 400);
         }
 
         // Add the new listing by syncing the provided directory URL

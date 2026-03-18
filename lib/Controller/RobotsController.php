@@ -5,6 +5,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Http\TextResponse;
 use OCP\AppFramework\Controller;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\App\IAppManager;
 use OCP\IURLGenerator;
@@ -39,6 +40,7 @@ class RobotsController extends Controller
      * @param ContainerInterface $container       The container for dependency injection
      * @param IAppManager        $appManager      The app manager
      * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
+     * @param IL10N              $l10n            The localization service
      */
     public function __construct(
         $appName,
@@ -47,6 +49,7 @@ class RobotsController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly IURLGenerator $urlGenerator,
+        private readonly IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
 
@@ -67,7 +70,7 @@ class RobotsController extends Controller
         $settings = $this->settingsService->getSettings();
 
         if (isset($settings['configuration']['catalog_register']) === false || isset($settings['configuration']['catalog_schema']) === false) {
-            return new TextResponse('Could net fetch settings', 500);
+            return new TextResponse($this->l10n->t('Could not fetch settings'), 500);
         }
 
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];

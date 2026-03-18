@@ -5,6 +5,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -40,7 +41,8 @@ class FederationController extends Controller
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly PublicationService $publicationService
+        private readonly PublicationService $publicationService,
+        private readonly IL10N $l10n
     ) {
         parent::__construct($appName, $request);
 
@@ -81,7 +83,7 @@ class FederationController extends Controller
 
             return new JSONResponse($responseData);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publications: '.$e->getMessage()], 500);
+            return new JSONResponse(['error' => $this->l10n->t('Failed to retrieve publications') . ': '.$e->getMessage()], 500);
         }
 
     }//end publications()
@@ -109,7 +111,7 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication: '.$e->getMessage()], 500);
+            return new JSONResponse(['error' => $this->l10n->t('Failed to retrieve publication') . ': '.$e->getMessage()], 500);
         }
 
     }//end publication()
@@ -138,7 +140,7 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication uses: '.$e->getMessage()], 500);
+            return new JSONResponse(['error' => $this->l10n->t('Failed to retrieve publication uses') . ': '.$e->getMessage()], 500);
         }
 
     }//end publicationUses()
@@ -167,7 +169,7 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication used: '.$e->getMessage()], 500);
+            return new JSONResponse(['error' => $this->l10n->t('Failed to retrieve publication used') . ': '.$e->getMessage()], 500);
         }
 
     }//end publicationUsed()
