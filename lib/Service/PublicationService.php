@@ -886,8 +886,7 @@ class PublicationService
         }
 
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
-        /** @var string $aggregate */
-        $aggregate       = ($queryParams['_aggregate'] ?? 'true');
+        $aggregate       = (string) ($queryParams['_aggregate'] ?? 'true');
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
 
         // Check if catalog information should be included (performance optimization)
@@ -1028,6 +1027,7 @@ class PublicationService
         }
 
         // If aggregation is disabled, return only local results
+        /** @psalm-suppress TypeDoesNotContainType $shouldAggregate can be false when query param is 'false' or '0' */
         if (!$shouldAggregate) {
             return $responseData;
         }

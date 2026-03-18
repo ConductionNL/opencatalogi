@@ -1029,12 +1029,14 @@ class DirectoryService
         // Try to generate from search endpoint.
         if (!empty($listingData['search'])) {
             // Replace 'search' with 'publications' in the URL.
-            $publicationEndpoint = str_replace('/search', '/publications', $listingData['search']);
+            /** @var string $searchUrl */
+            $searchUrl = $listingData['search'];
+            $publicationEndpoint = str_replace('/search', '/publications', $searchUrl);
 
             // Also handle cases where 'search' might be a query parameter or different pattern.
             if ($publicationEndpoint === $listingData['search']) {
                 // Try replacing 'search' anywhere in the URL path.
-                $publicationEndpoint = preg_replace('/\/search(?=\/|$)/', '/publications', $listingData['search']);
+                $publicationEndpoint = (string) preg_replace('/\/search(?=\/|$)/', '/publications', $listingData['search']);
             }
 
             // If still no change, try a more generic approach.
@@ -1072,6 +1074,7 @@ class DirectoryService
         // Try to construct from catalogDirectory (the actual catalog's directory endpoint from relations).
         // Format: Replace /api/directory with /api/publications.
         if (!empty($listingData['catalogDirectory'])) {
+            /** @var string $catalogDir */
             $catalogDir = $listingData['catalogDirectory'];
             // Replace /api/directory with /api/publications.
             $publicationEndpoint = str_replace('/api/directory', '/api/publications', $catalogDir);

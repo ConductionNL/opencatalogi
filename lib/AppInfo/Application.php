@@ -45,15 +45,21 @@ class Application extends App implements IBootstrap
         $context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
                 
         // Register event listeners for OpenRegister events
+        /** @psalm-suppress InvalidArgument OpenRegister event classes are in external app */
         $context->registerEventListener(ObjectCreatedEvent::class, ObjectCreatedEventListener::class);
+        /** @psalm-suppress InvalidArgument OpenRegister event classes are in external app */
         $context->registerEventListener(ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class);
-        
+
         // Register catalog cache event listeners
+        /** @psalm-suppress InvalidArgument OpenRegister event classes are in external app */
         $context->registerEventListener(ObjectCreatedEvent::class, CatalogCacheEventListener::class);
+        /** @psalm-suppress InvalidArgument OpenRegister event classes are in external app */
         $context->registerEventListener(ObjectUpdatedEvent::class, CatalogCacheEventListener::class);
+        /** @psalm-suppress InvalidArgument OpenRegister event classes are in external app */
         $context->registerEventListener(ObjectDeletedEvent::class, CatalogCacheEventListener::class);
         
         // Register tool registration listener for OpenRegister agents
+        /** @psalm-suppress InvalidArgument ToolRegistrationEvent is in openregister app */
         $context->registerEventListener(ToolRegistrationEvent::class, ToolRegistrationListener::class);
     }//end register
 

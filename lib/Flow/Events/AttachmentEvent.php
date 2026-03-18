@@ -22,7 +22,7 @@ class AttachmentEvent implements IEntity
 
     public function getEvents(): string
     {
-        //return \OC::$server->getURLGenerator()->imagePath('opencatalogi','app.svg');
+        return '';
     }
 
     /**
