@@ -52,7 +52,7 @@ class ElasticSearchClientAdapter
      * Perform a search operation
      *
      * @param  array $params The search parameters
-     * @return array The search results
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The search results
      */
     public function search(array $params)
     {
@@ -66,7 +66,7 @@ class ElasticSearchClientAdapter
      * Index a document
      *
      * @param  array $params The indexing parameters
-     * @return array The indexing response
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The indexing response
      */
     public function index(array $params)
     {
@@ -80,7 +80,7 @@ class ElasticSearchClientAdapter
      * Get a document by its ID
      *
      * @param  array $params The get parameters
-     * @return array The document data
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The document data
      */
     public function get(array $params)
     {
@@ -94,7 +94,7 @@ class ElasticSearchClientAdapter
      * Update a document
      *
      * @param  array $params The update parameters
-     * @return array The update response
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The update response
      */
     public function update(array $params)
     {
@@ -108,7 +108,7 @@ class ElasticSearchClientAdapter
      * Delete a document
      *
      * @param  array $params The delete parameters
-     * @return array The delete response
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The delete response
      */
     public function delete(array $params)
     {

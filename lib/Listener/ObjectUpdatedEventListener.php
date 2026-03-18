@@ -30,6 +30,8 @@ use Psr\Log\LoggerInterface;
  *
  * Listens to ObjectUpdatedEvent and applies auto-publishing logic
  * based on OpenCatalogi configuration settings.
+ *
+ * @template-implements IEventListener<Event>
  */
 class ObjectUpdatedEventListener implements IEventListener
 {

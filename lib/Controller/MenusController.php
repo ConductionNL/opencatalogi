@@ -123,7 +123,7 @@ class MenusController extends Controller
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
         // Determine the origin
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $origin = $this->request->getHeader('Origin') ?: '*';
 
         // Create and configure the response
         $response = new \OCP\AppFramework\Http\Response();

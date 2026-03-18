@@ -33,6 +33,8 @@ use Psr\Log\LoggerInterface;
  *
  * Listens to object creation, update, and deletion events and manages
  * the catalog cache accordingly through invalidation and warmup operations.
+ *
+ * @template-implements IEventListener<Event>
  */
 class CatalogCacheEventListener implements IEventListener
 {

@@ -6,6 +6,7 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IL10N;
@@ -93,7 +94,7 @@ class PublicationsController extends Controller
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
+     * @return object|null The OpenRegister ObjectService if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
     private function getObjectService()
@@ -255,7 +256,7 @@ class PublicationsController extends Controller
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
         // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin = $this->request->getHeader('Origin') ?: '*';
 
         // Create and configure the response
         $response = new \OCP\AppFramework\Http\Response();
@@ -294,7 +295,7 @@ class PublicationsController extends Controller
             }
 
             // Convert ObjectEntity to array if needed (cache may return array directly)
-            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+            $catalog = $catalogData;
 
             // Get ObjectService directly - bypass all PublicationService overhead
             $objectService = $this->getObjectService();
@@ -431,7 +432,7 @@ class PublicationsController extends Controller
             }
 
             // Convert ObjectEntity to array if needed (cache may return array directly)
-            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+            $catalog = $catalogData;
 
             // Get ObjectService directly
             $objectService = $this->getObjectService();
@@ -657,7 +658,7 @@ class PublicationsController extends Controller
             }
 
             // Convert ObjectEntity to array if needed
-            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+            $catalog = $catalogData;
 
             // Extract register and schema from catalog for magic table support.
             $catalogRegisters = $catalog['registers'] ?? [];
@@ -739,14 +740,14 @@ class PublicationsController extends Controller
      * @param string $catalogSlug The slug of the catalog
      * @param string $id          Id of publication
      *
-     * @return JSONResponse JSON response containing the requested attachments/files.
+     * @return DataDownloadResponse|JSONResponse JSON response containing the requested attachments/files.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function download(string $catalogSlug, string $id): JSONResponse
+    public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse
     {
         try {
             // Get the catalog from cache or database
@@ -764,7 +765,7 @@ class PublicationsController extends Controller
             }
 
             // Convert ObjectEntity to array if needed
-            $catalog = is_array($catalogData) ? $catalogData : $catalogData->jsonSerialize();
+            $catalog = $catalogData;
 
             // Extract register and schema from catalog for magic table support.
             $catalogRegisters = $catalog['registers'] ?? [];

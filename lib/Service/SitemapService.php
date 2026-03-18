@@ -312,7 +312,7 @@ class SitemapService
      *
      * @param string                                  $catalogSlug   The slug of the Woo catalog
      * @param string                                  $categoryCode  The sitemap category code
-     * @param \OCA\OpenRegister\Service\ObjectService $objectService The OpenRegister ObjectService
+     * @param object $objectService The OpenRegister ObjectService
      * @param object|null                             $catalog       Resolved catalog object (output reference)
      * @param string|null                             $schemaId      Resolved schema ID (output reference)
      * @param string|null                             $registerId    Resolved register ID (output reference)

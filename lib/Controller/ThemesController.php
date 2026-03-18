@@ -121,7 +121,7 @@ class ThemesController extends Controller
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
         // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin = $this->request->getHeader('Origin') ?: '*';
 
         // Create and configure the response
         $response = new \OCP\AppFramework\Http\Response();

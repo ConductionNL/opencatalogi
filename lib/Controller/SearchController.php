@@ -2,6 +2,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
@@ -109,13 +110,13 @@ class SearchController extends Controller
      * This is an internal endpoint for testing and administrative purposes.
      *
      * @param  string $id Id of publication
-     * @return JSONResponse JSON response containing the download information.
+     * @return DataDownloadResponse|JSONResponse JSON response containing the download information.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function download(string $id): JSONResponse
+    public function download(string $id): DataDownloadResponse|JSONResponse
     {
         return $this->publicationService->download(id: $id);
 

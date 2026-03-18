@@ -4,7 +4,7 @@ namespace OCA\OpenCatalogi\Cron;
 
 use OCP\WorkflowEngine\IOperation ;
 
-class AutomatedPublishing extends IOperation
+class AutomatedPublishing implements IOperation
 {
 
 

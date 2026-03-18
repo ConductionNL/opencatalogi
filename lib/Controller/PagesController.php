@@ -123,7 +123,7 @@ class PagesController extends Controller
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
         // Determine the origin
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $origin = $this->request->getHeader('Origin') ?: '*';
 
         // Create and configure the response
         $response = new \OCP\AppFramework\Http\Response();
@@ -269,7 +269,7 @@ class PagesController extends Controller
         }
 
         // Add CORS headers for public API access
-        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $origin = $this->request->getHeader('Origin') ?: '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

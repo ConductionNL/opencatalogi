@@ -24,6 +24,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCA\OpenCatalogi\Service\FileService;
+use OCA\OpenRegister\Service\ObjectService;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use Psr\Container\ContainerExceptionInterface;

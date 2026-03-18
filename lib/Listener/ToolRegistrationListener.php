@@ -31,7 +31,7 @@ use OCP\EventDispatcher\IEventListener;
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
  *
- * @template-implements IEventListener<ToolRegistrationEvent>
+ * @template-implements IEventListener<Event>
  */
 class ToolRegistrationListener implements IEventListener
 {

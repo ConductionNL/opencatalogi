@@ -27,6 +27,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use Exception;
 use OCP\Common\Exception\NotFoundException;
@@ -885,6 +886,7 @@ class PublicationService
         }
 
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
+        /** @var string $aggregate */
         $aggregate       = ($queryParams['_aggregate'] ?? 'true');
         $shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
 

@@ -22,7 +22,7 @@ ini_set('memory_limit', '2048M');
 
 use DateTime;
 use Exception;
-use Mpdf\MpMpdfdf;
+use Mpdf\Mpdf;
 use Mpdf\MpdfException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\File;
@@ -442,6 +442,7 @@ class FileService
                 $userFolder->newFile(path: $filePath);
                 $file = $userFolder->get(path: $filePath);
 
+                /** @var \OCP\Files\File $file */
                 $file->putContent(data: $content);
 
                 return true;
@@ -482,6 +483,7 @@ class FileService
             try {
                 $file = $userFolder->get(path: $filePath);
 
+                /** @var \OCP\Files\File $file */
                 $file->putContent(data: $content);
 
                 return true;
@@ -490,6 +492,7 @@ class FileService
                     $userFolder->newFile(path: $filePath);
                     $file = $userFolder->get(path: $filePath);
 
+                    /** @var \OCP\Files\File $file */
                     $file->putContent(data: $content);
 
                     $this->logger->info("File $filePath did not exist, created a new file for it.");

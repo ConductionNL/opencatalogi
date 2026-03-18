@@ -112,6 +112,8 @@ class DirectoryService
      * @throws DoesNotExistException|MultipleObjectsReturnedException
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws GuzzleException
+     *
+     * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
      */
     public function doCronSync(): array
     {
@@ -195,6 +197,8 @@ class DirectoryService
      * @return array<string> Array of unique directory URLs
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
+     *
+     * @psalm-suppress InvalidArgument
      */
     public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
     {
@@ -303,6 +307,8 @@ class DirectoryService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
      * @throws \InvalidArgumentException If directory URL is invalid
+     *
+     * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
      */
     public function syncDirectory(string $directoryUrl): array
     {
@@ -764,6 +770,8 @@ class DirectoryService
      * @return array Array containing combined publications
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
+     *
+     * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
      */
     public function getPublications(array $guzzleConfig = [], bool $includeDefault = false): array
     {
@@ -1376,6 +1384,8 @@ class DirectoryService
      * @return array Array with 'results' and 'sources' keys
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
+     *
+     * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
      */
     public function getUsed(string $uuid, array $guzzleConfig = []): array
     {
@@ -1515,6 +1525,8 @@ class DirectoryService
      * @return array|null Array containing publication data and source, or null if not found
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws DoesNotExistException|MultipleObjectsReturnedException
+     *
+     * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
      */
     public function getPublication(string $publicationId, array $guzzleConfig = []): ?array
     {

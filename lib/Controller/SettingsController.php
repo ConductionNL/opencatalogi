@@ -37,7 +37,7 @@ class SettingsController extends Controller
     /**
      * The OpenRegister object service.
      *
-     * @var \OCA\OpenRegister\Service\ObjectService|null The OpenRegister object service.
+     * @var object|null The OpenRegister object service.
      */
     private $objectService;
 

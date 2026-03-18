@@ -123,7 +123,7 @@ class CatalogiController extends Controller
     public function preflightedCors(): \OCP\AppFramework\Http\Response
     {
         // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin = $this->request->getHeader('Origin') ?: '*';
 
         // Create and configure the response
         $response = new \OCP\AppFramework\Http\Response();
@@ -207,7 +207,7 @@ class CatalogiController extends Controller
         $response = $this->catalogiService->index($id);
 
         // Add CORS headers for public API access
-        $origin = isset($this->request->server['HTTP_ORIGIN']) ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin = $this->request->getHeader('Origin') ?: '*';
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);

@@ -7,7 +7,7 @@ use OCP\WorkflowEngine\IEntity;
 /**
  * DOCS: https://docs.nextcloud.com/server/latest/developer_manual/digging_deeper/flow.html#entities
  */
-class AttachmentEvent extends IEntity
+class AttachmentEvent implements IEntity
 {
     
     public function getName(): string

@@ -6,6 +6,8 @@ use OCP\AppFramework\Http\Response;
 
 /**
  * A simple response for plain text data
+ *
+ * @template-extends Response<int, array<string, mixed>>
  */
 class TextResponse extends Response
 {

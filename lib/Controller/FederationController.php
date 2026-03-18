@@ -2,6 +2,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
@@ -199,14 +200,14 @@ class FederationController extends Controller
      *
      * @param string $id Id of publication
      *
-     * @return JSONResponse JSON response for download or error response.
+     * @return DataDownloadResponse|JSONResponse JSON response for download or error response.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function publicationDownload(string $id): JSONResponse
+    public function publicationDownload(string $id): DataDownloadResponse|JSONResponse
     {
         return $this->publicationService->download(id: $id);
 

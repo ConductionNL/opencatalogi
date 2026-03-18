@@ -12,6 +12,7 @@ use DOMText;
  * A response for XML data
  *
  * @psalm-suppress PropertyNotSetInConstructor
+ * @template-extends Response<int, array<string, mixed>>
  */
 class XMLResponse extends Response
 {

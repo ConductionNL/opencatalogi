@@ -232,7 +232,7 @@ class ListingsController extends Controller
         $result = $this->getObjectService()->deleteObject((string) $id);
 
         // Return the result as a JSON response
-        return new JSONResponse(['success' => $result], $result === true ? '200' : '404');
+        return new JSONResponse(['success' => $result], $result === true ? 200 : 404);
 
     }//end destroy()
 
