@@ -6,6 +6,7 @@ parameters:
         - phpstan-bootstrap.php
     excludePaths:
         - vendor
+        - vendor-bin
         # CMSTool implements OCA\OpenRegister\Tool\ToolInterface which isn't available during analysis
         - lib/Tool/CMSTool.php
     scanDirectories:

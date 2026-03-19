@@ -224,7 +224,7 @@ class SettingsController extends Controller
     {
         try {
             $params      = $this->request->getParams();
-            $forceImport = isset($params['force']) && $params['force'] === true;
+            $forceImport = isset($params['force']) === true && $params['force'] === true;
 
             $result = $this->settingsService->manualImport($forceImport);
 

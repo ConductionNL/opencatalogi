@@ -77,7 +77,6 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:checked.sync="catalogi.hasWooSitemap">
 					Requires Woo sitemap
 				</NcCheckboxRadioSwitch>
-
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -226,12 +225,12 @@ export default {
 					status: this.statusOptions.find(opt => opt.id === (activeCatalog.status || '').toLowerCase()) || this.statusOptions[0],
 				}
 
-			// Find and set the selected organization
-			const org = objectStore.getCollection('organization').results.find(
-				org => org.id && activeCatalog.organization && org.id.toString() === activeCatalog.organization.toString(),
-			)
+				// Find and set the selected organization
+				const org = objectStore.getCollection('organization').results.find(
+					org => org.id && activeCatalog.organization && org.id.toString() === activeCatalog.organization.toString(),
+				)
 
-			this.selectedOrganization = org ? { id: org.id, label: org.title } : null
+				this.selectedOrganization = org ? { id: org.id, label: org.title } : null
 
 				// Map existing registers and schemas to the format expected by NcSelect
 				this.selectedRegisters = activeCatalog.registers.map(id => ({

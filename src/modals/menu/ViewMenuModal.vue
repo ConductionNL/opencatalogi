@@ -422,6 +422,7 @@ export default {
 		/**
 		 * Open the delete modal for a specific menu item
 		 * @param {object} item - The menu item to delete
+		 * @param index
 		 */
 		deleteItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })

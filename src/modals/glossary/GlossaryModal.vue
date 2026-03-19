@@ -57,12 +57,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:value.sync="glossary.externalLink"
 					:error="!!inputValidation.fieldErrors?.['externalLink']"
 					:helper-text="inputValidation.fieldErrors?.['externalLink']?.[0]" />
-				<NcSelectTags v-model="glossary.keywords"
+				<NcSelect v-model="glossary.keywords"
 					:disabled="objectStore.isLoading('glossary')"
-					label="Keywords"
+					input-label="Keywords"
+					:multiple="true"
+					:taggable="true"
 					:error="!!inputValidation.fieldErrors?.['keywords']"
 					:helper-text="inputValidation.fieldErrors?.['keywords']?.[0]"
-					placeholder="Add keywords" />
+					placeholder="Type and press Enter to add keywords" />
 			</div>
 			<div v-if="objectStore.isLoading('glossary')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -91,7 +93,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcModal, NcTextField, NcLoadingIcon, NcNoteCard, NcSelectTags } from '@nextcloud/vue'
+import { NcButton, NcModal, NcTextField, NcLoadingIcon, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { Glossary } from '../../entities/index.js'
@@ -104,7 +106,7 @@ export default {
 		NcButton,
 		NcLoadingIcon,
 		NcNoteCard,
-		NcSelectTags,
+		NcSelect,
 		ContentSaveOutline,
 		Cancel,
 	},

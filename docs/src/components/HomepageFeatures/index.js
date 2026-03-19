@@ -4,26 +4,26 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
+    title: 'Publication Management',
     description: (
       <>
-        Open Catalogi is designed to be easily installed and used to get your software catalog up and running quickly.
+        Create, manage, and publish documents with full metadata, attachments, and WOO compliance. Support for multiple publication types and statuses.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Federated Catalogs',
     description: (
       <>
-        Open Catalogi lets you focus on showcasing your software, while we handle the complexity of catalog management.
+        Synchronize catalogs across organizations in a federated directory. Discover and search publications from the entire network.
       </>
     ),
   },
   {
-    title: 'Common Ground Ready',
+    title: 'Open Data & WOO',
     description: (
       <>
-        Built with Dutch Common Ground principles in mind, ensuring standardized and compliant software publication.
+        Built for Dutch open data standards and WOO transparency requirements. DCAT-AP compliant metadata and public search frontend.
       </>
     ),
   },
