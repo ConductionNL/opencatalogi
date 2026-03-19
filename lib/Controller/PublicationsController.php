@@ -339,6 +339,56 @@ class PublicationsController extends Controller
                 'registers' => ($catalog['registers'] ?? []),
             ];
 
+            // Enrich @self with resolved schema and register objects for frontend enrichment.
+            // The frontend expects @self.schemas[id] = {slug, title} and @self.registers[id] = {slug, title}.
+            try {
+                $schemaMapper   = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+                $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+
+                $resolvedSchemas = [];
+                $schemaIds       = $catalog['schemas'] ?? [];
+                if (is_string($schemaIds) === true) {
+                    $schemaIds = json_decode($schemaIds, true) ?? [];
+                }
+
+                foreach ($schemaIds as $schemaId) {
+                    try {
+                        $schema                        = $schemaMapper->find((int) $schemaId);
+                        $resolvedSchemas[$schemaId] = [
+                            'id'    => $schema->getId(),
+                            'slug'  => $schema->getSlug(),
+                            'title' => $schema->getTitle(),
+                        ];
+                    } catch (\Exception $e) {
+                        // Schema not found, skip.
+                    }
+                }
+
+                $resolvedRegisters = [];
+                $registerIds       = $catalog['registers'] ?? [];
+                if (is_string($registerIds) === true) {
+                    $registerIds = json_decode($registerIds, true) ?? [];
+                }
+
+                foreach ($registerIds as $registerId) {
+                    try {
+                        $register                        = $registerMapper->find((int) $registerId);
+                        $resolvedRegisters[$registerId] = [
+                            'id'    => $register->getId(),
+                            'slug'  => $register->getSlug(),
+                            'title' => $register->getTitle(),
+                        ];
+                    } catch (\Exception $e) {
+                        // Register not found, skip.
+                    }
+                }
+
+                $result['@self']['schemas']   = $resolvedSchemas;
+                $result['@self']['registers'] = $resolvedRegisters;
+            } catch (\Exception $e) {
+                // OpenRegister not available, skip enrichment.
+            }//end try
+
             // Add CORS headers for public API access.
             $response = new JSONResponse($result, 200);
             $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
