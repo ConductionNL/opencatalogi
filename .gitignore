@@ -16,6 +16,9 @@
 
 /coverage/
 /coverage-frontend/
+
+.phpunit.cache/
+phpmetrics/
 /website/node_modules/
 /website/.docusaurus/
 /website/build/
