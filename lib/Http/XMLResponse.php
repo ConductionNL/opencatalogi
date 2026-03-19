@@ -205,7 +205,6 @@ class XMLResponse extends Response
      * @psalm-param array<string, mixed> $data
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     private function buildXmlElement(DOMDocument $dom, DOMElement $element, array $data): void
     {
@@ -233,20 +232,22 @@ class XMLResponse extends Response
                 $key = "item$key";
             }
 
-            if (is_array($value) === true) {
-                // Handle indexed arrays (multiple elements with same name).
-                if (isset($value[0]) === true && is_array($value[0]) === true) {
-                    foreach ($value as $item) {
-                        $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $item);
-                    }
-                } else {
-                    // Handle associative arrays (complex elements).
-                    $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
-                }
-            } else {
+            if (is_array($value) === false) {
                 // Handle simple value elements.
                 $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
+                continue;
             }
+
+            // Handle indexed arrays (multiple elements with same name).
+            if (isset($value[0]) === true && is_array($value[0]) === true) {
+                foreach ($value as $item) {
+                    $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $item);
+                }
+                continue;
+            }
+
+            // Handle associative arrays (complex elements).
+            $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
         }//end foreach
 
     }//end buildXmlElement()
@@ -266,7 +267,6 @@ class XMLResponse extends Response
      * @psalm-param string $tagName
      * @psalm-param array<string, mixed>|string|object $data
      *
-     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     private function createChildElement(DOMDocument $dom, DOMElement $parentElement, string $tagName, $data): void
     {
@@ -279,24 +279,37 @@ class XMLResponse extends Response
 
         if (is_array($data) === true) {
             $this->buildXmlElement(dom: $dom, element: $childElement, data: $data);
-        } else {
-            // Handle objects that might not be convertible to string directly.
-            if (is_object($data) === true) {
-                // For QueryBuilder objects or objects without __toString() create a placeholder.
-                if ($data instanceof IQueryBuilder
-                    || method_exists($data, '__toString') === false
-                ) {
-                    $data = '[Object of class '.get_class($data).']';
-                } else {
-                    // For objects with __toString() method.
-                    $data = (string) $data;
-                }
-            }
-
-            $childElement->appendChild($this->createSafeTextNode(dom: $dom, text: (string) $data));
+            return;
         }
 
+        // Handle objects that might not be convertible to string directly.
+        if (is_object($data) === true) {
+            $data = $this->convertObjectToString($data);
+        }
+
+        $childElement->appendChild($this->createSafeTextNode(dom: $dom, text: (string) $data));
+
     }//end createChildElement()
+
+    /**
+     * Convert an object to its string representation.
+     *
+     * @param object $data The object to convert
+     *
+     * @return string The string representation
+     */
+    private function convertObjectToString(object $data): string
+    {
+        // For QueryBuilder objects or objects without __toString() create a placeholder.
+        if ($data instanceof IQueryBuilder
+            || method_exists($data, '__toString') === false
+        ) {
+            return '[Object of class '.get_class($data).']';
+        }
+
+        return (string) $data;
+
+    }//end convertObjectToString()
 
     /**
      * Process text content safely.

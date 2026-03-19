@@ -34,7 +34,6 @@ use RuntimeException;
  * as well as managing configuration for different object types.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  */
 class SettingsService
@@ -142,7 +141,9 @@ class SettingsService
                 if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
                     throw new RuntimeException('Failed to enable OpenRegister');
                 }
-            } else if ($minVersion !== null) {
+            }
+
+            if ($this->isOpenRegisterInstalled($minVersion) === true && $minVersion !== null) {
                 // Check if update is needed.
                 $currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
                 if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
@@ -159,7 +160,7 @@ class SettingsService
                         throw new RuntimeException('Failed to enable OpenRegister after update');
                     }
                 }
-            }//end if
+            }
 
             return true;
         } catch (\Exception $e) {
@@ -194,10 +195,9 @@ class SettingsService
                 $matchingRegister = null;
                 foreach ($registers as $register) {
                     // Convert Register entity to array if needed.
+                    $registerData = $register->jsonSerialize();
                     if (is_array($register) === true) {
                         $registerData = $register;
-                    } else {
-                        $registerData = $register->jsonSerialize();
                     }
 
                     if (stripos($registerData['slug'], $registerSlug) !== false) {
@@ -429,10 +429,9 @@ class SettingsService
 
             foreach ($registers as $register) {
                 // Convert register to array if it's an object.
+                $registerArray = (array) $register;
                 if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
                     $registerArray = $register->jsonSerialize();
-                } else {
-                    $registerArray = (array) $register;
                 }
 
                 // Get schema IDs from the register.
@@ -457,10 +456,9 @@ class SettingsService
                         $schema = $schemaMapper->find((int) $schemaId);
                         if ($schema !== null) {
                             // Convert schema entity to array.
+                            $schemaArray = (array) $schema;
                             if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
                                 $schemaArray = $schema->jsonSerialize();
-                            } else {
-                                $schemaArray = (array) $schema;
                             }
 
                             $fullSchemas[] = $schemaArray;
@@ -560,10 +558,9 @@ class SettingsService
                 // Check if this option is provided in the input data.
                 if (isset($options[$option]) === true) {
                     // Convert boolean or string to string format for storage.
+                    $value = 'false';
                     if ($options[$option] === true || $options[$option] === 'true') {
                         $value = 'true';
-                    } else {
-                        $value = 'false';
                     }
 
                     // Store the value in the configuration.
@@ -711,7 +708,11 @@ class SettingsService
                         $schemaMap[$schemaArray['slug']] = $schemaArray['id'];
                     }
                 }
-            } else if (is_array($schema) === true && isset($schema['slug']) === true) {
+
+                continue;
+            }
+
+            if (is_array($schema) === true && isset($schema['slug']) === true) {
                 $schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
             }
         }
@@ -729,12 +730,16 @@ class SettingsService
                         break;
                     }
                 }
-            } else if (is_array($register) === true && isset($register['slug']) === true) {
-                // Already an array.
-                if ($register['slug'] === 'publication') {
-                    $registerId = ($register['id'] ?? $register['uuid'] ?? null);
-                    break;
-                }
+
+                continue;
+            }
+
+            // Already an array.
+            if (is_array($register) === true && isset($register['slug']) === true
+                && $register['slug'] === 'publication'
+            ) {
+                $registerId = ($register['id'] ?? $register['uuid'] ?? null);
+                break;
             }
         }
 

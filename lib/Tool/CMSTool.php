@@ -43,7 +43,6 @@ use Psr\Log\LoggerInterface;
  * @package  OCA\OpenCatalogi\Tool
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.ElseExpression)
  */
 class CMSTool implements ToolInterface
 {
@@ -136,13 +135,15 @@ class CMSTool implements ToolInterface
 
         // Determine user ID for operations.
         // Prioritize session user, fallback to agent's configured user.
-        $sessionUser = $this->userSession->getUser();
+        $this->currentUserId = null;
+        $sessionUser         = $this->userSession->getUser();
         if ($sessionUser !== null) {
             $this->currentUserId = $sessionUser->getUID();
-        } else if ($agent !== null) {
+            return;
+        }
+
+        if ($agent !== null) {
             $this->currentUserId = $agent->getUser();
-        } else {
-            $this->currentUserId = null;
         }
 
     }//end setAgent()
@@ -655,6 +656,59 @@ class CMSTool implements ToolInterface
     }//end generateSlug()
 
     /**
+     * Resolve a parameter value, handling null and type casting.
+     *
+     * @param \ReflectionParameter $param The reflection parameter.
+     * @param mixed                $value The current value.
+     *
+     * @return mixed The resolved value.
+     */
+    private function resolveParameterValue(\ReflectionParameter $param, mixed $value): mixed
+    {
+        if ($value === 'null' || $value === null) {
+            // Use default value if available, otherwise null.
+            if ($param->isDefaultValueAvailable() === true) {
+                return $param->getDefaultValue();
+            }
+
+            return null;
+        }
+
+        if ($param->hasType() === true) {
+            return $this->castParameterValue($param, $value);
+        }
+
+        return $value;
+
+    }//end resolveParameterValue()
+
+    /**
+     * Cast a parameter value based on its reflection type.
+     *
+     * @param \ReflectionParameter $param The reflection parameter.
+     * @param mixed                $value The current value.
+     *
+     * @return mixed The cast value.
+     */
+    private function castParameterValue(\ReflectionParameter $param, mixed $value): mixed
+    {
+        $type = $param->getType();
+        if ($type === null || ($type instanceof \ReflectionNamedType) === false) {
+            return $value;
+        }
+
+        return match ($type->getName()) {
+            'int' => (int) $value,
+            'float' => (float) $value,
+            'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'string' => (string) $value,
+            'array' => is_array($value) === true ? $value : [],
+            default => $value,
+        };
+
+    }//end castParameterValue()
+
+    /**
      * Create error response
      *
      * @param string  $message Error message
@@ -735,35 +789,7 @@ class CMSTool implements ToolInterface
                 }
 
                 // Handle string 'null' from LLM.
-                if ($value === 'null' || $value === null) {
-                    // Use default value if available, otherwise null.
-                    if ($param->isDefaultValueAvailable() === true) {
-                        $value = $param->getDefaultValue();
-                    } else {
-                        $value = null;
-                    }
-                } else if ($param->hasType() === true) {
-                    // Cast to the expected type.
-                    $type = $param->getType();
-                    if ($type !== null && $type instanceof \ReflectionNamedType) {
-                        $typeName = $type->getName();
-                        if ($typeName === 'int') {
-                            $value = (int) $value;
-                        } else if ($typeName === 'float') {
-                            $value = (float) $value;
-                        } else if ($typeName === 'bool') {
-                            $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
-                        } else if ($typeName === 'string') {
-                            $value = (string) $value;
-                        } else if ($typeName === 'array') {
-                            if (is_array($value) === true) {
-                                $value = $value;
-                            } else {
-                                $value = [];
-                            }
-                        }
-                    }
-                }//end if
+                $value = $this->resolveParameterValue($param, $value);
 
                 $typedArguments[] = $value;
             }//end foreach

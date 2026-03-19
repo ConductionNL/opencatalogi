@@ -498,7 +498,6 @@ class CatalogiService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function index(null|string|int $catalogId=null): JSONResponse
     {
@@ -516,19 +515,17 @@ class CatalogiService
             $query['@self'] = [];
             if (empty($context['registers']) === false) {
                 // Use scalar value when only one register to avoid magic_mapper overhead.
+                $query['@self']['register'] = $context['registers'];
                 if (count($context['registers']) === 1) {
                     $query['@self']['register'] = $context['registers'][0];
-                } else {
-                    $query['@self']['register'] = $context['registers'];
                 }
             }
 
             if (empty($context['schemas']) === false) {
                 // Use scalar value when only one schema to avoid magic_mapper overhead.
+                $query['@self']['schema'] = $context['schemas'];
                 if (count($context['schemas']) === 1) {
                     $query['@self']['schema'] = $context['schemas'][0];
-                } else {
-                    $query['@self']['schema'] = $context['schemas'];
                 }
             }
         }

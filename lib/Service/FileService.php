@@ -55,7 +55,6 @@ use ZipArchive;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ElseExpression)
  */
 
 class FileService
@@ -114,11 +113,10 @@ class FileService
     private function getCurrentDomain(): string
     {
         // Check if the request is over HTTPS.
-        $isHttps = (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off');
+        $isHttps  = (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off');
+        $protocol = 'http://';
         if ($isHttps === true) {
             $protocol = 'https://';
-        } else {
-            $protocol = 'http://';
         }
 
         // Get the host (domain).
@@ -143,10 +141,9 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         try {
@@ -235,10 +232,9 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         try {
@@ -376,10 +372,9 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
@@ -419,10 +414,9 @@ class FileService
     {
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         // Update Attachment data.
@@ -466,10 +460,9 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
@@ -519,10 +512,9 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
@@ -574,10 +566,9 @@ class FileService
 
         // Get the current user.
         $currentUser = $this->userSession->getUser();
+        $userId      = 'Guest';
         if ($currentUser !== null) {
             $userId = $currentUser->getUID();
-        } else {
-            $userId = 'Guest';
         }
 
         $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
