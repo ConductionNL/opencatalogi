@@ -1,7 +1,6 @@
 <?php
-
 /**
- * OpenCatalogi Health Controller
+ * OpenCatalogi Health Controller.
  *
  * Exposes health check endpoint for container orchestration and monitoring.
  *
@@ -34,15 +33,14 @@ use Psr\Log\LoggerInterface;
  */
 class HealthController extends Controller
 {
-
     /**
      * Constructor.
      *
-     * @param string          $appName    The application name
-     * @param IRequest        $request    The HTTP request
-     * @param IDBConnection   $db         Database connection
-     * @param IAppManager     $appManager App manager
-     * @param LoggerInterface $logger     Logger
+     * @param string          $appName    The application name.
+     * @param IRequest        $request    The HTTP request.
+     * @param IDBConnection   $db         Database connection.
+     * @param IAppManager     $appManager App manager.
+     * @param LoggerInterface $logger     Logger.
      */
     public function __construct(
         $appName,
@@ -51,16 +49,16 @@ class HealthController extends Controller
         private IAppManager $appManager,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($appName, $request);
-    }//end __construct()
+        parent::__construct(appName: $appName, request: $request);
 
+    }//end __construct()
 
     /**
      * Health check endpoint.
      *
      * @NoCSRFRequired
      *
-     * @return JSONResponse Health status
+     * @return JSONResponse Health status.
      */
     public function index(): JSONResponse
     {
@@ -75,27 +73,30 @@ class HealthController extends Controller
 
         // Check filesystem.
         $checks['filesystem'] = $this->checkFilesystem();
-        if ($checks['filesystem'] !== 'ok') {
-            $status = ($status === 'error') ? 'error' : 'degraded';
+        if ($checks['filesystem'] !== 'ok' && $status !== 'error') {
+            $status = 'degraded';
         }
 
-        $httpStatus = ($status === 'ok') ? Http::STATUS_OK : Http::STATUS_SERVICE_UNAVAILABLE;
+        $httpStatus = Http::STATUS_SERVICE_UNAVAILABLE;
+        if ($status === 'ok') {
+            $httpStatus = Http::STATUS_OK;
+        }
 
         return new JSONResponse(
-            [
+            data: [
                 'status'  => $status,
                 'version' => $this->getAppVersion(),
                 'checks'  => $checks,
             ],
-            $httpStatus
+            statusCode: $httpStatus
         );
-    }//end index()
 
+    }//end index()
 
     /**
      * Check database connectivity.
      *
-     * @return string 'ok' or error message
+     * @return string 'ok' or error message.
      */
     private function checkDatabase(): string
     {
@@ -107,22 +108,28 @@ class HealthController extends Controller
 
             return 'ok';
         } catch (\Exception $e) {
-            $this->logger->error('[HealthController] Database check failed', ['error' => $e->getMessage()]);
-            return 'failed: ' . $e->getMessage();
+            $this->logger->error(
+                message: '[HealthController] Database check failed',
+                context: ['error' => $e->getMessage()]
+            );
+            return 'failed: '.$e->getMessage();
         }
-    }//end checkDatabase()
 
+    }//end checkDatabase()
 
     /**
      * Check filesystem access.
      *
-     * @return string 'ok' or error message
+     * @return string 'ok' or error message.
      */
     private function checkFilesystem(): string
     {
         try {
-            $tmpFile = sys_get_temp_dir() . '/opencatalogi_health_' . getmypid();
-            $written = file_put_contents($tmpFile, 'health');
+            $tmpFile = sys_get_temp_dir().'/opencatalogi_health_'.getmypid();
+            $written = file_put_contents(
+                filename: $tmpFile,
+                data: 'health'
+            );
             if ($written === false) {
                 return 'failed: cannot write to temp directory';
             }
@@ -131,24 +138,23 @@ class HealthController extends Controller
 
             return 'ok';
         } catch (\Exception $e) {
-            return 'failed: ' . $e->getMessage();
+            return 'failed: '.$e->getMessage();
         }
-    }//end checkFilesystem()
 
+    }//end checkFilesystem()
 
     /**
      * Get the app version.
      *
-     * @return string The app version
+     * @return string The app version.
      */
     private function getAppVersion(): string
     {
         try {
-            return $this->appManager->getAppVersion('opencatalogi');
+            return $this->appManager->getAppVersion(appId: 'opencatalogi');
         } catch (\Exception $e) {
             return 'unknown';
         }
+
     }//end getAppVersion()
-
-
 }//end class
