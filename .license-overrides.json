@@ -1,0 +1,7 @@
+{
+	"@fortawesome/free-solid-svg-icons": "License is (CC-BY-4.0 AND MIT) — both are approved open-source licenses, compound AND expression not parsed by checker",
+	"@fortawesome/free-regular-svg-icons": "License is (CC-BY-4.0 AND MIT) — both are approved open-source licenses, compound AND expression not parsed by checker",
+	"@fortawesome/free-brands-svg-icons": "License is (CC-BY-4.0 AND MIT) — both are approved open-source licenses, compound AND expression not parsed by checker",
+	"glob-to-regexp": "License is BSD* — BSD-2-Clause equivalent, recognized by license-checker with trailing wildcard",
+	"apexcharts": "MIT licensed — custom SPDX field contains logo URL instead of license identifier"
+}
