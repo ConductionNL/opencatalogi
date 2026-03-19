@@ -1,6 +1,8 @@
 <?php
 /**
- * XMLResponse for OpenCatalogi.
+ * OpenCatalogi XML Response.
+ *
+ * A response class for rendering data as XML output.
  *
  * @category Http
  * @package  OCA\OpenCatalogi\Http
@@ -14,7 +16,6 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Http;
 
 use OCP\AppFramework\Http\Response;
@@ -24,7 +25,7 @@ use DOMElement;
 use DOMText;
 
 /**
- * A response for XML data
+ * A response for XML data.
  *
  * @psalm-suppress PropertyNotSetInConstructor
  */
@@ -46,12 +47,12 @@ class XMLResponse extends Response
     protected $renderCallback = null;
 
     /**
-     * Constructor for XMLResponse
+     * Constructor for XMLResponse.
      *
      * @param array<string, mixed>|string $data    The data to convert to XML
      * @param integer                     $status  HTTP status code, defaults to 200
      * @param array<string, string>       $headers Custom headers to add to the response
-     * @param string|null                 $path    The request path to determine if download header should be added
+     * @param string|null                 $path    The request path for download header
      *
      * @psalm-param array<string, mixed>|string $data
      * @psalm-param int $status
@@ -60,39 +61,37 @@ class XMLResponse extends Response
      */
     public function __construct($data=[], int $status=200, array $headers=[], ?string $path=null)
     {
-        parent::__construct(status: $status);
+        // @phpstan-ignore argument.type
+        parent::__construct($status);
 
         // Set response data.
+        $this->data = ['content' => $data];
         if (is_array($data) === true) {
             $this->data = $data;
-        } else {
-            $this->data = ['content' => $data];
         }
 
         // Set headers.
         foreach ($headers as $name => $value) {
-            $this->addHeader(name: $name, value: $value);
+            $this->addHeader($name, $value);
         }
 
         // Set content type header.
-        $this->addHeader(name: 'Content-Type', value: 'application/xml; charset=utf-8');
+        $this->addHeader('Content-Type', 'application/xml; charset=utf-8');
 
         // Only add Content-Disposition header if path ends with .xml.
-        $headers = $this->getHeaders();
         if ($path !== null
             && str_ends_with($path, '.xml') === true
-            && isset($headers['Content-Disposition']) === false
+            && isset($this->getHeaders()['Content-Disposition']) === false
         ) {
-            $this->addHeader(name: 'Content-Disposition', value: 'attachment; filename="export.xml"');
+            $this->addHeader('Content-Disposition', 'attachment; filename="export.xml"');
         }
 
     }//end __construct()
 
     /**
-     * Get the data for rendering
+     * Get the data for rendering.
      *
-     * @return       array<string, mixed> The data for rendering
-     * @psalm-return array<string, mixed>
+     * @return array<string, mixed> The data for rendering
      */
     protected function getData(): array
     {
@@ -101,7 +100,7 @@ class XMLResponse extends Response
     }//end getData()
 
     /**
-     * Set custom render callback
+     * Set custom render callback.
      *
      * @param callable $callback Function that takes data array and returns XML string
      *
@@ -117,7 +116,7 @@ class XMLResponse extends Response
     }//end setRenderCallback()
 
     /**
-     * Returns the rendered XML
+     * Returns the rendered XML.
      *
      * @return string The rendered XML
      */
@@ -129,18 +128,18 @@ class XMLResponse extends Response
 
         $data = $this->getData()['value'];
 
-        // Check if data contains an @root key, if so use it directly.
+        // Check if data contains an @root key and use it directly.
         if (isset($data['@root']) === true) {
-            return $this->arrayToXml(data: $data);
+            return $this->arrayToXml($data);
         }
 
         // Use default root tag.
-        return $this->arrayToXml(data: ['value' => $data], rootTag: 'response');
+        return $this->arrayToXml(['value' => $data], 'response');
 
     }//end render()
 
     /**
-     * Convert an array to XML
+     * Convert an array to XML.
      *
      * @param array<string, mixed> $data    The data to convert
      * @param string|null          $rootTag Optional root tag name (overrides @root in data)
@@ -155,7 +154,7 @@ class XMLResponse extends Response
         // Extract root tag from data or use provided root tag.
         $rootName = ($rootTag ?? ($data['@root'] ?? 'root'));
 
-        // Remove @root if it exists in data since we've extracted it.
+        // Remove @root if it exists in data since we have extracted it.
         if (isset($data['@root']) === true) {
             unset($data['@root']);
         }
@@ -177,9 +176,8 @@ class XMLResponse extends Response
         $this->buildXmlElement(dom: $dom, element: $root, data: $data);
 
         // Get XML output.
-        if (empty($dom->saveXML()) === false) {
-            $xmlOutput = $dom->saveXML();
-        } else {
+        $xmlOutput = $dom->saveXML();
+        if ($xmlOutput === false) {
             $xmlOutput = '';
         }
 
@@ -194,7 +192,7 @@ class XMLResponse extends Response
     }//end arrayToXml()
 
     /**
-     * Build an XML element with attributes and children in order
+     * Build an XML element with attributes and children in order.
      *
      * @param DOMDocument          $dom     The document
      * @param DOMElement           $element The element to populate
@@ -205,6 +203,8 @@ class XMLResponse extends Response
      * @psalm-param DOMDocument $dom
      * @psalm-param DOMElement $element
      * @psalm-param array<string, mixed> $data
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function buildXmlElement(DOMDocument $dom, DOMElement $element, array $data): void
     {
@@ -230,30 +230,31 @@ class XMLResponse extends Response
             $key = ltrim($key, '@');
             if (is_numeric($key) === true) {
                 $key = "item$key";
-            } else {
-                $key = $key;
             }
 
-            if (is_array($value) === true) {
-                // Handle indexed arrays (multiple elements with same name).
-                if (isset($value[0]) === true && is_array($value[0]) === true) {
-                    foreach ($value as $item) {
-                        $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $item);
-                    }
-                } else {
-                    // Handle associative arrays (complex elements).
-                    $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
-                }
-            } else {
+            if (is_array($value) === false) {
                 // Handle simple value elements.
                 $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
+                continue;
             }
+
+            // Handle indexed arrays (multiple elements with same name).
+            if (isset($value[0]) === true && is_array($value[0]) === true) {
+                foreach ($value as $item) {
+                    $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $item);
+                }
+
+                continue;
+            }
+
+            // Handle associative arrays (complex elements).
+            $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $value);
         }//end foreach
 
     }//end buildXmlElement()
 
     /**
-     * Create a child element and populate it
+     * Create a child element and populate it.
      *
      * @param DOMDocument                        $dom           The document
      * @param DOMElement                         $parentElement The parent element
@@ -278,27 +279,40 @@ class XMLResponse extends Response
 
         if (is_array($data) === true) {
             $this->buildXmlElement(dom: $dom, element: $childElement, data: $data);
-        } else {
-            // Handle objects that might not be convertible to string directly.
-            if (is_object($data) === true) {
-                // For QueryBuilder objects or objects without __toString(), create a placeholder.
-                if ($data instanceof IQueryBuilder
-                    || method_exists($data, '__toString') === false
-                ) {
-                    $data = '[Object of class '.get_class($data).']';
-                } else {
-                    // For objects with __toString() method.
-                    $data = (string) $data;
-                }
-            }
-
-            $childElement->appendChild($this->createSafeTextNode(dom: $dom, text: (string) $data));
+            return;
         }
+
+        // Handle objects that might not be convertible to string directly.
+        if (is_object($data) === true) {
+            $data = $this->convertObjectToString($data);
+        }
+
+        $childElement->appendChild($this->createSafeTextNode(dom: $dom, text: (string) $data));
 
     }//end createChildElement()
 
     /**
-     * Process text content safely
+     * Convert an object to its string representation.
+     *
+     * @param object $data The object to convert
+     *
+     * @return string The string representation
+     */
+    private function convertObjectToString(object $data): string
+    {
+        // For QueryBuilder objects or objects without __toString() create a placeholder.
+        if ($data instanceof IQueryBuilder
+            || method_exists($data, '__toString') === false
+        ) {
+            return '[Object of class '.get_class($data).']';
+        }
+
+        return (string) $data;
+
+    }//end convertObjectToString()
+
+    /**
+     * Process text content safely.
      *
      * @param DOMDocument $dom  The document
      * @param string      $text The text to create a node for
@@ -314,11 +328,11 @@ class XMLResponse extends Response
         // Decode any HTML entities to prevent double encoding.
         // First decode things like &amp; into &.
         $decodedText = html_entity_decode($text, (ENT_QUOTES | ENT_HTML5), 'UTF-8');
-        // Then decode again to handle cases like &#039; into '.
+        // Then decode again to handle cases like &#039; into a single quote.
         $decodedText = html_entity_decode($decodedText, (ENT_QUOTES | ENT_HTML5), 'UTF-8');
 
         // Create a text node with the processed text.
-        // Carriage returns will be encoded as decimal entities (&#13;) which are.
+        // Carriage returns will be encoded as decimal entities (&#13;) which are
         // later converted to hexadecimal (&#xD;) in the arrayToXml method.
         return $dom->createTextNode($decodedText);
 

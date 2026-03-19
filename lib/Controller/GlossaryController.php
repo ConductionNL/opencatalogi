@@ -1,6 +1,8 @@
 <?php
 /**
- * GlossaryController for OpenCatalogi.
+ * OpenCatalogi Glossary Controller.
+ *
+ * Controller for handling glossary-related operations in the OpenCatalogi app.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -14,17 +16,19 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use RuntimeException;
 
 /**
  * Class GlossaryController
@@ -71,6 +75,7 @@ class GlossaryController extends Controller
      * @param IAppConfig         $config             App configuration interface
      * @param ContainerInterface $container          Server container for dependency injection
      * @param IAppManager        $appManager         App manager for checking installed apps
+     * @param IL10N              $l10n               Localization service
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
      * @param integer            $corsMaxAge         CORS max age
@@ -81,11 +86,12 @@ class GlossaryController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
+        private readonly IL10N $l10n,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
     ) {
-        parent::__construct(appName: $appName, request: $request);
+        parent::__construct($appName, $request);
         $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
         $this->corsMaxAge         = $corsMaxAge;
@@ -104,7 +110,7 @@ class GlossaryController extends Controller
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
@@ -129,23 +135,22 @@ class GlossaryController extends Controller
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return Response The CORS response
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    public function preflightedCors(): Response
     {
         // Determine the origin.
-        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
-            $origin = $this->request->server['HTTP_ORIGIN'];
-        } else {
+        $origin = $this->request->getHeader('Origin');
+        if ($origin === '' || $origin === false) {
             $origin = '*';
         }
 
         // Create and configure the response.
-        $response = new \OCP\AppFramework\Http\Response();
+        $response = new Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
@@ -165,6 +170,9 @@ class GlossaryController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function index(): JSONResponse
     {
@@ -180,12 +188,12 @@ class GlossaryController extends Controller
         // Clean up unwanted parameters.
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter if configured - use proper OpenRegister syntax.
+        // Add schema filter if configured using proper OpenRegister syntax.
         if (empty($glossaryConfig['schema']) === false) {
             $searchQuery['@self']['schema'] = $glossaryConfig['schema'];
         }
 
-        // Add register filter if configured - use proper OpenRegister syntax.
+        // Add register filter if configured using proper OpenRegister syntax.
         if (empty($glossaryConfig['register']) === false) {
             $searchQuery['@self']['register'] = $glossaryConfig['register'];
         }
@@ -195,13 +203,7 @@ class GlossaryController extends Controller
 
         // Use searchObjectsPaginated for better performance and pagination support.
         // Set rbac=false, multi=false for public glossary access.
-        // Glossary terms do not use the publishing workflow, so published=false.
-        $result = $this->getObjectService()->searchObjectsPaginated(
-            $searchQuery,
-            _rbac: false,
-            _multitenancy: false,
-            published: false
-        );
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         // Build paginated response structure.
         $responseData = [
@@ -239,11 +241,7 @@ class GlossaryController extends Controller
 
         // Add CORS headers for public API access.
         $response = new JSONResponse($responseData);
-        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
-            $origin = $this->request->server['HTTP_ORIGIN'];
-        } else {
-            $origin = '*';
-        }
+        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -273,33 +271,22 @@ class GlossaryController extends Controller
             '_limit'  => 1,
             '_source' => 'database',
         ];
-        // Glossary terms do not use the publishing workflow, so published=false.
-        $result = $this->getObjectService()->searchObjectsPaginated(
-            $searchQuery,
-            _rbac: false,
-            _multitenancy: false,
-            published: false
-        );
+        $result      = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
         if (empty($result['results']) === true) {
-            return new JSONResponse(['error' => 'Glossary term not found'], 404);
+            return new JSONResponse(['error' => $this->l10n->t('Glossary term not found')], 404);
         }
 
         $glossaryTerm = $result['results'][0];
 
+        $data = $glossaryTerm;
         if ($glossaryTerm instanceof \OCP\AppFramework\Db\Entity) {
             $data = $glossaryTerm->jsonSerialize();
-        } else {
-            $data = $glossaryTerm;
         }
 
         // Add CORS headers for public API access.
         $response = new JSONResponse($data);
-        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
-            $origin = $this->request->server['HTTP_ORIGIN'];
-        } else {
-            $origin = '*';
-        }
+        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);

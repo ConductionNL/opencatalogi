@@ -1,6 +1,8 @@
 <?php
 /**
- * CatalogiController for OpenCatalogi.
+ * OpenCatalogi Catalogi Controller.
+ *
+ * Controller for handling catalog-related operations in the OpenCatalogi app.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -14,30 +16,22 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use RuntimeException;
 
 /**
- * Class CatalogiController
- * Controller for handling catalog-related operations in the OpenCatalogi app.
- *
- * @category  Controller
- * @package   opencatalogi
- * @author    Ruben Linde
- * @copyright 2024
- * @license   AGPL-3.0-or-later
- * @version   1.0.0
- * @link      https://github.com/opencatalogi/opencatalogi
+ * Controller for handling catalog-related operations.
  */
 class CatalogiController extends Controller
 {
@@ -45,36 +39,36 @@ class CatalogiController extends Controller
     /**
      * Allowed CORS methods.
      *
-     * @var string Allowed CORS methods
+     * @var string
      */
     private string $corsMethods;
 
     /**
      * Allowed CORS headers.
      *
-     * @var string Allowed CORS headers
+     * @var string
      */
     private string $corsAllowedHeaders;
 
     /**
      * CORS max age.
      *
-     * @var integer CORS max age
+     * @var integer
      */
     private int $corsMaxAge;
 
     /**
      * CatalogiController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param CatalogiService    $catalogiService    The catalogi service
-     * @param IAppConfig         $config             App configuration interface
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param integer            $corsMaxAge         CORS max age
+     * @param string             $appName            The name of the app.
+     * @param IRequest           $request            The request object.
+     * @param CatalogiService    $catalogiService    The catalogi service.
+     * @param IAppConfig         $config             App configuration interface.
+     * @param ContainerInterface $container          Server container for DI.
+     * @param IAppManager        $appManager         App manager.
+     * @param string             $corsMethods        Allowed CORS methods.
+     * @param string             $corsAllowedHeaders Allowed CORS headers.
+     * @param integer            $corsMaxAge         CORS max age.
      */
     public function __construct(
         $appName,
@@ -87,7 +81,7 @@ class CatalogiController extends Controller
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
     ) {
-        parent::__construct(appName: $appName, request: $request);
+        parent::__construct($appName, $request);
         $this->corsMethods        = $corsMethods;
         $this->corsAllowedHeaders = $corsAllowedHeaders;
         $this->corsMaxAge         = $corsMaxAge;
@@ -97,7 +91,8 @@ class CatalogiController extends Controller
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
-     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister ObjectService if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The ObjectService.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
     private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
@@ -106,14 +101,14 @@ class CatalogiController extends Controller
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
     /**
      * Get the schema and register configuration for catalogs.
      *
-     * @return array<string, string> Array containing schema and register configuration
+     * @return array<string, string> Array containing schema and register configuration.
      */
     private function getCatalogConfiguration(): array
     {
@@ -131,23 +126,22 @@ class CatalogiController extends Controller
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
-     * @return \OCP\AppFramework\Http\Response The CORS response
+     * @return Response The CORS response.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    public function preflightedCors(): Response
     {
         // Determine the origin.
-        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
-            $origin = $this->request->server['HTTP_ORIGIN'];
-        } else {
+        $origin = $this->request->getHeader('Origin');
+        if ($origin === '') {
             $origin = '*';
         }
 
         // Create and configure the response.
-        $response = new \OCP\AppFramework\Http\Response();
+        $response = new Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
@@ -161,7 +155,8 @@ class CatalogiController extends Controller
     /**
      * Retrieve a list of publications based on all available catalogs.
      *
-     * @return JSONResponse JSON response containing the list of publications and total count
+     * @return JSONResponse JSON response containing the list of publications.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
@@ -194,17 +189,12 @@ class CatalogiController extends Controller
             query: $searchQuery,
             _rbac: false,
             _multitenancy: false,
-            published: false,
             deleted: false
         );
 
         // Add CORS headers for public API access.
         $response = new JSONResponse($result);
-        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
-            $origin = $this->request->server['HTTP_ORIGIN'];
-        } else {
-            $origin = '*';
-        }
+        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -217,9 +207,10 @@ class CatalogiController extends Controller
     /**
      * Retrieve a list of catalogs based on provided filters and parameters.
      *
-     * @param string|integer $id The ID of the catalog to use as a filter
+     * @param string|integer $id The ID of the catalog to use as a filter.
      *
-     * @return JSONResponse JSON response containing the list of catalogs and total count
+     * @return JSONResponse JSON response containing the list of catalogs.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
@@ -232,9 +223,8 @@ class CatalogiController extends Controller
         $response = $this->catalogiService->index($id);
 
         // Add CORS headers for public API access.
-        if (isset($this->request->server['HTTP_ORIGIN']) === true) {
-            $origin = $this->request->server['HTTP_ORIGIN'];
-        } else {
+        $origin = $this->request->getHeader('Origin');
+        if ($origin === '') {
             $origin = '*';
         }
 

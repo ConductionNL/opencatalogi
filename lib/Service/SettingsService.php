@@ -19,18 +19,21 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCP\IAppConfig;
-use OCP\IRequest;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCP\AppFramework\Http\JSONResponse;
 use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
+use RuntimeException;
 
 /**
  * Service for handling settings-related operations.
  *
  * Provides functionality for retrieving, saving, and loading settings,
  * as well as managing configuration for different object types.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
  */
 class SettingsService
 {
@@ -43,16 +46,16 @@ class SettingsService
     private string $appName;
 
     /**
-     * The unique identifier for the OpenRegister application.
+     * This constant represents the unique identifier for the OpenRegister application, used to check its installation and status.
      *
      * @var string $openRegisterAppId The ID of the OpenRegister app.
      */
     private const OPENREGISTER_APP_ID = 'openregister';
 
     /**
-     * The minimum required version of the OpenRegister application.
+     * This constant defines the minimum version of the OpenRegister application that is required for compatibility and functionality.
      *
-     * @var string $minOpenRegisterVersion The minimum required version of OpenRegister.
+     * @var string $minORVersion The minimum required version of OpenRegister.
      */
     private const MIN_OPENREGISTER_VERSION = '0.1.7';
 
@@ -60,13 +63,11 @@ class SettingsService
      * SettingsService constructor.
      *
      * @param IAppConfig         $config     App configuration interface.
-     * @param IRequest           $request    Request interface.
      * @param ContainerInterface $container  Container for dependency injection.
      * @param IAppManager        $appManager App manager interface.
      */
     public function __construct(
         private readonly IAppConfig $config,
-        private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager
     ) {
@@ -93,7 +94,7 @@ class SettingsService
         }
 
         $currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
-        return version_compare($currentVersion, $minVersion, '>=');
+        return version_compare(version1: $currentVersion, version2: $minVersion, operator: '>=');
 
     }//end isOpenRegisterInstalled()
 
@@ -104,7 +105,11 @@ class SettingsService
      */
     public function isOpenRegisterEnabled(): bool
     {
-        return $this->appManager->isEnabled(self::OPENREGISTER_APP_ID) === true;
+        /*
+         * @psalm-suppress UndefinedInterfaceMethod
+         */
+
+        return $this->appManager->isEnabledForUser(self::OPENREGISTER_APP_ID) === true;
 
     }//end isOpenRegisterEnabled()
 
@@ -115,43 +120,48 @@ class SettingsService
      *
      * @return boolean True if installation/update was successful.
      * @throws \RuntimeException If installation/update fails.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
      */
     public function installOrUpdateOpenRegister(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
         try {
-            if ($this->isOpenRegisterInstalled(minVersion: $minVersion) === false) {
-                // Removed problematic download functionality.
+            if ($this->isOpenRegisterInstalled($minVersion) === false) {
+                // Removed problematic download functionality
                 // Then install the downloaded app.
                 if (OC_App::installApp(self::OPENREGISTER_APP_ID) === false) {
-                    throw new \RuntimeException('Failed to install OpenRegister');
+                    throw new RuntimeException('Failed to install OpenRegister');
                 }
 
                 // Enable the app after installation.
                 if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-                    throw new \RuntimeException('Failed to enable OpenRegister');
+                    throw new RuntimeException('Failed to enable OpenRegister');
                 }
-            } else if ($minVersion !== null) {
+            }
+
+            if ($this->isOpenRegisterInstalled($minVersion) === true && $minVersion !== null) {
                 // Check if update is needed.
                 $currentVersion = $this->appManager->getAppVersion(self::OPENREGISTER_APP_ID);
-                if (version_compare($currentVersion, $minVersion, '<') === true) {
-                    // Removed problematic download functionality.
+                if (version_compare(version1: $currentVersion, version2: $minVersion, operator: '<') === true) {
+                    // Removed problematic download functionality
                     // Then update the app.
                     if (OC_App::updateApp(self::OPENREGISTER_APP_ID) === false) {
-                        throw new \RuntimeException('Failed to update OpenRegister');
+                        throw new RuntimeException('Failed to update OpenRegister');
                     }
                 }
 
                 // Ensure the app is enabled after update.
                 if ($this->isOpenRegisterEnabled() === false) {
                     if (OC_App::enable(self::OPENREGISTER_APP_ID) === false) {
-                        throw new \RuntimeException('Failed to enable OpenRegister after update');
+                        throw new RuntimeException('Failed to enable OpenRegister after update');
                     }
                 }
-            }//end if
+            }
 
             return true;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to install/update OpenRegister: '.$e->getMessage());
+            throw new RuntimeException('Failed to install/update OpenRegister: '.$e->getMessage());
         }//end try
 
     }//end installOrUpdateOpenRegister()
@@ -161,6 +171,8 @@ class SettingsService
      *
      * @return array The updated configuration.
      * @throws \RuntimeException If auto-configuration fails.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function autoConfigure(): array
     {
@@ -213,7 +225,7 @@ class SettingsService
 
             return $configuration;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to auto-configure: '.$e->getMessage());
+            throw new RuntimeException('Failed to auto-configure: '.$e->getMessage());
         }//end try
 
     }//end autoConfigure()
@@ -221,11 +233,11 @@ class SettingsService
     /**
      * Initializes the app with all required components.
      *
-     * @param string|null $minOpenRegisterVersion Minimum required OpenRegister version.
+     * @param string|null $minORVersion Minimum required OpenRegister version.
      *
      * @return array The initialization results.
      */
-    public function initialize(?string $minOpenRegisterVersion=self::MIN_OPENREGISTER_VERSION): array
+    public function initialize(?string $minORVersion=self::MIN_OPENREGISTER_VERSION): array
     {
         $results = [
             'openRegister'   => false,
@@ -236,8 +248,8 @@ class SettingsService
 
         try {
             // Check and install/update OpenRegister.
-            if ($this->isOpenRegisterInstalled(minVersion: $minOpenRegisterVersion) === false) {
-                $this->installOrUpdateOpenRegister(minVersion: $minOpenRegisterVersion);
+            if ($this->isOpenRegisterInstalled($minORVersion) === false) {
+                $this->installOrUpdateOpenRegister($minORVersion);
             }
 
             $results['openRegister'] = true;
@@ -245,17 +257,14 @@ class SettingsService
             // Auto-configure registers and schemas.
             $configuration = $this->autoConfigure();
             if (empty($configuration) === false) {
-                $this->updateSettings(data: $configuration);
+                $this->updateSettings($configuration);
                 $results['autoConfigured'] = true;
             }
 
             // Load settings from file only if needed.
+            $results['settingsLoaded'] = true;
             if ($this->shouldLoadSettings() === true) {
                 $this->loadSettings();
-                $results['settingsLoaded'] = true;
-            } else {
-                $results['settingsLoaded'] = true;
-                // Already up to date.
             }
         } catch (\Exception $e) {
             $results['errors'][] = $e->getMessage();
@@ -277,7 +286,7 @@ class SettingsService
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
 
@@ -293,7 +302,7 @@ class SettingsService
             return $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
         }
 
-        throw new \RuntimeException('RegisterMapper is not available.');
+        throw new RuntimeException('RegisterMapper is not available.');
 
     }//end getRegisterMapper()
 
@@ -309,7 +318,7 @@ class SettingsService
             return $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
         }
 
-        throw new \RuntimeException('SchemaMapper is not available.');
+        throw new RuntimeException('SchemaMapper is not available.');
 
     }//end getSchemaMapper()
 
@@ -325,7 +334,7 @@ class SettingsService
             return $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
         }
 
-        throw new \RuntimeException('Configuration service is not available.');
+        throw new RuntimeException('Configuration service is not available.');
 
     }//end getConfigurationService()
 
@@ -359,7 +368,7 @@ class SettingsService
                 $registers = $registerMapper->findAll();
 
                 // Enrich registers with full schema objects instead of just IDs.
-                $data['availableRegisters'] = $this->enrichRegistersWithSchemas(registers: $registers);
+                $data['availableRegisters'] = $this->enrichRegistersWithSchemas($registers);
             }
         } catch (\RuntimeException $e) {
             // Service not available, continue with default values.
@@ -387,7 +396,7 @@ class SettingsService
 
             return $data;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to retrieve settings: '.$e->getMessage());
+            throw new RuntimeException('Failed to retrieve settings: '.$e->getMessage());
         }
 
     }//end getSettings()
@@ -401,6 +410,8 @@ class SettingsService
      * @param array $registers Array of register entities from OpenRegister.
      *
      * @return array Array of registers with enriched schema data.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function enrichRegistersWithSchemas(array $registers): array
     {
@@ -416,10 +427,9 @@ class SettingsService
 
             foreach ($registers as $register) {
                 // Convert register to array if it's an object.
+                $registerArray = (array) $register;
                 if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
                     $registerArray = $register->jsonSerialize();
-                } else {
-                    $registerArray = (array) $register;
                 }
 
                 // Get schema IDs from the register.
@@ -444,10 +454,9 @@ class SettingsService
                         $schema = $schemaMapper->find((int) $schemaId);
                         if ($schema !== null) {
                             // Convert schema entity to array.
+                            $schemaArray = (array) $schema;
                             if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
                                 $schemaArray = $schema->jsonSerialize();
-                            } else {
-                                $schemaArray = (array) $schema;
                             }
 
                             $fullSchemas[] = $schemaArray;
@@ -491,7 +500,7 @@ class SettingsService
 
             return $data;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to update settings: '.$e->getMessage());
+            throw new RuntimeException('Failed to update settings: '.$e->getMessage());
         }//end try
 
     }//end updateSettings()
@@ -507,30 +516,18 @@ class SettingsService
         try {
             // Retrieve publishing options from configuration with defaults to false.
             $publishingOptions = [
-                // Convert string 'true'/'false' to boolean for auto publish attachments.
-                'auto_publish_attachments'      => $this->config->getValueString(
-                    $this->appName,
-                        'auto_publish_attachments',
-                        'false'
-                ) === 'true',
-                // Convert string 'true'/'false' to boolean for auto publish objects.
-                'auto_publish_objects'          => $this->config->getValueString(
-                    $this->appName,
-                        'auto_publish_objects',
-                        'false'
-                ) === 'true',
-                // Convert string 'true'/'false' to boolean for old style publishing view.
-                'use_old_style_publishing_view' => $this->config->getValueString(
-                    $this->appName,
-                        'use_old_style_publishing_view',
-                        'false'
-                ) === 'true',
+                // Convert string 'true'/'false' to boolean for auto publish attachments setting.
+                'auto_publish_attachments'      => $this->config->getValueString($this->appName, 'auto_publish_attachments', 'false') === 'true',
+                // Convert string 'true'/'false' to boolean for auto publish objects setting.
+                'auto_publish_objects'          => $this->config->getValueString($this->appName, 'auto_publish_objects', 'false') === 'true',
+                // Convert string 'true'/'false' to boolean for old style publishing view setting.
+                'use_old_style_publishing_view' => $this->config->getValueString($this->appName, 'use_old_style_publishing_view', 'false') === 'true',
             ];
 
             return $publishingOptions;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to retrieve publishing options: '.$e->getMessage());
-        }//end try
+            throw new RuntimeException('Failed to retrieve publishing options: '.$e->getMessage());
+        }
 
     }//end getPublishingOptions()
 
@@ -559,10 +556,9 @@ class SettingsService
                 // Check if this option is provided in the input data.
                 if (isset($options[$option]) === true) {
                     // Convert boolean or string to string format for storage.
+                    $value = 'false';
                     if ($options[$option] === true || $options[$option] === 'true') {
                         $value = 'true';
-                    } else {
-                        $value = 'false';
                     }
 
                     // Store the value in the configuration.
@@ -574,7 +570,7 @@ class SettingsService
 
             return $updatedOptions;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to update publishing options: '.$e->getMessage());
+            throw new RuntimeException('Failed to update publishing options: '.$e->getMessage());
         }//end try
 
     }//end updatePublishingOptions()
@@ -590,6 +586,9 @@ class SettingsService
      *
      * @return array The loaded settings configuration.
      * @throws \RuntimeException If settings loading fails.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function loadSettings(bool $force=false): array
     {
@@ -602,32 +601,30 @@ class SettingsService
 
             // Check if file exists.
             if (file_exists($absoluteFilePath) === false) {
-                throw new \RuntimeException("Configuration file not found: {$absoluteFilePath}");
+                throw new RuntimeException("Configuration file not found: {$absoluteFilePath}");
             }
 
             // Read the JSON file content.
             $jsonContent = file_get_contents($absoluteFilePath);
             if ($jsonContent === false) {
-                throw new \RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
+                throw new RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
             }
 
             // Parse JSON.
             $data = json_decode($jsonContent, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \RuntimeException("Invalid JSON in configuration file: ".json_last_error_msg());
+                throw new RuntimeException("Invalid JSON in configuration file: ".json_last_error_msg());
             }
 
             // Calculate relative path from Nextcloud root for sourceUrl tracking.
-            // appPath is something like /var/www/html/apps-extra/opencatalogi.
+            // appPath is something like /var/www/html/apps-extra/opencatalogi
             // We need to get the part after the Nextcloud root.
             $nextcloudRoot = dirname(dirname(dirname($appPath)));
             // Go up from apps-extra/opencatalogi to root.
             $relativeFilePath = str_replace($nextcloudRoot.'/', '', $absoluteFilePath);
 
             // Fallback: if path calculation fails, use the standard relative path.
-            $isAppsExtra = str_starts_with($relativeFilePath, 'apps-extra/');
-            $isApps      = str_starts_with($relativeFilePath, 'apps/');
-            if ($isAppsExtra === false && $isApps === false) {
+            if (str_starts_with($relativeFilePath, 'apps-extra/') === false && str_starts_with($relativeFilePath, 'apps/') === false) {
                 $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
             }
 
@@ -648,7 +645,7 @@ class SettingsService
             // Get the configuration service.
             $configurationService = $this->getConfigurationService();
 
-            // Get the current app version dynamically.
+            // Get the current app version. dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
             // Use importFromApp to import the configuration data directly.
@@ -661,11 +658,11 @@ class SettingsService
             );
 
             // Update app configuration with imported schema and register IDs.
-            $this->updateObjectTypeConfiguration(importResult: $result);
+            $this->updateObjectTypeConfiguration($result);
 
             return $result;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to load settings: '.$e->getMessage());
+            throw new RuntimeException('Failed to load settings: '.$e->getMessage());
         }//end try
 
     }//end loadSettings()
@@ -680,6 +677,9 @@ class SettingsService
      * @param array $importResult The result from the importFromApp call containing registers and schemas.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     private function updateObjectTypeConfiguration(array $importResult): void
     {
@@ -696,7 +696,7 @@ class SettingsService
 
         // Build a map of schema slugs to schema IDs.
         $schemaMap = [];
-        foreach (($importResult['schemas'] ?? []) as $index => $schema) {
+        foreach (($importResult['schemas'] ?? []) as $schema) {
             // Handle both object and array formats.
             if (is_object($schema) === true) {
                 // Nextcloud entities have jsonSerialize() method to convert to array.
@@ -706,7 +706,11 @@ class SettingsService
                         $schemaMap[$schemaArray['slug']] = $schemaArray['id'];
                     }
                 }
-            } else if (is_array($schema) === true && isset($schema['slug']) === true) {
+
+                continue;
+            }
+
+            if (is_array($schema) === true && isset($schema['slug']) === true) {
                 $schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
             }
         }
@@ -724,14 +728,18 @@ class SettingsService
                         break;
                     }
                 }
-            } else if (is_array($register) === true && isset($register['slug']) === true) {
-                // Already an array.
-                if ($register['slug'] === 'publication') {
-                    $registerId = ($register['id'] ?? $register['uuid'] ?? null);
-                    break;
-                }
+
+                continue;
             }
-        }
+
+            // Already an array.
+            if (is_array($register) === true && isset($register['slug']) === true
+                && $register['slug'] === 'publication'
+            ) {
+                $registerId = ($register['id'] ?? $register['uuid'] ?? null);
+                break;
+            }
+        }//end foreach
 
         // Update configuration for each object type.
         foreach ($objectTypes as $type) {
@@ -766,7 +774,7 @@ class SettingsService
             // Get the current app version.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Get the configuration service to check stored version.
+            // Get the configuration service. to check stored version.
             $configurationService = $this->getConfigurationService();
             $storedVersion        = $configurationService->getConfiguredAppVersion(Application::APP_ID);
 
@@ -777,7 +785,7 @@ class SettingsService
 
             // Compare versions using semantic versioning.
             // Load settings if current version is newer than stored version.
-            return version_compare($currentAppVersion, $storedVersion, '>');
+            return version_compare(version1: $currentAppVersion, version2: $storedVersion, operator: '>');
         } catch (\Exception $e) {
             // If we can't determine versions, err on the side of loading settings.
             return true;
@@ -800,13 +808,13 @@ class SettingsService
             // Get the current app version.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Get the configuration service to check stored version.
+            // Get the configuration service. to check stored version.
             $configurationService = $this->getConfigurationService();
             $storedConfigVersion  = $configurationService->getConfiguredAppVersion(Application::APP_ID);
 
             // Determine if versions match.
             $versionsMatch = $storedConfigVersion !== null &&
-                           version_compare($currentAppVersion, $storedConfigVersion, '=');
+                           version_compare(version1: $currentAppVersion, version2: $storedConfigVersion, operator: '=');
 
             return [
                 'appName'           => 'OpenCatalogi',
@@ -814,10 +822,10 @@ class SettingsService
                 'configuredVersion' => $storedConfigVersion,
                 'versionsMatch'     => $versionsMatch,
                 'needsUpdate'       => $storedConfigVersion === null ||
-                               version_compare($currentAppVersion, $storedConfigVersion, '>'),
+                               version_compare(version1: $currentAppVersion, version2: $storedConfigVersion, operator: '>'),
             ];
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to get version information: '.$e->getMessage());
+            throw new RuntimeException('Failed to get version information: '.$e->getMessage());
         }//end try
 
     }//end getVersionInfo()
@@ -831,6 +839,8 @@ class SettingsService
      * @param boolean $forceImport Whether to force import regardless of version.
      *
      * @return array The import results with success/error information.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function manualImport(bool $forceImport=false): array
     {
@@ -848,7 +858,7 @@ class SettingsService
             }
 
             // Perform the import.
-            $importResult = $this->loadSettings(force: $forceImport);
+            $importResult = $this->loadSettings($forceImport);
 
             // Get updated version info.
             $updatedVersionInfo = $this->getVersionInfo();

@@ -1,6 +1,6 @@
 <?php
 /**
- * TextResponse for OpenCatalogi.
+ * Text response for plain text output.
  *
  * @category Http
  * @package  OCA\OpenCatalogi\Http
@@ -14,13 +14,12 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Http;
 
 use OCP\AppFramework\Http\Response;
 
 /**
- * A simple response for plain text data
+ * A simple response for plain text data.
  */
 class TextResponse extends Response
 {
@@ -35,13 +34,14 @@ class TextResponse extends Response
     /**
      * Constructor for TextResponse.
      *
-     * @param string                $text       The text to return.
-     * @param integer               $statusCode HTTP status code, defaults to 200.
-     * @param array<string, string> $headers    Additional headers.
+     * @param string                $text    The text to return.
+     * @param integer               $status  HTTP status code, defaults to 200.
+     * @param array<string, string> $headers Additional headers.
      */
-    public function __construct(string $text='', int $statusCode=200, array $headers=[])
+    public function __construct(string $text='', int $status=200, array $headers=[])
     {
-        parent::__construct(status: $statusCode);
+        // @phpstan-ignore argument.type
+        parent::__construct($status);
 
         $this->text = $text;
 
@@ -56,7 +56,7 @@ class TextResponse extends Response
     }//end __construct()
 
     /**
-     * Returns the rendered text
+     * Returns the rendered text.
      *
      * @return string
      */

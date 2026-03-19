@@ -1,6 +1,6 @@
 <?php
 /**
- * AttachmentEvent for OpenCatalogi.
+ * Attachment flow event entity.
  *
  * @category Flow
  * @package  OCA\OpenCatalogi\Flow\Events
@@ -14,56 +14,76 @@
  * @link https://www.OpenCatalogi.nl
  */
 
+namespace OCA\OpenCatalogi\Flow\Events;
 
-namespace OCA\OpenCatalogi\Cron;
-
+use OCP\EventDispatcher\Event;
 use OCP\WorkflowEngine\IEntity;
+use OCP\WorkflowEngine\IRuleMatcher;
 
 /**
  * DOCS: https://docs.nextcloud.com/server/latest/developer_manual/digging_deeper/flow.html#entities
+ *
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
-/**
- * Attachment event entity for workflow engine.
- */
-class AttachmentEvent extends IEntity
+class AttachmentEvent implements IEntity
 {
     /**
-     * Get the name of the event entity.
+     * Get the entity name.
      *
-     * @return string The entity name.
+     * @return string
      */
     public function getName(): string
     {
-        return $this->l10n - t('Attachment');
+        return 'Attachment';
+
     }//end getName()
 
     /**
-     * Get the icon for the event entity.
+     * Get the entity icon.
      *
-     * @return string The icon path.
+     * @return string
      */
     public function getIcon(): string
     {
-        return \OC::$server->getURLGenerator()->imagePath('opencatalogi', 'app.svg');
+        return \OC::$server->getURLGenerator()->imagePath(appName: 'opencatalogi', file: 'app.svg');
+
     }//end getIcon()
 
     /**
-     * Get the events for the entity.
+     * Get available events.
      *
-     * @return string The events string.
+     * @return array<array-key, \OCP\WorkflowEngine\IEntityEvent>
      */
-    public function getEvents(): string
+    public function getEvents(): array
     {
-        // Return \OC::$server->getURLGenerator()->imagePath('opencatalogi','app.svg');.
+        return [];
+
     }//end getEvents()
 
     /**
-     * Will check whether the passed user is allowed to see the current event.
+     * Prepare the rule matcher for this entity.
      *
-     * @return boolean Whether the user is legitimated.
+     * @param IRuleMatcher $ruleMatcher The rule matcher.
+     * @param string       $eventName   The event name.
+     * @param Event        $event       The event.
+     *
+     * @return void
      */
-    public function isLegitimatedForUserId(): bool
+    public function prepareRuleMatcher(IRuleMatcher $ruleMatcher, string $eventName, Event $event): void
+    {
+
+    }//end prepareRuleMatcher()
+
+    /**
+     * Check if user is legitimated.
+     *
+     * @param string $userId The user ID.
+     *
+     * @return bool
+     */
+    public function isLegitimatedForUserId(string $userId): bool
     {
         return true;
+
     }//end isLegitimatedForUserId()
 }//end class

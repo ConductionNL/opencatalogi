@@ -32,6 +32,14 @@
                 <referencedClass name="OCP\AppFramework\Db\DoesNotExistException"/>
                 <referencedClass name="OCP\AppFramework\Db\Entity"/>
                 <referencedClass name="OCP\DB\Exception"/>
+                <!-- OpenRegister classes (external app dependency) -->
+                <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
+                <referencedClass name="OCA\OpenRegister\Service\FileService"/>
+                <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
+                <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
+                <referencedClass name="OCA\OpenRegister\Db\FileMapper"/>
+                <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
+                <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>
             </errorLevel>
         </UndefinedDocblockClass>
         <UndefinedClass>
@@ -71,8 +79,30 @@
                 <referencedClass name="OCP\IUserManager"/>
                 <referencedClass name="OCP\IUserSession"/>
                 <referencedClass name="OCP\Search\IFilteringProvider"/>
+                <!-- OpenRegister classes (external app dependency) -->
+                <referencedClass name="OCA\OpenRegister\Event\ObjectCreatedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectDeletedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ToolRegistrationEvent"/>
+                <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
+                <referencedClass name="OCA\OpenRegister\Service\FileService"/>
+                <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
+                <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
+                <referencedClass name="OCA\OpenRegister\Db\FileMapper"/>
+                <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
+                <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>
+                <referencedClass name="OCA\OpenRegister\Db\Agent"/>
+                <referencedClass name="OCA\OpenRegister\Tool\ToolInterface"/>
+                <!-- Nextcloud internal classes -->
+                <referencedClass name="OC_App"/>
+                <referencedClass name="OCP\WorkflowEngine\IEntity"/>
+                <referencedClass name="OCP\WorkflowEngine\IOperation"/>
+                <!-- Mpdf library -->
+                <referencedClass name="Mpdf\Mpdf"/>
             </errorLevel>
         </UndefinedClass>
+        <InvalidTemplateParam errorLevel="suppress"/>
+        <NoInterfaceProperties errorLevel="suppress"/>
         <UndefinedMagicMethod errorLevel="suppress"/>
         <UnusedClass errorLevel="suppress"/>
         <PossiblyUnusedMethod errorLevel="suppress"/>

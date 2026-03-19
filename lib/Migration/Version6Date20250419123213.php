@@ -8,6 +8,10 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  */
 
 declare(strict_types=1);
@@ -21,21 +25,18 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Class Version6Date20250419123213
+ * Migration to remove old tables and add uri columns.
  *
- * Migration to:
- * 1. Add uri columns to all tables
- * 2. Remove old tables that are no longer used
- * 3. Install and enable OpenRegister
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class Version6Date20250419123213 extends SimpleMigrationStep
 {
     /**
-     * Pre-schema change handler.
+     * Pre-schema change hook.
      *
-     * @param IOutput                   $output        The output handler.
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                     $options       Migration options.
+     * @param IOutput                  $output        The output handler.
+     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                    $options       Migration options.
      *
      * @return void
      */
@@ -47,15 +48,15 @@ class Version6Date20250419123213 extends SimpleMigrationStep
     /**
      * Apply schema changes.
      *
-     * @param IOutput                   $output        The output handler.
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                     $options       Migration options.
+     * @param IOutput                  $output        The output handler.
+     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                    $options       Migration options.
      *
-     * @return null|ISchemaWrapper The updated schema or null.
+     * @return null|ISchemaWrapper
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {
-        // Get the schema from the closure.
+        // @var ISchemaWrapper $schema
         $schema = $schemaClosure();
 
         // Remove old tables that are no longer used.
@@ -81,11 +82,11 @@ class Version6Date20250419123213 extends SimpleMigrationStep
     }//end changeSchema()
 
     /**
-     * Post-schema change handler.
+     * Post-schema change hook.
      *
-     * @param IOutput                   $output        The output handler.
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                     $options       Migration options.
+     * @param IOutput                  $output        The output handler.
+     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                    $options       Migration options.
      *
      * @return void
      */

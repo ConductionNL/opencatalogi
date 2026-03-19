@@ -24,7 +24,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -32,13 +31,17 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
+use RuntimeException;
+use InvalidArgumentException;
 
 /**
- * BroadcastService Class
+ * BroadcastService Class.
  *
  * This class provides functionality to broadcast this OpenCatalogi directory to other instances.
  * It allows for broadcasting to a specific URL or to all known directories.
  * The service uses dynamic versioning in User-Agent headers for proper identification.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class BroadcastService
 {
@@ -72,28 +75,25 @@ class BroadcastService
     private const REQUEST_TIMEOUT = 30;
 
     /**
-     * Constructor for BroadcastService
+     * Constructor for BroadcastService.
      *
      * @param IURLGenerator      $urlGenerator URL generator interface
-     * @param IAppConfig         $config       App configuration interface
      * @param ContainerInterface $container    Server container for dependency injection
      * @param IAppManager        $appManager   App manager for checking installed apps
      * @param LoggerInterface    $logger       Logger for recording broadcast activities
      */
     public function __construct(
         private readonly IURLGenerator $urlGenerator,
-        private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
     ) {
         // Initialize HTTP client with default configuration.
         $this->client = new Client(
-            [
+            config: [
                 'timeout'         => self::REQUEST_TIMEOUT,
                 'connect_timeout' => 10,
                 'verify'          => true,
-            // Enable SSL verification for security.
             ]
         );
 
@@ -126,13 +126,14 @@ class BroadcastService
         }
 
         // Throw exception when OpenRegister is not available.
-        // phpcs:ignore Generic.Files.LineLength.TooLong
-        throw new \RuntimeException('OpenRegister service is not available. Ensure OpenRegister app is installed and enabled.');
+        throw new RuntimeException(
+            'OpenRegister service is not available. Ensure OpenRegister app is installed and enabled.'
+        );
 
     }//end getObjectService()
 
     /**
-     * Get the current version of the OpenCatalogi app
+     * Get the current version of the OpenCatalogi app.
      *
      * Retrieves the version string from the app manager to use in User-Agent headers
      * and other version-specific functionality.
@@ -154,7 +155,7 @@ class BroadcastService
     }//end getAppVersion()
 
     /**
-     * Get the current directory URL for this OpenCatalogi instance
+     * Get the current directory URL for this OpenCatalogi instance.
      *
      * This method generates the absolute URL for this directory's index endpoint
      * which will be sent to other instances during broadcast.
@@ -171,7 +172,7 @@ class BroadcastService
     }//end getCurrentDirectoryUrl()
 
     /**
-     * Retrieve all unique directory URLs from existing listings
+     * Retrieve all unique directory URLs from existing listings.
      *
      * This method fetches all listing objects and extracts unique directory URLs
      * to determine which external instances should receive broadcast notifications.
@@ -187,13 +188,18 @@ class BroadcastService
     {
         try {
             // Retrieve all listing objects from OpenRegister.
-            $listings = $this->getObjectService()->getObjects(objectType: 'listing');
+            $listings = $this->getObjectService()->getObjects('listing');
 
             // Extract unique directory URLs from the listings.
             $directoryUrls = array_unique(array_column($listings, 'directory'));
 
             // Filter out empty or invalid URLs.
-            return array_filter($directoryUrls, fn($url) => empty($url) === false && filter_var($url, FILTER_VALIDATE_URL));
+            return array_filter(
+                $directoryUrls,
+                function ($url) {
+                    return empty($url) === false && filter_var($url, FILTER_VALIDATE_URL) !== false;
+                }
+            );
         } catch (\Exception $e) {
             // Log the error and re-throw for caller handling.
             $this->logger->error('Failed to retrieve directory URLs: '.$e->getMessage());
@@ -203,7 +209,7 @@ class BroadcastService
     }//end getDirectoryUrls()
 
     /**
-     * Send broadcast request to a specific URL with retry logic
+     * Send broadcast request to a specific URL with retry logic.
      *
      * This method handles the actual HTTP POST request with built-in retry logic
      * for handling temporary network failures or service unavailability.
@@ -225,8 +231,8 @@ class BroadcastService
             try {
                 // Send POST request with directory URL payload.
                 $response = $this->client->post(
-                    $url,
-                    [
+                    uri: $url,
+                    options: [
                         'json'    => [
                             'directory' => $directoryUrl,
                             'timestamp' => (new DateTime())->format('c'),
@@ -258,10 +264,11 @@ class BroadcastService
                     $this->logger->error(
                         "All {$attempt} broadcast attempts to {$url} failed. Final error: ".$e->getMessage()
                     );
-                } else {
-                    // Wait before retrying (exponential backoff).
-                    sleep($attempt * 2);
+                    continue;
                 }
+
+                // Wait before retrying (exponential backoff).
+                sleep($attempt * 2);
             }//end try
         }//end while
 
@@ -270,7 +277,7 @@ class BroadcastService
     }//end sendBroadcastRequest()
 
     /**
-     * Broadcast this OpenCatalogi directory to one or more instances
+     * Broadcast this OpenCatalogi directory to one or more instances.
      *
      * This method handles broadcasting the current directory information to external
      * OpenCatalogi instances. It can broadcast to a specific URL or to all known directories.
@@ -290,20 +297,18 @@ class BroadcastService
         // Get the URL of this directory to include in broadcast payload.
         $directoryUrl = $this->getCurrentDirectoryUrl();
 
-        // Initialize results array to track success/failure per URL.
+        // Initialize results array to track success and failure per URL.
         $results = [];
 
         // Determine target URLs for broadcasting.
+        $targetUrls = $this->getDirectoryUrls();
         if ($url !== null) {
             // Validate the provided URL.
             if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-                throw new \InvalidArgumentException("Invalid URL provided for broadcast: {$url}");
+                throw new InvalidArgumentException("Invalid URL provided for broadcast: {$url}");
             }
 
             $targetUrls = [$url];
-        } else {
-            // Get all known directory URLs.
-            $targetUrls = $this->getDirectoryUrls();
         }
 
         // If no target URLs found, log warning and return empty results.
@@ -324,7 +329,7 @@ class BroadcastService
             }
 
             // Attempt to send broadcast request.
-            $success = $this->sendBroadcastRequest(url: $targetUrl, directoryUrl: $directoryUrl);
+            $success = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
             $results[$targetUrl] = $success;
         }
 

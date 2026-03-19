@@ -1,6 +1,6 @@
 <?php
 /**
- * OpenCatalogiAdmin for OpenCatalogi.
+ * OpenCatalogi admin settings page.
  *
  * @category Settings
  * @package  OCA\OpenCatalogi\Settings
@@ -18,61 +18,56 @@ namespace OCA\OpenCatalogi\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IConfig;
-use OCP\IL10N;
 use OCP\Settings\ISettings;
 
 /**
- * Admin settings form for OpenCatalogi.
+ * Admin settings page for OpenCatalogi.
  */
 class OpenCatalogiAdmin implements ISettings
 {
 
     /**
-     * The localization service.
-     *
-     * @var IL10N
-     */
-    private IL10N $l;
-
-    /**
-     * The Nextcloud config service.
+     * System configuration.
      *
      * @var IConfig
      */
     private IConfig $config;
 
     /**
-     * Constructor for OpenCatalogiAdmin settings.
+     * Constructor.
      *
-     * @param IConfig $config The Nextcloud config service.
-     * @param IL10N   $l      The localization service.
+     * @param IConfig $config System configuration.
      */
-    public function __construct(IConfig $config, IL10N $l)
+    public function __construct(IConfig $config)
     {
         $this->config = $config;
-        $this->l      = $l;
 
     }//end __construct()
 
     /**
-     * Get the settings form template response.
+     * Get the admin settings form.
      *
-     * @return TemplateResponse The admin settings template.
+     * @return TemplateResponse
      */
     public function getForm()
     {
         $parameters = [
-            'mySetting' => $this->config->getSystemValue('open_catalogi_setting', true),
+            'mySetting' => $this->config->getSystemValue(key: 'open_catalogi_setting', default: true),
         ];
 
-        return new TemplateResponse('opencatalogi', 'settings/admin', $parameters, 'admin');
+        return new TemplateResponse(
+            appName: 'opencatalogi',
+            templateName: 'settings/admin',
+            params: $parameters,
+            renderAs: 'admin'
+        );
 
     }//end getForm()
 
     /**
-     * Get the section ID for these settings.
+     * Get the settings section name.
      *
-     * @return string The section name.
+     * @return string
      */
     public function getSection()
     {
@@ -83,13 +78,12 @@ class OpenCatalogiAdmin implements ISettings
     }//end getSection()
 
     /**
-     * Get the priority for ordering the settings form.
+     * Get the form priority within the admin section.
      *
-     * Whether the form should be rather on the top or bottom of
-     * the admin section. The forms are arranged in ascending order of the
+     * The forms are arranged in ascending order of the
      * priority values. It is required to return a value between 0 and 100.
      *
-     * @return integer The priority value.
+     * @return integer
      */
     public function getPriority()
     {

@@ -1,6 +1,6 @@
 <?php
 /**
- * OpenCatalogiAdmin for OpenCatalogi.
+ * OpenCatalogi admin section for settings.
  *
  * @category Sections
  * @package  OCA\OpenCatalogi\Sections
@@ -27,24 +27,24 @@ class OpenCatalogiAdmin implements IIconSection
 {
 
     /**
-     * The localization service.
+     * Localization service.
      *
      * @var IL10N
      */
     private IL10N $l;
 
     /**
-     * The URL generator service.
+     * URL generator.
      *
      * @var IURLGenerator
      */
     private IURLGenerator $urlGenerator;
 
     /**
-     * Constructor for OpenCatalogiAdmin section.
+     * Constructor.
      *
-     * @param IL10N         $l            The localization service.
-     * @param IURLGenerator $urlGenerator The URL generator service.
+     * @param IL10N         $l            Localization service.
+     * @param IURLGenerator $urlGenerator URL generator.
      */
     public function __construct(IL10N $l, IURLGenerator $urlGenerator)
     {
@@ -54,20 +54,20 @@ class OpenCatalogiAdmin implements IIconSection
     }//end __construct()
 
     /**
-     * Get the icon for the admin section.
+     * Get the section icon.
      *
-     * @return string The icon path.
+     * @return string
      */
     public function getIcon(): string
     {
-        return $this->urlGenerator->imagePath('core', 'actions/settings-dark.svg');
+        return $this->urlGenerator->imagePath(appName: 'opencatalogi', file: 'app-dark.svg');
 
     }//end getIcon()
 
     /**
-     * Get the section identifier.
+     * Get the section ID.
      *
-     * @return string The section ID.
+     * @return string
      */
     public function getID(): string
     {
@@ -76,9 +76,9 @@ class OpenCatalogiAdmin implements IIconSection
     }//end getID()
 
     /**
-     * Get the display name for the section.
+     * Get the section name.
      *
-     * @return string The section name.
+     * @return string
      */
     public function getName(): string
     {
@@ -87,9 +87,9 @@ class OpenCatalogiAdmin implements IIconSection
     }//end getName()
 
     /**
-     * Get the priority for ordering sections.
+     * Get the section priority.
      *
-     * @return integer The section priority.
+     * @return int
      */
     public function getPriority(): int
     {

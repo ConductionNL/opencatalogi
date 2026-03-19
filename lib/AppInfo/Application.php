@@ -1,8 +1,6 @@
 <?php
 /**
- * Application bootstrap for OpenCatalogi.
- *
- * Registers dashboard widgets, event listeners, and tool registrations.
+ * Main Application class for OpenCatalogi.
  *
  * @category AppInfo
  * @package  OCA\OpenCatalogi\AppInfo
@@ -10,6 +8,10 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  */
 
 declare(strict_types=1);
@@ -33,24 +35,27 @@ use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 
 /**
- * Main Application class for OpenCatalogi
+ * Main Application class for OpenCatalogi.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Application extends App implements IBootstrap
 {
     public const APP_ID = 'opencatalogi';
 
     /**
-     * Constructor for the Application.
+     * Constructor.
      *
      * @psalm-suppress PossiblyUnusedMethod
      */
     public function __construct()
     {
-        parent::__construct(appName: self::APP_ID);
+        parent::__construct(self::APP_ID);
+
     }//end __construct()
 
     /**
-     * Register services, event listeners, and dashboard widgets.
+     * Register app services and event listeners.
      *
      * @param IRegistrationContext $context The registration context.
      *
@@ -66,16 +71,35 @@ class Application extends App implements IBootstrap
         $context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
 
         // Register event listeners for OpenRegister events.
-        $context->registerEventListener(ObjectCreatedEvent::class, ObjectCreatedEventListener::class);
-        $context->registerEventListener(ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class);
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: ObjectCreatedEventListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: ObjectUpdatedEventListener::class
+        );
 
         // Register catalog cache event listeners.
-        $context->registerEventListener(ObjectCreatedEvent::class, CatalogCacheEventListener::class);
-        $context->registerEventListener(ObjectUpdatedEvent::class, CatalogCacheEventListener::class);
-        $context->registerEventListener(ObjectDeletedEvent::class, CatalogCacheEventListener::class);
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: CatalogCacheEventListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: CatalogCacheEventListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectDeletedEvent::class,
+            listener: CatalogCacheEventListener::class
+        );
 
         // Register tool registration listener for OpenRegister agents.
-        $context->registerEventListener(ToolRegistrationEvent::class, ToolRegistrationListener::class);
+        $context->registerEventListener(
+            event: ToolRegistrationEvent::class,
+            listener: ToolRegistrationListener::class
+        );
+
     }//end register()
 
     /**
@@ -84,11 +108,12 @@ class Application extends App implements IBootstrap
      * @param IBootContext $context The boot context.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function boot(IBootContext $context): void
     {
-        // Initialization is now handled by the Repair step (InitializeSettings).
-        // which runs only during app install/upgrade, not on every request.
+        // Initialization handled by the Repair step (InitializeSettings).
         // See lib/Repair/InitializeSettings.php.
     }//end boot()
 }//end class

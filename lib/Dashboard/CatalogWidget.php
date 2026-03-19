@@ -1,6 +1,6 @@
 <?php
 /**
- * CatalogWidget for OpenCatalogi.
+ * Dashboard widget for catalog overview.
  *
  * @category Dashboard
  * @package  OCA\OpenCatalogi\Dashboard
@@ -14,31 +14,26 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
-
 namespace OCA\OpenCatalogi\Dashboard;
 
 use OCP\Dashboard\IWidget;
 use OCP\IL10N;
-use OCP\IURLGenerator;
 use OCP\Util;
 
 use OCA\OpenCatalogi\AppInfo\Application;
 
 /**
- * Catalog dashboard widget for Nextcloud.
+ * Widget showing catalog overview on the dashboard.
  */
 class CatalogWidget implements IWidget
 {
     /**
-     * Constructor for CatalogWidget.
+     * Constructor.
      *
-     * @param IL10N         $l10n The localization service.
-     * @param IURLGenerator $url  The URL generator service.
+     * @param IL10N $l10n Localization service.
      */
     public function __construct(
         private IL10N $l10n,
-        private IURLGenerator $url
     ) {
 
     }//end __construct()
@@ -46,7 +41,7 @@ class CatalogWidget implements IWidget
     /**
      * Get the widget identifier.
      *
-     * @return string The widget ID.
+     * @return string
      */
     public function getId(): string
     {
@@ -57,7 +52,7 @@ class CatalogWidget implements IWidget
     /**
      * Get the widget title.
      *
-     * @return string The widget title.
+     * @return string
      */
     public function getTitle(): string
     {
@@ -68,7 +63,7 @@ class CatalogWidget implements IWidget
     /**
      * Get the widget display order.
      *
-     * @return integer The display order.
+     * @return int
      */
     public function getOrder(): int
     {
@@ -79,7 +74,7 @@ class CatalogWidget implements IWidget
     /**
      * Get the widget icon CSS class.
      *
-     * @return string The icon class.
+     * @return string
      */
     public function getIconClass(): string
     {
@@ -90,7 +85,7 @@ class CatalogWidget implements IWidget
     /**
      * Get the widget URL.
      *
-     * @return string|null The widget URL or null.
+     * @return string|null
      */
     public function getUrl(): ?string
     {
@@ -102,11 +97,13 @@ class CatalogWidget implements IWidget
      * Load the widget scripts and styles.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public function load(): void
     {
-        Util::addScript(Application::APP_ID, Application::APP_ID.'-catalogiWidget');
-        Util::addStyle(Application::APP_ID, 'dashboardWidgets');
+        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-catalogiWidget');
+        Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
 
     }//end load()
 }//end class

@@ -1,8 +1,8 @@
 <?php
 /**
- * Dashboard controller for OpenCatalogi.
+ * OpenCatalogi Dashboard Controller.
  *
- * Handles dashboard-related operations in the OpenCatalogi app.
+ * Controller for handling dashboard-related operations in the OpenCatalogi app.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -10,6 +10,10 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -21,17 +25,15 @@ use OCP\IRequest;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 
 /**
- * Class DashboardController
- *
- * Controller for handling dashboard-related operations in the OpenCatalogi app.
+ * Controller for handling dashboard-related operations.
  */
 class DashboardController extends Controller
 {
     /**
      * DashboardController constructor.
      *
-     * @param string   $appName The name of the app
-     * @param IRequest $request The request object
+     * @param string   $appName The name of the app.
+     * @param IRequest $request The request object.
      */
     public function __construct($appName, IRequest $request)
     {
@@ -42,21 +44,22 @@ class DashboardController extends Controller
     /**
      * Render the dashboard page.
      *
-     * @param string|null $getParameter Optional GET parameter
+     * @param string|null $getParameter Optional GET parameter.
      *
-     * @return TemplateResponse The rendered template response
+     * @return TemplateResponse The rendered template response.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function page(?string $getParameter): TemplateResponse
     {
         try {
             // Create a new TemplateResponse for the index page.
             $response = new TemplateResponse(
-                $this->appName,
-                'index',
-                []
+                appName: $this->appName,
+                templateName: 'index',
+                params: []
             );
 
             // Set up Content Security Policy.
@@ -68,10 +71,10 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             // Return an error template response if an exception occurs.
             return new TemplateResponse(
-                $this->appName,
-                'error',
-                ['error' => $e->getMessage()],
-                '500'
+                appName: $this->appName,
+                templateName: 'error',
+                params: ['error' => $e->getMessage()],
+                renderAs: '500'
             );
         }//end try
 
@@ -80,7 +83,7 @@ class DashboardController extends Controller
     /**
      * Retrieve dashboard data.
      *
-     * @return JSONResponse JSON response containing dashboard data
+     * @return JSONResponse JSON response containing dashboard data.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -89,11 +92,11 @@ class DashboardController extends Controller
     {
         try {
             // Prepare results using a test array.
-            $results = ["results" => self::TEST_ARRAY];
+            $results = ["results" => []];
             return new JSONResponse($results);
         } catch (\Exception $e) {
             // Return an error JSON response if an exception occurs.
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end index()

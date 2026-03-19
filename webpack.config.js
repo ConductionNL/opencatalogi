@@ -1,4 +1,5 @@
 const path = require('path')
+const fs = require('fs')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
 const { VueLoaderPlugin } = require('vue-loader')
 
@@ -60,11 +61,19 @@ webpackConfig.plugins = [
 	new VueLoaderPlugin(),
 ]
 
-// Ensure '@' alias resolves to the project's 'src' directory for cleaner imports like '@/...'
+// Use local source when available (monorepo dev), otherwise fall back to npm package
+const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
+const useLocalLib = fs.existsSync(localLib)
+
 webpackConfig.resolve = webpackConfig.resolve || {}
 webpackConfig.resolve.alias = {
 	...(webpackConfig.resolve.alias || {}),
 	'@': path.resolve(__dirname, 'src'),
+	...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
+	'vue$': path.resolve(__dirname, 'node_modules/vue'),
+	'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
+	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
+	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
 }
 
 module.exports = webpackConfig

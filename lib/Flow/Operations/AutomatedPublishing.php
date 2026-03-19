@@ -1,6 +1,6 @@
 <?php
 /**
- * AutomatedPublishing for OpenCatalogi.
+ * Automated publishing flow operation.
  *
  * @category Flow
  * @package  OCA\OpenCatalogi\Flow\Operations
@@ -14,68 +14,73 @@
  * @link https://www.OpenCatalogi.nl
  */
 
+namespace OCA\OpenCatalogi\Flow\Operations;
 
-namespace OCA\OpenCatalogi\Cron;
-
-use OCP\WorkflowEngine\IOperation ;
+use OCP\EventDispatcher\Event;
+use OCP\WorkflowEngine\IOperation;
 
 /**
- * Automated publishing workflow operation.
+ * Operation for automatically publishing publications that meet predefined parameters.
+ *
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
-class AutomatedPublishing extends IOperation
+class AutomatedPublishing implements IOperation
 {
     /**
-     * Get the display name of the operation.
+     * Get the display name of this operation.
      *
-     * @return string The display name.
+     * @return string
      */
     public function getDisplayName(): string
     {
-        return $this->l->t('Automated publishing');
+        return 'Automated publishing';
 
     }//end getDisplayName()
 
     /**
-     * Get the description of the operation.
+     * Get the description of this operation.
      *
-     * @return string The description.
+     * @return string
      */
     public function getDescription(): string
     {
-        return $this->l->t('Automaticly publish publiations if they meet predefined parameters');
+        return 'Automatically publish publications if they meet predefined parameters';
 
     }//end getDescription()
 
     /**
-     * Get the icon for the operation.
+     * Get the icon for this operation.
      *
-     * @return string The icon path.
+     * @return string
      */
     public function getIcon(): string
     {
-        return \OC::$server->getURLGenerator()->imagePath('opencatalogi', 'app.svg');
+        return \OC::$server->getURLGenerator()->imagePath(appName: 'opencatalogi', file: 'app.svg');
 
     }//end getIcon()
 
     /**
      * Validate the operation configuration.
      *
-     * @return boolean Whether the operation is valid.
+     * @param string $name      The operation name.
+     * @param array  $checks    The checks to validate.
+     * @param string $operation The operation string.
+     *
+     * @return void
      */
-    public function validateOperation(): bool
+    public function validateOperation(string $name, array $checks, string $operation): void
     {
-        return true;
 
     }//end validateOperation()
 
     /**
      * Determines for what kind of users the operation is available.
      *
-     * The scope is presented from the IManager as a constant with 0 for ADMIN and 1 for USER.
+     * @param int $scope The scope to check.
      *
-     * @param integer $scope The scope level.
+     * @return bool
      *
-     * @return boolean Whether the operation is available for the scope.
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function isAvailableForScope(int $scope): bool
     {
@@ -86,4 +91,18 @@ class AutomatedPublishing extends IOperation
         return false;
 
     }//end isAvailableForScope()
+
+    /**
+     * Handle the event when triggered.
+     *
+     * @param string                           $eventName   The event name.
+     * @param Event                            $event       The event.
+     * @param \OCP\WorkflowEngine\IRuleMatcher $ruleMatcher The rule matcher.
+     *
+     * @return void
+     */
+    public function onEvent(string $eventName, Event $event, \OCP\WorkflowEngine\IRuleMatcher $ruleMatcher): void
+    {
+
+    }//end onEvent()
 }//end class

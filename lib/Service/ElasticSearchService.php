@@ -19,29 +19,23 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-
-
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * Service for managing interactions with Elasticsearch.
- *
- * Provides functionality for indexing, updating, deleting, and searching objects in Elasticsearch,
- * as well as processing and formatting query results and aggregations.
  */
-
 class ElasticSearchService
 {
     /**
-     * Get an Elasticsearch client instance.
+     * Get an Elasticsearch client from configuration.
      *
-     * @param array $config The configuration for the client.
+     * @param array $config The Elasticsearch configuration.
      *
-     * @return Client The Elasticsearch client.
+     * @return Client
      */
-    private function getClient(array $config): Client
+    protected function getClient(array $config): mixed
     {
         $uri    = $config['location'];
         $apiKey = explode(separator: ':', string: base64_decode(string: $config['key']));
@@ -54,7 +48,7 @@ class ElasticSearchService
     }//end getClient()
 
     /**
-     * Add an object to ElasticSearch
+     * Add an object to ElasticSearch.
      *
      * @param array $object The object to add to the data store.
      * @param array $config The configuration of ElasticSearch.
@@ -70,7 +64,7 @@ class ElasticSearchService
         }
 
         try {
-            $result = $client->index(
+            $client->index(
                 params: [
                     'index' => $config['index'],
                     'id'    => $object['id'],
@@ -98,10 +92,10 @@ class ElasticSearchService
     /**
      * Remove an object from Elasticsearch.
      *
-     * @param string $id     The object ID to remove.
+     * @param string $id     The object ID.
      * @param array  $config The Elasticsearch configuration.
      *
-     * @return array The result or exception details.
+     * @return array
      */
     public function removeObject(string $id, array $config): array
     {
@@ -129,11 +123,11 @@ class ElasticSearchService
     /**
      * Update an object in Elasticsearch.
      *
-     * @param string $id     The object ID to update.
+     * @param string $id     The object ID.
      * @param array  $object The updated object data.
      * @param array  $config The Elasticsearch configuration.
      *
-     * @return array The result or exception details.
+     * @return array
      */
     public function updateObject(string $id, array $object, array $config): array
     {
@@ -170,6 +164,8 @@ class ElasticSearchService
      * @param array|string $filter The filter value or configuration.
      *
      * @return array The parsed filter clause.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function parseFilter(string $name, array|string $filter): array
     {
@@ -182,11 +178,10 @@ class ElasticSearchService
             switch ($key) {
                 case 'regexp':
                 case 'like':
-                    if (preg_match("/^\/.+\/[a-z]*$/i", $value) !== false) {
+                    if (preg_match(pattern: "/^\/.+\/[a-z]*$/i", subject: $value) !== false) {
                         return ['regexp' => [$name => strtolower($value)]];
-                    } else {
-                        return ['match' => [$name => $value]];
                     }
+                    return ['match' => [$name => $value]];
 
                 case '>=':
                 case 'after':
@@ -210,11 +205,14 @@ class ElasticSearchService
     }//end parseFilter()
 
     /**
-     * Parse all filters into an Elasticsearch query body.
+     * Parse multiple filters into an Elasticsearch query body.
      *
      * @param array $filters The filters to parse.
      *
-     * @return array The parsed query body.
+     * @return array The Elasticsearch query body.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function parseFilters(array $filters): array
     {
@@ -281,9 +279,9 @@ class ElasticSearchService
     }//end parseFilters()
 
     /**
-     * Format a single search hit result.
+     * Format a search result hit into a flat array.
      *
-     * @param array $hit The raw hit from Elasticsearch.
+     * @param array $hit The Elasticsearch hit to format.
      *
      * @return array The formatted result.
      */
@@ -301,7 +299,7 @@ class ElasticSearchService
     /**
      * Rename the items in an aggregation bucket according to the response standard for aggregations.
      *
-     * @param array $bucketItem The item to rewrite
+     * @param array $bucketItem The item to rewrite.
      *
      * @return array The rewritten array.
      */
@@ -336,9 +334,9 @@ class ElasticSearchService
      *
      * @param array   $filters      The search filters.
      * @param array   $config       The Elasticsearch configuration.
-     * @param integer $totalResults Reference to store total result count.
+     * @param integer $totalResults The total number of results (passed by reference).
      *
-     * @return array The search results with facets.
+     * @return array The search results.
      */
     public function searchObject(array $filters, array $config, int &$totalResults=0): array
     {
@@ -354,11 +352,15 @@ class ElasticSearchService
 
         $totalResults = $result['hits']['total']['value'];
 
-        $return = ['results' => array_map(callback: [$this, 'formatResults'], array: $result['hits']['hits'])];
+        $return           = [
+            'results' => array_map(
+                callback: [$this, 'formatResults'],
+                array: $result['hits']['hits']
+            ),
+        ];
+        $return['facets'] = [];
         if (isset($result['aggregations']) === true) {
             $return['facets'] = array_map([$this, 'mapAggregationResults'], $result['aggregations']);
-        } else {
-            $return['facets'] = [];
         }
 
         return $return;

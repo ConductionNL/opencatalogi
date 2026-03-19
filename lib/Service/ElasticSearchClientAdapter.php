@@ -33,14 +33,14 @@ class ElasticSearchClientAdapter
     /**
      * The Elasticsearch client instance.
      *
-     * @var Client The Elasticsearch client instance
+     * @var Client
      */
     private $client;
 
     /**
-     * Constructor for ElasticSearchClientAdapter
+     * Constructor for ElasticSearchClientAdapter.
      *
-     * @param Client $client The Elasticsearch client instance
+     * @param Client $client The Elasticsearch client instance.
      */
     public function __construct(Client $client)
     {
@@ -49,11 +49,11 @@ class ElasticSearchClientAdapter
     }//end __construct()
 
     /**
-     * Perform a search operation
+     * Perform a search operation.
      *
-     * @param array $params The search parameters
+     * @param array $params The search parameters.
      *
-     * @return array The search results
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The search results.
      */
     public function search(array $params)
     {
@@ -63,11 +63,11 @@ class ElasticSearchClientAdapter
     }//end search()
 
     /**
-     * Index a document
+     * Index a document.
      *
-     * @param array $params The indexing parameters
+     * @param array $params The indexing parameters.
      *
-     * @return array The indexing response
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The indexing response.
      */
     public function index(array $params)
     {
@@ -77,11 +77,11 @@ class ElasticSearchClientAdapter
     }//end index()
 
     /**
-     * Get a document by its ID
+     * Get a document by its ID.
      *
-     * @param array $params The get parameters
+     * @param array $params The get parameters.
      *
-     * @return array The document data
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The document data.
      */
     public function get(array $params)
     {
@@ -91,11 +91,11 @@ class ElasticSearchClientAdapter
     }//end get()
 
     /**
-     * Update a document
+     * Update a document.
      *
-     * @param array $params The update parameters
+     * @param array $params The update parameters.
      *
-     * @return array The update response
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The update response.
      */
     public function update(array $params)
     {
@@ -105,11 +105,11 @@ class ElasticSearchClientAdapter
     }//end update()
 
     /**
-     * Delete a document
+     * Delete a document.
      *
-     * @param array $params The delete parameters
+     * @param array $params The delete parameters.
      *
-     * @return array The delete response
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The delete response.
      */
     public function delete(array $params)
     {
