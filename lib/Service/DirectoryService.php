@@ -250,8 +250,8 @@ class DirectoryService
                 ];
 
                 // Directory data is public by design — listings/catalogs have authorization.read=["public"].
-                // Disable multitenancy filtering so public directory discovery works across organizations.
-                $listings = $objectService->searchObjects($query, _multitenancy: false);
+                // Disable RBAC and multitenancy so public directory discovery works without user context.
+                $listings = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
 
                 // Build unique directory URLs using URL as key to automatically handle duplicates.
                 foreach ($listings as $listing) {
@@ -1762,8 +1762,8 @@ class DirectoryService
             }
 
             try {
-                // Directory data is public — disable multitenancy for cross-org visibility.
-                $listingResult = $objectService->searchObjects($query, _multitenancy: false);
+                // Directory data is public — disable RBAC and multitenancy for cross-org visibility.
+                $listingResult = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
 
                 // Convert listing objects to arrays and filter out internal properties.
                 // Note: Don't expand schemas for listings; they already have expanded schemas from external directories.
@@ -1814,8 +1814,8 @@ class DirectoryService
             }
 
             try {
-                // Directory data is public — disable multitenancy for cross-org visibility.
-                $catalogResult = $objectService->searchObjects($query, _multitenancy: false);
+                // Directory data is public — disable RBAC and multitenancy for cross-org visibility.
+                $catalogResult = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
 
                 // Convert catalog objects to listing format and expand schemas.
                 $catalogsAsListings = array_map(
