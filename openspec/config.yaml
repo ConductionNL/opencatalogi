@@ -26,3 +26,4 @@ rules:
   tasks:
     - Test with tilburg-woo-ui to verify frontend compatibility
     - Verify CORS headers on all public endpoints
+    - Follow mandatory task categories from ADRs 005, 009, 010, 011

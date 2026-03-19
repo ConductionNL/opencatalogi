@@ -26,3 +26,5 @@
 /website/node_modules/
 
 phpqa/
+docs/.docusaurus/
+docs/node_modules/
