@@ -79,7 +79,6 @@ class DirectoryService
      */
     private int $cacheTimestamp = 0;
 
-
     /**
      * Constructor for DirectoryService
      *
@@ -107,7 +106,6 @@ class DirectoryService
         $this->client  = new Client([]);
 
     }//end __construct()
-
 
     /**
      * Execute synchronization during cron job (asynchronous)
@@ -193,7 +191,6 @@ class DirectoryService
 
     }//end doCronSync()
 
-
     /**
      * Get unique directory URLs from stored listings
      *
@@ -211,7 +208,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getUniqueDirectories(bool $availableOnly = false, bool $defaultOnly = false): array
+    public function getUniqueDirectories(bool $availableOnly=false, bool $defaultOnly=false): array
     {
         // Check cache validity (5 minute TTL).
         $currentTime = time();
@@ -260,13 +257,13 @@ class DirectoryService
                     if ($availableOnly && $available === false) {
                         // Removed redundant logging
                         continue;
-// Skip unavailable listings.
+                        // Skip unavailable listings.
                     }
 
                     if ($defaultOnly && $default === false) {
                         // Removed redundant logging
                         continue;
-// Skip non-default listings
+                        // Skip non-default listings
                     }
 
                     // Check for publications URL in the object data (primary) or directory URL (fallback).
@@ -274,6 +271,7 @@ class DirectoryService
                         $uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
                         // Removed redundant logging.
                     }
+
                     // If no publications URL found, skip this listing.
                     // We used to have fallback logic here that would try to use the directory field,
                     // but that often pointed to the source directory (where we got the listing from)
@@ -282,19 +280,18 @@ class DirectoryService
             } catch (\Exception $e) {
                 // Removed redundant logging
             }//end try
-        }
+        }//end if
 
         // Return just the unique URLs as an indexed array
         $result = array_values($uniqueDirectoryUrls);
 
         // Cache the result with current timestamp
         $this->cachedUniqueDirs = $result;
-        $this->cacheTimestamp          = $currentTime;
+        $this->cacheTimestamp   = $currentTime;
 
         return $result;
 
     }//end getUniqueDirectories()
-
 
     /**
      * Synchronize a specific directory (asynchronous)
@@ -364,8 +361,8 @@ class DirectoryService
         try {
             // Fetch directory data with limit to get all listings
             $dirUrlWithLimit = $directoryUrl.'?_limit=10000';
-            $response              = $this->client->get($dirUrlWithLimit);
-            $directoryData         = json_decode($response->getBody()->getContents(), true);
+            $response        = $this->client->get($dirUrlWithLimit);
+            $directoryData   = json_decode($response->getBody()->getContents(), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new InvalidArgumentException('Invalid JSON response from directory');
@@ -437,19 +434,19 @@ class DirectoryService
 
                         if ($listingResult['success']) {
                             switch ($listingResult['action']) {
-                            case 'created':
-                                $results['listings_created']++;
-                                break;
-                            case 'updated':
-                                $results['listings_updated']++;
-                                break;
-                            case 'unchanged':
-                                $results['listings_unchanged']++;
-                                break;
-                            case 'skipped_outdated':
-                            case 'skipped_other_directory':
-                                $results['listings_skipped']++;
-                                break;
+                                case 'created':
+                                    $results['listings_created']++;
+                                    break;
+                                case 'updated':
+                                    $results['listings_updated']++;
+                                    break;
+                                case 'unchanged':
+                                    $results['listings_unchanged']++;
+                                    break;
+                                case 'skipped_outdated':
+                                case 'skipped_other_directory':
+                                    $results['listings_skipped']++;
+                                    break;
                             }
                         }
 
@@ -475,7 +472,7 @@ class DirectoryService
                 }
             }//end if
         } catch (GuzzleException $e) {
-            $error               = 'Failed to fetch directory data: '.$e->getMessage();
+            $error = 'Failed to fetch directory data: '.$e->getMessage();
             $results['errors'][] = $error;
 
             // Try to update existing listings with error status
@@ -492,7 +489,7 @@ class DirectoryService
 
             throw new RequestException($error, null, null, $e);
         } catch (\Exception $e) {
-            $error               = 'Sync failed: '.$e->getMessage();
+            $error = 'Sync failed: '.$e->getMessage();
             $results['errors'][] = $error;
 
             // Try to update existing listings with error status
@@ -508,7 +505,6 @@ class DirectoryService
         return $results;
 
     }//end syncDirectory()
-
 
     /**
      * Synchronize a single listing from directory data
@@ -533,9 +529,9 @@ class DirectoryService
     public function syncListing(array $listingData, string $sourceDirectoryUrl): array
     {
         // Extract fields from OpenRegister object structure
-        $listingId = ($listingData['id'] ?? null);
+        $listingId    = ($listingData['id'] ?? null);
         $listingTitle = ($listingData['title'] ?? $listingData['@self']['name'] ?? 'Unknown');
-        
+
         // Extract catalog ID from relations.catalog or use id as fallback
         $catalogId = null;
         if (isset($listingData['catalog']) === true) {
@@ -548,10 +544,10 @@ class DirectoryService
             // Fallback: use id as catalog (for listings, catalog ID is often the same as listing ID)
             $catalogId = $listingId;
         }
-        
+
         // Extract directory from relations if present
         $listingDirectory = ($listingData['directory'] ?? $listingData['@self']['relations']['directory'] ?? null);
-        
+
         $result = [
             'listing_id'    => ($listingId ?? 'unknown'),
             'listing_title' => $listingTitle,
@@ -594,15 +590,15 @@ class DirectoryService
             if (empty($listingId)) {
                 throw new InvalidArgumentException('Invalid listing data: missing id');
             }
-            
+
             if (empty($catalogId)) {
                 throw new InvalidArgumentException('Invalid listing data: missing catalog');
             }
 
             // Ensure catalog field is set in listingData for later use
             $listingData['catalog'] = $catalogId;
-            $listingData['id'] = $listingId;
-            
+            $listingData['id']      = $listingId;
+
             // Extract title from @self.name if title is not at top level
             if (empty($listingData['title']) && isset($listingData['@self']['name'])) {
                 $listingData['title'] = $listingData['@self']['name'];
@@ -624,17 +620,17 @@ class DirectoryService
             // These endpoints tell us where the actual catalog's API is hosted.
             if (isset($listingData['@self']['relations']) && is_array($listingData['@self']['relations'])) {
                 $relations = $listingData['@self']['relations'];
-                
+
                 // Extract publications endpoint.
                 if (isset($relations['publications']) && !empty($relations['publications'])) {
                     $listingData['publications'] = $relations['publications'];
                 }
-                
+
                 // Extract search endpoint (alternative).
                 if (isset($relations['search']) && !empty($relations['search'])) {
                     $listingData['search'] = $relations['search'];
                 }
-                
+
                 // Extract directory endpoint from relations (the actual catalog's directory URL).
                 // This is different from $sourceDirectoryUrl which is where we got the listing from.
                 if (isset($relations['directory']) && !empty($relations['directory'])) {
@@ -696,8 +692,8 @@ class DirectoryService
                 $existingObject      = ($existingListingData['object'] ?? []);
 
                 // Preserve existing availability and default status, but set smart defaults for missing fields
-                $listingData['default']    = ($existingObject['default'] ?? $listingData['default']);
-                $listingData['status']     = ($existingObject['status'] ?? 'development');
+                $listingData['default']          = ($existingObject['default'] ?? $listingData['default']);
+                $listingData['status']           = ($existingObject['status'] ?? 'development');
                 $listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
             }
 
@@ -734,7 +730,7 @@ class DirectoryService
                     $result['action']  = 'updated';
                     $result['success'] = true;
                 }
-            }
+            }//end if
 
             if (!$isUpdate) {
                 // Create new listing using saveObject
@@ -756,7 +752,7 @@ class DirectoryService
 
                     // Update with error status
                     $errorData['statusCode'] = 500;
-// Internal server error
+                    // Internal server error
                     $errorData['lastSync'] = (new DateTime())->format('c');
 
                     // Use positional parameters for compatibility with different ObjectService versions
@@ -770,7 +766,6 @@ class DirectoryService
         return $result;
 
     }//end syncListing()
-
 
     /**
      * Get publications from all available federated catalogs asynchronously
@@ -792,7 +787,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getPublications(array $guzzleConfig = [], bool $includeDefault = false): array
+    public function getPublications(array $guzzleConfig=[], bool $includeDefault=false): array
     {
         // Get directories based on criteria.
         $directories = $this->getUniqueDirectories(availableOnly: true, defaultOnly: $includeDefault);
@@ -823,15 +818,15 @@ class DirectoryService
             RequestOptions::HTTP_ERRORS     => false,
         ];
 
-        $finalGuzzleConfig         = array_merge($defaultGuzzleConfig, $guzzleConfig);
-        $queryParams               = ($finalGuzzleConfig['query_params'] ?? []);
+        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams       = ($finalGuzzleConfig['query_params'] ?? []);
         $queryParams['_aggregate'] = 'false';
-// Prevent circular aggregation
+        // Prevent circular aggregation
         $queryParams['_extend'] = [
             '@self.schema',
             '@self.register',
         ];
-// Add self-extension
+        // Add self-extension
         $client            = new Client($finalGuzzleConfig);
             $promises      = [];
         $urlToDirectoryMap = [];
@@ -937,7 +932,7 @@ class DirectoryService
             }
 
             $sources[$directoryInfo['name']] = $directoryInfo['url'];
-            $combinedTotal                  += $result['total'];
+            $combinedTotal += $result['total'];
 
             foreach ($result['results'] as $item) {
                 $itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
@@ -971,7 +966,6 @@ class DirectoryService
 
     }//end getPublications()
 
-
     /**
      * Detect or generate publication endpoint for a listing
      *
@@ -1001,8 +995,10 @@ class DirectoryService
         // Try to generate from search endpoint.
         if (!empty($listingData['search'])) {
             // Replace 'search' with 'publications' in the URL.
-            /** @var string $searchUrl */
-            $searchUrl = $listingData['search'];
+            /*
+             * @var string $searchUrl
+             */
+            $searchUrl           = $listingData['search'];
             $publicationEndpoint = str_replace('/search', '/publications', $searchUrl);
 
             // Also handle cases where 'search' might be a query parameter or different pattern.
@@ -1024,7 +1020,7 @@ class DirectoryService
                         $pathSegments
                     );
 
-                    $newPath             = '/'.implode('/', $pathSegments);
+                    $newPath = '/'.implode('/', $pathSegments);
                     $publicationEndpoint = $urlParts['scheme'].'://'.$urlParts['host'];
                     if (isset($urlParts['port']) === true) {
                         $publicationEndpoint .= ':'.$urlParts['port'];
@@ -1046,7 +1042,9 @@ class DirectoryService
         // Try to construct from catalogDirectory (the actual catalog's directory endpoint from relations).
         // Format: Replace /api/directory with /api/publications.
         if (!empty($listingData['catalogDirectory'])) {
-            /** @var string $catalogDir */
+            /*
+             * @var string $catalogDir
+             */
             $catalogDir = $listingData['catalogDirectory'];
             // Replace /api/directory with /api/publications.
             $publicationEndpoint = str_replace('/api/directory', '/api/publications', $catalogDir);
@@ -1059,7 +1057,7 @@ class DirectoryService
         // Format: https://{directory-host}/apps/opencatalogi/api/publications
         if (!empty($listingData['directory'])) {
             $directory = $listingData['directory'];
-            
+
             // If directory is just a hostname (e.g., "directory.opencatalogi.nl" or "opencatalogi.nl")
             // construct the full publications URL.
             if (strpos($directory, '://') === false) {
@@ -1074,6 +1072,7 @@ class DirectoryService
                 if (isset($urlParts['port']) === true) {
                     $publicationEndpoint .= ':'.$urlParts['port'];
                 }
+
                 $publicationEndpoint .= '/apps/opencatalogi/api/publications';
                 return $publicationEndpoint;
             }
@@ -1098,7 +1097,6 @@ class DirectoryService
         return null;
 
     }//end detectPublicationEndpoint()
-
 
     /**
      * Check if incoming listing data is outdated compared to existing data
@@ -1146,7 +1144,6 @@ class DirectoryService
 
     }//end isListingDataOutdated()
 
-
     /**
      * Extract timestamp from listing data for comparison
      *
@@ -1164,15 +1161,15 @@ class DirectoryService
         // Priority order for timestamp fields
         $timestampFields = [
             'updated',
-// Standard updated field
+        // Standard updated field
             '@self.updated',
-// Metadata updated field
+        // Metadata updated field
             'created',
-// Creation timestamp
+        // Creation timestamp
             '@self.created',
-// Metadata creation timestamp
+        // Metadata creation timestamp
             'lastSync',
-// Last sync timestamp
+        // Last sync timestamp
         ];
 
         foreach ($timestampFields as $field) {
@@ -1215,7 +1212,6 @@ class DirectoryService
 
     }//end extractTimestamp()
 
-
     /**
      * Update directory status on error
      *
@@ -1234,7 +1230,7 @@ class DirectoryService
             // Check if OpenRegister service is available
             if (!in_array('openregister', $this->appManager->getInstalledApps())) {
                 return;
-// Can't update if OpenRegister is not available
+                // Can't update if OpenRegister is not available
             }
 
             // Get ObjectService from container
@@ -1246,7 +1242,7 @@ class DirectoryService
 
             if (empty($listingSchema) || empty($listingRegister)) {
                 return;
-// Can't update without schema/register configuration
+                // Can't update without schema/register configuration
             }
 
             // Find all listings from this directory
@@ -1278,7 +1274,6 @@ class DirectoryService
 
     }//end updateDirectoryStatusOnError()
 
-
     /**
      * Check if the current request is from a system broadcast
      *
@@ -1296,7 +1291,6 @@ class DirectoryService
 
     }//end isSystemBroadcast()
 
-
     /**
      * Check if a URL is considered local
      *
@@ -1313,7 +1307,7 @@ class DirectoryService
 
         if (!$parsedUrl || !isset($parsedUrl['host'])) {
             return true;
-// Invalid URL is considered local
+            // Invalid URL is considered local
         }
 
         $host = strtolower($parsedUrl['host']);
@@ -1347,7 +1341,6 @@ class DirectoryService
 
     }//end isLocalUrl()
 
-
     /**
      * Get objects from other catalogs that use/reference our local object
      *
@@ -1367,7 +1360,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getUsed(string $uuid, array $guzzleConfig = []): array
+    public function getUsed(string $uuid, array $guzzleConfig=[]): array
     {
         // Get available listings with publication endpoints
         $directories = $this->getUniqueDirectories(availableOnly: true);
@@ -1395,15 +1388,15 @@ class DirectoryService
             RequestOptions::HTTP_ERRORS     => false,
         ];
 
-        $finalGuzzleConfig         = array_merge($defaultGuzzleConfig, $guzzleConfig);
-        $queryParams               = ($finalGuzzleConfig['query_params'] ?? []);
+        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams       = ($finalGuzzleConfig['query_params'] ?? []);
         $queryParams['_aggregate'] = 'false';
-// Prevent circular aggregation
+        // Prevent circular aggregation
         $queryParams['_extend'] = [
             '@self.schema',
             '@self.register',
         ];
-// Add self-extension
+        // Add self-extension
         $client            = new Client($finalGuzzleConfig);
         $promises          = [];
         $urlToDirectoryMap = [];
@@ -1499,7 +1492,6 @@ class DirectoryService
 
     }//end getUsed()
 
-
     /**
      * Get a single publication from federated catalogs by ID
      *
@@ -1519,7 +1511,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getPublication(string $publicationId, array $guzzleConfig = []): ?array
+    public function getPublication(string $publicationId, array $guzzleConfig=[]): ?array
     {
         // Get available directories
         $directories = $this->getUniqueDirectories(availableOnly: true);
@@ -1544,15 +1536,15 @@ class DirectoryService
             RequestOptions::HTTP_ERRORS     => false,
         ];
 
-        $finalGuzzleConfig         = array_merge($defaultGuzzleConfig, $guzzleConfig);
-        $queryParams               = ($finalGuzzleConfig['query_params'] ?? []);
+        $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
+        $queryParams       = ($finalGuzzleConfig['query_params'] ?? []);
         $queryParams['_aggregate'] = 'false';
-// Prevent circular aggregation
+        // Prevent circular aggregation
         $queryParams['_extend'] = [
             '@self.schema',
             '@self.register',
         ];
-// Add self-extension
+        // Add self-extension
         $client            = new Client($finalGuzzleConfig);
         $promises          = [];
         $urlToDirectoryMap = [];
@@ -1622,7 +1614,6 @@ class DirectoryService
 
     }//end getPublication()
 
-
     /**
      * Get directory entries (listings and catalogs formatted as listings)
      *
@@ -1638,7 +1629,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getDirectory(array $requestParams = []): array
+    public function getDirectory(array $requestParams=[]): array
     {
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
@@ -1776,7 +1767,6 @@ class DirectoryService
 
     }//end getDirectory()
 
-
     /**
      * Convert a catalog object to listing format
      *
@@ -1831,7 +1821,6 @@ class DirectoryService
 
     }//end convertCatalogToListing()
 
-
     /**
      * Filter listing object to remove properties not meant for external API
      *
@@ -1877,7 +1866,6 @@ class DirectoryService
 
     }//end filterListingProperties()
 
-
     /**
      * Convert catalogi to listings format
      *
@@ -1899,7 +1887,6 @@ class DirectoryService
 
     }//end convertCatalogiToListings()
 
-
     /**
      * Expand schema IDs to full schema objects
      *
@@ -1919,7 +1906,7 @@ class DirectoryService
         // Check if OpenRegister service is available
         if (!in_array('openregister', $this->appManager->getInstalledApps())) {
             return $schemaIds;
-// Return IDs if OpenRegister is not available
+            // Return IDs if OpenRegister is not available
         }
 
         try {
@@ -1943,7 +1930,6 @@ class DirectoryService
         }
 
     }//end expandSchemas()
-
 
     /**
      * Process listing or catalog data to expand schema IDs
@@ -1973,7 +1959,6 @@ class DirectoryService
         return $objectData;
 
     }//end processSchemaExpansion()
-
 
     /**
      * Aggregate facets from multiple directory sources
@@ -2045,12 +2030,13 @@ class DirectoryService
                     if (isset($mergedFacets[$field][$existingValues[$valueId]]['count']) === true) {
                         $mergedFacets[$field][$existingValues[$valueId]]['count'] += $facetValue['count'];
                     }
+
                     continue;
                 }
 
                 // Add new value
                 $mergedFacets[$field][] = $facetValue;
-            }
+            }//end foreach
 
             // Re-sort merged facets by count (descending) and then by value (ascending)
             // Only sort if we have valid array data
@@ -2079,6 +2065,4 @@ class DirectoryService
         return $mergedFacets;
 
     }//end aggregateFacets()
-
-
 }//end class

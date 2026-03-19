@@ -241,7 +241,7 @@ class GlossaryController extends Controller
 
         // Add CORS headers for public API access.
         $response = new JSONResponse($responseData);
-        $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -286,7 +286,7 @@ class GlossaryController extends Controller
 
         // Add CORS headers for public API access.
         $response = new JSONResponse($data);
-        $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);

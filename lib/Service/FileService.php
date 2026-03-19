@@ -59,8 +59,6 @@ use ZipArchive;
 
 class FileService
 {
-
-
     /**
      * Constructor for FileService
      *
@@ -78,7 +76,6 @@ class FileService
 
     }//end __construct()
 
-
     /**
      * Get the name for the folder used for storing files of the given publication.
      *
@@ -93,7 +90,6 @@ class FileService
 
     }//end getPublicationFolderName()
 
-
     /**
      * Returns a share link for the given IShare object.
      *
@@ -106,7 +102,6 @@ class FileService
         return $this->getCurrentDomain().'/index.php/s/'.$share->getToken();
 
     }//end getShareLink()
-
 
     /**
      * Gets and returns the current host / domain with correct protocol.
@@ -129,7 +124,6 @@ class FileService
 
     }//end getCurrentDomain()
 
-
     /**
      * Try to find a IShare object with given $path & $shareType.
      *
@@ -138,7 +132,7 @@ class FileService
      *
      * @return IShare|null An IShare object or null.
      */
-    public function findShare(string $path, ?int $shareType = 3): ?IShare
+    public function findShare(string $path, ?int $shareType=3): ?IShare
     {
         $path = trim(string: $path, characters: '/');
 
@@ -173,7 +167,6 @@ class FileService
 
     }//end findShare()
 
-
     /**
      * Creates a IShare object using the $shareData array data.
      *
@@ -203,7 +196,6 @@ class FileService
 
     }//end createShare()
 
-
     /**
      * Creates and returns a share link for a file (or folder).
      * (https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html#create-a-new-share)
@@ -215,7 +207,7 @@ class FileService
      * @return string The share link.
      * @throws Exception In case creating the share(link) fails.
      */
-    public function createShareLink(string $path, ?int $shareType = 3, ?int $permissions = null): string
+    public function createShareLink(string $path, ?int $shareType=3, ?int $permissions=null): string
     {
         $path = trim(string: $path, characters: '/');
         if ($permissions === null) {
@@ -264,7 +256,6 @@ class FileService
         }
 
     }//end createShareLink()
-
 
     /**
      * Handles file upload and creates the necessary folder structure in NextCloud.
@@ -316,7 +307,6 @@ class FileService
 
     }//end handleFile()
 
-
     /**
      * Gets info about the uploaded file from the request body, looks specifically for the field '_file'.
      * If there is no file or there is an error loading it this will return an error response.
@@ -341,7 +331,6 @@ class FileService
         return $uploadedFile;
 
     }//end checkUploadedFile()
-
 
     /**
      * Creates a new folder in NextCloud, unless it already exists.
@@ -379,7 +368,6 @@ class FileService
         }
 
     }//end createFolder()
-
 
     /**
      * Adds information about the uploaded file to the appropriate Attachment fields. Inclusive share link.
@@ -422,7 +410,6 @@ class FileService
 
     }//end addFileInfoToData()
 
-
     /**
      * Uploads a file to NextCloud. Will create a new file if it doesn't exist yet.
      *
@@ -448,7 +435,9 @@ class FileService
                 $userFolder->newFile(path: $filePath);
                 $file = $userFolder->get(path: $filePath);
 
-                /** @var \OCP\Files\File $file */
+                /*
+                 * @var \OCP\Files\File $file
+                 */
                 $file->putContent(data: $content);
 
                 return true;
@@ -465,7 +454,6 @@ class FileService
 
     }//end uploadFile()
 
-
     /**
      * Overwrites an existing file in NextCloud.
      *
@@ -478,7 +466,7 @@ class FileService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
-    public function updateFile(mixed $content, string $filePath, bool $createNew = false): bool
+    public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
     {
         $filePath = trim(string: $filePath, characters: '/');
 
@@ -491,7 +479,9 @@ class FileService
             try {
                 $file = $userFolder->get(path: $filePath);
 
-                /** @var \OCP\Files\File $file */
+                /*
+                 * @var \OCP\Files\File $file
+                 */
                 $file->putContent(data: $content);
 
                 return true;
@@ -500,13 +490,15 @@ class FileService
                     $userFolder->newFile(path: $filePath);
                     $file = $userFolder->get(path: $filePath);
 
-                    /** @var \OCP\Files\File $file */
+                    /*
+                     * @var \OCP\Files\File $file
+                     */
                     $file->putContent(data: $content);
 
                     $this->logger->info("File $filePath did not exist, created a new file for it.");
                     return true;
                 }
-            }
+            }//end try
 
             // File already exists.
             $this->logger->warning("File $filePath already exists.");
@@ -518,7 +510,6 @@ class FileService
         }//end try
 
     }//end updateFile()
-
 
     /**
      * Deletes a file from NextCloud.
@@ -557,7 +548,6 @@ class FileService
 
     }//end deleteFile()
 
-
     /**
      * Creates a pdf file in a /tmp folder using a twig template and given context.
      *
@@ -595,7 +585,6 @@ class FileService
         return $mpdf;
 
     }//end createPdf()
-
 
     /**
      * Creates a ZIP archive at the $tempZip location using the $tempFolder location as input for the ZIP archive.
@@ -636,7 +625,6 @@ class FileService
 
     }//end createZip()
 
-
     /**
      * A function that outputs a downloadable ZIP to the response body of the current api request.
      * Can best be used after creating a ZIP archive with the createZip() function.
@@ -650,7 +638,7 @@ class FileService
      *
      * @return void
      */
-    public function downloadZip(string $tempZip, ?string $inputFolder = null): void
+    public function downloadZip(string $tempZip, ?string $inputFolder=null): void
     {
         // Send the ZIP file to the client for download.
         header(header: 'Content-Type: application/zip');
@@ -663,12 +651,11 @@ class FileService
             foreach (glob("$inputFolder/*.*") ?: [] as $file) {
                 unlink($file);
             }
+
             rmdir(directory: $inputFolder);
         }
 
         unlink(filename: $tempZip);
 
     }//end downloadZip()
-
-
 }//end class

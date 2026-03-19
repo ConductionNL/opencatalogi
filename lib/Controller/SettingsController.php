@@ -42,16 +42,16 @@ class SettingsController extends Controller
      */
     private $objectService;
 
-
     /**
      * SettingsController constructor.
      *
      * @param string             $appName         The name of the app
      * @param IRequest           $request         The request object
-     * @param IAppConfig         $config          The app configuration
-     * @param ContainerInterface $container       The container
-     * @param IAppManager        $appManager      The app manager
-     * @param SettingsService    $settingsService The settings service
+     * @param IAppConfig         $config          The app configuration.
+     * @param ContainerInterface $container       The container.
+     * @param IAppManager        $appManager      The app manager.
+     * @param SettingsService    $settingsService The settings service.
+     * @param IL10N              $l10n            The localization service.
      */
     public function __construct(
         $appName,
@@ -62,10 +62,9 @@ class SettingsController extends Controller
         private readonly SettingsService $settingsService,
         private readonly IL10N $l10n,
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
-
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.
@@ -83,7 +82,6 @@ class SettingsController extends Controller
         throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
-
 
     /**
      * Attempts to retrieve the Configuration service from the container.
@@ -105,7 +103,6 @@ class SettingsController extends Controller
 
     }//end getConfigurationService()
 
-
     /**
      * Retrieve the current settings.
      *
@@ -120,11 +117,10 @@ class SettingsController extends Controller
             $data = $this->settingsService->getSettings();
             return new JSONResponse($data);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end index()
-
 
     /**
      * Handle the post request to update settings.
@@ -140,11 +136,10 @@ class SettingsController extends Controller
             $result = $this->settingsService->updateSettings($data);
             return new JSONResponse($result);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end create()
-
 
     /**
      * Load the settings from the publication_register.json file.
@@ -159,11 +154,10 @@ class SettingsController extends Controller
             $result = $this->settingsService->loadSettings();
             return new JSONResponse($result);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end load()
-
 
     /**
      * Get the current publishing options.
@@ -179,11 +173,10 @@ class SettingsController extends Controller
             $data = $this->settingsService->getPublishingOptions();
             return new JSONResponse($data);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end getPublishingOptions()
-
 
     /**
      * Update the publishing options.
@@ -199,11 +192,10 @@ class SettingsController extends Controller
             $result = $this->settingsService->updatePublishingOptions($data);
             return new JSONResponse($result);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end updatePublishingOptions()
-
 
     /**
      * Get version information for the app and configuration.
@@ -219,11 +211,10 @@ class SettingsController extends Controller
             $data = $this->settingsService->getVersionInfo();
             return new JSONResponse($data);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => $e->getMessage()], 500);
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
 
     }//end getVersionInfo()
-
 
     /**
      * Manually trigger configuration import.
@@ -240,23 +231,21 @@ class SettingsController extends Controller
 
             $result = $this->settingsService->manualImport($forceImport);
 
-            if ($result['success']) {
+            if ($result['success'] === true) {
                 return new JSONResponse($result);
             }
 
-            return new JSONResponse($result, 400);
+            return new JSONResponse(data: $result, statusCode: 400);
         } catch (\Exception $e) {
             return new JSONResponse(
-                [
+                data: [
                     'success' => false,
-                    'message' => $this->l10n->t('Import failed') . ': '.$e->getMessage(),
+                    'message' => $this->l10n->t('Import failed').': '.$e->getMessage(),
                     'error'   => $e->getMessage(),
                 ],
-                500
+                statusCode: 500
             );
         }//end try
 
     }//end manualImport()
-
-
 }//end class

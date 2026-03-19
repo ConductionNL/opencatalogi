@@ -33,7 +33,6 @@ use Psr\Log\LoggerInterface;
  */
 class MetricsController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -53,7 +52,6 @@ class MetricsController extends Controller
         parent::__construct($appName, $request);
     }//end __construct()
 
-
     /**
      * Return Prometheus metrics in text exposition format.
      *
@@ -70,7 +68,6 @@ class MetricsController extends Controller
         return $response;
     }//end index()
 
-
     /**
      * Collect all metrics and format as Prometheus text.
      *
@@ -86,7 +83,7 @@ class MetricsController extends Controller
 
         $lines[] = '# HELP opencatalogi_info Application information';
         $lines[] = '# TYPE opencatalogi_info gauge';
-        $lines[] = 'opencatalogi_info{version="' . $version . '",php_version="' . $phpVersion . '"} 1';
+        $lines[] = 'opencatalogi_info{version="'.$version.'",php_version="'.$phpVersion.'"} 1';
         $lines[] = '';
 
         // App up gauge.
@@ -96,14 +93,14 @@ class MetricsController extends Controller
         $lines[] = '';
 
         // Publications total by status and catalog.
-        $lines[] = '# HELP opencatalogi_publications_total Total publications by status and catalog';
-        $lines[] = '# TYPE opencatalogi_publications_total gauge';
+        $lines[]   = '# HELP opencatalogi_publications_total Total publications by status and catalog';
+        $lines[]   = '# TYPE opencatalogi_publications_total gauge';
         $pubCounts = $this->getPublicationCounts();
         foreach ($pubCounts as $row) {
             $status  = $this->sanitizeLabel($row['status'] ?? 'unknown');
             $catalog = $this->sanitizeLabel($row['catalog'] ?? 'unknown');
             $count   = (int) $row['cnt'];
-            $lines[] = 'opencatalogi_publications_total{status="' . $status . '",catalog="' . $catalog . '"} ' . $count;
+            $lines[] = 'opencatalogi_publications_total{status="'.$status.'",catalog="'.$catalog.'"} '.$count;
         }
 
         $lines[] = '';
@@ -112,17 +109,17 @@ class MetricsController extends Controller
         $catalogsTotal = $this->countObjectsBySchemaPattern('%atalog%');
         $lines[]       = '# HELP opencatalogi_catalogs_total Total catalogs';
         $lines[]       = '# TYPE opencatalogi_catalogs_total gauge';
-        $lines[]       = 'opencatalogi_catalogs_total ' . $catalogsTotal;
+        $lines[]       = 'opencatalogi_catalogs_total '.$catalogsTotal;
         $lines[]       = '';
 
         // Listings total.
-        $lines[] = '# HELP opencatalogi_listings_total Total listings by status';
-        $lines[] = '# TYPE opencatalogi_listings_total gauge';
+        $lines[]       = '# HELP opencatalogi_listings_total Total listings by status';
+        $lines[]       = '# TYPE opencatalogi_listings_total gauge';
         $listingCounts = $this->getListingCounts();
         foreach ($listingCounts as $row) {
             $status  = $this->sanitizeLabel($row['status'] ?? 'unknown');
             $count   = (int) $row['cnt'];
-            $lines[] = 'opencatalogi_listings_total{status="' . $status . '"} ' . $count;
+            $lines[] = 'opencatalogi_listings_total{status="'.$status.'"} '.$count;
         }
 
         if (empty($listingCounts) === true) {
@@ -135,12 +132,11 @@ class MetricsController extends Controller
         $searchCount = $this->countSearchRequests();
         $lines[]     = '# HELP opencatalogi_search_requests_total Total search requests';
         $lines[]     = '# TYPE opencatalogi_search_requests_total counter';
-        $lines[]     = 'opencatalogi_search_requests_total ' . $searchCount;
+        $lines[]     = 'opencatalogi_search_requests_total '.$searchCount;
         $lines[]     = '';
 
-        return implode("\n", $lines) . "\n";
+        return implode("\n", $lines)."\n";
     }//end collectMetrics()
-
 
     /**
      * Get publication counts grouped by status and catalog.
@@ -169,9 +165,8 @@ class MetricsController extends Controller
         } catch (\Exception $e) {
             $this->logger->warning('[MetricsController] Failed to get publication counts', ['error' => $e->getMessage()]);
             return [];
-        }
+        }//end try
     }//end getPublicationCounts()
-
 
     /**
      * Count objects matching a schema title pattern.
@@ -199,7 +194,6 @@ class MetricsController extends Controller
             return 0;
         }
     }//end countObjectsBySchemaPattern()
-
 
     /**
      * Get listing counts grouped by status.
@@ -230,7 +224,6 @@ class MetricsController extends Controller
         }
     }//end getListingCounts()
 
-
     /**
      * Count search requests from the metrics table.
      *
@@ -255,7 +248,6 @@ class MetricsController extends Controller
         }
     }//end countSearchRequests()
 
-
     /**
      * Get the app version.
      *
@@ -269,7 +261,6 @@ class MetricsController extends Controller
             return 'unknown';
         }
     }//end getAppVersion()
-
 
     /**
      * Sanitize a label value for Prometheus format.
@@ -286,6 +277,4 @@ class MetricsController extends Controller
             $value
         );
     }//end sanitizeLabel()
-
-
 }//end class

@@ -294,20 +294,22 @@ class SitemapService
             }
         }
 
+        $schemaLoc  = 'http://www.sitemaps.org/schemas/sitemap/0.9 ';
+        $schemaLoc .= 'http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd ';
+        $schemaLoc .= 'https://standaarden.overheid.nl/diwoo/metadata/ ';
+        $schemaLoc .= 'https://standaarden.overheid.nl/diwoo/metadata/0.9.1/xsd/diwoo-metadata.xsd';
+
         $xmlContent = [
             '@root'          => 'diwoo:Documents',
             '@attributes'    => [
                 'xmlns'              => 'http://www.sitemaps.org/schemas/sitemap/0.9',
-                'xmlns:xsi'         => 'http://www.w3.org/2001/XMLSchema-instance',
-                'xmlns:diwoo'       => 'https://standaarden.overheid.nl/diwoo/metadata/',
-                'xsi:schemaLocation' => 'http://www.sitemaps.org/schemas/sitemap/0.9 '
-                    .'http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd '
-                    .'https://standaarden.overheid.nl/diwoo/metadata/ '
-                    .'https://standaarden.overheid.nl/diwoo/metadata/0.9.1/xsd/diwoo-metadata.xsd',
-                'xmlns:xhtml'       => 'http://www.w3.org/1999/xhtml',
-                'xmlns:image'       => 'http://www.google.com/schemas/sitemap-image/1.1',
-                'xmlns:video'       => 'http://www.google.com/schemas/sitemap-video/1.1',
-                'xmlns:news'        => 'http://www.google.com/schemas/sitemap-news/0.9',
+                'xmlns:xsi'          => 'http://www.w3.org/2001/XMLSchema-instance',
+                'xmlns:diwoo'        => 'https://standaarden.overheid.nl/diwoo/metadata/',
+                'xsi:schemaLocation' => $schemaLoc,
+                'xmlns:xhtml'        => 'http://www.w3.org/1999/xhtml',
+                'xmlns:image'        => 'http://www.google.com/schemas/sitemap-image/1.1',
+                'xmlns:video'        => 'http://www.google.com/schemas/sitemap-video/1.1',
+                'xmlns:news'         => 'http://www.google.com/schemas/sitemap-news/0.9',
             ],
             'diwoo:Document' => $xmlDiwooDocuments,
         ];

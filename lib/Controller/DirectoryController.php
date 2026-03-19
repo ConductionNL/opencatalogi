@@ -135,7 +135,7 @@ class DirectoryController extends Controller
 
             // Create JSON response with CORS headers.
             $response = new JSONResponse($data);
-            $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -151,7 +151,7 @@ class DirectoryController extends Controller
                 ],
                 statusCode: 500
             );
-            $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);

@@ -76,7 +76,6 @@ class PublicationService
      */
     private array $cachedCatalogFilters = [];
 
-
     /**
      * Constructor for PublicationService.
      *
@@ -99,7 +98,6 @@ class PublicationService
 
     }//end __construct()
 
-
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
@@ -117,7 +115,6 @@ class PublicationService
         throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
-
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.
@@ -137,7 +134,6 @@ class PublicationService
 
     }//end getFileService()
 
-
     /**
      * Get register and schema combinations from catalogs.
      *
@@ -148,7 +144,7 @@ class PublicationService
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
-    public function getCatalogFilters(null|string|int $catalogId = null): array
+    public function getCatalogFilters(null|string|int $catalogId=null): array
     {
         // Create cache key based on catalog ID
         $cacheKey = $catalogId === null ? 'all' : (string) $catalogId;
@@ -156,7 +152,7 @@ class PublicationService
         // Return cached result if available
         if (isset($this->cachedCatalogFilters[$cacheKey])) {
             // Restore class properties from cache
-            $cached                   = $this->cachedCatalogFilters[$cacheKey];
+            $cached = $this->cachedCatalogFilters[$cacheKey];
             $this->availableRegisters = $cached['availableRegisters'];
             $this->availableSchemas   = $cached['availableSchemas'];
             return $cached['result'];
@@ -218,7 +214,6 @@ class PublicationService
 
     }//end getCatalogFilters()
 
-
     /**
      * Get the list of available registers.
      *
@@ -230,7 +225,6 @@ class PublicationService
 
     }//end getAvailableRegisters()
 
-
     /**
      * Get the list of available schemas.
      *
@@ -241,7 +235,6 @@ class PublicationService
         return $this->availableSchemas;
 
     }//end getAvailableSchemas()
-
 
     /**
      * Generic method to search publications with catalog filtering and security
@@ -260,7 +253,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array
+    private function searchPublications(null|string|int $catalogId=null, ?array $ids=null, ?array $customParams=null): array
     {
         // Use custom parameters if provided, otherwise use request parameters
         $searchQuery = ($customParams ?? $this->request->getParams());
@@ -293,7 +286,7 @@ class PublicationService
         // Filter out virtual field facet requests before passing to OpenRegister
         // Directory and catalogs are virtual fields injected at runtime, not database columns
         $reqDirFacets = false;
-        $reqCatFacets   = false;
+        $reqCatFacets = false;
 
         if (isset($searchQuery['_facets']['@self']['directory'])) {
             $reqDirFacets = true;
@@ -361,7 +354,6 @@ class PublicationService
 
     }//end searchPublications()
 
-
     /**
      * Get external catalogs from listings stored in the directory service
      *
@@ -403,16 +395,15 @@ class PublicationService
 
     }//end getExternalCatalogsFromListings()
 
-
     /**
      * Add virtual field facets manually (directory and catalog facets)
      *
      * This method handles faceting for virtual fields that are injected at runtime
      * rather than stored as real database columns. It supports directory and catalog facets.
      *
-     * @param  array   $existingFacets         The existing facets from the search result
-     * @param  boolean $inclDirFacets Whether to include directory facets
-     * @param  boolean $inclCatFacets   Whether to include catalog facets
+     * @param  array   $existingFacets The existing facets from the search result
+     * @param  boolean $inclDirFacets  Whether to include directory facets
+     * @param  boolean $inclCatFacets  Whether to include catalog facets
      * @return array The facets with virtual field facets added
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -421,7 +412,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function addVirtualFieldFacets(array $existingFacets, bool $inclDirFacets = false, bool $inclCatFacets = false): array
+    private function addVirtualFieldFacets(array $existingFacets, bool $inclDirFacets=false, bool $inclCatFacets=false): array
     {
         try {
             // Ensure @self section exists
@@ -440,7 +431,7 @@ class PublicationService
                         'key'     => 'local',
                         'label'   => 'local',
                         'results' => 1,
-// We'll count this properly later if needed
+                // We'll count this properly later if needed
                     ],
                 ];
 
@@ -451,7 +442,7 @@ class PublicationService
                         'key'     => $directoryName,
                         'label'   => $directoryName,
                         'results' => 1,
-// We'll count this properly later if needed
+                    // We'll count this properly later if needed
                     ];
                 }
 
@@ -475,7 +466,7 @@ class PublicationService
                         'key'     => $catalogKey,
                         'label'   => $catalogLabel,
                         'results' => 1,
-// We'll count this properly later if needed
+                    // We'll count this properly later if needed
                     ];
                 }
 
@@ -499,7 +490,7 @@ class PublicationService
                             'key'     => $catalogKey,
                             'label'   => $catalogLabel,
                             'results' => 1,
-// We'll count this properly later if needed
+                        // We'll count this properly later if needed
                         ];
                     }
                 }//end foreach
@@ -527,7 +518,6 @@ class PublicationService
 
     }//end addVirtualFieldFacets()
 
-
     /**
      * Retrieves a list of all objects for a specific register and schema
      *
@@ -542,7 +532,7 @@ class PublicationService
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse
+    public function index(null|string|int $catalogId=null, ?array $customParams=null): JSONResponse
     {
         try {
             $result = $this->searchPublications($catalogId, null, $customParams);
@@ -552,7 +542,6 @@ class PublicationService
         }
 
     }//end index()
-
 
     /**
      * Shows a specific object from a register and schema
@@ -598,7 +587,6 @@ class PublicationService
 
     }//end show()
 
-
     /**
      * Shows attachments of a publication
      *
@@ -636,7 +624,6 @@ class PublicationService
         }//end try
 
     }//end attachments()
-
 
      /**
       * Download all files of an object as a ZIP archive
@@ -701,7 +688,6 @@ class PublicationService
 
     }//end download()
 
-
     /**
      * Filter out unwanted properties from objects
      *
@@ -757,7 +743,6 @@ class PublicationService
 
     }//end filterUnwantedProperties()
 
-
     /**
      * Retrieves all objects that this publication references
      *
@@ -804,7 +789,6 @@ class PublicationService
         }//end try
 
     }//end uses()
-
 
     /**
      * Retrieves all objects that use this publication
@@ -853,7 +837,6 @@ class PublicationService
 
     }//end used()
 
-
     /**
      * Get aggregated publications from local and federated sources
      *
@@ -884,7 +867,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array
+    public function getAggregatedPublications(array $queryParams=[], array $requestParams=[], string $baseUrl=''): array
     {
         // Performance monitoring - start timing
         $startTime = microtime(true);
@@ -919,7 +902,7 @@ class PublicationService
 
         // Check if virtual field facets were specifically requested
         $reqDirFacets = isset($queryParams['_facets']['@self']['directory']);
-        $reqCatFacets   = isset($queryParams['_facets']['@self']['catalogs']);
+        $reqCatFacets = isset($queryParams['_facets']['@self']['catalogs']);
 
         // PERFORMANCE OPTIMIZATION: Ultra-fast path for basic requests
         // Use ultra-fast path when no special processing is needed
@@ -962,7 +945,6 @@ class PublicationService
 
         // Note: @self.schema and @self.register are now provided at response @self level,
         // not duplicated in each result. No need to add them to _extend.
-
         // Get local publications first
         $localResponse = $this->index(null, $queryParams);
         $localData     = json_decode($localResponse->render(), true);
@@ -987,7 +969,7 @@ class PublicationService
             }
 
             unset($publication);
-// Break the reference
+            // Break the reference
         }//end if
 
         // Calculate pagination info
@@ -1044,7 +1026,9 @@ class PublicationService
         }
 
         // If aggregation is disabled, return only local results
-        /** @psalm-suppress TypeDoesNotContainType $shouldAggregate can be false when query param is 'false' or '0' */
+        /*
+         * @psalm-suppress TypeDoesNotContainType $shouldAggregate can be false when query param is 'false' or '0'
+         */
         if (!$shouldAggregate) {
             return $responseData;
         }
@@ -1091,12 +1075,12 @@ class PublicationService
             $localQueryParams['_page']  = 1;
             $localQueryParams['_limit'] = $itemsNeeded;
             unset($localQueryParams['_offset']);
-// Remove offset to start from beginning
+            // Remove offset to start from beginning
             // For federated results: request from page 1 with enough items
             $federatedQueryParams['_page']  = 1;
             $federatedQueryParams['_limit'] = $itemsNeeded;
             unset($federatedQueryParams['_offset']);
-// Remove offset to start from beginning
+            // Remove offset to start from beginning
             // Get local results with modified parameters
             // Pass the modified parameters directly to the service
             $allLocalResponse = $this->index(null, $localQueryParams);
@@ -1120,7 +1104,7 @@ class PublicationService
                 }
 
                 unset($publication);
-// Break the reference
+                // Break the reference
             }//end if
 
             // Get federated results with modified parameters
@@ -1263,7 +1247,7 @@ class PublicationService
 
             // Performance monitoring for aggregated results
             $executionTime = ((microtime(true) - $startTime) * 1000);
-// Convert to milliseconds
+            // Convert to milliseconds
             $responseData['_performance'] = [
                 'execution_time_ms' => round($executionTime, 2),
                 'fast_path'         => false,
@@ -1276,7 +1260,7 @@ class PublicationService
         } catch (\Exception $e) {
             // If aggregation fails, return local results only
             // Performance monitoring for fallback case
-            $executionTime                = ((microtime(true) - $startTime) * 1000);
+            $executionTime = ((microtime(true) - $startTime) * 1000);
             $responseData['_performance'] = [
                 'execution_time_ms' => round($executionTime, 2),
                 'fast_path'         => false,
@@ -1289,7 +1273,6 @@ class PublicationService
         }//end try
 
     }//end getAggregatedPublications()
-
 
     /**
      * Get local publications without federation overhead (performance optimized)
@@ -1305,12 +1288,12 @@ class PublicationService
      * - Minimal virtual field facet processing
      * - Direct pagination without aggregation logic
      *
-     * @param  array   $queryParams              Query parameters for filtering, pagination, ordering, etc.
-     * @param  array   $requestParams            Original request parameters for building pagination links
-     * @param  string  $baseUrl                  Base URL for building pagination links
-     * @param  boolean $includeCatalogs          Whether to include catalog information in @self
-     * @param  boolean $reqDirFacets Whether directory facets were requested
-     * @param  boolean $reqCatFacets   Whether catalog facets were requested
+     * @param  array   $queryParams     Query parameters for filtering, pagination, ordering, etc.
+     * @param  array   $requestParams   Original request parameters for building pagination links
+     * @param  string  $baseUrl         Base URL for building pagination links
+     * @param  boolean $includeCatalogs Whether to include catalog information in @self
+     * @param  boolean $reqDirFacets    Whether directory facets were requested
+     * @param  boolean $reqCatFacets    Whether catalog facets were requested
      * @return array Response data containing publications, pagination info, and optionally facets
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -1333,7 +1316,6 @@ class PublicationService
 
         // Note: @self.schema and @self.register are now provided at response @self level,
         // not duplicated in each result. No need to add them to _extend.
-
         $timings['setup'] = ((microtime(true) - $setupStart) * 1000);
 
         // ULTRA-FAST PATH: Skip all middleware and call ObjectService directly
@@ -1378,7 +1360,7 @@ class PublicationService
             }//end foreach
 
             unset($publication);
-// Break the reference
+            // Break the reference
         }//end if
 
         // Calculate pagination info
@@ -1438,7 +1420,7 @@ class PublicationService
 
         // Performance monitoring - calculate execution time
         $executionTime = ((microtime(true) - $startTime) * 1000);
-// Convert to milliseconds
+        // Convert to milliseconds
         $responseData['_performance'] = [
             'execution_time_ms' => round($executionTime, 2),
             'fast_path'         => true,
@@ -1451,7 +1433,6 @@ class PublicationService
         return $responseData;
 
     }//end getLocalPublicationsFast()
-
 
     /**
      * Get local publications with ultra-fast path (minimal overhead)
@@ -1508,7 +1489,7 @@ class PublicationService
         // Get the proper catalog context (use cached version)
         $cacheKey = 'all';
         if (isset($this->cachedCatalogFilters[$cacheKey])) {
-            $cached                   = $this->cachedCatalogFilters[$cacheKey];
+            $cached = $this->cachedCatalogFilters[$cacheKey];
             $this->availableRegisters = $cached['availableRegisters'];
             $this->availableSchemas   = $cached['availableSchemas'];
             $catalogContext           = $cached['result'];
@@ -1561,7 +1542,7 @@ class PublicationService
                     'schemas'   => [$schema],
                 ];
             }//end try
-        }
+        }//end if
 
         // Set up the search query properly (preserve original logic from searchPublications)
         if (!isset($searchQuery['@self'])) {
@@ -1594,7 +1575,7 @@ class PublicationService
 
         // Handle virtual field facet processing if needed (before unwrapping)
         $reqDirFacets = isset($queryParams['_facets']['@self']['directory']);
-        $reqCatFacets   = isset($queryParams['_facets']['@self']['catalogs']);
+        $reqCatFacets = isset($queryParams['_facets']['@self']['catalogs']);
 
         if (isset($result['facets']) && ($reqDirFacets || $reqCatFacets)) {
             // Need to unwrap facets first, then add virtual fields, then the unwrapping logic will handle it consistently
@@ -1664,7 +1645,7 @@ class PublicationService
         $timings['response'] = ((microtime(true) - $responseStart) * 1000);
 
         // Performance monitoring
-        $executionTime                = ((microtime(true) - $startTime) * 1000);
+        $executionTime = ((microtime(true) - $startTime) * 1000);
         $responseData['_performance'] = [
             'execution_time_ms'        => round($executionTime, 2),
             'fast_path'                => true,
@@ -1682,7 +1663,6 @@ class PublicationService
         return $responseData;
 
     }//end getLocalPublicationsUltraFast()
-
 
     /**
      * Get local catalog information for adding to publication @self.catalogs property.
@@ -1756,7 +1736,6 @@ class PublicationService
 
     }//end getLocalCatalogs()
 
-
     /**
      * Simple merge function for facets data from multiple sources.
      *
@@ -1771,7 +1750,6 @@ class PublicationService
         return !empty($localFacets) ? $localFacets : $federatedFacets;
 
     }//end mergeFacetsData()
-
 
     /**
      * Simple merge function for facetable metadata from multiple sources.
@@ -1841,7 +1819,6 @@ class PublicationService
 
     }//end mergeFacetableData()
 
-
     /**
      * Apply ordering to the cumulated dataset from multiple sources
      *
@@ -1900,14 +1877,13 @@ class PublicationService
                 }//end foreach
 
                 return 0;
-            // All compared fields are equal
+                // All compared fields are equal
             }
         );
 
         return $results;
 
     }//end applyCumulativeOrdering()
-
 
     /**
      * Extract field value from a result object using dot notation
@@ -1935,7 +1911,6 @@ class PublicationService
 
     }//end extractFieldValue()
 
-
     /**
      * Compare two values for sorting
      *
@@ -1951,15 +1926,15 @@ class PublicationService
     {
         // Handle null values
         if ($a === null && $b === null) {
-return 0;
+            return 0;
         }
 
         if ($a === null) {
-return -1;
+            return -1;
         }
 
         if ($b === null) {
-return 1;
+            return 1;
         }
 
         // Handle date strings
@@ -1982,7 +1957,6 @@ return 1;
 
     }//end compareValues()
 
-
     /**
      * Get a single publication with optional federation support
      *
@@ -1999,7 +1973,7 @@ return 1;
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function getFederatedPublication(string $id, array $queryParams = []): array
+    public function getFederatedPublication(string $id, array $queryParams=[]): array
     {
         // Try to get the publication locally first
         $localResponse = $this->show(id: $id);
@@ -2056,7 +2030,7 @@ return 1;
             if (isset($queryParams['timeout'])) {
                 $timeout = (int) $queryParams['timeout'];
                 if ($timeout > 0 && $timeout <= 120) {
-// Max 2 minutes
+                    // Max 2 minutes
                     $guzzleConfig['timeout'] = $timeout;
                 }
             }
@@ -2065,7 +2039,7 @@ return 1;
             if (isset($queryParams['connect_timeout'])) {
                 $connectTimeout = (int) $queryParams['connect_timeout'];
                 if ($connectTimeout > 0 && $connectTimeout <= 30) {
-// Max 30 seconds
+                    // Max 30 seconds
                     $guzzleConfig['connect_timeout'] = $connectTimeout;
                 }
             }
@@ -2105,7 +2079,6 @@ return 1;
 
     }//end getFederatedPublication()
 
-
     /**
      * Get publications that use this publication with federation support
      *
@@ -2119,7 +2092,7 @@ return 1;
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getFederatedUsed(string $id, array $queryParams = []): array
+    public function getFederatedUsed(string $id, array $queryParams=[]): array
     {
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
         $aggregate       = ($queryParams['_aggregate'] ?? 'true');
@@ -2146,7 +2119,7 @@ return 1;
             if (isset($queryParams['timeout'])) {
                 $timeout = (int) $queryParams['timeout'];
                 if ($timeout > 0 && $timeout <= 120) {
-// Max 2 minutes
+                    // Max 2 minutes
                     $guzzleConfig['timeout'] = $timeout;
                 }
             }
@@ -2155,7 +2128,7 @@ return 1;
             if (isset($queryParams['connect_timeout'])) {
                 $connectTimeout = (int) $queryParams['connect_timeout'];
                 if ($connectTimeout > 0 && $connectTimeout <= 30) {
-// Max 30 seconds
+                    // Max 30 seconds
                     $guzzleConfig['connect_timeout'] = $connectTimeout;
                 }
             }
@@ -2194,7 +2167,6 @@ return 1;
 
     }//end getFederatedUsed()
 
-
     /**
      * Get publications that this publication uses with federation support
      *
@@ -2208,7 +2180,7 @@ return 1;
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
-    public function getFederatedUses(string $id, array $queryParams = []): array
+    public function getFederatedUses(string $id, array $queryParams=[]): array
     {
         // Check if aggregation is enabled (default: true, unless explicitly set to false)
         $aggregate       = ($queryParams['_aggregate'] ?? 'true');
@@ -2235,7 +2207,7 @@ return 1;
             if (isset($queryParams['timeout'])) {
                 $timeout = (int) $queryParams['timeout'];
                 if ($timeout > 0 && $timeout <= 120) {
-// Max 2 minutes
+                    // Max 2 minutes
                     $guzzleConfig['timeout'] = $timeout;
                 }
             }
@@ -2244,7 +2216,7 @@ return 1;
             if (isset($queryParams['connect_timeout'])) {
                 $connectTimeout = (int) $queryParams['connect_timeout'];
                 if ($connectTimeout > 0 && $connectTimeout <= 30) {
-// Max 30 seconds
+                    // Max 30 seconds
                     $guzzleConfig['connect_timeout'] = $connectTimeout;
                 }
             }
@@ -2270,6 +2242,4 @@ return 1;
         }//end try
 
     }//end getFederatedUses()
-
-
 }//end class

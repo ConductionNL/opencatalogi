@@ -291,7 +291,7 @@ class ListingsController extends Controller
                 $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
                 $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
                 $object          = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
-                $objectData = $object;
+                $objectData      = $object;
                 if ($object instanceof \OCP\AppFramework\Db\Entity) {
                     $objectData = $object->jsonSerialize();
                 }

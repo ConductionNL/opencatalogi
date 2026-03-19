@@ -82,7 +82,6 @@ class CMSTool implements ToolInterface
      */
     private IUserSession $userSession;
 
-
     /**
      * Constructor
      *
@@ -101,7 +100,6 @@ class CMSTool implements ToolInterface
 
     }//end __construct()
 
-
     /**
      * Get tool name
      *
@@ -113,7 +111,6 @@ class CMSTool implements ToolInterface
 
     }//end getName()
 
-
     /**
      * Get tool description
      *
@@ -124,7 +121,6 @@ class CMSTool implements ToolInterface
         return 'Manage website content: create and manage pages, menus, and menu items for OpenCatalogi';
 
     }//end getDescription()
-
 
     /**
      * Set agent context
@@ -142,7 +138,6 @@ class CMSTool implements ToolInterface
         $this->currentUserId = $this->userSession->getUser() ? $this->userSession->getUser()->getUID() : ($agent ? $agent->getUser() : null);
 
     }//end setAgent()
-
 
     /**
      * Get function definitions
@@ -316,7 +311,6 @@ class CMSTool implements ToolInterface
 
     }//end getFunctions()
 
-
     /**
      * Execute a function
      *
@@ -328,7 +322,7 @@ class CMSTool implements ToolInterface
      *
      * @throws \Exception If function execution fails
      */
-    public function executeFunction(string $functionName, array $parameters, ?string $userId = null): array
+    public function executeFunction(string $functionName, array $parameters, ?string $userId=null): array
     {
         $this->logger->info(
             '[CMSTool] Executing function',
@@ -362,7 +356,6 @@ class CMSTool implements ToolInterface
         }//end try
 
     }//end executeFunction()
-
 
     /**
      * Create a new page
@@ -407,7 +400,6 @@ class CMSTool implements ToolInterface
 
     }//end createPage()
 
-
     /**
      * List all pages
      *
@@ -451,7 +443,6 @@ class CMSTool implements ToolInterface
 
     }//end listPages()
 
-
     /**
      * Create a new menu with proper schema structure.
      *
@@ -494,7 +485,7 @@ class CMSTool implements ToolInterface
             'title'        => $parameters['title'],
             'position'     => ($parameters['position'] ?? 0),
             'items'        => $parameters['items'],
-// Array of menu items
+        // Array of menu items
             'owner'        => $this->currentUserId,
             'organisation' => $this->agent?->getOrganisation(),
         ];
@@ -523,7 +514,6 @@ class CMSTool implements ToolInterface
         );
 
     }//end createMenu()
-
 
     /**
      * List all menus
@@ -563,7 +553,6 @@ class CMSTool implements ToolInterface
         );
 
     }//end listMenus()
-
 
     /**
      * Add a menu item to a menu
@@ -614,7 +603,6 @@ class CMSTool implements ToolInterface
 
     }//end addMenuItem()
 
-
     /**
      * Generate URL-friendly slug from title
      *
@@ -637,7 +625,6 @@ class CMSTool implements ToolInterface
 
     }//end generateSlug()
 
-
     /**
      * Create error response
      *
@@ -646,7 +633,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Error response
      */
-    private function errorResponse(string $message, int $code = 500): array
+    private function errorResponse(string $message, int $code=500): array
     {
         $this->logger->error('[CMSTool] Error', ['message' => $message, 'code' => $code]);
 
@@ -658,7 +645,6 @@ class CMSTool implements ToolInterface
 
     }//end errorResponse()
 
-
     /**
      * Create success response
      *
@@ -667,7 +653,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Success response
      */
-    private function successResponse(string $message, array $data = []): array
+    private function successResponse(string $message, array $data=[]): array
     {
         return [
             'success' => true,
@@ -676,7 +662,6 @@ class CMSTool implements ToolInterface
         ];
 
     }//end successResponse()
-
 
     /**
      * Magic method to support snake_case method calls for LLPhant compatibility
@@ -767,6 +752,4 @@ class CMSTool implements ToolInterface
         throw new BadMethodCallException("Method {$name} (or {$camelCaseMethod}) does not exist");
 
     }//end __call()
-
-
 }//end class

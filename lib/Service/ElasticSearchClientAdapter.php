@@ -31,15 +31,16 @@ class ElasticSearchClientAdapter
 {
 
     /**
-     * @var Client The Elasticsearch client instance
+     * The Elasticsearch client instance.
+     *
+     * @var Client
      */
     private $client;
 
-
     /**
-     * Constructor for ElasticSearchClientAdapter
+     * Constructor for ElasticSearchClientAdapter.
      *
-     * @param Client $client The Elasticsearch client instance
+     * @param Client $client The Elasticsearch client instance.
      */
     public function __construct(Client $client)
     {
@@ -47,75 +48,73 @@ class ElasticSearchClientAdapter
 
     }//end __construct()
 
-
     /**
-     * Perform a search operation
+     * Perform a search operation.
      *
-     * @param  array $params The search parameters
-     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The search results
+     * @param array $params The search parameters.
+     *
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The search results.
      */
     public function search(array $params)
     {
-        // Execute the search request and return the results
+        // Execute the search request and return the results.
         return $this->client->search($params);
 
     }//end search()
 
-
     /**
-     * Index a document
+     * Index a document.
      *
-     * @param  array $params The indexing parameters
-     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The indexing response
+     * @param array $params The indexing parameters.
+     *
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The indexing response.
      */
     public function index(array $params)
     {
-        // Index the document and return the response
+        // Index the document and return the response.
         return $this->client->index($params);
 
     }//end index()
 
-
     /**
-     * Get a document by its ID
+     * Get a document by its ID.
      *
-     * @param  array $params The get parameters
-     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The document data
+     * @param array $params The get parameters.
+     *
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The document data.
      */
     public function get(array $params)
     {
-        // Retrieve the document and return it
+        // Retrieve the document and return it.
         return $this->client->get($params);
 
     }//end get()
 
-
     /**
-     * Update a document
+     * Update a document.
      *
-     * @param  array $params The update parameters
-     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The update response
+     * @param array $params The update parameters.
+     *
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The update response.
      */
     public function update(array $params)
     {
-        // Update the document and return the response
+        // Update the document and return the response.
         return $this->client->update($params);
 
     }//end update()
 
-
     /**
-     * Delete a document
+     * Delete a document.
      *
-     * @param  array $params The delete parameters
-     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The delete response
+     * @param array $params The delete parameters.
+     *
+     * @return \Elastic\Elasticsearch\Response\Elasticsearch|\Http\Promise\Promise The delete response.
      */
     public function delete(array $params)
     {
-        // Delete the document and return the response
+        // Delete the document and return the response.
         return $this->client->delete($params);
 
     }//end delete()
-
-
 }//end class

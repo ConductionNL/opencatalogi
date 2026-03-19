@@ -1,4 +1,20 @@
 <?php
+/**
+ * OpenCatalogi Pages Controller.
+ *
+ * Controller for handling page-related operations in the OpenCatalogi app.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -15,36 +31,41 @@ use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 
 /**
- * Class PagesController
+ * Class PagesController.
  *
  * Controller for handling page-related operations in the OpenCatalogi app.
  *
  * @category  Controller
- * @package   opencatalogi
- * @author    Ruben van der Linde
- * @copyright 2024
- * @license   AGPL-3.0-or-later
- * @version   1.0.0
- * @link      https://github.com/opencatalogi/opencatalogi
+ * @package   OCA\OpenCatalogi\Controller
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git_id>
+ * @link      https://www.OpenCatalogi.nl
  */
 class PagesController extends Controller
 {
 
     /**
+     * Allowed CORS methods.
+     *
      * @var string Allowed CORS methods
      */
     private string $corsMethods;
 
     /**
+     * Allowed CORS headers.
+     *
      * @var string Allowed CORS headers
      */
     private string $corsAllowedHeaders;
 
     /**
+     * CORS max age.
+     *
      * @var integer CORS max age
      */
     private int $corsMaxAge;
-
 
     /**
      * PagesController constructor.
@@ -54,6 +75,7 @@ class PagesController extends Controller
      * @param IAppConfig         $config             App configuration interface
      * @param ContainerInterface $container          Server container for dependency injection
      * @param IAppManager        $appManager         App manager for checking installed apps
+     * @param IL10N              $l10n               Localization service
      * @param string             $corsMethods        Allowed CORS methods
      * @param string             $corsAllowedHeaders Allowed CORS headers
      * @param integer            $corsMaxAge         CORS max age
@@ -65,9 +87,9 @@ class PagesController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly IL10N $l10n,
-        string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-        string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-        int $corsMaxAge = 1728000
+        string $corsMethods='PUT, POST, GET, DELETE, PATCH',
+        string $corsAllowedHeaders='Authorization, Content-Type, Accept',
+        int $corsMaxAge=1728000
     ) {
         parent::__construct($appName, $request);
         $this->corsMethods        = $corsMethods;
@@ -75,7 +97,6 @@ class PagesController extends Controller
         $this->corsMaxAge         = $corsMaxAge;
 
     }//end __construct()
-
 
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
@@ -93,7 +114,6 @@ class PagesController extends Controller
 
     }//end getObjectService()
 
-
     /**
      * Get the schema and register configuration for pages.
      *
@@ -101,7 +121,7 @@ class PagesController extends Controller
      */
     private function getPageConfiguration(): array
     {
-        // Get the page schema and register from configuration
+        // Get the page schema and register from configuration.
         $schema   = $this->config->getValueString($this->appName, 'page_schema', '');
         $register = $this->config->getValueString($this->appName, 'page_register', '');
 
@@ -111,7 +131,6 @@ class PagesController extends Controller
         ];
 
     }//end getPageConfiguration()
-
 
     /**
      * Implements a preflighted CORS response for OPTIONS requests.
@@ -124,10 +143,13 @@ class PagesController extends Controller
      */
     public function preflightedCors(): Response
     {
-        // Determine the origin
-        $origin = $this->request->getHeader('Origin') ?: '*';
+        // Determine the origin.
+        $origin = $this->request->getHeader('Origin');
+        if ($origin === '' || $origin === false) {
+            $origin = '*';
+        }
 
-        // Create and configure the response
+        // Create and configure the response.
         $response = new Response();
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -139,9 +161,8 @@ class PagesController extends Controller
 
     }//end preflightedCors()
 
-
     /**
-     * Get all pages - OPTIMIZED with searchObjectsPaginated.
+     * Get all pages using searchObjectsPaginated.
      *
      * @return JSONResponse The JSON response containing the list of pages
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -152,34 +173,34 @@ class PagesController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get page configuration from settings
+        // Get page configuration from settings.
         $pageConfig = $this->getPageConfiguration();
 
-        // Get query parameters from request
+        // Get query parameters from request.
         $queryParams = $this->request->getParams();
 
-        // Build search query
+        // Build search query.
         $searchQuery = $queryParams;
 
-        // Clean up unwanted parameters
+        // Clean up unwanted parameters.
         unset($searchQuery['id'], $searchQuery['_route']);
 
-        // Add schema filter if configured - use _schema for magic mapper routing
-        if (!empty($pageConfig['schema'])) {
+        // Add schema filter if configured using _schema for magic mapper routing.
+        if (empty($pageConfig['schema']) === false) {
             $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured - use _register for magic mapper routing
-        if (!empty($pageConfig['register'])) {
+        // Add register filter if configured using _register for magic mapper routing.
+        if (empty($pageConfig['register']) === false) {
             $searchQuery['_register'] = $pageConfig['register'];
         }
 
-        // Use searchObjectsPaginated for better performance and pagination support
-        // Set rbac=false, multi=false for public page access
+        // Use searchObjectsPaginated for better performance and pagination support.
+        // Set rbac=false and multi=false for public page access.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
-        // Build paginated response structure
         /*
+         * Build paginated response structure.
             $responseData = [
             'results' => $result['results'] ?? [],
             'total' => $result['total'] ?? 0,
@@ -189,7 +210,7 @@ class PagesController extends Controller
             'pages' => $result['pages'] ?? 1
             ];
 
-            // Add pagination links if present
+            // Add pagination links if present.
             if (isset($result['next'])) {
             $responseData['next'] = $result['next'];
             }
@@ -197,10 +218,10 @@ class PagesController extends Controller
             $responseData['prev'] = $result['prev'];
             }
 
-            // Add facets if present
+            // Add facets if present.
             if (isset($result['facets'])) {
             $facetsData = $result['facets'];
-            // Unwrap nested facets if needed
+            // Unwrap nested facets if needed.
             if (isset($facetsData['facets']) && is_array($facetsData['facets'])) {
                 $facetsData = $facetsData['facets'];
             }
@@ -209,11 +230,15 @@ class PagesController extends Controller
             if (isset($result['facetable'])) {
             $responseData['facetable'] = $result['facetable'];
             }
-        */
+         */
 
-        // Add CORS headers for public API access
+        // Add CORS headers for public API access.
         $response = new JSONResponse($result);
-        $origin   = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        $origin   = $this->request->getHeader('Origin');
+        if ($origin === '' || $origin === false) {
+            $origin = ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -222,9 +247,8 @@ class PagesController extends Controller
 
     }//end index()
 
-
     /**
-     * Get a specific page by its slug - OPTIMIZED with searchObjectsPaginated.
+     * Get a specific page by its slug using searchObjectsPaginated.
      *
      * @param string $slug The slug of the page to retrieve
      *
@@ -244,36 +268,39 @@ class PagesController extends Controller
         $searchQuery = [
             'slug'    => $slug,
             '_limit'  => 1,
-// We only need one result
             '_source' => 'database',
         ];
 
-        // Add schema filter if configured - use _schema for magic mapper routing
-        if (!empty($pageConfig['schema'])) {
+        // Add schema filter if configured using _schema for magic mapper routing.
+        if (empty($pageConfig['schema']) === false) {
             $searchQuery['_schema'] = $pageConfig['schema'];
         }
 
-        // Add register filter if configured - use _register for magic mapper routing
-        if (!empty($pageConfig['register'])) {
+        // Add register filter if configured using _register for magic mapper routing.
+        if (empty($pageConfig['register']) === false) {
             $searchQuery['_register'] = $pageConfig['register'];
         }
 
-        // Use searchObjectsPaginated for better performance
-        // Set rbac=false, multi=false (schema authorization handles access)
+        // Use searchObjectsPaginated for better performance.
+        // Set rbac=false and multi=false as schema authorization handles access.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
-        if (empty($result['results'])) {
+        if (empty($result['results']) === true) {
             $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
         }
 
-        if (!empty($result['results'])) {
-            // Return the first matching page
+        if (empty($result['results']) === false) {
+            // Return the first matching page.
             $page     = $result['results'][0];
             $response = new JSONResponse($page);
         }
 
-        // Add CORS headers for public API access
-        $origin = $this->request->getHeader('Origin') ?: '*';
+        // Add CORS headers for public API access.
+        $origin = $this->request->getHeader('Origin');
+        if ($origin === '' || $origin === false) {
+            $origin = '*';
+        }
+
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -281,6 +308,4 @@ class PagesController extends Controller
         return $response;
 
     }//end show()
-
-
 }//end class

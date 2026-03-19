@@ -347,7 +347,7 @@ class PublicationsController extends Controller
 
             // Add CORS headers for public API access.
             $response = new JSONResponse($result, 200);
-            $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -415,8 +415,8 @@ class PublicationsController extends Controller
             if (is_string($extend) === true) {
                 $extend = array_map('trim', explode(',', $extend));
             } else if (is_array($extend) === false) {
-            $extend = [$extend];
-        }
+                $extend = [$extend];
+            }
 
             // Debug logging.
             $this->logger->debug(
@@ -538,7 +538,7 @@ class PublicationsController extends Controller
 
             // Add CORS headers for public API access.
             $response = new JSONResponse($result, 200);
-            $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -850,7 +850,7 @@ class PublicationsController extends Controller
 
             // Add CORS headers for public API access.
             $response = new JSONResponse($result, 200);
-            $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
@@ -910,7 +910,7 @@ class PublicationsController extends Controller
 
             // Add CORS headers for public API access.
             $response = new JSONResponse($result, 200);
-            $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
+            $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
             $response->addHeader('Access-Control-Allow-Origin', $origin);
             $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);

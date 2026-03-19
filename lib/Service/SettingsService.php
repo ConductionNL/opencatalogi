@@ -462,6 +462,7 @@ class SettingsService
                             } else {
                                 $schemaArray = (array) $schema;
                             }
+
                             $fullSchemas[] = $schemaArray;
                         }
                     } catch (\Exception $e) {
@@ -564,6 +565,7 @@ class SettingsService
                     } else {
                         $value = 'false';
                     }
+
                     // Store the value in the configuration.
                     $this->config->setValueString($this->appName, $option, $value);
                     // Retrieve and convert back to boolean for the response.
@@ -626,7 +628,7 @@ class SettingsService
             // Go up from apps-extra/opencatalogi to root.
             $relativeFilePath = str_replace($nextcloudRoot.'/', '', $absoluteFilePath);
 
-            // Fallback: if path calculation fails, use the standard relative path
+            // Fallback: if path calculation fails, use the standard relative path.
             if (str_starts_with($relativeFilePath, 'apps-extra/') === false && str_starts_with($relativeFilePath, 'apps/') === false) {
                 $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
             }
@@ -645,14 +647,14 @@ class SettingsService
                 $data['x-openregister']['sourceType'] = 'local';
             }
 
-            // Get the configuration service
+            // Get the configuration service.
             $configurationService = $this->getConfigurationService();
 
             // Get the current app version. dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Use importFromApp to import the configuration data directly
-            // This avoids the file path resolution issue in importFromFilePath
+            // Use importFromApp to import the configuration data directly.
+            // This avoids the file path resolution issue in importFromFilePath.
             $result = $configurationService->importFromApp(
                 appId: Application::APP_ID,
                 data: $data,
@@ -769,7 +771,7 @@ class SettingsService
             // Get the current app version.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Get the configuration service to check stored version.
+            // Get the configuration service. to check stored version.
             $configurationService = $this->getConfigurationService();
             $storedVersion        = $configurationService->getConfiguredAppVersion(Application::APP_ID);
 
@@ -782,7 +784,7 @@ class SettingsService
             // Load settings if current version is newer than stored version.
             return version_compare(version1: $currentAppVersion, version2: $storedVersion, operator: '>');
         } catch (\Exception $e) {
-            // If we can't determine versions, err on the side of loading settings
+            // If we can't determine versions, err on the side of loading settings.
             return true;
         }//end try
 
@@ -803,7 +805,7 @@ class SettingsService
             // Get the current app version.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // Get the configuration service to check stored version.
+            // Get the configuration service. to check stored version.
             $configurationService = $this->getConfigurationService();
             $storedConfigVersion  = $configurationService->getConfiguredAppVersion(Application::APP_ID);
 
@@ -840,11 +842,11 @@ class SettingsService
     public function manualImport(bool $forceImport=false): array
     {
         try {
-            // Get version info first
+            // Get version info first.
             $versionInfo = $this->getVersionInfo();
 
-            // Check if import is needed (unless forced)
-            if ($forceImport === false && $versionInfo['versionsMatch']) {
+            // Check if import is needed (unless forced).
+            if ($forceImport === false && $versionInfo['versionsMatch'] === true) {
                 return [
                     'success'     => false,
                     'message'     => 'Configuration is already up to date. Use force import if you want to reimport.',
@@ -852,10 +854,10 @@ class SettingsService
                 ];
             }
 
-            // Perform the import
+            // Perform the import.
             $importResult = $this->loadSettings($forceImport);
 
-            // Get updated version info
+            // Get updated version info.
             $updatedVersionInfo = $this->getVersionInfo();
 
             return [

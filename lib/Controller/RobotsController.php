@@ -1,4 +1,20 @@
 <?php
+/**
+ * OpenCatalogi Robots Controller.
+ *
+ * Controller for handling robots.txt generation in the OpenCatalogi app.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
 
 namespace OCA\OpenCatalogi\Controller;
 
@@ -16,33 +32,30 @@ use OCA\OpenCatalogi\Service\SitemapService;
 use RuntimeException;
 
 /**
- * Class RobotsController
+ * Controller for generating robots.txt content.
  *
- * Controller for handling publication-related operations in the OpenCatalogi app.
- *
- * @category  Controller
- * @package   opencatalogi
- * @author    Ruben van der Linde
- * @copyright 2024
- * @license   AGPL-3.0-or-later
- * @version   1.0.0
- * @link      https://github.com/opencatalogi/opencatalogi
+ * @psalm-suppress UnusedClass
  */
 class RobotsController extends Controller
 {
 
+    /**
+     * The object service instance.
+     *
+     * @var object|null
+     */
     private ?object $objectService = null;
 
     /**
-     * PublicationsController constructor.
+     * RobotsController constructor.
      *
-     * @param string             $appName         The name of the app
-     * @param IRequest           $request         The request object
-     * @param SettingsService    $settingsService The settings service
-     * @param ContainerInterface $container       The container for dependency injection
-     * @param IAppManager        $appManager      The app manager
-     * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
-     * @param IL10N              $l10n            The localization service
+     * @param string             $appName         The name of the app.
+     * @param IRequest           $request         The request object.
+     * @param SettingsService    $settingsService The settings service.
+     * @param ContainerInterface $container       The container for DI.
+     * @param IAppManager        $appManager      The app manager.
+     * @param IURLGenerator      $urlGenerator    The URL generator.
+     * @param IL10N              $l10n            The localization service.
      */
     public function __construct(
         $appName,
@@ -53,15 +66,14 @@ class RobotsController extends Controller
         private readonly IURLGenerator $urlGenerator,
         private readonly IL10N $l10n,
     ) {
-        parent::__construct($appName, $request);
+        parent::__construct(appName: $appName, request: $request);
 
     }//end __construct()
 
-
     /**
-     * Implements a preflighted CORS response for OPTIONS requests.
+     * Generate robots.txt with sitemap references.
      *
-     * @return TextResponse The CORS response
+     * @return TextResponse The robots.txt response.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -71,8 +83,13 @@ class RobotsController extends Controller
     {
         $settings = $this->settingsService->getSettings();
 
-        if (isset($settings['configuration']['catalog_register']) === false || isset($settings['configuration']['catalog_schema']) === false) {
-            return new TextResponse($this->l10n->t('Could not fetch settings'), 500);
+        if (isset($settings['configuration']['catalog_register']) === false
+            || isset($settings['configuration']['catalog_schema']) === false
+        ) {
+            return new TextResponse(
+                text: $this->l10n->t('Could not fetch settings'),
+                status: 500
+            );
         }
 
         $searchQuery = [];
@@ -91,7 +108,7 @@ class RobotsController extends Controller
         $text  = '';
         $count = 0;
         foreach ($catalogs as $catalog) {
-            if (!$catalog->getSlug()) {
+            if ($catalog->getSlug() === false) {
                 continue;
             }
 
@@ -106,15 +123,15 @@ class RobotsController extends Controller
             $count++;
         }
 
-        return new TextResponse($text);
+        return new TextResponse(text: $text);
 
     }//end index()
-
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
@@ -128,6 +145,4 @@ class RobotsController extends Controller
         throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
-
-
 }//end class

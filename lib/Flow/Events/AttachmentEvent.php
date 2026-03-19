@@ -1,4 +1,18 @@
 <?php
+/**
+ * Attachment flow event entity.
+ *
+ * @category Flow
+ * @package  OCA\OpenCatalogi\Flow\Events
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
 
 namespace OCA\OpenCatalogi\Flow\Events;
 
@@ -9,37 +23,67 @@ use OCP\WorkflowEngine\IRuleMatcher;
 /**
  * DOCS: https://docs.nextcloud.com/server/latest/developer_manual/digging_deeper/flow.html#entities
  *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter) — parameters required by IEntity interface
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class AttachmentEvent implements IEntity
 {
-
+    /**
+     * Get the entity name.
+     *
+     * @return string
+     */
     public function getName(): string
     {
         return 'Attachment';
-    }
 
-    public function getIcon(): string
-    {
-        return \OC::$server->getURLGenerator()->imagePath('opencatalogi', 'app.svg');
-    }
+    }//end getName()
 
     /**
+     * Get the entity icon.
+     *
+     * @return string
+     */
+    public function getIcon(): string
+    {
+        return \OC::$server->getURLGenerator()->imagePath(appName: 'opencatalogi', file: 'app.svg');
+
+    }//end getIcon()
+
+    /**
+     * Get available events.
+     *
      * @return array<array-key, \OCP\WorkflowEngine\IEntityEvent>
      */
     public function getEvents(): array
     {
         return [];
-    }
 
+    }//end getEvents()
+
+    /**
+     * Prepare the rule matcher for this entity.
+     *
+     * @param IRuleMatcher $ruleMatcher The rule matcher.
+     * @param string       $eventName   The event name.
+     * @param Event        $event       The event.
+     *
+     * @return void
+     */
     public function prepareRuleMatcher(IRuleMatcher $ruleMatcher, string $eventName, Event $event): void
     {
-    }
 
+    }//end prepareRuleMatcher()
+
+    /**
+     * Check if user is legitimated.
+     *
+     * @param string $userId The user ID.
+     *
+     * @return bool
+     */
     public function isLegitimatedForUserId(string $userId): bool
     {
         return true;
-    }
 
-
-}
+    }//end isLegitimatedForUserId()
+}//end class
