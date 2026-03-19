@@ -178,7 +178,7 @@ class SearchService
         $localResults['facets']  = [];
 
         $totalResults = 0;
-        $limit = 30;
+        $limit        = 30;
         if (isset($parameters['_limit']) === true) {
             $limit = $parameters['_limit'];
         }
@@ -455,8 +455,7 @@ class SearchService
         $sort = [];
         if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
             foreach ($filters['_order'] as $field => $direction) {
-                $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-
+                $direction    = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
                 $sort[$field] = $direction;
             }
         }
