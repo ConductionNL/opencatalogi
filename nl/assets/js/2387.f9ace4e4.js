@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[2387],{82387:(e,a,c)=>{c.d(a,{createGitGraphServices:()=>s.b});var s=c(82785);c(19369)}}]);
