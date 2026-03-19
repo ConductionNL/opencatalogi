@@ -45,16 +45,14 @@ De APIs van OpenCatalogi zijn voor nu nog terug te vinden op [https://conduction
 | [Github](https://github.com/ConductionNL/opencatalogi)| Beheer API, Zoeken API, Beheerinterface    | OpenCatalogi            |  EUPL        |  
 | [Github](https://github.com/maykinmedia/objects-api)| ORC (objectenopslag)    | Maykin Media            |  EUPL        |  
 | [Github](https://github.com/open-zaak/open-zaak)        | DRC (documentenopslag)      | Maykin Media            |  EUPL        |  
-| [Github](https://github.com/elastic/elasticsearch)         | Elastic Search      | Elastic            |  SPL + EUPL        |  
-| [Github](https://github.com/OpenCatalogi/OpenCatalogiBundle)         | Synchronisatie Service      | Conduction            |  EUPL        |  
+| [Github](https://github.com/OpenCatalogi/OpenCatalogiBundle)         | Synchronisatie Service      | Conduction            |  EUPL        |
 
 Hierop zijn een paar opmerkingen te maken
 
 - We hebben recentelijk de keuze gemaakt om over te stappen op Nextcloud. Meer hierover kan je teruglezen op [https://documentatie.opencatalogi.nl/Handleidingen/Nextcloud/](https://documentatie.opencatalogi.nl/Handleidingen/Nextcloud/).
-- Het inzetten van ORC, DRC en Elastic zijn vanuit Open Catalogi gezien (geadviseerde) keuzes. Het is ook mogelijk om alles in een interne database of externe object store op te slaan.
+- Het inzetten van ORC en DRC zijn vanuit Open Catalogi gezien (geadviseerde) keuzes. Het is ook mogelijk om alles in een interne database of externe object store op te slaan. Zoekfunctionaliteit wordt verzorgd door OpenRegister.
 - De Synchronisatie service draait momenteel nog op het common gateway platform, er is echter voor gekozen om ook deze over te brengen naar Nextcloud.
 - Beheer API en Zoeken API worden samen met de beheerinterface geleverd door één code base, een praktische inrichtingskeuze die we hebben overgenomen van Open Zaak. Voor organisaties die componenten graag splitsen in containers zijn ze echter ook los installeerbaar.
-- Het is ook mogelijk om de zoeken API direct vanuit Elasticsearch uit te leveren, dat heeft een aanzienlijk performance voordeel. Maar verhinderd ook het federatief zoeken.
 - Voor het ORC en DRC zijn aanvullende componenten beschikbaar/benodigd (OTC, Notificaties etc.) die laten we hier voor het overzicht even weg
 
 ## Functionaliteit Beheeromgeving
@@ -86,7 +84,7 @@ Dit betekent dat een nieuwe installatie zich slechts bij één andere installati
 
 ## Onder de motorkap
 
-OpenCatalogi bestaat eigenlijk uit een paar technische componenten die samenwerken. Om te beginnen bestaat het uit verschillende objecten (Catalogi, Publicaties, Documenten en Index) die worden opgeslagen in een objectstore (of ORC in VNG-termen). Publicaties bieden een basis workflowmanagement setup. Wanneer een publicatie als gepubliceerd is gemarkeerd, wordt deze vervolgens overgebracht naar een zoekindex (Elasticsearch). Het OpenCatalogi zoek-endpoint gebruikt deze zoekindex vervolgens om vragen te beantwoorden. Dit betekent dat de gebruiksgerichte (publieke) frontend de zoekindex gebruikt (aangezien het vragen stelt aan het zoek-endpoint) en dat het administratie-endpoint de objectstore gebruikt.
+OpenCatalogi bestaat eigenlijk uit een paar technische componenten die samenwerken. Om te beginnen bestaat het uit verschillende objecten (Catalogi, Publicaties, Documenten en Index) die worden opgeslagen in OpenRegister (objectstore). Publicaties bieden een basis workflowmanagement setup. Het OpenCatalogi zoek-endpoint gebruikt OpenRegister's zoekfunctionaliteit voor lokale zoekopdrachten en combineert deze met resultaten van remote catalogi via federatief zoeken.
 
 Afzonderlijke synchronisatieservices kunnen publicaties maken van externe bronnen (bijvoorbeeld GitHub, of case handling systemen). Deze publicaties worden in de objectstore gemaakt en moeten als gepubliceerd worden gemarkeerd voordat ze worden gesynchroniseerd naar de zoekindex (en beschikbaar worden gemaakt onder het zoek-endpoint), hoewel dit proces geautomatiseerd kan worden in de configuratie. Deze strikte scheiding van gegevens op basis van de rol en context van verzoekers in een opslag- en zoekgedeelte voorkomt onbedoelde openbaarmaking van informatie. Dit is vooral belangrijk omdat OpenCatalogi ook wordt gebruikt door [OpenWoo.app](https://openwoo.app/).
 
@@ -151,7 +149,7 @@ Het federatieve netwerk is een mooie manier om data bij de bron op te halen, maa
 
 ## Search up-to-date houden
 
-Bij wijzigingen in de publicatieopslag (ORC) of documentopslag (DRC) wordt de zoekindex (Elastic) op de hoogte gebracht van een wijziging (creëren, updaten of verwijderen), zodat deze wijziging in de index kan worden verwerkt. Dit betekent dat de zoekindex zichzelf up-to-date houdt met betrekking tot publicaties en documenten. Houd er hierbij rekening mee dat documenten NIET in de zoekindex worden opgenomen.
+Bij wijzigingen in de publicatieopslag worden deze direct beschikbaar via OpenRegister's zoekfunctionaliteit. OpenRegister beheert de zoekindex intern en houdt deze automatisch up-to-date bij het creëren, updaten of verwijderen van objecten.
 
 ## Uniek maken van documenten
 

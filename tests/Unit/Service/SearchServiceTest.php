@@ -9,7 +9,6 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7\Response;
 use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Service\ElasticSearchService;
 use OCA\OpenCatalogi\Service\SearchService;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
@@ -20,18 +19,15 @@ class SearchServiceTest extends TestCase
 {
 
     private SearchService $searchService;
-    private ElasticSearchService $elasticServiceMock;
     private DirectoryService $directoryServiceMock;
     private IURLGenerator $urlGeneratorMock;
 
     protected function setUp(): void
     {
-        $this->elasticServiceMock = $this->createMock(ElasticSearchService::class);
         $this->directoryServiceMock = $this->createMock(DirectoryService::class);
         $this->urlGeneratorMock = $this->createMock(IURLGenerator::class);
 
         $this->searchService = new SearchService(
-            $this->elasticServiceMock,
             $this->directoryServiceMock,
             $this->urlGeneratorMock
         );
@@ -174,17 +170,11 @@ class SearchServiceTest extends TestCase
     // search
     // =========================================================================
 
-    public function testSearchWithEmptyElasticConfigLocation(): void
+    public function testSearchWithEmptyLocalResultsAndEmptyDirectory(): void
     {
         $this->directoryServiceMock->method('getDirectory')->willReturn([]);
 
-        $this->elasticServiceMock->expects($this->never())->method('searchObject');
-
-        $result = $this->searchService->search(
-            [],
-            ['location' => '', 'key' => '', 'index' => ''],
-            []
-        );
+        $result = $this->searchService->search([]);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('results', $result);
@@ -201,14 +191,8 @@ class SearchServiceTest extends TestCase
         $this->assertEquals(0, $result['total']);
     }
 
-    public function testSearchWithElasticConfigAndEmptyDirectory(): void
+    public function testSearchWithLocalResultsAndEmptyDirectory(): void
     {
-        $elasticConfig = [
-            'location' => 'https://elastic.example.com',
-            'key' => 'dXNlcm5hbWU6cGFzc3dvcmQ=',
-            'index' => 'objects',
-        ];
-
         $localResults = [
             'results' => [
                 ['_score' => 1, 'id' => 1],
@@ -219,19 +203,14 @@ class SearchServiceTest extends TestCase
                     ['_id' => 'cat1', 'count' => 10],
                 ],
             ],
+            'total' => 2,
         ];
-
-        $totalResults = 0;
-
-        $this->elasticServiceMock
-            ->method('searchObject')
-            ->willReturn($localResults);
 
         $this->directoryServiceMock
             ->method('getDirectory')
             ->willReturn([]);
 
-        $result = $this->searchService->search([], $elasticConfig, []);
+        $result = $this->searchService->search([], $localResults);
 
         $this->assertIsArray($result);
         $this->assertEquals($localResults['results'], $result['results']);
@@ -242,15 +221,9 @@ class SearchServiceTest extends TestCase
     public function testSearchWithCustomLimitAndPage(): void
     {
         $this->directoryServiceMock->method('getDirectory')->willReturn([]);
-        $this->elasticServiceMock->method('searchObject')->willReturn([
-            'results' => [],
-            'facets' => [],
-        ]);
 
         $result = $this->searchService->search(
-            ['_limit' => 10, '_page' => 3],
-            ['location' => 'https://elastic.example.com', 'key' => '', 'index' => ''],
-            []
+            ['_limit' => 10, '_page' => 3]
         );
 
         $this->assertEquals(10, $result['limit']);
@@ -259,18 +232,11 @@ class SearchServiceTest extends TestCase
 
     public function testSearchWithDirectoryEntries(): void
     {
-        $elasticConfig = [
-            'location' => 'https://elastic.example.com',
-            'key' => 'key',
-            'index' => 'objects',
+        $localResults = [
+            'results' => [['_score' => 1, 'id' => 'local1']],
+            'facets' => [],
+            'total' => 1,
         ];
-
-        $this->elasticServiceMock
-            ->method('searchObject')
-            ->willReturn([
-                'results' => [['_score' => 1, 'id' => 'local1']],
-                'facets' => [],
-            ]);
 
         $this->urlGeneratorMock
             ->method('linkToRoute')
@@ -306,7 +272,7 @@ class SearchServiceTest extends TestCase
         $property->setAccessible(true);
         $property->setValue($this->searchService, $clientMock);
 
-        $result = $this->searchService->search([], $elasticConfig, []);
+        $result = $this->searchService->search([], $localResults);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('results', $result);
@@ -315,16 +281,6 @@ class SearchServiceTest extends TestCase
 
     public function testSearchSkipsDirectoryWithDefaultFalse(): void
     {
-        $elasticConfig = [
-            'location' => 'https://elastic.example.com',
-            'key' => 'key',
-            'index' => 'objects',
-        ];
-
-        $this->elasticServiceMock
-            ->method('searchObject')
-            ->willReturn(['results' => [], 'facets' => []]);
-
         $this->urlGeneratorMock
             ->method('linkToRoute')
             ->willReturn('/api/directory');
@@ -350,23 +306,13 @@ class SearchServiceTest extends TestCase
         $property->setAccessible(true);
         $property->setValue($this->searchService, $clientMock);
 
-        $result = $this->searchService->search([], $elasticConfig, []);
+        $result = $this->searchService->search([]);
 
         $this->assertEquals(0, $result['count']);
     }
 
     public function testSearchSkipsSelfDirectory(): void
     {
-        $elasticConfig = [
-            'location' => 'https://elastic.example.com',
-            'key' => 'key',
-            'index' => 'objects',
-        ];
-
-        $this->elasticServiceMock
-            ->method('searchObject')
-            ->willReturn(['results' => [], 'facets' => []]);
-
         $this->urlGeneratorMock
             ->method('linkToRoute')
             ->willReturn('/api/directory');
@@ -393,23 +339,13 @@ class SearchServiceTest extends TestCase
         $property->setAccessible(true);
         $property->setValue($this->searchService, $clientMock);
 
-        $result = $this->searchService->search([], $elasticConfig, []);
+        $result = $this->searchService->search([]);
 
         $this->assertEquals(0, $result['count']);
     }
 
     public function testSearchWithRejectedPromise(): void
     {
-        $elasticConfig = [
-            'location' => 'https://elastic.example.com',
-            'key' => 'key',
-            'index' => 'objects',
-        ];
-
-        $this->elasticServiceMock
-            ->method('searchObject')
-            ->willReturn(['results' => [], 'facets' => []]);
-
         $this->urlGeneratorMock
             ->method('linkToRoute')
             ->willReturn('/api/directory');
@@ -437,500 +373,11 @@ class SearchServiceTest extends TestCase
         $property->setAccessible(true);
         $property->setValue($this->searchService, $clientMock);
 
-        $result = $this->searchService->search([], $elasticConfig, []);
+        $result = $this->searchService->search([]);
 
         // Rejected promises should be ignored, returning only local results
         $this->assertIsArray($result);
         $this->assertEquals(0, $result['count']);
-    }
-
-    // =========================================================================
-    // createMongoDBSearchFilter
-    // =========================================================================
-
-    public function testCreateMongoDBSearchFilterWithSearch(): void
-    {
-        $filters = ['_search' => 'test query'];
-        $fields = ['title', 'description'];
-
-        $result = $this->searchService->createMongoDBSearchFilter($filters, $fields);
-
-        $this->assertArrayHasKey('$or', $result);
-        $this->assertCount(2, $result['$or']);
-        $this->assertEquals(
-            ['title' => ['$regex' => 'test query', '$options' => 'i']],
-            $result['$or'][0]
-        );
-        $this->assertEquals(
-            ['description' => ['$regex' => 'test query', '$options' => 'i']],
-            $result['$or'][1]
-        );
-        $this->assertArrayNotHasKey('_search', $result);
-    }
-
-    public function testCreateMongoDBSearchFilterWithoutSearch(): void
-    {
-        $filters = ['status' => 'active'];
-        $fields = ['title'];
-
-        $result = $this->searchService->createMongoDBSearchFilter($filters, $fields);
-
-        $this->assertArrayNotHasKey('$or', $result);
-        $this->assertEquals('active', $result['status']);
-    }
-
-    public function testCreateMongoDBSearchFilterIsNotNull(): void
-    {
-        $filters = ['title' => 'IS NOT NULL'];
-        $fields = [];
-
-        $result = $this->searchService->createMongoDBSearchFilter($filters, $fields);
-
-        $this->assertEquals(['$ne' => null], $result['title']);
-    }
-
-    public function testCreateMongoDBSearchFilterIsNull(): void
-    {
-        $filters = ['title' => 'IS NULL'];
-        $fields = [];
-
-        $result = $this->searchService->createMongoDBSearchFilter($filters, $fields);
-
-        $this->assertEquals(['$eq' => null], $result['title']);
-    }
-
-    public function testCreateMongoDBSearchFilterEmptyFilters(): void
-    {
-        $result = $this->searchService->createMongoDBSearchFilter([], []);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateMongoDBSearchFilterEmptyFieldsToSearch(): void
-    {
-        $filters = ['_search' => 'test'];
-        $result = $this->searchService->createMongoDBSearchFilter($filters, []);
-
-        $this->assertArrayHasKey('$or', $result);
-        $this->assertEmpty($result['$or']);
-        $this->assertArrayNotHasKey('_search', $result);
-    }
-
-    public function testCreateMongoDBSearchFilterCombinedSearchAndNullChecks(): void
-    {
-        $filters = [
-            '_search' => 'query',
-            'status' => 'IS NOT NULL',
-            'archived' => 'IS NULL',
-            'category' => 'news',
-        ];
-        $fields = ['title'];
-
-        $result = $this->searchService->createMongoDBSearchFilter($filters, $fields);
-
-        $this->assertArrayHasKey('$or', $result);
-        $this->assertEquals(['$ne' => null], $result['status']);
-        $this->assertEquals(['$eq' => null], $result['archived']);
-        $this->assertEquals('news', $result['category']);
-    }
-
-    // =========================================================================
-    // createMySQLSearchConditions
-    // =========================================================================
-
-    public function testCreateMySQLSearchConditionsWithSearch(): void
-    {
-        $filters = ['_search' => 'test'];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            ['title', 'description'],
-            $searchParams
-        );
-
-        $this->assertCount(1, $result);
-        $this->assertStringContainsString('LOWER(title) LIKE :search', $result[0]);
-        $this->assertStringContainsString('LOWER(description) LIKE :search', $result[0]);
-        $this->assertStringStartsWith('(', $result[0]);
-        $this->assertStringEndsWith(')', $result[0]);
-    }
-
-    public function testCreateMySQLSearchConditionsWithSingleField(): void
-    {
-        $filters = ['_search' => 'test'];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            ['title'],
-            $searchParams
-        );
-
-        $this->assertCount(1, $result);
-        $this->assertEquals('(LOWER(title) LIKE :search)', $result[0]);
-    }
-
-    public function testCreateMySQLSearchConditionsWithCommaValues(): void
-    {
-        $filters = ['status' => 'active,archived,draft'];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            [],
-            $searchParams
-        );
-
-        // Should contain the OR condition
-        $found = false;
-        foreach ($result as $condition) {
-            if (strpos($condition, 'status = :status_0') !== false) {
-                $found = true;
-                $this->assertStringContainsString('status = :status_1', $condition);
-                $this->assertStringContainsString('status = :status_2', $condition);
-            }
-        }
-
-        $this->assertTrue($found, 'Comma-separated values should generate OR conditions');
-        $this->assertEquals('active', $searchParams['status_0']);
-        $this->assertEquals('archived', $searchParams['status_1']);
-        $this->assertEquals('draft', $searchParams['status_2']);
-
-        // The original filter key should be unset
-        $this->assertArrayNotHasKey('status', $filters);
-    }
-
-    public function testCreateMySQLSearchConditionsNoFilters(): void
-    {
-        $filters = [];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            [],
-            $searchParams
-        );
-
-        $this->assertCount(1, $result);
-        $this->assertEquals('1=1', $result[0]);
-    }
-
-    public function testCreateMySQLSearchConditionsSkipsEmptyValues(): void
-    {
-        $filters = ['status' => '', 'title' => null];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            [],
-            $searchParams
-        );
-
-        $this->assertCount(1, $result);
-        $this->assertEquals('1=1', $result[0]);
-    }
-
-    public function testCreateMySQLSearchConditionsSearchAndCommaFilters(): void
-    {
-        $filters = ['_search' => 'test', 'category' => 'news,events'];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            ['title'],
-            $searchParams
-        );
-
-        $this->assertCount(2, $result);
-        $this->assertStringContainsString('LOWER(title) LIKE :search', $result[0]);
-        $this->assertStringContainsString('category = :category_0', $result[1]);
-    }
-
-    public function testCreateMySQLSearchConditionsSkipsSearchKey(): void
-    {
-        $filters = ['_search' => 'test', 'name' => 'value'];
-        $searchParams = [];
-
-        $result = $this->searchService->createMySQLSearchConditions(
-            $filters,
-            ['title'],
-            $searchParams
-        );
-
-        // _search should be skipped in the foreach, name is a simple value (no comma)
-        // so only search condition + default 1=1 would not apply since we have conditions
-        $this->assertGreaterThanOrEqual(1, count($result));
-    }
-
-    // =========================================================================
-    // unsetSpecialQueryParams
-    // =========================================================================
-
-    public function testUnsetSpecialQueryParamsRemovesUnderscoreKeys(): void
-    {
-        $filters = [
-            '_limit' => 10,
-            '_page' => 1,
-            '_search' => 'test',
-            '_order' => ['title' => 'ASC'],
-            'title' => 'hello',
-            'category' => 'news',
-        ];
-
-        $result = $this->searchService->unsetSpecialQueryParams($filters);
-
-        $this->assertArrayNotHasKey('_limit', $result);
-        $this->assertArrayNotHasKey('_page', $result);
-        $this->assertArrayNotHasKey('_search', $result);
-        $this->assertArrayNotHasKey('_order', $result);
-        $this->assertArrayHasKey('title', $result);
-        $this->assertArrayHasKey('category', $result);
-    }
-
-    public function testUnsetSpecialQueryParamsRemovesSearchKey(): void
-    {
-        $filters = [
-            'search' => 'test',
-            'title' => 'hello',
-        ];
-
-        $result = $this->searchService->unsetSpecialQueryParams($filters);
-
-        $this->assertArrayNotHasKey('search', $result);
-        $this->assertArrayHasKey('title', $result);
-    }
-
-    public function testUnsetSpecialQueryParamsEmptyArray(): void
-    {
-        $result = $this->searchService->unsetSpecialQueryParams([]);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testUnsetSpecialQueryParamsAllSpecial(): void
-    {
-        $filters = [
-            '_limit' => 10,
-            '_page' => 1,
-            'search' => 'query',
-        ];
-
-        $result = $this->searchService->unsetSpecialQueryParams($filters);
-        $this->assertEmpty($result);
-    }
-
-    public function testUnsetSpecialQueryParamsNoSpecial(): void
-    {
-        $filters = [
-            'title' => 'hello',
-            'category' => 'news',
-        ];
-
-        $result = $this->searchService->unsetSpecialQueryParams($filters);
-        $this->assertEquals($filters, $result);
-    }
-
-    // =========================================================================
-    // createMySQLSearchParams
-    // =========================================================================
-
-    public function testCreateMySQLSearchParamsWithSearch(): void
-    {
-        $filters = ['_search' => 'Test Query'];
-
-        $result = $this->searchService->createMySQLSearchParams($filters);
-
-        $this->assertArrayHasKey('search', $result);
-        $this->assertEquals('%test query%', $result['search']);
-    }
-
-    public function testCreateMySQLSearchParamsWithoutSearch(): void
-    {
-        $filters = ['title' => 'hello'];
-
-        $result = $this->searchService->createMySQLSearchParams($filters);
-
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateMySQLSearchParamsEmptyFilters(): void
-    {
-        $result = $this->searchService->createMySQLSearchParams([]);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateMySQLSearchParamsEmptySearchString(): void
-    {
-        $filters = ['_search' => ''];
-
-        $result = $this->searchService->createMySQLSearchParams($filters);
-
-        // empty string is falsy, so isset returns true but value is ''
-        $this->assertArrayHasKey('search', $result);
-        $this->assertEquals('%%', $result['search']);
-    }
-
-    public function testCreateMySQLSearchParamsSpecialCharacters(): void
-    {
-        $filters = ['_search' => "O'Brien & Co."];
-
-        $result = $this->searchService->createMySQLSearchParams($filters);
-
-        $this->assertEquals("%o'brien & co.%", $result['search']);
-    }
-
-    public function testCreateMySQLSearchParamsUpperCase(): void
-    {
-        $filters = ['_search' => 'UPPERCASE'];
-
-        $result = $this->searchService->createMySQLSearchParams($filters);
-
-        $this->assertEquals('%uppercase%', $result['search']);
-    }
-
-    // =========================================================================
-    // createSortForMySQL
-    // =========================================================================
-
-    public function testCreateSortForMySQLWithOrder(): void
-    {
-        $filters = [
-            '_order' => [
-                'title' => 'ASC',
-                'date' => 'DESC',
-            ],
-        ];
-
-        $result = $this->searchService->createSortForMySQL($filters);
-
-        $this->assertEquals('ASC', $result['title']);
-        $this->assertEquals('DESC', $result['date']);
-    }
-
-    public function testCreateSortForMySQLDefaultsToAsc(): void
-    {
-        $filters = [
-            '_order' => [
-                'title' => 'invalid',
-            ],
-        ];
-
-        $result = $this->searchService->createSortForMySQL($filters);
-
-        $this->assertEquals('ASC', $result['title']);
-    }
-
-    public function testCreateSortForMySQLCaseInsensitiveDesc(): void
-    {
-        $filters = [
-            '_order' => [
-                'title' => 'desc',
-                'name' => 'Desc',
-            ],
-        ];
-
-        $result = $this->searchService->createSortForMySQL($filters);
-
-        $this->assertEquals('DESC', $result['title']);
-        $this->assertEquals('DESC', $result['name']);
-    }
-
-    public function testCreateSortForMySQLNoOrder(): void
-    {
-        $filters = ['title' => 'test'];
-
-        $result = $this->searchService->createSortForMySQL($filters);
-
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateSortForMySQLEmptyFilters(): void
-    {
-        $result = $this->searchService->createSortForMySQL([]);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateSortForMySQLOrderNotArray(): void
-    {
-        $filters = ['_order' => 'title'];
-
-        $result = $this->searchService->createSortForMySQL($filters);
-
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    // =========================================================================
-    // createSortForMongoDB
-    // =========================================================================
-
-    public function testCreateSortForMongoDBWithOrder(): void
-    {
-        $filters = [
-            '_order' => [
-                'title' => 'ASC',
-                'date' => 'DESC',
-            ],
-        ];
-
-        $result = $this->searchService->createSortForMongoDB($filters);
-
-        $this->assertEquals(1, $result['title']);
-        $this->assertEquals(-1, $result['date']);
-    }
-
-    public function testCreateSortForMongoDBDefaultsToAsc(): void
-    {
-        $filters = [
-            '_order' => [
-                'title' => 'something',
-            ],
-        ];
-
-        $result = $this->searchService->createSortForMongoDB($filters);
-
-        $this->assertEquals(1, $result['title']);
-    }
-
-    public function testCreateSortForMongoDBCaseInsensitiveDesc(): void
-    {
-        $filters = [
-            '_order' => [
-                'title' => 'desc',
-                'name' => 'Desc',
-            ],
-        ];
-
-        $result = $this->searchService->createSortForMongoDB($filters);
-
-        $this->assertEquals(-1, $result['title']);
-        $this->assertEquals(-1, $result['name']);
-    }
-
-    public function testCreateSortForMongoDBNoOrder(): void
-    {
-        $result = $this->searchService->createSortForMongoDB(['title' => 'test']);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateSortForMongoDBEmptyFilters(): void
-    {
-        $result = $this->searchService->createSortForMongoDB([]);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
-
-    public function testCreateSortForMongoDBOrderNotArray(): void
-    {
-        $result = $this->searchService->createSortForMongoDB(['_order' => 'title']);
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
     }
 
     // =========================================================================
@@ -1198,16 +645,6 @@ class SearchServiceTest extends TestCase
         $this->assertCount(2, $vars['tags']);
         $this->assertContains('php', $vars['tags']);
         $this->assertContains('js', $vars['tags']);
-    }
-
-    // =========================================================================
-    // BASE_OBJECT constant
-    // =========================================================================
-
-    public function testBaseObjectConstant(): void
-    {
-        $this->assertEquals('objects', SearchService::BASE_OBJECT['database']);
-        $this->assertEquals('json', SearchService::BASE_OBJECT['collection']);
     }
 
     // =========================================================================
