@@ -410,6 +410,7 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
 import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
+import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
@@ -440,6 +441,7 @@ export default {
 		Delete,
 		FormatListChecks,
 		FormatColumns,
+		ListBoxOutline,
 		PaginationComponent,
 		PublishedIcon,
 	},
