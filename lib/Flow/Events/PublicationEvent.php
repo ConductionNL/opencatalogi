@@ -22,8 +22,6 @@ use OCP\WorkflowEngine\IRuleMatcher;
 
 /**
  * Publication flow event entity for workflow engine.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class PublicationEvent implements IEntity
 {
@@ -68,6 +66,8 @@ class PublicationEvent implements IEntity
      * @param Event        $event       The event.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) required by IEntity interface
      */
     public function prepareRuleMatcher(IRuleMatcher $ruleMatcher, string $eventName, Event $event): void
     {
@@ -80,6 +80,8 @@ class PublicationEvent implements IEntity
      * @param string $userId The user ID.
      *
      * @return bool
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) required by IEntity interface
      */
     public function isLegitimatedForUserId(string $userId): bool
     {

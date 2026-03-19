@@ -22,8 +22,6 @@ use OCP\WorkflowEngine\IRuleMatcher;
 
 /**
  * DOCS: https://docs.nextcloud.com/server/latest/developer_manual/digging_deeper/flow.html#entities
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class AttachmentEvent implements IEntity
 {
@@ -68,6 +66,8 @@ class AttachmentEvent implements IEntity
      * @param Event        $event       The event.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) required by IEntity interface
      */
     public function prepareRuleMatcher(IRuleMatcher $ruleMatcher, string $eventName, Event $event): void
     {
@@ -80,6 +80,8 @@ class AttachmentEvent implements IEntity
      * @param string $userId The user ID.
      *
      * @return bool
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) required by IEntity interface
      */
     public function isLegitimatedForUserId(string $userId): bool
     {

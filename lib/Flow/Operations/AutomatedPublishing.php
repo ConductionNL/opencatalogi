@@ -21,8 +21,6 @@ use OCP\WorkflowEngine\IOperation;
 
 /**
  * Operation for automatically publishing publications that meet predefined parameters.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class AutomatedPublishing implements IOperation
 {
@@ -67,6 +65,8 @@ class AutomatedPublishing implements IOperation
      * @param string $operation The operation string.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) required by IOperation interface
      */
     public function validateOperation(string $name, array $checks, string $operation): void
     {
@@ -79,8 +79,6 @@ class AutomatedPublishing implements IOperation
      * @param int $scope The scope to check.
      *
      * @return bool
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function isAvailableForScope(int $scope): bool
     {
@@ -100,6 +98,8 @@ class AutomatedPublishing implements IOperation
      * @param \OCP\WorkflowEngine\IRuleMatcher $ruleMatcher The rule matcher.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) required by IOperation interface
      */
     public function onEvent(string $eventName, Event $event, \OCP\WorkflowEngine\IRuleMatcher $ruleMatcher): void
     {
