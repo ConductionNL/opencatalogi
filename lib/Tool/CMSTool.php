@@ -219,8 +219,7 @@ class CMSTool implements ToolInterface
                         ],
                         'items'           => [
                             'type'        => 'array',
-                            // phpcs:ignore Generic.Files.LineLength.TooLong
-                            'description' => 'Array of menu items. Each item MUST have: order (number), name (string), link (string). ASK THE USER what items they want.',
+                            'description' => 'Array of menu items. Each item MUST have: order, name, and link.',
                             'items'       => [
                                 'type'       => 'object',
                                 'properties' => [
