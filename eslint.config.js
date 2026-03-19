@@ -51,6 +51,8 @@ module.exports = defineConfig([
 		},
 
 		rules: {
+			// Allow unused i18n functions (t, n) and _ throwaway vars — imported for future translation wiring
+			'no-unused-vars': ['error', { varsIgnorePattern: '^(t|n|_)$', argsIgnorePattern: '^_' }],
 			'jsdoc/require-jsdoc': 'off',
 			'vue/first-attribute-linebreak': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',
