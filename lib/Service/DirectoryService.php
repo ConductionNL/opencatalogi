@@ -780,7 +780,7 @@ class DirectoryService
 
             // Try to update the listing with error status if it exists.
             // @phpstan-ignore-next-line Variables are assigned in the try block before potential exceptions.
-            if (is_array($existingListings) && count($existingListings) > 0 && $objectService !== null) {
+            if (is_array($existingListings) === true && count($existingListings) > 0 && $objectService !== null) {
                 try {
                     $existingListing     = $existingListings[0];
                     $existingListingData = $existingListing->jsonSerialize();
@@ -800,7 +800,7 @@ class DirectoryService
                 } catch (\Exception $updateException) {
                     // Silently ignore update failures in error handling path.
                 }//end try
-            }
+            }//end if
         }//end try
 
         return $result;
@@ -904,7 +904,7 @@ class DirectoryService
             ];
 
             $promises[] = new Promise(
-                function ($resolve) use ($client, $publicationsUrl) {
+                resolver: function ($resolve) use ($client, $publicationsUrl) {
                     $failResult = ['success' => false, 'results' => [], 'facets' => [], 'total' => 0];
                     try {
                         $response   = $client->get($publicationsUrl);

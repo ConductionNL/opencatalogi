@@ -37,7 +37,6 @@ use RuntimeException;
  */
 class EventService
 {
-
     /**
      * EventService constructor.
      *

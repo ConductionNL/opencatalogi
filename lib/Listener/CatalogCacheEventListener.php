@@ -150,7 +150,11 @@ class CatalogCacheEventListener implements IEventListener
 
             // For creation and updates, invalidate and warm up cache.
             $catalogiService->warmupCatalogCache($catalogData['slug']);
-            $eventType = ($event instanceof ObjectCreatedEvent) ? 'creation' : 'update';
+            if ($event instanceof ObjectCreatedEvent) {
+                $eventType = 'creation';
+            } else {
+                $eventType = 'update';
+            }
 
             $logger->info(
                 message: 'OpenCatalogi: Catalog cache warmed up after '.$eventType,

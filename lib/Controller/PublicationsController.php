@@ -260,7 +260,6 @@ class PublicationsController extends Controller
             $queryParams = $this->request->getParams();
 
             // Use ObjectService centralized query builder which handles dot-to-underscore conversion.
-            /** @var array<string, mixed> $searchQuery */
             $searchQuery = $objectService->buildSearchQuery($queryParams);
             $searchQuery['_includeDeleted'] = false;
 

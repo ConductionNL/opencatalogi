@@ -389,7 +389,6 @@ class PublicationService
         }
 
         // Search objects using the new structure.
-        /** @var array<string, mixed> $result */
         $result = $objectService->searchObjectsPaginated($searchQuery);
 
         // Filter unwanted properties from results.

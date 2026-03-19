@@ -446,7 +446,6 @@ class SearchService
      * @param array $filters Query parameters from request.
      *
      * @return array $sort
-     *
      */
     public function createSortForMySQL(array $filters): array
     {
@@ -472,7 +471,6 @@ class SearchService
      * @return array $sort
      *
      * @todo Not tested yet. See PublicationsController->index().
-     *
      */
     public function createSortForMongoDB(array $filters): array
     {

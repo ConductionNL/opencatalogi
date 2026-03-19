@@ -739,7 +739,7 @@ class SettingsService
                 $registerId = ($register['id'] ?? $register['uuid'] ?? null);
                 break;
             }
-        }
+        }//end foreach
 
         // Update configuration for each object type.
         foreach ($objectTypes as $type) {

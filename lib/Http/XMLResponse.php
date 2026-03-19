@@ -61,7 +61,7 @@ class XMLResponse extends Response
      */
     public function __construct($data=[], int $status=200, array $headers=[], ?string $path=null)
     {
-        /** @phpstan-ignore argument.type */
+        // @phpstan-ignore argument.type
         parent::__construct($status);
 
         // Set response data.
@@ -243,6 +243,7 @@ class XMLResponse extends Response
                 foreach ($value as $item) {
                     $this->createChildElement(dom: $dom, parentElement: $element, tagName: $key, data: $item);
                 }
+
                 continue;
             }
 
@@ -266,7 +267,6 @@ class XMLResponse extends Response
      * @psalm-param DOMElement $parentElement
      * @psalm-param string $tagName
      * @psalm-param array<string, mixed>|string|object $data
-     *
      */
     private function createChildElement(DOMDocument $dom, DOMElement $parentElement, string $tagName, $data): void
     {

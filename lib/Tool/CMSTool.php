@@ -702,11 +702,28 @@ class CMSTool implements ToolInterface
             'float' => (float) $value,
             'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'string' => (string) $value,
-            'array' => is_array($value) === true ? $value : [],
+            'array' => $this->castToArray($value),
             default => $value,
         };
 
     }//end castParameterValue()
+
+    /**
+     * Cast a value to array, returning empty array if not already an array.
+     *
+     * @param mixed $value The value to cast.
+     *
+     * @return array The resulting array.
+     */
+    private function castToArray(mixed $value): array
+    {
+        if (is_array($value) === true) {
+            return $value;
+        }
+
+        return [];
+
+    }//end castToArray()
 
     /**
      * Create error response
