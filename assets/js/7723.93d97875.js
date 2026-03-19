@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[7723],{57723:(e,c,a)=>{a.d(c,{createPieServices:()=>s.f});var s=a(88685);a(19369)}}]);

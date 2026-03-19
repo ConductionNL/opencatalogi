@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkopencatalogi_docs=self.webpackChunkopencatalogi_docs||[]).push([[9720],{39720:(e,c,a)=>{a.d(c,{createArchitectureServices:()=>s.S});var s=a(27555);a(19369)}}]);

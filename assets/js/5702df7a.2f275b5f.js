@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkopen_catalogi_docs=self.webpackChunkopen_catalogi_docs||[]).push([[4567],{74632:e=>{e.exports={}}}]);
