@@ -8,7 +8,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 	<div>
 		<!--Generic-->
 		<CatalogModal />
-		<OrganizationModal v-if="navigationStore.modal === 'organization'" />
 		<AddPublicationThemeModal v-if="navigationStore.modal === 'addPublicationTheme'" />
 		<!--View Modals-->
 		<ViewDirectoryModal />
@@ -49,7 +48,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 
 // Generic
 import CatalogModal from './catalog/CatalogModal.vue'
-import OrganizationModal from './organization/OrganizationModal.vue'
 import UploadFilesModal from './generic/UploadFiles.vue'
 // View Modals
 import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
@@ -95,7 +93,6 @@ export default {
 		CatalogModal,
 		AddDirectoryModal,
 		EditListingModal,
-		OrganizationModal,
 		// View Modals
 		ViewDirectoryModal,
 		ViewGlossaryModal,
