@@ -1,9 +1,9 @@
 <?php
 /**
- * Service for handling publication-related operations.
+ * Service for handling catalog-related operations.
  *
- * Provides functionality for retrieving, saving, updating, and deleting publications,
- * as well as managing publication-related data and filters.
+ * Provides functionality for retrieving, saving, updating, and deleting catalogs,
+ * as well as managing catalog-related data, filters, and caching.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -36,10 +36,10 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * Service for handling publication-related operations.
+ * Service for handling catalog-related operations.
  *
- * Provides functionality for retrieving, saving, updating, and deleting publications,
- * as well as managing publication-related data and filters.
+ * Provides functionality for retrieving, saving, updating, and deleting catalogs,
+ * as well as managing catalog-related data, filters, and caching.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -47,31 +47,43 @@ use RuntimeException;
 class CatalogiService
 {
 
+    /**
+     * The cached object service instance.
+     *
+     * @var object|null
+     */
     private ?object $objectService = null;
 
     /**
+     * The name of the app.
+     *
      * @var string $appName The name of the app
      */
     private string $appName;
 
     /**
+     * List of available registers from catalogs.
+     *
      * @var array<string> List of available registers from catalogs
      */
     private array $availableRegisters = [];
 
     /**
+     * List of available schemas from catalogs.
+     *
      * @var array<string> List of available schemas from catalogs
      */
     private array $availableSchemas = [];
 
     /**
+     * Cache instance for storing catalog data.
+     *
      * @var ICache Cache instance for storing catalog data
      */
     private ICache $cache;
 
-
     /**
-     * Constructor for PublicationService.
+     * Constructor for CatalogiService.
      *
      * @param IAppConfig         $config       App configuration interface
      * @param IRequest           $request      Request interface
@@ -93,7 +105,6 @@ class CatalogiService
 
     }//end __construct()
 
-
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
@@ -112,9 +123,8 @@ class CatalogiService
 
     }//end getObjectService()
 
-
     /**
-     * Attempts to retrieve the OpenRegister service from the container.
+     * Attempts to retrieve the OpenRegister FileService from the container.
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
@@ -131,24 +141,24 @@ class CatalogiService
 
     }//end getFileService()
 
-
     /**
      * Get register and schema combinations from catalogs.
      *
      * This method retrieves all catalogs (or a specific one if ID is provided),
      * extracts their registers and schemas, and stores them as general variables.
      *
-     * @param  string|integer|null $catalogId Optional ID of a specific catalog to filter by
+     * @param string|integer|null $catalogId Optional ID of a specific catalog to filter by
+     *
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
-    public function getCatalogFilters(null|string|int $catalogId = null): array
+    public function getCatalogFilters(null|string|int $catalogId=null): array
     {
-        // Establish the default schema and register
+        // Establish the default schema and register.
         $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
-        // Setup the base query for searchObjects
+        // Setup the base query for searchObjects.
         $query = [
             '@self' => [
                 'register' => $register,
@@ -156,33 +166,33 @@ class CatalogiService
             ],
         ];
 
-        // If a specific catalog ID is provided, add it as a filter
+        // If a specific catalog ID is provided, add it as a filter.
         if ($catalogId !== null) {
             $query['@self']['uuid'] = $catalogId;
         }
 
-        // Get catalogs using searchObjects (handles deleted field correctly)
+        // Get catalogs using searchObjects (handles deleted field correctly).
         $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
-        // Initialize arrays to store unique registers and schemas
+        // Initialize arrays to store unique registers and schemas.
         $uniqueRegisters = [];
         $uniqueSchemas   = [];
 
-        // Iterate over each catalog to extract registers and schemas
+        // Iterate over each catalog to extract registers and schemas.
         foreach ($catalogs as $catalog) {
             $catalog = $catalog->jsonSerialize();
-            // Check if 'registers' is an array and merge unique values
-            if (isset($catalog['registers']) && is_array($catalog['registers'])) {
+            // Check if registers is an array and merge unique values.
+            if (isset($catalog['registers']) === true && is_array($catalog['registers']) === true) {
                 $uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
             }
 
-            // Check if 'schemas' is an array and merge unique values
-            if (isset($catalog['schemas']) && is_array($catalog['schemas'])) {
+            // Check if schemas is an array and merge unique values.
+            if (isset($catalog['schemas']) === true && is_array($catalog['schemas']) === true) {
                 $uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
             }
         }
 
-        // Remove duplicate values and assign to class properties
+        // Remove duplicate values and assign to class properties.
         $this->availableRegisters = array_unique($uniqueRegisters);
         $this->availableSchemas   = array_unique($uniqueSchemas);
 
@@ -192,7 +202,6 @@ class CatalogiService
         ];
 
     }//end getCatalogFilters()
-
 
     /**
      * Get the list of available registers.
@@ -205,7 +214,6 @@ class CatalogiService
 
     }//end getAvailableRegisters()
 
-
     /**
      * Get the list of available schemas.
      *
@@ -217,42 +225,41 @@ class CatalogiService
 
     }//end getAvailableSchemas()
 
-
     /**
-     * Helper method to get configuration array from the current request
+     * Helper method to get configuration array from the current request.
      *
      * @param string|null $register Optional register identifier
      * @param string|null $schema   Optional schema identifier
      * @param array|null  $ids      Optional array of specific IDs to filter
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — parameters reserved for future filter use
-     * @return array Configuration array containing:
-     *               - limit: (int) Maximum number of items per page
-     *               - offset: (int|null) Number of items to skip
-     *               - page: (int|null) Current page number
-     *               - filters: (array) Filter parameters
-     *               - sort: (array) Sort parameters
-     *               - search: (string|null) Search term
-     *               - extend: (array|null) Properties to extend
-     *               - fields: (array|null) Fields to include
-     *               - unset: (array|null) Fields to exclude
-     *               - register: (string|null) Register identifier
-     *               - schema: (string|null) Schema identifier
-     *               - ids: (array|null) Specific IDs to filter
+     * @return array Configuration array with limit, offset, page, filters, sort, search, extend, fields, unset, queries, ids.
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
      */
-    private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array
+    private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
     {
         $params = $this->request->getParams();
 
         unset($params['id']);
         unset($params['_route']);
 
-        // Extract and normalize parameters
+        // Extract and normalize parameters.
         $limit  = (int) ($params['limit'] ?? $params['_limit'] ?? 20);
-        $offset = isset($params['offset']) ? (int) $params['offset'] : (isset($params['_offset']) ? (int) $params['_offset'] : null);
-        $page   = isset($params['page']) ? (int) $params['page'] : (isset($params['_page']) ? (int) $params['_page'] : null);
+        $offset = null;
+        if (isset($params['offset']) === true) {
+            $offset = (int) $params['offset'];
+        } else if (isset($params['_offset']) === true) {
+            $offset = (int) $params['_offset'];
+        }
 
-        // If we have a page but no offset, calculate the offset
+        $page = null;
+        if (isset($params['page']) === true) {
+            $page = (int) $params['page'];
+        } else if (isset($params['_page']) === true) {
+            $page = (int) $params['_page'];
+        }
+
+        // If we have a page but no offset, calculate the offset.
         if ($page !== null && $offset === null) {
             $offset = (($page - 1) * $limit);
         }
@@ -278,7 +285,6 @@ class CatalogiService
 
     }//end getConfig()
 
-
     /**
      * Get a catalog by its slug from cache or database.
      *
@@ -292,7 +298,7 @@ class CatalogiService
      */
     public function getCatalogBySlug(string $slug): ?array
     {
-        // Step 1: Try to get from cache
+        // Step 1: Try to get from cache.
         $cacheKey      = 'catalog_slug_'.$slug;
         $cachedCatalog = $this->cache->get($cacheKey);
 
@@ -301,11 +307,11 @@ class CatalogiService
             return $cachedCatalog;
         }
 
-        // Step 2: Not in cache, query the database
+        // Step 2: Not in cache, query the database.
         $this->logger->debug('Catalog not in cache, querying database', ['slug' => $slug]);
 
         try {
-            // Get catalog schema and register from config
+            // Get catalog schema and register from config.
             $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
@@ -330,7 +336,7 @@ class CatalogiService
 
             $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
-            if (empty($catalogs)) {
+            if (empty($catalogs) === true) {
                 $this->logger->error(
                     'Catalog not found',
                     [
@@ -344,7 +350,7 @@ class CatalogiService
 
             $catalog = $catalogs[0]->jsonSerialize();
 
-            // Step 3: Store in cache (TTL: 1 hour = 3600 seconds)
+            // Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
             $this->cache->set($cacheKey, $catalog, 3600);
             $this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
 
@@ -361,7 +367,6 @@ class CatalogiService
         }//end try
 
     }//end getCatalogBySlug()
-
 
     /**
      * Invalidate the cache for a specific catalog.
@@ -381,7 +386,6 @@ class CatalogiService
 
     }//end invalidateCatalogCache()
 
-
     /**
      * Invalidate cache for a catalog by its ID.
      *
@@ -395,7 +399,7 @@ class CatalogiService
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
         try {
-            // Get catalog register/schema for magic mapper routing
+            // Get catalog register and schema for magic mapper routing.
             $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
@@ -406,7 +410,7 @@ class CatalogiService
             );
             $catalogData = $catalog->jsonSerialize();
 
-            if (isset($catalogData['slug'])) {
+            if (isset($catalogData['slug']) === true) {
                 $this->invalidateCatalogCache($catalogData['slug']);
             }
         } catch (Exception $e) {
@@ -417,10 +421,9 @@ class CatalogiService
                     'error'     => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
     }//end invalidateCatalogCacheById()
-
 
     /**
      * Warm up the cache for a specific catalog.
@@ -435,13 +438,12 @@ class CatalogiService
      */
     public function warmupCatalogCache(string $slug): void
     {
-        // Force a fresh load from database and store in cache
+        // Force a fresh load from database and store in cache.
         $this->invalidateCatalogCache($slug);
         $this->getCatalogBySlug($slug);
         $this->logger->debug('Catalog cache warmed up', ['slug' => $slug]);
 
     }//end warmupCatalogCache()
-
 
     /**
      * Warm up cache for a catalog by its ID.
@@ -454,7 +456,7 @@ class CatalogiService
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
         try {
-            // Get catalog register/schema for magic mapper routing
+            // Get catalog register and schema for magic mapper routing.
             $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
             $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
@@ -465,7 +467,7 @@ class CatalogiService
             );
             $catalogData = $catalog->jsonSerialize();
 
-            if (isset($catalogData['slug'])) {
+            if (isset($catalogData['slug']) === true) {
                 $this->warmupCatalogCache($catalogData['slug']);
             }
         } catch (Exception $e) {
@@ -476,96 +478,101 @@ class CatalogiService
                     'error'     => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
     }//end warmupCatalogCacheById()
 
-
     /**
-     * Retrieves a list of all objects for a specific register and schema
+     * Retrieves a list of all objects for a specific register and schema.
      *
      * This method returns a paginated list of objects that match the specified register and schema.
      * It supports filtering, sorting, and pagination through query parameters.
      *
-     * @param ObjectService $objectService The object service
+     * @param string|integer|null $catalogId Optional catalog ID to filter by
      *
      * @return JSONResponse A JSON response containing the list of objects
      *
-     * @NoAdminRequired *
+     * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
-    public function index(null|string|int $catalogId = null): JSONResponse
+    public function index(null|string|int $catalogId=null): JSONResponse
     {
-        // Get config and fetch objects
+        // Get config and fetch objects.
         $config = $this->getConfig();
 
-        // Get the context for the catalog
+        // Get the context for the catalog.
         $context = $this->getCatalogFilters($catalogId);
 
         $objectService = $this->getObjectService();
 
-        // Build search query from config - use _register and _schema for magic mapper routing
+        // Build search query from config using _register and _schema for magic mapper routing.
         $query = [];
-        if (!empty($context['registers']) || !empty($context['schemas'])) {
+        if (empty($context['registers']) === false || empty($context['schemas']) === false) {
             $query['@self'] = [];
-            if (!empty($context['registers'])) {
-                // Use scalar value when only one register to avoid magic_mapper overhead
-                $query['@self']['register'] = count($context['registers']) === 1
-                    ? $context['registers'][0]
-                    : $context['registers'];
+            if (empty($context['registers']) === false) {
+                // Use scalar value when only one register to avoid magic_mapper overhead.
+                if (count($context['registers']) === 1) {
+                    $query['@self']['register'] = $context['registers'][0];
+                } else {
+                    $query['@self']['register'] = $context['registers'];
+                }
             }
 
-            if (!empty($context['schemas'])) {
-                // Use scalar value when only one schema to avoid magic_mapper overhead
-                $query['@self']['schema'] = count($context['schemas']) === 1
-                    ? $context['schemas'][0]
-                    : $context['schemas'];
+            if (empty($context['schemas']) === false) {
+                // Use scalar value when only one schema to avoid magic_mapper overhead.
+                if (count($context['schemas']) === 1) {
+                    $query['@self']['schema'] = $context['schemas'][0];
+                } else {
+                    $query['@self']['schema'] = $context['schemas'];
+                }
             }
         }
 
-        // Add other filters from config
-        if (!empty($config['filters'])) {
+        // Add other filters from config.
+        if (empty($config['filters']) === false) {
             foreach ($config['filters'] as $key => $value) {
-                if (!in_array($key, ['register', 'schema'])) {
+                if (in_array($key, ['register', 'schema']) === false) {
                     $query[$key] = $value;
                 }
             }
         }
 
-        // Add special parameters
-        if (isset($config['limit'])) {
+        // Add special parameters.
+        if (isset($config['limit']) === true) {
             $query['_limit'] = $config['limit'];
         }
 
-        if (isset($config['offset'])) {
+        if (isset($config['offset']) === true) {
             $query['_offset'] = $config['offset'];
         }
 
-        if (isset($config['page'])) {
+        if (isset($config['page']) === true) {
             $query['_page'] = $config['page'];
         }
 
-        if (isset($config['queries'])) {
+        if (isset($config['queries']) === true) {
             $query['_queries'] = $config['queries'];
         }
 
-        if (isset($config['order'])) {
+        if (isset($config['order']) === true) {
             $query['_order'] = $config['order'];
         }
 
-        // Use searchObjectsPaginated which handles pagination internally
+        // Use searchObjectsPaginated which handles pagination internally.
         $result = $objectService->searchObjectsPaginated($query);
 
-        // Filter out unwanted properties from the '@self' array in each object
+        // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(
             function ($object) {
                 $objectArray = $object->jsonSerialize();
 
-                // @todo: a loggedin user should be able to see the full object
-                if (isset($objectArray['@self']) && is_array($objectArray['@self'])) {
+                // @todo: a logged-in user should be able to see the full object.
+                if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
                     $unwantedProperties = [
                         'schemaVersion',
                         'relations',
@@ -578,7 +585,7 @@ class CatalogiService
                         'size',
                         'deleted',
                     ];
-                    // Remove unwanted properties from the '@self' array
+                    // Remove unwanted properties from the @self array.
                     $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
                 }
 
@@ -589,10 +596,8 @@ class CatalogiService
 
         $result['results'] = $filteredResults;
 
-        // Return paginated results
+        // Return paginated results.
         return new JSONResponse($result);
 
     }//end index()
-
-
 }//end class

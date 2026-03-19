@@ -449,14 +449,19 @@ class SearchService
      * @param array $filters Query parameters from request.
      *
      * @return array $sort
+     *
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function createSortForMySQL(array $filters): array
     {
         $sort = [];
         if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
             foreach ($filters['_order'] as $field => $direction) {
-                $direction    = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-                $sort[$field] = $direction;
+                if (strtoupper($direction) === 'DESC') {
+                    $sort[$field] = 'DESC';
+                } else {
+                    $sort[$field] = 'ASC';
+                }
             }
         }
 
@@ -472,13 +477,19 @@ class SearchService
      * @return array $sort
      *
      * @todo Not tested yet. See PublicationsController->index().
+     *
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function createSortForMongoDB(array $filters): array
     {
         $sort = [];
         if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
             foreach ($filters['_order'] as $field => $direction) {
-                $sort[$field] = strtoupper($direction) === 'DESC' ? -1 : 1;
+                if (strtoupper($direction) === 'DESC') {
+                    $sort[$field] = -1;
+                } else {
+                    $sort[$field] = 1;
+                }
             }
         }
 
