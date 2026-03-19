@@ -43,6 +43,7 @@ use Psr\Log\LoggerInterface;
  * @package  OCA\OpenCatalogi\Tool
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
  */
 class CMSTool implements ToolInterface
 {
@@ -133,9 +134,16 @@ class CMSTool implements ToolInterface
     {
         $this->agent = $agent;
 
-        // Determine user ID for operations
-        // Prioritize session user, fallback to agent's configured user
-        $this->currentUserId = $this->userSession->getUser() ? $this->userSession->getUser()->getUID() : ($agent ? $agent->getUser() : null);
+        // Determine user ID for operations.
+        // Prioritize session user, fallback to agent's configured user.
+        $sessionUser = $this->userSession->getUser();
+        if ($sessionUser !== null) {
+            $this->currentUserId = $sessionUser->getUID();
+        } else if ($agent !== null) {
+            $this->currentUserId = $agent->getUser();
+        } else {
+            $this->currentUserId = null;
+        }
 
     }//end setAgent()
 
@@ -151,7 +159,7 @@ class CMSTool implements ToolInterface
     public function getFunctions(): array
     {
         return [
-            // Page functions
+            // Page functions.
             [
                 'name'        => 'cms_create_page',
                 'description' => 'Create a new page with title and content. Returns the page UUID.',
@@ -193,10 +201,12 @@ class CMSTool implements ToolInterface
                 ],
             ],
 
-            // Menu functions
+            // Menu functions.
             [
                 'name'        => 'cms_create_menu',
-                'description' => 'Create a new menu with items. Ask the user for menu position, menu items (with names, links, order), and access groups if not provided. Each menu MUST have at least one item.',
+                'description' => 'Create a new menu with items. Ask the user for menu position, '
+                    .'menu items (with names, links, order), and access groups if not provided. '
+                    .'Each menu MUST have at least one item.',
                 'parameters'  => [
                     'type'       => 'object',
                     'properties' => [
@@ -206,11 +216,13 @@ class CMSTool implements ToolInterface
                         ],
                         'position'        => [
                             'type'        => 'number',
-                            'description' => 'Menu display position/order (0 = first, higher = later). ASK THE USER for this if not provided.',
+                            'description' => 'Menu display position/order (0 = first, higher = later). '
+                                .'ASK THE USER for this if not provided.',
                         ],
                         'items'           => [
                             'type'        => 'array',
-                            'description' => 'Array of menu items. Each item MUST have: order (number), name (string), link (string). ASK THE USER what items they want.',
+                            'description' => 'Array of menu items. Each item MUST have: order (number), '
+                                .'name (string), link (string). ASK THE USER what items they want.',
                             'items'       => [
                                 'type'       => 'object',
                                 'properties' => [
