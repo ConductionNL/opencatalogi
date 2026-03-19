@@ -1,31 +1,107 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<GenericObjectTable
-		object-type="organization"
-		object-type-plural="organizations"
+	<CnIndexPage
+		ref="indexPage"
 		:title="t('opencatalogi', 'Organizations')"
 		:description="t('opencatalogi', 'Manage your organizations and their configurations')"
-		:empty-icon="OfficeBuildingOutline"
-		:card-icon="OfficeBuildingOutline"
-		:properties="organizationProperties"
-		:object-actions="organizationObjectActions"
-		:mass-actions="organizationMassActions"
-		:actions="organizationActions"
-		:add-action="addOrganizationAction"
-		:help-url="'https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/organisaties'"
-		@mounted="onMounted" />
+		:show-title="true"
+		:objects="currentObjects"
+		:columns="tableColumns"
+		:pagination="currentPagination"
+		:loading="objectStore.isLoading('organization')"
+		:selectable="true"
+		:selected-ids="selectedIds"
+		:show-view-toggle="true"
+		:show-edit-action="false"
+		:show-copy-action="false"
+		:show-delete-action="false"
+		:show-mass-import="false"
+		:show-mass-export="false"
+		:show-mass-copy="false"
+		:show-mass-delete="false"
+		:view-mode="viewMode"
+		:add-label="t('opencatalogi', 'Add Organization')"
+		row-key="id"
+		:empty-text="t('opencatalogi', 'No organizations found')"
+		:refreshing="isRefreshing"
+		@add="onAdd"
+		@refresh="handleRefresh"
+		@page-changed="onPageChange"
+		@page-size-changed="onPageSizeChange"
+		@view-mode-change="viewMode = $event"
+		@select="onSelect"
+		@row-click="onRowClick">
+		<!-- Mass actions in action bar -->
+		<template #action-items>
+			<NcActionButton close-after-click
+				:disabled="selectedIds.length === 0"
+				@click="onMassDelete">
+				<template #icon>
+					<Delete :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Delete Selected') }}
+			</NcActionButton>
+			<NcActionButton close-after-click
+				:disabled="selectedIds.length === 0"
+				@click="onMassPublish">
+				<template #icon>
+					<PublishIcon :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Publish Selected') }}
+			</NcActionButton>
+			<NcActionButton close-after-click
+				:disabled="selectedIds.length === 0"
+				@click="onMassDepublish">
+				<template #icon>
+					<PublishOffIcon :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Depublish Selected') }}
+			</NcActionButton>
+		</template>
+
+		<!-- Row actions -->
+		<template #row-actions="{ row }">
+			<NcActions>
+				<template #icon>
+					<DotsHorizontal :size="20" />
+				</template>
+				<NcActionButton close-after-click @click="viewOrganization(row)">
+					<template #icon>
+						<Eye :size="20" />
+					</template>
+					{{ t('opencatalogi', 'View') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="editOrganization(row)">
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Edit') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="copyOrganization(row)">
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Copy') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="deleteOrganization(row)">
+					<template #icon>
+						<TrashCanOutline :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Delete') }}
+				</NcActionButton>
+			</NcActions>
+		</template>
+	</CnIndexPage>
 </template>
 
 <script>
-import GenericObjectTable from '../../components/GenericObjectTable.vue'
-import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
+import { NcActions, NcActionButton } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
@@ -37,184 +113,115 @@ import PublishOffIcon from 'vue-material-design-icons/PublishOff.vue'
 export default {
 	name: 'OrganizationIndex',
 	components: {
-		GenericObjectTable,
+		CnIndexPage,
+		NcActions,
+		NcActionButton,
+		DotsHorizontal,
+		Eye,
+		Pencil,
+		ContentCopy,
+		TrashCanOutline,
+		Delete,
+		PublishIcon,
+		PublishOffIcon,
 	},
 	data() {
 		return {
-			organizationProperties: [
-				{
-					id: 'name',
-					label: 'Name',
-					key: 'name',
-					sortable: true,
-					searchable: true,
-				},
-				{
-					id: 'website',
-					label: 'Website',
-					key: 'website',
-					sortable: true,
-					searchable: true,
-				},
-				{
-					id: 'summary',
-					label: 'Summary',
-					key: 'summary',
-					sortable: false,
-					searchable: true,
-				},
-				{
-					id: 'oin',
-					label: 'OIN',
-					key: 'oin',
-					sortable: true,
-					searchable: true,
-				},
-				{
-					id: 'tooi',
-					label: 'TOOI',
-					key: 'tooi',
-					sortable: true,
-					searchable: true,
-				},
-				{
-					id: 'rsin',
-					label: 'RSIN',
-					key: 'rsin',
-					sortable: true,
-					searchable: true,
-				},
-				{
-					id: 'updatedAt',
-					label: 'Last Updated',
-					key: 'updatedAt',
-					sortable: true,
-					searchable: false,
-				},
-			],
-			organizationObjectActions: [
-				{
-					id: 'view',
-					label: 'View',
-					icon: Eye,
-					handler: (organization) => {
-						objectStore.setActiveObject('organization', organization)
-						navigationStore.setModal('viewOrganization')
-					},
-				},
-				{
-					id: 'edit',
-					label: 'Edit',
-					icon: Pencil,
-					handler: (organization) => {
-						objectStore.setActiveObject('organization', organization)
-						navigationStore.setModal('organization')
-					},
-				},
-				{
-					id: 'copy',
-					label: 'Copy',
-					icon: ContentCopy,
-					handler: (organization) => {
-						objectStore.setActiveObject('organization', organization)
-						navigationStore.setDialog('copyObject', {
-							objectType: 'organization',
-							dialogTitle: 'Organization',
-						})
-					},
-				},
-				{
-					id: 'delete',
-					label: 'Delete',
-					icon: TrashCanOutline,
-					handler: (organization) => {
-						objectStore.setActiveObject('organization', organization)
-						navigationStore.setDialog('deleteObject', {
-							objectType: 'organization',
-							dialogTitle: 'Organization',
-						})
-					},
-				},
-			],
-			organizationMassActions: [
-				{
-					id: 'massDelete',
-					label: 'Delete Selected',
-					icon: Delete,
-					handler: () => {
-						navigationStore.setDialog('massDeleteObjects', {
-							objectType: 'organization',
-							dialogTitle: 'Organizations',
-						})
-					},
-				},
-				{
-					id: 'massPublish',
-					label: 'Publish Selected',
-					icon: PublishIcon,
-					handler: () => {
-						navigationStore.setDialog('massPublishObjects', {
-							objectType: 'organization',
-							dialogTitle: 'Organizations',
-						})
-					},
-				},
-				{
-					id: 'massDepublish',
-					label: 'Depublish Selected',
-					icon: PublishOffIcon,
-					handler: () => {
-						navigationStore.setDialog('massDepublishObjects', {
-							objectType: 'organization',
-							dialogTitle: 'Organizations',
-						})
-					},
-				},
-			],
-			organizationActions: [
-				{
-					id: 'add',
-					label: 'Add Organization',
-					icon: Plus,
-					primary: true,
-					handler: () => {
-						objectStore.clearActiveObject('organization')
-						navigationStore.setModal('organization')
-					},
-				},
-				{
-					id: 'refresh',
-					label: 'Refresh',
-					icon: Refresh,
-					handler: () => {
-						objectStore.fetchCollection('organization')
-					},
-					disabled: () => objectStore.isLoading('organization'),
-				},
-				{
-					id: 'help',
-					label: 'Help',
-					icon: HelpCircleOutline,
-					handler: () => {
-						window.open('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/organisaties', '_blank')
-					},
-				},
-			],
-			addOrganizationAction: {
-				id: 'add',
-				label: 'Add Organization',
-				icon: Plus,
-				handler: () => {
-					objectStore.clearActiveObject('organization')
-					navigationStore.setModal('organization')
-				},
-			},
+			selectedIds: [],
+			viewMode: 'table',
+			isRefreshing: false,
 		}
 	},
+	computed: {
+		tableColumns() {
+			return [
+				{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true },
+				{ key: 'website', label: t('opencatalogi', 'Website'), sortable: true },
+				{ key: 'summary', label: t('opencatalogi', 'Summary') },
+				{ key: 'oin', label: t('opencatalogi', 'OIN'), sortable: true },
+				{ key: 'tooi', label: t('opencatalogi', 'TOOI'), sortable: true },
+				{ key: 'rsin', label: t('opencatalogi', 'RSIN'), sortable: true },
+			]
+		},
+		currentObjects() {
+			const collection = objectStore.getCollection('organization')
+			if (Array.isArray(collection)) return collection
+			return collection?.results || []
+		},
+		currentPagination() {
+			return objectStore.getPagination('organization')
+				|| { total: 0, page: 1, pages: 1, limit: 20 }
+		},
+	},
+	mounted() {
+		objectStore.fetchCollection('organization')
+	},
 	methods: {
-		onMounted() {
-			console.info('OrganizationIndex mounted, fetching organizations...')
-			objectStore.fetchCollection('organization')
+		onAdd() {
+			objectStore.clearActiveObject('organization')
+			navigationStore.setModal('organization')
+		},
+		async handleRefresh() {
+			this.isRefreshing = true
+			try {
+				await objectStore.fetchCollection('organization')
+			} finally {
+				this.isRefreshing = false
+			}
+		},
+		onPageChange(page) {
+			objectStore.fetchCollection('organization', { _page: page })
+		},
+		onPageSizeChange(size) {
+			objectStore.fetchCollection('organization', { _page: 1, _limit: size })
+		},
+		onSelect(ids) {
+			this.selectedIds = ids
+			objectStore.setSelectedObjects(ids)
+		},
+		onRowClick(row) {
+			objectStore.setActiveObject('organization', row)
+			navigationStore.setModal('viewOrganization')
+		},
+		viewOrganization(organization) {
+			objectStore.setActiveObject('organization', organization)
+			navigationStore.setModal('viewOrganization')
+		},
+		editOrganization(organization) {
+			objectStore.setActiveObject('organization', organization)
+			navigationStore.setModal('organization')
+		},
+		copyOrganization(organization) {
+			objectStore.setActiveObject('organization', organization)
+			navigationStore.setDialog('copyObject', {
+				objectType: 'organization',
+				dialogTitle: 'Organization',
+			})
+		},
+		deleteOrganization(organization) {
+			objectStore.setActiveObject('organization', organization)
+			navigationStore.setDialog('deleteObject', {
+				objectType: 'organization',
+				dialogTitle: 'Organization',
+			})
+		},
+		onMassDelete() {
+			navigationStore.setDialog('massDeleteObjects', {
+				objectType: 'organization',
+				dialogTitle: 'Organizations',
+			})
+		},
+		onMassPublish() {
+			navigationStore.setDialog('massPublishObjects', {
+				objectType: 'organization',
+				dialogTitle: 'Organizations',
+			})
+		},
+		onMassDepublish() {
+			navigationStore.setDialog('massDepublishObjects', {
+				objectType: 'organization',
+				dialogTitle: 'Organizations',
+			})
 		},
 	},
 }
