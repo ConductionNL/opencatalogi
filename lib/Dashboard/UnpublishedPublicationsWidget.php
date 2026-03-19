@@ -18,7 +18,6 @@ namespace OCA\OpenCatalogi\Dashboard;
 
 use OCP\Dashboard\IWidget;
 use OCP\IL10N;
-use OCP\IURLGenerator;
 use OCP\Util;
 
 use OCA\OpenCatalogi\AppInfo\Application;
@@ -31,12 +30,10 @@ class UnpublishedPublicationsWidget implements IWidget
     /**
      * Constructor.
      *
-     * @param IL10N         $l10n Localization service.
-     * @param IURLGenerator $url  URL generator.
+     * @param IL10N $l10n Localization service.
      */
     public function __construct(
         private IL10N $l10n,
-        private IURLGenerator $url
     ) {
 
     }//end __construct()

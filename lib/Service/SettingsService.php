@@ -19,7 +19,6 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCP\IAppConfig;
-use OCP\IRequest;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCP\AppFramework\Http\JSONResponse;
@@ -64,13 +63,11 @@ class SettingsService
      * SettingsService constructor.
      *
      * @param IAppConfig         $config     App configuration interface.
-     * @param IRequest           $request    Request interface.
      * @param ContainerInterface $container  Container for dependency injection.
      * @param IAppManager        $appManager App manager interface.
      */
     public function __construct(
         private readonly IAppConfig $config,
-        private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager
     ) {
@@ -195,9 +192,10 @@ class SettingsService
                 $matchingRegister = null;
                 foreach ($registers as $register) {
                     // Convert Register entity to array if needed.
-                    $registerData = $register->jsonSerialize();
                     if (is_array($register) === true) {
                         $registerData = $register;
+                    } else {
+                        $registerData = $register->jsonSerialize();
                     }
 
                     if (stripos($registerData['slug'], $registerSlug) !== false) {

@@ -60,13 +60,6 @@ class SitemapService
     ];
 
     /**
-     * The name of the app.
-     *
-     * @var string $appName The name of the app
-     */
-    private string $appName;
-
-    /**
      * Constructor for SitemapService.
      *
      * @param ContainerInterface $container       Server container for dependency injection
@@ -80,7 +73,6 @@ class SitemapService
         private readonly SettingsService $settingsService,
         private readonly IURLGenerator $urlGenerator,
     ) {
-        $this->appName = 'opencatalogi';
 
     }//end __construct()
 

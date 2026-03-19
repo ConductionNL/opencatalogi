@@ -199,4 +199,124 @@ class XMLResponseTest extends TestCase
 
         $this->assertStringStartsWith('<?xml version="1.0" encoding="UTF-8"?>', $xml);
     }
+
+    public function testRenderWithNumericKeys(): void
+    {
+        $data = [
+            '@root' => 'root',
+            '0'     => 'first',
+            '1'     => 'second',
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        // Numeric keys get prefixed with "item".
+        $this->assertStringContainsString('<item0>first</item0>', $xml);
+        $this->assertStringContainsString('<item1>second</item1>', $xml);
+    }
+
+    public function testRenderWithAtPrefixedKeys(): void
+    {
+        $data = [
+            '@root'  => 'root',
+            '@field' => 'value',
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        // @ prefix is stripped from element names.
+        $this->assertStringContainsString('<field>value</field>', $xml);
+    }
+
+    public function testRenderWithObjectWithToString(): void
+    {
+        $obj = new class {
+            public function __toString(): string
+            {
+                return 'stringified';
+            }
+        };
+        $data = [
+            '@root' => 'root',
+            'item'  => $obj,
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        $this->assertStringContainsString('<item>stringified</item>', $xml);
+    }
+
+    public function testRenderWithObjectWithoutToString(): void
+    {
+        $obj = new \stdClass();
+        $data = [
+            '@root' => 'root',
+            'item'  => $obj,
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        $this->assertStringContainsString('[Object of class stdClass]', $xml);
+    }
+
+    public function testRenderWithAssociativeSubArray(): void
+    {
+        $data = [
+            '@root'   => 'root',
+            'details' => [
+                'name' => 'Test',
+                'age'  => '30',
+            ],
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        $this->assertStringContainsString('<details>', $xml);
+        $this->assertStringContainsString('<name>Test</name>', $xml);
+        $this->assertStringContainsString('<age>30</age>', $xml);
+    }
+
+    public function testRenderWithNullRootTag(): void
+    {
+        $response = new XMLResponse();
+        $xml = $response->arrayToXml(['name' => 'Test']);
+
+        // Should use default 'root' when no rootTag or @root provided.
+        $this->assertStringContainsString('<root>', $xml);
+    }
+
+    public function testConstructorWithExistingContentDisposition(): void
+    {
+        // If Content-Disposition is already set, it should not be overwritten.
+        $response = new XMLResponse([], 200, ['Content-Disposition' => 'inline'], '/data.xml');
+
+        $headers = $response->getHeaders();
+        $this->assertSame('inline', $headers['Content-Disposition']);
+    }
+
+    public function testRenderWithEmptyTagSelfClosing(): void
+    {
+        $data = [
+            '@root' => 'root',
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        // Should contain XML declaration and root element.
+        $this->assertStringContainsString('<?xml', $xml);
+        $this->assertStringContainsString('root', $xml);
+    }
+
+    public function testRenderWithHtmlEntityDecoding(): void
+    {
+        $data = [
+            '@root' => 'doc',
+            'text'  => '&lt;tag&gt;',
+        ];
+        $response = new XMLResponse($data);
+        $xml = $response->render();
+
+        // html_entity_decode converts &lt; to < which then gets XML-encoded.
+        $this->assertStringContainsString('&lt;tag&gt;', $xml);
+    }
 }

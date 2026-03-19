@@ -20,7 +20,6 @@ namespace OCA\OpenCatalogi\Repair;
 
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use OCP\IConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCA\OpenCatalogi\AppInfo\Application;
@@ -38,12 +37,10 @@ class InitializeSettings implements IRepairStep
     /**
      * Constructor.
      *
-     * @param IConfig            $config     The config service.
      * @param IAppManager        $appManager The app manager.
      * @param ContainerInterface $container  The container.
      */
     public function __construct(
-        private readonly IConfig $config,
         private readonly IAppManager $appManager,
         private readonly ContainerInterface $container
     ) {

@@ -7,7 +7,6 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Controller\SettingsController;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\App\IAppManager;
@@ -23,7 +22,6 @@ class SettingsControllerTest extends TestCase
 {
 
     private IRequest|MockObject $request;
-    private IAppConfig|MockObject $config;
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
     private SettingsService|MockObject $settingsService;
@@ -33,7 +31,6 @@ class SettingsControllerTest extends TestCase
     protected function setUp(): void
     {
         $this->request         = $this->createMock(IRequest::class);
-        $this->config          = $this->createMock(IAppConfig::class);
         $this->container       = $this->createMock(ContainerInterface::class);
         $this->appManager      = $this->createMock(IAppManager::class);
         $this->settingsService = $this->createMock(SettingsService::class);
@@ -45,7 +42,6 @@ class SettingsControllerTest extends TestCase
         $this->controller = new SettingsController(
             'opencatalogi',
             $this->request,
-            $this->config,
             $this->container,
             $this->appManager,
             $this->settingsService,

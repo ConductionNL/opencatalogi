@@ -50,4 +50,14 @@ class CatalogWidgetTest extends TestCase
     {
         $this->assertNull($this->widget->getUrl());
     }
+
+    public function testLoadDoesNotThrow(): void
+    {
+        // load() calls Util::addScript and Util::addStyle (static methods).
+        // In the Nextcloud test environment, these are available.
+        $this->widget->load();
+
+        // If we reach here, no exception was thrown.
+        $this->assertTrue(true);
+    }
 }

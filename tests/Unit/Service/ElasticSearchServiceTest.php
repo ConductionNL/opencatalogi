@@ -28,13 +28,9 @@ interface MockableElasticClient
 /**
  * Unit tests for ElasticSearchService.
  *
- * For methods that depend on the private getClient() method (addObject, removeObject,
- * updateObject, searchObject), we use reflection to invoke getClient separately and
- * test the client-calling logic by verifying the method bodies via a testable subclass
- * that re-declares getClient as a protected method storing a mock.
- *
- * Pure methods (parseFilter, parseFilters, formatResults, renameBucketItems,
- * mapAggregationResults) are tested directly on the original service.
+ * The service's getClient() method is protected, allowing a testable subclass
+ * to override it and inject a mock client. All other methods execute on the
+ * real source code for proper coverage.
  */
 class ElasticSearchServiceTest extends TestCase
 {
@@ -78,10 +74,8 @@ class ElasticSearchServiceTest extends TestCase
     }
 
     /**
-     * Create an ElasticSearchService with a mock client injected.
-     *
-     * Uses a testable subclass that re-implements the client-dependent methods
-     * identically but calls a mockable getClient() instead of the parent's private one.
+     * Create an ElasticSearchService subclass that overrides only getClient()
+     * to return our mock, so that all other methods execute on the real source.
      *
      * @return ElasticSearchService
      */
@@ -89,11 +83,7 @@ class ElasticSearchServiceTest extends TestCase
     {
         $mockClient = $this->mockClient;
 
-        // Build a testable service that uses our mock client.
-        // The testClient property is untyped because the mock implements
-        // MockableElasticClient, not the final Client class.
-        $service = new class ($mockClient) extends ElasticSearchService {
-            /** @var MockableElasticClient */
+        return new class ($mockClient) extends ElasticSearchService {
             private $testClient;
 
             public function __construct($testClient)
@@ -101,133 +91,11 @@ class ElasticSearchServiceTest extends TestCase
                 $this->testClient = $testClient;
             }
 
-            /**
-             * Add an object using the mock client.
-             */
-            public function addObject(array $object, array $config): array
+            protected function getClient(array $config): mixed
             {
-                $client = $this->testClient;
-
-                if (isset($object['_id']) === true) {
-                    unset($object['_id']);
-                }
-
-                try {
-                    $client->index(
-                        params: [
-                            'index' => $config['index'],
-                            'id'    => $object['id'],
-                            'body'  => $object,
-                        ]
-                    );
-                } catch (\Exception $exception) {
-                    return [
-                        'exception' => [
-                            'message' => $exception->getMessage(),
-                            'trace'   => $exception->getTraceAsString(),
-                        ],
-                    ];
-                }
-
-                return $client->get(
-                    params: [
-                        'index' => $config['index'],
-                        'id'    => $object['id'],
-                    ]
-                )['_source'];
-            }
-
-            /**
-             * Remove an object using the mock client.
-             */
-            public function removeObject(string $id, array $config): array
-            {
-                $client = $this->testClient;
-
-                try {
-                    $client->delete(
-                        params: [
-                            'index' => $config['index'],
-                            'id'    => $id,
-                        ]
-                    );
-                    return [];
-                } catch (\Exception $exception) {
-                    return [
-                        'exception' => [
-                            'message' => $exception->getMessage(),
-                            'trace'   => $exception->getTraceAsString(),
-                        ],
-                    ];
-                }
-            }
-
-            /**
-             * Update an object using the mock client.
-             */
-            public function updateObject(string $id, array $object, array $config): array
-            {
-                $client = $this->testClient;
-
-                if (isset($object['_id']) === true) {
-                    unset($object['_id']);
-                }
-
-                try {
-                    $client->index(
-                        params: [
-                            'index' => $config['index'],
-                            'id'    => $id,
-                            'body'  => ['doc' => $object],
-                        ]
-                    );
-                    return [];
-                } catch (\Exception $exception) {
-                    return [
-                        'exception' => [
-                            'message' => $exception->getMessage(),
-                            'trace'   => $exception->getTraceAsString(),
-                        ],
-                    ];
-                }
-            }
-
-            /**
-             * Search using the mock client.
-             */
-            public function searchObject(array $filters, array $config, int &$totalResults = 0): array
-            {
-                $body = $this->parseFilters(filters: $filters);
-
-                $client = $this->testClient;
-                $result = $client->search(
-                    params: [
-                        'index' => $config['index'],
-                        'body'  => $body,
-                    ]
-                );
-
-                $totalResults = $result['hits']['total']['value'];
-
-                $return = [
-                    'results' => array_map(
-                        callback: [$this, 'formatResults'],
-                        array: $result['hits']['hits']
-                    ),
-                ];
-                $return['facets'] = [];
-                if (isset($result['aggregations']) === true) {
-                    $return['facets'] = array_map(
-                        [$this, 'mapAggregationResults'],
-                        $result['aggregations']
-                    );
-                }
-
-                return $return;
+                return $this->testClient;
             }
         };
-
-        return $service;
     }
 
     // ─── addObject ───────────────────────────────────────────────
@@ -479,6 +347,25 @@ class ElasticSearchServiceTest extends TestCase
         $service->updateObject('obj-1', $object, $this->config);
     }
 
+    /**
+     * Test updateObject without _id field does not attempt to unset.
+     *
+     * @return void
+     */
+    public function testUpdateObjectWithoutUnderscoreId(): void
+    {
+        $object = ['title' => 'No _id present'];
+
+        $this->mockClient->expects($this->once())
+            ->method('index')
+            ->with($this->callback(function (array $params) {
+                return $params['body']['doc'] === ['title' => 'No _id present'];
+            }));
+
+        $service = $this->createServiceWithMockClient();
+        $service->updateObject('obj-1', $object, $this->config);
+    }
+
     // ─── parseFilter ─────────────────────────────────────────────
 
     /**
@@ -636,16 +523,29 @@ class ElasticSearchServiceTest extends TestCase
     }
 
     /**
-     * Test parseFilter with like key but non-regex string returns match.
+     * Test parseFilter with like key but non-regex string returns regexp.
      *
      * @return void
      */
     public function testParseFilterLikeNonRegex(): void
     {
-        // A plain string (not surrounded by /.../) does NOT match the regex pattern,
-        // but preg_match returns 0 (not false) and the code checks !== false,
-        // so the regexp branch is always taken for valid input.
         $result = $this->service->parseFilter('name', ['like' => 'plain text']);
+        $this->assertSame(['regexp' => ['name' => 'plain text']], $result);
+    }
+
+    /**
+     * Test parseFilter with regexp key and non-regex-looking string still returns regexp.
+     *
+     * The code's preg_match check uses !== false, meaning any valid match check
+     * (returning 0 or 1) takes the regexp branch. Only preg_match returning false
+     * (pattern compilation error) would reach the match fallback, but the pattern is
+     * hardcoded and always valid, making that line unreachable dead code.
+     *
+     * @return void
+     */
+    public function testParseFilterRegexpWithPlainText(): void
+    {
+        $result = $this->service->parseFilter('name', ['regexp' => 'plain text']);
         $this->assertSame(['regexp' => ['name' => 'plain text']], $result);
     }
 
@@ -1314,7 +1214,7 @@ class ElasticSearchServiceTest extends TestCase
         $this->assertSame('test_index', $result['results'][0]['_index']);
     }
 
-    // ─── getClient (private method via reflection) ───────────────
+    // ─── getClient (protected method via reflection) ─────────────
 
     /**
      * Test getClient creates a Client instance with proper configuration.
@@ -1338,7 +1238,6 @@ class ElasticSearchServiceTest extends TestCase
      */
     public function testGetClientParsesApiKey(): void
     {
-        // This test verifies getClient doesn't throw with a valid key format.
         $config = [
             'location' => 'https://es.example.com:9200',
             'key'      => base64_encode('key-id:api-secret'),
@@ -1350,6 +1249,28 @@ class ElasticSearchServiceTest extends TestCase
 
         $client = $reflection->invoke($this->service, $config);
 
+        $this->assertInstanceOf(Client::class, $client);
+    }
+
+    /**
+     * Test getClient uses the location from config as host.
+     *
+     * @return void
+     */
+    public function testGetClientUsesLocationAsHost(): void
+    {
+        $config = [
+            'location' => 'https://custom-host:9201',
+            'key'      => base64_encode('id:key'),
+            'index'    => 'idx',
+        ];
+
+        $reflection = new \ReflectionMethod(ElasticSearchService::class, 'getClient');
+        $reflection->setAccessible(true);
+
+        $client = $reflection->invoke($this->service, $config);
+
+        // Client is created successfully with the custom location.
         $this->assertInstanceOf(Client::class, $client);
     }
 }

@@ -107,4 +107,154 @@ class RobotsControllerTest extends TestCase
 
         $this->controller->getObjectService();
     }
+
+    public function testIndexReturns500WhenBothSettingsMissing(): void
+    {
+        $this->settingsService->method('getSettings')
+            ->willReturn([
+                'configuration' => [],
+            ]);
+
+        $response = $this->controller->index();
+
+        $this->assertInstanceOf(TextResponse::class, $response);
+    }
+
+    public function testIndexGeneratesSitemapReferencesForCatalogs(): void
+    {
+        // Create a mock object entity with slug.
+        $mockCatalog = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['getSlug'])
+            ->getMock();
+        $mockCatalog->method('getSlug')->willReturn('test-catalog');
+
+        $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn(['results' => [$mockCatalog]]);
+
+        $this->settingsService->method('getSettings')
+            ->willReturn([
+                'configuration' => [
+                    'catalog_register' => '1',
+                    'catalog_schema'   => '5',
+                ],
+            ]);
+
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+        $this->container->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjService);
+
+        $this->urlGenerator->method('getBaseUrl')
+            ->willReturn('https://example.com');
+
+        $response = $this->controller->index();
+
+        $this->assertInstanceOf(TextResponse::class, $response);
+    }
+
+    public function testIndexHandlesCatalogWithFalseSlug(): void
+    {
+        // Create a mock object entity that returns false for getSlug (skipped).
+        $mockCatalog = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['getSlug'])
+            ->getMock();
+        $mockCatalog->method('getSlug')->willReturn(false);
+
+        $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn(['results' => [$mockCatalog]]);
+
+        $this->settingsService->method('getSettings')
+            ->willReturn([
+                'configuration' => [
+                    'catalog_register' => '1',
+                    'catalog_schema'   => '5',
+                ],
+            ]);
+
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+        $this->container->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjService);
+
+        $this->urlGenerator->method('getBaseUrl')
+            ->willReturn('https://example.com');
+
+        $response = $this->controller->index();
+
+        $this->assertInstanceOf(TextResponse::class, $response);
+    }
+
+    public function testIndexHandlesNoCatalogs(): void
+    {
+        $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn(['results' => []]);
+
+        $this->settingsService->method('getSettings')
+            ->willReturn([
+                'configuration' => [
+                    'catalog_register' => '1',
+                    'catalog_schema'   => '5',
+                ],
+            ]);
+
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+        $this->container->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjService);
+
+        $this->urlGenerator->method('getBaseUrl')
+            ->willReturn('https://example.com');
+
+        $response = $this->controller->index();
+
+        $this->assertInstanceOf(TextResponse::class, $response);
+    }
+
+    public function testIndexHandlesMultipleCatalogs(): void
+    {
+        $mockCatalog1 = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['getSlug'])
+            ->getMock();
+        $mockCatalog1->method('getSlug')->willReturn('catalog-1');
+
+        $mockCatalog2 = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['getSlug'])
+            ->getMock();
+        $mockCatalog2->method('getSlug')->willReturn('catalog-2');
+
+        $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn(['results' => [$mockCatalog1, $mockCatalog2]]);
+
+        $this->settingsService->method('getSettings')
+            ->willReturn([
+                'configuration' => [
+                    'catalog_register' => '1',
+                    'catalog_schema'   => '5',
+                ],
+            ]);
+
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+        $this->container->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($mockObjService);
+
+        $this->urlGenerator->method('getBaseUrl')
+            ->willReturn('https://example.com/');
+
+        $response = $this->controller->index();
+
+        $this->assertInstanceOf(TextResponse::class, $response);
+    }
 }

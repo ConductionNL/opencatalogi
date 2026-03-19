@@ -97,7 +97,7 @@ class CatalogiService
         private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
-        private readonly ICacheFactory $cacheFactory,
+        ICacheFactory $cacheFactory,
         private readonly LoggerInterface $logger,
     ) {
         $this->appName = 'opencatalogi';

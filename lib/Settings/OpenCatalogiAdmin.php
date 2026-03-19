@@ -18,7 +18,6 @@ namespace OCA\OpenCatalogi\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IConfig;
-use OCP\IL10N;
 use OCP\Settings\ISettings;
 
 /**
@@ -26,13 +25,6 @@ use OCP\Settings\ISettings;
  */
 class OpenCatalogiAdmin implements ISettings
 {
-
-    /**
-     * Localization service.
-     *
-     * @var IL10N
-     */
-    private IL10N $l;
 
     /**
      * System configuration.
@@ -45,12 +37,10 @@ class OpenCatalogiAdmin implements ISettings
      * Constructor.
      *
      * @param IConfig $config System configuration.
-     * @param IL10N   $l      Localization service.
      */
-    public function __construct(IConfig $config, IL10N $l)
+    public function __construct(IConfig $config)
     {
         $this->config = $config;
-        $this->l      = $l;
 
     }//end __construct()
 

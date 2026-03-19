@@ -18,7 +18,6 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCP\IAppConfig;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -47,7 +46,6 @@ class SettingsController extends Controller
      *
      * @param string             $appName         The name of the app
      * @param IRequest           $request         The request object
-     * @param IAppConfig         $config          The app configuration.
      * @param ContainerInterface $container       The container.
      * @param IAppManager        $appManager      The app manager.
      * @param SettingsService    $settingsService The settings service.
@@ -56,7 +54,6 @@ class SettingsController extends Controller
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,

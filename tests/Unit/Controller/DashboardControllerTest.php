@@ -62,4 +62,28 @@ class DashboardControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(200, $response->getStatus());
     }
+
+    public function testIndexReturnsResultsKey(): void
+    {
+        $response = $this->controller->index();
+        $data = $response->getData();
+
+        $this->assertArrayHasKey('results', $data);
+        $this->assertSame([], $data['results']);
+    }
+
+    public function testPageHasContentSecurityPolicy(): void
+    {
+        $response = $this->controller->page(null);
+
+        $csp = $response->getContentSecurityPolicy();
+        $this->assertNotNull($csp);
+    }
+
+    public function testPageReturnsStatus200(): void
+    {
+        $response = $this->controller->page('param');
+
+        $this->assertEquals(200, $response->getStatus());
+    }
 }

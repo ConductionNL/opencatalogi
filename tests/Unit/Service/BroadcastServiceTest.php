@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\BroadcastService;
-use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -31,11 +30,6 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
      * @var IURLGenerator|\PHPUnit\Framework\MockObject\MockObject
      */
     private $urlGeneratorMock;
-
-    /**
-     * @var IAppConfig|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $configMock;
 
     /**
      * @var ContainerInterface|\PHPUnit\Framework\MockObject\MockObject
@@ -66,14 +60,12 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
     protected function setUp(): void
     {
         $this->urlGeneratorMock = $this->createMock(IURLGenerator::class);
-        $this->configMock       = $this->createMock(IAppConfig::class);
         $this->containerMock    = $this->createMock(ContainerInterface::class);
         $this->appManagerMock   = $this->createMock(IAppManager::class);
         $this->loggerMock       = $this->createMock(LoggerInterface::class);
 
         $this->broadcastService = new BroadcastService(
             $this->urlGeneratorMock,
-            $this->configMock,
             $this->containerMock,
             $this->appManagerMock,
             $this->loggerMock

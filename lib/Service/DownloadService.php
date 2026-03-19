@@ -146,7 +146,7 @@ class DownloadService
                 return $entity->jsonSerialize();
             }
 
-            return null;
+            return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 404);
         } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }

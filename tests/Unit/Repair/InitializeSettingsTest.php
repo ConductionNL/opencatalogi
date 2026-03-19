@@ -7,7 +7,6 @@ namespace Unit\Repair;
 use OCA\OpenCatalogi\Repair\InitializeSettings;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\App\IAppManager;
-use OCP\IConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -15,19 +14,16 @@ use Psr\Container\ContainerInterface;
 class InitializeSettingsTest extends TestCase
 {
     private InitializeSettings $repairStep;
-    private IConfig $config;
     private IAppManager $appManager;
     private ContainerInterface $container;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->config = $this->createMock(IConfig::class);
         $this->appManager = $this->createMock(IAppManager::class);
         $this->container = $this->createMock(ContainerInterface::class);
 
         $this->repairStep = new InitializeSettings(
-            $this->config,
             $this->appManager,
             $this->container
         );

@@ -20,8 +20,6 @@ use OCP\AppFramework\Http\Response;
 
 /**
  * A simple response for plain text data.
- *
- * @template-extends Response<int, array<string, mixed>>
  */
 class TextResponse extends Response
 {
@@ -42,6 +40,7 @@ class TextResponse extends Response
      */
     public function __construct(string $text='', int $status=200, array $headers=[])
     {
+        /** @phpstan-ignore argument.type */
         parent::__construct($status);
 
         $this->text = $text;

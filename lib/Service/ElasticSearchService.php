@@ -35,7 +35,7 @@ class ElasticSearchService
      *
      * @return Client
      */
-    protected function getClient(array $config): Client
+    protected function getClient(array $config): mixed
     {
         $uri    = $config['location'];
         $apiKey = explode(separator: ':', string: base64_decode(string: $config['key']));

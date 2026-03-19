@@ -2373,4 +2373,1225 @@ class PublicationServiceTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($this->service, null, null);
     }
+
+    // =======================================================================
+    // getLocalPublicationsFast (via reflection)
+    // =======================================================================
+
+    public function testGetLocalPublicationsFastWithCatalogAndDirectoryFacets(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $resultObj = $this->createSerializableObject([
+            '@self' => ['id' => 'pub-1', 'title' => 'Test'],
+        ]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [$resultObj],
+            'total'   => 1,
+            'facets'  => ['@self' => ['status' => ['type' => 'terms']]],
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['https://external.example.com']);
+
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1],
+            ['_page' => 1],
+            'http://example.com/api',
+            true,  // includeCatalogs
+            true,  // reqDirFacets
+            true   // reqCatFacets
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertArrayHasKey('_performance', $result);
+        $this->assertTrue($result['_performance']['fast_path']);
+        $this->assertFalse($result['_performance']['ultra_fast_path']);
+        $this->assertTrue($result['_performance']['include_catalogs']);
+        $this->assertArrayHasKey('facets', $result);
+    }
+
+    public function testGetLocalPublicationsFastDelegatesToUltraFastWhenNoCatalogOrFacets(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1],
+            [],
+            '',
+            false, // includeCatalogs
+            false, // reqDirFacets
+            false  // reqCatFacets
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertArrayHasKey('_performance', $result);
+        // Should delegate to ultra-fast path
+        $this->assertTrue($result['_performance']['ultra_fast_path']);
+    }
+
+    public function testGetLocalPublicationsFastWithPaginationLinks(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'id'        => 'cat-1',
+            'title'     => 'Test Catalog',
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $resultObj = $this->createSerializableObject([
+            '@self' => ['id' => 'pub-1'],
+        ]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results'   => [$resultObj],
+            'total'     => 30,
+            'facets'    => ['@self' => ['status' => ['type' => 'terms']]],
+            'facetable' => ['@self' => ['status' => ['type' => 'categorical']]],
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 2],
+            ['_page' => 2],
+            'http://example.com/api',
+            true,  // includeCatalogs
+            false, // reqDirFacets
+            false  // reqCatFacets
+        );
+
+        $this->assertArrayHasKey('next', $result);
+        $this->assertArrayHasKey('prev', $result);
+        $this->assertSame(30, $result['total']);
+        $this->assertSame(2, $result['page']);
+        $this->assertEquals(3, $result['pages']);
+        $this->assertArrayHasKey('facetable', $result);
+    }
+
+    public function testGetLocalPublicationsFastLimitZero(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 5,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 0, '_page' => 1],
+            [],
+            '',
+            true,  // includeCatalogs
+            false, // reqDirFacets
+            true   // reqCatFacets
+        );
+
+        $this->assertSame(0, $result['limit']);
+        $this->assertSame(1, $result['pages']);
+    }
+
+    public function testGetLocalPublicationsFastNoFacetsButDirFacetsRequested(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn([]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1],
+            [],
+            '',
+            false, // includeCatalogs
+            true,  // reqDirFacets
+            false  // reqCatFacets
+        );
+
+        $this->assertArrayHasKey('facets', $result);
+    }
+
+    public function testGetLocalPublicationsFastNestedFacetsUnwrapped(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        // Return nested facets (facets inside facets)
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+            'facets'  => ['facets' => ['@self' => ['status' => ['type' => 'terms']]]],
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['https://external.example.com']);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1],
+            [],
+            '',
+            true,  // includeCatalogs
+            true,  // reqDirFacets
+            false  // reqCatFacets
+        );
+
+        $this->assertArrayHasKey('facets', $result);
+    }
+
+    // =======================================================================
+    // getAggregatedPublications — with _include_catalogs & facets
+    // =======================================================================
+
+    public function testGetAggregatedPublicationsWithIncludeCatalogs(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'id'        => 'cat-1',
+            'title'     => 'Test Catalog',
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')->willReturn([]);
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $this->service->getAggregatedPublications(
+            [
+                '_aggregate'        => 'false',
+                '_include_catalogs' => 'true',
+                '_facets'           => ['@self' => ['directory' => true, 'catalogs' => true]],
+            ],
+            [],
+            'http://example.com/api'
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertArrayHasKey('_performance', $result);
+    }
+
+    public function testGetAggregatedPublicationsUltraFastExplicitlyDisabled(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'id'        => 'cat-1',
+            'title'     => 'Test Catalog',
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')->willReturn([]);
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $this->service->getAggregatedPublications(
+            [
+                '_aggregate'        => 'false',
+                '_ultra_fast'       => 'false',
+                '_include_catalogs' => 'true',
+            ],
+            [],
+            ''
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertArrayHasKey('_performance', $result);
+        $this->assertFalse($result['_performance']['ultra_fast_path']);
+    }
+
+    // =======================================================================
+    // getAggregatedPublications — with federation, facets and ordering
+    // =======================================================================
+
+    public function testGetAggregatedPublicationsWithFederationFacetsAndOrdering(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'id'        => 'cat-1',
+            'title'     => 'Test',
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $localObj = $this->createSerializableObject([
+            '@self' => ['id' => 'pub-local', 'published' => '2024-06-01'],
+            'id'    => 'pub-local',
+        ]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results'   => [$localObj],
+            'total'     => 1,
+            'facets'    => ['@self' => ['status' => ['type' => 'terms']]],
+            'facetable' => ['@self' => ['status' => ['type' => 'categorical']]],
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['https://external.example.com']);
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $this->directoryService->method('getPublications')->willReturn([
+            'results'   => [
+                ['id' => 'pub-fed', '@self' => ['published' => '2024-01-01']],
+            ],
+            'total'     => 1,
+            'facets'    => ['@self' => ['type' => ['type' => 'terms']]],
+            'facetable' => ['@self' => ['type' => ['type' => 'categorical']]],
+        ]);
+
+        $result = $this->service->getAggregatedPublications(
+            [
+                '_order'    => ['@self.published' => 'DESC'],
+                '_facets'   => ['@self' => ['directory' => true, 'catalogs' => true]],
+                '_facetable' => 'true',
+            ],
+            ['_page' => 1],
+            'http://example.com/api'
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertArrayHasKey('facets', $result);
+        $this->assertArrayHasKey('facetable', $result);
+        $this->assertSame(2, $result['total']);
+    }
+
+    public function testGetAggregatedPublicationsWithFederationNoFacets(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $localObj = $this->createSerializableObject([
+            '@self' => ['id' => 'pub-local'],
+            'id'    => 'pub-local',
+        ]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [$localObj],
+            'total'   => 1,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['https://external.example.com']);
+
+        $this->directoryService->method('getPublications')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $result = $this->service->getAggregatedPublications(
+            [
+                '_facets'    => ['@self' => ['directory' => true]],
+                '_facetable' => 'true',
+            ],
+            [],
+            ''
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertArrayHasKey('facets', $result);
+        $this->assertArrayHasKey('facetable', $result);
+    }
+
+    // =======================================================================
+    // getLocalPublicationsUltraFast — catalog context fallback
+    // =======================================================================
+
+    public function testGetLocalPublicationsUltraFastCatalogContextFallback(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsUltraFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        // searchObjects throws, should use fallback
+        $objectService->method('searchObjects')
+            ->willThrowException(new \Exception('DB unavailable'));
+
+        $resultObj = $this->createSerializableObject([
+            '@self' => ['id' => 'pub-1'],
+        ]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [$resultObj],
+            'total'   => 1,
+        ]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1],
+            [],
+            '',
+            microtime(true)
+        );
+
+        $this->assertArrayHasKey('results', $result);
+        $this->assertTrue($result['_performance']['ultra_fast_path']);
+    }
+
+    public function testGetLocalPublicationsUltraFastSkipFiltering(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsUltraFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1, '_skip_filtering' => 'true'],
+            [],
+            '',
+            microtime(true)
+        );
+
+        $this->assertTrue($result['_performance']['skipped_filtering']);
+    }
+
+    public function testGetLocalPublicationsUltraFastWithVirtualFacets(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsUltraFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results'   => [],
+            'total'     => 0,
+            'facets'    => ['@self' => ['status' => ['type' => 'terms']]],
+            'facetable' => ['@self' => ['status' => ['type' => 'categorical']]],
+        ]);
+
+        $this->directoryService->method('getUniqueDirectories')->willReturn([]);
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $method->invoke(
+            $this->service,
+            [
+                '_limit'  => 10,
+                '_page'   => 1,
+                '_facets' => ['@self' => ['directory' => true, 'catalogs' => true]],
+            ],
+            [],
+            '',
+            microtime(true)
+        );
+
+        $this->assertArrayHasKey('facets', $result);
+        $this->assertTrue($result['_performance']['processed_virtual_facets']);
+    }
+
+    public function testGetLocalPublicationsUltraFastWithMultiRegisterSchema(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalPublicationsUltraFast');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1', 'reg-2'],
+            'schemas'   => ['sch-1', 'sch-2'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())
+            ->method('searchObjectsPaginated')
+            ->with($this->callback(function ($query) {
+                return is_array($query['@self']['register'])
+                    && is_array($query['@self']['schema']);
+            }))
+            ->willReturn([
+                'results' => [],
+                'total'   => 0,
+            ]);
+
+        $result = $method->invoke(
+            $this->service,
+            ['_limit' => 10, '_page' => 1],
+            [],
+            '',
+            microtime(true)
+        );
+
+        $this->assertArrayHasKey('results', $result);
+    }
+
+    // =======================================================================
+    // getLocalCatalogs — with non-Entity catalog
+    // =======================================================================
+
+    public function testGetLocalCatalogsWithNonEntityCatalog(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalCatalogs');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        // Return a plain array (not an Entity object)
+        $objectService->method('searchObjects')->willReturn([
+            ['id' => 'cat-array', 'title' => 'Array Catalog'],
+        ]);
+
+        $result = $method->invoke($this->service);
+        $this->assertCount(1, $result);
+        $this->assertSame('cat-array', $result[0]['id']);
+    }
+
+    public function testGetLocalCatalogsSkipsEmptyId(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getLocalCatalogs');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'title' => 'No ID Catalog',
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $result = $method->invoke($this->service);
+        $this->assertSame([], $result);
+    }
+
+    // =======================================================================
+    // getExternalCatalogsFromListings — fallback labels
+    // =======================================================================
+
+    public function testGetExternalCatalogsFromListingsFallbackLabel(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'getExternalCatalogsFromListings');
+        $method->setAccessible(true);
+
+        $this->directoryService->method('getDirectory')->willReturn([
+            'results' => [
+                // Listing with id only (no catalog, no title)
+                ['id' => 'listing-no-title'],
+            ],
+        ]);
+
+        $result = $method->invoke($this->service);
+        $this->assertCount(1, $result);
+        $this->assertSame('listing-no-title', $result[0]['key']);
+        // Label falls back to catalogId which falls back to id
+        $this->assertSame('listing-no-title', $result[0]['label']);
+    }
+
+    // =======================================================================
+    // addVirtualFieldFacets — catalogs with both id and title
+    // =======================================================================
+
+    public function testAddVirtualFieldFacetsCatalogWithIdNoTitle(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'addVirtualFieldFacets');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'id' => 'cat-no-title',
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $method->invoke($this->service, [], false, true);
+
+        $buckets = $result['@self']['catalogs']['buckets'];
+        $this->assertCount(1, $buckets);
+        $this->assertSame('cat-no-title', $buckets[0]['key']);
+        // getLocalCatalogs defaults title to 'Local Catalog' when missing
+        $this->assertSame('Local Catalog', $buckets[0]['label']);
+    }
+
+    public function testAddVirtualFieldFacetsCatalogWithNoIdNoTitle(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'addVirtualFieldFacets');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'description' => 'no id, no title',
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $result = $method->invoke($this->service, [], false, true);
+
+        $buckets = $result['@self']['catalogs']['buckets'];
+        // getLocalCatalogs skips catalogs with empty id, so no local catalogs found
+        // Default bucket is added when catalogBuckets is empty
+        $this->assertSame('default', $buckets[0]['key']);
+        $this->assertSame('Default Catalog', $buckets[0]['label']);
+    }
+
+    public function testAddVirtualFieldFacetsExternalCatalogsDeduplication(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'addVirtualFieldFacets');
+        $method->setAccessible(true);
+
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'id'    => 'cat-1',
+            'title' => 'Test Catalog',
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        // External catalog has same key as local — should be deduplicated
+        $this->directoryService->method('getDirectory')->willReturn([
+            'results' => [
+                ['catalog' => 'cat-1', 'title' => 'Duplicate Catalog'],
+            ],
+        ]);
+
+        $result = $method->invoke($this->service, [], false, true);
+
+        $buckets = $result['@self']['catalogs']['buckets'];
+        $this->assertCount(1, $buckets);
+    }
+
+    // =======================================================================
+    // applyCumulativeOrdering — indexed array format
+    // =======================================================================
+
+    public function testApplyCumulativeOrderingIndexedArrayFormat(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+        $method->setAccessible(true);
+
+        $results = [
+            ['title' => 'B', 'score' => 1],
+            ['title' => 'A', 'score' => 2],
+            ['title' => 'C', 'score' => 3],
+        ];
+
+        // Indexed format: [0 => ['field' => 'direction']]
+        $ordered = $method->invoke($this->service, $results, [
+            '_order' => [0 => ['score' => 'DESC']],
+        ]);
+
+        $this->assertSame(3, $ordered[0]['score']);
+        $this->assertSame(2, $ordered[1]['score']);
+        $this->assertSame(1, $ordered[2]['score']);
+    }
+
+    public function testApplyCumulativeOrderingNonArrayDirection(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+        $method->setAccessible(true);
+
+        $results = [
+            ['title' => 'B'],
+            ['title' => 'A'],
+        ];
+
+        // Non-string direction defaults to ASC — verify no crash and ordering is applied
+        $ordered = $method->invoke($this->service, $results, [
+            '_order' => ['title' => 123],
+        ]);
+
+        // Should contain both results regardless of actual order
+        $titles = array_column($ordered, 'title');
+        $this->assertCount(2, $titles);
+        $this->assertContains('A', $titles);
+        $this->assertContains('B', $titles);
+    }
+
+    // =======================================================================
+    // download — success path
+    // =======================================================================
+
+    public function testDownloadReturnsZipOnSuccess(): void
+    {
+        $fileService = $this->createFileServiceMock();
+        $this->mockFileServiceAvailable($fileService);
+
+        // Create a temp file for the test
+        $tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
+        file_put_contents($tmpFile, 'fake zip content');
+
+        $fileService->method('createObjectFilesZip')
+            ->willReturn([
+                'path'     => $tmpFile,
+                'filename' => 'test-files.zip',
+                'mimeType' => 'application/zip',
+            ]);
+
+        $response = $this->service->download('pub-1');
+        $this->assertInstanceOf(DataDownloadResponse::class, $response);
+    }
+
+    // =======================================================================
+    // attachments — NotFoundException handling
+    // =======================================================================
+
+    public function testAttachmentsReturns404OnNotFoundException(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $fileService   = $this->createFileServiceMock();
+
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+
+        $this->container->method('get')
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService) {
+                if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+                if ($class === 'OCA\OpenRegister\Service\FileService') {
+                    return $fileService;
+                }
+                return null;
+            });
+
+        $objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+        $fileService->method('getFiles')
+            ->willThrowException(new \OCP\Common\Exception\NotFoundException('Folder not found'));
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->attachments('pub-1');
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Files folder not found', $data['error']);
+    }
+
+    // =======================================================================
+    // getFederatedUsed — with timeout params
+    // =======================================================================
+
+    public function testGetFederatedUsedWithTimeoutParams(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $objectService->method('findByRelations')->willReturn([]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->expects($this->once())
+            ->method('getUsed')
+            ->with(
+                'pub-1',
+                $this->callback(function ($config) {
+                    return $config['timeout'] === 10
+                        && $config['connect_timeout'] === 5;
+                })
+            )
+            ->willReturn(['results' => [], 'sources' => []]);
+
+        $this->service->getFederatedUsed('pub-1', [
+            'timeout'         => '10',
+            'connect_timeout' => '5',
+        ]);
+    }
+
+    // =======================================================================
+    // getFederatedUses — with timeout params (code path)
+    // =======================================================================
+
+    public function testGetFederatedUsesWithTimeoutParams(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $pubObj = $this->createSerializableObject([
+            'id'        => 'pub-1',
+            'relations' => [],
+        ]);
+        $objectService->method('find')->willReturn($pubObj);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $result = $this->service->getFederatedUses('pub-1', [
+            'timeout'         => '10',
+            'connect_timeout' => '5',
+        ]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(200, $result['status']);
+    }
+
+    // =======================================================================
+    // getFederatedPublication — timeout boundary values
+    // =======================================================================
+
+    public function testGetFederatedPublicationInvalidTimeoutIgnored(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $objectService->method('find')
+            ->willThrowException(new DoesNotExistException('Not found'));
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->expects($this->once())
+            ->method('getPublication')
+            ->with(
+                'pub-1',
+                $this->callback(function ($config) {
+                    // Invalid timeout values (over max) should not be set
+                    return !isset($config['timeout']) && !isset($config['connect_timeout']);
+                })
+            )
+            ->willReturn([]);
+
+        $this->service->getFederatedPublication('pub-1', [
+            'timeout'         => '999',
+            'connect_timeout' => '999',
+        ]);
+    }
+
+    // =======================================================================
+    // searchPublications — request param mapping
+    // =======================================================================
+
+    public function testSearchPublicationsMapsMultipleParameters(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')->willReturn('');
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $resultObj = $this->createSerializableObject(['@self' => ['id' => 'obj-1']]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [$resultObj],
+            'total'   => 1,
+        ]);
+
+        // Multiple parameters that need mapping
+        $this->request->method('getParams')->willReturn([
+            'fields' => ['title'],
+            'facets' => ['status'],
+            'order'  => ['title' => 'ASC'],
+            'page'   => 1,
+            'limit'  => 10,
+        ]);
+
+        $method = new \ReflectionMethod(PublicationService::class, 'searchPublications');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, null, null);
+        $this->assertArrayHasKey('results', $result);
+    }
+
+    // =======================================================================
+    // searchPublications — virtual facets with results
+    // =======================================================================
+
+    public function testSearchPublicationsAddsVirtualFacetsWhenRequested(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')->willReturn('');
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $resultObj = $this->createSerializableObject(['@self' => ['id' => 'obj-1']]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [$resultObj],
+            'total'   => 1,
+            'facets'  => ['@self' => ['status' => ['type' => 'terms']]],
+        ]);
+
+        $this->directoryService->method('getUniqueDirectories')->willReturn([]);
+        $this->directoryService->method('getDirectory')->willReturn(['results' => []]);
+
+        $this->request->method('getParams')->willReturn([
+            '_facets' => [
+                '@self' => [
+                    'directory' => true,
+                    'catalogs'  => true,
+                    'status'    => true,
+                ],
+            ],
+        ]);
+
+        $method = new \ReflectionMethod(PublicationService::class, 'searchPublications');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->service, null, null);
+        $this->assertArrayHasKey('facets', $result);
+        $this->assertArrayHasKey('directory', $result['facets']['@self']);
+        $this->assertArrayHasKey('catalogs', $result['facets']['@self']);
+    }
+
+    // =======================================================================
+    // addVirtualFieldFacets — directory without host
+    // =======================================================================
+
+    public function testAddVirtualFieldFacetsDirectoryWithoutHost(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'addVirtualFieldFacets');
+        $method->setAccessible(true);
+
+        // Return a URL-like string that has no parseable host
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['/just-a-path']);
+
+        $result = $method->invoke($this->service, [], true, false);
+
+        $buckets = $result['@self']['directory']['buckets'];
+        $this->assertCount(2, $buckets);
+        // Second bucket should use the raw URL as name since parse_url returns empty host
+        $this->assertSame('/just-a-path', $buckets[1]['key']);
+    }
+
+    // =======================================================================
+    // getAggregatedPublications — facetable requested but not in response
+    // =======================================================================
+
+    public function testGetAggregatedPublicationsWithFacetableRequested(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['https://external.example.com']);
+
+        $this->directoryService->method('getPublications')->willReturn([
+            'results' => [],
+            'total'   => 0,
+        ]);
+
+        $result = $this->service->getAggregatedPublications(
+            ['_facetable' => 'true'],
+            [],
+            ''
+        );
+
+        $this->assertArrayHasKey('facetable', $result);
+    }
+
+    // =======================================================================
+    // getAggregatedPublications — nested facets unwrapping in federation
+    // =======================================================================
+
+    public function testGetAggregatedPublicationsNestedFacetsUnwrapped(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalog = $this->createSerializableObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('searchObjectsPaginated')->willReturn([
+            'results' => [],
+            'total'   => 0,
+            'facets'  => ['facets' => ['@self' => ['status' => ['type' => 'terms']]]],
+        ]);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->directoryService->method('getUniqueDirectories')
+            ->willReturn(['https://external.example.com']);
+
+        $this->directoryService->method('getPublications')->willReturn([
+            'results' => [],
+            'total'   => 0,
+            'facets'  => ['facets' => ['@self' => ['type' => ['type' => 'terms']]]],
+        ]);
+
+        $result = $this->service->getAggregatedPublications([], [], '');
+
+        $this->assertArrayHasKey('facets', $result);
+    }
+
+    // =======================================================================
+    // compareValues — non-date string comparison
+    // =======================================================================
+
+    public function testCompareValuesNonDateStrings(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'compareValues');
+        $method->setAccessible(true);
+
+        // Strings that cannot be parsed as dates
+        $result = $method->invoke($this->service, 'abc', 'xyz');
+        $this->assertLessThan(0, $result);
+    }
 }

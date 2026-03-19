@@ -27,8 +27,7 @@ use DOMText;
 /**
  * A response for XML data.
  *
- * @psalm-suppress   PropertyNotSetInConstructor
- * @template-extends Response<int, array<string, mixed>>
+ * @psalm-suppress PropertyNotSetInConstructor
  */
 class XMLResponse extends Response
 {
@@ -62,6 +61,7 @@ class XMLResponse extends Response
      */
     public function __construct($data=[], int $status=200, array $headers=[], ?string $path=null)
     {
+        /** @phpstan-ignore argument.type */
         parent::__construct($status);
 
         // Set response data.

@@ -60,12 +60,10 @@ class AutomatedPublishingTest extends TestCase
 
     public function testGetIconReturnsString(): void
     {
-        // getIcon depends on OC::$server which is not available in unit tests.
-        // We test that calling getIcon produces a string or throws a known error.
-        // Since OC::$server won't be initialized in unit tests, we verify the method exists
-        // and would return a string in a real environment.
-        $reflection = new \ReflectionMethod(AutomatedPublishing::class, 'getIcon');
-        $this->assertSame('string', $reflection->getReturnType()->getName());
+        // \OC::$server is available in the Nextcloud test container.
+        $icon = $this->operation->getIcon();
+        $this->assertIsString($icon);
+        $this->assertNotEmpty($icon);
     }
 
     // --- validateOperation ---

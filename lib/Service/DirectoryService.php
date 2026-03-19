@@ -28,7 +28,6 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
-use OCP\IServerContainer;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -100,7 +99,6 @@ class DirectoryService
      * @param ContainerInterface $container        Server container for dependency injection
      * @param IAppManager        $appManager       App manager for checking installed apps
      * @param BroadcastService   $broadcastService Broadcast service for notifying other directories
-     * @param IServerContainer   $server           Server container for logging and other services
      * @param IRequest           $request          Request interface for accessing HTTP headers
      */
     public function __construct(
@@ -109,7 +107,6 @@ class DirectoryService
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly BroadcastService $broadcastService,
-        private readonly IServerContainer $server,
         private readonly IRequest $request
     ) {
         $this->appName = 'opencatalogi';
@@ -252,9 +249,10 @@ class DirectoryService
                     ],
                 ];
 
-                $listings = $objectService->searchObjects($query);
+                // Directory data is public by design — listings/catalogs have authorization.read=["public"].
+                // Disable multitenancy filtering so public directory discovery works across organizations.
+                $listings = $objectService->searchObjects($query, _multitenancy: false);
 
-                // Removed redundant logging.
                 // Build unique directory URLs using URL as key to automatically handle duplicates.
                 foreach ($listings as $listing) {
                     $listingData = $listing->jsonSerialize();
@@ -580,6 +578,12 @@ class DirectoryService
             'error'         => null,
         ];
 
+        // Initialize variables used in both try and catch blocks.
+        $existingListings = [];
+        $objectService    = null;
+        $listingRegister  = '';
+        $listingSchema    = '';
+
         try {
             // Check if this listing belongs to a different directory that we already have as a source.
             if (empty($listingDirectory) === false
@@ -630,15 +634,8 @@ class DirectoryService
 
             // Clean up listing data to match schema.
             // Keep the @self metadata for UUID handling, but clean it up.
-            $uuid = null;
-            if (isset($listingData['@self']['id']) === true) {
-                $uuid = $listingData['@self']['id'];
-            } else if (isset($listingData['id']) === true) {
-                $uuid = $listingData['id'];
-            } else if (isset($listingData['catalog']) === true) {
-                // Use catalog as UUID if no explicit ID is provided.
-                $uuid = $listingData['catalog'];
-            }
+            // Determine UUID: prefer @self.id, then listing id.
+            $uuid = ($listingData['@self']['id'] ?? $listingData['id']);
 
             // Extract API endpoints from @self.relations BEFORE we unset @self.
             // These endpoints tell us where the actual catalog's API is hosted.
@@ -782,18 +779,17 @@ class DirectoryService
             $result['error'] = $e->getMessage();
 
             // Try to update the listing with error status if it exists.
-            try {
-                if (empty($existingListings) === false) {
+            // @phpstan-ignore-next-line Variables are assigned in the try block before potential exceptions.
+            if (is_array($existingListings) && count($existingListings) > 0 && $objectService !== null) {
+                try {
                     $existingListing     = $existingListings[0];
                     $existingListingData = $existingListing->jsonSerialize();
                     $errorData           = ($existingListingData['object'] ?? []);
 
-                    // Update with error status..
+                    // Update with error status.
                     $errorData['statusCode'] = 500;
-                    // Internal server error.
-                    $errorData['lastSync'] = (new DateTime())->format('c');
+                    $errorData['lastSync']   = (new DateTime())->format('c');
 
-                    // Use positional parameters for compatibility with different ObjectService versions..
                     $objectService->saveObject(
                         object: $errorData,
                         extend: [],
@@ -801,10 +797,10 @@ class DirectoryService
                         schema: $listingSchema,
                         uuid: $existingListingData['id']
                     );
-                }
-            } catch (\Exception $updateException) {
-                // Removed redundant logging.
-            }//end try
+                } catch (\Exception $updateException) {
+                    // Silently ignore update failures in error handling path.
+                }//end try
+            }
         }//end try
 
         return $result;
@@ -908,7 +904,7 @@ class DirectoryService
             ];
 
             $promises[] = new Promise(
-                waitFn: function ($resolve) use ($client, $publicationsUrl, $directoryUrl) {
+                function ($resolve) use ($client, $publicationsUrl) {
                     $failResult = ['success' => false, 'results' => [], 'facets' => [], 'total' => 0];
                     try {
                         $response   = $client->get($publicationsUrl);
@@ -1766,7 +1762,8 @@ class DirectoryService
             }
 
             try {
-                $listingResult = $objectService->searchObjects($query);
+                // Directory data is public — disable multitenancy for cross-org visibility.
+                $listingResult = $objectService->searchObjects($query, _multitenancy: false);
 
                 // Convert listing objects to arrays and filter out internal properties.
                 // Note: Don't expand schemas for listings; they already have expanded schemas from external directories.
@@ -1817,7 +1814,8 @@ class DirectoryService
             }
 
             try {
-                $catalogResult = $objectService->searchObjects($query);
+                // Directory data is public — disable multitenancy for cross-org visibility.
+                $catalogResult = $objectService->searchObjects($query, _multitenancy: false);
 
                 // Convert catalog objects to listing format and expand schemas.
                 $catalogsAsListings = array_map(

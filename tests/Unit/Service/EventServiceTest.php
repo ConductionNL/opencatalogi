@@ -10,8 +10,6 @@ use OCA\OpenRegister\Service\ObjectService;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCP\IAppConfig;
-use OCP\IRequest;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -25,16 +23,6 @@ use RuntimeException;
  */
 class EventServiceTest extends \PHPUnit\Framework\TestCase
 {
-
-    /**
-     * @var IAppConfig|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $configMock;
-
-    /**
-     * @var IRequest|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $requestMock;
 
     /**
      * @var ContainerInterface|\PHPUnit\Framework\MockObject\MockObject
@@ -64,16 +52,12 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
     protected function setUp(): void
     {
-        $this->configMock          = $this->createMock(IAppConfig::class);
-        $this->requestMock         = $this->createMock(IRequest::class);
         $this->containerMock       = $this->createMock(ContainerInterface::class);
         $this->appManagerMock      = $this->createMock(IAppManager::class);
         $this->settingsServiceMock = $this->createMock(SettingsService::class);
         $this->loggerMock          = $this->createMock(LoggerInterface::class);
 
         $this->eventService = new EventService(
-            $this->configMock,
-            $this->requestMock,
             $this->containerMock,
             $this->appManagerMock,
             $this->settingsServiceMock,
@@ -858,7 +842,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertEquals(0, $result['published']);
         $this->assertNotEmpty($result['errors']);
-        $this->assertStringContainsString('Exception creating share link', $result['errors'][0]);
+        $this->assertStringContainsString('Failed to publish file', $result['errors'][0]);
 
     }//end testPublishObjectAttachmentsShareLinkException()
 

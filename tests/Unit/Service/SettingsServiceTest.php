@@ -33,9 +33,6 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
     /** @var IAppConfig|MockObject */
     private IAppConfig|MockObject $config;
 
-    /** @var IRequest|MockObject */
-    private IRequest|MockObject $request;
-
     /** @var ContainerInterface|MockObject */
     private ContainerInterface|MockObject $container;
 
@@ -49,13 +46,11 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
     protected function setUp(): void
     {
         $this->config     = $this->createMock(IAppConfig::class);
-        $this->request    = $this->createMock(IRequest::class);
         $this->container  = $this->createMock(ContainerInterface::class);
         $this->appManager = $this->createMock(IAppManager::class);
 
         $this->service = new SettingsService(
             $this->config,
-            $this->request,
             $this->container,
             $this->appManager
         );

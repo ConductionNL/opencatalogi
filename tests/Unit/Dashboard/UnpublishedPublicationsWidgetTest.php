@@ -50,4 +50,10 @@ class UnpublishedPublicationsWidgetTest extends TestCase
     {
         $this->assertNull($this->widget->getUrl());
     }
+
+    public function testLoadDoesNotThrow(): void
+    {
+        $this->widget->load();
+        $this->assertTrue(true);
+    }
 }

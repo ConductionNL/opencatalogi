@@ -440,18 +440,21 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     // handleFile
     // -------------------------------------------------------------------------
 
-    public function testHandleFileWithFile(): void
+    public function testHandleFileSuccessfulUpload(): void
     {
         $_SERVER['HTTPS']    = 'on';
         $_SERVER['HTTP_HOST'] = 'example.com';
 
         $userFolder = $this->setupUserFolder('admin');
 
-        // Set up request mock.
+        // Create a real temporary file for file_get_contents.
+        $tmpFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tmpFile, 'file content');
+
         $request = $this->createMock(IRequest::class);
         $request->method('getUploadedFile')->with('_file')->willReturn([
             'name'     => 'document.pdf',
-            'tmp_name' => '/tmp/phpABCDEF',
+            'tmp_name' => $tmpFile,
             'type'     => 'application/pdf',
             'size'     => 12345,
             'error'    => UPLOAD_ERR_OK,
@@ -462,45 +465,78 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
                 ['Publication-Title', 'Test Publication'],
             ]);
 
-        // Folder creation: all return folder exists.
-        $userFolder->method('get')->willReturnCallback(function (string $path) use ($userFolder) {
-            // For file upload, throw NotFoundException to trigger new file creation.
-            if (str_ends_with($path, 'document.pdf')) {
+        $file = $this->createMock(File::class);
+        $file->method('getId')->willReturn(1);
+
+        // Track get() calls to differentiate folder checks from file operations.
+        $getCallIndex = 0;
+        $userFolder->method('get')->willReturnCallback(function (string $path) use ($userFolder, $file, &$getCallIndex) {
+            $getCallIndex++;
+            // Calls 1-3: folder existence checks (Publicaties, Publicaties/(42) Test Publication,
+            // Publicaties/(42) Test Publication/Bijlagen) - return folder (already exists).
+            if ($getCallIndex <= 3) {
+                return $userFolder;
+            }
+
+            // Call 4: uploadFile checks if file exists - throw NotFoundException.
+            if ($getCallIndex === 4) {
                 throw new NotFoundException();
             }
 
-            return $userFolder;
+            // Call 5+: after newFile, return the file mock for putContent and share link creation.
+            return $file;
         });
 
-        $file = $this->createMock(File::class);
-        $file->method('getId')->willReturn(1);
         $userFolder->method('newFile')->willReturn($file);
 
-        // After newFile, get should return the file mock for putContent.
-        // We need a more sophisticated callback.
-        $callCount = 0;
-        $userFolder->method('get')->willReturnCallback(function (string $path) use ($userFolder, $file, &$callCount) {
-            if (str_contains($path, 'document.pdf')) {
-                $callCount++;
-                if ($callCount <= 1) {
-                    throw new NotFoundException();
-                }
-
-                return $file;
-            }
-
-            return $userFolder;
-        });
-
-        // Share creation.
         $share = $this->createMock(IShare::class);
         $share->method('getToken')->willReturn('sharetoken');
         $this->shareManager->method('newShare')->willReturn($share);
         $this->shareManager->method('createShare')->willReturn($share);
 
-        // The dual-callback mock setup for folder->get() doesn't work reliably in unit tests.
-        // The handleFile method requires complex file system mock coordination.
-        $this->markTestSkipped('handleFile with file upload requires complex mock coordination that cannot be reliably unit tested');
+        $result = $this->fileService->handleFile($request, []);
+
+        $this->assertIsArray($result);
+        $this->assertSame('application/pdf', $result['type']);
+        $this->assertSame(12345, $result['size']);
+        $this->assertSame('document', $result['title']);
+        $this->assertSame('pdf', $result['extension']);
+        $this->assertStringContainsString('/index.php/s/sharetoken', $result['accessUrl']);
+
+        @unlink($tmpFile);
+    }
+
+    public function testHandleFileUploadFails(): void
+    {
+        $userFolder = $this->setupUserFolder('admin');
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'test_');
+        file_put_contents($tmpFile, 'content');
+
+        $request = $this->createMock(IRequest::class);
+        $request->method('getUploadedFile')->with('_file')->willReturn([
+            'name'     => 'document.pdf',
+            'tmp_name' => $tmpFile,
+            'type'     => 'application/pdf',
+            'size'     => 100,
+            'error'    => UPLOAD_ERR_OK,
+        ]);
+        $request->method('getHeader')
+            ->willReturnMap([
+                ['Publication-Id', '1'],
+                ['Publication-Title', 'Pub'],
+            ]);
+
+        // All folder checks succeed, and the file already exists (uploadFile returns false).
+        $userFolder->method('get')->willReturn($userFolder);
+        $userFolder->method('newFile')->willReturn($this->createMock(File::class));
+
+        $result = $this->fileService->handleFile($request, []);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertSame(400, $result->getStatus());
+
+        @unlink($tmpFile);
     }
 
     public function testHandleFileWithoutFile(): void
@@ -904,35 +940,350 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     }
 
     // -------------------------------------------------------------------------
-    // createPdf — skipped due to filesystem and Mpdf dependencies
+    // Guest user fallback paths
     // -------------------------------------------------------------------------
 
-    public function testCreatePdfRequiresTwigAndMpdf(): void
+    public function testCreateShareLinkGuestUser(): void
     {
-        // createPdf() directly instantiates FilesystemLoader, Environment, and Mpdf.
-        // These cannot be mocked without a real filesystem or dependency injection refactor.
-        // Mark as skipped.
-        $this->markTestSkipped('createPdf() requires real filesystem for Twig templates and Mpdf binary.');
+        $_SERVER['HTTPS']    = 'on';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $userFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
+
+        $file = $this->createMock(File::class);
+        $file->method('getId')->willReturn(1);
+        $userFolder->method('get')->willReturn($file);
+
+        $share = $this->createMock(IShare::class);
+        $share->method('getToken')->willReturn('guest-token');
+        $this->shareManager->method('newShare')->willReturn($share);
+        $this->shareManager->method('createShare')->willReturn($share);
+
+        $result = $this->fileService->createShareLink('file.pdf');
+        $this->assertStringContainsString('/index.php/s/guest-token', $result);
+    }
+
+    public function testCreateFolderGuestUser(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $userFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
+
+        $userFolder->method('get')->willThrowException(new NotFoundException());
+        $userFolder->expects($this->once())->method('newFolder')->with('TestFolder');
+
+        $result = $this->fileService->createFolder('TestFolder');
+        $this->assertTrue($result);
+    }
+
+    public function testAddFileInfoToDataGuestUser(): void
+    {
+        $_SERVER['HTTPS']    = 'on';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $userFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
+
+        $file = $this->createMock(File::class);
+        $file->method('getId')->willReturn(1);
+        $userFolder->method('get')->willReturn($file);
+
+        $share = $this->createMock(IShare::class);
+        $share->method('getToken')->willReturn('gt');
+        $this->shareManager->method('newShare')->willReturn($share);
+        $this->shareManager->method('createShare')->willReturn($share);
+
+        $uploadedFile = ['name' => 'file.txt', 'type' => 'text/plain', 'size' => 10];
+        $result = $this->fileService->addFileInfoToData([], $uploadedFile, 'path/file.txt');
+
+        $this->assertSame('Guest/path/file.txt', $result['reference']);
+    }
+
+    public function testUploadFileGuestUser(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $userFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
+
+        $file = $this->createMock(File::class);
+        $file->expects($this->once())->method('putContent')->with('content');
+
+        $callCount = 0;
+        $userFolder->method('get')->willReturnCallback(function () use ($file, &$callCount) {
+            $callCount++;
+            if ($callCount === 1) {
+                throw new NotFoundException();
+            }
+            return $file;
+        });
+
+        $userFolder->expects($this->once())->method('newFile');
+
+        $result = $this->fileService->uploadFile('content', 'path/file.txt');
+        $this->assertTrue($result);
+    }
+
+    public function testUpdateFileGuestUser(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $userFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
+
+        $file = $this->createMock(File::class);
+        $file->expects($this->once())->method('putContent')->with('updated');
+        $userFolder->method('get')->willReturn($file);
+
+        $result = $this->fileService->updateFile('updated', 'path/file.txt');
+        $this->assertTrue($result);
+    }
+
+    public function testDeleteFileGuestUser(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $userFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
+
+        $file = $this->createMock(File::class);
+        $file->expects($this->once())->method('delete');
+        $userFolder->method('get')->willReturn($file);
+
+        $result = $this->fileService->deleteFile('path/file.txt');
+        $this->assertTrue($result);
     }
 
     // -------------------------------------------------------------------------
-    // createZip — skipped due to ZipArchive and filesystem dependencies
+    // createShareLink — additional permission branches
     // -------------------------------------------------------------------------
 
-    public function testCreateZipRequiresFilesystem(): void
+    public function testCreateShareLinkWithExplicitPermissions(): void
     {
-        // createZip() directly instantiates ZipArchive and uses RecursiveDirectoryIterator.
-        // These cannot be mocked in a pure unit test.
-        $this->markTestSkipped('createZip() requires real filesystem and ZipArchive extension.');
+        $_SERVER['HTTPS']    = 'on';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+
+        $userFolder = $this->setupUserFolder('admin');
+        $file       = $this->createMock(File::class);
+        $file->method('getId')->willReturn(1);
+        $userFolder->method('get')->willReturn($file);
+
+        $share = $this->createMock(IShare::class);
+        $share->method('getToken')->willReturn('t');
+        // Explicit permissions=16 should be used directly, not defaulted.
+        $share->expects($this->once())->method('setPermissions')->with(16);
+        $this->shareManager->method('newShare')->willReturn($share);
+        $this->shareManager->method('createShare')->willReturn($share);
+
+        $this->fileService->createShareLink('file.pdf', 3, 16);
+    }
+
+    // -------------------------------------------------------------------------
+    // createZip — uses real temp files
+    // -------------------------------------------------------------------------
+
+    public function testCreateZipSuccess(): void
+    {
+        // Create temporary input folder with files.
+        $inputFolder = sys_get_temp_dir() . '/test_zip_input_' . uniqid();
+        mkdir($inputFolder, 0777, true);
+        file_put_contents("$inputFolder/file1.txt", 'Hello');
+        file_put_contents("$inputFolder/file2.txt", 'World');
+
+        $tempZip = sys_get_temp_dir() . '/test_output_' . uniqid() . '.zip';
+
+        $result = $this->fileService->createZip($inputFolder, $tempZip);
+
+        $this->assertNull($result);
+        $this->assertFileExists($tempZip);
+
+        // Verify the ZIP contents.
+        $zip = new \ZipArchive();
+        $zip->open($tempZip);
+        $this->assertSame(2, $zip->numFiles);
+        $zip->close();
+
+        // Cleanup.
+        unlink("$inputFolder/file1.txt");
+        unlink("$inputFolder/file2.txt");
+        rmdir($inputFolder);
+        unlink($tempZip);
+    }
+
+    public function testCreateZipEmptyFolder(): void
+    {
+        $inputFolder = sys_get_temp_dir() . '/test_zip_empty_' . uniqid();
+        mkdir($inputFolder, 0777, true);
+
+        $tempZip = sys_get_temp_dir() . '/test_empty_' . uniqid() . '.zip';
+
+        // Suppress PHP warning from ZipArchive::close() on empty archives.
+        $result = @$this->fileService->createZip($inputFolder, $tempZip);
+
+        $this->assertNull($result);
+
+        // Cleanup.
+        rmdir($inputFolder);
+        if (file_exists($tempZip)) {
+            unlink($tempZip);
+        }
+    }
+
+    public function testCreateZipWithSubdirectory(): void
+    {
+        $inputFolder = sys_get_temp_dir() . '/test_zip_subdir_' . uniqid();
+        mkdir("$inputFolder/subdir", 0777, true);
+        file_put_contents("$inputFolder/root.txt", 'root');
+        file_put_contents("$inputFolder/subdir/nested.txt", 'nested');
+
+        $tempZip = sys_get_temp_dir() . '/test_subdir_' . uniqid() . '.zip';
+
+        $result = $this->fileService->createZip($inputFolder, $tempZip);
+
+        $this->assertNull($result);
+
+        $zip = new \ZipArchive();
+        $zip->open($tempZip);
+        $this->assertSame(2, $zip->numFiles);
+        $zip->close();
+
+        // Cleanup.
+        unlink("$inputFolder/root.txt");
+        unlink("$inputFolder/subdir/nested.txt");
+        rmdir("$inputFolder/subdir");
+        rmdir($inputFolder);
+        unlink($tempZip);
+    }
+
+    public function testCreateZipInvalidPath(): void
+    {
+        $inputFolder = sys_get_temp_dir() . '/test_zip_input_' . uniqid();
+        mkdir($inputFolder, 0777, true);
+        file_put_contents("$inputFolder/file.txt", 'data');
+
+        // Use a path inside a non-writable directory.
+        $readOnlyDir = sys_get_temp_dir() . '/test_zip_readonly_' . uniqid();
+        mkdir($readOnlyDir, 0444, true);
+        $tempZip = "$readOnlyDir/subdir/test.zip";
+
+        $result = $this->fileService->createZip($inputFolder, $tempZip);
+
+        // On most systems this will fail. If it doesn't, just skip.
+        if ($result === null) {
+            // Some systems allow this; clean up and skip.
+            @unlink($tempZip);
+            @rmdir("$readOnlyDir/subdir");
+            chmod($readOnlyDir, 0777);
+            rmdir($readOnlyDir);
+            unlink("$inputFolder/file.txt");
+            rmdir($inputFolder);
+            $this->markTestSkipped('System allows writing to read-only directories');
+        }
+
+        $this->assertSame('failed to create ZIP archive', $result);
+
+        // Cleanup.
+        chmod($readOnlyDir, 0777);
+        rmdir($readOnlyDir);
+        unlink("$inputFolder/file.txt");
+        rmdir($inputFolder);
     }
 
     // -------------------------------------------------------------------------
     // downloadZip — skipped due to header() calls
     // -------------------------------------------------------------------------
 
-    public function testDownloadZipRequiresHeaderOutput(): void
+    public function testDownloadZipSkipped(): void
     {
-        // downloadZip() uses header() and readfile(), which cannot be captured in PHPUnit.
-        $this->markTestSkipped('downloadZip() calls header() and readfile() which cannot be tested in unit context.');
+        // downloadZip() calls header() which cannot be sent in CLI, and
+        // @runInSeparateProcess fails with Nextcloud bootstrap output.
+        $this->markTestSkipped('downloadZip() calls header() and readfile(); incompatible with Nextcloud bootstrap in separate process.');
+    }
+
+    // -------------------------------------------------------------------------
+    // createPdf — test error handling
+    // -------------------------------------------------------------------------
+
+    public function testCreatePdfThrowsOnMissingTemplate(): void
+    {
+        // createPdf() directly instantiates Twig and Mpdf.
+        // Without a valid template, Twig will throw a LoaderError or RuntimeError.
+        $this->expectException(\Exception::class);
+
+        $this->fileService->createPdf('nonexistent-template.html.twig', []);
+    }
+
+    public function testCreatePdfSuccess(): void
+    {
+        // Ensure the test template exists.
+        $templateDir = '/var/www/html/custom_apps/opencatalogi/lib/Templates';
+        if (is_dir($templateDir) === false) {
+            mkdir($templateDir, 0777, true);
+        }
+
+        $templateFile = "$templateDir/test.html.twig";
+        if (file_exists($templateFile) === false) {
+            file_put_contents($templateFile, '<html><body>{{ title }}</body></html>');
+        }
+
+        $result = $this->fileService->createPdf('test.html.twig', ['title' => 'Test PDF']);
+
+        $this->assertInstanceOf(\Mpdf\Mpdf::class, $result);
+
+        // Cleanup mpdf temp dir.
+        if (is_dir('/tmp/mpdf')) {
+            $files = glob('/tmp/mpdf/*');
+            if ($files !== false) {
+                foreach ($files as $f) {
+                    if (is_file($f)) {
+                        @unlink($f);
+                    }
+                }
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // updateFile — additional branch: createNew with NotPermittedException
+    // -------------------------------------------------------------------------
+
+    public function testUpdateFileCreateNewPermissionError(): void
+    {
+        $userFolder = $this->setupUserFolder('admin');
+
+        $userFolder->method('get')
+            ->willThrowException(new NotFoundException());
+        $userFolder->method('newFile')
+            ->willThrowException(new NotPermittedException());
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageMatches("/Can.*t write to file/");
+
+        $this->fileService->updateFile('content', 'restricted/file.txt', true);
+    }
+
+    // -------------------------------------------------------------------------
+    // deleteFile — InvalidPathException branch
+    // -------------------------------------------------------------------------
+
+    public function testDeleteFileInvalidPathException(): void
+    {
+        $userFolder = $this->setupUserFolder('admin');
+
+        $file = $this->createMock(File::class);
+        $file->method('delete')
+            ->willThrowException(new \OCP\Files\InvalidPathException());
+        $userFolder->method('get')->willReturn($file);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageMatches("/Can.*t delete file/");
+
+        $this->fileService->deleteFile('invalid/file.txt');
     }
 }

@@ -24,7 +24,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -79,14 +78,12 @@ class BroadcastService
      * Constructor for BroadcastService.
      *
      * @param IURLGenerator      $urlGenerator URL generator interface
-     * @param IAppConfig         $config       App configuration interface
      * @param ContainerInterface $container    Server container for dependency injection
      * @param IAppManager        $appManager   App manager for checking installed apps
      * @param LoggerInterface    $logger       Logger for recording broadcast activities
      */
     public function __construct(
         private readonly IURLGenerator $urlGenerator,
-        private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,

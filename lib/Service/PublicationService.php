@@ -32,7 +32,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use Exception;
 use InvalidArgumentException;
 use OCP\Common\Exception\NotFoundException;
-use OCP\IURLGenerator;
 use OCP\IServerContainer;
 use RuntimeException;
 
@@ -99,7 +98,6 @@ class PublicationService
      * @param IServerContainer $container        Server container for dependency injection
      * @param IAppManager      $appManager       App manager for checking installed apps
      * @param DirectoryService $directoryService Directory service for federation
-     * @param IURLGenerator    $urlGenerator     URL generator for building URLs
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -107,7 +105,6 @@ class PublicationService
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
-        private readonly IURLGenerator $urlGenerator,
     ) {
         $this->appName = 'opencatalogi';
 
@@ -392,6 +389,7 @@ class PublicationService
         }
 
         // Search objects using the new structure.
+        /** @var array<string, mixed> $result */
         $result = $objectService->searchObjectsPaginated($searchQuery);
 
         // Filter unwanted properties from results.
@@ -1142,16 +1140,6 @@ class PublicationService
         } else if ($shouldIncludeFacets === true) {
             // If faceting is requested but no facetable data exists, create basic structure.
             $responseData['facetable'] = $this->mergeFacetableData([], []);
-        }
-
-        /*
-         * If aggregation is disabled, return only local results.
-         *
-         * @psalm-suppress TypeDoesNotContainType $shouldAggregate can be false when query param is 'false' or '0'
-         */
-
-        if ($shouldAggregate === false) {
-            return $responseData;
         }
 
         try {
@@ -2408,47 +2396,14 @@ class PublicationService
             ];
         }
 
-        try {
-            // Get optional Guzzle configuration from query parameters.
-            $guzzleConfig = [];
-
-            // Allow timeout configuration via query parameter.
-            if (isset($queryParams['timeout']) === true) {
-                $timeout = (int) $queryParams['timeout'];
-                if ($timeout > 0 && $timeout <= 120) {
-                    // Max 2 minutes.
-                    $guzzleConfig['timeout'] = $timeout;
-                }
-            }
-
-            // Allow connect timeout configuration via query parameter.
-            if (isset($queryParams['connect_timeout']) === true) {
-                $connectTimeout = (int) $queryParams['connect_timeout'];
-                if ($connectTimeout > 0 && $connectTimeout <= 30) {
-                    // Max 30 seconds.
-                    $guzzleConfig['connect_timeout'] = $connectTimeout;
-                }
-            }
-
-            // Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-            $guzzleConfig['query_params'] = $queryParams;
-
-            // Note: For 'uses' we don't have a specific DirectoryService method yet
-            // This would need to be implemented similar to getUsed() if needed
-            // For now, return local results only.
-            return [
-                'success' => true,
-                'data'    => $localData,
-                'status'  => 200,
-            ];
-        } catch (\Exception $e) {
-            // If federation fails, return local results.
-            return [
-                'success' => true,
-                'data'    => $localData,
-                'status'  => 200,
-            ];
-        }//end try
+        // Note: For 'uses' we don't have a specific DirectoryService method yet.
+        // This would need to be implemented similar to getUsed() if needed.
+        // For now, return local results only.
+        return [
+            'success' => true,
+            'data'    => $localData,
+            'status'  => 200,
+        ];
 
     }//end getFederatedUses()
 }//end class

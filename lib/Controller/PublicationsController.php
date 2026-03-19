@@ -18,7 +18,6 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCP\AppFramework\Controller;
@@ -27,7 +26,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -75,9 +73,7 @@ class PublicationsController extends Controller
      * @param string             $appName            The name of the app
      * @param IRequest           $request            The request object
      * @param PublicationService $publicationService The publication service
-     * @param DirectoryService   $directoryService   The directory service
      * @param CatalogiService    $catalogiService    The catalogi service
-     * @param IAppConfig         $config             The app configuration
      * @param ContainerInterface $container          The container for dependency injection
      * @param IAppManager        $appManager         The app manager
      * @param LoggerInterface    $logger             PSR-3 logger
@@ -93,9 +89,7 @@ class PublicationsController extends Controller
         $appName,
         IRequest $request,
         private readonly PublicationService $publicationService,
-        private readonly DirectoryService $directoryService,
         private readonly CatalogiService $catalogiService,
-        private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
@@ -266,6 +260,7 @@ class PublicationsController extends Controller
             $queryParams = $this->request->getParams();
 
             // Use ObjectService centralized query builder which handles dot-to-underscore conversion.
+            /** @var array<string, mixed> $searchQuery */
             $searchQuery = $objectService->buildSearchQuery($queryParams);
             $searchQuery['_includeDeleted'] = false;
 

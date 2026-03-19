@@ -18,8 +18,6 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use OCP\IAppConfig;
-use OCP\IRequest;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -41,32 +39,19 @@ class EventService
 {
 
     /**
-     * This property holds the name of the application, which is used for identification and configuration purposes.
-     *
-     * @var string $appName The name of the app.
-     */
-    private string $appName;
-
-    /**
      * EventService constructor.
      *
-     * @param IAppConfig         $config          App configuration interface.
-     * @param IRequest           $request         Request interface.
      * @param ContainerInterface $container       Container for dependency injection.
      * @param IAppManager        $appManager      App manager interface.
      * @param SettingsService    $settingsService Settings service for configuration access.
      * @param LoggerInterface    $logger          PSR-3 logger.
      */
     public function __construct(
-        private readonly IAppConfig $config,
-        private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly LoggerInterface $logger
     ) {
-        // Set the application name for identification and configuration purposes.
-        $this->appName = 'opencatalogi';
 
     }//end __construct()
 
@@ -439,45 +424,40 @@ class EventService
 
             // Process each file from the FileMapper.
             foreach ($files as $file) {
-                try {
-                    $fileName = ($file['name'] ?? 'unknown');
-                    $filePath = ($file['path'] ?? '');
+                $fileName = ($file['name'] ?? 'unknown');
+                $filePath = ($file['path'] ?? '');
 
-                    // Check if file is already published by checking if it has a share token.
-                    // FileMapper already includes share information in the file data.
-                    if (empty($file['share_token']) === false) {
-                        $result['skipped']++;
-                        continue;
+                // Check if file is already published by checking if it has a share token.
+                // FileMapper already includes share information in the file data.
+                if (empty($file['share_token']) === false) {
+                    $result['skipped']++;
+                    continue;
+                }
+
+                // Create share link directly without updating the object.
+                // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix.
+                $openRegisterPath = '/OpenRegister/'.$filePath;
+
+                try {
+                    // Use the converted OpenRegister path format.
+                    $shareLink = $fileService->createShareLink($openRegisterPath);
+
+                    if ($shareLink !== null
+                        && $shareLink !== ''
+                        && str_contains($shareLink, 'not found') === false
+                        && str_contains($shareLink, 'couldn\'t be found') === false
+                    ) {
+                        $result['published']++;
                     }
 
-                    // Create share link directly without updating the object.
-                    // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix.
-                    $openRegisterPath = '/OpenRegister/'.$filePath;
-
-                    try {
-                        // Use the converted OpenRegister path format.
-                        $shareLink = $fileService->createShareLink($openRegisterPath);
-
-                        if ($shareLink !== null
-                            && $shareLink !== ''
-                            && str_contains($shareLink, 'not found') === false
-                            && str_contains($shareLink, 'couldn\'t be found') === false
-                        ) {
-                            $result['published']++;
-                        }
-
-                        if ($shareLink === null
-                            || $shareLink === ''
-                            || str_contains($shareLink, 'not found') === true
-                            || str_contains($shareLink, 'couldn\'t be found') === true
-                        ) {
-                            $result['errors'][] = "Failed to create share link for file {$fileName}";
-                        }
-                    } catch (\Exception $shareException) {
-                        $result['errors'][] = "Exception creating share link for file {$fileName}: ".$shareException->getMessage();
-                    }//end try
+                    if ($shareLink === null
+                        || $shareLink === ''
+                        || str_contains($shareLink, 'not found') === true
+                        || str_contains($shareLink, 'couldn\'t be found') === true
+                    ) {
+                        $result['errors'][] = "Failed to create share link for file {$fileName}";
+                    }
                 } catch (\Exception $e) {
-                    $fileName           = ($file['name'] ?? 'unknown');
                     $result['errors'][] = "Failed to publish file {$fileName}: ".$e->getMessage();
                 }//end try
             }//end foreach

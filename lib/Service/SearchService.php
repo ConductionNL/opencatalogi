@@ -381,10 +381,7 @@ class SearchService
                     // Add each value to the search params.
                 }
 
-                // Only add the condition if we have valid values to search for.
-                if (empty($orConditions) === false) {
-                    $searchConditions[] = '('.implode(' OR ', $orConditions).')';
-                }
+                $searchConditions[] = '('.implode(' OR ', $orConditions).')';
 
                 // Unset to prevent sql errors because of double filtering.
                 unset($filters[$key]);

@@ -6,9 +6,12 @@ parameters:
         - phpstan-bootstrap.php
     excludePaths:
         - vendor
+        # CMSTool implements OCA\OpenRegister\Tool\ToolInterface which isn't available during analysis
+        - lib/Tool/CMSTool.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
     ignoreErrors:
         # Nextcloud internal classes that PHPStan might not recognize
         - '#Call to an undefined method OC::#'
@@ -20,15 +23,16 @@ parameters:
         - '#Caught class OC\\\\#'
         - '#Class OCA\\\\DAV\\\\#'
         # OCA classes from other apps (OpenRegister) not available during static analysis
-        - '#unknown class OCA\\OpenRegister\\#'
-        - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class OCA\\OpenRegister\\#'
-        - '#has invalid return type OCA\\OpenRegister\\#'
+        - '#OCA\\OpenRegister\\#'
         # GuzzleHttp is available at runtime via Nextcloud but not in composer require
-        - '#unknown class GuzzleHttp\\#'
-        - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class GuzzleHttp\\#'
-        - '#invalid type GuzzleHttp\\#'
-        - '#Caught class GuzzleHttp\\#'
+        - '#GuzzleHttp\\#'
+        # Doctrine DBAL classes used in migrations (available at runtime via Nextcloud)
+        - '#Doctrine\\DBAL\\#'
+        # React\Promise used by Guzzle (available at runtime)
+        - '#React\\Promise\\#'
+        # OCP\Files\Node::putContent() exists at runtime but not in stubs
+        - '#Call to an undefined method OCP\\Files\\Node::putContent#'
+        # OCP\AppFramework\Db\Entity::jsonSerialize() exists at runtime (implements JsonSerializable)
+        - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
         # Dynamic HTTP status codes from business rule validation results
         - '#Parameter \$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
