@@ -58,6 +58,7 @@ module.exports = defineConfig([
 			'@typescript-eslint/no-explicit-any': 'off',
 			'n/no-missing-import': 'off',
 			'import/default': 'off',
+			'import/no-unresolved': ['error', { ignore: ['vue-apexcharts'] }],
 		},
 	},
 ])
