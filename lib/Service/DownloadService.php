@@ -141,7 +141,12 @@ class DownloadService
     private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse
     {
         try {
-            return $objectService->getObject('publication', $id);
+            $entity = $objectService->find($id);
+            if ($entity !== null) {
+                return $entity->jsonSerialize();
+            }
+
+            return null;
         } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
@@ -224,7 +229,10 @@ class DownloadService
 
         // Add all attachments to Bijlagen folder.
         foreach ($attachments as $attachment) {
-            $attachment  = $attachment->jsonSerialize();
+            if (is_object($attachment) === true && method_exists($attachment, 'jsonSerialize') === true) {
+                $attachment = $attachment->jsonSerialize();
+            }
+
             $fileContent = file_get_contents($attachment['downloadUrl']);
             if ($fileContent !== false) {
                 $filePath = explode('/', $attachment['reference']);
@@ -305,16 +313,30 @@ class DownloadService
         // Fetch attachment objects.
         try {
             // Fetch the publication object by its ID.
-            $object = $objectService->getObject(objectType: 'publication', id: $id);
+            $entity = $objectService->find($id);
+            if ($entity !== null) {
+                $object = $entity->jsonSerialize();
+            } else {
+                $object = null;
+            }
 
-            // Fetch attachment objects.
-            return $objectService->getMultipleObjects(
-                objectType: 'attachment',
-                ids: $object['attachments']
-            );
+            if ($object === null) {
+                return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 500);
+            }
+
+            // Fetch attachment objects by their IDs.
+            $attachments = [];
+            foreach (($object['attachments'] ?? []) as $attId) {
+                $attEntity = $objectService->find($attId);
+                if ($attEntity !== null) {
+                    $attachments[] = $attEntity->jsonSerialize();
+                }
+            }
+
+            return $attachments;
         } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-        }
+        }//end try
 
     }//end publicationAttachments()
 }//end class

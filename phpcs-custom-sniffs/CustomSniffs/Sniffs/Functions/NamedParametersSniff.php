@@ -100,8 +100,8 @@ class NamedParametersSniff implements Sniff
             }
         }
         
-        // Suggest named parameters for functions with 1+ parameters (they might have defaults)
-        if ($parameterCount >= 1 && !$hasNamedParameters) {
+        // Suggest named parameters for functions with 2+ parameters.
+        if ($parameterCount >= 2 && !$hasNamedParameters) {
             $functionName = $tokens[$stackPtr]['content'];
             
             // Skip built-in functions that commonly don't benefit from named parameters
@@ -116,12 +116,22 @@ class NamedParametersSniff implements Sniff
                 // String functions (simple ones)
                 'strlen', 'trim', 'ltrim', 'rtrim', 'strtolower', 'strtoupper', 'ucfirst',
                 'ucwords', 'lcfirst', 'ord', 'chr', 'md5', 'sha1', 'crc32',
+                'strtok', 'wordwrap', 'str_word_count', 'substr_count',
+                'similar_text', 'soundex', 'metaphone', 'levenshtein',
                 
                 // Array functions (simple ones)
                 'count', 'sizeof', 'array_push', 'array_pop', 'array_shift', 'array_unshift',
                 'array_keys', 'array_values', 'array_reverse', 'array_unique', 'array_sum',
                 'array_product', 'min', 'max', 'end', 'reset', 'key', 'current', 'next', 'prev',
-                
+
+                // Array functions (variadic — named params not applicable)
+                'array_merge', 'array_merge_recursive', 'array_replace', 'array_replace_recursive',
+                'array_diff', 'array_diff_key', 'array_diff_assoc', 'array_intersect',
+                'array_intersect_key', 'array_intersect_assoc', 'compact', 'array_combine',
+                'array_column', 'array_chunk', 'array_splice', 'array_slice', 'array_pad',
+                'array_flip', 'array_fill', 'array_fill_keys', 'sort', 'rsort', 'asort',
+                'arsort', 'ksort', 'krsort', 'array_multisort',
+
                 // Array functions that commonly use callbacks (might benefit from named params but often don't)
                 'array_filter', 'array_map', 'array_reduce', 'array_walk', 'usort', 'uksort',
                 'uasort', 'array_search', 'array_key_exists', 'in_array',
@@ -141,7 +151,75 @@ class NamedParametersSniff implements Sniff
                 'filesize', 'filemtime', 'filectime', 'fileatime', 'dirname', 'basename',
                 
                 // DateTime (simple constructors)
-                'time', 'microtime', 'date', 'gmdate', 'mktime', 'gmmktime'
+                'time', 'microtime', 'date', 'gmdate', 'mktime', 'gmmktime',
+
+                // String functions (variadic or commonly obvious)
+                'sprintf', 'printf', 'sscanf', 'str_replace', 'str_ireplace',
+                'substr', 'strpos', 'strrpos', 'stripos', 'strripos',
+                'str_contains', 'str_starts_with', 'str_ends_with',
+                'str_split', 'chunk_split', 'nl2br', 'number_format',
+                'preg_replace', 'preg_split', 'preg_match_all',
+                'http_build_query', 'parse_url', 'parse_str',
+                'urlencode', 'urldecode', 'rawurlencode', 'rawurldecode',
+                'base64_encode', 'base64_decode', 'htmlspecialchars',
+                'htmlentities', 'html_entity_decode', 'strip_tags',
+                'addslashes', 'stripslashes', 'quotemeta',
+                'hex2bin', 'bin2hex', 'ctype_alnum', 'ctype_alpha',
+
+                // Type casting and conversion
+                'intval', 'floatval', 'strval', 'boolval', 'settype', 'gettype',
+                'class_exists', 'method_exists', 'property_exists',
+                'function_exists', 'interface_exists', 'get_class',
+
+                // Misc built-ins
+                'header', 'setcookie', 'sleep', 'usleep',
+                'trigger_error', 'set_error_handler',
+                'ob_start', 'ob_get_contents', 'ob_end_clean',
+                'defined', 'define', 'constant',
+
+                // Query builder methods (Doctrine/Nextcloud)
+                'select', 'selectalias', 'from', 'innerjoin', 'leftjoin',
+                'rightjoin', 'join', 'where', 'andwhere', 'orwhere',
+                'groupby', 'orderby', 'setmaxresults', 'setfirstresult',
+                'setparameter', 'like', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
+                'isnull', 'isnotnull', 'createnamedparameter',
+                'createpositionalparameter',
+
+                // Schema/table methods (Doctrine DBAL)
+                'addindex', 'addcolumn', 'hascolumn', 'hastable', 'droptable',
+                'gettable', 'hasindex', 'adduniqueidx', 'renamecolumn',
+                'dropcolumn', 'createtable', 'settable', 'setdefault',
+                'addcolumn', 'changecolumn',
+
+                // Logging methods (PSR-3 Logger)
+                'debug', 'info', 'notice', 'warning', 'error', 'critical',
+                'alert', 'emergency', 'log',
+
+                // Common Nextcloud/framework methods
+                'addheader', 'setheader', 'registerservice', 'registerdashboardwidget',
+                'registereventlistener', '__construct',
+
+                // HTTP response constructors
+                'jsonresponse', 'templateresponse', 'datadownloadresponse',
+                'textresponse', 'xmlresponse', 'redirectresponse',
+
+                // Common PHP OOP
+                'get', 'set', 'has', 'add', 'remove', 'delete',
+                'create', 'update', 'find', 'findall',
+
+                // Nextcloud service methods
+                'getvaluestring', 'getvalueint', 'getvaluebool',
+                'setvaluestring', 'setvalueint', 'setvaluebool',
+                'getsystemvalue', 'setsystemvalue',
+                'getappvalue', 'setappvalue', 'deleteappvalue',
+                'getappversion',
+
+                // File operations
+                'file_put_contents', 'file_get_contents', 'fopen', 'fclose',
+                'fread', 'fwrite', 'fgets', 'feof', 'fseek', 'ftell',
+                'mkdir', 'rmdir', 'rename', 'copy', 'unlink', 'symlink',
+                'chmod', 'chown', 'chgrp', 'glob', 'scandir', 'pathinfo',
+                'realpath', 'tempnam', 'tmpfile'
             ];
             
             if (!in_array(strtolower($functionName), $skipFunctions)) {

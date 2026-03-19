@@ -113,7 +113,7 @@ class SettingsService
          * @psalm-suppress UndefinedInterfaceMethod
          */
 
-        return $this->appManager->isEnabled(self::OPENREGISTER_APP_ID) === true;
+        return $this->appManager->isEnabledForUser(self::OPENREGISTER_APP_ID) === true;
 
     }//end isOpenRegisterEnabled()
 

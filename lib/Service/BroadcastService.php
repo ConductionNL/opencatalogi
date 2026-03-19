@@ -191,7 +191,7 @@ class BroadcastService
     {
         try {
             // Retrieve all listing objects from OpenRegister.
-            $listings = $this->getObjectService()->getObjects(objectType: 'listing');
+            $listings = $this->getObjectService()->getObjects('listing');
 
             // Extract unique directory URLs from the listings.
             $directoryUrls = array_unique(array_column($listings, 'directory'));

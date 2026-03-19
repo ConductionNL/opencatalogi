@@ -407,7 +407,7 @@ class CMSTool implements ToolInterface
             message: 'Page created successfully',
             data: [
                 'pageId' => $page->getUuid(),
-                'title'  => $page->getTitle(),
+                'title'  => $parameters['title'],
                 'slug'   => $slug,
             ]
         );
@@ -431,10 +431,11 @@ class CMSTool implements ToolInterface
         ];
 
         // Schema name without register prefix.
-        $pages = $this->objectService->findObjects(
-            filters: $filters,
-            limit: $limit,
-            schema: 'page'
+        $pages = $this->objectService->findAll(
+            config: [
+                'filters' => $filters,
+                'limit'   => $limit,
+            ]
         );
 
         return $this->successResponse(
@@ -445,12 +446,12 @@ class CMSTool implements ToolInterface
                     function ($page) {
                         return [
                             'id'      => $page->getUuid(),
-                            'title'   => $page->getTitle(),
+                            'title'   => ($page->getObject()['title'] ?? ''),
                             'slug'    => ($page->getSlug() ?? ''),
                             'summary' => ($page->getSummary() ?? ''),
                         ];
                     },
-                    ($pages['results'] ?? [])
+                    $pages
                 ),
             ]
         );
@@ -550,15 +551,16 @@ class CMSTool implements ToolInterface
         ];
 
         // Schema name without register prefix.
-        $menus = $this->objectService->findObjects(
-            filters: $filters,
-            schema: 'menu'
+        $menus = $this->objectService->findAll(
+            config: [
+                'filters' => $filters,
+            ]
         );
 
         return $this->successResponse(
             message: 'Menus retrieved successfully',
-            [
-                'count' => count(($menus['results'] ?? [])),
+            data: [
+                'count' => count($menus),
                 'menus' => array_map(
                     function ($menu) {
                         $object = $menu->getObject();
@@ -569,7 +571,7 @@ class CMSTool implements ToolInterface
                             'itemCount' => count(($object['items'] ?? [])),
                         ];
                     },
-                    ($menus['results'] ?? [])
+                    $menus
                 ),
             ]
         );
@@ -621,7 +623,7 @@ class CMSTool implements ToolInterface
 
         return $this->successResponse(
             message: 'Menu item added successfully',
-            [
+            data: [
                 'menuItemId' => $menuItem->getUuid(),
                 'name'       => $menuItem->getName(),
                 'menuId'     => $parameters['menuId'],
@@ -769,10 +771,10 @@ class CMSTool implements ToolInterface
             // CMSTool methods expect a single array parameter, not individual args.
             // Combine all typed arguments back into a single associative array.
             // If original was positional, wrap in array.
-            $result = $this->$camelCaseMethod($typedArguments);
+            $result = $this->$camelCaseMethod(...$typedArguments);
             if ($isAssociative === true) {
                 // If original was associative, pass it as-is.
-                $result = $this->$camelCaseMethod($arguments);
+                $result = $this->$camelCaseMethod(...$arguments);
             }
 
             // LLPhant expects tool results to be JSON strings, not arrays.

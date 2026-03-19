@@ -195,7 +195,7 @@ class ListingsController extends Controller
 
         // Save the new listing object.
         $object = $this->getObjectService()->saveObject(
-            data: $data,
+            object: $data,
             extend: [],
             register: $listingRegister,
             schema: $listingSchema
@@ -231,7 +231,7 @@ class ListingsController extends Controller
 
         // Save the updated listing object with the id as UUID for update.
         $object = $this->getObjectService()->saveObject(
-            data: $data,
+            object: $data,
             extend: [],
             register: $listingRegister,
             schema: $listingSchema,
