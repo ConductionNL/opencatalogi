@@ -35,16 +35,19 @@ use Symfony\Component\Uid\Uuid;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
-
 class SearchService
 {
 
     /**
+     * The HTTP client.
+     *
      * @var Client
      */
     public $client;
 
     /**
+     * Base object configuration.
+     *
      * @var array Base object configuration
      */
     public const BASE_OBJECT = [
@@ -52,13 +55,12 @@ class SearchService
         'collection' => 'json',
     ];
 
-
     /**
      * SearchService constructor.
      *
-     * @param ElasticSearchService $elasticService   The service responsible for handling interactions with the Elasticsearch database.
-     * @param DirectoryService     $directoryService The service used for managing directory-related operations.
-     * @param IURLGenerator        $urlGenerator     The service for generating URLs within the application.
+     * @param ElasticSearchService $elasticService   The Elasticsearch service.
+     * @param DirectoryService     $directoryService The directory service.
+     * @param IURLGenerator        $urlGenerator     The URL generator.
      */
     public function __construct(
         private readonly ElasticSearchService $elasticService,
@@ -69,26 +71,26 @@ class SearchService
 
     }//end __construct()
 
-
     /**
      * Merge facets from existing and new aggregations.
      *
-     * @param  array $existingAggregation
-     * @param  array $newAggregation
+     * @param array $existingAggregation The existing aggregation array.
+     * @param array $newAggregation      The new aggregation array to merge.
+     *
      * @return array Merged facets
      */
     public function mergeFacets(array $existingAggregation, array $newAggregation): array
     {
-        $results                   = [];
+        $results        = [];
         $existingAggMap = [];
-        $newAggregationMapped      = [];
+        $newAggregationMapped = [];
 
-        // Map existing aggregation
+        // Map existing aggregation.
         foreach ($existingAggregation as $value) {
             $existingAggMap[$value['_id']] = $value['count'];
         }
 
-        // Merge new aggregation with existing
+        // Merge new aggregation with existing.
         foreach ($newAggregation as $value) {
             $newAggregationMapped[$value['_id']] = $value['count'];
             if (isset($existingAggMap[$value['_id']]) === true) {
@@ -96,8 +98,12 @@ class SearchService
             }
         }
 
-        // Combine results
-        foreach (array_merge(array_diff($existingAggMap, $newAggregationMapped), array_diff($newAggregationMapped, $existingAggMap)) as $key => $value) {
+        // Combine results.
+        $merged = array_merge(
+            array_diff($existingAggMap, $newAggregationMapped),
+            array_diff($newAggregationMapped, $existingAggMap)
+        );
+        foreach ($merged as $key => $value) {
             $results[] = [
                 '_id'   => $key,
                 'count' => $value,
@@ -108,12 +114,12 @@ class SearchService
 
     }//end mergeFacets()
 
-
     /**
      * Merge existing and new aggregations.
      *
-     * @param  array|null $existingAggregations
-     * @param  array|null $newAggregations
+     * @param array|null $existingAggregations The existing aggregations.
+     * @param array|null $newAggregations      The new aggregations to merge.
+     *
      * @return array Merged aggregations
      */
     private function mergeAggregations(?array $existingAggregations, ?array $newAggregations): array
@@ -137,13 +143,13 @@ class SearchService
 
     }//end mergeAggregations()
 
-
     /**
      * Comparison function for sorting result arrays.
      *
-     * @param  array $a
-     * @param  array $b
-     * @return integer
+     * @param array $a The first array to compare.
+     * @param array $b The second array to compare.
+     *
+     * @return integer The comparison result.
      */
     public function sortResultArray(array $a, array $b): int
     {
@@ -151,46 +157,62 @@ class SearchService
 
     }//end sortResultArray()
 
-
     /**
      * Perform a search operation.
      *
-     * @param  array $parameters    Search parameters
-     * @param  array $elasticConfig Elasticsearch configuration
-     * @param  array $dbConfig      Database configuration
-     * @param  array $catalogi      Catalogi configuration
+     * @param array $parameters    Search parameters
+     * @param array $elasticConfig Elasticsearch configuration
+     * @param array $dbConfig      Database configuration
+     * @param array $catalogi      Catalogi configuration
+     *
      * @return array Search results
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) — $dbConfig reserved for future database search
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) dbConfig reserved for future database search.
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function search(array $parameters, array $elasticConfig, array $dbConfig, array $catalogi = []): array
+    public function search(array $parameters, array $elasticConfig, array $dbConfig, array $catalogi=[]): array
     {
         $localResults['results'] = [];
         $localResults['facets']  = [];
 
         $totalResults = 0;
-        $limit        = isset($parameters['_limit']) === true ? $parameters['_limit'] : 30;
-        $page         = isset($parameters['_page']) === true ? $parameters['_page'] : 1;
+        $limit = 30;
+        if (isset($parameters['_limit']) === true) {
+            $limit = $parameters['_limit'];
+        }
 
-        // Perform local search if Elasticsearch is configured
+        $page = 1;
+        if (isset($parameters['_page']) === true) {
+            $page = $parameters['_page'];
+        }
+
+        // Perform local search if Elasticsearch is configured.
         if ($elasticConfig['location'] !== '') {
-            $localResults = $this->elasticService->searchObject(filters: $parameters, config: $elasticConfig, totalResults: $totalResults,);
+            $localResults = $this->elasticService->searchObject(
+                filters: $parameters,
+                config: $elasticConfig,
+                totalResults: $totalResults,
+            );
         }
 
         $directory = $this->directoryService->getDirectory(['_limit' => 1000]);
 
-        // Return early if directory is empty
+        // Return early if directory is empty.
         if (count($directory) === 0) {
             $pages = (int) ceil($totalResults / $limit);
+            if ($pages === 0) {
+                $pages = 1;
+            }
+
             return [
                 'facets'  => $localResults['facets'],
                 'results' => $localResults['results'],
                 'count'   => count($localResults['results']),
                 'limit'   => (int) $limit,
                 'page'    => (int) $page,
-                'pages'   => $pages === 0 ? 1 : $pages,
+                'pages'   => $pages,
                 'total'   => $totalResults,
             ];
         }
@@ -200,13 +222,16 @@ class SearchService
 
         $searchEndpoints = [];
 
-        // Prepare search endpoints
+        // Prepare search endpoints.
         $promises = [];
+        $indexUrl = $this->urlGenerator->getAbsoluteURL(
+            $this->urlGenerator->linkToRoute(routeName: "opencatalogi.directory.index")
+        );
         foreach ($directory as $instance) {
             if ($instance['default'] === false
                 || isset($parameters['_catalogi']) === true
                 && in_array($instance['catalog'], $parameters['_catalogi']) === false
-                || $instance['search'] === $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute(routeName:"opencatalogi.directory.index"))
+                || $instance['search'] === $indexUrl
             ) {
                 continue;
             }
@@ -216,15 +241,15 @@ class SearchService
 
         unset($parameters['_catalogi']);
 
-        // Perform asynchronous requests to search endpoints
+        // Perform asynchronous requests to search endpoints.
         foreach ($searchEndpoints as $searchEndpoint => $catalogi) {
             $parameters['_catalogi'] = $catalogi;
-            $promises[]              = $this->client->getAsync($searchEndpoint, ['query' => $parameters]);
+            $promises[] = $this->client->getAsync($searchEndpoint, ['query' => $parameters]);
         }
 
         $responses = Utils::settle($promises)->wait();
 
-        // Process responses
+        // Process responses.
         foreach ($responses as $response) {
             if ($response['state'] === 'fulfilled') {
                 $responseData = json_decode(
@@ -245,23 +270,26 @@ class SearchService
 
         $pages = (int) ceil($totalResults / $limit);
 
+        if ($pages === 0) {
+            $pages = 1;
+        }
+
         return [
             'facets'  => $aggregations,
             'results' => $results,
             'count'   => count($results),
             'limit'   => (int) $limit,
             'page'    => (int) $page,
-            'pages'   => $pages === 0 ? 1 : $pages,
+            'pages'   => $pages,
             'total'   => $totalResults,
         ];
 
     }//end search()
 
-
     /**
      * This function creates a mongodb filter array.
      *
-     * Also unsets _search in filters !
+     * Also unsets _search in filters.
      *
      * @param array $filters        Query parameters from request.
      * @param array $fieldsToSearch Database field names to filter/search on.
@@ -298,7 +326,6 @@ class SearchService
 
     }//end createMongoDBSearchFilter()
 
-
     /**
      * This function creates mysql search conditions based on given filters from request.
      *
@@ -311,7 +338,7 @@ class SearchService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    public function createMySQLSearchConditions(array &$filters, array $fieldsToSearch, ?array &$searchParams = []): array
+    public function createMySQLSearchConditions(array &$filters, array $fieldsToSearch, ?array &$searchParams=[]): array
     {
         $searchConditions = [];
         if (isset($filters['_search']) === true) {
@@ -331,30 +358,30 @@ class SearchService
 
         foreach ($filters as $key => $value) {
             if ($key === '_search') {
+                // Skip _search field.
                 continue;
-// Skip _search field
             }
 
-            // Skip if the filter value is empty or null
+            // Skip if the filter value is empty or null.
             if (empty($value) === true) {
                 continue;
             }
 
-            // Check if the filter value contains commas, meaning multiple values (OR conditions)
+            // Check if the filter value contains commas for multiple values (OR conditions).
             if (is_string($value) === true && strpos($value, ',') !== false) {
                 $values = explode(',', $value);
-// Split the comma-separated values into an array
+                // Split the comma-separated values into an array.
                 $orConditions = [];
 
                 foreach ($values as $i => $val) {
                     $paramKey = "{$key}_$i";
-// Generate unique parameter key
+                    // Generate unique parameter key.
                     $orConditions[]          = "$key = :$paramKey";
                     $searchParams[$paramKey] = trim($val);
-// Add each value to the search params
+                    // Add each value to the search params.
                 }
 
-                // Only add the condition if we have valid values to search for
+                // Only add the condition if we have valid values to search for.
                 if (empty($orConditions) === false) {
                     $searchConditions[] = '('.implode(' OR ', $orConditions).')';
                 }
@@ -364,17 +391,16 @@ class SearchService
             }//end if
         }//end foreach
 
-        // Ensure that search conditions and params exist before proceeding
+        // Ensure that search conditions and params exist before proceeding.
         if (empty($searchConditions) === true) {
-            // Handle the case where no search conditions are generated
+            // Handle the case where no search conditions are generated.
+            // Default condition to avoid breaking the SQL query.
             $searchConditions[] = '1=1';
-// Default condition to avoid breaking the SQL query
         }
 
         return $searchConditions;
 
     }//end createMySQLSearchConditions()
-
 
     /**
      * This function unsets all keys starting with _ from filters.
@@ -386,7 +412,7 @@ class SearchService
     public function unsetSpecialQueryParams(array $filters): array
     {
         foreach (array_keys($filters) as $key) {
-            if (str_starts_with($key, '_')) {
+            if (str_starts_with($key, '_') === true) {
                 unset($filters[$key]);
             }
 
@@ -398,7 +424,6 @@ class SearchService
         return $filters;
 
     }//end unsetSpecialQueryParams()
-
 
     /**
      * This function creates mysql search parameters based on given filters from request.
@@ -418,9 +443,8 @@ class SearchService
 
     }//end createMySQLSearchParams()
 
-
     /**
-     * This function creates an sort array based on given order param from request.
+     * This function creates a sort array based on given order param from request.
      *
      * @param array $filters Query parameters from request.
      *
@@ -429,9 +453,10 @@ class SearchService
     public function createSortForMySQL(array $filters): array
     {
         $sort = [];
-        if (isset($filters['_order']) && is_array($filters['_order'])) {
+        if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
             foreach ($filters['_order'] as $field => $direction) {
-                $direction    = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+                $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+
                 $sort[$field] = $direction;
             }
         }
@@ -440,20 +465,19 @@ class SearchService
 
     }//end createSortForMySQL()
 
-
     /**
      * This function creates a sort array based on given order param from request.
-     *
-     * @todo Not tested yet. See PublicationsController->index()
      *
      * @param array $filters Query parameters from request.
      *
      * @return array $sort
+     *
+     * @todo Not tested yet. See PublicationsController->index().
      */
     public function createSortForMongoDB(array $filters): array
     {
         $sort = [];
-        if (isset($filters['_order']) && is_array($filters['_order'])) {
+        if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
             foreach ($filters['_order'] as $field => $direction) {
                 $sort[$field] = strtoupper($direction) === 'DESC' ? -1 : 1;
             }
@@ -463,19 +487,18 @@ class SearchService
 
     }//end createSortForMongoDB()
 
-
     /**
-     * This function adds a single query param to the given $vars array. ?$name=$value
-     * Will check if request query $name has [...] inside the parameter, like this: ?queryParam[$nameKey]=$value.
-     * Works recursive, so in case we have ?queryParam[$nameKey][$anotherNameKey][etc][etc]=$value.
-     * Also checks for queryParams ending on [] like: ?queryParam[$nameKey][] (or just ?queryParam[]), if this is the case
-     * this function will add given value to an array of [queryParam][$nameKey][] = $value or [queryParam][] = $value.
+     * This function adds a single query param to the given $vars array.
+     *
+     * Will check if request query $name has [...] inside the parameter.
+     * Works recursive for nested brackets.
+     * Also checks for queryParams ending on [] and adds value to an array.
      * If none of the above this function will just add [queryParam] = $value to $vars.
      *
      * @param array  $vars    The vars array we are going to store the query parameter in
-     * @param string $name    The full $name of the query param, like this: ?$name=$value
-     * @param string $nameKey The full $name of the query param, unless it contains [] like: ?queryParam[$nameKey]=$value
-     * @param string $value   The full $value of the query param, like this: ?$name=$value
+     * @param string $name    The full $name of the query param
+     * @param string $nameKey The key portion of the query param name
+     * @param string $value   The full $value of the query param
      *
      * @return void
      */
@@ -506,7 +529,6 @@ class SearchService
 
     }//end recursiveRequestQueryKey()
 
-
     /**
      * Parses the request query string and returns it as an array of queries.
      *
@@ -514,7 +536,7 @@ class SearchService
      *
      * @return array The resulting array of query parameters.
      */
-    public function parseQueryString(string $queryString = ''): array
+    public function parseQueryString(string $queryString=''): array
     {
         $vars = [];
 
@@ -546,6 +568,4 @@ class SearchService
         return $vars;
 
     }//end parseQueryString()
-
-
 }//end class
