@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # Organization-Specific ArchiMate Export Specification
 
 ## Purpose

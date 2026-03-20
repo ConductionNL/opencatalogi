@@ -1,3 +1,7 @@
+---
+status: reviewed
+---
+
 # Prometheus Metrics Endpoint
 
 ## Purpose
