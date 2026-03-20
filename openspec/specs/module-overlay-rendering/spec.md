@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Module Overlay Rendering Specification
 
 ## Purpose
@@ -17,7 +21,7 @@ GEMMA views are ArchiMate diagrams that show the Dutch municipal reference archi
 - Parent-child: JointJS parent embedding for nesting modules inside referentiecomponenten
 - Performance: paper.freeze()/unfreeze() pattern for batch rendering
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Module nodes MUST render as children of referentiecomponenten
 Module overlay nodes returned by the enrichment API MUST be rendered inside their parent referentiecomponent using the existing JointJS parent-child hierarchy.

@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Deelnames Gebruik Specification
 
 ## Purpose
@@ -16,7 +20,7 @@ In the Dutch municipal landscape, organizations frequently share software applic
 - Leverages the softwarecatalog enrichment API for view data retrieval
 - Builds on the existing GEMMA view and referentiecomponent data model
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: ViewService MUST retrieve deelnames gebruik separately from regular gebruik
 The ViewService MUST perform a two-phase retrieval: regular gebruik filtered by RBAC, then deelnames gebruik with RBAC disabled filtering by the `deelnemers` field.

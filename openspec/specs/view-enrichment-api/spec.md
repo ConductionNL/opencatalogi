@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # View Enrichment API Specification
 
 ## Purpose
@@ -16,7 +20,7 @@ Previously, the frontend called the OpenRegister API directly to fetch raw GEMMA
 - OpenCatalogi's existing public API (`/api/{catalogSlug}`) serves publication data; views are a softwarecatalog concern
 - The enrichment API calls OpenRegister's ObjectService internally for view, module, and gebruik data
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Frontend MUST call enrichment API for views
 The frontend MUST use the softwarecatalog enrichment API (`/softwarecatalog/api/views/{viewId}`) instead of the OpenRegister direct API (`/openregister/api/objects/vng-gemma/view/{id}`) for all view rendering.

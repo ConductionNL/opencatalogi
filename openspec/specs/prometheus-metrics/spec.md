@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Prometheus Metrics Endpoint
 
 ## Purpose
@@ -16,7 +20,7 @@ OpenCatalogi serves as the public-facing publication platform for government tra
 - OpenRegister has a reference MetricsService and HeartbeatController that can serve as a shared pattern
 - All Conduction apps should expose the same standard metrics set for unified monitoring
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Metrics endpoint MUST expose standard metrics
 The `GET /api/metrics` endpoint MUST return metrics in Prometheus text exposition format covering app health, request counts, and error tracking.

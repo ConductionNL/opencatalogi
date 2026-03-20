@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Organization-Specific ArchiMate Export Specification
 
 ## Purpose
@@ -18,7 +22,7 @@ Organizations using the softwarecatalog map their applications to GEMMA referent
 - Added relationships: SpecializationRelationship linking modules to referentiecomponenten
 - Added views: Copies of qualifying GEMMA views with module nodes plotted
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Export MUST produce valid ArchiMate XML with organization applications
 The organization export MUST generate a valid AMEFF XML file that includes all base GEMMA objects plus synthesized application elements, specialization relationships, enriched view copies, and organization folder structure.

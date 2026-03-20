@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # woo-transparency Specification
 
 ## Purpose
@@ -18,7 +22,7 @@ The document processing pipeline (entity detection, anonymization, PDF conversio
 - **Listing**: Individual WOO documents (openbaar and redacted deels-openbaar) become Listings within the WOO publication Catalog.
 - **Organization**: Links WOO publications to the responsible bestuursorgaan.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: WOO document queue
 The system MUST provide a document processing queue for WOO requests, enabling users to track and manage the assessment status of all documents in a WOO request.

@@ -1,3 +1,7 @@
+---
+status: implemented
+---
+
 # Register Content Internationalization
 
 ## Purpose
@@ -22,7 +26,7 @@ Dutch municipalities increasingly serve multilingual populations and must comply
 - **Glossary item**: Term, definition -- domain-specific terminology
 - **Organization**: Title, description -- public-facing organization names
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Publication fields MUST support multi-language content
 Publication objects MUST store and serve multi-language content for their primary text fields.
