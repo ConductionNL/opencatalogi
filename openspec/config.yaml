@@ -16,13 +16,23 @@ rules:
   proposal:
     - Reference shared nextcloud-app spec for app structure requirements
     - Consider impact on tilburg-woo-ui frontend
+    - "ADR-011: Check OpenRegister core for existing functionality before proposing new features"
   specs:
     - Include public API specs for endpoints consumed by frontend UIs
     - WOO compliance requirements where applicable
+    - "ADR-009: Include test scenarios for all MUST/SHALL requirements"
   design:
     - Uses OpenRegister's ObjectService for data persistence
     - Config keys stored in IAppConfig: listing_schema, listing_register, listing_source
     - Public endpoints need @CORS, @NoCSRFRequired, @PublicPage annotations
+    - "ADR-001: All data MUST be stored via OpenRegister — no custom database tables"
+    - "ADR-012: MUST use @conduction/nextcloud-vue components (CnIndexPage, CnDashboardPage, CnFormDialog, CnDataTable) — do NOT create custom equivalents"
+    - "ADR-008: Follow Controller → Service → Mapper layering pattern"
+    - "ADR-003: MUST use NL Design System tokens via Nextcloud CSS variables — no hardcoded colors"
   tasks:
     - Test with tilburg-woo-ui to verify frontend compatibility
     - Verify CORS headers on all public endpoints
+    - "ADR-010: MUST include documentation task with browser screenshots using Playwright MCP"
+    - "ADR-009: MUST include unit test tasks — minimum 75% coverage for new code"
+    - "ADR-005: MUST include i18n tasks — Dutch and English translations required"
+    - "ADR-010: Every user-facing feature MUST have docs in docs/features/ with screenshots"
