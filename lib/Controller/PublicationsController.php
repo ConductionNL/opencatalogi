@@ -353,7 +353,7 @@ class PublicationsController extends Controller
 
                 foreach ($schemaIds as $schemaId) {
                     try {
-                        $schema                        = $schemaMapper->find((int) $schemaId);
+                        $schema = $schemaMapper->find((int) $schemaId);
                         $resolvedSchemas[$schemaId] = [
                             'id'    => $schema->getId(),
                             'slug'  => $schema->getSlug(),
@@ -372,7 +372,7 @@ class PublicationsController extends Controller
 
                 foreach ($registerIds as $registerId) {
                     try {
-                        $register                        = $registerMapper->find((int) $registerId);
+                        $register = $registerMapper->find((int) $registerId);
                         $resolvedRegisters[$registerId] = [
                             'id'    => $register->getId(),
                             'slug'  => $register->getSlug(),

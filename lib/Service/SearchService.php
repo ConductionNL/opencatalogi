@@ -1,10 +1,9 @@
 <?php
 /**
- * Service for managing search operations and related functionalities.
+ * Service for managing federated search operations.
  *
- * Provides methods for performing search queries, merging search results and aggregations,
- * and creating database-specific filters and sort parameters. Handles both local and
- * distributed search queries across multiple directories.
+ * Performs local search via OpenRegister and federates queries to remote
+ * catalog directories, merging results and facets from all sources.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -23,17 +22,12 @@ namespace OCA\OpenCatalogi\Service;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\Utils;
 use OCP\IURLGenerator;
-use Symfony\Component\Uid\Uuid;
 
 /**
- * Service for managing search operations and related functionalities.
+ * Service for managing federated search operations.
  *
- * Provides methods for performing search queries, merging search results and aggregations,
- * and creating database-specific filters and sort parameters. Handles both local and
- * distributed search queries across multiple directories.
- *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * Performs local search via OpenRegister and federates queries to remote
+ * catalog directories, merging results and facets from all sources.
  */
 class SearchService
 {
@@ -46,24 +40,12 @@ class SearchService
     public $client;
 
     /**
-     * Base object configuration.
-     *
-     * @var array Base object configuration
-     */
-    public const BASE_OBJECT = [
-        'database'   => 'objects',
-        'collection' => 'json',
-    ];
-
-    /**
      * SearchService constructor.
      *
-     * @param ElasticSearchService $elasticService   The Elasticsearch service.
-     * @param DirectoryService     $directoryService The directory service.
-     * @param IURLGenerator        $urlGenerator     The URL generator.
+     * @param DirectoryService $directoryService The directory service.
+     * @param IURLGenerator    $urlGenerator     The URL generator.
      */
     public function __construct(
-        private readonly ElasticSearchService $elasticService,
         private readonly DirectoryService $directoryService,
         private readonly IURLGenerator $urlGenerator
     ) {
@@ -158,67 +140,33 @@ class SearchService
     }//end sortResultArray()
 
     /**
-     * Perform a search operation.
+     * Perform a federated search operation.
      *
-     * @param array $parameters    Search parameters
-     * @param array $elasticConfig Elasticsearch configuration
-     * @param array $dbConfig      Database configuration
-     * @param array $catalogi      Catalogi configuration
+     * Queries remote catalog directories and merges results with the provided
+     * local results. Local search is handled by the caller via OpenRegister.
      *
-     * @return array Search results
+     * @param array $parameters   Search parameters.
+     * @param array $localResults Local results from OpenRegister (with 'results' and 'facets' keys).
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) dbConfig reserved for future database search.
+     * @return array Federated search results.
+     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    public function search(array $parameters, array $elasticConfig, array $dbConfig, array $catalogi=[]): array
+    public function search(array $parameters, array $localResults=[]): array
     {
-        $localResults['results'] = [];
-        $localResults['facets']  = [];
-
-        $totalResults = 0;
-        $limit        = 30;
-        if (isset($parameters['_limit']) === true) {
-            $limit = $parameters['_limit'];
-        }
-
-        $page = 1;
-        if (isset($parameters['_page']) === true) {
-            $page = $parameters['_page'];
-        }
-
-        // Perform local search if Elasticsearch is configured.
-        if ($elasticConfig['location'] !== '') {
-            $localResults = $this->elasticService->searchObject(
-                filters: $parameters,
-                config: $elasticConfig,
-                totalResults: $totalResults,
-            );
-        }
+        $results      = ($localResults['results'] ?? []);
+        $aggregations = ($localResults['facets'] ?? []);
+        $totalResults = ($localResults['total'] ?? count($results));
+        $limit        = ($parameters['_limit'] ?? 30);
+        $page         = ($parameters['_page'] ?? 1);
 
         $directory = $this->directoryService->getDirectory(['_limit' => 1000]);
 
         // Return early if directory is empty.
         if (count($directory) === 0) {
-            $pages = (int) ceil($totalResults / $limit);
-            if ($pages === 0) {
-                $pages = 1;
-            }
-
-            return [
-                'facets'  => $localResults['facets'],
-                'results' => $localResults['results'],
-                'count'   => count($localResults['results']),
-                'limit'   => (int) $limit,
-                'page'    => (int) $page,
-                'pages'   => $pages,
-                'total'   => $totalResults,
-            ];
+            return $this->buildResponse(facets: $aggregations, results: $results, limit: $limit, page: $page, total: $totalResults);
         }
-
-        $results      = $localResults['results'];
-        $aggregations = $localResults['facets'];
 
         $searchEndpoints = [];
 
@@ -268,225 +216,36 @@ class SearchService
             }
         }
 
-        $pages = (int) ceil($totalResults / $limit);
+        return $this->buildResponse(facets: $aggregations, results: $results, limit: $limit, page: $page, total: $totalResults);
 
-        if ($pages === 0) {
-            $pages = 1;
-        }
+    }//end search()
+
+    /**
+     * Build a standardized search response array.
+     *
+     * @param array $facets  The aggregated facets.
+     * @param array $results The search results.
+     * @param mixed $limit   The page size limit.
+     * @param mixed $page    The current page number.
+     * @param int   $total   The total number of results.
+     *
+     * @return array The formatted response.
+     */
+    private function buildResponse(array $facets, array $results, mixed $limit, mixed $page, int $total): array
+    {
+        $pages = max(1, (int) ceil($total / $limit));
 
         return [
-            'facets'  => $aggregations,
+            'facets'  => $facets,
             'results' => $results,
             'count'   => count($results),
             'limit'   => (int) $limit,
             'page'    => (int) $page,
             'pages'   => $pages,
-            'total'   => $totalResults,
+            'total'   => $total,
         ];
 
-    }//end search()
-
-    /**
-     * This function creates a mongodb filter array.
-     *
-     * Also unsets _search in filters.
-     *
-     * @param array $filters        Query parameters from request.
-     * @param array $fieldsToSearch Database field names to filter/search on.
-     *
-     * @return array $filters
-     */
-    public function createMongoDBSearchFilter(array $filters, array $fieldsToSearch): array
-    {
-        if (isset($filters['_search']) === true) {
-            $searchRegex    = [
-                '$regex'   => $filters['_search'],
-                '$options' => 'i',
-            ];
-            $filters['$or'] = [];
-
-            foreach ($fieldsToSearch as $field) {
-                $filters['$or'][] = [$field => $searchRegex];
-            }
-
-            unset($filters['_search']);
-        }
-
-        foreach ($filters as $field => $value) {
-            if ($value === 'IS NOT NULL') {
-                $filters[$field] = ['$ne' => null];
-            }
-
-            if ($value === 'IS NULL') {
-                $filters[$field] = ['$eq' => null];
-            }
-        }
-
-        return $filters;
-
-    }//end createMongoDBSearchFilter()
-
-    /**
-     * This function creates mysql search conditions based on given filters from request.
-     *
-     * @param array      $filters        Query parameters from request.
-     * @param array      $fieldsToSearch Fields to search on in sql.
-     * @param array|null $searchParams   Search params for sql.
-     *
-     * @return array $searchConditions
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     */
-    public function createMySQLSearchConditions(array &$filters, array $fieldsToSearch, ?array &$searchParams=[]): array
-    {
-        $searchConditions = [];
-        if (isset($filters['_search']) === true) {
-            foreach ($fieldsToSearch as $field) {
-                if (isset($searchConditions[0]) !== true) {
-                    $searchConditions[] = "LOWER($field) LIKE :search";
-                    continue;
-                }
-
-                $searchConditions[0] = $searchConditions[0]." OR LOWER($field) LIKE :search";
-            }
-
-            if (isset($searchConditions[0]) === true) {
-                $searchConditions[0] = "($searchConditions[0])";
-            }
-        }
-
-        foreach ($filters as $key => $value) {
-            if ($key === '_search') {
-                // Skip _search field.
-                continue;
-            }
-
-            // Skip if the filter value is empty or null.
-            if (empty($value) === true) {
-                continue;
-            }
-
-            // Check if the filter value contains commas for multiple values (OR conditions).
-            if (is_string($value) === true && strpos($value, ',') !== false) {
-                $values = explode(',', $value);
-                // Split the comma-separated values into an array.
-                $orConditions = [];
-
-                foreach ($values as $i => $val) {
-                    $paramKey = "{$key}_$i";
-                    // Generate unique parameter key.
-                    $orConditions[]          = "$key = :$paramKey";
-                    $searchParams[$paramKey] = trim($val);
-                    // Add each value to the search params.
-                }
-
-                $searchConditions[] = '('.implode(' OR ', $orConditions).')';
-
-                // Unset to prevent sql errors because of double filtering.
-                unset($filters[$key]);
-            }//end if
-        }//end foreach
-
-        // Ensure that search conditions and params exist before proceeding.
-        if (empty($searchConditions) === true) {
-            // Handle the case where no search conditions are generated.
-            // Default condition to avoid breaking the SQL query.
-            $searchConditions[] = '1=1';
-        }
-
-        return $searchConditions;
-
-    }//end createMySQLSearchConditions()
-
-    /**
-     * This function unsets all keys starting with _ from filters.
-     *
-     * @param array $filters Query parameters from request.
-     *
-     * @return array $filters
-     */
-    public function unsetSpecialQueryParams(array $filters): array
-    {
-        foreach (array_keys($filters) as $key) {
-            if (str_starts_with($key, '_') === true) {
-                unset($filters[$key]);
-            }
-
-            if ($key === 'search') {
-                unset($filters[$key]);
-            }
-        }
-
-        return $filters;
-
-    }//end unsetSpecialQueryParams()
-
-    /**
-     * This function creates mysql search parameters based on given filters from request.
-     *
-     * @param array $filters Query parameters from request.
-     *
-     * @return array $searchParams
-     */
-    public function createMySQLSearchParams(array $filters): array
-    {
-        $searchParams = [];
-        if (isset($filters['_search']) === true) {
-            $searchParams['search'] = '%'.strtolower($filters['_search']).'%';
-        }
-
-        return $searchParams;
-
-    }//end createMySQLSearchParams()
-
-    /**
-     * This function creates a sort array based on given order param from request.
-     *
-     * @param array $filters Query parameters from request.
-     *
-     * @return array $sort
-     */
-    public function createSortForMySQL(array $filters): array
-    {
-        $sort = [];
-        if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
-            foreach ($filters['_order'] as $field => $direction) {
-                $sort[$field] = 'ASC';
-                if (strtoupper($direction) === 'DESC') {
-                    $sort[$field] = 'DESC';
-                }
-            }
-        }
-
-        return $sort;
-
-    }//end createSortForMySQL()
-
-    /**
-     * This function creates a sort array based on given order param from request.
-     *
-     * @param array $filters Query parameters from request.
-     *
-     * @return array $sort
-     *
-     * @todo Not tested yet. See PublicationsController->index().
-     */
-    public function createSortForMongoDB(array $filters): array
-    {
-        $sort = [];
-        if (isset($filters['_order']) === true && is_array($filters['_order']) === true) {
-            foreach ($filters['_order'] as $field => $direction) {
-                $sort[$field] = 1;
-                if (strtoupper($direction) === 'DESC') {
-                    $sort[$field] = -1;
-                }
-            }
-        }
-
-        return $sort;
-
-    }//end createSortForMongoDB()
+    }//end buildResponse()
 
     /**
      * This function adds a single query param to the given $vars array.

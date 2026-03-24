@@ -1,4 +1,2 @@
-export type TConfiguration = {
-    useElastic: boolean
-    useMongo: boolean
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface TConfiguration {}

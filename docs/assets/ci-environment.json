@@ -1,0 +1,21 @@
+{
+	"id": "ci-newman-env",
+	"name": "CI Environment",
+	"values": [
+		{
+			"key": "environment",
+			"value": "http://localhost:8080/index.php/apps/opencatalogi",
+			"enabled": true
+		},
+		{
+			"key": "admin_user",
+			"value": "admin",
+			"enabled": true
+		},
+		{
+			"key": "admin_password",
+			"value": "admin",
+			"enabled": true
+		}
+	]
+}
