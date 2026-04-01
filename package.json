@@ -100,7 +100,7 @@
   "overrides": {
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
-    "dompurify": "^3.2.4",
+    "dompurify": ">=2.5.8",
     "d3-color": "^3.1.0",
     "mermaid": {
       "dompurify": "^3.2.4",
