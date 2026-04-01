@@ -154,10 +154,10 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
+// eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
 import { CnDashboardPage, CnStatsBlock, CnChartWidget, buildHeaders } from '@conduction/nextcloud-vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
-import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
@@ -187,14 +187,12 @@ export default {
 		CnChartWidget,
 		Plus,
 		Refresh,
-		DatabaseCogOutline,
 		FileDocumentEditOutline,
 		Paperclip,
 	},
 	data() {
 		return {
 			// Icon components for CnStatsBlock :icon prop
-			DatabaseCogOutline,
 			DatabaseEyeOutline,
 			FileDocumentEditOutline,
 			PaperclipOff,
