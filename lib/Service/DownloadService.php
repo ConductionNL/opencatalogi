@@ -146,10 +146,21 @@ class DownloadService
                 return $entity->jsonSerialize();
             }
 
-            return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 404);
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-        }
+            return new JSONResponse(
+                data: ['error' => 'Publication not found'],
+                statusCode: 404
+            );
+        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        }//end try
 
     }//end getPublicationData()
 
@@ -333,8 +344,16 @@ class DownloadService
             }
 
             return $attachments;
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
         }//end try
 
     }//end publicationAttachments()

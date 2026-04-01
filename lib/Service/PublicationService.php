@@ -466,8 +466,11 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function addVirtualFieldFacets(array $existingFacets, bool $inclDirFacets=false, bool $inclCatFacets=false): array
-    {
+    private function addVirtualFieldFacets(
+        array $existingFacets,
+        bool $inclDirFacets=false,
+        bool $inclCatFacets=false
+    ): array {
         try {
             // Ensure @self section exists.
             if (isset($existingFacets['@self']) === false) {
@@ -788,7 +791,9 @@ class PublicationService
                     $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
 
                     // Check for 'files' property and filter files without 'published'.
-                    if (isset($objectArray['@self']['files']) === true && is_array($objectArray['@self']['files']) === true) {
+                    if (isset($objectArray['@self']['files']) === true
+                        && is_array($objectArray['@self']['files']) === true
+                    ) {
                         $objectArray['@self']['files'] = array_filter(
                             $objectArray['@self']['files'],
                             function ($file) {
@@ -808,9 +813,12 @@ class PublicationService
     /**
      * Retrieves all objects that this publication references
      *
-     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
+     * This method returns all objects that this publication
+     * uses/references. A -> B means that A (This publication)
+     * references B (Another object).
      *
-     * @param string $id The ID of the publication to retrieve relations for
+     * @param string $id The ID of the publication to retrieve
+     *                   relations for
      *
      * @return JSONResponse A JSON response containing the related objects
      *
@@ -857,9 +865,12 @@ class PublicationService
     /**
      * Retrieves all objects that use this publication
      *
-     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
+     * This method returns all objects that reference (use) this
+     * publication. B -> A means that B (Another object) references
+     * A (This publication).
      *
-     * @param string $id The ID of the publication to retrieve uses for
+     * @param string $id The ID of the publication to retrieve
+     *                   uses for
      *
      * @return JSONResponse A JSON response containing the referenced objects
      *
@@ -1116,7 +1127,11 @@ class PublicationService
 
             // Add virtual field facets if they were requested.
             if ($reqDirFacets === true || $reqCatFacets === true) {
-                $facetsData = $this->addVirtualFieldFacets(existingFacets: $facetsData, inclDirFacets: $reqDirFacets, inclCatFacets: $reqCatFacets);
+                $facetsData = $this->addVirtualFieldFacets(
+                    existingFacets: $facetsData,
+                    inclDirFacets: $reqDirFacets,
+                    inclCatFacets: $reqCatFacets
+                );
             }
 
             $responseData['facets'] = $facetsData;
@@ -1211,7 +1226,9 @@ class PublicationService
             }//end if
 
             // Get federated results with modified parameters
-            // Prepare query parameters for federation - exclude pagination and directory filter params since aggregation handles those.
+            // Prepare query parameters for federation - exclude
+            // pagination and directory filter params since
+            // aggregation handles those.
             $fedFilterParams = array_filter(
                 $federatedQueryParams,
                 function ($key) {
@@ -1468,7 +1485,9 @@ class PublicationService
         $localResults = ($localData['results'] ?? []);
 
         // Add catalog and directory information only if requested or needed for faceting.
-        if (($includeCatalogs === true || $reqDirFacets === true || $reqCatFacets === true) && empty($localResults) === false) {
+        if (($includeCatalogs === true || $reqDirFacets === true || $reqCatFacets === true)
+            && empty($localResults) === false
+        ) {
             // Get local catalogs only if needed.
             $localCatalogs = [];
             if ($includeCatalogs === true) {
@@ -1533,7 +1552,11 @@ class PublicationService
 
             // Add virtual field facets only if they were requested.
             if ($reqDirFacets === true || $reqCatFacets === true) {
-                $facetsData = $this->addVirtualFieldFacets(existingFacets: $facetsData, inclDirFacets: $reqDirFacets, inclCatFacets: $reqCatFacets);
+                $facetsData = $this->addVirtualFieldFacets(
+                    existingFacets: $facetsData,
+                    inclDirFacets: $reqDirFacets,
+                    inclCatFacets: $reqCatFacets
+                );
             }
 
             $responseData['facets'] = $facetsData;
@@ -1596,8 +1619,12 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function getLocalPublicationsUltraFast(array $queryParams, array $requestParams, string $baseUrl, float $startTime): array
-    {
+    private function getLocalPublicationsUltraFast(
+        array $queryParams,
+        array $requestParams,
+        string $baseUrl,
+        float $startTime
+    ): array {
 
         $timings = [
             'setup'         => 0,
@@ -2260,8 +2287,11 @@ class PublicationService
     /**
      * Get publications that use this publication with federation support
      *
-     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
-     * When aggregation is enabled, it also searches federated catalogs.
+     * This method returns all objects that reference (use) this
+     * publication. B -> A means that B (Another object) references
+     * A (This publication).
+     * When aggregation is enabled, it also searches federated
+     * catalogs.
      *
      * @param string $id          The ID of the publication to retrieve uses for
      * @param array  $queryParams Query parameters including aggregation settings
@@ -2350,8 +2380,11 @@ class PublicationService
     /**
      * Get publications that this publication uses with federation support
      *
-     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
-     * When aggregation is enabled, it also searches federated catalogs.
+     * This method returns all objects that this publication
+     * uses/references. A -> B means that A (This publication)
+     * references B (Another object).
+     * When aggregation is enabled, it also searches federated
+     * catalogs.
      *
      * @param string $id          The ID of the publication to retrieve relations for
      * @param array  $queryParams Query parameters including aggregation settings
