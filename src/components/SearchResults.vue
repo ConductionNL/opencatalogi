@@ -11,7 +11,7 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { ref, computed, onMounted } from 'vue'
 import { objectStore } from '../store/store.js'
 import { NcEmptyContent, NcLoadingIcon, NcTextField, NcListItem, NcActionButton } from '@nextcloud/vue'

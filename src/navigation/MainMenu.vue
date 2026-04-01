@@ -149,6 +149,9 @@ export default {
 		Cog,
 	},
 	computed: {
+		navigationStore() {
+			return navigationStore
+		},
 		catalogs() {
 			const collection = objectStore.getCollection('catalog')
 			const results = Array.isArray(collection) ? collection : collection?.results || []
