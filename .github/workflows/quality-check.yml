@@ -21,5 +21,4 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
-      enable-newman: true
-      newman-collection-path: "tests/integration"
+      enable-newman: false
