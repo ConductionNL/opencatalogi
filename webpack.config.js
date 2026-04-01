@@ -54,6 +54,10 @@ webpackConfig.module = {
 			test: /\.css$/,
 			use: ['style-loader', 'css-loader'],
 		},
+		{
+			test: /\.scss$/,
+			use: ['style-loader', 'css-loader', 'sass-loader'],
+		},
 	],
 }
 
@@ -65,15 +69,26 @@ webpackConfig.plugins = [
 const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
 const useLocalLib = fs.existsSync(localLib)
 
+// Ensure '@' alias resolves to the project's 'src' directory for cleaner imports like '@/...'
 webpackConfig.resolve = webpackConfig.resolve || {}
+// When using local nextcloud-vue source, resolve its deps from this app's node_modules
+webpackConfig.resolve.modules = [
+	path.resolve(__dirname, 'node_modules'),
+	'node_modules',
+]
 webpackConfig.resolve.alias = {
 	...(webpackConfig.resolve.alias || {}),
 	'@': path.resolve(__dirname, 'src'),
 	...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
+	// Deduplicate shared packages so the aliased library source uses
+	// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
 	'vue$': path.resolve(__dirname, 'node_modules/vue'),
 	'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
 	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
+	// Resolve apexcharts from this app's node_modules (used by CnChartWidget)
+	'vue-apexcharts': path.resolve(__dirname, 'node_modules/vue-apexcharts'),
+	'apexcharts': path.resolve(__dirname, 'node_modules/apexcharts'),
 }
 
 module.exports = webpackConfig

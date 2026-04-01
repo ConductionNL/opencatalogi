@@ -11,7 +11,6 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'

@@ -24,59 +24,30 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:schema="glossarySchema"
 		:add-label="t('opencatalogi', 'Add Term')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No glossary terms found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@create="onSaveTerm"
-		@edit="onSaveTerm"
 		@refresh="handleRefresh"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
-		<template #form-fields="{ formData, errors, updateField }">
-			<div class="formContainer">
-				<NcTextField
-					:label="t('opencatalogi', 'Title') + ' *'"
-					:value="formData.title || ''"
-					:error="!!errors.title"
-					:helper-text="errors.title"
-					maxlength="255"
-					@update:value="v => updateField('title', v)" />
-				<NcTextField
-					:label="t('opencatalogi', 'Summary')"
-					:value="formData.summary || ''"
-					maxlength="255"
-					@update:value="v => updateField('summary', v)" />
-				<NcTextArea
-					:label="t('opencatalogi', 'Description')"
-					:value="formData.description || ''"
-					@update:value="v => updateField('description', v)" />
-				<NcTextField
-					:label="t('opencatalogi', 'External Link')"
-					:value="formData.externalLink || ''"
-					@update:value="v => updateField('externalLink', v)" />
-				<NcSelect
-					:value="formData.keywords || []"
-					:input-label="t('opencatalogi', 'Keywords')"
-					:multiple="true"
-					:taggable="true"
-					:placeholder="t('opencatalogi', 'Type and press Enter to add keywords')"
-					@input="v => updateField('keywords', v)" />
-			</div>
-		</template>
+		<!-- Custom column: status -->
 		<template #column-published="{ row }">
 			<CnStatusBadge
 				:label="row.published ? t('opencatalogi', 'Public') : t('opencatalogi', 'Private')"
 				:color-map="statusColorMap" />
 		</template>
+
+		<!-- Custom column: keywords -->
 		<template #column-keywords="{ row }">
 			{{ row.keywords?.length ? row.keywords.join(', ') : '-' }}
 		</template>
+
+		<!-- Row actions -->
 		<template #row-actions="{ row }">
 			<NcActions>
 				<template #icon>
@@ -88,7 +59,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
+				<NcActionButton close-after-click @click="editTerm(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -112,7 +83,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect } from '@nextcloud/vue'
+import { NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
@@ -123,29 +94,28 @@ import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 export default {
 	name: 'GlossaryIndex',
 	components: {
-		CnIndexPage, CnStatusBadge, NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect,
-		DotsHorizontal, Eye, Pencil, ContentCopy, TrashCanOutline,
+		CnIndexPage,
+		CnStatusBadge,
+		NcActions,
+		NcActionButton,
+		DotsHorizontal,
+		Eye,
+		Pencil,
+		ContentCopy,
+		TrashCanOutline,
 	},
 	data() {
 		return {
-			selectedIds: [], viewMode: 'cards', isRefreshing: false,
-			statusColorMap: { [t('opencatalogi', 'Public')]: 'success', [t('opencatalogi', 'Private')]: 'default' },
+			selectedIds: [],
+			viewMode: 'cards',
+			isRefreshing: false,
+			statusColorMap: {
+				[t('opencatalogi', 'Public')]: 'success',
+				[t('opencatalogi', 'Private')]: 'default',
+			},
 		}
 	},
 	computed: {
-		glossarySchema() {
-			return {
-				title: t('opencatalogi', 'Term'),
-				properties: {
-					title: { type: 'string', title: t('opencatalogi', 'Title'), required: true, minLength: 1 },
-					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
-					description: { type: 'string', title: t('opencatalogi', 'Description') },
-					externalLink: { type: 'string', title: t('opencatalogi', 'External Link') },
-					keywords: { type: 'array', title: t('opencatalogi', 'Keywords') },
-				},
-				required: ['title'],
-			}
-		},
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
@@ -155,35 +125,60 @@ export default {
 			]
 		},
 		currentObjects() {
-			const c = objectStore.getCollection('glossary')
-			return Array.isArray(c) ? c : c?.results || []
+			const collection = objectStore.getCollection('glossary')
+			if (Array.isArray(collection)) return collection
+			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('glossary') || { total: 0, page: 1, pages: 1, limit: 20 }
+			return objectStore.getPagination('glossary')
+				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() { objectStore.fetchCollection('glossary') },
+	mounted() {
+		objectStore.fetchCollection('glossary')
+	},
 	methods: {
-		onAdd() { objectStore.clearActiveObject('glossary'); this.$refs.indexPage.openFormDialog(null) },
-		async onSaveTerm(formData) {
-			try {
-				if (formData.id) { await objectStore.updateObject('glossary', formData.id, formData) } else { await objectStore.createObject('glossary', formData) }
-				this.$refs.indexPage.setFormResult({ success: true })
-				await objectStore.fetchCollection('glossary')
-			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save term' }) }
+		onAdd() {
+			objectStore.clearActiveObject('glossary')
+			navigationStore.setModal('glossary')
 		},
-		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('glossary') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('glossary', { _page: page }) },
-		onPageSizeChange(size) { objectStore.fetchCollection('glossary', { _page: 1, _limit: size }) },
-		onSelect(ids) { this.selectedIds = ids },
-		onRowClick(row) { objectStore.setActiveObject('glossary', row); navigationStore.setModal('viewGlossary') },
-		viewTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setModal('viewGlossary') },
-		copyTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' }) },
-		deleteTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' }) },
+		async handleRefresh() {
+			this.isRefreshing = true
+			try {
+				await objectStore.fetchCollection('glossary')
+			} finally {
+				this.isRefreshing = false
+			}
+		},
+		onPageChange(page) {
+			objectStore.fetchCollection('glossary', { _page: page })
+		},
+		onPageSizeChange(size) {
+			objectStore.fetchCollection('glossary', { _page: 1, _limit: size })
+		},
+		onSelect(ids) {
+			this.selectedIds = ids
+		},
+		onRowClick(row) {
+			objectStore.setActiveObject('glossary', row)
+			navigationStore.setModal('viewGlossary')
+		},
+		viewTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setModal('viewGlossary')
+		},
+		editTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setModal('glossary')
+		},
+		copyTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' })
+		},
+		deleteTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' })
+		},
 	},
 }
 </script>
-
-<style scoped>
-.formContainer > * { margin-block-end: 10px; }
-</style>

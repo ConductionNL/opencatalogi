@@ -63,22 +63,68 @@ class Version6Date20241129151236 extends SimpleMigrationStep
             $table = $schema->createTable(tableName: 'ocat_pages');
 
             // Primary key and identifier columns.
-            $table->addColumn(name: 'id', typeName: Types::BIGINT, options: ['autoincrement' => true, 'notnull' => true, 'length' => 4]);
-            $table->addColumn(name: 'uuid', typeName: Types::STRING, options: ['notnull' => true, 'length' => 255]);
-            $table->addColumn(name: 'version', typeName: Types::STRING, options: ['notnull' => true, 'length' => 255, 'default' => '0.0.1']);
+            $table->addColumn(
+                name: 'id',
+                typeName: Types::BIGINT,
+                options: [
+                    'autoincrement' => true,
+                    'notnull'       => true,
+                    'length'        => 4,
+                ]
+            );
+            $table->addColumn(
+                name: 'uuid',
+                typeName: Types::STRING,
+                options: ['notnull' => true, 'length' => 255]
+            );
+            $table->addColumn(
+                name: 'version',
+                typeName: Types::STRING,
+                options: [
+                    'notnull' => true,
+                    'length'  => 255,
+                    'default' => '0.0.1',
+                ]
+            );
 
             // Meta columns.
-            $table->addColumn(name: 'name', typeName: Types::STRING, options: ['notnull' => true, 'length' => 255]);
-            $table->addColumn(name: 'slug', typeName: Types::STRING, options: ['notnull' => true, 'length' => 255]);
-            $table->addColumn(name: 'contents', typeName: Types::JSON, options: ['notnull' => false]);
-            $table->addColumn(name: 'updated', typeName: Types::DATETIME, options: ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
-            $table->addColumn(name: 'created', typeName: Types::DATETIME, options: ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
+            $table->addColumn(
+                name: 'name',
+                typeName: Types::STRING,
+                options: ['notnull' => true, 'length' => 255]
+            );
+            $table->addColumn(
+                name: 'slug',
+                typeName: Types::STRING,
+                options: ['notnull' => true, 'length' => 255]
+            );
+            $table->addColumn(
+                name: 'contents',
+                typeName: Types::JSON,
+                options: ['notnull' => false]
+            );
+            $table->addColumn(
+                name: 'updated',
+                typeName: Types::DATETIME,
+                options: [
+                    'notnull' => true,
+                    'default' => 'CURRENT_TIMESTAMP',
+                ]
+            );
+            $table->addColumn(
+                name: 'created',
+                typeName: Types::DATETIME,
+                options: [
+                    'notnull' => true,
+                    'default' => 'CURRENT_TIMESTAMP',
+                ]
+            );
 
             // Keys and indexes.
             $table->setPrimaryKey(columnNames: ['id']);
             $table->addIndex(['uuid'], 'ocat_pages_uuid_index');
             $table->addIndex(['slug'], 'ocat_pages_slug_index');
-        }
+        }//end if
 
         return $schema;
 
