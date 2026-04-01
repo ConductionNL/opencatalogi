@@ -192,9 +192,8 @@ class SettingsService
                 $matchingRegister = null;
                 foreach ($registers as $register) {
                     // Convert Register entity to array if needed.
-                    if (is_array($register) === true) {
-                        $registerData = $register;
-                    } else {
+                    $registerData = $register;
+                    if (is_array($register) === false) {
                         $registerData = $register->jsonSerialize();
                     }
 

@@ -60,6 +60,8 @@ class Application extends App implements IBootstrap
      * @param IRegistrationContext $context The registration context.
      *
      * @return void
+     *
+     * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
      */
     public function register(IRegistrationContext $context): void
     {

@@ -453,6 +453,8 @@ class FileService
      *
      * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
+     *
+     * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
      */
     public function uploadFile(mixed $content, string $filePath): bool
     {
@@ -474,9 +476,7 @@ class FileService
             } catch (NotFoundException $e) {
                 $userFolder->newFile(path: $filePath);
                 $file = $userFolder->get(path: $filePath);
-
-                // Variable $file is an instance of \OCP\Files\File.
-                $file->putContent(data: $content);
+                $file->putContent($content);
 
                 return true;
             }
@@ -504,6 +504,8 @@ class FileService
      * @return boolean True if successful.
      * @throws Exception In case we can't write to file because it is not permitted.
      *
+     * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
+     *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
@@ -523,18 +525,14 @@ class FileService
         try {
             try {
                 $file = $userFolder->get(path: $filePath);
-
-                // Variable $file is an instance of \OCP\Files\File.
-                $file->putContent(data: $content);
+                $file->putContent($content);
 
                 return true;
             } catch (NotFoundException $e) {
                 if ($createNew === true) {
                     $userFolder->newFile(path: $filePath);
                     $file = $userFolder->get(path: $filePath);
-
-                    // Variable $file is an instance of \OCP\Files\File.
-                    $file->putContent(data: $content);
+                    $file->putContent($content);
 
                     $this->logger->info("File $filePath did not exist, created a new file for it.");
                     return true;

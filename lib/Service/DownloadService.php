@@ -314,10 +314,9 @@ class DownloadService
         try {
             // Fetch the publication object by its ID.
             $entity = $objectService->find($id);
+            $object = null;
             if ($entity !== null) {
                 $object = $entity->jsonSerialize();
-            } else {
-                $object = null;
             }
 
             if ($object === null) {

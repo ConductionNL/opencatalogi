@@ -1044,8 +1044,8 @@ class DirectoryService
              * @var string $searchUrl
              */
 
-            $searchUrl           = $listingData['search'];
-            $publicationEndpoint = str_replace('/search', '/publications', $searchUrl);
+            $searchUrl           = (string) $listingData['search'];
+            $publicationEndpoint = (string) str_replace('/search', '/publications', $searchUrl);
 
             // Also handle cases where 'search' might be a query parameter or different pattern.
             if ($publicationEndpoint === $listingData['search']) {
@@ -1096,9 +1096,9 @@ class DirectoryService
              * @var string $catalogDir
              */
 
-            $catalogDir = $listingData['catalogDirectory'];
+            $catalogDir = (string) $listingData['catalogDirectory'];
             // Replace /api/directory with /api/publications.
-            $publicationEndpoint = str_replace('/api/directory', '/api/publications', $catalogDir);
+            $publicationEndpoint = (string) str_replace('/api/directory', '/api/publications', $catalogDir);
             if ($publicationEndpoint !== $catalogDir) {
                 return $publicationEndpoint;
             }
@@ -1769,10 +1769,9 @@ class DirectoryService
                 // Note: Don't expand schemas for listings; they already have expanded schemas from external directories.
                 $listings = array_map(
                     function ($object) {
+                        $listingData = $object;
                         if ($object instanceof \OCP\AppFramework\Db\Entity) {
                             $listingData = $object->jsonSerialize();
-                        } else {
-                            $listingData = $object;
                         }
 
                         return $this->filterListingProperties($listingData);
@@ -1855,10 +1854,9 @@ class DirectoryService
     private function convertCatalogToListing($catalogObject): array
     {
         // Extract catalog data.
+        $catalogData = $catalogObject;
         if ($catalogObject instanceof \OCP\AppFramework\Db\Entity) {
             $catalogData = $catalogObject->jsonSerialize();
-        } else {
-            $catalogData = $catalogObject;
         }
 
         $catalog = ($catalogData['object'] ?? $catalogData);
