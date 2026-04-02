@@ -623,9 +623,11 @@ class DirectoryService
                 throw new InvalidArgumentException('Invalid listing data: missing catalog');
             }
 
-            // Ensure catalog field is set in listingData for later use.
-            $listingData['catalog'] = $catalogId;
-            $listingData['id']      = $listingId;
+            // Ensure catalog fields are set in listingData for later use.
+            // The listing schema requires 'catalogusId' as a required field.
+            $listingData['catalog']     = $catalogId;
+            $listingData['catalogusId'] = $catalogId;
+            $listingData['id']          = $listingId;
 
             // Extract title from @self.name if title is not at top level.
             if (empty($listingData['title']) === true && isset($listingData['@self']['name']) === true) {
@@ -673,6 +675,18 @@ class DirectoryService
 
             // Set lastSync as ISO string format instead of DateTime object.
             $listingData['lastSync'] = (new DateTime())->format('c');
+
+            // Set published from source if available, otherwise default to now for backwards compatibility.
+            // Normalize to ISO 8601 format (date-time validation requires 'T' separator and timezone).
+            if (empty($listingData['published']) === true) {
+                $listingData['published'] = (new DateTime())->format('c');
+            } else {
+                try {
+                    $listingData['published'] = (new DateTime($listingData['published']))->format('c');
+                } catch (\Exception $e) {
+                    $listingData['published'] = (new DateTime())->format('c');
+                }
+            }
 
             // Catalog field is already present from external listing data.
             // Set summary to 'unknown' if empty (required field).
@@ -1762,8 +1776,9 @@ class DirectoryService
             }
 
             try {
-                // Directory data is public — disable RBAC and multitenancy for cross-org visibility.
-                $listingResult = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
+                // RBAC handles public visibility via conditional published date rule.
+                // Disable multitenancy so listings from all orgs are visible.
+                $listingResult = $objectService->searchObjects($query, _multitenancy: false);
 
                 // Convert listing objects to arrays and filter out internal properties.
                 // Note: Don't expand schemas for listings; they already have expanded schemas from external directories.
@@ -1814,8 +1829,9 @@ class DirectoryService
             }
 
             try {
-                // Directory data is public — disable RBAC and multitenancy for cross-org visibility.
-                $catalogResult = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
+                // RBAC handles public visibility via conditional published date rule.
+                // Disable multitenancy so catalogs from all orgs are visible.
+                $catalogResult = $objectService->searchObjects($query, _multitenancy: false);
 
                 // Convert catalog objects to listing format and expand schemas.
                 $catalogsAsListings = array_map(
@@ -1878,10 +1894,12 @@ class DirectoryService
         );
 
         // Create listing object from catalog - only core API fields.
+        $catalogId = ($catalog['id'] ?? $catalogData['id'] ?? '');
         $listing = [
             // Required fields for listing.
-            'id'           => ($catalog['id'] ?? $catalogData['id'] ?? ''),
-            'catalog'      => ($catalog['id'] ?? $catalogData['id'] ?? ''),
+            'id'           => $catalogId,
+            'catalog'      => $catalogId,
+            'catalogusId'  => $catalogId,
             'title'        => ($catalog['title'] ?? 'Unknown Catalog'),
             'summary'      => ($catalog['summary'] ?? $catalog['description'] ?? 'Local catalog'),
             'status'       => ($catalog['status'] ?? 'development'),
@@ -1896,6 +1914,9 @@ class DirectoryService
             'search'       => $searchUrl,
             'publications' => $publicationsUrl,
             'version'      => $this->appManager->getAppInfo('opencatalogi')['version'],
+
+            // Publication date from catalog, default to now for public visibility.
+            'published'    => ($catalog['published'] ?? (new DateTime())->format('c')),
         ];
 
         return $listing;
