@@ -57,8 +57,8 @@ services:
         condition: service_healthy
     volumes:
       - federation-nc1:/var/www/html:rw
-      - .:/var/www/html/custom_apps/openregister
-      - ../opencatalogi:/var/www/html/custom_apps/opencatalogi
+      - ../openregister:/var/www/html/custom_apps/openregister
+      - .:/var/www/html/custom_apps/opencatalogi
     environment:
       - POSTGRES_DB=nc1
       - POSTGRES_USER=nextcloud
@@ -89,8 +89,8 @@ services:
         condition: service_healthy
     volumes:
       - federation-nc2:/var/www/html:rw
-      - .:/var/www/html/custom_apps/openregister
-      - ../opencatalogi:/var/www/html/custom_apps/opencatalogi
+      - ../openregister:/var/www/html/custom_apps/openregister
+      - .:/var/www/html/custom_apps/opencatalogi
     environment:
       - POSTGRES_DB=nc2
       - POSTGRES_USER=nextcloud
