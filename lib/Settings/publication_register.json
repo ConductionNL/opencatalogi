@@ -255,6 +255,12 @@
             "description": "If this catalog needs Woo specific sitemap or not, meant for Woo catalgos",
             "default": false,
             "facetable": false
+          },
+          "published": {
+            "type": "string",
+            "description": "Publication date — when set to a date in the past, this catalog becomes publicly accessible",
+            "format": "date-time",
+            "facetable": true
           }
         },
         "configuration": {
@@ -264,7 +270,15 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {
+              "group": "public",
+              "match": {
+                "published": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
           ]
         }
       },
@@ -387,6 +401,12 @@
             "type": "string",
             "description": "The version of OpenCatalogi the source of the listing runs",
             "facetable": false
+          },
+          "published": {
+            "type": "string",
+            "description": "Publication date — when set to a date in the past, this listing becomes publicly accessible",
+            "format": "date-time",
+            "facetable": true
           }
         },
         "configuration": {
@@ -396,7 +416,15 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {
+              "group": "public",
+              "match": {
+                "published": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
           ]
         }
       },
@@ -847,7 +875,8 @@
         "description": "This catalog contains all public publications available in OpenCatalogi.",
         "listed": true,
         "status": "stable",
-        "slug": "publications"
+        "slug": "publications",
+        "published": "2025-01-01T00:00:00+00:00"
       },
       {
         "@self": {
