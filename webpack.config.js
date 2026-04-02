@@ -64,6 +64,8 @@ webpackConfig.module = {
 
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
+	// TODO: Remove NodePolyfillPlugin when upgrading to Vue 3. This is a temporary hack required
+	// because we are using an outdated version of @nextcloud/vue which still targets Vue 2.
 	new NodePolyfillPlugin({
 		additionalAliases: ['process'],
 	}),
