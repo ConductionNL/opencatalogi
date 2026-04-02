@@ -167,8 +167,19 @@ class CatalogiService
         ];
 
         // If a specific catalog ID is provided, add it as a filter.
+        // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
+        // on the object's own 'slug' field.
         if ($catalogId !== null) {
-            $query['@self']['uuid'] = $catalogId;
+            $isUuid = preg_match(
+                '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+                (string) $catalogId
+            ) === 1;
+
+            if ($isUuid === true) {
+                $query['@self']['uuid'] = $catalogId;
+            } else {
+                $query['slug'] = $catalogId;
+            }
         }
 
         // Get catalogs using searchObjects (handles deleted field correctly).
