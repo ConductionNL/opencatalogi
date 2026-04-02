@@ -170,12 +170,7 @@ class CatalogiService
         // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
         // on the object's own 'slug' field.
         if ($catalogId !== null) {
-            $isUuid = preg_match(
-                '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
-                (string) $catalogId
-            ) === 1;
-
-            if ($isUuid === true) {
+              if (Uuid::isValid($catalogId) === true) {
                 $query['@self']['uuid'] = $catalogId;
             } else {
                 $query['slug'] = $catalogId;
