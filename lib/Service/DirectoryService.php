@@ -701,15 +701,17 @@ class DirectoryService
             }
 
             // Check if listing already exists to determine action type.
+            // Match on catalogusId + directory (source directory URL) to correctly deduplicate
+            // across instances. Using catalogId alone fails because different instances generate
+            // different UUIDs for the same logical catalog.
             $existingListings = $objectService->searchObjects(
                 query: [
-                    'filters' => [
-                        '@self'   => [
-                            'register' => $listingRegister,
-                            'schema'   => $listingSchema,
-                        ],
-                        'catalog' => $catalogId,
+                    '@self' => [
+                        'register' => $listingRegister,
+                        'schema'   => $listingSchema,
                     ],
+                    'catalogusId' => $catalogId,
+                    'directory'   => $sourceDirectoryUrl,
                 ]
             );
 
@@ -1780,20 +1782,32 @@ class DirectoryService
                 // Disable multitenancy so listings from all orgs are visible.
                 $listingResult = $objectService->searchObjects($query, _multitenancy: false);
 
-                // Convert listing objects to arrays and filter out internal properties.
-                // Note: Don't expand schemas for listings; they already have expanded schemas from external directories.
-                $listings = array_map(
-                    function ($object) {
-                        if ($object instanceof \OCP\AppFramework\Db\Entity) {
-                            $listingData = $object->jsonSerialize();
-                        } else {
-                            $listingData = $object;
-                        }
-
-                        return $this->filterListingProperties($listingData);
-                    },
-                    $listingResult
+                // Get our directory URL to identify locally-created listings.
+                $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
+                    $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
                 );
+
+                // Only include listings that originated from this instance in the directory.
+                // Synced listings from other instances have a foreign directory URL and should
+                // NOT be re-broadcast — that would create infinite sync loops between instances.
+                $listings = [];
+                foreach ($listingResult as $object) {
+                    if ($object instanceof \OCP\AppFramework\Db\Entity) {
+                        $listingData = $object->jsonSerialize();
+                    } else {
+                        $listingData = $object;
+                    }
+
+                    $objectData  = ($listingData['object'] ?? $listingData);
+                    $listingDir  = ($objectData['directory'] ?? '');
+
+                    // Skip listings that were synced from other directories.
+                    if (empty($listingDir) === false && $listingDir !== $ourDirectoryUrl) {
+                        continue;
+                    }
+
+                    $listings[] = $this->filterListingProperties($listingData);
+                }
 
                 $allResults = array_merge($allResults, $listings);
             } catch (\Exception $e) {
