@@ -54,6 +54,18 @@ class DirectoryService
 {
 
     /**
+     * Default directory URLs to sync from. These are the central OpenCatalogi registries.
+     * opencatalogi.nl proxies to the same Nextcloud backend as directory.opencatalogi.nl,
+     * serving as a backup in case one endpoint is unavailable.
+     *
+     * @var array<string>
+     */
+    private const DEFAULT_DIRECTORIES = [
+        'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory',
+        'https://opencatalogi.nl/api/apps/opencatalogi/api/directory',
+    ];
+
+    /**
      * The name of the app.
      *
      * @var string
@@ -132,10 +144,11 @@ class DirectoryService
         // Get all unique directory URLs to sync and cache them globally.
         $this->uniqueDirectories = $this->getUniqueDirectories();
 
-        // Add default OpenCatalogi directory if not already present.
-        $defaultDirectory = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
-        if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
-            $this->uniqueDirectories[] = $defaultDirectory;
+        // Add default OpenCatalogi directories if not already present.
+        foreach (self::DEFAULT_DIRECTORIES as $defaultDirectory) {
+            if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
+                $this->uniqueDirectories[] = $defaultDirectory;
+            }
         }
 
         $uniqueDirectoryUrls = $this->uniqueDirectories;
@@ -330,10 +343,11 @@ class DirectoryService
         if (empty($this->uniqueDirectories) === true) {
             $this->uniqueDirectories = $this->getUniqueDirectories();
 
-            // Add default OpenCatalogi directory if not already present.
-            $defaultDirectory = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
-            if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
-                $this->uniqueDirectories[] = $defaultDirectory;
+            // Add default OpenCatalogi directories if not already present.
+            foreach (self::DEFAULT_DIRECTORIES as $defaultDirectory) {
+                if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
+                    $this->uniqueDirectories[] = $defaultDirectory;
+                }
             }
         }
 
@@ -719,7 +733,7 @@ class DirectoryService
 
             // Set directory properties based on whether it's new or updated.
             // Set defaults for new listings.
-            $listingData['default']          = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+            $listingData['default']          = in_array($sourceDirectoryUrl, self::DEFAULT_DIRECTORIES, true);
             $listingData['statusCode']       = 200;
             $listingData['status']           = 'development';
             $listingData['integrationLevel'] = 'search';
