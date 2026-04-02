@@ -19,6 +19,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
@@ -140,6 +141,98 @@ class CatalogiService
         throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getFileService()
+
+    /**
+     * Attempts to retrieve the SchemaMapper from the Container
+     *
+     * @return \OCA\OpenRegister\Db\SchemaMapper|null
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            $schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+
+            return $schemaMapper;
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+    }//end getSchemaMapper()
+
+    /**
+     * Attempts to retrieve the RegisterMapper from the Container
+     *
+     * @return \OCA\OpenRegister\Db\SchemaMapper|null
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+
+            return $registerMapper;
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+    }//end getRegisterMapper()
+
+    /**
+     * Attempts to rewrite slugs and uuids in register and schema fields of a Catalog to actual ids
+     *
+     * @param ObjectEntity $objectEntity The catalog object to rewrite
+     *
+     * @return bool Whether the object has been updated.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
+    {
+        $object = $objectEntity->getObject();
+
+        $registers = $object['registers'];
+        $schemas   = $object['schemas'];
+
+        // First, attempt to rewrite the registers.
+        $registers = array_map(function ($register) {
+            if (preg_match("/^\d+$/", $register)) {
+                return $register;
+            }
+            try {
+                $registerObject = $this->getRegisterMapper()->find($register);
+
+                return $registerObject->getId();
+            } catch (NotFoundException $e) {
+                throw new \RuntimeException('Register ' . $register . ' not found.');
+            }
+        }, $registers);
+
+        // Then, attempt to rewrite the schemas.
+        $schemas = array_map(function ($schema) {
+            if (preg_match("/^\d+$/", $schema)) {
+                return $schema;
+            }
+            try {
+                $schemaObject = $this->getSchemaMapper()->find($schema);
+
+                return $schemaObject->getId();
+            } catch (NotFoundException $e) {
+                throw new \RuntimeException('Register ' . $schema . ' not found.');
+            }
+        }, $schemas);
+
+        // Set the registers and schemas in the object and update the object.
+        $object['registers'] = $registers;
+        $object['schemas']   = $schemas;
+
+        $objectEntity->setObject($object);
+
+        $this->getObjectService()->saveObject($objectEntity);
+
+        return true;
+    }//end rewriteSchemasAndRegisters()
 
     /**
      * Get register and schema combinations from catalogs.
