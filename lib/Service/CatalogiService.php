@@ -34,6 +34,7 @@ use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Service for handling catalog-related operations.
