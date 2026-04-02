@@ -24,6 +24,7 @@ use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\App\IAppManager;
+use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -47,6 +48,7 @@ class MetricsController extends Controller
         IRequest $request,
         private IDBConnection $db,
         private IAppManager $appManager,
+        private IConfig $config,
         private LoggerInterface $logger,
     ) {
         parent::__construct($appName, $request);
@@ -77,20 +79,22 @@ class MetricsController extends Controller
     {
         $lines = [];
 
-        // App info gauge.
+        // App info gauge with nextcloud_version label.
         $version    = $this->getAppVersion();
         $phpVersion = PHP_VERSION;
+        $ncVersion  = $this->config->getSystemValueString('version', '0.0.0');
 
         $lines[] = '# HELP opencatalogi_info Application information';
         $lines[] = '# TYPE opencatalogi_info gauge';
-        $lines[] = 'opencatalogi_info{version="'.$version.'",php_version="'.$phpVersion.'"} 1';
+        $lines[] = 'opencatalogi_info{version="'.$version.'",php_version="'.$phpVersion.'",nextcloud_version="'.$ncVersion.'"} 1';
         $lines[] = '';
 
-        // App up gauge.
-        $lines[] = '# HELP opencatalogi_up Whether the application is healthy';
-        $lines[] = '# TYPE opencatalogi_up gauge';
-        $lines[] = 'opencatalogi_up 1';
-        $lines[] = '';
+        // App up gauge — reflects actual database health.
+        $dbHealthy = $this->isDatabaseHealthy();
+        $lines[]   = '# HELP opencatalogi_up Whether the application is healthy';
+        $lines[]   = '# TYPE opencatalogi_up gauge';
+        $lines[]   = 'opencatalogi_up '.($dbHealthy === true ? '1' : '0');
+        $lines[]   = '';
 
         // Publications total by status and catalog.
         $lines[]   = '# HELP opencatalogi_publications_total Total publications by status and catalog';
@@ -134,6 +138,13 @@ class MetricsController extends Controller
         $lines[]     = '# TYPE opencatalogi_search_requests_total counter';
         $lines[]     = 'opencatalogi_search_requests_total '.$searchCount;
         $lines[]     = '';
+
+        // Federation — directory entries total.
+        $directoryCount = $this->countDirectoryEntries();
+        $lines[]        = '# HELP opencatalogi_directory_entries_total Total federated directory entries';
+        $lines[]        = '# TYPE opencatalogi_directory_entries_total gauge';
+        $lines[]        = 'opencatalogi_directory_entries_total '.$directoryCount;
+        $lines[]        = '';
 
         return implode("\n", $lines)."\n";
     }//end collectMetrics()
@@ -261,6 +272,51 @@ class MetricsController extends Controller
             return 'unknown';
         }
     }//end getAppVersion()
+
+    /**
+     * Check whether the database is reachable.
+     *
+     * @return bool True when a simple SELECT succeeds
+     */
+    private function isDatabaseHealthy(): bool
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('1'));
+            $result = $qb->executeQuery();
+            $result->closeCursor();
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->warning('[MetricsController] Database health check failed', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }//end isDatabaseHealthy()
+
+    /**
+     * Count directory entries for federation metrics.
+     *
+     * @return int The number of directory entries
+     */
+    private function countDirectoryEntries(): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->func()->count('o.id', 'cnt'))
+                ->from('openregister_objects', 'o')
+                ->innerJoin('o', 'openregister_schemas', 's', $qb->expr()->eq('o.schema', 's.id'))
+                ->where($qb->expr()->like('s.title', $qb->createNamedParameter('%irectory%')));
+
+            $result = $qb->executeQuery();
+            $row    = $result->fetch();
+            $result->closeCursor();
+
+            return (int) ($row['cnt'] ?? 0);
+        } catch (\Exception $e) {
+            $this->logger->warning('[MetricsController] Failed to count directory entries', ['error' => $e->getMessage()]);
+            return 0;
+        }
+    }//end countDirectoryEntries()
 
     /**
      * Sanitize a label value for Prometheus format.
