@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-// NOTE: Using component instance $router/$route in watchers below
+import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
 import {
@@ -30,6 +29,9 @@ const emit = defineEmits(['update:open'])
 
 // Store
 const searchStore = useSearchStore()
+
+// Vue 2 instance for $route/$router access in <script setup>
+const instance = getCurrentInstance()?.proxy
 
 // Local state
 const searchTerm = ref('')
@@ -237,17 +239,17 @@ function shallowEqualQuery(a, b) {
 	return true
 }
 
-function writeUrlFromStateIfChanged(vm) {
-	if (vm.$route.path !== '/search') return
+function writeUrlFromStateIfChanged() {
+	if (!instance?.$route || instance.$route.path !== '/search') return
 	const nextQuery = buildQueryFromState()
-	if (shallowEqualQuery(nextQuery, vm.$route.query)) return
-	vm.$router.replace({ path: vm.$route.path, query: nextQuery })
+	if (shallowEqualQuery(nextQuery, instance.$route.query)) return
+	instance.$router.replace({ path: instance.$route.path, query: nextQuery })
 }
 
 // Lifecycle
-onMounted(async function() {
+onMounted(async () => {
 	// Initialize from URL -> store
-	applyQueryToState(this.$route.query || {})
+	applyQueryToState(instance?.$route?.query || {})
 
 	// Initialize search term local mirror
 	searchTerm.value = searchStore.getSearchTerm
@@ -260,11 +262,11 @@ onMounted(async function() {
 })
 
 // Watch route changes -> apply to state
-watch(() => this && this.$route && this.$route.fullPath, function() {
-	if (!this || !this.$route) return
-	if (this.$route.path !== '/search') return
-	applyQueryToState(this.$route.query || {})
-}.bind(this))
+watch(() => instance?.$route?.fullPath, () => {
+	if (!instance?.$route) return
+	if (instance.$route.path !== '/search') return
+	applyQueryToState(instance.$route.query || {})
+})
 
 // Watch state changes -> write to URL (debounced)
 watch([
@@ -272,12 +274,12 @@ watch([
 	() => searchStore.getViewMode,
 	() => searchStore.getOrdering,
 	() => searchStore.getFilters,
-], function() {
+], () => {
 	if (debounceTimer.value) clearTimeout(debounceTimer.value)
 	debounceTimer.value = setTimeout(() => {
-		writeUrlFromStateIfChanged(this)
+		writeUrlFromStateIfChanged()
 	}, 400)
-}.bind(this))
+})
 </script>
 
 <template>
