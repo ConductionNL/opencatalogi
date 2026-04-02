@@ -1913,12 +1913,16 @@ class DirectoryService
         );
 
         // Get our search and publications URLs.
-        // Use federation endpoint (not publications.index which requires catalogSlug).
-        $searchUrl       = $this->urlGenerator->getAbsoluteURL(
+        $searchUrl = $this->urlGenerator->getAbsoluteURL(
             $this->urlGenerator->linkToRoute('opencatalogi.search.index')
         );
+
+        // Use the catalog-specific publications endpoint (/api/{slug}) which serves
+        // the actual local publications. The federation endpoint only aggregates from
+        // remote sources and doesn't serve local data correctly.
+        $catalogSlug     = ($catalog['slug'] ?? 'publications');
         $publicationsUrl = $this->urlGenerator->getAbsoluteURL(
-            $this->urlGenerator->linkToRoute('opencatalogi.federation.publications')
+            $this->urlGenerator->linkToRoute('opencatalogi.publications.index', ['catalogSlug' => $catalogSlug])
         );
 
         // Create listing object from catalog - only core API fields.
