@@ -1,6 +1,14 @@
 <script setup>
+import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('theme', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
@@ -9,6 +17,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:title="t('opencatalogi', 'Themes')"
 		:description="t('opencatalogi', 'Manage your website themes and visual styling')"
 		:show-title="true"
+		:schema="schema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -24,44 +33,21 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:schema="themeSchema"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Theme')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No themes found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@create="onSaveTheme"
-		@edit="onSaveTheme"
-		@refresh="handleRefresh"
+		@refresh="refresh"
+		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
-		<!-- Form fields for create/edit dialog -->
-		<template #form-fields="{ formData, errors, updateField }">
-			<div class="formContainer">
-				<NcTextField
-					:label="t('opencatalogi', 'Title') + ' *'"
-					:value="formData.title || ''"
-					:error="!!errors.title"
-					:helper-text="errors.title"
-					@update:value="v => updateField('title', v)" />
-				<NcTextField
-					:label="t('opencatalogi', 'Summary')"
-					:value="formData.summary || ''"
-					@update:value="v => updateField('summary', v)" />
-				<NcTextArea
-					:label="t('opencatalogi', 'Description')"
-					:value="formData.description || ''"
-					@update:value="v => updateField('description', v)" />
-				<NcTextField
-					:label="t('opencatalogi', 'Image (url)')"
-					:value="formData.image || ''"
-					@update:value="v => updateField('image', v)" />
-			</div>
-		</template>
-
 		<!-- Row actions -->
 		<template #row-actions="{ row }">
 			<NcActions>
@@ -74,7 +60,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
+				<NcActionButton close-after-click @click="editTheme(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -98,7 +84,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcTextField, NcTextArea } from '@nextcloud/vue'
+import { NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
@@ -112,8 +98,6 @@ export default {
 		CnIndexPage,
 		NcActions,
 		NcActionButton,
-		NcTextField,
-		NcTextArea,
 		DotsHorizontal,
 		Eye,
 		Pencil,
@@ -123,23 +107,11 @@ export default {
 	data() {
 		return {
 			selectedIds: [],
-			viewMode: 'cards',
+			viewMode: 'table',
 			isRefreshing: false,
 		}
 	},
 	computed: {
-		themeSchema() {
-			return {
-				title: t('opencatalogi', 'Theme'),
-				properties: {
-					title: { type: 'string', title: t('opencatalogi', 'Title'), required: true, minLength: 1 },
-					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
-					description: { type: 'string', title: t('opencatalogi', 'Description') },
-					image: { type: 'string', title: t('opencatalogi', 'Image') },
-				},
-				required: ['title'],
-			}
-		},
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
@@ -157,52 +129,29 @@ export default {
 				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() {
-		objectStore.fetchCollection('theme')
-	},
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('theme')
-			this.$refs.indexPage.openFormDialog(null)
-		},
-		async onSaveTheme(formData) {
-			try {
-				const isEdit = !!formData.id
-				if (isEdit) {
-					await objectStore.updateObject('theme', formData.id, formData)
-				} else {
-					await objectStore.createObject('theme', formData)
-				}
-				this.$refs.indexPage.setFormResult({ success: true })
-				await objectStore.fetchCollection('theme')
-			} catch (error) {
-				this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save theme' })
-			}
-		},
-		async handleRefresh() {
-			this.isRefreshing = true
-			try {
-				await objectStore.fetchCollection('theme')
-			} finally {
-				this.isRefreshing = false
-			}
-		},
-		onPageChange(page) {
-			objectStore.fetchCollection('theme', { _page: page })
-		},
-		onPageSizeChange(size) {
-			objectStore.fetchCollection('theme', { _page: 1, _limit: size })
+			navigationStore.setModal('theme')
 		},
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			objectStore.setActiveObject('theme', row)
-			navigationStore.setModal('viewTheme')
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'ThemeDetail', params: { id } })
+			}
 		},
 		viewTheme(theme) {
+			const id = theme?.['@self']?.id || theme?.id
+			if (id) {
+				this.$router.push({ name: 'ThemeDetail', params: { id } })
+			}
+		},
+		editTheme(theme) {
 			objectStore.setActiveObject('theme', theme)
-			navigationStore.setModal('viewTheme')
+			navigationStore.setModal('theme')
 		},
 		copyTheme(theme) {
 			objectStore.setActiveObject('theme', theme)
@@ -215,9 +164,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-.formContainer > * {
-	margin-block-end: 10px;
-}
-</style>

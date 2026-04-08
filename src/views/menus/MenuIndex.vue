@@ -1,6 +1,14 @@
 <script setup>
+import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('menu', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
@@ -9,6 +17,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:title="t('opencatalogi', 'Menus')"
 		:description="t('opencatalogi', 'Manage your navigation menus and menu items')"
 		:show-title="true"
+		:schema="schema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -24,26 +33,61 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Menu')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No menus found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@refresh="handleRefresh"
+		@refresh="refresh"
+		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
-		<template #column-items="{ row }">{{ row.items?.length || 0 }}</template>
-		<template #column-updatedAt="{ row }">{{ row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : '-' }}</template>
+		<!-- Custom column: menu items count -->
+		<template #column-items="{ row }">
+			{{ row.items?.length || 0 }}
+		</template>
+
+		<!-- Custom column: updated date -->
+		<template #column-updatedAt="{ row }">
+			{{ row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : '-' }}
+		</template>
+
+		<!-- Row actions -->
 		<template #row-actions="{ row }">
 			<NcActions>
-				<template #icon><DotsHorizontal :size="20" /></template>
-				<NcActionButton close-after-click @click="editMenu(row)"><template #icon><Pencil :size="20" /></template>{{ t('opencatalogi', 'Edit') }}</NcActionButton>
-				<NcActionButton close-after-click @click="addMenuItem(row)"><template #icon><Plus :size="20" /></template>{{ t('opencatalogi', 'Add Item') }}</NcActionButton>
-				<NcActionButton close-after-click @click="copyMenu(row)"><template #icon><ContentCopy :size="20" /></template>{{ t('opencatalogi', 'Copy') }}</NcActionButton>
-				<NcActionButton close-after-click @click="deleteMenu(row)"><template #icon><TrashCanOutline :size="20" /></template>{{ t('opencatalogi', 'Delete') }}</NcActionButton>
+				<template #icon>
+					<DotsHorizontal :size="20" />
+				</template>
+				<NcActionButton close-after-click @click="editMenu(row)">
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Edit') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="addMenuItem(row)">
+					<template #icon>
+						<Plus :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Add Item') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="copyMenu(row)">
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Copy') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="deleteMenu(row)">
+					<template #icon>
+						<TrashCanOutline :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Delete') }}
+				</NcActionButton>
 			</NcActions>
 		</template>
 	</CnIndexPage>
@@ -60,25 +104,74 @@ import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 export default {
 	name: 'MenuIndex',
-	components: { CnIndexPage, NcActions, NcActionButton, DotsHorizontal, Pencil, Plus, ContentCopy, TrashCanOutline },
-	data() { return { selectedIds: [], viewMode: 'cards', isRefreshing: false } },
-	computed: {
-		tableColumns() { return [{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true }, { key: 'position', label: t('opencatalogi', 'Position'), sortable: true }, { key: 'items', label: t('opencatalogi', 'Menu Items') }, { key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true }] },
-		currentObjects() { const c = objectStore.getCollection('menu'); return Array.isArray(c) ? c : c?.results || [] },
-		currentPagination() { return objectStore.getPagination('menu') || { total: 0, page: 1, pages: 1, limit: 20 } },
+	components: {
+		CnIndexPage,
+		NcActions,
+		NcActionButton,
+		DotsHorizontal,
+		Pencil,
+		Plus,
+		ContentCopy,
+		TrashCanOutline,
 	},
-	mounted() { objectStore.fetchCollection('menu') },
+	data() {
+		return {
+			selectedIds: [],
+			viewMode: 'table',
+			isRefreshing: false,
+		}
+	},
+	computed: {
+		tableColumns() {
+			return [
+				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
+				{ key: 'position', label: t('opencatalogi', 'Position'), sortable: true },
+				{ key: 'items', label: t('opencatalogi', 'Menu Items') },
+				{ key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true },
+			]
+		},
+		currentObjects() {
+			const collection = objectStore.getCollection('menu')
+			if (Array.isArray(collection)) return collection
+			return collection?.results || []
+		},
+		currentPagination() {
+			return objectStore.getPagination('menu')
+				|| { total: 0, page: 1, pages: 1, limit: 20 }
+		},
+	},
 	methods: {
-		onAdd() { objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu') },
-		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('menu') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('menu', { _page: page }) },
-		onPageSizeChange(size) { objectStore.fetchCollection('menu', { _page: 1, _limit: size }) },
-		onSelect(ids) { this.selectedIds = ids },
-		onRowClick(row) { objectStore.setActiveObject('menu', row); navigationStore.setModal('viewMenu') },
-		editMenu(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu') },
-		addMenuItem(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setModal('menuItemForm') },
-		copyMenu(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setDialog('copyObject', { objectType: 'menu', dialogTitle: 'Menu' }) },
-		deleteMenu(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setDialog('deleteObject', { objectType: 'menu', dialogTitle: 'Menu' }) },
+		onAdd() {
+			objectStore.clearActiveObject('menu')
+			navigationStore.setModal('viewMenu')
+		},
+		onSelect(ids) {
+			this.selectedIds = ids
+		},
+		onRowClick(row) {
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'MenuDetail', params: { id } })
+			}
+		},
+		editMenu(menu) {
+			const id = menu?.['@self']?.id || menu?.id
+			if (id) {
+				this.$router.push({ name: 'MenuDetail', params: { id } })
+			}
+		},
+		addMenuItem(menu) {
+			objectStore.setActiveObject('menu', menu)
+			navigationStore.setModal('menuItemForm')
+		},
+		copyMenu(menu) {
+			objectStore.setActiveObject('menu', menu)
+			navigationStore.setDialog('copyObject', { objectType: 'menu', dialogTitle: 'Menu' })
+		},
+		deleteMenu(menu) {
+			objectStore.setActiveObject('menu', menu)
+			navigationStore.setDialog('deleteObject', { objectType: 'menu', dialogTitle: 'Menu' })
+		},
 	},
 }
 </script>

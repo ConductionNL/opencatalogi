@@ -1249,10 +1249,10 @@ export default {
 				return []
 			}
 
-			const selectedCatalogRegisterIds = fullCatalog.registers || []
+			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(String)
 
 			return objectStore.availableRegisters
-				.filter(register => selectedCatalogRegisterIds.includes(register.id))
+				.filter(register => selectedCatalogRegisterIds.includes(String(register.id)))
 				.map(register => ({
 					id: register.id,
 					label: register.title,
@@ -1270,14 +1270,14 @@ export default {
 				return []
 			}
 
-			const registerSchemaIds = register.schemas?.map(schema => schema.id) || []
-			const catalogSchemaIds = catalog.schemas || []
+			const registerSchemaIds = (register.schemas?.map(schema => String(schema.id)) || [])
+			const catalogSchemaIds = (catalog.schemas || []).map(String)
 
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
 			const validSchemaIds = registerSchemaIds.filter(id => catalogSchemaIds.includes(id))
 
 			return objectStore.availableSchemas
-				.filter(schema => validSchemaIds.includes(schema.id))
+				.filter(schema => validSchemaIds.includes(String(schema.id)))
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
@@ -1527,13 +1527,42 @@ export default {
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		initializeData() {
+		_autoSelectRemaining(retries = 0) {
+			if (retries > 10) return
+			this.$nextTick(() => {
+				let changed = false
+				if (this.selectedCatalog && !this.selectedRegister && this.registerOptions.length === 1) {
+					this.selectedRegister = this.registerOptions[0]
+					changed = true
+				}
+				if (this.selectedRegister && !this.selectedSchema && this.schemaOptions.length === 1) {
+					this.selectedSchema = this.schemaOptions[0]
+					changed = true
+				}
+				if (this.allSelectionsComplete && !this.showProperties) {
+					this.showProperties = true
+					changed = true
+				}
+				if (changed && !this.showProperties) {
+					this._autoSelectRemaining(retries + 1)
+				}
+			})
+		},
+		async initializeData() {
 			if (!this.currentObject) {
 				// For new objects, initialize with empty form data and auto-select if possible
 				this.formData = {}
 				this.jsonData = JSON.stringify({}, null, 2)
 
-				const catalogs = objectStore.getCollection('catalog').results
+				// Ensure settings and catalogs are loaded before auto-selection
+				if (!objectStore.settings) {
+					await objectStore.fetchSettings()
+				}
+				let catalogs = objectStore.getCollection('catalog').results
+				if (!catalogs || catalogs.length === 0) {
+					await objectStore.fetchCollection('catalog')
+					catalogs = objectStore.getCollection('catalog').results || []
+				}
 
 				// Check if we have a catalogSlug route param
 				const catalogSlug = this.$route.params.catalogSlug
@@ -1554,20 +1583,7 @@ export default {
 					}
 				}
 
-				// Use nextTick to ensure the computed properties are updated
-				this.$nextTick(() => {
-					// Auto-select register if there's only one
-					if (this.registerOptions.length === 1) {
-						this.selectedRegister = this.registerOptions[0]
-
-						this.$nextTick(() => {
-							// Auto-select schema if there's only one
-							if (this.schemaOptions.length === 1) {
-								this.selectedSchema = this.schemaOptions[0]
-							}
-						})
-					}
-				})
+				this._autoSelectRemaining()
 
 				return
 			}
