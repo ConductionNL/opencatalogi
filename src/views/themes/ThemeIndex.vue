@@ -1,6 +1,14 @@
 <script setup>
+import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('theme', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
@@ -9,6 +17,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:title="t('opencatalogi', 'Themes')"
 		:description="t('opencatalogi', 'Manage your website themes and visual styling')"
 		:show-title="true"
+		:schema="schema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -24,12 +33,16 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Theme')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No themes found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@refresh="handleRefresh"
+		@refresh="refresh"
+		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
@@ -94,7 +107,7 @@ export default {
 	data() {
 		return {
 			selectedIds: [],
-			viewMode: 'cards',
+			viewMode: 'table',
 			isRefreshing: false,
 		}
 	},
@@ -116,38 +129,25 @@ export default {
 				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() {
-		objectStore.fetchCollection('theme')
-	},
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('theme')
 			navigationStore.setModal('theme')
 		},
-		async handleRefresh() {
-			this.isRefreshing = true
-			try {
-				await objectStore.fetchCollection('theme')
-			} finally {
-				this.isRefreshing = false
-			}
-		},
-		onPageChange(page) {
-			objectStore.fetchCollection('theme', { _page: page })
-		},
-		onPageSizeChange(size) {
-			objectStore.fetchCollection('theme', { _page: 1, _limit: size })
-		},
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			objectStore.setActiveObject('theme', row)
-			navigationStore.setModal('viewTheme')
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'ThemeDetail', params: { id } })
+			}
 		},
 		viewTheme(theme) {
-			objectStore.setActiveObject('theme', theme)
-			navigationStore.setModal('viewTheme')
+			const id = theme?.['@self']?.id || theme?.id
+			if (id) {
+				this.$router.push({ name: 'ThemeDetail', params: { id } })
+			}
 		},
 		editTheme(theme) {
 			objectStore.setActiveObject('theme', theme)

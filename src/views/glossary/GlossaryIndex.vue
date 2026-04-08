@@ -1,6 +1,14 @@
 <script setup>
+import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('glossary', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
@@ -9,6 +17,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:title="t('opencatalogi', 'Glossary')"
 		:description="t('opencatalogi', 'Manage your glossary terms and definitions')"
 		:show-title="true"
+		:schema="schema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -24,12 +33,16 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Term')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No glossary terms found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@refresh="handleRefresh"
+		@refresh="refresh"
+		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
@@ -107,7 +120,7 @@ export default {
 	data() {
 		return {
 			selectedIds: [],
-			viewMode: 'cards',
+			viewMode: 'table',
 			isRefreshing: false,
 			statusColorMap: {
 				[t('opencatalogi', 'Public')]: 'success',
@@ -134,38 +147,25 @@ export default {
 				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() {
-		objectStore.fetchCollection('glossary')
-	},
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('glossary')
 			navigationStore.setModal('glossary')
 		},
-		async handleRefresh() {
-			this.isRefreshing = true
-			try {
-				await objectStore.fetchCollection('glossary')
-			} finally {
-				this.isRefreshing = false
-			}
-		},
-		onPageChange(page) {
-			objectStore.fetchCollection('glossary', { _page: page })
-		},
-		onPageSizeChange(size) {
-			objectStore.fetchCollection('glossary', { _page: 1, _limit: size })
-		},
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			objectStore.setActiveObject('glossary', row)
-			navigationStore.setModal('viewGlossary')
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'GlossaryDetail', params: { id } })
+			}
 		},
 		viewTerm(term) {
-			objectStore.setActiveObject('glossary', term)
-			navigationStore.setModal('viewGlossary')
+			const id = term?.['@self']?.id || term?.id
+			if (id) {
+				this.$router.push({ name: 'GlossaryDetail', params: { id } })
+			}
 		},
 		editTerm(term) {
 			objectStore.setActiveObject('glossary', term)

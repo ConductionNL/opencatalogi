@@ -62,6 +62,10 @@ export const useObjectStore = defineStore('object', {
 		success: {},
 		/** @type {{[key: string]: {schema: string, register: string}}} */
 		objectTypeRegistry: {},
+		/** @type {{[key: string]: object}} */
+		schemas: {},
+		/** @type {{[key: string]: object}} */
+		facets: {},
 		/** @type {Array<string>} */
 		selectedObjects: [],
 		/** @type {Array<string>} */
@@ -627,6 +631,39 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Fetch and cache the JSON Schema for a registered object type.
+		 * Required by useListView composable for CnIndexSidebar integration.
+		 * @param {string} type - The object type slug
+		 * @return {Promise<object|null>} The schema object or null on failure
+		 */
+		async fetchSchema(type) {
+			if (this.schemas[type]) {
+				return this.schemas[type]
+			}
+			// Ensure settings (and type registration) are loaded
+			if (!this.settings) {
+				await this.fetchSettings()
+			}
+			const config = this.objectTypeRegistry[type]
+			if (!config?.schema) {
+				return null
+			}
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/schemas/${config.schema}`,
+					{ method: 'GET', headers: { 'Content-Type': 'application/json' } },
+				)
+				if (!response.ok) return null
+				const schema = await response.json()
+				this.schemas = { ...this.schemas, [type]: schema }
+				return schema
+			} catch {
+				return null
+			}
+		},
+
+		/**
 		 * Unregister an object type
 		 * @param {string} slug - The schema slug to unregister
 		 */
@@ -664,12 +701,25 @@ export const useObjectStore = defineStore('object', {
 		 */
 		getSchemaConfig(objectType) {
 			// First check if this is a registered object type
-			const objectTypeConfig = this.objectTypeRegistry[objectType]
+			let objectTypeConfig = this.objectTypeRegistry[objectType]
 			if (objectTypeConfig) {
 				return {
 					source: 'openregister',
 					schema: objectTypeConfig.schema,
 					register: objectTypeConfig.register,
+				}
+			}
+
+			// If settings are loaded but types aren't registered yet, register now
+			if (this.settings && Object.keys(this.objectTypeRegistry).length === 0) {
+				this._registerTypesFromSettings()
+				objectTypeConfig = this.objectTypeRegistry[objectType]
+				if (objectTypeConfig) {
+					return {
+						source: 'openregister',
+						schema: objectTypeConfig.schema,
+						register: objectTypeConfig.register,
+					}
 				}
 			}
 
@@ -934,6 +984,8 @@ export const useObjectStore = defineStore('object', {
 				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
 				if (!response.ok) throw new Error('Failed to fetch settings')
 				this.settings = await response.json()
+				// Register types immediately so useListView.fetchSchema works
+				this._registerTypesFromSettings()
 			} catch (error) {
 				console.error('Error fetching settings:', error)
 				throw error
@@ -1601,6 +1653,9 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
+				// Auto-register object types from settings so useListView/fetchSchema work
+				this._registerTypesFromSettings()
+
 				// Get all available object types from settings
 				const objectTypes = this.objectTypes
 
@@ -1623,6 +1678,43 @@ export const useObjectStore = defineStore('object', {
 				console.error('Error during preload:', error)
 				// Don't throw here to allow the application to continue
 			}
+		},
+
+		/**
+		 * Register object types from settings into objectTypeRegistry.
+		 * Maps each objectType slug to its schema/register IDs by searching
+		 * availableRegisters for a matching schema slug.
+		 * @private
+		 */
+		_registerTypesFromSettings() {
+			if (!this.settings) return
+
+			// Include 'publication' alongside the settings-defined types
+			const objectTypes = [...(this.settings.objectTypes || []), 'publication']
+			const registers = this.settings.availableRegisters || []
+
+			for (const type of objectTypes) {
+				if (this.objectTypeRegistry[type]) continue
+
+				// Find the schema matching this type slug in any register
+				for (const register of registers) {
+					const matchingSchema = (register.schemas || []).find(
+						(s) => s.slug === type || s.title?.toLowerCase() === type,
+					)
+					if (matchingSchema) {
+						this.objectTypeRegistry = {
+							...this.objectTypeRegistry,
+							[type]: {
+								schema: String(matchingSchema.id),
+								register: String(register.id),
+							},
+						}
+						break
+					}
+				}
+			}
+
+			console.info('Registered object types:', Object.keys(this.objectTypeRegistry))
 		},
 
 		/**

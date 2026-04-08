@@ -1,6 +1,14 @@
 <script setup>
+import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('menu', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
@@ -9,6 +17,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:title="t('opencatalogi', 'Menus')"
 		:description="t('opencatalogi', 'Manage your navigation menus and menu items')"
 		:show-title="true"
+		:schema="schema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -24,12 +33,16 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Menu')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No menus found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@refresh="handleRefresh"
+		@refresh="refresh"
+		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
@@ -104,7 +117,7 @@ export default {
 	data() {
 		return {
 			selectedIds: [],
-			viewMode: 'cards',
+			viewMode: 'table',
 			isRefreshing: false,
 		}
 	},
@@ -127,38 +140,25 @@ export default {
 				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() {
-		objectStore.fetchCollection('menu')
-	},
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('menu')
 			navigationStore.setModal('viewMenu')
 		},
-		async handleRefresh() {
-			this.isRefreshing = true
-			try {
-				await objectStore.fetchCollection('menu')
-			} finally {
-				this.isRefreshing = false
-			}
-		},
-		onPageChange(page) {
-			objectStore.fetchCollection('menu', { _page: page })
-		},
-		onPageSizeChange(size) {
-			objectStore.fetchCollection('menu', { _page: 1, _limit: size })
-		},
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			objectStore.setActiveObject('menu', row)
-			navigationStore.setModal('viewMenu')
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'MenuDetail', params: { id } })
+			}
 		},
 		editMenu(menu) {
-			objectStore.setActiveObject('menu', menu)
-			navigationStore.setModal('viewMenu')
+			const id = menu?.['@self']?.id || menu?.id
+			if (id) {
+				this.$router.push({ name: 'MenuDetail', params: { id } })
+			}
 		},
 		addMenuItem(menu) {
 			objectStore.setActiveObject('menu', menu)

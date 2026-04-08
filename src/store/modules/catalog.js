@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { Catalogi } from '../../entities/catalogi/catalogi.ts'
 import { objectStore } from '../../store/store.js'
+import { buildHeaders } from '@conduction/nextcloud-vue'
 
 /** @typedef {import('../../entities/catalogi/catalogi.ts').Catalogi} CatalogEntity */
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
@@ -134,10 +135,11 @@ export const useCatalogStore = defineStore('catalog', {
 			const queryParams = new URLSearchParams(searchParams)
 
 			try {
-				const catalogIdToUse = catalogId || this.activeCatalog.id
+				const catalogIdToUse = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id
 
-				const url = `/index.php/apps/opencatalogi/api/catalogi/${catalogIdToUse}?${queryParams}`
-				const response = await fetch(url)
+				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
+				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
+				const response = await fetch(url, { method: 'GET', headers: buildHeaders() })
 				const data = await response.json()
 
 				this.publications = {

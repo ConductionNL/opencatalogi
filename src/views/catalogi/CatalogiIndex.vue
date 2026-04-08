@@ -1,6 +1,14 @@
 <script setup>
+import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('catalog', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
@@ -9,6 +17,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:title="t('opencatalogi', 'Catalogs')"
 		:description="t('opencatalogi', 'Manage your data catalogs and their configurations')"
 		:show-title="true"
+		:schema="schema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -24,12 +33,16 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Catalog')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No catalogs found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@refresh="handleRefresh"
+		@refresh="refresh"
+		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
@@ -125,7 +138,7 @@ export default {
 	data() {
 		return {
 			selectedIds: [],
-			viewMode: 'cards',
+			viewMode: 'table',
 			isRefreshing: false,
 			visibilityColorMap: {
 				[t('opencatalogi', 'Public')]: 'success',
@@ -144,6 +157,8 @@ export default {
 			]
 		},
 		currentObjects() {
+			// useListView expects collections[type] to be an array;
+			// OpenCatalogi's store wraps it in { results: [] }
 			const collection = objectStore.getCollection('catalog')
 			if (Array.isArray(collection)) return collection
 			return collection?.results || []
@@ -153,38 +168,25 @@ export default {
 				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() {
-		objectStore.fetchCollection('catalog')
-	},
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('catalog')
 			navigationStore.setModal('catalog')
 		},
-		async handleRefresh() {
-			this.isRefreshing = true
-			try {
-				await objectStore.fetchCollection('catalog')
-			} finally {
-				this.isRefreshing = false
-			}
-		},
-		onPageChange(page) {
-			objectStore.fetchCollection('catalog', { _page: page })
-		},
-		onPageSizeChange(size) {
-			objectStore.fetchCollection('catalog', { _page: 1, _limit: size })
-		},
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			objectStore.setActiveObject('catalog', row)
-			navigationStore.setModal('viewCatalogi')
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'CatalogDetail', params: { id } })
+			}
 		},
 		viewCatalog(catalog) {
-			objectStore.setActiveObject('catalog', catalog)
-			navigationStore.setModal('viewCatalogi')
+			const id = catalog?.['@self']?.id || catalog?.id
+			if (id) {
+				this.$router.push({ name: 'CatalogDetail', params: { id } })
+			}
 		},
 		editCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
