@@ -755,7 +755,7 @@ export default {
 
 			files.forEach((file) => {
 				formData.append('files[]', file)
-				if (file.tags) {
+				if (file.tags?.length > 0) {
 					formData.append('tags[]', file.tags.join(','))
 				}
 			})
