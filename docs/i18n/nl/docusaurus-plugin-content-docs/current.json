@@ -1,0 +1,54 @@
+{
+  "version.label": {
+    "message": "Volgende",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Users": {
+    "message": "Gebruikers",
+    "description": "The label for category Users in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Components": {
+    "message": "Componenten",
+    "description": "The label for category Components in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Components.link.generated-index.description": {
+    "message": "Herbruikbare componenten die in de hele applicatie worden gebruikt",
+    "description": "The generated-index page description for category Components in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Beheerders": {
+    "message": "Beheerders",
+    "description": "The label for category Beheerders in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Community": {
+    "message": "Community",
+    "description": "The label for category Community in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.notulen": {
+    "message": "notulen",
+    "description": "The label for category notulen in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Roadmap": {
+    "message": "Routekaart",
+    "description": "The label for category Roadmap in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Design Decisions": {
+    "message": "Ontwerpbeslissingen",
+    "description": "The label for category Design Decisions in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.installatie": {
+    "message": "installatie",
+    "description": "The label for category installatie in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Technical": {
+    "message": "Technisch",
+    "description": "The label for category Technical in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Technology": {
+    "message": "Technologie",
+    "description": "The label for category Technology in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Handleidingen": {
+    "message": "Handleidingen",
+    "description": "The label for category Handleidingen in sidebar tutorialSidebar"
+  }
+}

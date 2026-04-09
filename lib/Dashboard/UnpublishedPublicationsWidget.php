@@ -98,7 +98,7 @@ class UnpublishedPublicationsWidget implements IWidget
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.StaticAccess)
+     * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
      */
     public function load(): void
     {

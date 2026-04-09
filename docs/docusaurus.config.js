@@ -20,7 +20,11 @@ const config = {
   // metadata like html lang
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'nl'],
+    localeConfigs: {
+      en: { label: 'English' },
+      nl: { label: 'Nederlands' },
+    },
   },
 
   // Add markdown support for mermaid diagrams
@@ -37,6 +41,7 @@ const config = {
       ({
         docs: {
           path: './',
+          exclude: ['**/node_modules/**'],
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
             'https://github.com/conductionnl/opencatalogi/tree/main/docs/',
@@ -96,6 +101,10 @@ const config = {
           {
             href: 'https://github.com/conductionnl/opencatalogi',
             label: 'GitHub',
+            position: 'right',
+          },
+          {
+            type: 'localeDropdown',
             position: 'right',
           },
         ],

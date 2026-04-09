@@ -1,415 +1,189 @@
-/**
- * GlossaryIndex.vue
- * Component for displaying glossary items with cards and table view
- * @category Views
- * @package opencatalogi
- * @author Ruben Linde
- * @copyright 2024
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- * @link https://github.com/opencatalogi/opencatalogi
- */
-
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcAppContent>
-		<div class="viewContainer">
-			<!-- Header -->
-			<div class="viewHeader">
-				<h1 class="viewHeaderTitleIndented">
-					{{ t('opencatalogi', 'Glossary') }}
-				</h1>
-				<p>{{ t('opencatalogi', 'Manage your glossary terms and definitions') }}</p>
+	<CnIndexPage
+		ref="indexPage"
+		:title="t('opencatalogi', 'Glossary')"
+		:description="t('opencatalogi', 'Manage your glossary terms and definitions')"
+		:show-title="true"
+		:objects="currentObjects"
+		:columns="tableColumns"
+		:pagination="currentPagination"
+		:loading="objectStore.isLoading('glossary')"
+		:selectable="true"
+		:selected-ids="selectedIds"
+		:show-view-toggle="true"
+		:show-edit-action="false"
+		:show-copy-action="false"
+		:show-delete-action="false"
+		:show-mass-import="false"
+		:show-mass-export="false"
+		:show-mass-copy="false"
+		:show-mass-delete="false"
+		:view-mode="viewMode"
+		:schema="glossarySchema"
+		:add-label="t('opencatalogi', 'Add Term')"
+		row-key="id"
+		:empty-text="t('opencatalogi', 'No glossary terms found')"
+		:refreshing="isRefreshing"
+		@add="onAdd"
+		@create="onSaveTerm"
+		@edit="onSaveTerm"
+		@refresh="handleRefresh"
+		@page-changed="onPageChange"
+		@page-size-changed="onPageSizeChange"
+		@view-mode-change="viewMode = $event"
+		@select="onSelect"
+		@row-click="onRowClick">
+		<template #form-fields="{ formData, errors, updateField }">
+			<div class="formContainer">
+				<NcTextField
+					:label="t('opencatalogi', 'Title') + ' *'"
+					:value="formData.title || ''"
+					:error="!!errors.title"
+					:helper-text="errors.title"
+					maxlength="255"
+					@update:value="v => updateField('title', v)" />
+				<NcTextField
+					:label="t('opencatalogi', 'Summary')"
+					:value="formData.summary || ''"
+					maxlength="255"
+					@update:value="v => updateField('summary', v)" />
+				<NcTextArea
+					:label="t('opencatalogi', 'Description')"
+					:value="formData.description || ''"
+					@update:value="v => updateField('description', v)" />
+				<NcTextField
+					:label="t('opencatalogi', 'External Link')"
+					:value="formData.externalLink || ''"
+					@update:value="v => updateField('externalLink', v)" />
+				<NcSelect
+					:value="formData.keywords || []"
+					:input-label="t('opencatalogi', 'Keywords')"
+					:multiple="true"
+					:taggable="true"
+					:placeholder="t('opencatalogi', 'Type and press Enter to add keywords')"
+					@input="v => updateField('keywords', v)" />
 			</div>
-
-			<!-- Actions Bar -->
-			<div class="viewActionsBar">
-				<div class="viewInfo">
-					<span class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} terms', { showing: filteredTerms.length, total: currentPagination.total || filteredTerms.length }) }}
-					</span>
-					<span v-if="selectedTerms.length > 0" class="viewIndicator">
-						({{ t('opencatalogi', '{count} selected', { count: selectedTerms.length }) }})
-					</span>
-				</div>
-				<div class="viewActions">
-					<div class="viewModeSwitchContainer">
-						<NcCheckboxRadioSwitch
-							v-tooltip="'See terms as cards'"
-							:checked="viewMode === 'cards'"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
-							value="cards"
-							name="terms_view_mode"
-							type="radio"
-							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('cards')">
-							Cards
-						</NcCheckboxRadioSwitch>
-						<NcCheckboxRadioSwitch
-							v-tooltip="'See terms as a table'"
-							:checked="viewMode === 'table'"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
-							value="table"
-							name="terms_view_mode"
-							type="radio"
-							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('table')">
-							Table
-						</NcCheckboxRadioSwitch>
-					</div>
-
-					<NcActions
-						:force-name="true"
-						:inline="3"
-						menu-name="Actions">
-						<NcActionButton
-							:primary="true"
-							close-after-click
-							@click="objectStore.clearActiveObject('glossary'); navigationStore.setModal('glossary')">
-							<template #icon>
-								<Plus :size="20" />
-							</template>
-							Add Term
-						</NcActionButton>
-						<NcActionButton
-							close-after-click
-							:disabled="objectStore.isLoading('glossary')"
-							@click="objectStore.fetchCollection('glossary')">
-							<template #icon>
-								<Refresh :size="20" />
-							</template>
-							Refresh
-						</NcActionButton>
-						<NcActionButton
-							title="View documentation about glossary"
-							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/glossaries', '_blank')">
-							<template #icon>
-								<HelpCircleOutline :size="20" />
-							</template>
-							Help
-						</NcActionButton>
-					</NcActions>
-				</div>
-			</div>
-
-			<!-- Loading, Error, and Empty States -->
-			<NcEmptyContent v-if="objectStore.isLoading('glossary') || !filteredTerms.length"
-				:name="emptyContentName"
-				:description="emptyContentDescription">
+		</template>
+		<template #column-published="{ row }">
+			<CnStatusBadge
+				:label="row.published ? t('opencatalogi', 'Public') : t('opencatalogi', 'Private')"
+				:color-map="statusColorMap" />
+		</template>
+		<template #column-keywords="{ row }">
+			{{ row.keywords?.length ? row.keywords.join(', ') : '-' }}
+		</template>
+		<template #row-actions="{ row }">
+			<NcActions>
 				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('glossary')" :size="64" />
-					<BookOpenOutline v-else :size="64" />
+					<DotsHorizontal :size="20" />
 				</template>
-				<template v-if="!objectStore.isLoading('glossary') && !objectStore.getCollection('glossary')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('glossary'); navigationStore.setModal('glossary')">
-						{{ t('opencatalogi', 'Add term') }}
-					</NcButton>
-				</template>
-			</NcEmptyContent>
-
-			<!-- Content -->
-			<div v-else>
-				<template v-if="viewMode === 'cards'">
-					<div class="cardGrid">
-						<div v-for="term in paginatedTerms" :key="term.id" class="card">
-							<div class="cardHeader">
-								<h2 v-tooltip.bottom="term.summary">
-									<BookOpenOutline :size="20" />
-									{{ term.title }}
-								</h2>
-								<NcActions :primary="true" menu-name="Actions">
-									<template #icon>
-										<DotsHorizontal :size="20" />
-									</template>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setModal('viewGlossary')">
-										<template #icon>
-											<Eye :size="20" />
-										</template>
-										View
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setModal('glossary')">
-										<template #icon>
-											<Pencil :size="20" />
-										</template>
-										Edit
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' })">
-										<template #icon>
-											<ContentCopy :size="20" />
-										</template>
-										Copy
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' })">
-										<template #icon>
-											<TrashCanOutline :size="20" />
-										</template>
-										Delete
-									</NcActionButton>
-								</NcActions>
-							</div>
-							<!-- Term Statistics Table -->
-							<table class="statisticsTable termStats">
-								<thead>
-									<tr>
-										<th>{{ t('opencatalogi', 'Property') }}</th>
-										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td>{{ t('opencatalogi', 'Status') }}</td>
-										<td>{{ term.published ? 'Public' : 'Private' }}</td>
-										<td>{{ term.published ? 'Published' : 'Draft' }}</td>
-									</tr>
-									<tr v-if="term.summary">
-										<td>{{ t('opencatalogi', 'Summary') }}</td>
-										<td class="truncatedText">
-											{{ term.summary }}
-										</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-									<tr v-if="term.description">
-										<td>{{ t('opencatalogi', 'Description') }}</td>
-										<td class="truncatedText">
-											{{ term.description }}
-										</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-									<tr>
-										<td>{{ t('opencatalogi', 'Related Terms') }}</td>
-										<td>{{ term.relatedTerms?.length || 0 }}</td>
-										<td>{{ term.relatedTerms?.length > 0 ? 'Linked' : 'None' }}</td>
-									</tr>
-									<tr v-if="term.keywords?.length">
-										<td>{{ t('opencatalogi', 'Keywords') }}</td>
-										<td>{{ term.keywords.join(', ') }}</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</template>
-				<template v-else>
-					<div class="viewTableContainer">
-						<table class="viewTable">
-							<thead>
-								<tr>
-									<th class="tableColumnCheckbox">
-										<NcCheckboxRadioSwitch
-											:checked="allSelected"
-											:indeterminate="someSelected"
-											@update:checked="toggleSelectAll" />
-									</th>
-									<th>{{ t('opencatalogi', 'Title') }}</th>
-									<th>{{ t('opencatalogi', 'Status') }}</th>
-									<th>{{ t('opencatalogi', 'Related Terms') }}</th>
-									<th>{{ t('opencatalogi', 'Keywords') }}</th>
-									<th class="tableColumnActions">
-										{{ t('opencatalogi', 'Actions') }}
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="term in paginatedTerms"
-									:key="term.id"
-									class="viewTableRow"
-									:class="{ viewTableRowSelected: selectedTerms.includes(term.id) }">
-									<td class="tableColumnCheckbox">
-										<NcCheckboxRadioSwitch
-											:checked="selectedTerms.includes(term.id)"
-											@update:checked="(checked) => toggleTermSelection(term.id, checked)" />
-									</td>
-									<td class="tableColumnTitle">
-										<div class="titleContent">
-											<strong>{{ term.title }}</strong>
-											<span v-if="term.summary" class="textDescription textEllipsis">{{ term.summary }}</span>
-										</div>
-									</td>
-									<td>{{ term.published ? 'Public' : 'Private' }}</td>
-									<td>{{ term.relatedTerms?.length || 0 }}</td>
-									<td class="tableColumnConstrained">
-										<span v-if="term.keywords?.length">{{ term.keywords.join(', ') }}</span>
-										<span v-else>-</span>
-									</td>
-									<td class="tableColumnActions">
-										<NcActions :primary="false">
-											<template #icon>
-												<DotsHorizontal :size="20" />
-											</template>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setModal('viewGlossary')">
-												<template #icon>
-													<Eye :size="20" />
-												</template>
-												View
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setModal('glossary')">
-												<template #icon>
-													<Pencil :size="20" />
-												</template>
-												Edit
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' })">
-												<template #icon>
-													<ContentCopy :size="20" />
-												</template>
-												Copy
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('glossary', term); navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' })">
-												<template #icon>
-													<TrashCanOutline :size="20" />
-												</template>
-												Delete
-											</NcActionButton>
-										</NcActions>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</template>
-			</div>
-
-			<!-- Pagination -->
-			<PaginationComponent
-				:current-page="currentPagination.page || 1"
-				:total-pages="currentPagination.pages || Math.ceil(filteredTerms.length / (currentPagination.limit || 20))"
-				:total-items="currentPagination.total || filteredTerms.length"
-				:current-page-size="currentPagination.limit || 20"
-				:min-items-to-show="0"
-				@page-changed="onPageChanged"
-				@page-size-changed="onPageSizeChanged" />
-		</div>
-	</NcAppContent>
+				<NcActionButton close-after-click @click="viewTerm(row)">
+					<template #icon>
+						<Eye :size="20" />
+					</template>
+					{{ t('opencatalogi', 'View') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Edit') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="copyTerm(row)">
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Copy') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="deleteTerm(row)">
+					<template #icon>
+						<TrashCanOutline :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Delete') }}
+				</NcActionButton>
+			</NcActions>
+		</template>
+	</CnIndexPage>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcCheckboxRadioSwitch, NcButton } from '@nextcloud/vue'
-import BookOpenOutline from 'vue-material-design-icons/BookOpenOutline.vue'
+import { NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect } from '@nextcloud/vue'
+import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-
-import PaginationComponent from '../../components/PaginationComponent.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 export default {
 	name: 'GlossaryIndex',
 	components: {
-		NcAppContent,
-		NcEmptyContent,
-		NcLoadingIcon,
-		NcActions,
-		NcActionButton,
-		NcCheckboxRadioSwitch,
-		NcButton,
-		BookOpenOutline,
-		DotsHorizontal,
-		Pencil,
-		TrashCanOutline,
-		Refresh,
-		Plus,
-		Eye,
-		ContentCopy,
-		HelpCircleOutline,
-		PaginationComponent,
+		CnIndexPage, CnStatusBadge, NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect,
+		DotsHorizontal, Eye, Pencil, ContentCopy, TrashCanOutline,
 	},
 	data() {
 		return {
-			selectedTerms: [],
-			viewMode: 'cards',
+			selectedIds: [], viewMode: 'cards', isRefreshing: false,
+			statusColorMap: { [t('opencatalogi', 'Public')]: 'success', [t('opencatalogi', 'Private')]: 'default' },
 		}
 	},
 	computed: {
-		filteredTerms() {
-			return objectStore.getCollection('glossary')?.results || []
+		glossarySchema() {
+			return {
+				title: t('opencatalogi', 'Term'),
+				properties: {
+					title: { type: 'string', title: t('opencatalogi', 'Title'), required: true, minLength: 1 },
+					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
+					description: { type: 'string', title: t('opencatalogi', 'Description') },
+					externalLink: { type: 'string', title: t('opencatalogi', 'External Link') },
+					keywords: { type: 'array', title: t('opencatalogi', 'Keywords') },
+				},
+				required: ['title'],
+			}
+		},
+		tableColumns() {
+			return [
+				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
+				{ key: 'published', label: t('opencatalogi', 'Status'), sortable: true },
+				{ key: 'relatedTerms', label: t('opencatalogi', 'Related Terms') },
+				{ key: 'keywords', label: t('opencatalogi', 'Keywords') },
+			]
+		},
+		currentObjects() {
+			const c = objectStore.getCollection('glossary')
+			return Array.isArray(c) ? c : c?.results || []
 		},
 		currentPagination() {
-			const pagination = objectStore.getPagination('glossary')
-			console.info('Current pagination data:', pagination)
-			return pagination
-		},
-		paginatedTerms() {
-			return this.filteredTerms
-		},
-		allSelected() {
-			return this.filteredTerms.length > 0 && this.filteredTerms.every(term => this.selectedTerms.includes(term.id))
-		},
-		someSelected() {
-			return this.selectedTerms.length > 0 && !this.allSelected
-		},
-		emptyContentName() {
-			if (objectStore.isLoading('glossary')) {
-				return t('opencatalogi', 'Loading glossary terms...')
-			} else if (!objectStore.getCollection('glossary')?.results?.length) {
-				return t('opencatalogi', 'No glossary terms found')
-			}
-			return ''
-		},
-		emptyContentDescription() {
-			if (objectStore.isLoading('glossary')) {
-				return t('opencatalogi', 'Please wait while we fetch your glossary terms.')
-			} else if (!objectStore.getCollection('glossary')?.results?.length) {
-				return t('opencatalogi', 'No glossary terms are available.')
-			}
-			return ''
+			return objectStore.getPagination('glossary') || { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() {
-		console.info('GlossaryIndex mounted, fetching terms...')
-		objectStore.fetchCollection('glossary')
-	},
+	mounted() { objectStore.fetchCollection('glossary') },
 	methods: {
-		setViewMode(mode) {
-			console.info('Setting view mode to:', mode)
-			this.viewMode = mode
+		onAdd() { objectStore.clearActiveObject('glossary'); this.$refs.indexPage.openFormDialog(null) },
+		async onSaveTerm(formData) {
+			try {
+				if (formData.id) { await objectStore.updateObject('glossary', formData.id, formData) } else { await objectStore.createObject('glossary', formData) }
+				this.$refs.indexPage.setFormResult({ success: true })
+				await objectStore.fetchCollection('glossary')
+			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save term' }) }
 		},
-		toggleSelectAll(checked) {
-			if (checked) {
-				this.selectedTerms = this.filteredTerms.map(term => term.id)
-			} else {
-				this.selectedTerms = []
-			}
-		},
-		toggleTermSelection(termId, checked) {
-			if (checked) {
-				this.selectedTerms.push(termId)
-			} else {
-				this.selectedTerms = this.selectedTerms.filter(id => id !== termId)
-			}
-		},
-		onPageChanged(page) {
-			console.info('Page changed to:', page)
-			objectStore.fetchCollection('glossary', { _page: page, _limit: this.currentPagination.limit || 20 })
-		},
-		onPageSizeChanged(pageSize) {
-			console.info('Page size changed to:', pageSize)
-			objectStore.fetchCollection('glossary', { _page: 1, _limit: pageSize })
-		},
-		openLink(url, type = '') {
-			window.open(url, type)
-		},
+		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('glossary') } finally { this.isRefreshing = false } },
+		onPageChange(page) { objectStore.fetchCollection('glossary', { _page: page }) },
+		onPageSizeChange(size) { objectStore.fetchCollection('glossary', { _page: 1, _limit: size }) },
+		onSelect(ids) { this.selectedIds = ids },
+		onRowClick(row) { objectStore.setActiveObject('glossary', row); navigationStore.setModal('viewGlossary') },
+		viewTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setModal('viewGlossary') },
+		copyTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' }) },
+		deleteTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' }) },
 	},
 }
 </script>
 
 <style scoped>
-.truncatedText {
-	max-width: 200px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	display: inline-block;
-}
+.formContainer > * { margin-block-end: 10px; }
 </style>
