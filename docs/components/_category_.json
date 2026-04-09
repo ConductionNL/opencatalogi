@@ -4,12 +4,5 @@
   "link": {
     "type": "generated-index",
     "description": "Reusable components used throughout the application"
-  },
-  "items": [
-    {
-      "type": "doc",
-      "id": "components/search-results",
-      "label": "SearchResults"
-    }
-  ]
+  }
 } 

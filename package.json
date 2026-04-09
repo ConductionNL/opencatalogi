@@ -21,6 +21,7 @@
   ],
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
+    "@conduction/nextcloud-vue": "^0.1.0-beta.7",
     "@codemirror/lang-xml": "^6.0.1",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "6.6.0",
@@ -91,7 +92,19 @@
     "ts-jest": "^29.2.4",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.4",
-    "vue-eslint-parser": "^10.2.0",
-    "vue-jest": "^3.0.7"
+    "vue-eslint-parser": "^10.2.0"
+  },
+  "overrides": {
+    "braces": "^3.0.3",
+    "micromatch": "^4.0.8",
+    "dompurify": "^3.2.4",
+    "d3-color": "^3.1.0",
+    "mermaid": {
+      "dompurify": "^3.2.4",
+      "d3": "^7.0.0"
+    },
+    "json5": "^2.2.3",
+    "@braintree/sanitize-url": "^7.0.0",
+    "katex": "^0.16.0"
   }
 }

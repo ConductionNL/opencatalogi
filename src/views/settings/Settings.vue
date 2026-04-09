@@ -5,75 +5,66 @@
 			description="A central place for managing your Catalogi and publications"
 			doc-url="https://docs.opencatalogi.nl" />
 
-		<NcSettingsSection
-			name="Version Information"
-			description="Current application and configuration versions">
-			<div v-if="!loadingVersionInfo" class="version-info">
-				<div class="version-details">
-					<div class="version-item">
-						<strong>Application:</strong> {{ versionInfo.appName }} v{{ versionInfo.appVersion }}
-					</div>
-					<div class="version-item">
-						<strong>Configured Version:</strong>
-						<span v-if="versionInfo.configuredVersion">{{ versionInfo.configuredVersion }}</span>
-						<span v-else class="no-version">Not configured</span>
-					</div>
-					<div class="version-item">
-						<strong>Status:</strong>
-						<span v-if="versionInfo.versionsMatch" class="status-ok">✓ Up to date</span>
-						<span v-else-if="versionInfo.needsUpdate" class="status-warning">⚠ Update needed</span>
-						<span v-else class="status-error">✗ Version mismatch</span>
-					</div>
+		<CnVersionInfoCard
+			app-name="OpenCatalogi"
+			:app-version="versionInfo.appVersion"
+			:configured-version="versionInfo.configuredVersion"
+			:is-up-to-date="versionInfo.versionsMatch"
+			:show-update-button="versionInfo.needsUpdate"
+			:title="t('opencatalogi', 'Version Information')"
+			:description="t('opencatalogi', 'Current application and configuration versions')">
+			<template #actions>
+				<NcButton
+					type="secondary"
+					:disabled="importing"
+					@click="manualImport(false)">
+					<template #icon>
+						<NcLoadingIcon v-if="importing" :size="20" />
+						<Refresh v-else :size="20" />
+					</template>
+					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update Configuration') : t('opencatalogi', 'Reimport Configuration') }}
+				</NcButton>
+
+				<NcButton
+					type="primary"
+					:disabled="importing"
+					@click="manualImport(true)">
+					<template #icon>
+						<NcLoadingIcon v-if="importing" :size="20" />
+						<Refresh v-else :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Force Import') }}
+				</NcButton>
+			</template>
+			<template #default>
+				<!-- Import Results -->
+				<div v-if="importResult" class="import-result">
+					<NcNoteCard
+						v-if="importResult.success"
+						type="success">
+						{{ importResult.message }}
+					</NcNoteCard>
+					<NcNoteCard
+						v-else
+						type="error">
+						{{ importResult.message }}
+					</NcNoteCard>
 				</div>
-
-				<!-- Manual Import Section -->
-				<div class="manual-import">
-					<div class="import-actions">
-						<NcButton
-							type="secondary"
-							:disabled="importing"
-							@click="manualImport(false)">
-							<template #icon>
-								<NcLoadingIcon v-if="importing" :size="20" />
-								<Refresh v-else :size="20" />
-							</template>
-							{{ versionInfo.needsUpdate ? 'Update Configuration' : 'Reimport Configuration' }}
-						</NcButton>
-
-						<NcButton
-							type="primary"
-							:disabled="importing"
-							@click="manualImport(true)">
-							<template #icon>
-								<NcLoadingIcon v-if="importing" :size="20" />
-								<Refresh v-else :size="20" />
-							</template>
-							Force Import
-						</NcButton>
-					</div>
-
-					<!-- Import Results -->
-					<div v-if="importResult" class="import-result">
-						<NcNoteCard
-							v-if="importResult.success"
-							type="success">
-							{{ importResult.message }}
-						</NcNoteCard>
-						<NcNoteCard
-							v-else
-							type="error">
-							{{ importResult.message }}
-						</NcNoteCard>
-					</div>
+			</template>
+			<template #footer>
+				<div class="cn-support-info">
+					<h4>{{ t('opencatalogi', 'Support') }}</h4>
+					<p>
+						{{ t('opencatalogi', 'For support, contact us at') }}
+						<a href="mailto:support@conduction.nl">support@conduction.nl</a>
+					</p>
+					<p>
+						{{ t('opencatalogi', 'For a Service Level Agreement (SLA), contact') }}
+						<a href="mailto:sales@conduction.nl">sales@conduction.nl</a>
+					</p>
 				</div>
-			</div>
-
-			<!-- Loading State -->
-			<NcLoadingIcon v-else
-				class="loading-icon"
-				:size="64"
-				appearance="dark" />
-		</NcSettingsSection>
+			</template>
+		</CnVersionInfoCard>
 
 		<NcSettingsSection
 			name="Data storage"
@@ -216,6 +207,7 @@ import {
 	NcLoadingIcon,
 	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
+import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 
@@ -241,6 +233,7 @@ export default defineComponent({
 		NcButton,
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
+		CnVersionInfoCard,
 		Save,
 		Refresh,
 	},
@@ -836,58 +829,6 @@ export default defineComponent({
 	color: var(--color-text-lighter);
 	font-size: 0.9rem;
 	line-height: 1.4;
-}
-
-.version-info {
-	max-width: 600px;
-}
-
-.version-details {
-	margin-bottom: 2rem;
-	padding: 1rem;
-	background-color: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-}
-
-.version-item {
-	margin-bottom: 0.5rem;
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.version-item:last-child {
-	margin-bottom: 0;
-}
-
-.no-version {
-	color: var(--color-text-lighter);
-	font-style: italic;
-}
-
-.status-ok {
-	color: var(--color-success);
-	font-weight: bold;
-}
-
-.status-warning {
-	color: var(--color-warning);
-	font-weight: bold;
-}
-
-.status-error {
-	color: var(--color-error);
-	font-weight: bold;
-}
-
-.manual-import {
-	margin-top: 1.5rem;
-}
-
-.import-actions {
-	display: flex;
-	gap: 1rem;
-	margin-bottom: 1rem;
 }
 
 .import-result {

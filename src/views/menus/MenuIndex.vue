@@ -1,403 +1,84 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcAppContent>
-		<div class="viewContainer">
-			<!-- Header -->
-			<div class="viewHeader">
-				<h1 class="viewHeaderTitleIndented">
-					{{ t('opencatalogi', 'Menus') }}
-				</h1>
-				<p>{{ t('opencatalogi', 'Manage your navigation menus and menu items') }}</p>
-			</div>
-
-			<!-- Actions Bar -->
-			<div class="viewActionsBar">
-				<div class="viewInfo">
-					<span class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} menus', { showing: filteredMenus.length, total: currentPagination.total || filteredMenus.length }) }}
-					</span>
-					<span v-if="selectedMenus.length > 0" class="viewIndicator">
-						({{ t('opencatalogi', '{count} selected', { count: selectedMenus.length }) }})
-					</span>
-				</div>
-				<div class="viewActions">
-					<div class="viewModeSwitchContainer">
-						<NcCheckboxRadioSwitch
-							v-tooltip="'See menus as cards'"
-							:checked="viewMode === 'cards'"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
-							value="cards"
-							name="menus_view_mode"
-							type="radio"
-							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('cards')">
-							Cards
-						</NcCheckboxRadioSwitch>
-						<NcCheckboxRadioSwitch
-							v-tooltip="'See menus as a table'"
-							:checked="viewMode === 'table'"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
-							value="table"
-							name="menus_view_mode"
-							type="radio"
-							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('table')">
-							Table
-						</NcCheckboxRadioSwitch>
-					</div>
-
-					<NcActions
-						:force-name="true"
-						:inline="3"
-						menu-name="Actions">
-						<NcActionButton
-							:primary="true"
-							close-after-click
-							@click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
-							<template #icon>
-								<Plus :size="20" />
-							</template>
-							Add Menu
-						</NcActionButton>
-						<NcActionButton
-							close-after-click
-							:disabled="objectStore.isLoading('menu')"
-							@click="objectStore.fetchCollection('menu')">
-							<template #icon>
-								<Refresh :size="20" />
-							</template>
-							Refresh
-						</NcActionButton>
-						<NcActionButton
-							title="View documentation about menus"
-							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/menus', '_blank')">
-							<template #icon>
-								<HelpCircleOutline :size="20" />
-							</template>
-							Help
-						</NcActionButton>
-					</NcActions>
-				</div>
-			</div>
-
-			<!-- Loading, Error, and Empty States -->
-			<NcEmptyContent v-if="objectStore.isLoading('menu') || !filteredMenus.length"
-				:name="emptyContentName"
-				:description="emptyContentDescription">
-				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="64" />
-					<MenuIcon v-else :size="64" />
-				</template>
-				<template v-if="!objectStore.isLoading('menu') && !objectStore.getCollection('menu')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu')">
-						{{ t('opencatalogi', 'Add menu') }}
-					</NcButton>
-				</template>
-			</NcEmptyContent>
-
-			<!-- Content -->
-			<div v-else>
-				<template v-if="viewMode === 'cards'">
-					<div class="cardGrid">
-						<div v-for="menu in paginatedMenus" :key="menu.id" class="card">
-							<div class="cardHeader">
-								<h2 v-tooltip.bottom="menu.description">
-									<MenuIcon :size="20" />
-									{{ menu.title }}
-								</h2>
-								<NcActions :primary="true" menu-name="Actions">
-									<template #icon>
-										<DotsHorizontal :size="20" />
-									</template>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu')">
-										<template #icon>
-											<Pencil :size="20" />
-										</template>
-										Edit
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('menuItemForm')">
-										<template #icon>
-											<Plus :size="20" />
-										</template>
-										Add Item
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setDialog('copyObject', { objectType: 'menu', dialogTitle: 'Menu' })">
-										<template #icon>
-											<ContentCopy :size="20" />
-										</template>
-										Copy
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setDialog('deleteObject', { objectType: 'menu', dialogTitle: 'Menu' })">
-										<template #icon>
-											<TrashCanOutline :size="20" />
-										</template>
-										Delete
-									</NcActionButton>
-								</NcActions>
-							</div>
-							<!-- Menu Statistics Table -->
-							<table class="statisticsTable menuStats">
-								<thead>
-									<tr>
-										<th>{{ t('opencatalogi', 'Property') }}</th>
-										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-if="menu.slug">
-										<td>{{ t('opencatalogi', 'Slug') }}</td>
-										<td>{{ menu.slug }}</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-									<tr v-if="menu.description">
-										<td>{{ t('opencatalogi', 'Description') }}</td>
-										<td class="truncatedText">
-											{{ menu.description }}
-										</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-									<tr>
-										<td>{{ t('opencatalogi', 'Position') }}</td>
-										<td>
-											{{ menu.position }}
-										</td>
-										<td>{{ 'Configured' }}</td>
-									</tr>
-									<tr>
-										<td>{{ t('opencatalogi', 'Menu Items') }}</td>
-										<td>{{ menu.items?.length || 0 }}</td>
-										<td>{{ menu.items?.length > 0 ? 'Configured' : 'Empty' }}</td>
-									</tr>
-									<tr v-if="menu.updatedAt">
-										<td>{{ t('opencatalogi', 'Last Updated') }}</td>
-										<td>{{ new Date(menu.updatedAt).toLocaleDateString() }}</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</template>
-				<template v-else>
-					<div class="viewTableContainer">
-						<table class="viewTable">
-							<thead>
-								<tr>
-									<th class="tableColumnCheckbox">
-										<NcCheckboxRadioSwitch
-											:checked="allSelected"
-											:indeterminate="someSelected"
-											@update:checked="toggleSelectAll" />
-									</th>
-									<th>{{ t('opencatalogi', 'Title') }}</th>
-									<th>{{ t('opencatalogi', 'Position') }}</th>
-									<th>{{ t('opencatalogi', 'Menu Items') }}</th>
-									<th>{{ t('opencatalogi', 'Last Updated') }}</th>
-									<th class="tableColumnActions">
-										{{ t('opencatalogi', 'Actions') }}
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="menu in paginatedMenus"
-									:key="menu.id"
-									class="viewTableRow"
-									:class="{ viewTableRowSelected: selectedMenus.includes(menu.id) }">
-									<td class="tableColumnCheckbox">
-										<NcCheckboxRadioSwitch
-											:checked="selectedMenus.includes(menu.id)"
-											@update:checked="(checked) => toggleMenuSelection(menu.id, checked)" />
-									</td>
-									<td class="tableColumnTitle">
-										<div class="titleContent">
-											<strong>{{ menu.title }}</strong>
-											<span v-if="menu.description" class="textDescription textEllipsis">{{ menu.description }}</span>
-										</div>
-									</td>
-									<td>
-										{{ menu.position }}
-									</td>
-									<td>{{ menu.items?.length || 0 }}</td>
-									<td class="tableColumnConstrained">
-										<span v-if="menu.updatedAt">{{ new Date(menu.updatedAt).toLocaleDateString() }}</span>
-										<span v-else>-</span>
-									</td>
-									<td class="tableColumnActions">
-										<NcActions :primary="false">
-											<template #icon>
-												<DotsHorizontal :size="20" />
-											</template>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu')">
-												<template #icon>
-													<Pencil :size="20" />
-												</template>
-												Edit
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setModal('menuItemForm')">
-												<template #icon>
-													<Plus :size="20" />
-												</template>
-												Add Item
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setDialog('copyObject', { objectType: 'menu', dialogTitle: 'Menu' })">
-												<template #icon>
-													<ContentCopy :size="20" />
-												</template>
-												Copy
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('menu', menu); navigationStore.setDialog('deleteObject', { objectType: 'menu', dialogTitle: 'Menu' })">
-												<template #icon>
-													<TrashCanOutline :size="20" />
-												</template>
-												Delete
-											</NcActionButton>
-										</NcActions>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</template>
-			</div>
-
-			<!-- Pagination -->
-			<PaginationComponent
-				:current-page="currentPagination.page || 1"
-				:total-pages="currentPagination.pages || Math.ceil(filteredMenus.length / (currentPagination.limit || 20))"
-				:total-items="currentPagination.total || filteredMenus.length"
-				:current-page-size="currentPagination.limit || 20"
-				:min-items-to-show="0"
-				@page-changed="onPageChanged"
-				@page-size-changed="onPageSizeChanged" />
-		</div>
-	</NcAppContent>
+	<CnIndexPage
+		ref="indexPage"
+		:title="t('opencatalogi', 'Menus')"
+		:description="t('opencatalogi', 'Manage your navigation menus and menu items')"
+		:show-title="true"
+		:objects="currentObjects"
+		:columns="tableColumns"
+		:pagination="currentPagination"
+		:loading="objectStore.isLoading('menu')"
+		:selectable="true"
+		:selected-ids="selectedIds"
+		:show-view-toggle="true"
+		:show-edit-action="false"
+		:show-copy-action="false"
+		:show-delete-action="false"
+		:show-mass-import="false"
+		:show-mass-export="false"
+		:show-mass-copy="false"
+		:show-mass-delete="false"
+		:view-mode="viewMode"
+		:add-label="t('opencatalogi', 'Add Menu')"
+		row-key="id"
+		:empty-text="t('opencatalogi', 'No menus found')"
+		:refreshing="isRefreshing"
+		@add="onAdd"
+		@refresh="handleRefresh"
+		@page-changed="onPageChange"
+		@page-size-changed="onPageSizeChange"
+		@view-mode-change="viewMode = $event"
+		@select="onSelect"
+		@row-click="onRowClick">
+		<template #column-items="{ row }">{{ row.items?.length || 0 }}</template>
+		<template #column-updatedAt="{ row }">{{ row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : '-' }}</template>
+		<template #row-actions="{ row }">
+			<NcActions>
+				<template #icon><DotsHorizontal :size="20" /></template>
+				<NcActionButton close-after-click @click="editMenu(row)"><template #icon><Pencil :size="20" /></template>{{ t('opencatalogi', 'Edit') }}</NcActionButton>
+				<NcActionButton close-after-click @click="addMenuItem(row)"><template #icon><Plus :size="20" /></template>{{ t('opencatalogi', 'Add Item') }}</NcActionButton>
+				<NcActionButton close-after-click @click="copyMenu(row)"><template #icon><ContentCopy :size="20" /></template>{{ t('opencatalogi', 'Copy') }}</NcActionButton>
+				<NcActionButton close-after-click @click="deleteMenu(row)"><template #icon><TrashCanOutline :size="20" /></template>{{ t('opencatalogi', 'Delete') }}</NcActionButton>
+			</NcActions>
+		</template>
+	</CnIndexPage>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcCheckboxRadioSwitch, NcButton } from '@nextcloud/vue'
-import Menu from 'vue-material-design-icons/Menu.vue'
+import { NcActions, NcActionButton } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-
-import PaginationComponent from '../../components/PaginationComponent.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 export default {
 	name: 'MenuIndex',
-	components: {
-		NcAppContent,
-		NcEmptyContent,
-		NcLoadingIcon,
-		NcActions,
-		NcActionButton,
-		NcCheckboxRadioSwitch,
-		NcButton,
-		// Menu is reserved in HTML, so we use MenuIcon instead
-		MenuIcon: Menu,
-		DotsHorizontal,
-		Pencil,
-		TrashCanOutline,
-		Refresh,
-		Plus,
-		ContentCopy,
-		HelpCircleOutline,
-		PaginationComponent,
-	},
-	data() {
-		return {
-			selectedMenus: [],
-			viewMode: 'cards',
-		}
-	},
+	components: { CnIndexPage, NcActions, NcActionButton, DotsHorizontal, Pencil, Plus, ContentCopy, TrashCanOutline },
+	data() { return { selectedIds: [], viewMode: 'cards', isRefreshing: false } },
 	computed: {
-		filteredMenus() {
-			return objectStore.getCollection('menu')?.results || []
-		},
-		currentPagination() {
-			const pagination = objectStore.getPagination('menu')
-			console.info('Current pagination data:', pagination)
-			return pagination
-		},
-		paginatedMenus() {
-			return this.filteredMenus
-		},
-		allSelected() {
-			return this.filteredMenus.length > 0 && this.filteredMenus.every(menu => this.selectedMenus.includes(menu.id))
-		},
-		someSelected() {
-			return this.selectedMenus.length > 0 && !this.allSelected
-		},
-		emptyContentName() {
-			if (objectStore.isLoading('menu')) {
-				return t('opencatalogi', 'Loading menus...')
-			} else if (!objectStore.getCollection('menu')?.results?.length) {
-				return t('opencatalogi', 'No menus found')
-			}
-			return ''
-		},
-		emptyContentDescription() {
-			if (objectStore.isLoading('menu')) {
-				return t('opencatalogi', 'Please wait while we fetch your menus.')
-			} else if (!objectStore.getCollection('menu')?.results?.length) {
-				return t('opencatalogi', 'No menus are available.')
-			}
-			return ''
-		},
+		tableColumns() { return [{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true }, { key: 'position', label: t('opencatalogi', 'Position'), sortable: true }, { key: 'items', label: t('opencatalogi', 'Menu Items') }, { key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true }] },
+		currentObjects() { const c = objectStore.getCollection('menu'); return Array.isArray(c) ? c : c?.results || [] },
+		currentPagination() { return objectStore.getPagination('menu') || { total: 0, page: 1, pages: 1, limit: 20 } },
 	},
-	mounted() {
-		console.info('MenuIndex mounted, fetching menus...')
-		objectStore.fetchCollection('menu')
-	},
+	mounted() { objectStore.fetchCollection('menu') },
 	methods: {
-		setViewMode(mode) {
-			console.info('Setting view mode to:', mode)
-			this.viewMode = mode
-		},
-		toggleSelectAll(checked) {
-			if (checked) {
-				this.selectedMenus = this.filteredMenus.map(menu => menu.id)
-			} else {
-				this.selectedMenus = []
-			}
-		},
-		toggleMenuSelection(menuId, checked) {
-			if (checked) {
-				this.selectedMenus.push(menuId)
-			} else {
-				this.selectedMenus = this.selectedMenus.filter(id => id !== menuId)
-			}
-		},
-		onPageChanged(page) {
-			console.info('Page changed to:', page)
-			objectStore.fetchCollection('menu', { _page: page, _limit: this.currentPagination.limit || 20 })
-		},
-		onPageSizeChanged(pageSize) {
-			console.info('Page size changed to:', pageSize)
-			objectStore.fetchCollection('menu', { _page: 1, _limit: pageSize })
-		},
-		openLink(url, type = '') {
-			window.open(url, type)
-		},
+		onAdd() { objectStore.clearActiveObject('menu'); navigationStore.setModal('viewMenu') },
+		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('menu') } finally { this.isRefreshing = false } },
+		onPageChange(page) { objectStore.fetchCollection('menu', { _page: page }) },
+		onPageSizeChange(size) { objectStore.fetchCollection('menu', { _page: 1, _limit: size }) },
+		onSelect(ids) { this.selectedIds = ids },
+		onRowClick(row) { objectStore.setActiveObject('menu', row); navigationStore.setModal('viewMenu') },
+		editMenu(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setModal('viewMenu') },
+		addMenuItem(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setModal('menuItemForm') },
+		copyMenu(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setDialog('copyObject', { objectType: 'menu', dialogTitle: 'Menu' }) },
+		deleteMenu(menu) { objectStore.setActiveObject('menu', menu); navigationStore.setDialog('deleteObject', { objectType: 'menu', dialogTitle: 'Menu' }) },
 	},
 }
 </script>
-
-<style scoped>
-.truncatedText {
-	max-width: 200px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	display: inline-block;
-}
-</style>

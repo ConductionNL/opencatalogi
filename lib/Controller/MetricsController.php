@@ -24,6 +24,7 @@ use OCP\AppFramework\Http\TextPlainResponse;
 use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\App\IAppManager;
+use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -33,7 +34,6 @@ use Psr\Log\LoggerInterface;
  */
 class MetricsController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -48,11 +48,11 @@ class MetricsController extends Controller
         IRequest $request,
         private IDBConnection $db,
         private IAppManager $appManager,
+        private IConfig $config,
         private LoggerInterface $logger,
     ) {
         parent::__construct($appName, $request);
     }//end __construct()
-
 
     /**
      * Return Prometheus metrics in text exposition format.
@@ -70,7 +70,6 @@ class MetricsController extends Controller
         return $response;
     }//end index()
 
-
     /**
      * Collect all metrics and format as Prometheus text.
      *
@@ -80,30 +79,32 @@ class MetricsController extends Controller
     {
         $lines = [];
 
-        // App info gauge.
+        // App info gauge with nextcloud_version label.
         $version    = $this->getAppVersion();
         $phpVersion = PHP_VERSION;
+        $ncVersion  = $this->config->getSystemValueString('version', '0.0.0');
 
         $lines[] = '# HELP opencatalogi_info Application information';
         $lines[] = '# TYPE opencatalogi_info gauge';
-        $lines[] = 'opencatalogi_info{version="' . $version . '",php_version="' . $phpVersion . '"} 1';
+        $lines[] = 'opencatalogi_info{version="'.$version.'",php_version="'.$phpVersion.'",nextcloud_version="'.$ncVersion.'"} 1';
         $lines[] = '';
 
-        // App up gauge.
-        $lines[] = '# HELP opencatalogi_up Whether the application is healthy';
-        $lines[] = '# TYPE opencatalogi_up gauge';
-        $lines[] = 'opencatalogi_up 1';
-        $lines[] = '';
+        // App up gauge — reflects actual database health.
+        $dbHealthy = $this->isDatabaseHealthy();
+        $lines[]   = '# HELP opencatalogi_up Whether the application is healthy';
+        $lines[]   = '# TYPE opencatalogi_up gauge';
+        $lines[]   = 'opencatalogi_up '.($dbHealthy === true ? '1' : '0');
+        $lines[]   = '';
 
         // Publications total by status and catalog.
-        $lines[] = '# HELP opencatalogi_publications_total Total publications by status and catalog';
-        $lines[] = '# TYPE opencatalogi_publications_total gauge';
+        $lines[]   = '# HELP opencatalogi_publications_total Total publications by status and catalog';
+        $lines[]   = '# TYPE opencatalogi_publications_total gauge';
         $pubCounts = $this->getPublicationCounts();
         foreach ($pubCounts as $row) {
             $status  = $this->sanitizeLabel($row['status'] ?? 'unknown');
             $catalog = $this->sanitizeLabel($row['catalog'] ?? 'unknown');
             $count   = (int) $row['cnt'];
-            $lines[] = 'opencatalogi_publications_total{status="' . $status . '",catalog="' . $catalog . '"} ' . $count;
+            $lines[] = 'opencatalogi_publications_total{status="'.$status.'",catalog="'.$catalog.'"} '.$count;
         }
 
         $lines[] = '';
@@ -112,17 +113,17 @@ class MetricsController extends Controller
         $catalogsTotal = $this->countObjectsBySchemaPattern('%atalog%');
         $lines[]       = '# HELP opencatalogi_catalogs_total Total catalogs';
         $lines[]       = '# TYPE opencatalogi_catalogs_total gauge';
-        $lines[]       = 'opencatalogi_catalogs_total ' . $catalogsTotal;
+        $lines[]       = 'opencatalogi_catalogs_total '.$catalogsTotal;
         $lines[]       = '';
 
         // Listings total.
-        $lines[] = '# HELP opencatalogi_listings_total Total listings by status';
-        $lines[] = '# TYPE opencatalogi_listings_total gauge';
+        $lines[]       = '# HELP opencatalogi_listings_total Total listings by status';
+        $lines[]       = '# TYPE opencatalogi_listings_total gauge';
         $listingCounts = $this->getListingCounts();
         foreach ($listingCounts as $row) {
             $status  = $this->sanitizeLabel($row['status'] ?? 'unknown');
             $count   = (int) $row['cnt'];
-            $lines[] = 'opencatalogi_listings_total{status="' . $status . '"} ' . $count;
+            $lines[] = 'opencatalogi_listings_total{status="'.$status.'"} '.$count;
         }
 
         if (empty($listingCounts) === true) {
@@ -135,12 +136,18 @@ class MetricsController extends Controller
         $searchCount = $this->countSearchRequests();
         $lines[]     = '# HELP opencatalogi_search_requests_total Total search requests';
         $lines[]     = '# TYPE opencatalogi_search_requests_total counter';
-        $lines[]     = 'opencatalogi_search_requests_total ' . $searchCount;
+        $lines[]     = 'opencatalogi_search_requests_total '.$searchCount;
         $lines[]     = '';
 
-        return implode("\n", $lines) . "\n";
-    }//end collectMetrics()
+        // Federation — directory entries total.
+        $directoryCount = $this->countDirectoryEntries();
+        $lines[]        = '# HELP opencatalogi_directory_entries_total Total federated directory entries';
+        $lines[]        = '# TYPE opencatalogi_directory_entries_total gauge';
+        $lines[]        = 'opencatalogi_directory_entries_total '.$directoryCount;
+        $lines[]        = '';
 
+        return implode("\n", $lines)."\n";
+    }//end collectMetrics()
 
     /**
      * Get publication counts grouped by status and catalog.
@@ -169,9 +176,8 @@ class MetricsController extends Controller
         } catch (\Exception $e) {
             $this->logger->warning('[MetricsController] Failed to get publication counts', ['error' => $e->getMessage()]);
             return [];
-        }
+        }//end try
     }//end getPublicationCounts()
-
 
     /**
      * Count objects matching a schema title pattern.
@@ -199,7 +205,6 @@ class MetricsController extends Controller
             return 0;
         }
     }//end countObjectsBySchemaPattern()
-
 
     /**
      * Get listing counts grouped by status.
@@ -230,7 +235,6 @@ class MetricsController extends Controller
         }
     }//end getListingCounts()
 
-
     /**
      * Count search requests from the metrics table.
      *
@@ -255,7 +259,6 @@ class MetricsController extends Controller
         }
     }//end countSearchRequests()
 
-
     /**
      * Get the app version.
      *
@@ -270,6 +273,50 @@ class MetricsController extends Controller
         }
     }//end getAppVersion()
 
+    /**
+     * Check whether the database is reachable.
+     *
+     * @return bool True when a simple SELECT succeeds
+     */
+    private function isDatabaseHealthy(): bool
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('1'));
+            $result = $qb->executeQuery();
+            $result->closeCursor();
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->warning('[MetricsController] Database health check failed', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }//end isDatabaseHealthy()
+
+    /**
+     * Count directory entries for federation metrics.
+     *
+     * @return int The number of directory entries
+     */
+    private function countDirectoryEntries(): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->func()->count('o.id', 'cnt'))
+                ->from('openregister_objects', 'o')
+                ->innerJoin('o', 'openregister_schemas', 's', $qb->expr()->eq('o.schema', 's.id'))
+                ->where($qb->expr()->like('s.title', $qb->createNamedParameter('%irectory%')));
+
+            $result = $qb->executeQuery();
+            $row    = $result->fetch();
+            $result->closeCursor();
+
+            return (int) ($row['cnt'] ?? 0);
+        } catch (\Exception $e) {
+            $this->logger->warning('[MetricsController] Failed to count directory entries', ['error' => $e->getMessage()]);
+            return 0;
+        }
+    }//end countDirectoryEntries()
 
     /**
      * Sanitize a label value for Prometheus format.
@@ -286,6 +333,4 @@ class MetricsController extends Controller
             $value
         );
     }//end sanitizeLabel()
-
-
 }//end class

@@ -1,6 +1,6 @@
 <?php
 /**
- * OpenCatalogi Object Updated Event Listener
+ * OpenCatalogi Object Updated Event Listener.
  *
  * This file contains the listener class for handling object update events from OpenRegister.
  *
@@ -30,11 +30,11 @@ use Psr\Log\LoggerInterface;
  *
  * Listens to ObjectUpdatedEvent and applies auto-publishing logic
  * based on OpenCatalogi configuration settings.
+ *
+ * @template-implements IEventListener<Event>
  */
 class ObjectUpdatedEventListener implements IEventListener
 {
-
-
     /**
      * ObjectUpdatedEventListener constructor.
      */
@@ -42,7 +42,6 @@ class ObjectUpdatedEventListener implements IEventListener
     {
 
     }//end __construct()
-
 
     /**
      * Handle the event when an object is updated.
@@ -53,14 +52,16 @@ class ObjectUpdatedEventListener implements IEventListener
      * @param Event $event The event object containing the updated ObjectEntity.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function handle(Event $event): void
     {
         try {
-            // Get logger first for all logging
+            // Get logger first for all logging.
             $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
 
-            // TEST LOGGING TO SEE IF OPENCATALOGI LISTENER WORKS
+            // Test logging to verify listener works.
             $logger->debug("OPENCATALOGI_EVENT_LISTENER_CALLED_AT_".date('Y-m-d_H:i:s'));
             $logger->debug("OPENCATALOGI_EVENT_CLASS: ".get_class($event));
 
@@ -72,15 +73,21 @@ class ObjectUpdatedEventListener implements IEventListener
 
             $logger->debug("OPENCATALOGI_CONFIRMED_OBJECTUPDATEDEVENT_PROCESSING");
 
-            // Get services from the server container
-            $settingsService = \OC::$server->get(\OCA\OpenCatalogi\Service\SettingsService::class);
-            $eventService    = \OC::$server->get(\OCA\OpenCatalogi\Service\EventService::class);
+            // Get services from the server container.
+            $settingsService = \OC::$server->get(
+                \OCA\OpenCatalogi\Service\SettingsService::class
+            );
+            $eventService    = \OC::$server->get(
+                \OCA\OpenCatalogi\Service\EventService::class
+            );
 
-            // Check if any auto-publishing features are enabled before processing.
+            // Check if any auto-publishing features are enabled.
             $publishingOptions = $settingsService->getPublishingOptions();
 
-            // Skip processing if no auto-publishing features are enabled.
-            if ($publishingOptions['auto_publish_objects'] === false && $publishingOptions['auto_publish_attachments'] === false) {
+            // Skip if no auto-publishing features are enabled.
+            if ($publishingOptions['auto_publish_objects'] === false
+                && $publishingOptions['auto_publish_attachments'] === false
+            ) {
                 return;
             }
 
@@ -92,7 +99,12 @@ class ObjectUpdatedEventListener implements IEventListener
             $newObjectData = $this->convertObjectEntityToArray($newObjectEntity);
 
             // Check if this update should trigger auto-publishing logic.
-            if ($this->shouldProcessUpdate($newObjectData, $oldObjectEntity, $publishingOptions) === false) {
+            if ($this->shouldProcessUpdate(
+                newObjectData: $newObjectData,
+                oldObjectEntity: $oldObjectEntity,
+                publishingOptions: $publishingOptions
+            ) === false
+            ) {
                 return;
             }
 
@@ -102,8 +114,8 @@ class ObjectUpdatedEventListener implements IEventListener
             // Log successful processing for monitoring.
             if ($result['processed'] > 0) {
                 $logger->info(
-                    'OpenCatalogi: Processed object update event',
-                    [
+                    message: 'OpenCatalogi: Processed object update event',
+                    context: [
                         'objectId'             => ($newObjectData['@self']['id'] ?? 'unknown'),
                         'published'            => $result['published'],
                         'attachmentsPublished' => $result['attachmentsPublished'],
@@ -115,8 +127,8 @@ class ObjectUpdatedEventListener implements IEventListener
             if (empty($result['errors']) === false) {
                 foreach ($result['errors'] as $error) {
                     $logger->error(
-                        'OpenCatalogi: Error processing object update event',
-                        [
+                        message: 'OpenCatalogi: Error processing object update event',
+                        context: [
                             'error'    => $error,
                             'objectId' => ($newObjectData['@self']['id'] ?? 'unknown'),
                         ]
@@ -125,32 +137,33 @@ class ObjectUpdatedEventListener implements IEventListener
             }
         } catch (\Exception $e) {
             // Log unexpected errors and continue gracefully.
-            // Get logger if not already available
-            if (!isset($logger)) {
+            if (isset($logger) === false) {
                 $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
             }
 
-            $logger->error('OpenCatalogi: Exception in object update event listener: '.$e->getMessage(), ['exception' => $e]);
+            $logger->error(
+                message: 'OpenCatalogi: Exception in object update event listener: '.$e->getMessage(),
+                context: ['exception' => $e]
+            );
         }//end try
 
     }//end handle()
 
-
     /**
      * Determine if an object update should trigger auto-publishing logic.
      *
-     * This method checks if the update is relevant for auto-publishing based on
-     * what changed and current configuration.
-     *
-     * @param array                             $newObjectData     The updated object data.
-     * @param \OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity   The original object entity.
-     * @param array                             $publishingOptions The current publishing configuration.
+     * @param array                                  $newObjectData     The updated object data.
+     * @param \OCA\OpenRegister\Db\ObjectEntity|null $oldObjectEntity   The original object entity.
+     * @param array                                  $publishingOptions The publishing configuration.
      *
      * @return boolean True if the update should be processed, false otherwise.
      */
-    private function shouldProcessUpdate(array $newObjectData, ?\OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity, array $publishingOptions): bool
-    {
-        // If auto-publish attachments is enabled, always process updates for published objects.
+    private function shouldProcessUpdate(
+        array $newObjectData,
+        ?\OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity,
+        array $publishingOptions
+    ): bool {
+        // If auto-publish attachments is enabled, always process for published objects.
         if ($publishingOptions['auto_publish_attachments'] === true) {
             $isNewObjectPublished = $this->isObjectPublished($newObjectData);
             if ($isNewObjectPublished === true) {
@@ -164,9 +177,12 @@ class ObjectUpdatedEventListener implements IEventListener
         }
 
         // Check if publication status changed from unpublished to published.
-        // If old object is null, assume it was not published.
-        $wasPublished = $oldObjectEntity !== null ? $this->isObjectEntityPublished($oldObjectEntity) : false;
-        $isPublished  = $this->isObjectPublished($newObjectData);
+        $wasPublished = false;
+        if ($oldObjectEntity !== null) {
+            $wasPublished = $this->isObjectEntityPublished($oldObjectEntity);
+        }
+
+        $isPublished = $this->isObjectPublished($newObjectData);
 
         // Process if object became published.
         if ($wasPublished === false && $isPublished === true) {
@@ -176,7 +192,6 @@ class ObjectUpdatedEventListener implements IEventListener
         return false;
 
     }//end shouldProcessUpdate()
-
 
     /**
      * Check if an ObjectEntity is currently published.
@@ -203,7 +218,6 @@ class ObjectUpdatedEventListener implements IEventListener
         return false;
 
     }//end isObjectEntityPublished()
-
 
     /**
      * Check if an object data array represents a published object.
@@ -233,12 +247,8 @@ class ObjectUpdatedEventListener implements IEventListener
 
     }//end isObjectPublished()
 
-
     /**
      * Convert ObjectEntity to array format for EventService.
-     *
-     * This method transforms the ObjectEntity from OpenRegister into the array
-     * format expected by our EventService.
      *
      * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to convert.
      *
@@ -262,14 +272,10 @@ class ObjectUpdatedEventListener implements IEventListener
         $objectData['@self']['published']   = $objectEntity->getPublished()?->format('c');
         $objectData['@self']['depublished'] = $objectEntity->getDepublished()?->format('c');
 
-        // For now, don't fetch files to avoid infinite recursion.
-        // The FileService->getFiles() call can trigger object updates which cause infinite loops.
-        // TODO: Implement a safer way to get file information for attachment publishing.
+        // Don't fetch files to avoid infinite recursion.
         $objectData['@self']['files'] = [];
 
         return $objectData;
 
     }//end convertObjectEntityToArray()
-
-
 }//end class

@@ -11,6 +11,7 @@
  */
 
 <script setup>
+import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
@@ -131,7 +132,7 @@ const handleDelete = async () => {
 			if (itemIndex === -1) {
 				itemIndex = menuItems.findIndex(item =>
 					item.name === activeMenuItem.name
-					&& item.order === activeMenuItem.order
+					&& item.order === activeMenuItem.order,
 				)
 			}
 		}
