@@ -27,6 +27,7 @@ use DOMText;
 /**
  * A response for XML data.
  *
+ * @psalm-suppress MissingTemplateParam
  * @psalm-suppress PropertyNotSetInConstructor
  */
 class XMLResponse extends Response

@@ -393,7 +393,9 @@ class DirectoryService
                         }
 
                         // Skip if listing has a local URL (localhost, .local, private IPs).
-                        if (isset($listingData['directory']) === true && $this->isLocalUrl($listingData['directory']) === true) {
+                        if (isset($listingData['directory']) === true
+                            && $this->isLocalUrl($listingData['directory']) === true
+                        ) {
                             return false;
                         }
 
@@ -468,7 +470,10 @@ class DirectoryService
 
                 // Broadcast to the directory if it doesn't have our listings and our URL is not local.
                 // Skip broadcasting if this sync was triggered by a system broadcast to prevent infinite loops.
-                if ($hasOurListings === false && $this->isLocalUrl($ourDirectoryUrl) === false && $this->isSystemBroadcast() === false) {
+                if ($hasOurListings === false
+                    && $this->isLocalUrl($ourDirectoryUrl) === false
+                    && $this->isSystemBroadcast() === false
+                ) {
                     try {
                         $this->broadcastService->broadcast($directoryUrl);
                     } catch (\Exception $e) {
@@ -641,7 +646,9 @@ class DirectoryService
 
             // Extract API endpoints from @self.relations BEFORE we unset @self.
             // These endpoints tell us where the actual catalog's API is hosted.
-            if (isset($listingData['@self']['relations']) === true && is_array($listingData['@self']['relations']) === true) {
+            if (isset($listingData['@self']['relations']) === true
+                && is_array($listingData['@self']['relations']) === true
+            ) {
                 $relations = $listingData['@self']['relations'];
 
                 // Extract publications endpoint.
@@ -719,7 +726,9 @@ class DirectoryService
 
             // Set directory properties based on whether it's new or updated.
             // Set defaults for new listings.
-            $listingData['default']          = ($sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
+            $listingData['default']          = (
+                $sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
+            );
             $listingData['statusCode']       = 200;
             $listingData['status']           = 'development';
             $listingData['integrationLevel'] = 'search';
@@ -1060,8 +1069,8 @@ class DirectoryService
              * @var string $searchUrl
              */
 
-            $searchUrl           = $listingData['search'];
-            $publicationEndpoint = str_replace('/search', '/publications', $searchUrl);
+            $searchUrl           = (string) $listingData['search'];
+            $publicationEndpoint = (string) str_replace('/search', '/publications', $searchUrl);
 
             // Also handle cases where 'search' might be a query parameter or different pattern.
             if ($publicationEndpoint === $listingData['search']) {
@@ -1112,9 +1121,9 @@ class DirectoryService
              * @var string $catalogDir
              */
 
-            $catalogDir = $listingData['catalogDirectory'];
+            $catalogDir = (string) $listingData['catalogDirectory'];
             // Replace /api/directory with /api/publications.
-            $publicationEndpoint = str_replace('/api/directory', '/api/publications', $catalogDir);
+            $publicationEndpoint = (string) str_replace('/api/directory', '/api/publications', $catalogDir);
             if ($publicationEndpoint !== $catalogDir) {
                 return $publicationEndpoint;
             }
@@ -1400,7 +1409,12 @@ class DirectoryService
 
         // Check for private IP ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
         if (filter_var(value: $host, filter: FILTER_VALIDATE_IP) !== false) {
-            if (filter_var(value: $host, filter: FILTER_VALIDATE_IP, options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) === false) {
+            $isPrivateIp = filter_var(
+                value: $host,
+                filter: FILTER_VALIDATE_IP,
+                options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
+            );
+            if ($isPrivateIp === false) {
                 return true;
             }
         }
@@ -1885,10 +1899,9 @@ class DirectoryService
     private function convertCatalogToListing($catalogObject): array
     {
         // Extract catalog data.
+        $catalogData = $catalogObject;
         if ($catalogObject instanceof \OCP\AppFramework\Db\Entity) {
             $catalogData = $catalogObject->jsonSerialize();
-        } else {
-            $catalogData = $catalogObject;
         }
 
         $catalog = ($catalogData['object'] ?? $catalogData);
@@ -2170,7 +2183,11 @@ class DirectoryService
                     $mergedFacets[$field],
                     function ($a, $b) {
                         // Ensure both items are arrays with required fields.
-                        if (is_array($a) === false || is_array($b) === false || isset($a['_id']) === false || isset($b['_id']) === false) {
+                        if (is_array($a) === false
+                            || is_array($b) === false
+                            || isset($a['_id']) === false
+                            || isset($b['_id']) === false
+                        ) {
                             return 0;
                         }
 
@@ -2184,7 +2201,7 @@ class DirectoryService
                         return ($countB <=> $countA);
                     }
                 );
-            }
+            }//end if
         }//end foreach
 
         return $mergedFacets;
