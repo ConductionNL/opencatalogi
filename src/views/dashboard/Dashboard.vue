@@ -9,7 +9,7 @@
 			:unavailable-label="t('opencatalogi', 'Widget not available')"
 			@layout-change="onLayoutChange">
 			<!-- Header actions -->
-			<template #header-actions>
+			<template #actions>
 				<NcButton type="primary" @click="createPublication">
 					<template #icon>
 						<Plus :size="20" />
