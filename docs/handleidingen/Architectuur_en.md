@@ -22,16 +22,80 @@ When a new Open Catalogue installation is discovered, the discovering instance w
 
 That means that a new installation only needs to make itself known to one other installation in order to snowball to all other installations. Directory updates are made unique by an event key to prevent circular notifications and overloading the network.
 
-![Sequence Diagram network creation](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/createnetwork.svg "Sequence Diagram network creation")
+```mermaid
+sequenceDiagram
+    participant A as New Installation
+    participant B as Existing Installation
+    participant C as Other Installations
+
+    A->>B: Request directory
+    Note over A,B: New installation needs to know<br/>at least one existing installation
+    B-->>A: Provide directory
+    Note over B: Existing installation provides its directory
+
+    A->>B: Add itself to B's directory
+    Note over A,B: New installation is added to<br/>existing installation's directory
+
+    A->>C: Announce itself and request other unknown installations
+    Note over A,C: New installation communicates with<br/>all other installations in its directory
+    C-->>A: Provide other unknown installations
+    Note over C: Other installations provide their<br/>known installations to the new one
+
+    Note over A: Repeat the process at regular intervals
+```
 
 ## Under the Hood
-Open Catalogue actually consists of a couple of technical components working together. For a start, it consists of several objects (Catalogi, Publications, Documents, and Index) which are stored in an object store (or ORC in VNG terms). Publications give a basic workflow management setup. When a publication is marked as published, it is then transferred to a search index (Elasticsearch). The Open Catalogue search endpoint then uses this search index to answer questions. This means that the user-oriented (public) frontend uses the search index (since it questions the search endpoint) and that the administration endpoint uses the object store.
+Open Catalogue actually consists of a couple of technical components working together. For a start, it consists of several objects (Catalogi, Publications, and Documents) which are stored in Open Register (PostgreSQL). Publications give a basic workflow management setup. The Open Catalogue search endpoint queries the database directly via optimized queries to answer questions.
 
-Separate synchronization services can create publications from external sources (for example GitHub, or case handling systems). These publications are created in the object store and need to be marked as published before they are synchronized to the search index (and are made available under the search endpoint), though this process can be automated in configuration. This hard separation of data based on the role and context of requesters in a store and a search part prevents accidental disclosure of information. This is especially important because Open Catalogue is also used by [OpenWoo.app](https://openwoo.app/).
+Separate synchronization services can create publications from external sources (for example GitHub, or case handling systems). These publications are created in the database and need to be marked as published before they are made available under the search endpoint, though this process can be automated in configuration. Access control based on the role and context of requesters prevents accidental disclosure of information. This is especially important because Open Catalogue is also used by [OpenWoo.app](https://openwoo.app/).
 
-Normally speaking, documents (and files in general) aren't transferred to the object store, but obtained from the source when a single object is requested. You can however choose to transfer said object (per configuration) in order to prevent over asking the source application. This is especially convenient when dealing with older or less performant sources. Documents however are NEVER transferred to the search index in order to prevent indirect exposure. Documents can also be added to publications that have been manually created through the administration interface. Keep in mind though that these documents might still be required to be archived under archival law.
+Normally speaking, documents (and files in general) aren't transferred to the object store, but obtained from the source when a single object is requested. You can however choose to transfer said object (per configuration) in order to prevent over asking the source application. This is especially convenient when dealing with older or less performant sources. Documents can also be added to publications that have been manually created through the administration interface. Keep in mind though that these documents might still be required to be archived under archival law.
 
-![components](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/components.svg "components")
+```mermaid
+graph TD
+    subgraph internet["Internet"]
+        user["👤 Burger"]
+        employee["👤 Medewerker"]
+        admin["👤 Beheerder"]
+    end
+    subgraph federation["Federatief netwerk"]
+        externalCatalogue["Externe Catalogus"]
+    end
+    subgraph external["Externe Applicaties"]
+        zaaksysteem["Zaaksysteem"]
+        overigebronnen["Etc."]
+    end
+    subgraph kubernetes["Kubernetes"]
+        subgraph layer5["Layer 5 (interactie)"]
+            userUi["Publicatie platform\n(React NL Design)"]
+            adminUi["Beheer Interface\n(Vue NL Design)"]
+        end
+        subgraph layer4["Layer 4 (logica)"]
+            service["Synchronisaties"]
+        end
+        subgraph layer2["Layer 2 (API) — Nextcloud"]
+            searchAPI["Zoeken API\n(Open Index)"]
+            objectsAPI["Beheer API\n(Open Registers)"]
+        end
+    end
+    subgraph layer1["Layer 1 (data)"]
+        objectsDb[("Open Register\n(PostgreSQL)")]
+        drc[("DRC")]
+    end
+    user <-.->|Browser ANONYMOUS| userUi
+    employee <-.->|Browser ANONYMOUS| userUi
+    admin <-.->|Browser JWT token| adminUi
+    userUi -.-> searchAPI
+    adminUi -.-> objectsAPI
+    objectsAPI -.->|Store data| objectsDb
+    objectsAPI -.->|Store documents| drc
+    searchAPI -.->|Lookup| objectsDb
+    service -.->|Update| objectsAPI
+    externalCatalogue <-.->|Directory exchange| searchAPI
+    externalCatalogue -.->|Search| searchAPI
+    zaaksysteem <-.->|Synchronize| service
+    overigebronnen <-.->|Synchronize| service
+```
 
 ## Manual Publications and ZGW
 The admin UI does allow you to manually create publications, attach documents to them, and have a basic publication flow. If you want a more complex flow with several roles and actions, you might want to take a look into ZGW.  

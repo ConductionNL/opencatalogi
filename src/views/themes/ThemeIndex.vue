@@ -24,16 +24,44 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:show-add="false"
+		:schema="themeSchema"
+		:add-label="t('opencatalogi', 'Add Theme')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No themes found')"
 		:refreshing="isRefreshing"
+		@add="onAdd"
+		@create="onSaveTheme"
+		@edit="onSaveTheme"
 		@refresh="handleRefresh"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<!-- Form fields for create/edit dialog -->
+		<template #form-fields="{ formData, errors, updateField }">
+			<div class="formContainer">
+				<NcTextField
+					:label="t('opencatalogi', 'Title') + ' *'"
+					:value="formData.title || ''"
+					:error="!!errors.title"
+					:helper-text="errors.title"
+					@update:value="v => updateField('title', v)" />
+				<NcTextField
+					:label="t('opencatalogi', 'Summary')"
+					:value="formData.summary || ''"
+					@update:value="v => updateField('summary', v)" />
+				<NcTextArea
+					:label="t('opencatalogi', 'Description')"
+					:value="formData.description || ''"
+					@update:value="v => updateField('description', v)" />
+				<NcTextField
+					:label="t('opencatalogi', 'Image (url)')"
+					:value="formData.image || ''"
+					@update:value="v => updateField('image', v)" />
+			</div>
+		</template>
+
 		<!-- Row actions -->
 		<template #row-actions="{ row }">
 			<NcActions>
@@ -46,7 +74,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="editTheme(row)">
+				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -70,7 +98,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcTextField, NcTextArea } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
@@ -84,6 +112,8 @@ export default {
 		CnIndexPage,
 		NcActions,
 		NcActionButton,
+		NcTextField,
+		NcTextArea,
 		DotsHorizontal,
 		Eye,
 		Pencil,
@@ -98,6 +128,18 @@ export default {
 		}
 	},
 	computed: {
+		themeSchema() {
+			return {
+				title: t('opencatalogi', 'Theme'),
+				properties: {
+					title: { type: 'string', title: t('opencatalogi', 'Title'), required: true, minLength: 1 },
+					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
+					description: { type: 'string', title: t('opencatalogi', 'Description') },
+					image: { type: 'string', title: t('opencatalogi', 'Image') },
+				},
+				required: ['title'],
+			}
+		},
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
@@ -121,7 +163,21 @@ export default {
 	methods: {
 		onAdd() {
 			objectStore.clearActiveObject('theme')
-			navigationStore.setModal('theme')
+			this.$refs.indexPage.openFormDialog(null)
+		},
+		async onSaveTheme(formData) {
+			try {
+				const isEdit = !!formData.id
+				if (isEdit) {
+					await objectStore.updateObject('theme', formData.id, formData)
+				} else {
+					await objectStore.createObject('theme', formData)
+				}
+				this.$refs.indexPage.setFormResult({ success: true })
+				await objectStore.fetchCollection('theme')
+			} catch (error) {
+				this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save theme' })
+			}
 		},
 		async handleRefresh() {
 			this.isRefreshing = true
@@ -148,10 +204,6 @@ export default {
 			objectStore.setActiveObject('theme', theme)
 			navigationStore.setModal('viewTheme')
 		},
-		editTheme(theme) {
-			objectStore.setActiveObject('theme', theme)
-			navigationStore.setModal('theme')
-		},
 		copyTheme(theme) {
 			objectStore.setActiveObject('theme', theme)
 			navigationStore.setDialog('copyObject', { objectType: 'theme', dialogTitle: 'Theme' })
@@ -163,3 +215,9 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.formContainer > * {
+	margin-block-end: 10px;
+}
+</style>

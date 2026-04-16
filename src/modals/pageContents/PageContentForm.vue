@@ -7,7 +7,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.name}`"
+		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.title}`"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
@@ -49,16 +49,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:value.sync="contentsItem.order"
 								required />
 
-							<!-- text (legacy format) -->
-							<div v-if="contentsItem.type === 'text'" class="editor-container">
-								<label>Text Content</label>
-								<v-md-editor
-									:initial-value="contentsItem.textData"
-									:options="editorOptions"
-									initial-edit-type="wysiwyg"
-									preview-style="tab"
-									height="300px"
-									@load="(editor) => textEditor = editor" />
+							<!-- text (plain text) -->
+							<div v-if="contentsItem.type === 'text'" class="form-group">
+								<label for="text-content">Text Content</label>
+								<textarea
+									id="text-content"
+									v-model="contentsItem.textData"
+									class="text-content-textarea"
+									:disabled="objectStore.isLoading('page')"
+									rows="10"
+									placeholder="Enter your text content here..." />
 							</div>
 
 							<!-- RichText -->
@@ -71,6 +71,20 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									preview-style="tab"
 									height="300px"
 									@load="(editor) => richTextEditor = editor" />
+							</div>
+
+							<!-- Image -->
+							<div v-if="contentsItem.type === 'Image'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Image URL"
+									:value.sync="contentsItem.imageUrl"
+									placeholder="https://example.com/image.jpg" />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Srcset (optional, responsive images)"
+									:value.sync="contentsItem.imageSrcset"
+									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
 							</div>
 
 							<!-- Faq -->
@@ -179,9 +193,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 				@click="addPageContent">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
-					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
+					<ContentSave v-else-if="isEdit" :size="20" />
+					<Plus v-else :size="20" />
 				</template>
-				{{ isEdit ? 'Edit' : 'Add' }}
+				{{ isEdit ? 'Save' : 'Add' }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -196,6 +211,7 @@ import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
 
 import { Page } from '../../entities/index.js'
@@ -216,6 +232,7 @@ export default {
 		vMdEditor,
 		// Icons
 		Plus,
+		ContentSave,
 		Drag,
 	},
 	data() {
@@ -448,6 +465,19 @@ export default {
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 				}
+			} else if (this.contentsItem.type === 'Image') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						url: this.contentsItem.imageUrl,
+						srcset: this.contentsItem.imageSrcset || undefined,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
 			} else if (this.contentsItem.type === 'Faq') {
 				contentItem = {
 					type: this.contentsItem.type,
@@ -645,6 +675,24 @@ export default {
 
 .hide-after-login {
 	margin-block-start: var(--OC-margin-20);
+}
+
+.text-content-textarea {
+	width: 100%;
+	min-height: 200px;
+	padding: 12px;
+	font-family: var(--font-face);
+	font-size: var(--default-font-size);
+	color: var(--color-main-text);
+	background-color: var(--color-main-background);
+	border: 2px solid var(--color-border-dark);
+	border-radius: var(--border-radius);
+	resize: vertical;
+}
+
+.text-content-textarea:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
 }
 
 /* Toast UI Editor Styles */
