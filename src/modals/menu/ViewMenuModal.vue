@@ -193,7 +193,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Plus :size="20" />
 				</template>
-				{{ t('opencatalogi', 'Add Item') }}
+				{{ t('opencatalogi', 'Add item') }}
 			</NcButton>
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}

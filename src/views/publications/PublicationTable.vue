@@ -24,7 +24,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Publication')"
+		:add-label="t('opencatalogi', 'Add publication')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No publications found')"
 		:refreshing="isRefreshing"
@@ -36,9 +36,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		@select="onSelect"
 		@row-click="viewPublication">
 		<template #action-items>
-			<NcActionButton close-after-click :disabled="selectedPublicationIds.length === 0" @click="bulkDeletePublications"><template #icon><Delete :size="20" /></template>{{ t('opencatalogi', 'Delete Selected') }}</NcActionButton>
-			<NcActionButton close-after-click :disabled="selectedPublicationIds.length === 0" @click="bulkPublishPublications"><template #icon><Publish :size="20" /></template>{{ t('opencatalogi', 'Publish Selected') }}</NcActionButton>
-			<NcActionButton close-after-click :disabled="selectedPublicationIds.length === 0" @click="bulkDepublishPublications"><template #icon><PublishOff :size="20" /></template>{{ t('opencatalogi', 'Depublish Selected') }}</NcActionButton>
+			<NcActionButton close-after-click :disabled="selectedPublicationIds.length === 0" @click="bulkDeletePublications"><template #icon><Delete :size="20" /></template>{{ t('opencatalogi', 'Delete selected') }}</NcActionButton>
+			<NcActionButton close-after-click :disabled="selectedPublicationIds.length === 0" @click="bulkPublishPublications"><template #icon><Publish :size="20" /></template>{{ t('opencatalogi', 'Publish selected') }}</NcActionButton>
+			<NcActionButton close-after-click :disabled="selectedPublicationIds.length === 0" @click="bulkDepublishPublications"><template #icon><PublishOff :size="20" /></template>{{ t('opencatalogi', 'Depublish selected') }}</NcActionButton>
 		</template>
 		<template #column-name="{ row }"><span class="titleWithIcon"><PublishedIcon :object="row" :size="16" /><span>{{ row['@self']?.name || row.title || row.name || row.id }}</span></span></template>
 		<template #column-published="{ row }">{{ row['@self']?.published ? formatDate(row['@self'].published) : t('opencatalogi', 'No') }}</template>
@@ -51,7 +51,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<NcActionButton close-after-click @click="copyPublication(row)"><template #icon><ContentCopy :size="20" /></template>{{ t('opencatalogi', 'Copy') }}</NcActionButton>
 				<NcActionButton v-if="shouldShowPublishAction(row)" close-after-click @click="singlePublishPublication(row)"><template #icon><Publish :size="20" /></template>{{ t('opencatalogi', 'Publish') }}</NcActionButton>
 				<NcActionButton v-if="shouldShowDepublishAction(row)" close-after-click @click="singleDepublishPublication(row)"><template #icon><PublishOff :size="20" /></template>{{ t('opencatalogi', 'Depublish') }}</NcActionButton>
-				<NcActionButton close-after-click @click="addAttachment(row)"><template #icon><FilePlusOutline :size="20" /></template>{{ t('opencatalogi', 'Add Attachment') }}</NcActionButton>
+				<NcActionButton close-after-click @click="addAttachment(row)"><template #icon><FilePlusOutline :size="20" /></template>{{ t('opencatalogi', 'Add attachment') }}</NcActionButton>
 				<NcActionButton close-after-click @click="singleDeletePublication(row)"><template #icon><TrashCanOutline :size="20" /></template>{{ t('opencatalogi', 'Delete') }}</NcActionButton>
 			</NcActions>
 		</template>

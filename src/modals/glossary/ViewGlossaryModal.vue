@@ -24,7 +24,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		<div class="modal__content">
 			<div v-if="term" class="glossaryDetails">
 				<div class="detailSection">
-					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
+					<h3>{{ t('opencatalogi', 'Basic information') }}</h3>
 					<div class="detailGrid">
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Title') }}:</strong>
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<span>{{ term.description }}</span>
 						</div>
 						<div v-if="term.externalLink" class="detailItem">
-							<strong>{{ t('opencatalogi', 'External Link') }}:</strong>
+							<strong>{{ t('opencatalogi', 'External link') }}:</strong>
 							<span>
 								<a :href="term.externalLink" target="_blank" rel="noopener noreferrer">
 									{{ term.externalLink }}
@@ -65,7 +65,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</div>
 
 				<div v-if="term.relatedTerms?.length" class="detailSection">
-					<h3>{{ t('opencatalogi', 'Related Terms') }}</h3>
+					<h3>{{ t('opencatalogi', 'Related terms') }}</h3>
 					<div class="relatedTermsList">
 						<NcButton v-for="relatedTerm in term.relatedTerms"
 							:key="relatedTerm.id"

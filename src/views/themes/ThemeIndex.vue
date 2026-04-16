@@ -25,7 +25,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-delete="false"
 		:view-mode="viewMode"
 		:schema="themeSchema"
-		:add-label="t('opencatalogi', 'Add Theme')"
+		:add-label="t('opencatalogi', 'Add theme')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No themes found')"
 		:refreshing="isRefreshing"

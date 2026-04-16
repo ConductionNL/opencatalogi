@@ -24,7 +24,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Catalog')"
+		:add-label="t('opencatalogi', 'Add catalog')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No catalogs found')"
 		:refreshing="isRefreshing"
@@ -46,7 +46,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon><DotsHorizontal :size="20" /></template>
 				<NcActionButton close-after-click @click="viewCatalog(row)"><template #icon><Eye :size="20" /></template>{{ t('opencatalogi', 'View') }}</NcActionButton>
 				<NcActionButton close-after-click @click="editCatalog(row)"><template #icon><Pencil :size="20" /></template>{{ t('opencatalogi', 'Edit') }}</NcActionButton>
-				<NcActionButton close-after-click @click="openCatalog(row)"><template #icon><OpenInApp :size="20" /></template>{{ t('opencatalogi', 'View Catalog') }}</NcActionButton>
+				<NcActionButton close-after-click @click="openCatalog(row)"><template #icon><OpenInApp :size="20" /></template>{{ t('opencatalogi', 'View catalog') }}</NcActionButton>
 				<NcActionButton close-after-click @click="copyCatalog(row)"><template #icon><ContentCopy :size="20" /></template>{{ t('opencatalogi', 'Copy') }}</NcActionButton>
 				<NcActionButton close-after-click @click="deleteCatalog(row)"><template #icon><TrashCanOutline :size="20" /></template>{{ t('opencatalogi', 'Delete') }}</NcActionButton>
 			</NcActions>

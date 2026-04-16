@@ -24,7 +24,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Directory')"
+		:add-label="t('opencatalogi', 'Add directory')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No directory listings found')"
 		:refreshing="isRefreshing"
@@ -53,9 +53,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		<template #row-actions="{ row }">
 			<NcActions>
 				<template #icon><DotsHorizontal :size="20" /></template>
-				<NcActionButton close-after-click @click="refreshDirectory(row)"><template #icon><Refresh :size="20" /></template>{{ t('opencatalogi', 'Sync Directory') }}</NcActionButton>
+				<NcActionButton close-after-click @click="refreshDirectory(row)"><template #icon><Refresh :size="20" /></template>{{ t('opencatalogi', 'Sync directory') }}</NcActionButton>
 				<NcActionButton close-after-click @click="toggleIntegrationLevel(row)"><template #icon><component :is="row.integrationLevel === 'search' ? CloseCircle : CheckCircle" :size="20" /></template>{{ row.integrationLevel === 'search' ? t('opencatalogi', 'Disable') : t('opencatalogi', 'Enable') }}</NcActionButton>
-				<NcActionButton close-after-click @click="toggleDefault(row)"><template #icon><component :is="row.default ? Star : StarOutline" :size="20" /></template>{{ row.default ? t('opencatalogi', 'Remove as Default') : t('opencatalogi', 'Set as Default') }}</NcActionButton>
+				<NcActionButton close-after-click @click="toggleDefault(row)"><template #icon><component :is="row.default ? Star : StarOutline" :size="20" /></template>{{ row.default ? t('opencatalogi', 'Remove as default') : t('opencatalogi', 'Set as default') }}</NcActionButton>
 			</NcActions>
 		</template>
 	</CnIndexPage>
@@ -78,7 +78,7 @@ export default {
 	components: { CnIndexPage, CnStatusBadge, NcActions, NcActionButton, DotsHorizontal, Refresh, CheckCircle, AlertCircle, CloseCircle, Star, StarOutline },
 	data() { return { selectedIds: [], viewMode: 'cards', isRefreshing: false, statusColorMap: { [t('opencatalogi', 'Online')]: 'success', [t('opencatalogi', 'Unknown')]: 'warning', [t('opencatalogi', 'Error')]: 'error' } } },
 	computed: {
-		tableColumns() { return [{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true }, { key: 'organization', label: t('opencatalogi', 'Organization') }, { key: 'schemas', label: t('opencatalogi', 'Schemas') }, { key: 'publications', label: t('opencatalogi', 'Publications URL') }, { key: 'search', label: t('opencatalogi', 'Search URL') }, { key: 'directory', label: t('opencatalogi', 'Directory URL') }, { key: 'lastSync', label: t('opencatalogi', 'Last Sync'), sortable: true }, { key: 'statusCode', label: t('opencatalogi', 'Status'), sortable: true }] },
+		tableColumns() { return [{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true }, { key: 'organization', label: t('opencatalogi', 'Organization') }, { key: 'schemas', label: t('opencatalogi', 'Schemas') }, { key: 'publications', label: t('opencatalogi', 'Publications URL') }, { key: 'search', label: t('opencatalogi', 'Search URL') }, { key: 'directory', label: t('opencatalogi', 'Directory URL') }, { key: 'lastSync', label: t('opencatalogi', 'Last sync'), sortable: true }, { key: 'statusCode', label: t('opencatalogi', 'Status'), sortable: true }] },
 		currentObjects() { const c = objectStore.getCollection('listing'); return Array.isArray(c) ? c : c?.results || [] },
 		currentPagination() { return objectStore.getPagination('listing') || { total: 0, page: 1, pages: 1, limit: 20 } },
 	},

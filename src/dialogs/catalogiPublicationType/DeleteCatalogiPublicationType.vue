@@ -66,7 +66,7 @@ const handleCancel = () => {
 <template>
 	<div class="delete-catalogi-publication-type-dialog">
 		<p>
-			{{ t('opencatalogi', 'Do you want to delete') }} <b>{{ publicationType?.title }}</b> {{ t('opencatalogi', 'from') }} <b>{{ catalog?.title }}</b>?
+			{{ t('opencatalogi', 'Do you want to delete') }} <b>{{ publicationType?.title }}</b> {{ t('opencatalogi', 'From') }} <b>{{ catalog?.title }}</b>?
 		</p>
 		<div class="delete-catalogi-publication-type-dialog__actions">
 			<NcButton :disabled="loading" @click="handleCancel">

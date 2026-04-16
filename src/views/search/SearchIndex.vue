@@ -9,7 +9,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 			<!-- Header -->
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('opencatalogi', 'Search Publications') }}
+					{{ t('opencatalogi', 'Search publications') }}
 				</h1>
 				<p>{{ t('opencatalogi', 'Search and explore publications across all catalogs') }}</p>
 			</div>
@@ -82,14 +82,14 @@ import { useSearchStore } from '../../store/modules/search.ts'
 
 			<!-- Error State -->
 			<NcEmptyContent v-if="searchStore.getError"
-				:name="t('opencatalogi', 'Search Error')"
+				:name="t('opencatalogi', 'Search error')"
 				:description="searchStore.getError">
 				<template #icon>
 					<AlertCircleOutline :size="64" />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="performSearch">
-						{{ t('opencatalogi', 'Try Again') }}
+						{{ t('opencatalogi', 'Try again') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>
@@ -136,13 +136,13 @@ import { useSearchStore } from '../../store/modules/search.ts'
 										<template #icon>
 											<LinkVariant :size="20" />
 										</template>
-										{{ t('opencatalogi', 'View Uses') }}
+										{{ t('opencatalogi', 'View uses') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="viewPublicationUsed(publication)">
 										<template #icon>
 											<LinkVariantOff :size="20" />
 										</template>
-										{{ t('opencatalogi', 'View Used By') }}
+										{{ t('opencatalogi', 'View used by') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="downloadPublication(publication)">
 										<template #icon>
@@ -185,7 +185,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="publication.modified">
-										<td>{{ t('opencatalogi', 'Last Modified') }}</td>
+										<td>{{ t('opencatalogi', 'Last modified') }}</td>
 										<td>{{ formatDate(publication.modified) }}</td>
 										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
@@ -269,13 +269,13 @@ import { useSearchStore } from '../../store/modules/search.ts'
 												<template #icon>
 													<LinkVariant :size="20" />
 												</template>
-												{{ t('opencatalogi', 'View Uses') }}
+												{{ t('opencatalogi', 'View uses') }}
 											</NcActionButton>
 											<NcActionButton close-after-click @click="viewPublicationUsed(publication)">
 												<template #icon>
 													<LinkVariantOff :size="20" />
 												</template>
-												{{ t('opencatalogi', 'View Used By') }}
+												{{ t('opencatalogi', 'View used by') }}
 											</NcActionButton>
 											<NcActionButton close-after-click @click="downloadPublication(publication)">
 												<template #icon>

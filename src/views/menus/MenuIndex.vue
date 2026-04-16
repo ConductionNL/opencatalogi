@@ -24,7 +24,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Menu')"
+		:add-label="t('opencatalogi', 'Add menu')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No menus found')"
 		:refreshing="isRefreshing"
@@ -41,7 +41,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			<NcActions>
 				<template #icon><DotsHorizontal :size="20" /></template>
 				<NcActionButton close-after-click @click="editMenu(row)"><template #icon><Pencil :size="20" /></template>{{ t('opencatalogi', 'Edit') }}</NcActionButton>
-				<NcActionButton close-after-click @click="addMenuItem(row)"><template #icon><Plus :size="20" /></template>{{ t('opencatalogi', 'Add Item') }}</NcActionButton>
+				<NcActionButton close-after-click @click="addMenuItem(row)"><template #icon><Plus :size="20" /></template>{{ t('opencatalogi', 'Add item') }}</NcActionButton>
 				<NcActionButton close-after-click @click="copyMenu(row)"><template #icon><ContentCopy :size="20" /></template>{{ t('opencatalogi', 'Copy') }}</NcActionButton>
 				<NcActionButton close-after-click @click="deleteMenu(row)"><template #icon><TrashCanOutline :size="20" /></template>{{ t('opencatalogi', 'Delete') }}</NcActionButton>
 			</NcActions>
@@ -63,7 +63,7 @@ export default {
 	components: { CnIndexPage, NcActions, NcActionButton, DotsHorizontal, Pencil, Plus, ContentCopy, TrashCanOutline },
 	data() { return { selectedIds: [], viewMode: 'cards', isRefreshing: false } },
 	computed: {
-		tableColumns() { return [{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true }, { key: 'position', label: t('opencatalogi', 'Position'), sortable: true }, { key: 'items', label: t('opencatalogi', 'Menu Items') }, { key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true }] },
+		tableColumns() { return [{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true }, { key: 'position', label: t('opencatalogi', 'Position'), sortable: true }, { key: 'items', label: t('opencatalogi', 'Menu items') }, { key: 'updatedAt', label: t('opencatalogi', 'Last updated'), sortable: true }] },
 		currentObjects() { const c = objectStore.getCollection('menu'); return Array.isArray(c) ? c : c?.results || [] },
 		currentPagination() { return objectStore.getPagination('menu') || { total: 0, page: 1, pages: 1, limit: 20 } },
 	},

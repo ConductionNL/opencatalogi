@@ -14,7 +14,7 @@
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					{{ t('opencatalogi', 'New Publication') }}
+					{{ t('opencatalogi', 'New publication') }}
 				</NcButton>
 				<NcButton :disabled="globalLoading"
 					:aria-label="t('opencatalogi', 'Refresh dashboard')"
@@ -30,7 +30,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Catalogs')"
 					:count="kpis.catalogCount"
-					:count-label="t('opencatalogi', 'catalogs')"
+					:count-label="t('opencatalogi', 'Catalogs')"
 					:icon="DatabaseCogOutline"
 					variant="primary"
 					horizontal
@@ -42,7 +42,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Publications')"
 					:count="kpis.publicationCount"
-					:count-label="t('opencatalogi', 'publications')"
+					:count-label="t('opencatalogi', 'Publications')"
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
@@ -52,9 +52,9 @@
 			<!-- Concept Publications count widget -->
 			<template #widget-count-concept-publications>
 				<CnStatsBlock
-					:title="t('opencatalogi', 'Concept Publications')"
+					:title="t('opencatalogi', 'Concept publications')"
 					:count="kpis.conceptPublicationCount"
-					:count-label="t('opencatalogi', 'concept')"
+					:count-label="t('opencatalogi', 'Concept')"
 					:icon="FileDocumentEditOutline"
 					:variant="kpis.conceptPublicationCount > 0 ? 'warning' : 'default'"
 					horizontal
@@ -64,9 +64,9 @@
 			<!-- Concept Attachments count widget -->
 			<template #widget-count-concept-attachments>
 				<CnStatsBlock
-					:title="t('opencatalogi', 'Concept Attachments')"
+					:title="t('opencatalogi', 'Concept attachments')"
 					:count="kpis.conceptAttachmentCount"
-					:count-label="t('opencatalogi', 'concept')"
+					:count-label="t('opencatalogi', 'Concept')"
 					:icon="PaperclipOff"
 					:variant="kpis.conceptAttachmentCount > 0 ? 'warning' : 'default'"
 					horizontal />
@@ -246,11 +246,11 @@ export default {
 			return [
 				{ id: 'count-catalogs', title: t('opencatalogi', 'Catalogs'), type: 'custom' },
 				{ id: 'count-publications', title: t('opencatalogi', 'Publications'), type: 'custom' },
-				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
-				{ id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
-				{ id: 'catalogi', title: t('opencatalogi', 'Catalogs Overview'), type: 'custom' },
-				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
-				{ id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept publications'), type: 'custom' },
+				{ id: 'count-concept-attachments', title: t('opencatalogi', 'Concept attachments'), type: 'custom' },
+				{ id: 'catalogi', title: t('opencatalogi', 'Catalogs overview'), type: 'custom' },
+				{ id: 'concept-publications', title: t('opencatalogi', 'Concept publications'), type: 'custom' },
+				{ id: 'concept-attachments', title: t('opencatalogi', 'Concept attachments'), type: 'custom' },
 			]
 		},
 	},

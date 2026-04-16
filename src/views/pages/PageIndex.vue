@@ -24,7 +24,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-copy="false"
 		:show-mass-delete="false"
 		:view-mode="viewMode"
-		:add-label="t('opencatalogi', 'Add Page')"
+		:add-label="t('opencatalogi', 'Add page')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No pages found')"
 		:refreshing="isRefreshing"
@@ -61,7 +61,7 @@ export default {
 	components: { CnIndexPage, NcActions, NcActionButton, DotsHorizontal, Pencil, ContentCopy, TrashCanOutline },
 	data() { return { selectedIds: [], viewMode: 'cards', isRefreshing: false } },
 	computed: {
-		tableColumns() { return [{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true }, { key: 'slug', label: t('opencatalogi', 'Slug'), sortable: true }, { key: 'contents', label: t('opencatalogi', 'Content Items') }, { key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true }] },
+		tableColumns() { return [{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true }, { key: 'slug', label: t('opencatalogi', 'Slug'), sortable: true }, { key: 'contents', label: t('opencatalogi', 'Content items') }, { key: 'updatedAt', label: t('opencatalogi', 'Last updated'), sortable: true }] },
 		currentObjects() { const c = objectStore.getCollection('page'); return Array.isArray(c) ? c : c?.results || [] },
 		currentPagination() { return objectStore.getPagination('page') || { total: 0, page: 1, pages: 1, limit: 20 } },
 	},
