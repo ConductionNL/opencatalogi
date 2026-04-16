@@ -1,7 +1,7 @@
 {
   "name": "opencatalogi",
   "version": "1.0.0",
-  "license": "AGPL-3.0-or-later",
+  "license": "EUPL-1.2",
   "engines": {
     "node": "^20.0.0",
     "npm": "^10.0.0"
@@ -29,6 +29,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/vue-fontawesome": "^2.0.10",
     "@kangc/v-md-editor": "^1.7.12",
+    "@conduction/nextcloud-vue": "^0.1.0-beta.3",
     "@nextcloud/axios": "^2.5.0",
     "@nextcloud/dialogs": "^5.3.7",
     "@nextcloud/initial-state": "^2.2.0",

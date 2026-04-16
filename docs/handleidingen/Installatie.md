@@ -30,7 +30,25 @@ Om componenten (informatie) te publiceren op OpenCatalogi, bieden we een [GitHub
 
 Lees meer over de configuratie-opties van de workflow.
 
-![Publiceren van Componenten](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/installation_publiccode.svg "Publiceren van Componenten")
+```mermaid
+sequenceDiagram
+    actor Employee
+    participant Repository
+    participant OpenCatalogi
+    participant Frontend
+    actor Citizen
+
+    Employee->>Repository: Places data or code that should be shared
+    Employee->>Repository: Places and configures workflow
+    Repository->>Repository: Workflow builds publiccode.yaml
+    Repository->>OpenCatalogi: Workflow notifies of repository
+    Citizen->>Frontend: Views frontend
+    Frontend->>OpenCatalogi: Queries federated data
+    OpenCatalogi->>Frontend: Provides data
+    Frontend->>Citizen: Provides view of data
+    Employee->>Repository: Alters any data or code
+    Repository->>OpenCatalogi: Workflow notifies of changes
+```
 
 ### Publiceren van Organisatie
 
@@ -42,7 +60,22 @@ Om organisatiegegevens te publiceren op OpenCatalogi, is er eveneens een [GitHub
 
 Lees meer over de configuratie-opties van de workflow.
 
-![Publiceren van Organisatie](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/installation_publicorganisation.svg "Publiceren van Organisatie")
+```mermaid
+sequenceDiagram
+    actor Employee
+    participant Repository
+    participant OpenCatalogi
+    participant Frontend
+    actor Citizen
+
+    Employee->>Repository: Places and configures workflow
+    Repository->>Repository: Workflow builds opencatalogi.yaml in .github repository
+    Repository->>OpenCatalogi: Workflow notifies of organisation
+    Citizen->>Frontend: Views frontend
+    Frontend->>OpenCatalogi: Queries federated data
+    OpenCatalogi->>Frontend: Provides data
+    Frontend->>Citizen: Provides view of data
+```
 
 ### Publiceren Frontend (Portaal)
 
@@ -54,7 +87,26 @@ Om je eigen OpenCatalogi-portaal te publiceren, bieden we een [GitHub-workflow a
 
 Lees meer over de configuratie-opties van de workflow.
 
-![Publiceren van Frontend](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/installation_frontend.svg "Publiceren van Frontend")
+```mermaid
+sequenceDiagram
+    actor Employee
+    participant Repository
+    participant OpenCatalogi
+    participant NLDesignSystem as NL Design System
+    participant Frontend
+    actor Citizen
+
+    Employee->>Repository: Places and configures workflow
+    OpenCatalogi->>Repository: Pulls Frontend Code
+    NLDesignSystem->>Repository: Pulls organisation's NL Design tokens
+    Repository->>Repository: Workflow builds frontend
+    Employee->>Repository: Configures GitHub Pages
+    Repository->>Frontend: Deploys GitHub page
+    Citizen->>Frontend: Views frontend
+    Frontend->>OpenCatalogi: Queries federated data
+    OpenCatalogi->>Frontend: Provides data
+    Frontend->>Citizen: Provides view of data
+```
 
 ## Gebruiken als SAAS
 

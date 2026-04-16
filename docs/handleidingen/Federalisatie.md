@@ -6,7 +6,34 @@ Op deze manier ontstaat een federatief stelsel, oftewel een virtuele catalogus d
 
 ## Flow
 
-![Federatieve bevragingsflow](https://raw.githubusercontent.com/CommonGateway/OpenIndex/main/docs/Federalisatie.svg)
+```mermaid
+sequenceDiagram
+    actor Requester
+    participant FE as Search Endpoint
+    participant B1 as Bron 1
+    participant B2 as Bron 2
+    participant BN as Bron N
+    participant RV as Resultaten Verwerking
+
+    rect rgb(240, 248, 255)
+        Note over Requester,RV: Bevraging Proces
+        Requester->>FE: Bevraagt federatief endpoint
+        FE->>FE: Bepaalt sources
+
+        par Asynchroon bevragen van alle bronnen
+            FE->>B1: Stelt vraag
+            FE->>B2: Stelt vraag
+            FE->>BN: Stelt vraag
+        end
+
+        B1->>FE: Resultaat 1
+        B2->>FE: Resultaat 2
+        BN->>FE: Resultaat N
+        FE->>RV: Verwerkt resultaten per 500
+        RV->>FE: Gegroepeerde resultaten
+        FE->>Requester: Geeft gegroepeerde resultaten terug
+    end
+```
 
 ## Configuratie per vraag (Request)
 
@@ -158,7 +185,23 @@ Iedere instantie van Open Index houd naast de eigen index ook een lijst bij van 
 
 Op deze manier word er (relatief snel) per installatie een totaal directory opgebouwd van andere installaties.
 
-![Discovery flow](https://raw.githubusercontent.com/CommonGateway/OpenIndex/main/docs/Discovery.svg)
+```mermaid
+sequenceDiagram
+    participant New as Open Index Installatie
+    participant Known as Bekende Index
+    participant Others as Andere Indexen
+
+    Note over New: 1. Installatie komt online
+    Note over New: 2. Minimaal één index<br/>toegevoegd aan directory
+    New->>Known: 3. Bevraagt index uit directory
+    Known-->>New: Stuurt eigen directory terug
+    Note over New: 4. Discovery: neemt directory<br/>van externe index over
+    New->>Known: 5. Advertising: meldt zichzelf aan
+    New->>Others: 3. Bevraagt overige indexen uit directory
+    Others-->>New: Sturen eigen directories terug
+    New->>Others: 5. Meldt zichzelf aan
+    Note over New: 6. Herhaal stap 3
+```
 
 ## Healthy en unhealthy indexen
 
@@ -166,15 +209,4 @@ In de praktijk kan het voorkomen dat een externe index verdwijnt (bijvoorbeeld o
 
 ## Federatief zoeken buiten Open Index
 
-Federatief zoeken is een patroon dat door Open Index wordt gefaciliteerd bovenop bestaande zoekoplossingen zoals Elastic Search en MongoDB. Doordat de resultaten van deze oplossingen worden gemapt naar het patroon van federatief zoeken, kunnen de onderliggende indexen worden geaggregeerd. Het is echter ook mogelijk om het patroon rechtstreeks uit te leveren vanuit de registers zelf (het [framework Open Registers](https://openregisters.app/) ondersteund dit ook). Dit heeft zowel voordelen als nadelen.
-
-**Voordelen**
-
-- Er is geen (of een kleinere) organisatie brede index nodig
-- Het sluit beter aan bij het architectuurprincipe 'data bij de bron'.
-
-**Nadelen**
-
-- Een register is geoptimaliseerd voor data betrouwbaarheid boven snelheid, en zal doorgaans iets langsamer zijn dan een gepsecialiseerde zoekoplossing
-- Er zullen veel bevragingen (en daarmee belasting) neerkomen bij de bron
-- Het aantal asynchrone bevragingen vanuit de federatieve zoekopdracht neemt toe, die wordt daardoor langsamer en zwaarder om uit te voeren.
+Federatief zoeken is een patroon dat door Open Index wordt gefaciliteerd. De zoekresultaten worden rechtstreeks uitgeleverd vanuit de registers zelf via [Open Register](https://openregisters.app/) (PostgreSQL). Doordat de resultaten worden gemapt naar het patroon van federatief zoeken, kunnen de onderliggende bronnen worden geaggregeerd. Dit sluit aan bij het architectuurprincipe 'data bij de bron'.

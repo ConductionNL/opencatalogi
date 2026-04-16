@@ -34,7 +34,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										Content Items ({{ page.contents?.length || 0 }})
 									</h4>
 									<div v-if="page.contents?.length" class="attached-list">
-										<div v-for="(content, index) in page.contents"
+										<div v-for="(content, index) in sortedContents"
 											:key="content.id || index"
 											class="attached-list-item">
 											<div class="object-info">
@@ -227,7 +227,7 @@ export default {
 				options: [],
 				loading: false,
 			},
-			tabIndex: 1, // 1 = Configuration by default for add, 0 = Content Items
+			tabIndex: 0, // 0 = first visible tab (Content Items in edit, Configuration in add)
 		}
 	},
 	computed: {
@@ -258,6 +258,14 @@ export default {
 		 */
 		pageState() {
 			return objectStore.getState('page')
+		},
+		/**
+		 * Get contents sorted by order field
+		 * @return {Array} Sorted contents array
+		 */
+		sortedContents() {
+			if (!this.page?.contents?.length) return []
+			return [...this.page.contents].sort((a, b) => (a.order || 0) - (b.order || 0))
 		},
 		/**
 		 * Validate the input form
@@ -346,6 +354,7 @@ export default {
 		 * @return {void}
 		 */
 		openAddContentModal() {
+			objectStore.setState('page', { success: null, error: null })
 			navigationStore.setModal('pageContentForm')
 		},
 		/**
