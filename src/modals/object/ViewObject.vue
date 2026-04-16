@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
 </script>
@@ -1249,10 +1248,10 @@ export default {
 				return []
 			}
 
-			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(String)
+			const selectedCatalogRegisterIds = fullCatalog.registers || []
 
 			return objectStore.availableRegisters
-				.filter(register => selectedCatalogRegisterIds.includes(String(register.id)))
+				.filter(register => selectedCatalogRegisterIds.includes(register.id))
 				.map(register => ({
 					id: register.id,
 					label: register.title,
@@ -1270,14 +1269,14 @@ export default {
 				return []
 			}
 
-			const registerSchemaIds = (register.schemas?.map(schema => String(schema.id)) || [])
-			const catalogSchemaIds = (catalog.schemas || []).map(String)
+			const registerSchemaIds = register.schemas?.map(schema => schema.id) || []
+			const catalogSchemaIds = catalog.schemas || []
 
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
 			const validSchemaIds = registerSchemaIds.filter(id => catalogSchemaIds.includes(id))
 
 			return objectStore.availableSchemas
-				.filter(schema => validSchemaIds.includes(String(schema.id)))
+				.filter(schema => validSchemaIds.includes(schema.id))
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
@@ -1527,42 +1526,13 @@ export default {
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		_autoSelectRemaining(retries = 0) {
-			if (retries > 10) return
-			this.$nextTick(() => {
-				let changed = false
-				if (this.selectedCatalog && !this.selectedRegister && this.registerOptions.length === 1) {
-					this.selectedRegister = this.registerOptions[0]
-					changed = true
-				}
-				if (this.selectedRegister && !this.selectedSchema && this.schemaOptions.length === 1) {
-					this.selectedSchema = this.schemaOptions[0]
-					changed = true
-				}
-				if (this.allSelectionsComplete && !this.showProperties) {
-					this.showProperties = true
-					changed = true
-				}
-				if (changed && !this.showProperties) {
-					this._autoSelectRemaining(retries + 1)
-				}
-			})
-		},
 		async initializeData() {
 			if (!this.currentObject) {
 				// For new objects, initialize with empty form data and auto-select if possible
 				this.formData = {}
 				this.jsonData = JSON.stringify({}, null, 2)
 
-				// Ensure settings and catalogs are loaded before auto-selection
-				if (!objectStore.settings) {
-					await objectStore.fetchSettings()
-				}
-				let catalogs = objectStore.getCollection('catalog').results
-				if (!catalogs || catalogs.length === 0) {
-					await objectStore.fetchCollection('catalog')
-					catalogs = objectStore.getCollection('catalog').results || []
-				}
+				const catalogs = objectStore.getCollection('catalog').results
 
 				// Check if we have a catalogSlug route param
 				const catalogSlug = this.$route.params.catalogSlug
@@ -1583,7 +1553,17 @@ export default {
 					}
 				}
 
-				this._autoSelectRemaining()
+				// Auto-select register and schema if only one option exists.
+				// Existing watchers on selectedCatalog/selectedRegister handle
+				// the cascading updates, so a single tick is sufficient.
+				await this.$nextTick()
+				if (this.registerOptions.length === 1) {
+					this.selectedRegister = this.registerOptions[0]
+					await this.$nextTick()
+					if (this.schemaOptions.length === 1) {
+						this.selectedSchema = this.schemaOptions[0]
+					}
+				}
 
 				return
 			}

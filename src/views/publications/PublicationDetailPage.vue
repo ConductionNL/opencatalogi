@@ -105,7 +105,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 <script>
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
-import { CnDetailPage, CnObjectDataWidget, CnObjectMetadataWidget } from '@conduction/nextcloud-vue'
+import { CnDetailPage, CnObjectDataWidget, CnObjectMetadataWidget, buildHeaders } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
@@ -136,6 +136,7 @@ export default {
 	},
 	data() {
 		return {
+			publication: null,
 			schema: null,
 			loading: false,
 			error: null,
@@ -146,9 +147,6 @@ export default {
 	computed: {
 		objectStoreInstance() {
 			return objectStore
-		},
-		publication() {
-			return objectStore.getActiveObject('publication')
 		},
 		publicationId() {
 			return this.$route.params.id
@@ -200,12 +198,43 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				await objectStore.fetchObject('publication', this.publicationId)
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/opencatalogi/api/${this.catalogSlug}/${this.publicationId}`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (!response.ok) {
+					throw new Error(`Failed to load publication (${response.status})`)
+				}
+				this.publication = await response.json()
+				objectStore.setActiveObject('publication', this.publication)
+
+				// Fetch the schema for the data widget
+				const schemaId = this.publication['@self']?.schema
+				if (schemaId) {
+					await this.loadSchema(schemaId)
+				}
 			} catch (err) {
 				this.error = err.message
 				console.error('Failed to load publication:', err)
 			} finally {
 				this.loading = false
+			}
+		},
+		async loadSchema(schemaId) {
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/schemas/${schemaId}`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (!response.ok) {
+					console.error(`Failed to load schema (${response.status})`)
+					return
+				}
+				this.schema = await response.json()
+			} catch (err) {
+				console.error('Failed to load schema:', err)
 			}
 		},
 		onSaved(result) {

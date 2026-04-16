@@ -1,6 +1,13 @@
 <template>
 	<NcAppNavigation>
 		<template #list>
+			<NcAppNavigationNew
+				:text="t('opencatalogi', 'Create Publication')"
+				@click="navigationStore.setModal('viewObject'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
+				<template #icon>
+					<Plus :size="20" />
+				</template>
+			</NcAppNavigationNew>
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Dashboard')"
 				:to="{ name: 'Dashboard' }"
@@ -35,6 +42,13 @@
 		</template>
 		<template #footer>
 			<NcAppNavigationSettings>
+				<NcAppNavigationItem
+					:name="t('opencatalogi', 'Organizations')"
+					:to="{ name: 'Organizations' }">
+					<template #icon>
+						<OfficeBuildingOutline :size="20" />
+					</template>
+				</NcAppNavigationItem>
 				<NcAppNavigationItem
 					:name="t('opencatalogi', 'Catalogs')"
 					:to="{ name: 'Catalogs' }">
@@ -94,15 +108,19 @@ import { translate as t } from '@nextcloud/l10n'
 import {
 	NcAppNavigation,
 	NcAppNavigationItem,
+	NcAppNavigationNew,
 	NcAppNavigationSettings,
 } from '@nextcloud/vue'
 import { objectStore, navigationStore } from '../store/store.js'
+
+import Plus from 'vue-material-design-icons/Plus.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import LayersSearchOutline from 'vue-material-design-icons/LayersSearchOutline.vue'
 import LayersOutline from 'vue-material-design-icons/LayersOutline.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
+import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
 import ShapeOutline from 'vue-material-design-icons/ShapeOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 import MenuClose from 'vue-material-design-icons/MenuClose.vue'
@@ -114,13 +132,16 @@ export default {
 	components: {
 		NcAppNavigation,
 		NcAppNavigationItem,
+		NcAppNavigationNew,
 		NcAppNavigationSettings,
+		Plus,
 		Finance,
 		DatabaseEyeOutline,
 		DatabaseCogOutline,
 		LayersSearchOutline,
 		LayersOutline,
 		BookOpenVariantOutline,
+		OfficeBuildingOutline,
 		ShapeOutline,
 		Web,
 		MenuClose,

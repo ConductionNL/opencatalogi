@@ -39,7 +39,13 @@ class CatalogFilteringTest extends TestCase
     /**
      * @var string Base URL for Nextcloud container
      */
-    private string $baseUrl = 'http://localhost';
+    private string $baseUrl;
+
+    public function __construct(string $name = '')
+    {
+        parent::__construct($name);
+        $this->baseUrl = getenv('TEST_BASE_URL') ?: 'http://localhost:8080';
+    }
 
     /**
      * @var array<string> IDs of created catalogs for cleanup

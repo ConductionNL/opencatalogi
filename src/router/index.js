@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 // Views
-import Dashboard from '@/views/dashboard/DashboardIndex.vue'
+import Dashboard from '@/views/dashboard/Dashboard.vue'
 import Catalogi from '@/views/catalogi/CatalogiIndex.vue'
 import CatalogDetailPage from '@/views/catalogi/CatalogDetailPage.vue'
 import PublicationsIndex from '@/views/publications/PublicationIndex.vue'
