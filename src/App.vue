@@ -1,6 +1,6 @@
 <template>
 	<NcContent app-name="opencatalogi">
-		<MainMenu />
+		<MainMenu @open-settings="settingsOpen = true" />
 		<NcAppContent>
 			<template #default>
 				<router-view />
@@ -36,6 +36,7 @@
 
 		<Modals />
 		<Dialogs />
+		<UserSettings :open="settingsOpen" @update:open="settingsOpen = $event" />
 	</NcContent>
 </template>
 
@@ -47,6 +48,7 @@ import { CnObjectSidebar, CnIndexSidebar } from '@conduction/nextcloud-vue'
 import MainMenu from './navigation/MainMenu.vue'
 import Modals from './modals/Modals.vue'
 import Dialogs from './dialogs/Dialogs.vue'
+import UserSettings from './views/settings/UserSettings.vue'
 import { objectStore } from './store/store.js'
 
 export default {
@@ -59,9 +61,11 @@ export default {
 		MainMenu,
 		Modals,
 		Dialogs,
+		UserSettings,
 	},
 	data() {
 		return {
+			settingsOpen: false,
 			objectSidebarState: {
 				active: false,
 				open: true,
