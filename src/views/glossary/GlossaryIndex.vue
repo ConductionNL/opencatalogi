@@ -123,13 +123,28 @@ import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 export default {
 	name: 'GlossaryIndex',
 	components: {
-		CnIndexPage, CnStatusBadge, NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect,
-		DotsHorizontal, Eye, Pencil, ContentCopy, TrashCanOutline,
+		CnIndexPage,
+		CnStatusBadge,
+		NcActions,
+		NcActionButton,
+		NcTextField,
+		NcTextArea,
+		NcSelect,
+		DotsHorizontal,
+		Eye,
+		Pencil,
+		ContentCopy,
+		TrashCanOutline,
 	},
 	data() {
 		return {
-			selectedIds: [], viewMode: 'cards', isRefreshing: false,
-			statusColorMap: { [t('opencatalogi', 'Public')]: 'success', [t('opencatalogi', 'Private')]: 'default' },
+			selectedIds: [],
+			viewMode: 'cards',
+			isRefreshing: false,
+			statusColorMap: {
+				[t('opencatalogi', 'Public')]: 'success',
+				[t('opencatalogi', 'Private')]: 'default',
+			},
 		}
 	},
 	computed: {
@@ -155,35 +170,75 @@ export default {
 			]
 		},
 		currentObjects() {
-			const c = objectStore.getCollection('glossary')
-			return Array.isArray(c) ? c : c?.results || []
+			const collection = objectStore.getCollection('glossary')
+			if (Array.isArray(collection)) return collection
+			return collection?.results || []
 		},
 		currentPagination() {
-			return objectStore.getPagination('glossary') || { total: 0, page: 1, pages: 1, limit: 20 }
+			return objectStore.getPagination('glossary')
+				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
 	},
-	mounted() { objectStore.fetchCollection('glossary') },
+	mounted() {
+		objectStore.fetchCollection('glossary')
+	},
 	methods: {
-		onAdd() { objectStore.clearActiveObject('glossary'); this.$refs.indexPage.openFormDialog(null) },
+		onAdd() {
+			objectStore.clearActiveObject('glossary')
+			this.$refs.indexPage.openFormDialog(null)
+		},
 		async onSaveTerm(formData) {
 			try {
-				if (formData.id) { await objectStore.updateObject('glossary', formData.id, formData) } else { await objectStore.createObject('glossary', formData) }
+				if (formData.id) {
+					await objectStore.updateObject('glossary', formData.id, formData)
+				} else {
+					await objectStore.createObject('glossary', formData)
+				}
 				this.$refs.indexPage.setFormResult({ success: true })
 				await objectStore.fetchCollection('glossary')
-			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save term' }) }
+			} catch (error) {
+				this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save term' })
+			}
 		},
-		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('glossary') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('glossary', { _page: page }) },
-		onPageSizeChange(size) { objectStore.fetchCollection('glossary', { _page: 1, _limit: size }) },
-		onSelect(ids) { this.selectedIds = ids },
-		onRowClick(row) { objectStore.setActiveObject('glossary', row); navigationStore.setModal('viewGlossary') },
-		viewTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setModal('viewGlossary') },
-		copyTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' }) },
-		deleteTerm(term) { objectStore.setActiveObject('glossary', term); navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' }) },
+		async handleRefresh() {
+			this.isRefreshing = true
+			try {
+				await objectStore.fetchCollection('glossary')
+			} finally {
+				this.isRefreshing = false
+			}
+		},
+		onPageChange(page) {
+			objectStore.fetchCollection('glossary', { _page: page })
+		},
+		onPageSizeChange(size) {
+			objectStore.fetchCollection('glossary', { _page: 1, _limit: size })
+		},
+		onSelect(ids) {
+			this.selectedIds = ids
+		},
+		onRowClick(row) {
+			objectStore.setActiveObject('glossary', row)
+			navigationStore.setModal('viewGlossary')
+		},
+		viewTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setModal('viewGlossary')
+		},
+		copyTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setDialog('copyObject', { objectType: 'glossary', dialogTitle: 'Term' })
+		},
+		deleteTerm(term) {
+			objectStore.setActiveObject('glossary', term)
+			navigationStore.setDialog('deleteObject', { objectType: 'glossary', dialogTitle: 'Term' })
+		},
 	},
 }
 </script>
 
 <style scoped>
-.formContainer > * { margin-block-end: 10px; }
+.formContainer > * {
+	margin-block-end: 10px;
+}
 </style>

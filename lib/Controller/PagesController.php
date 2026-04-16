@@ -145,7 +145,7 @@ class PagesController extends Controller
     {
         // Determine the origin.
         $origin = $this->request->getHeader('Origin');
-        if ($origin === '' || $origin === false) {
+        if ($origin === '') {
             $origin = '*';
         }
 
@@ -202,7 +202,7 @@ class PagesController extends Controller
         // Add CORS headers for public API access.
         $response = new JSONResponse($result);
         $origin   = $this->request->getHeader('Origin');
-        if ($origin === '' || $origin === false) {
+        if ($origin === '') {
             $origin = ($this->request->server['HTTP_ORIGIN'] ?? '*');
         }
 
@@ -264,7 +264,7 @@ class PagesController extends Controller
 
         // Add CORS headers for public API access.
         $origin = $this->request->getHeader('Origin');
-        if ($origin === '' || $origin === false) {
+        if ($origin === '') {
             $origin = '*';
         }
 

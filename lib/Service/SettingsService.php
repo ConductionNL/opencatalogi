@@ -46,14 +46,18 @@ class SettingsService
     private string $appName;
 
     /**
-     * This constant represents the unique identifier for the OpenRegister application, used to check its installation and status.
+     * This constant represents the unique identifier for the
+     * OpenRegister application, used to check its installation
+     * and status.
      *
      * @var string $openRegisterAppId The ID of the OpenRegister app.
      */
     private const OPENREGISTER_APP_ID = 'openregister';
 
     /**
-     * This constant defines the minimum version of the OpenRegister application that is required for compatibility and functionality.
+     * This constant defines the minimum version of the OpenRegister
+     * application that is required for compatibility and
+     * functionality.
      *
      * @var string $minORVersion The minimum required version of OpenRegister.
      */
@@ -192,9 +196,8 @@ class SettingsService
                 $matchingRegister = null;
                 foreach ($registers as $register) {
                     // Convert Register entity to array if needed.
-                    if (is_array($register) === true) {
-                        $registerData = $register;
-                    } else {
+                    $registerData = $register;
+                    if (is_array($register) === false) {
                         $registerData = $register->jsonSerialize();
                     }
 
@@ -517,17 +520,29 @@ class SettingsService
             // Retrieve publishing options from configuration with defaults to false.
             $publishingOptions = [
                 // Convert string 'true'/'false' to boolean for auto publish attachments setting.
-                'auto_publish_attachments'      => $this->config->getValueString($this->appName, 'auto_publish_attachments', 'false') === 'true',
+                'auto_publish_attachments'      => $this->config->getValueString(
+                    $this->appName,
+                    'auto_publish_attachments',
+                    'false'
+                ) === 'true',
                 // Convert string 'true'/'false' to boolean for auto publish objects setting.
-                'auto_publish_objects'          => $this->config->getValueString($this->appName, 'auto_publish_objects', 'false') === 'true',
+                'auto_publish_objects'          => $this->config->getValueString(
+                    $this->appName,
+                    'auto_publish_objects',
+                    'false'
+                ) === 'true',
                 // Convert string 'true'/'false' to boolean for old style publishing view setting.
-                'use_old_style_publishing_view' => $this->config->getValueString($this->appName, 'use_old_style_publishing_view', 'false') === 'true',
+                'use_old_style_publishing_view' => $this->config->getValueString(
+                    $this->appName,
+                    'use_old_style_publishing_view',
+                    'false'
+                ) === 'true',
             ];
 
             return $publishingOptions;
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to retrieve publishing options: '.$e->getMessage());
-        }
+        }//end try
 
     }//end getPublishingOptions()
 
@@ -624,7 +639,9 @@ class SettingsService
             $relativeFilePath = str_replace($nextcloudRoot.'/', '', $absoluteFilePath);
 
             // Fallback: if path calculation fails, use the standard relative path.
-            if (str_starts_with($relativeFilePath, 'apps-extra/') === false && str_starts_with($relativeFilePath, 'apps/') === false) {
+            if (str_starts_with($relativeFilePath, 'apps-extra/') === false
+                && str_starts_with($relativeFilePath, 'apps/') === false
+            ) {
                 $relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
             }
 

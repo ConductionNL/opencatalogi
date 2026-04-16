@@ -14,7 +14,7 @@
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					{{ t('opencatalogi', 'New publication') }}
+					{{ t('opencatalogi', 'New Publication') }}
 				</NcButton>
 				<NcButton :disabled="globalLoading"
 					:aria-label="t('opencatalogi', 'Refresh dashboard')"
@@ -25,16 +25,18 @@
 				</NcButton>
 			</template>
 
-			<!-- Catalogs count widget -->
-			<template #widget-count-catalogs>
-				<CnStatsBlock
-					:title="t('opencatalogi', 'Catalogs')"
-					:count="kpis.catalogCount"
-					:count-label="t('opencatalogi', 'Catalogs')"
-					:icon="DatabaseCogOutline"
-					variant="primary"
-					horizontal
-					:route="{ name: 'Catalogs' }" />
+			<!-- Objects by Schema donut chart -->
+			<template #widget-objects-by-schema>
+				<CnChartWidget
+					v-if="schemaChartData.series.length > 0"
+					type="donut"
+					:series="schemaChartData.series"
+					:labels="schemaChartData.labels"
+					:height="220"
+					:options="{ legend: { position: 'bottom', fontSize: '12px' }, plotOptions: { pie: { donut: { size: '55%' } } } }" />
+				<div v-else class="widget-empty">
+					{{ t('opencatalogi', 'No objects found') }}
+				</div>
 			</template>
 
 			<!-- Publications count widget -->
@@ -42,7 +44,7 @@
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Publications')"
 					:count="kpis.publicationCount"
-					:count-label="t('opencatalogi', 'Publications')"
+					:count-label="t('opencatalogi', 'publications')"
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
@@ -52,9 +54,9 @@
 			<!-- Concept Publications count widget -->
 			<template #widget-count-concept-publications>
 				<CnStatsBlock
-					:title="t('opencatalogi', 'Concept publications')"
+					:title="t('opencatalogi', 'Concept Publications')"
 					:count="kpis.conceptPublicationCount"
-					:count-label="t('opencatalogi', 'Concept')"
+					:count-label="t('opencatalogi', 'concept')"
 					:icon="FileDocumentEditOutline"
 					:variant="kpis.conceptPublicationCount > 0 ? 'warning' : 'default'"
 					horizontal
@@ -64,33 +66,25 @@
 			<!-- Concept Attachments count widget -->
 			<template #widget-count-concept-attachments>
 				<CnStatsBlock
-					:title="t('opencatalogi', 'Concept attachments')"
+					:title="t('opencatalogi', 'Concept Attachments')"
 					:count="kpis.conceptAttachmentCount"
-					:count-label="t('opencatalogi', 'Concept')"
+					:count-label="t('opencatalogi', 'concept')"
 					:icon="PaperclipOff"
 					:variant="kpis.conceptAttachmentCount > 0 ? 'warning' : 'default'"
 					horizontal />
 			</template>
 
-			<!-- Catalogi Overview widget -->
-			<template #widget-catalogi>
-				<div class="catalogi-widget-content">
-					<div v-if="catalogs.length === 0" class="widget-empty">
-						{{ t('opencatalogi', 'No catalogs found') }}
-					</div>
-					<div v-else class="catalogi-list">
-						<div
-							v-for="catalog in catalogs"
-							:key="catalog.id || catalog.slug"
-							class="catalogi-item"
-							@click="onCatalogClick(catalog)">
-							<DatabaseCogOutline :size="20" class="catalogi-item-icon" />
-							<div class="catalogi-item-content">
-								<span class="catalogi-item-title">{{ catalog.title }}</span>
-								<span v-if="catalog.summary" class="catalogi-item-summary">{{ catalog.summary }}</span>
-							</div>
-						</div>
-					</div>
+			<!-- Activity graph widget (audit trail actions over time) -->
+			<template #widget-activity>
+				<CnChartWidget
+					v-if="activityChartData.series.length > 0"
+					type="area"
+					:series="activityChartData.series"
+					:categories="activityChartData.labels"
+					:height="220"
+					:options="{ stroke: { curve: 'smooth', width: 2 }, xaxis: { labels: { rotate: -45, style: { fontSize: '10px' } } }, dataLabels: { enabled: false } }" />
+				<div v-else class="widget-empty">
+					{{ t('opencatalogi', 'No activity data') }}
 				</div>
 			</template>
 
@@ -160,10 +154,10 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
-import { CnDashboardPage, CnStatsBlock } from '@conduction/nextcloud-vue'
+// eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
+import { CnDashboardPage, CnStatsBlock, CnChartWidget, buildHeaders } from '@conduction/nextcloud-vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
-import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
@@ -175,13 +169,13 @@ import { objectStore, navigationStore } from '../../store/store.js'
  * then catalogi and concept publications side by side, concept attachments full width.
  */
 const DEFAULT_LAYOUT = [
-	{ id: 1, widgetId: 'count-catalogs', gridX: 0, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
-	{ id: 2, widgetId: 'count-publications', gridX: 3, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
-	{ id: 3, widgetId: 'count-concept-publications', gridX: 6, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
-	{ id: 4, widgetId: 'count-concept-attachments', gridX: 9, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
-	{ id: 5, widgetId: 'catalogi', gridX: 0, gridY: 2, gridWidth: 6, gridHeight: 4 },
-	{ id: 6, widgetId: 'concept-publications', gridX: 6, gridY: 2, gridWidth: 6, gridHeight: 4 },
-	{ id: 7, widgetId: 'concept-attachments', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
+	{ id: 1, widgetId: 'count-publications', gridX: 0, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
+	{ id: 2, widgetId: 'count-concept-publications', gridX: 3, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
+	{ id: 3, widgetId: 'count-concept-attachments', gridX: 6, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
+	{ id: 4, widgetId: 'objects-by-schema', gridX: 9, gridY: 0, gridWidth: 3, gridHeight: 5 },
+	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 2, gridWidth: 9, gridHeight: 4 },
+	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
+	{ id: 7, widgetId: 'concept-attachments', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
 ]
 
 export default {
@@ -190,16 +184,15 @@ export default {
 		NcButton,
 		CnDashboardPage,
 		CnStatsBlock,
+		CnChartWidget,
 		Plus,
 		Refresh,
-		DatabaseCogOutline,
 		FileDocumentEditOutline,
 		Paperclip,
 	},
 	data() {
 		return {
 			// Icon components for CnStatsBlock :icon prop
-			DatabaseCogOutline,
 			DatabaseEyeOutline,
 			FileDocumentEditOutline,
 			PaperclipOff,
@@ -207,6 +200,8 @@ export default {
 			error: null,
 			refreshTimer: null,
 			dashboardLayout: [...DEFAULT_LAYOUT],
+			schemaChartData: { labels: [], series: [] },
+			activityChartData: { labels: [], series: [] },
 		}
 	},
 	computed: {
@@ -244,13 +239,13 @@ export default {
 		},
 		widgetDefs() {
 			return [
-				{ id: 'count-catalogs', title: t('opencatalogi', 'Catalogs'), type: 'custom' },
 				{ id: 'count-publications', title: t('opencatalogi', 'Publications'), type: 'custom' },
-				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept publications'), type: 'custom' },
-				{ id: 'count-concept-attachments', title: t('opencatalogi', 'Concept attachments'), type: 'custom' },
-				{ id: 'catalogi', title: t('opencatalogi', 'Catalogs overview'), type: 'custom' },
-				{ id: 'concept-publications', title: t('opencatalogi', 'Concept publications'), type: 'custom' },
-				{ id: 'concept-attachments', title: t('opencatalogi', 'Concept attachments'), type: 'custom' },
+				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
+				{ id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+				{ id: 'objects-by-schema', title: t('opencatalogi', 'Objects by Type'), type: 'custom' },
+				{ id: 'activity', title: t('opencatalogi', 'Activity'), type: 'custom' },
+				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
+				{ id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 			]
 		},
 	},
@@ -276,12 +271,52 @@ export default {
 					objectStore.fetchCollection('catalog'),
 					objectStore.fetchCollection('publication'),
 					objectStore.fetchCollection('attachment'),
+					this.fetchSchemaChart(),
+					this.fetchActivityChart(),
 				])
 			} catch (err) {
 				this.error = err.message || t('opencatalogi', 'Failed to load dashboard data')
 				console.error('Dashboard fetch error:', err)
 			} finally {
 				this.globalLoading = false
+			}
+		},
+
+		async fetchSchemaChart() {
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/dashboard/charts/objects-by-schema`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					this.schemaChartData = {
+						labels: data.labels || [],
+						series: data.series || [],
+					}
+				}
+			} catch (err) {
+				console.warn('Failed to load schema chart:', err)
+			}
+		},
+
+		async fetchActivityChart() {
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					this.activityChartData = {
+						labels: data.labels || [],
+						series: data.series || [],
+					}
+				}
+			} catch (err) {
+				console.warn('Failed to load activity chart:', err)
 			}
 		},
 
@@ -294,69 +329,11 @@ export default {
 			this.dashboardLayout = newLayout
 		},
 
-		onCatalogClick(catalog) {
-			if (catalog?.slug) {
-				this.$router.push(`/publications/${catalog.slug}`)
-			}
-		},
 	},
 }
 </script>
 
 <style scoped>
-/* Catalogi widget */
-.catalogi-widget-content {
-	padding: 4px 0;
-	height: 100%;
-	overflow: auto;
-}
-
-.catalogi-list {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-
-.catalogi-item {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 10px 12px;
-	cursor: pointer;
-	border-radius: var(--border-radius);
-}
-
-.catalogi-item:hover {
-	background: var(--color-background-hover);
-}
-
-.catalogi-item-icon {
-	color: var(--color-primary-element);
-	flex-shrink: 0;
-}
-
-.catalogi-item-content {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-}
-
-.catalogi-item-title {
-	font-size: 14px;
-	font-weight: 500;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.catalogi-item-summary {
-	font-size: 12px;
-	color: var(--color-text-maxcontrast);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 /* Concept widgets (publications & attachments) */
 .concept-widget-content {
 	padding: 4px 0;
