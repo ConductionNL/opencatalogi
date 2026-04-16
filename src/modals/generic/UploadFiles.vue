@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -755,7 +754,7 @@ export default {
 
 			files.forEach((file) => {
 				formData.append('files[]', file)
-				if (file.tags) {
+				if (file.tags?.length > 0) {
 					formData.append('tags[]', file.tags.join(','))
 				}
 			})

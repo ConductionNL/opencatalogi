@@ -206,7 +206,7 @@ class PublicationsController extends Controller
     {
         // Determine the origin.
         $origin = $this->request->getHeader('Origin');
-        if ($origin === '' || $origin === false) {
+        if ($origin === '') {
             $origin = '*';
         }
 
@@ -260,8 +260,10 @@ class PublicationsController extends Controller
             $queryParams = $this->request->getParams();
 
             // Use ObjectService centralized query builder which handles dot-to-underscore conversion.
-            $searchQuery = $objectService->buildSearchQuery($queryParams);
-            $searchQuery['_includeDeleted'] = false;
+            $searchQuery = array_merge(
+                $objectService->buildSearchQuery($queryParams),
+                ['_includeDeleted' => false]
+            );
 
             // Clean up catalog-specific parameters.
             unset($searchQuery['catalogSlug'], $searchQuery['fq']);
@@ -306,8 +308,16 @@ class PublicationsController extends Controller
                     $searchQuery['_registers'] = $registers;
                     $searchQuery['_register']  = null;
 
-                    // Multi-register search: strip _order on non-universal fields.
-                    $universalOrderFields = ['uuid', 'created', 'updated', 'published', 'depublished'];
+                    // Multi-register search: strip _order on non-universal fields
+                    // since schemas may have different property names (e.g., 'name' vs 'naam').
+                    // Only allow metadata fields that exist in all magic mapper tables.
+                    // Keys arrive from the frontend with _ prefix (e.g., _order[_created]=desc).
+                    // _name, _description, _summary are metadata columns in every magic table.
+                    // _relevance is computed dynamically from search terms via pg_trgm similarity().
+                    $universalOrderFields = [
+                        '_uuid', '_created', '_updated', '_published', '_depublished',
+                        '_name', '_description', '_summary', '_relevance',
+                    ];
                     if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
                         foreach (array_keys($searchQuery['_order']) as $orderField) {
                             if (in_array($orderField, $universalOrderFields, true) === false) {
@@ -331,6 +341,26 @@ class PublicationsController extends Controller
                 _multitenancy: false
             );
 
+            // Strip empty values from results unless _empty=true is set.
+            // This reduces response payload by omitting null/empty properties.
+            $includeEmpty = filter_var(
+                value: $this->request->getParam(key: '_empty', default: false),
+                filter: FILTER_VALIDATE_BOOLEAN
+            );
+            if ($includeEmpty === false && isset($result['results']) === true && is_array($result['results']) === true) {
+                $result['results'] = array_map(
+                    callback: function ($item) {
+                        // Serialize ObjectEntity instances to arrays before stripping empty values.
+                        if (is_array($item) === false && method_exists(object_or_class: $item, method: 'jsonSerialize') === true) {
+                            $item = $item->jsonSerialize();
+                        }
+
+                        return is_array($item) === true ? $this->stripEmptyValues(data: $item) : $item;
+                    },
+                    array: $result['results']
+                );
+            }
+
             // Add catalog information to the response.
             $result['@catalog'] = [
                 'slug'      => $catalogSlug,
@@ -353,7 +383,7 @@ class PublicationsController extends Controller
 
                 foreach ($schemaIds as $schemaId) {
                     try {
-                        $schema                        = $schemaMapper->find((int) $schemaId);
+                        $schema = $schemaMapper->find((int) $schemaId);
                         $resolvedSchemas[$schemaId] = [
                             'id'    => $schema->getId(),
                             'slug'  => $schema->getSlug(),
@@ -372,7 +402,7 @@ class PublicationsController extends Controller
 
                 foreach ($registerIds as $registerId) {
                     try {
-                        $register                        = $registerMapper->find((int) $registerId);
+                        $register = $registerMapper->find((int) $registerId);
                         $resolvedRegisters[$registerId] = [
                             'id'    => $register->getId(),
                             'slug'  => $register->getSlug(),
@@ -882,6 +912,13 @@ class PublicationsController extends Controller
         try {
             $objectService = $this->getObjectService();
 
+            // Set register/schema context so RelationHandler can find the object in magic tables.
+            $location = $this->findObjectLocation($id);
+            if ($location !== null) {
+                $objectService->setRegister(register: (string) $location['register']);
+                $objectService->setSchema(schema: (string) $location['schema']);
+            }
+
             $queryParams = $this->request->getParams();
             unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
@@ -942,6 +979,13 @@ class PublicationsController extends Controller
         try {
             $objectService = $this->getObjectService();
 
+            // Set register/schema context so RelationHandler can find the object in magic tables.
+            $location = $this->findObjectLocation($id);
+            if ($location !== null) {
+                $objectService->setRegister(register: (string) $location['register']);
+                $objectService->setSchema(schema: (string) $location['schema']);
+            }
+
             $queryParams = $this->request->getParams();
             unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
@@ -980,4 +1024,58 @@ class PublicationsController extends Controller
         }//end try
 
     }//end used()
+
+    /**
+     * Recursively strips empty values (null, empty string, empty array) from an array.
+     *
+     * Used to reduce API response payload by omitting properties that have no value.
+     * Values of 0, false, and "0" are preserved as they are meaningful.
+     *
+     * @param array $data The data array to strip empty values from.
+     *
+     * @return array The data with empty values removed.
+     */
+    private function stripEmptyValues(array $data): array
+    {
+        $result = [];
+        foreach ($data as $key => $value) {
+            if (is_array($value) === true) {
+                $isSequential = array_is_list($value);
+
+                if ($isSequential === true) {
+                    $stripped = [];
+                    foreach ($value as $item) {
+                        if (is_array($item) === true) {
+                            $stripped[] = $this->stripEmptyValues(data: $item);
+                        } else {
+                            $stripped[] = $item;
+                        }
+                    }
+
+                    if (empty($stripped) === false) {
+                        $result[$key] = $stripped;
+                    }
+
+                    continue;
+                }
+
+                $stripped = $this->stripEmptyValues(data: $value);
+                if (empty($stripped) === false) {
+                    $result[$key] = $stripped;
+                }
+
+                continue;
+            }//end if
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $result[$key] = $value;
+        }//end foreach
+
+        return $result;
+    }//end stripEmptyValues()
+
+
 }//end class

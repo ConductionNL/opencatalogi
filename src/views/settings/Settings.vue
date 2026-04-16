@@ -145,7 +145,7 @@
 						Auto publish attachments
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						When an object that has published not null automatically publish all publications
+						When an object is published, automatically publish all its attachments as Nextcloud shares
 					</p>
 				</div>
 
@@ -157,7 +157,7 @@
 						Auto publish objects
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						When an object that has a schema and register matching a catalog is created automatically set it to published
+						When an object matching a catalog schema is created, automatically apply public read access via RBAC rules
 					</p>
 				</div>
 

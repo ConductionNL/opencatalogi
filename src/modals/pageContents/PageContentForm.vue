@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { getTheme } from '../../services/getTheme.js'
 import { EventBus } from '../../eventBus.js'
@@ -8,7 +7,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.name}`"
+		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.title}`"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
@@ -50,16 +49,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								:value.sync="contentsItem.order"
 								required />
 
-							<!-- text (legacy format) -->
-							<div v-if="contentsItem.type === 'text'" class="editor-container">
-								<label>Text Content</label>
-								<v-md-editor
-									:initial-value="contentsItem.textData"
-									:options="editorOptions"
-									initial-edit-type="wysiwyg"
-									preview-style="tab"
-									height="300px"
-									@load="(editor) => textEditor = editor" />
+							<!-- text (plain text) -->
+							<div v-if="contentsItem.type === 'text'" class="form-group">
+								<label for="text-content">Text Content</label>
+								<textarea
+									id="text-content"
+									v-model="contentsItem.textData"
+									class="text-content-textarea"
+									:disabled="objectStore.isLoading('page')"
+									rows="10"
+									placeholder="Enter your text content here..." />
 							</div>
 
 							<!-- RichText -->
@@ -74,6 +73,20 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									@load="(editor) => richTextEditor = editor" />
 							</div>
 
+							<!-- Image -->
+							<div v-if="contentsItem.type === 'Image'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Image URL"
+									:value.sync="contentsItem.imageUrl"
+									placeholder="https://example.com/image.jpg" />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Srcset (optional, responsive images)"
+									:value.sync="contentsItem.imageSrcset"
+									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
+							</div>
+
 							<!-- Faq -->
 							<div v-if="contentsItem.type === 'Faq'">
 								<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
@@ -82,6 +95,45 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 											<Drag class="drag-handle" :size="40" />
 											<NcTextField label="Vraag" :value.sync="item.question" />
 											<NcTextField label="Antwoord" :value.sync="item.answer" />
+										</div>
+									</div>
+								</VueDraggable>
+							</div>
+
+							<!-- Quote -->
+							<div v-if="contentsItem.type === 'Quote'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Title (bold text)"
+									:value.sync="contentsItem.quoteTitle"
+									placeholder="Enter the main quote text..." />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									label="Subtitle"
+									:value.sync="contentsItem.quoteSubtitle"
+									placeholder="Enter the subtitle text..." />
+							</div>
+
+							<!-- ContentBlocks -->
+							<div v-if="contentsItem.type === 'ContentBlocks'">
+								<p class="content-blocks-help">
+									Add up to 3 content blocks. Each block has an icon, title, description, and link.
+								</p>
+								<VueDraggable v-model="contentsItem.contentBlocksData" easing="ease-in-out" draggable="div:not(:last-child)">
+									<div v-for="item in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
+										<div :class="`draggable-form-item draggable-form-item--vertical ${getTheme()}`">
+											<div class="draggable-form-item__header">
+												<Drag class="drag-handle" :size="40" />
+												<NcSelect
+													v-bind="iconOptions"
+													v-model="item.icon"
+													input-label="Icon"
+													style="min-width: 160px;" />
+											</div>
+											<NcTextField label="Title" :value.sync="item.title" />
+											<NcTextField label="Description" :value.sync="item.text" />
+											<NcTextField label="Link URL" :value.sync="item.linkUrl" placeholder="/zoeken" />
+											<NcTextField label="Link text" :value.sync="item.linkTitle" placeholder="Meer informatie" />
 										</div>
 									</div>
 								</VueDraggable>
@@ -141,9 +193,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 				@click="addPageContent">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
-					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
+					<ContentSave v-else-if="isEdit" :size="20" />
+					<Plus v-else :size="20" />
 				</template>
-				{{ isEdit ? 'Edit' : 'Add' }}
+				{{ isEdit ? 'Save' : 'Add' }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -158,6 +211,7 @@ import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
 
 import { Page } from '../../entities/index.js'
@@ -178,6 +232,7 @@ export default {
 		vMdEditor,
 		// Icons
 		Plus,
+		ContentSave,
 		Drag,
 	},
 	data() {
@@ -188,6 +243,10 @@ export default {
 				order: 0,
 				richTextData: '',
 				textData: '',
+				imageUrl: '',
+				imageSrcset: '',
+				quoteTitle: '',
+				quoteSubtitle: '',
 				id: Math.random().toString(36).substring(2, 12),
 				faqData: [
 					{
@@ -196,12 +255,25 @@ export default {
 						answer: '',
 					},
 				],
+				contentBlocksData: [
+					{
+						id: Math.random().toString(36).substring(2, 12),
+						icon: '',
+						title: '',
+						text: '',
+						linkUrl: '',
+						linkTitle: '',
+					},
+				],
 				groups: [],
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
 			typeOptions: {
-				options: ['text', 'RichText', 'Faq'],
+				options: ['text', 'RichText', 'Image', 'Faq', 'Quote', 'ContentBlocks'],
+			},
+			iconOptions: {
+				options: ['search', 'cubes', 'cube', 'users', 'building', 'document', 'gear', 'link', 'world', 'truck', 'scroll', 'themes', 'house'],
 			},
 			success: null,
 			error: false,
@@ -258,6 +330,34 @@ export default {
 			},
 			deep: true,
 		},
+		'contentsItem.contentBlocksData': {
+			handler(newVal) {
+				const len = newVal.length
+				const last = newVal[len - 1]
+
+				// Auto-add a new empty block when the last one has content
+				if (last.title !== '' && last.text !== '') {
+					newVal.push({
+						id: Math.random().toString(36).substring(2, 12),
+						icon: '',
+						title: '',
+						text: '',
+						linkUrl: '',
+						linkTitle: '',
+					})
+				}
+
+				// Remove empty blocks except the last one
+				if (len > 1) {
+					for (let i = len - 2; i >= 0; i--) {
+						if (newVal[i].title === '' && newVal[i].text === '') {
+							newVal.splice(i, 1)
+						}
+					}
+				}
+			},
+			deep: true,
+		},
 	},
 	mounted() {
 		// Fetch groups for the dropdown.
@@ -283,6 +383,23 @@ export default {
 				this.contentsItem.textData = contentItem.data.html || contentItem.data.text || ''
 			} else if (contentItem.type === 'RichText') {
 				this.contentsItem.richTextData = contentItem.data.content || ''
+			} else if (contentItem.type === 'Image') {
+				this.contentsItem.imageUrl = contentItem.data.url || ''
+				this.contentsItem.imageSrcset = contentItem.data.srcset || ''
+			} else if (contentItem.type === 'Quote') {
+				this.contentsItem.quoteTitle = contentItem.data.title || ''
+				this.contentsItem.quoteSubtitle = contentItem.data.subtitle || ''
+			} else if (contentItem.type === 'ContentBlocks') {
+				if (contentItem.data.blocks && contentItem.data.blocks.length > 0) {
+					this.contentsItem.contentBlocksData = contentItem.data.blocks.map((block) => ({
+						id: Math.random().toString(36).substring(2, 12),
+						icon: block.icon || '',
+						title: block.title || '',
+						text: block.text || '',
+						linkUrl: block.linkUrl || '',
+						linkTitle: block.linkTitle || '',
+					})).concat(this.contentsItem.contentBlocksData)
+				}
 			}
 
 			// If faqs are present, prepend them to the contentsItem.
@@ -348,6 +465,19 @@ export default {
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 				}
+			} else if (this.contentsItem.type === 'Image') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						url: this.contentsItem.imageUrl,
+						srcset: this.contentsItem.imageSrcset || undefined,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
 			} else if (this.contentsItem.type === 'Faq') {
 				contentItem = {
 					type: this.contentsItem.type,
@@ -358,6 +488,38 @@ export default {
 						faqs: this.contentsItem.faqData.slice(0, -1).map((faq) => ({
 							question: faq.question,
 							answer: faq.answer,
+						})),
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'Quote') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						title: this.contentsItem.quoteTitle,
+						subtitle: this.contentsItem.quoteSubtitle,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'ContentBlocks') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						// Remove the last item since it's a placeholder.
+						blocks: this.contentsItem.contentBlocksData.slice(0, -1).map((block) => ({
+							icon: block.icon,
+							title: block.title,
+							text: block.text,
+							linkUrl: block.linkUrl,
+							linkTitle: block.linkTitle,
 						})),
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
@@ -477,6 +639,23 @@ export default {
     cursor: not-allowed;
 }
 
+.draggable-form-item--vertical {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.draggable-form-item__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.content-blocks-help {
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    margin-block-end: 8px;
+}
+
 .groups-section {
     margin-block-start: var(--OC-margin-20);
     margin-block-end: var(--OC-margin-20);
@@ -496,6 +675,24 @@ export default {
 
 .hide-after-login {
 	margin-block-start: var(--OC-margin-20);
+}
+
+.text-content-textarea {
+	width: 100%;
+	min-height: 200px;
+	padding: 12px;
+	font-family: var(--font-face);
+	font-size: var(--default-font-size);
+	color: var(--color-main-text);
+	background-color: var(--color-main-background);
+	border: 2px solid var(--color-border-dark);
+	border-radius: var(--border-radius);
+	resize: vertical;
+}
+
+.text-content-textarea:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
 }
 
 /* Toast UI Editor Styles */

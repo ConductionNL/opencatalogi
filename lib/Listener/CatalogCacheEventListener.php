@@ -52,6 +52,8 @@ class CatalogCacheEventListener implements IEventListener
      * @param Event $event The event object.
      *
      * @return object|null The object entity or null if event type is unsupported.
+     *
+     * @psalm-suppress TypeDoesNotContainType — OpenRegister events extend Event
      */
     private function extractObjectFromEvent(Event $event): ?object
     {
@@ -150,10 +152,9 @@ class CatalogCacheEventListener implements IEventListener
 
             // For creation and updates, invalidate and warm up cache.
             $catalogiService->warmupCatalogCache($catalogData['slug']);
+            $eventType = 'update';
             if ($event instanceof ObjectCreatedEvent) {
                 $eventType = 'creation';
-            } else {
-                $eventType = 'update';
             }
 
             $logger->info(
