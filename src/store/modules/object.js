@@ -1,3 +1,4 @@
+import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 
 /**
@@ -649,9 +650,8 @@ export const useObjectStore = defineStore('object', {
 				return null
 			}
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/schemas/${config.schema}`,
+					generateUrl(`/apps/openregister/api/schemas/${config.schema}`),
 					{ method: 'GET', headers: { 'Content-Type': 'application/json' } },
 				)
 				if (!response.ok) return null

@@ -80,6 +80,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnDetailPage, CnDetailGrid, CnJsonViewer, buildHeaders } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
@@ -194,9 +195,8 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/opencatalogi/api/${this.apiPath}/${this.entityId}`,
+					generateUrl(`/apps/opencatalogi/api/${this.apiPath}/${this.entityId}`),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (!response.ok) throw new Error(`Failed to load ${this.entityLabel} (${response.status})`)

@@ -172,6 +172,7 @@
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 // eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
 import { CnDashboardPage, CnStatsBlock, CnChartWidget, buildHeaders } from '@conduction/nextcloud-vue'
@@ -307,9 +308,8 @@ export default {
 
 		async fetchSchemaChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/objects-by-schema`,
+					generateUrl('/apps/openregister/api/dashboard/charts/objects-by-schema'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
@@ -329,7 +329,7 @@ export default {
 					if (catalogSchemaIds.size > 0) {
 						// Fetch schema names to match against chart labels
 						const schemaResponse = await fetch(
-							`${prefix}/apps/openregister/api/schemas`,
+							generateUrl('/apps/openregister/api/schemas'),
 							{ method: 'GET', headers: buildHeaders() },
 						)
 						if (schemaResponse.ok) {
@@ -364,9 +364,8 @@ export default {
 
 		async fetchTrafficChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
+					generateUrl('/apps/openregister/api/dashboard/charts/audit-trail-actions'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
@@ -388,9 +387,8 @@ export default {
 
 		async fetchPopularSearchTerms() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/search-trails/popular-terms?limit=10`,
+					generateUrl('/apps/openregister/api/search-trails/popular-terms?limit=10'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {

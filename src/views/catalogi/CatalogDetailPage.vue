@@ -82,6 +82,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 import { CnDetailPage, CnDetailGrid, CnJsonViewer, buildHeaders } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
@@ -89,8 +90,8 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 
 const DETAIL_LAYOUT = [
-	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 8, gridHeight: 4 },
-	{ id: 2, widgetId: 'configuration', gridX: 8, gridY: 0, gridWidth: 4, gridHeight: 4 },
+	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
+	{ id: 2, widgetId: 'configuration', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 4 },
 	{ id: 3, widgetId: 'description', gridX: 0, gridY: 4, gridWidth: 12, gridHeight: 2 },
 	{ id: 4, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
 ]
@@ -165,9 +166,8 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/opencatalogi/api/catalogi/${this.catalogId}`,
+					generateUrl(`/apps/opencatalogi/api/catalogi/${this.catalogId}`),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (!response.ok) throw new Error(`Failed to load catalog (${response.status})`)
