@@ -155,7 +155,7 @@
 
 <script setup>
 import { useSearchStore } from '../store/modules/search.ts'
-import { t } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import {
 	NcCheckboxRadioSwitch,
 	NcButton,

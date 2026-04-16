@@ -9,7 +9,7 @@ import { objectStore } from '../../store/store.js'
 		:item-menu="itemMenu"
 		@show="onShow">
 		<template #empty-content>
-			<NcEmptyContent :title="t('opencatalogi', 'Geen concept publicaties gevonden')">
+			<NcEmptyContent :title="t('opencatalogi', 'No concept publications found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
@@ -44,7 +44,7 @@ export default {
 			loading: false,
 			itemMenu: {
 				show: {
-					text: 'Publicatie bekijken',
+					text: t('opencatalogi', 'View publication'),
 					icon: 'icon-open-in-app',
 				},
 			},

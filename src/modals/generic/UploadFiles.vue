@@ -9,7 +9,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
-			<h2>Add attachment</h2>
+			<h2>{{ t('opencatalogi', 'Add attachment') }}</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
@@ -20,10 +20,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					label="Automatically share"
+					:label="t('opencatalogi', 'Automatically share')"
 					type="switch"
 					:checked.sync="share">
-					Automatically share
+					{{ t('opencatalogi', 'Automatically share') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 

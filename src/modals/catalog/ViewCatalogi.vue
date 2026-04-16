@@ -164,6 +164,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
 import {
 	NcDialog,
 	NcButton,
@@ -231,7 +232,7 @@ export default {
 		},
 		deleteCatalog() {
 			navigationStore.setModal(false)
-			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
+			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: t('opencatalogi', 'Catalog') })
 		},
 		getRegisterById(id) {
 			const availableRegisters = objectStore.availableRegisters

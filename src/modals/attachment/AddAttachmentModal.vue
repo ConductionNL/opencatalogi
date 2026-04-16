@@ -90,7 +90,7 @@ const handleCancel = () => {
 		label-id="addAttachmentModal"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Add Attachment</h2>
+			<h2>{{ t('opencatalogi', 'Add Attachment') }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
 					<p>Attachment successfully added</p>
@@ -105,31 +105,31 @@ const handleCancel = () => {
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="newAttachment.title"
-					label="Title"
+					:label="t('opencatalogi', 'Title')"
 					:disabled="loading"
 					:loading="loading" />
 				<NcTextField
 					v-model="newAttachment.description"
-					label="Description"
+					:label="t('opencatalogi', 'Description')"
 					:disabled="loading"
 					:loading="loading" />
 				<NcSelectTags
 					v-model="newAttachment.tags"
-					label="Tags"
+					:label="t('opencatalogi', 'Tags')"
 					:disabled="loading"
 					:loading="loading" />
 				<NcCheckboxRadioSwitch
 					v-model="newAttachment.published"
 					:disabled="loading"
 					:loading="loading">
-					Published
+					{{ t('opencatalogi', 'Published') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="handleCancel">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -141,7 +141,7 @@ const handleCancel = () => {
 							<Plus v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Add
+					{{ t('opencatalogi', 'Add') }}
 				</NcButton>
 			</span>
 		</div>

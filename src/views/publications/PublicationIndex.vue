@@ -10,7 +10,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			:size="64"
 			class="loadingIcon"
 			appearance="dark"
-			name="Loading settings..." />
+			:name="t('opencatalogi', 'Loading settings...')" />
 
 		<!-- Show new table view if use_old_style_publishing_view is false (default) -->
 		<!-- NEW: Only show table view if no publication ID is provided, otherwise go to details page -->
@@ -24,14 +24,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<template #default>
 				<NcEmptyContent v-if="showEmptyContent"
 					class="detailContainer"
-					name="No publication"
-					description="No publication selected">
+					:name="t('opencatalogi', 'No publication')"
+					:description="t('opencatalogi', 'No publication selected')">
 					<template #icon>
 						<ListBoxOutline />
 					</template>
 					<template #action>
 						<NcButton type="primary" @click="objectStore.clearActiveObject('publication'); navigationStore.setModal('objectModal')">
-							Add publication
+							{{ t('opencatalogi', 'Add publication') }}
 						</NcButton>
 					</template>
 				</NcEmptyContent>

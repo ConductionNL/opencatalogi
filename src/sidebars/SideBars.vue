@@ -23,7 +23,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Edit
+					{{ t('opencatalogi', 'Edit') }}
 				</NcButton>
 			</template>
 		</NcAppSidebar>
@@ -38,7 +38,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Edit
+					{{ t('opencatalogi', 'Edit') }}
 				</NcButton>
 			</template>
 		</NcAppSidebar>

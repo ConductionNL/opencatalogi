@@ -4,13 +4,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog name="Bijlage verwijderen"
+	<NcDialog :name="t('opencatalogi', 'Delete attachment')"
 		:can-close="false">
 		<p v-if="!succes">
-			Do you want to delete <b>{{ objectStore.getActiveObject('publicationAttachment')?.title }}</b>? This action cannot be undone.
+			{{ t('opencatalogi', 'Do you want to delete') }} <b>{{ objectStore.getActiveObject('publicationAttachment')?.title }}</b>? {{ t('opencatalogi', 'This action cannot be undone.') }}
 		</p>
 		<NcNoteCard v-if="succes" type="success">
-			<p>Attachment successfully deleted</p>
+			<p>{{ t('opencatalogi', 'Attachment successfully deleted') }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -23,7 +23,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ succes ? 'Close' : 'Cancel' }}
+				{{ succes ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				v-if="!succes"
@@ -35,7 +35,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Delete v-if="!loading" :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 	</NcDialog>

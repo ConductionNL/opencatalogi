@@ -6,14 +6,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 <template>
 	<NcDialog
 		v-if="shouldShowDialog"
-		:name="`${dialogTitle}${isMultiple ? 's' : ''} verwijderen`"
+		:name="t('opencatalogi', 'Delete {title}', { title: `${dialogTitle}${isMultiple ? 's' : ''}` })"
 		:can-close="false">
 		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
 			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} successfully deleted</p>
+				<p>{{ t('opencatalogi', '{title} successfully deleted', { title: `${dialogTitle}${isMultiple ? 's' : ''}` }) }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState(objectType).success && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
-				<p>Something went wrong while deleting {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
+				<p>{{ t('opencatalogi', 'Something went wrong while deleting {title}', { title: `${dialogTitle.toLowerCase()}${isMultiple ? 's' : ''}` }) }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -21,14 +21,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'are' : 'is' }} being deleted...</span>
+			<span>{{ t('opencatalogi', '{title} {count} being deleted...', { title: `${dialogTitle}${isMultiple ? 's' : ''}`, count: isMultiple ? t('opencatalogi', 'are') : t('opencatalogi', 'is') }) }}</span>
 		</div>
 		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
 			<template v-if="isMultiple">
-				Do you want to delete the selected {{ dialogTitle.toLowerCase() }}s? This action cannot be undone.
+				{{ t('opencatalogi', 'Do you want to delete the selected {title}s? This action cannot be undone.', { title: dialogTitle.toLowerCase() }) }}
 			</template>
 			<template v-else>
-				Do you want to delete <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b>? This action cannot be undone.
+				{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }) }}
 			</template>
 		</p>
 		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
@@ -39,7 +39,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Cancel
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				:disabled="loading"
@@ -51,7 +51,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 					<Delete v-if="!loading" :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -61,7 +61,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>

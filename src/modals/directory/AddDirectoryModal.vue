@@ -104,17 +104,17 @@ import { navigationStore } from '../../store/store.js'
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="directoryUrl"
-					label="Directory URL"
+					:label="t('opencatalogi', 'Directory URL')"
 					placeholder="https://directory.opencatalogi.nl/apps/opencatalogi/api/directory"
 					:disabled="loading"
 					:loading="loading"
-					helper-text="The URL of the OpenCatalogi directory API endpoint" />
+					:helper-text="t('opencatalogi', 'The URL of the OpenCatalogi directory API endpoint')" />
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="closeModal">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading || !directoryUrl"
@@ -126,7 +126,7 @@ import { navigationStore } from '../../store/store.js'
 							<Sync v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Sync
+					{{ t('opencatalogi', 'Sync') }}
 				</NcButton>
 			</span>
 		</div>

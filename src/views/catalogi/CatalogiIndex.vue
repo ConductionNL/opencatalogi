@@ -112,6 +112,7 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
 import { NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
@@ -197,11 +198,11 @@ export default {
 		},
 		copyCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
-			navigationStore.setDialog('copyObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
+			navigationStore.setDialog('copyObject', { objectType: 'catalog', dialogTitle: t('opencatalogi', 'Catalog') })
 		},
 		deleteCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
-			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
+			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: t('opencatalogi', 'Catalog') })
 		},
 		getOrganizationName(organizationId) {
 			const organization = objectStore.getObject('organization', organizationId)

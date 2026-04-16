@@ -12,9 +12,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 			<NcActions :disabled="objectStore.isLoading('publication')"
 				:primary="true"
-				:menu-name="objectStore.isLoading('publication') ? 'Loading...' : 'Actions'"
+				:menu-name="objectStore.isLoading('publication') ? t('opencatalogi', 'Loading...') : t('opencatalogi', 'Actions')"
 				:inline="1"
-				title="Actions you can perform on this publication">
+				:title="t('opencatalogi', 'Actions you can perform on this publication')">
 				<template #icon>
 					<span>
 						<NcLoadingIcon v-if="objectStore.isLoading('publication')" :size="20" appearance="dark" />
@@ -22,24 +22,24 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					</span>
 				</template>
 				<NcActionButton close-after-click
-					title="View the documentation about publications"
+					:title="t('opencatalogi', 'View the documentation about publications')"
 					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
-					Help
+					{{ t('opencatalogi', 'Help') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setModal('objectModal')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Edit
+					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('copyPublication')">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
-					Copy
+					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
 				<NcActionButton v-if="objectStore.getActiveObject('publication')['@self']?.published === null"
 					close-after-click
@@ -47,7 +47,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<template #icon>
 						<Publish :size="20" />
 					</template>
-					Publish
+					{{ t('opencatalogi', 'Publish') }}
 				</NcActionButton>
 				<NcActionButton v-if="objectStore.getActiveObject('publication')['@self']?.published"
 					close-after-click
@@ -55,82 +55,82 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<template #icon>
 						<PublishOff :size="20" />
 					</template>
-					Depublish
+					{{ t('opencatalogi', 'Depublish') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="navigationStore.setDialog('downloadPublication')">
 					<template #icon>
 						<Download :size="20" />
 					</template>
-					Download
+					{{ t('opencatalogi', 'Download') }}
 				</NcActionButton>
 				<NcActionButton close-after-click disabled>
 					<template #icon>
 						<FolderOutline :size="20" />
 					</template>
-					Add attachment
+					{{ t('opencatalogi', 'Add attachment') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
+				<NcActionButton close-after-click @click="navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: t('opencatalogi', 'Publication') })">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					Delete
+					{{ t('opencatalogi', 'Delete') }}
 				</NcActionButton>
 			</NcActions>
 		</div>
 		<div class="container">
 			<div class="detailGrid">
 				<div v-if="publication.reference">
-					<b>Reference:</b>
+					<b>{{ t('opencatalogi', 'Reference') }}:</b>
 					<span>{{ publication.reference }}</span>
 				</div>
 				<div v-if="publication.summary">
-					<b>Summary:</b>
+					<b>{{ t('opencatalogi', 'Summary') }}:</b>
 					<span>{{ publication.summary || '-' }}</span>
 				</div>
 				<div v-if="publication.description">
-					<b>Description:</b>
+					<b>{{ t('opencatalogi', 'Description') }}:</b>
 					<span>{{ publication.description || '-' }}</span>
 				</div>
 				<div v-if="publication.category">
-					<b>Category:</b>
+					<b>{{ t('opencatalogi', 'Category') }}:</b>
 					<span>{{ publication.category || '-' }}</span>
 				</div>
 				<div v-if="publication.portal">
-					<b>Portal:</b>
+					<b>{{ t('opencatalogi', 'Portal') }}:</b>
 					<span><a target="_blank" :href="publication.portal">{{
 						publication.portal || '-' }}</a></span>
 				</div>
 				<div v-if="publication.image">
-					<b>Image:</b>
+					<b>{{ t('opencatalogi', 'Image') }}:</b>
 					<span>{{ publication.image || '-' }}</span>
 				</div>
 				<div v-if="publication.featured">
-					<b>Featured:</b>
-					<span>{{ publication.featured ? "Yes" : "No" }}</span>
+					<b>{{ t('opencatalogi', 'Featured') }}:</b>
+					<span>{{ publication.featured ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') }}</span>
 				</div>
 				<div v-if="publication.license">
-					<b>License:</b>
+					<b>{{ t('opencatalogi', 'License') }}:</b>
 					<span>{{ publication.license || '-' }}</span>
 				</div>
 				<div v-if="publication.status">
-					<b>Status:</b>
+					<b>{{ t('opencatalogi', 'Status') }}:</b>
 					<span>{{ publication.status || '-' }}</span>
 				</div>
 				<div v-if="publication.published">
-					<b>Published:</b>
+					<b>{{ t('opencatalogi', 'Published') }}:</b>
 					<span>{{ new Date(publication.published).toLocaleDateString() || '-' }}</span>
 				</div>
 				<div v-if="publication.modified">
-					<b>Modified:</b>
+					<b>{{ t('opencatalogi', 'Modified') }}:</b>
 					<span>{{ publication.modified || '-' }}</span>
 				</div>
 				<div v-if="publication.source">
-					<b>Source:</b>
+					<b>{{ t('opencatalogi', 'Source') }}:</b>
 					<span>{{ publication.source || '-' }}</span>
 				</div>
 				<div v-if="publication.catalogi">
-					<b>Catalog:</b>
-					<span v-if="catalogiLoading">Loading...</span>
+					<b>{{ t('opencatalogi', 'Catalog') }}:</b>
+					<span v-if="catalogiLoading">{{ t('opencatalogi', 'Loading...') }}</span>
 					<div v-if="!catalogiLoading" class="buttonLinkContainer">
 						<span>{{ catalogi?.title }}</span>
 						<NcActions>
@@ -171,20 +171,20 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		</div>
 		<div class="tabContainer">
 			<BTabs content-class="mt-3" justified>
-				<BTab title="Attachments" active>
+				<BTab :title="t('opencatalogi', 'Attachments')" active>
 					<div class="tabPanel">
 						<div class="buttonsContainer">
 							<NcButton type="primary"
 								class="fullWidthButton"
-								aria-label="Add attachment"
+								:aria-label="t('opencatalogi', 'Add attachment')"
 								@click="addAttachment">
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Add attachment
+								{{ t('opencatalogi', 'Add attachment') }}
 							</NcButton>
 							<NcButton type="secondary"
-								aria-label="Open map"
+								:aria-label="t('opencatalogi', 'Open folder')"
 								@click="openFolder(publication?.['@self']?.folder)">
 								<template #icon>
 									<FolderOutline :size="20" />
@@ -193,9 +193,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<NcActions :disabled="objectStore.isLoading('publicationAttachments')"
 								:primary="true"
 								class="checkboxListActionButton"
-								:menu-name="objectStore.isLoading('publicationAttachments') ? 'Laden...' : 'Acties'"
+								:menu-name="objectStore.isLoading('publicationAttachments') ? t('opencatalogi', 'Loading...') : t('opencatalogi', 'Actions')"
 								:inline="0"
-								title="Actions you can perform on this publication">
+								:title="t('opencatalogi', 'Actions you can perform on this publication')">
 								<template #icon>
 									<span>
 										<NcLoadingIcon v-if="objectStore.isLoading('publicationAttachments')" :size="20" appearance="dark" />
@@ -207,32 +207,32 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										<SelectAllIcon v-if="!allPublishedSelected" :size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allPublishedSelected ? "Select" : "Deselect" }} all published attachments
+									{{ !allPublishedSelected ? t('opencatalogi', 'Select all published attachments') : t('opencatalogi', 'Deselect all published attachments') }}
 								</NcActionButton>
 								<NcActionButton close-after-click @click="selectAllAttachments('unpublished')">
 									<template #icon>
 										<SelectAllIcon v-if="!allUnpublishedSelected" :size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allUnpublishedSelected ? "Select" : "Deselect" }} all unpublished attachments
+									{{ !allUnpublishedSelected ? t('opencatalogi', 'Select all unpublished attachments') : t('opencatalogi', 'Deselect all unpublished attachments') }}
 								</NcActionButton>
 								<NcActionButton v-if="selectedUnpublishedCount > 0" close-after-click @click="bulkPublish">
 									<template #icon>
 										<Publish :size="20" />
 									</template>
-									Publish {{ selectedUnpublishedCount }} attachment{{ selectedUnpublishedCount > 1 ? 's' : '' }}
+									{{ n('opencatalogi', 'Publish {count} attachment', 'Publish {count} attachments', selectedUnpublishedCount, { count: selectedUnpublishedCount }) }}
 								</NcActionButton>
 								<NcActionButton v-if="selectedPublishedCount > 0" close-after-click @click="bulkDepublish">
 									<template #icon>
 										<PublishOff :size="20" />
 									</template>
-									Depublish {{ selectedPublishedCount }} attachment{{ selectedPublishedCount > 1 ? 's' : '' }}
+									{{ n('opencatalogi', 'Depublish {count} attachment', 'Depublish {count} attachments', selectedPublishedCount, { count: selectedPublishedCount }) }}
 								</NcActionButton>
 								<NcActionButton v-if="selectedAttachments.length > 0" close-after-click @click="bulkDeleteAttachments">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									Delete {{ selectedAttachmentsEntities.length }} attachment{{ selectedAttachmentsEntities.length > 1 ? 's' : '' }}
+									{{ n('opencatalogi', 'Delete {count} attachment', 'Delete {count} attachments', selectedAttachmentsEntities.length, { count: selectedAttachmentsEntities.length }) }}
 								</NcActionButton>
 							</NcActions>
 						</div>
@@ -279,10 +279,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 												:options="labelOptionsEdit.options"
 												@tag="addNewTag" />
 											<NcButton
-												v-tooltip="'Labels opslaan'"
+												v-tooltip="t('opencatalogi', 'Save labels')"
 												class="editTagsButton"
 												type="primary"
-												:aria-label="`save tags for ${attachment.title}`"
+												:aria-label="t('opencatalogi', 'Save tags for {title}', { title: attachment.title })"
 												@click="saveTags(attachment, editedTags)">
 												<template #icon>
 													<ContentSaveOutline v-if="!saveTagsLoading.includes(attachment.id)" :size="20" />
@@ -292,14 +292,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										</div>
 									</template>
 									<template #subname>
-										{{ attachment?.published ? new Date(attachment?.published).toLocaleDateString() : "Unpublished" }} - {{ attachment?.type || 'No type' }}
+										{{ attachment?.published ? new Date(attachment?.published).toLocaleDateString() : t('opencatalogi', 'Unpublished') }} - {{ attachment?.type || t('opencatalogi', 'No type') }}
 									</template>
 									<template #actions>
 										<NcActionButton close-after-click @click="openFile(attachment)">
 											<template #icon>
 												<OpenInNew :size="20" />
 											</template>
-											View file
+											{{ t('opencatalogi', 'View file') }}
 										</NcActionButton>
 										<NcActionButton v-if="!attachment.published"
 											close-after-click
@@ -307,7 +307,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<Publish :size="20" />
 											</template>
-											Publish
+											{{ t('opencatalogi', 'Publish') }}
 										</NcActionButton>
 										<NcActionButton v-if="attachment.published"
 											close-after-click
@@ -315,13 +315,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<PublishOff :size="20" />
 											</template>
-											Depublish
+											{{ t('opencatalogi', 'Depublish') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="deleteFile(attachment)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Delete
+											{{ t('opencatalogi', 'Delete') }}
 										</NcActionButton>
 										<NcActionButton v-if="editingTags !== attachment.title"
 											close-after-click
@@ -329,7 +329,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<TagEdit :size="20" />
 											</template>
-											Edit tags
+											{{ t('opencatalogi', 'Edit tags') }}
 										</NcActionButton>
 										<NcActionButton v-if="editingTags === attachment.title"
 											close-after-click
@@ -337,7 +337,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<TagOff :size="20" />
 											</template>
-											Stop editing tags
+											{{ t('opencatalogi', 'Stop editing tags') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
@@ -346,9 +346,9 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<div class="paginationContainer">
 								<BPagination v-model="currentPage" :total-rows="publicationAttachments?.total" :per-page="limit" />
 								<div>
-									<span>Number of items per page</span>
+									<span>{{ t('opencatalogi', 'Items per page') }}</span>
 									<NcSelect v-model="limit"
-										aria-label-combobox="Number of items per page"
+										:aria-label-combobox="t('opencatalogi', 'Items per page')"
 										class="limitSelect"
 										:options="limitOptions.options"
 										:taggable="true"
@@ -359,7 +359,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 						<div v-if="publicationAttachments?.length === 0">
 							<b class="emptyStateMessage">
-								No attachments added yet
+								{{ t('opencatalogi', 'No attachments added yet') }}
 							</b>
 						</div>
 
@@ -368,7 +368,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<NcLoadingIcon :size="64"
 								class="loadingIcon"
 								appearance="dark"
-								name="Attachments are loading" />
+								:name="t('opencatalogi', 'Attachments are loading')" />
 						</div>
 					</div>
 				</BTab>
@@ -455,24 +455,24 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						</b>
 					</div>
 				</BTab> -->
-				<BTab title="Thema's">
+				<BTab :title="t('opencatalogi', 'Themes')">
 					<div class="tabPanel">
 						<div class="buttonsContainer">
 							<NcButton type="primary"
 								class="fullWidthButton"
-								aria-label="Add theme"
+								:aria-label="t('opencatalogi', 'Add theme')"
 								@click="navigationStore.setModal('addPublicationTheme')">
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Add theme
+								{{ t('opencatalogi', 'Add theme') }}
 							</NcButton>
 							<NcActions :disabled="objectStore.isLoading('themes')"
 								:primary="true"
 								class="checkboxListActionButton"
-								:menu-name="objectStore.isLoading('themes') ? 'Laden...' : 'Acties'"
+								:menu-name="objectStore.isLoading('themes') ? t('opencatalogi', 'Loading...') : t('opencatalogi', 'Actions')"
 								:inline="0"
-								title="Actions you can perform on this publication">
+								:title="t('opencatalogi', 'Actions you can perform on this publication')">
 								<template #icon>
 									<span>
 										<NcLoadingIcon v-if="objectStore.isLoading('themes')" :size="20" appearance="dark" />
@@ -484,13 +484,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										<SelectAllIcon v-if="!allThemesSelected" :size="20" />
 										<SelectRemove v-else :size="20" />
 									</template>
-									{{ !allThemesSelected ? "Select" : "Deselect" }} all themes
+									{{ !allThemesSelected ? t('opencatalogi', 'Select all themes') : t('opencatalogi', 'Deselect all themes') }}
 								</NcActionButton>
 								<NcActionButton close-after-click :disabled="selectedThemes.length === 0" @click="bulkDeleteThemes">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									Delete {{ selectedThemes.length }} theme{{ selectedThemes.length > 1 || selectedThemes.length === 0 ? "'s" : '' }}
+									{{ n('opencatalogi', 'Delete {count} theme', 'Delete {count} themes', selectedThemes.length, { count: selectedThemes.length }) }}
 								</NcActionButton>
 							</NcActions>
 						</div>
@@ -517,20 +517,20 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 											<template #icon>
 												<OpenInApp :size="20" />
 											</template>
-											View
+											{{ t('opencatalogi', 'View') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="objectStore.setActiveObject('theme', value); navigationStore.setDialog('deletePublicationThemeDialog')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Delete
+											{{ t('opencatalogi', 'Delete') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<NcListItem v-for="(value, key, i) in missingThemes"
 								:key="`${value}${i}`"
-								:name="'Thema ' + value"
+								:name="t('opencatalogi', 'Theme {id}', { id: value })"
 								:bold="false"
 								:force-display-actions="true">
 								<template #icon>
@@ -538,40 +538,21 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 										:size="44" />
 								</template>
 								<template #subname>
-									Theme {{ value }} does not exist, it is recommended to delete it from this publication.
+									{{ t('opencatalogi', 'Theme {id} does not exist, it is recommended to delete it from this publication.', { id: value }) }}
 								</template>
 								<template #actions>
 									<NcActionButton close-after-click :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
 										<template #icon>
-											<ShapeOutline
-												:class="themeStore.themeItem?.id === value.id && 'selectedZaakIcon'"
-												disable-menu
-												:size="44" />
+											<Delete :size="20" />
 										</template>
-										<template #subname>
-											{{ value.summary }}
-										</template>
-										<template #actions>
-											<NcActionButton @click="themeStore.setThemeItem(value); $router.push('/themes')">
-												<template #icon>
-													<OpenInApp :size="20" />
-												</template>
-												View
-											</NcActionButton>
-											<NcActionButton @click="themeStore.setThemeItem(value); navigationStore.setDialog('deletePublicationThemeDialog')">
-												<template #icon>
-													<Delete :size="20" />
-												</template>
-												Delete
-											</NcActionButton>
-										</template>
-									</ncactionbutton>
+										{{ t('opencatalogi', 'Delete') }}
+									</NcActionButton>
 								</template>
 							</NcListItem>
 						</div>
 						<NcListItem v-for="(value, key, i) in missingThemes"
 							:key="`${value}${i}`"
-							:name="'Thema ' + value"
+							:name="t('opencatalogi', 'Theme {id}', { id: value })"
 							:bold="false"
 							:force-display-actions="true">
 							<template #icon>
@@ -579,80 +560,80 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									:size="44" />
 							</template>
 							<template #subname>
-								Theme {{ value }} does not exist, it is recommended to delete it from this publication.
+								{{ t('opencatalogi', 'Theme {id} does not exist, it is recommended to delete it from this publication.', { id: value }) }}
 							</template>
 							<template #actions>
 								<NcActionButton :disabled="deleteThemeLoading" @click="deleteMissingTheme(value)">
 									<template #icon>
 										<Delete :size="20" />
 									</template>
-									Delete
+									{{ t('opencatalogi', 'Delete') }}
 								</NcActionButton>
 							</template>
 						</NcListItem>
 					</div>
 					<div v-if="!filteredThemes?.length && !missingThemes?.length" class="tabPanel">
 						<b class="emptyStateMessage">
-							No themes found
+							{{ t('opencatalogi', 'No themes found') }}
 						</b>
 					</div>
 				</BTab>
-				<BTab title="Logging">
+				<BTab :title="t('opencatalogi', 'Logging')">
 					<table width="100%">
 						<tr>
-							<th><b>Timestamp</b></th>
-							<th><b>User</b></th>
-							<th><b>Action</b></th>
-							<th><b>Details</b></th>
+							<th><b>{{ t('opencatalogi', 'Timestamp') }}</b></th>
+							<th><b>{{ t('opencatalogi', 'User') }}</b></th>
+							<th><b>{{ t('opencatalogi', 'Action') }}</b></th>
+							<th><b>{{ t('opencatalogi', 'Details') }}</b></th>
 						</tr>
 						<tr>
 							<td>18-07-2024 11:55:21</td>
 							<td>Ruben van der Linde</td>
-							<td>Created</td>
+							<td>{{ t('opencatalogi', 'Created') }}</td>
 							<td>
 								<NcButton @click="navigationStore.setDialog('viewLog')">
 									<template #icon>
 										<TimelineQuestionOutline :size="20" />
 									</template>
-									View details
+									{{ t('opencatalogi', 'View details') }}
 								</NcButton>
 							</td>
 						</tr>
 					</table>
 				</BTab>
-				<BTab v-if="1 == 2" title="Rechten">
+				<BTab v-if="1 == 2" :title="t('opencatalogi', 'Permissions')">
 					<table width="100%">
 						<tr>
-							<td>This publication is <b v-if="prive">NOT</b> publicly accessible</td>
+							<td>{{ t('opencatalogi', 'This publication is') }} <b v-if="prive">{{ t('opencatalogi', 'NOT') }}</b> {{ t('opencatalogi', 'publicly accessible') }}</td>
 							<td>
 								<NcButton @click="prive = !prive">
 									<template #icon>
 										<LockOpenVariantOutline v-if="!prive" :size="20" />
 										<LockOutline v-if="prive" :size="20" />
 									</template>
-									<span v-if="!prive">Make private</span>
-									<span v-if="prive">Make public</span>
+									<span v-if="!prive">{{ t('opencatalogi', 'Make private') }}</span>
+									<span v-if="prive">{{ t('opencatalogi', 'Make public') }}</span>
 								</NcButton>
 							</td>
 						</tr>
 						<tr v-if="prive">
-							<td>User groups</td>
+							<td>{{ t('opencatalogi', 'User groups') }}</td>
 							<td>
 								<NcSelectTags v-model="userGroups"
-									input-label="user groups"
+									:input-label="t('opencatalogi', 'User groups')"
 									:multiple="true" />
 							</td>
 						</tr>
 					</table>
 				</BTab>
-				<BTab v-if="1 == 2" title="Statistieken">
+				<BTab v-if="1 == 2" :title="t('opencatalogi', 'Statistics')">
 					<apexchart v-if="publication.status === 'Published'"
 						width="100%"
 						type="line"
 						:options="chart.options"
 						:series="chart.series" />
 					<NcNoteCard type="info">
-						<p>There are no statistics known about this publication</p>
+						<p>{{ t('opencatalogi', 'There are no statistics known about this publication') }}</p>
 					</NcNoteCard>
 				</BTab>
 			</BTabs>

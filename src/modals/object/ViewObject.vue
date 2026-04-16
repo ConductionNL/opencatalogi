@@ -28,35 +28,35 @@ import { EventBus } from '../../eventBus.js'
 				<!-- For new objects, show catalog/register/schema selection first -->
 				<div v-if="isNewObject && !hasSelectedSchema" class="selectionContainer">
 					<div v-if="catalogOptions.length > 1" class="selectionStep">
-						<h3>Select Catalog</h3>
-						<p>Choose the catalog where this publication will be stored.</p>
+						<h3>{{ t('opencatalogi', 'Select catalog') }}</h3>
+						<p>{{ t('opencatalogi', 'Choose the catalog where this publication will be stored.') }}</p>
 						<NcSelect
 							v-model="selectedCatalog"
 							:options="catalogOptions"
-							input-label="Catalog"
-							placeholder="Select a catalog..."
+							:input-label="t('opencatalogi', 'Catalog')"
+							:placeholder="t('opencatalogi', 'Select a catalog...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
 					<div v-if="selectedCatalog && registerOptions.length > 1" class="selectionStep">
-						<h3>Select Register</h3>
-						<p>Choose the register that will store this publication.</p>
+						<h3>{{ t('opencatalogi', 'Select register') }}</h3>
+						<p>{{ t('opencatalogi', 'Choose the register that will store this publication.') }}</p>
 						<NcSelect
 							v-model="selectedRegister"
 							:options="registerOptions"
-							input-label="Register"
-							placeholder="Select a register..."
+							:input-label="t('opencatalogi', 'Register')"
+							:placeholder="t('opencatalogi', 'Select a register...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
 					<div v-if="selectedRegister && schemaOptions.length > 1" class="selectionStep">
-						<h3>Select Schema</h3>
-						<p>Choose the schema that defines the structure of this publication.</p>
+						<h3>{{ t('opencatalogi', 'Select schema') }}</h3>
+						<p>{{ t('opencatalogi', 'Choose the schema that defines the structure of this publication.') }}</p>
 						<NcSelect
 							v-model="selectedSchema"
 							:options="schemaOptions"
-							input-label="Schema"
-							placeholder="Select a schema..."
+							:input-label="t('opencatalogi', 'Schema')"
+							:placeholder="t('opencatalogi', 'Select a schema...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
@@ -65,7 +65,7 @@ import { EventBus } from '../../eventBus.js'
 							<template #icon>
 								<ArrowRight :size="20" />
 							</template>
-							Continue to Properties
+							{{ t('opencatalogi', 'Continue to properties') }}
 						</NcButton>
 					</div>
 				</div>
@@ -76,19 +76,19 @@ import { EventBus } from '../../eventBus.js'
 						<thead>
 							<tr class="viewTableRow">
 								<th class="tableColumnConstrained">
-									Property
+									{{ t('opencatalogi', 'Property') }}
 								</th>
 								<th class="tableColumnExpanded">
-									Value
+									{{ t('opencatalogi', 'Value') }}
 								</th>
 								<th class="tableColumnActions actions-header-cell">
 									<!-- Show/Hide Constant & Immutable Properties Toggle -->
 									<NcButton v-if="hasConstantOrImmutableProperties"
-										v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+										v-tooltip="showConstantProperties ? t('opencatalogi', 'Hide constant & immutable properties') : t('opencatalogi', 'Show constant & immutable properties')"
 										type="primary"
 										size="small"
 										class="action-btn eye-toggle-btn"
-										:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+										:aria-label="showConstantProperties ? t('opencatalogi', 'Hide constant & immutable properties') : t('opencatalogi', 'Show constant & immutable properties')"
 										@click="showConstantProperties = !showConstantProperties">
 										<template #icon>
 											<Eye v-if="!showConstantProperties" :size="16" />
@@ -188,7 +188,7 @@ import { EventBus } from '../../eventBus.js'
 												<NcSelect
 													v-model="themeFormData"
 													:options="themeOptions"
-													input-label="Themes"
+													:input-label="t('opencatalogi', 'Themes')"
 													multiple
 													:placeholder="getPropertyDisplayName(key)" />
 											</div>
@@ -204,7 +204,7 @@ import { EventBus } from '../../eventBus.js'
 													:step="getPropertyStep(key)"
 													@update:value="updatePropertyValue(key, $event)" />
 												<InformationOutline
-													v-tooltip="'Array values should be separated by commas'"
+													v-tooltip="t('opencatalogi', 'Array values should be separated by commas')"
 													:size="25"
 													class="info-icon" />
 											</div>
@@ -226,7 +226,7 @@ import { EventBus } from '../../eventBus.js'
 												<!-- Show edited value -->
 												<pre
 													v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
-													v-tooltip="'JSON object (edited)'"
+													v-tooltip="t('opencatalogi', 'JSON object (edited)')"
 													class="json-value">{{ formatValue(formData[key]) }}</pre>
 												<span
 													v-else-if="isDateTimeProperty(key) && formData[key]"
@@ -242,7 +242,7 @@ import { EventBus } from '../../eventBus.js'
 												<!-- Show original value -->
 												<pre
 													v-if="key !== 'themes' && typeof value === 'object' && value !== null"
-													v-tooltip="'JSON object'"
+													v-tooltip="t('opencatalogi', 'JSON object')"
 													class="json-value">{{ formatValue(value) }}</pre>
 												<span
 													v-else-if="isDateTimeProperty(key) && value"
@@ -278,7 +278,7 @@ import { EventBus } from '../../eventBus.js'
 				<!-- For existing objects, show tabs -->
 				<div v-else class="tabContainer">
 					<BTabs v-model="activeTab" content-class="mt-3" justified>
-						<BTab title="Properties" active>
+						<BTab :title="t('opencatalogi', 'Properties')" active>
 							<div class="viewTableContainer">
 								<table class="viewTable">
 									<thead>
@@ -292,11 +292,11 @@ import { EventBus } from '../../eventBus.js'
 											<th class="tableColumnActions actions-header-cell">
 												<!-- Show/Hide Constant & Immutable Properties Toggle -->
 												<NcButton v-if="hasConstantOrImmutableProperties"
-													v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+													v-tooltip="showConstantProperties ? t('opencatalogi', 'Hide constant & immutable properties') : t('opencatalogi', 'Show constant & immutable properties')"
 													type="primary"
 													size="small"
 													class="action-btn eye-toggle-btn"
-													:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+													:aria-label="showConstantProperties ? t('opencatalogi', 'Hide constant & immutable properties') : t('opencatalogi', 'Show constant & immutable properties')"
 													@click="showConstantProperties = !showConstantProperties">
 													<template #icon>
 														<Eye v-if="!showConstantProperties" :size="16" />
@@ -397,7 +397,7 @@ import { EventBus } from '../../eventBus.js'
 															<NcSelect
 																v-model="themeFormData"
 																:options="themeOptions"
-																input-label="Themes"
+																:input-label="t('opencatalogi', 'Themes')"
 																multiple
 																:placeholder="getPropertyDisplayName(key)" />
 														</div>
@@ -413,7 +413,7 @@ import { EventBus } from '../../eventBus.js'
 																:step="getPropertyStep(key)"
 																@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
 															<InformationOutline
-																v-tooltip="'Array values should be separated by commas'"
+																v-tooltip="t('opencatalogi', 'Array values should be separated by commas')"
 																:size="25"
 																class="info-icon" />
 														</div>
@@ -435,7 +435,7 @@ import { EventBus } from '../../eventBus.js'
 															<!-- Show edited value -->
 															<pre
 																v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
-																v-tooltip="'JSON object (edited)'"
+																v-tooltip="t('opencatalogi', 'JSON object (edited)')"
 																class="json-value">{{ formatValue(formData[key]) }}</pre>
 															<span
 																v-else-if="isDateTimeProperty(key) && formData[key]"
@@ -451,7 +451,7 @@ import { EventBus } from '../../eventBus.js'
 															<!-- Show original value -->
 															<pre
 																v-if="key !== 'themes' && typeof value === 'object' && value !== null"
-																v-tooltip="'JSON object'"
+																v-tooltip="t('opencatalogi', 'JSON object')"
 																class="json-value">{{ formatValue(value) }}</pre>
 															<span
 																v-else-if="isDateTimeProperty(key) && value"
@@ -484,7 +484,7 @@ import { EventBus } from '../../eventBus.js'
 								</table>
 							</div>
 						</BTab>
-						<BTab title="Metadata">
+						<BTab :title="t('opencatalogi', 'Metadata')">
 							<div class="viewTableContainer">
 								<table class="viewTable">
 									<thead>
@@ -528,8 +528,8 @@ import { EventBus } from '../../eventBus.js'
 							</NcNoteCard>
 
 							<NcEmptyContent v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)"
-								title="Loading files..."
-								:description="'Loading files for this publication...'">
+								:title="t('opencatalogi', 'Loading files...')"
+								:description="t('opencatalogi', 'Loading files for this publication...')">
 								<template #icon>
 									<NcLoadingIcon :size="64" />
 								</template>

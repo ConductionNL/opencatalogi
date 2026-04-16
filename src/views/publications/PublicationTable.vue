@@ -1,14 +1,6 @@
 <script setup>
-import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
-import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
-
-const sidebarState = inject('sidebarState', null)
-const { schema, sortKey, sortOrder, visibleColumns, onSort, refresh } = useListView('publication', {
-	sidebarState,
-	objectStore,
-})
 </script>
 
 <template>
@@ -17,7 +9,6 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, refresh } = useListV
 		:title="t('opencatalogi', 'Publications')"
 		:description="t('opencatalogi', 'Manage your publications and their status')"
 		:show-title="true"
-		:schema="schema"
 		:objects="filteredPublications"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -250,13 +241,8 @@ export default {
 			}
 		},
 		viewPublication(publication) {
-			const id = publication?.['@self']?.id || publication?.id
-			if (id) {
-				this.$router.push({
-					name: 'PublicationDetail',
-					params: { catalogSlug: this.$route.params.catalogSlug, id },
-				})
-			}
+			objectStore.setActiveObject('publication', publication)
+			navigationStore.setModal('viewObject')
 		},
 		copyPublication(publication) {
 			objectStore.setActiveObject('publication', publication)

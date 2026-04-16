@@ -35,7 +35,22 @@ Vanuit het OpenCatalogi-stelsel gaan we er vanuit dat:
 
 Hierbij kan één organisatie meerdere catalogi hebben, maar behoort iedere catalogus altijd bij één organisatie.
 
-![UML Diagram van OpenCatalogi](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/components_simple.svg "UML Diagram van OpenCatalogi")
+```mermaid
+graph TD
+    subgraph Internet
+        user["👤 Gebruiker"]
+    end
+    subgraph org1["Organisatie 1"]
+        cat1["Catalogus A"]
+        cat3["Catalogus B"]
+    end
+    subgraph org2["Organisatie 2"]
+        cat2["Catalogus"]
+    end
+    user -.->|Opzoeken| cat1
+    cat1 -.->|Gebruikt| cat2
+    cat1 -.->|Gebruikt| cat3
+```
 
 Voor een uitgebreide opzet over de interne werking van catalogi, zie ook de [architectuursectie](/docs/handleidingen/Architectuur.md).
 

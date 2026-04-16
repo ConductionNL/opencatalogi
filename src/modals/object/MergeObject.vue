@@ -4,45 +4,44 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog name="Merge Objects"
+	<NcDialog :name="t('opencatalogi', 'Merge objects')"
 		size="large"
 		:can-close="false">
 		<!-- Register and Schema Information -->
 		<div class="detail-grid">
 			<div class="detail-item">
-				<span class="detail-label">Register:</span>
+				<span class="detail-label">{{ t('opencatalogi', 'Register:') }}</span>
 				<span class="detail-value">{{ catalogStore.catalogiItem?.title || catalogStore.catalogiItem?.id }}</span>
 			</div>
 			<div class="detail-item">
-				<span class="detail-label">Schema:</span>
+				<span class="detail-label">{{ t('opencatalogi', 'Schema:') }}</span>
 				<span class="detail-value">{{ catalogStore.schemaItem?.title || catalogStore.schemaItem?.id }}</span>
 			</div>
 		</div>
 
 		<!-- Information about merge restrictions (only show if not completed) -->
 		<NcNoteCard v-if="step !== 3" type="info">
-			Objects can only be merged if they belong to the same register and schema.
-			If you want to merge objects from different schemas or registers, you need to migrate them first.
+			{{ t('opencatalogi', 'Objects can only be merged if they belong to the same register and schema. If you want to merge objects from different schemas or registers, you need to migrate them first.') }}
 		</NcNoteCard>
 
 		<!-- Step 1: Select Target Object -->
 		<div v-if="step === 1" class="merge-step step-1">
 			<h3 class="step-title">
-				Select Target Object
+				{{ t('opencatalogi', 'Select target object') }}
 			</h3>
-			<p>Select the object to merge <strong>{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id }}</strong> into:</p>
+			<p>{{ t('opencatalogi', 'Select the object to merge') }} <strong>{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id }}</strong> {{ t('opencatalogi', 'into:') }}</p>
 
 			<div class="search-container">
 				<NcTextField
 					v-model="searchTerm"
-					label="Search objects"
-					placeholder="Type to search for objects..."
+					:label="t('opencatalogi', 'Search objects')"
+					:placeholder="t('opencatalogi', 'Type to search for objects...')"
 					@input="searchObjects" />
 			</div>
 
 			<div v-if="loading" class="loading-container">
 				<NcLoadingIcon :size="32" />
-				<p>Loading objects...</p>
+				<p>{{ t('opencatalogi', 'Loading objects...') }}</p>
 			</div>
 
 			<div v-else-if="availableObjects.length" class="object-list">
@@ -60,16 +59,16 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</div>
 			</div>
 
-			<NcEmptyContent v-else-if="!loading" name="No objects found">
+			<NcEmptyContent v-else-if="!loading" :name="t('opencatalogi', 'No objects found')">
 				<template #description>
-					{{ searchTerm ? 'No objects match your search criteria' : 'No objects available for merging' }}
+					{{ searchTerm ? t('opencatalogi', 'No objects match your search criteria') : t('opencatalogi', 'No objects available for merging') }}
 				</template>
 			</NcEmptyContent>
 		</div>
 
 		<!-- Step 2: Merge Configuration -->
 		<div v-if="step === 2" class="merge-step">
-			<h3>Configure Merge</h3>
+			<h3>{{ t('opencatalogi', 'Configure merge') }}</h3>
 			<p>
 				Merging <strong>{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id }}</strong>
 				into <strong>{{ selectedTargetObject?.['@self']?.name || selectedTargetObject?.name || selectedTargetObject?.['@self']?.title || selectedTargetObject?.['@self']?.id }}</strong>
@@ -80,10 +79,10 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<table class="merge-table">
 					<thead>
 						<tr>
-							<th>Property</th>
-							<th>Source</th>
-							<th>Target</th>
-							<th>Result Value</th>
+							<th>{{ t('opencatalogi', 'Property') }}</th>
+							<th>{{ t('opencatalogi', 'Source') }}</th>
+							<th>{{ t('opencatalogi', 'Target') }}</th>
+							<th>{{ t('opencatalogi', 'Result value') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -292,7 +291,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<table class="report-table">
 						<thead>
 							<tr>
-								<th>Property</th>
+								<th>{{ t('opencatalogi', 'Property') }}</th>
 								<th>Old Value</th>
 								<th>New Value</th>
 							</tr>

@@ -9,7 +9,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('publication')"
-					label="Search"
+					:label="t('opencatalogi', 'Search')"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
 					@update:value="objectStore.setSearchTerm('publication', $event)"
@@ -17,66 +17,66 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionCaption name="Search" />
+					<NcActionCaption :name="t('opencatalogi', 'Search')" />
 					<NcActionCheckbox
 						:checked="conceptChecked"
 						:value="'concept'"
 						@change="handleCheckboxChange('concept', $event)">
-						Concept
+						{{ t('opencatalogi', 'Concept') }}
 					</NcActionCheckbox>
 					<NcActionCheckbox
 						:checked="gepubliceerdChecked"
 						:value="'gepubliceerd'"
 						@change="handleCheckboxChange('gepubliceerd', $event)">
-						Published
+						{{ t('opencatalogi', 'Published') }}
 					</NcActionCheckbox>
 					<NcActionSeparator />
-					<NcActionCaption name="Sort" />
+					<NcActionCaption :name="t('opencatalogi', 'Sort')" />
 					<NcActionInput
 						v-model="sortField"
 						type="multiselect"
-						input-label="Property"
+						:input-label="t('opencatalogi', 'Property')"
 						:options="['Title', 'Published date', 'Modified date']">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Choose a property
+						{{ t('opencatalogi', 'Choose a property') }}
 					</NcActionInput>
 					<NcActionRadio
 						:checked="sortDirection === 'asc'"
 						name="sortDirection"
 						value="asc"
 						@update:checked="updateSortOrder('asc')">
-						Ascending
+						{{ t('opencatalogi', 'Ascending') }}
 					</NcActionRadio>
 					<NcActionRadio
 						:checked="sortDirection === 'desc'"
 						name="sortDirection"
 						value="desc"
 						@update:checked="updateSortOrder('desc')">
-						Descending
+						{{ t('opencatalogi', 'Descending') }}
 					</NcActionRadio>
 					<NcActionSeparator />
-					<NcActionCaption name="Actions" />
+					<NcActionCaption :name="t('opencatalogi', 'Actions')" />
 					<NcActionButton
-						title="View the documentation about publications"
+						:title="t('opencatalogi', 'View the documentation about publications')"
 						@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
 						<template #icon>
 							<HelpCircleOutline :size="20" />
 						</template>
-						Help
+						{{ t('opencatalogi', 'Help') }}
 					</NcActionButton>
 					<NcActionButton close-after-click :disabled="catalogStore.isLoading" @click="catalogStore.fetchPublications">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('opencatalogi', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.clearActiveObject('publication'); navigationStore.setModal('objectModal')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add publication
+						{{ t('opencatalogi', 'Add publication') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -100,37 +100,37 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Edit
+							{{ t('opencatalogi', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyPublication')">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
-							Copy
+							{{ t('opencatalogi', 'Copy') }}
 						</NcActionButton>
 						<NcActionButton v-if="publication['@self'].published === null" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('publish')">
 							<template #icon>
 								<Publish :size="20" />
 							</template>
-							Publish
+							{{ t('opencatalogi', 'Publish') }}
 						</NcActionButton>
 						<NcActionButton v-if="publication['@self'].published" close-after-click @click="objectStore.setActiveObject('publication', publication); publishPublication('depublish')">
 							<template #icon>
 								<PublishOff :size="20" />
 							</template>
-							Depublish
+							{{ t('opencatalogi', 'Depublish') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('AddAttachment')">
 							<template #icon>
 								<FilePlusOutline :size="20" />
 							</template>
-							Add attachment
+							{{ t('opencatalogi', 'Add attachment') }}
 						</NcActionButton>
-						<NcActionButton close-after-click class="publicationsList-actionsDelete" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })">
+						<NcActionButton close-after-click class="publicationsList-actionsDelete" @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: t('opencatalogi', 'Publication') })">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
-							Delete
+							{{ t('opencatalogi', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -140,10 +140,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				:size="64"
 				class="loadingIcon"
 				appearance="dark"
-				name="Publications are loading" />
+				:name="t('opencatalogi', 'Loading publications...')" />
 
 			<div v-if="!publicationsResults?.length" class="emptyListHeader">
-				There are no publications defined.
+				{{ t('opencatalogi', 'No publications are available.') }}
 			</div>
 		</ul>
 	</NcAppContentList>

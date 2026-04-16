@@ -104,6 +104,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnDetailPage, CnObjectDataWidget, CnObjectMetadataWidget, buildHeaders } from '@conduction/nextcloud-vue'
@@ -257,7 +258,7 @@ export default {
 		},
 		deletePublication() {
 			objectStore.setActiveObject('publication', this.publication)
-			navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: 'Publicatie' })
+			navigationStore.setDialog('deleteObject', { objectType: 'publication', dialogTitle: t('opencatalogi', 'Publication') })
 		},
 	},
 }

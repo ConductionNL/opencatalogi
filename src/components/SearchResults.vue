@@ -85,7 +85,7 @@ onMounted(() => {
 		<div class="search-results__header">
 			<NcTextField :class="['search-results__search', searchClass]"
 				:value="objectStore.getSearchTerm('search')"
-				label="Search"
+				:label="t('opencatalogi', 'Search')"
 				trailing-button-icon="close"
 				:show-trailing-button="objectStore.getSearchTerm('search') !== ''"
 				@update:value="(value) => objectStore.setSearchTerm('search', value)"
@@ -99,11 +99,11 @@ onMounted(() => {
 					<template #icon>
 						<RefreshIcon />
 					</template>
-					{{ t('opencatalogi', 'Vernieuwen') }}
+					{{ t('opencatalogi', 'Refresh') }}
 				</NcActionButton>
 			</div>
 		</div>
-		<NcEmptyContent v-if="!hasResults" :title="t('opencatalogi', 'Geen resultaten gevonden')">
+		<NcEmptyContent v-if="!hasResults" :title="t('opencatalogi', 'No results found')">
 			<template #icon>
 				<FolderIcon />
 			</template>
