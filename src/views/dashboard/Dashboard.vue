@@ -74,17 +74,36 @@
 					horizontal />
 			</template>
 
-			<!-- Activity graph widget (audit trail actions over time) -->
-			<template #widget-activity>
+			<!-- Traffic graph widget (API read requests over time) -->
+			<template #widget-traffic>
 				<CnChartWidget
-					v-if="activityChartData.series.length > 0"
+					v-if="trafficChartData.series.length > 0"
 					type="area"
-					:series="activityChartData.series"
-					:categories="activityChartData.labels"
+					:series="trafficChartData.series"
+					:categories="trafficChartData.labels"
 					:height="220"
-					:options="{ stroke: { curve: 'smooth', width: 2 }, xaxis: { labels: { rotate: -45, style: { fontSize: '10px' } } }, dataLabels: { enabled: false } }" />
+					:options="{ stroke: { curve: 'smooth', width: 2 }, xaxis: { labels: { rotate: -45, style: { fontSize: '10px' } } }, dataLabels: { enabled: false }, colors: ['#079cff'] }" />
 				<div v-else class="widget-empty">
-					{{ t('opencatalogi', 'No activity data') }}
+					{{ t('opencatalogi', 'No traffic data') }}
+				</div>
+			</template>
+
+			<!-- Popular Search Terms widget -->
+			<template #widget-popular-searches>
+				<div class="search-terms-content">
+					<div v-if="popularSearchTerms.length === 0" class="widget-empty">
+						{{ t('opencatalogi', 'No search data yet') }}
+					</div>
+					<div v-else class="search-terms-list">
+						<div
+							v-for="(term, index) in popularSearchTerms"
+							:key="term.term || index"
+							class="search-term-item">
+							<span class="search-term-rank">{{ index + 1 }}</span>
+							<span class="search-term-text">{{ term.term }}</span>
+							<span class="search-term-count">{{ term.count }}</span>
+						</div>
+					</div>
 				</div>
 			</template>
 
@@ -153,6 +172,7 @@
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 // eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
 import { CnDashboardPage, CnStatsBlock, CnChartWidget, buildHeaders } from '@conduction/nextcloud-vue'
@@ -173,9 +193,10 @@ const DEFAULT_LAYOUT = [
 	{ id: 2, widgetId: 'count-concept-publications', gridX: 3, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
 	{ id: 3, widgetId: 'count-concept-attachments', gridX: 6, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
 	{ id: 4, widgetId: 'objects-by-schema', gridX: 9, gridY: 0, gridWidth: 3, gridHeight: 5 },
-	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 2, gridWidth: 9, gridHeight: 4 },
-	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
-	{ id: 7, widgetId: 'concept-attachments', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
+	{ id: 5, widgetId: 'traffic', gridX: 0, gridY: 2, gridWidth: 9, gridHeight: 4 },
+	{ id: 6, widgetId: 'popular-searches', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
+	{ id: 7, widgetId: 'concept-publications', gridX: 6, gridY: 6, gridWidth: 3, gridHeight: 4 },
+	{ id: 8, widgetId: 'concept-attachments', gridX: 9, gridY: 6, gridWidth: 3, gridHeight: 4 },
 ]
 
 export default {
@@ -201,7 +222,8 @@ export default {
 			refreshTimer: null,
 			dashboardLayout: [...DEFAULT_LAYOUT],
 			schemaChartData: { labels: [], series: [] },
-			activityChartData: { labels: [], series: [] },
+			trafficChartData: { labels: [], series: [] },
+			popularSearchTerms: [],
 		}
 	},
 	computed: {
@@ -243,7 +265,8 @@ export default {
 				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
 				{ id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 				{ id: 'objects-by-schema', title: t('opencatalogi', 'Objects by Type'), type: 'custom' },
-				{ id: 'activity', title: t('opencatalogi', 'Activity'), type: 'custom' },
+				{ id: 'traffic', title: t('opencatalogi', 'Traffic'), type: 'custom' },
+				{ id: 'popular-searches', title: t('opencatalogi', 'Popular Search Terms'), type: 'custom' },
 				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
 				{ id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 			]
@@ -272,7 +295,8 @@ export default {
 					objectStore.fetchCollection('publication'),
 					objectStore.fetchCollection('attachment'),
 					this.fetchSchemaChart(),
-					this.fetchActivityChart(),
+					this.fetchTrafficChart(),
+					this.fetchPopularSearchTerms(),
 				])
 			} catch (err) {
 				this.error = err.message || t('opencatalogi', 'Failed to load dashboard data')
@@ -284,39 +308,98 @@ export default {
 
 		async fetchSchemaChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/objects-by-schema`,
+					generateUrl('/apps/openregister/api/dashboard/charts/objects-by-schema'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
 					const data = await response.json()
-					this.schemaChartData = {
-						labels: data.labels || [],
-						series: data.series || [],
+					const allLabels = data.labels || []
+					const allSeries = data.series || []
+
+					// Collect schema IDs referenced by all catalogs
+					const catalogSchemaIds = new Set()
+					for (const catalog of this.catalogs) {
+						for (const schemaId of (catalog.schemas || [])) {
+							catalogSchemaIds.add(String(schemaId))
+						}
 					}
+
+					// If catalogs have schemas configured, filter the chart data
+					if (catalogSchemaIds.size > 0) {
+						// Fetch schema names to match against chart labels
+						const schemaResponse = await fetch(
+							generateUrl('/apps/openregister/api/schemas'),
+							{ method: 'GET', headers: buildHeaders() },
+						)
+						if (schemaResponse.ok) {
+							const schemas = await schemaResponse.json()
+							const schemaResults = schemas.results || schemas
+							const catalogSchemaNames = new Set()
+							for (const schema of schemaResults) {
+								if (catalogSchemaIds.has(String(schema.id))) {
+									catalogSchemaNames.add(schema.title || schema.name)
+								}
+							}
+
+							const filteredLabels = []
+							const filteredSeries = []
+							for (let i = 0; i < allLabels.length; i++) {
+								if (catalogSchemaNames.has(allLabels[i])) {
+									filteredLabels.push(allLabels[i])
+									filteredSeries.push(allSeries[i])
+								}
+							}
+							this.schemaChartData = { labels: filteredLabels, series: filteredSeries }
+							return
+						}
+					}
+
+					this.schemaChartData = { labels: allLabels, series: allSeries }
 				}
 			} catch (err) {
 				console.warn('Failed to load schema chart:', err)
 			}
 		},
 
-		async fetchActivityChart() {
+		async fetchTrafficChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
+					generateUrl('/apps/openregister/api/dashboard/charts/audit-trail-actions'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
 					const data = await response.json()
-					this.activityChartData = {
+					// Filter to only show Read (traffic) data
+					const allSeries = data.series || []
+					const readSeries = allSeries.filter(s => s.name === 'Read')
+					this.trafficChartData = {
 						labels: data.labels || [],
-						series: data.series || [],
+						series: readSeries.length > 0
+							? readSeries.map(s => ({ ...s, name: t('opencatalogi', 'Requests') }))
+							: allSeries,
 					}
 				}
 			} catch (err) {
-				console.warn('Failed to load activity chart:', err)
+				console.warn('Failed to load traffic chart:', err)
+			}
+		},
+
+		async fetchPopularSearchTerms() {
+			try {
+				const response = await fetch(
+					generateUrl('/apps/openregister/api/search-trails/popular-terms?limit=10'),
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					this.popularSearchTerms = (data.results || []).map(item => ({
+						term: item.search_term || item.term || item.query || '-',
+						count: item.count || item.total || 0,
+					}))
+				}
+			} catch (err) {
+				console.warn('Failed to load popular search terms:', err)
 			}
 		},
 
@@ -339,6 +422,44 @@ export default {
 	padding: 4px 0;
 	height: 100%;
 	overflow: auto;
+}
+
+/* Search terms widget */
+.search-terms-content {
+	padding: 4px 0;
+	height: 100%;
+	overflow: auto;
+}
+
+.search-terms-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.search-term-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--color-border-dark, rgba(0, 0, 0, 0.07));
+}
+
+.search-term-rank {
+	font-weight: 700;
+	color: var(--color-text-maxcontrast);
+	min-width: 20px;
+	text-align: center;
+}
+
+.search-term-text {
+	flex: 1;
+	font-size: 14px;
+}
+
+.search-term-count {
+	font-weight: 600;
+	color: var(--color-primary-element);
+	font-size: 13px;
 }
 
 .concept-list {
