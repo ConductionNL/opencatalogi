@@ -368,7 +368,10 @@ class SettingsService
             $registerMapper = $this->getRegisterMapper();
             if ($registerMapper !== null) {
                 $data['openRegisters'] = true;
-                $registers = $registerMapper->findAll();
+                $registers = $registerMapper->findAll(
+                    _rbac: false,
+                    _multitenancy: false
+                );
 
                 // Enrich registers with full schema objects instead of just IDs.
                 $data['availableRegisters'] = $this->enrichRegistersWithSchemas($registers);
@@ -454,7 +457,7 @@ class SettingsService
                     }
 
                     try {
-                        $schema = $schemaMapper->find((int) $schemaId);
+                        $schema = $schemaMapper->find((int) $schemaId, _rbac: false, _multitenancy: false);
                         if ($schema !== null) {
                             // Convert schema entity to array.
                             $schemaArray = (array) $schema;
