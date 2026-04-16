@@ -82,9 +82,8 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
-import { CnDetailPage, CnDetailGrid, CnJsonViewer, buildHeaders } from '@conduction/nextcloud-vue'
+import { CnDetailPage, CnDetailGrid, CnJsonViewer } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
@@ -109,7 +108,6 @@ export default {
 	},
 	data() {
 		return {
-			catalog: null,
 			loading: false,
 			error: null,
 			sidebarOpen: true,
@@ -119,6 +117,9 @@ export default {
 	computed: {
 		catalogId() {
 			return this.$route.params.id
+		},
+		catalog() {
+			return objectStore.getActiveObject('catalog')
 		},
 		metadataItems() {
 			if (!this.catalog) return []
@@ -166,13 +167,7 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await fetch(
-					generateUrl(`/apps/opencatalogi/api/catalogi/${this.catalogId}`),
-					{ method: 'GET', headers: buildHeaders() },
-				)
-				if (!response.ok) throw new Error(`Failed to load catalog (${response.status})`)
-				this.catalog = await response.json()
-				objectStore.setActiveObject('catalog', this.catalog)
+				await objectStore.fetchObject('catalog', this.catalogId)
 			} catch (err) {
 				this.error = err.message
 			} finally {
