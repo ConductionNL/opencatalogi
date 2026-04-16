@@ -8,8 +8,14 @@ export const mockThemeData = (): TTheme[] => [
 		summary: 'a short form summary',
 		description: 'a really really long description about this Theme',
 		image: 'string',
+		content: 'some content',
+		link: '/themes/1',
+		url: 'https://example.com/themes/1',
+		icon: 'icon-theme',
+		isExternal: false,
+		sort: 1,
 	},
-	// @ts-expect-error -- expected missing image property
+	// @ts-expect-error -- expected missing properties
 	{ // partial data
 		id: '2',
 		title: 'Woo',
@@ -22,6 +28,12 @@ export const mockThemeData = (): TTheme[] => [
 		summary: 'a short form summary',
 		description: 'a really really long description about this Theme',
 		image: 'string',
+		content: '',
+		link: '',
+		url: '',
+		icon: '',
+		isExternal: false,
+		sort: 0,
 	},
 ]
 
