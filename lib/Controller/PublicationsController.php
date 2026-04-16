@@ -206,7 +206,7 @@ class PublicationsController extends Controller
     {
         // Determine the origin.
         $origin = $this->request->getHeader('Origin');
-        if ($origin === '' || $origin === false) {
+        if ($origin === '') {
             $origin = '*';
         }
 
@@ -260,8 +260,10 @@ class PublicationsController extends Controller
             $queryParams = $this->request->getParams();
 
             // Use ObjectService centralized query builder which handles dot-to-underscore conversion.
-            $searchQuery = $objectService->buildSearchQuery($queryParams);
-            $searchQuery['_includeDeleted'] = false;
+            $searchQuery = array_merge(
+                $objectService->buildSearchQuery($queryParams),
+                ['_includeDeleted' => false]
+            );
 
             // Clean up catalog-specific parameters.
             unset($searchQuery['catalogSlug'], $searchQuery['fq']);

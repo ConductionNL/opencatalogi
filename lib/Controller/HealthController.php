@@ -24,6 +24,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\App\IAppManager;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,11 +37,12 @@ class HealthController extends Controller
     /**
      * Constructor.
      *
-     * @param string          $appName    The application name.
-     * @param IRequest        $request    The HTTP request.
-     * @param IDBConnection   $db         Database connection.
-     * @param IAppManager     $appManager App manager.
-     * @param LoggerInterface $logger     Logger.
+     * @param string             $appName    The application name.
+     * @param IRequest           $request    The HTTP request.
+     * @param IDBConnection      $db         Database connection.
+     * @param IAppManager        $appManager App manager.
+     * @param LoggerInterface    $logger     Logger.
+     * @param ContainerInterface $container  DI container.
      */
     public function __construct(
         $appName,
@@ -48,6 +50,7 @@ class HealthController extends Controller
         private IDBConnection $db,
         private IAppManager $appManager,
         private LoggerInterface $logger,
+        private ContainerInterface $container,
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -156,10 +159,13 @@ class HealthController extends Controller
     {
         try {
             // Check if ElasticSearch is configured.
-            $container = \OCP\Server::get(\Psr\Container\ContainerInterface::class);
-            $esService = $container->get(\OCA\OpenCatalogi\Service\ElasticSearchService::class);
+            $esService = $this->container->get(\OCA\OpenCatalogi\Service\ElasticSearchService::class);
             if ($esService !== null && method_exists($esService, 'isAvailable') === true) {
-                return $esService->isAvailable() === true ? 'elasticsearch: ok' : 'elasticsearch: unreachable';
+                if ($esService->isAvailable() === true) {
+                    return 'elasticsearch: ok';
+                }
+
+                return 'elasticsearch: unreachable';
             }
 
             return 'database';

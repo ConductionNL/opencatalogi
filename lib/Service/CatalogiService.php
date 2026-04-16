@@ -332,7 +332,9 @@ class CatalogiService
      * @param string|null $schema   Optional schema identifier
      * @param array|null  $ids      Optional array of specific IDs to filter
      *
-     * @return array Configuration array with limit, offset, page, filters, sort, search, extend, fields, unset, queries, ids.
+     * @return array Configuration array with limit, offset, page,
+     *                filters, sort, search, extend, fields, unset,
+     *                queries, ids.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
      */

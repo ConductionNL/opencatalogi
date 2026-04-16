@@ -41,6 +41,7 @@ class MetricsController extends Controller
      * @param IRequest        $request    The HTTP request
      * @param IDBConnection   $db         Database connection
      * @param IAppManager     $appManager App manager
+     * @param IConfig         $config     System configuration
      * @param LoggerInterface $logger     Logger
      */
     public function __construct(
@@ -86,15 +87,23 @@ class MetricsController extends Controller
 
         $lines[] = '# HELP opencatalogi_info Application information';
         $lines[] = '# TYPE opencatalogi_info gauge';
-        $lines[] = 'opencatalogi_info{version="'.$version.'",php_version="'.$phpVersion.'",nextcloud_version="'.$ncVersion.'"} 1';
+        $labels  = "version=\"{$version}\",php_version=\"{$phpVersion}\"";
+        $labels .= ",nextcloud_version=\"{$ncVersion}\"";
+        $lines[] = "opencatalogi_info{{$labels}} 1";
         $lines[] = '';
 
         // App up gauge — reflects actual database health.
         $dbHealthy = $this->isDatabaseHealthy();
-        $lines[]   = '# HELP opencatalogi_up Whether the application is healthy';
-        $lines[]   = '# TYPE opencatalogi_up gauge';
-        $lines[]   = 'opencatalogi_up '.($dbHealthy === true ? '1' : '0');
-        $lines[]   = '';
+
+        $lines[] = '# HELP opencatalogi_up Whether the application is healthy';
+        $lines[] = '# TYPE opencatalogi_up gauge';
+        $upValue = '0';
+        if ($dbHealthy === true) {
+            $upValue = '1';
+        }
+
+        $lines[] = 'opencatalogi_up '.$upValue;
+        $lines[] = '';
 
         // Publications total by status and catalog.
         $lines[]   = '# HELP opencatalogi_publications_total Total publications by status and catalog';

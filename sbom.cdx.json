@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:b95a78e4-67c7-45c7-b46a-a535771bae5f",
+  "serialNumber": "urn:uuid:dc477961-754a-4165-a87a-a1387a9261fc",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-03-19T17:50:27Z",
+    "timestamp": "2026-04-01T15:29:11Z",
     "tools": [
       {
         "name": "composer",
@@ -82,10 +82,10 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/opencatalogi-dev-fix/ci-quality-checks",
+      "bom-ref": "conductionnl/opencatalogi-dev-feature/nextcloud-vue",
       "type": "application",
       "name": "opencatalogi",
-      "version": "dev-fix/ci-quality-checks",
+      "version": "dev-feature/nextcloud-vue",
       "group": "conductionnl",
       "description": "This is a DSO Nextcloud project for the municipality Buren and is done by ConductionNL",
       "author": "Conduction b.v., Remko Huisman (Conduction), Ruben van der Linde (Conduction)",
@@ -96,15 +96,15 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/opencatalogi@dev-fix/ci-quality-checks",
+      "purl": "pkg:composer/conductionnl/opencatalogi@dev-feature/nextcloud-vue",
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "8c20f15235b711137709a5f5dadf94c181a4321e"
+          "value": "df58a8c1bf14b5dbb86f6304a80cfd8b0b7ee486"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "8c20f15235b711137709a5f5dadf94c181a4321e"
+          "value": "df58a8c1bf14b5dbb86f6304a80cfd8b0b7ee486"
         },
         {
           "name": "cdx:composer:package:type",
@@ -165,6 +165,110 @@
         {
           "name": "cdx:composer:package:sourceReference",
           "value": "a94ce4493d19ea430baa8d7d210a2c9bd7129fc2"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
+      "bom-ref": "elastic/transport-8.11.0.0",
+      "type": "library",
+      "name": "transport",
+      "version": "v8.11.0",
+      "group": "elastic",
+      "description": "HTTP transport PHP library for Elastic products",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:composer/elastic/transport@v8.11.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/elastic/elastic-transport-php/zipball/1d476af5dc0b74530d59b67d5dd96ee39768d5a4",
+          "comment": "dist reference: 1d476af5dc0b74530d59b67d5dd96ee39768d5a4"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/elastic/elastic-transport-php.git",
+          "comment": "source reference: 1d476af5dc0b74530d59b67d5dd96ee39768d5a4"
+        },
+        {
+          "type": "issue-tracker",
+          "url": "https://github.com/elastic/elastic-transport-php/issues",
+          "comment": "as detected from Composer manifest 'support.issues'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/elastic/elastic-transport-php/tree/v8.11.0",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "1d476af5dc0b74530d59b67d5dd96ee39768d5a4"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "1d476af5dc0b74530d59b67d5dd96ee39768d5a4"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
+      "bom-ref": "elasticsearch/elasticsearch-8.19.0.0",
+      "type": "library",
+      "name": "elasticsearch",
+      "version": "v8.19.0",
+      "group": "elasticsearch",
+      "description": "PHP Client for Elasticsearch",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:composer/elasticsearch/elasticsearch@v8.19.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/elastic/elasticsearch-php/zipball/1771284cb43a7b653634d418b6f5f0ec84ff8a6d",
+          "comment": "dist reference: 1771284cb43a7b653634d418b6f5f0ec84ff8a6d"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/elastic/elasticsearch-php.git",
+          "comment": "source reference: 1771284cb43a7b653634d418b6f5f0ec84ff8a6d"
+        },
+        {
+          "type": "issue-tracker",
+          "url": "https://github.com/elastic/elasticsearch-php/issues",
+          "comment": "as detected from Composer manifest 'support.issues'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/elastic/elasticsearch-php/tree/v8.19.0",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "1771284cb43a7b653634d418b6f5f0ec84ff8a6d"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "1771284cb43a7b653634d418b6f5f0ec84ff8a6d"
         },
         {
           "name": "cdx:composer:package:type",
@@ -553,6 +657,132 @@
       ]
     },
     {
+      "bom-ref": "open-telemetry/api-1.9.0.0",
+      "type": "library",
+      "name": "api",
+      "version": "1.9.0",
+      "group": "open-telemetry",
+      "description": "API for OpenTelemetry PHP.",
+      "author": "opentelemetry-php contributors",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "purl": "pkg:composer/open-telemetry/api@1.9.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/opentelemetry-php/api/zipball/6f8d237ce2c304ca85f31970f788e7f074d147be",
+          "comment": "dist reference: 6f8d237ce2c304ca85f31970f788e7f074d147be"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/opentelemetry-php/api.git",
+          "comment": "source reference: 6f8d237ce2c304ca85f31970f788e7f074d147be"
+        },
+        {
+          "type": "chat",
+          "url": "https://app.slack.com/client/T08PSQ7BQ/C01NFPCV44V",
+          "comment": "as detected from Composer manifest 'support.chat'"
+        },
+        {
+          "type": "documentation",
+          "url": "https://opentelemetry.io/docs/languages/php",
+          "comment": "as detected from Composer manifest 'support.docs'"
+        },
+        {
+          "type": "issue-tracker",
+          "url": "https://github.com/open-telemetry/opentelemetry-php/issues",
+          "comment": "as detected from Composer manifest 'support.issues'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/open-telemetry/opentelemetry-php",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "6f8d237ce2c304ca85f31970f788e7f074d147be"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "6f8d237ce2c304ca85f31970f788e7f074d147be"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
+      "bom-ref": "open-telemetry/context-1.5.0.0",
+      "type": "library",
+      "name": "context",
+      "version": "1.5.0",
+      "group": "open-telemetry",
+      "description": "Context implementation for OpenTelemetry PHP.",
+      "author": "opentelemetry-php contributors",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "purl": "pkg:composer/open-telemetry/context@1.5.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/opentelemetry-php/context/zipball/3c414b246e0dabb7d6145404e6a5e4536ca18d07",
+          "comment": "dist reference: 3c414b246e0dabb7d6145404e6a5e4536ca18d07"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/opentelemetry-php/context.git",
+          "comment": "source reference: 3c414b246e0dabb7d6145404e6a5e4536ca18d07"
+        },
+        {
+          "type": "chat",
+          "url": "https://app.slack.com/client/T08PSQ7BQ/C01NFPCV44V",
+          "comment": "as detected from Composer manifest 'support.chat'"
+        },
+        {
+          "type": "documentation",
+          "url": "https://opentelemetry.io/docs/languages/php",
+          "comment": "as detected from Composer manifest 'support.docs'"
+        },
+        {
+          "type": "issue-tracker",
+          "url": "https://github.com/open-telemetry/opentelemetry-php/issues",
+          "comment": "as detected from Composer manifest 'support.issues'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/open-telemetry/opentelemetry-php",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "3c414b246e0dabb7d6145404e6a5e4536ca18d07"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "3c414b246e0dabb7d6145404e6a5e4536ca18d07"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
       "bom-ref": "opis/json-schema-2.6.0.0",
       "type": "library",
       "name": "json-schema",
@@ -777,6 +1007,122 @@
         {
           "name": "cdx:composer:package:sourceReference",
           "value": "996434e5492cb4c3edcb9168db6fbb1359ef965a"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
+      "bom-ref": "php-http/httplug-2.4.1.0",
+      "type": "library",
+      "name": "httplug",
+      "version": "2.4.1",
+      "group": "php-http",
+      "description": "HTTPlug, the HTTP client abstraction for PHP",
+      "author": "Eric GELOEN, Márk Sági-Kazár",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:composer/php-http/httplug@2.4.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/php-http/httplug/zipball/5cad731844891a4c282f3f3e1b582c46839d22f4",
+          "comment": "dist reference: 5cad731844891a4c282f3f3e1b582c46839d22f4"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/php-http/httplug.git",
+          "comment": "source reference: 5cad731844891a4c282f3f3e1b582c46839d22f4"
+        },
+        {
+          "type": "website",
+          "url": "http://httplug.io",
+          "comment": "as detected from Composer manifest 'homepage'"
+        },
+        {
+          "type": "issue-tracker",
+          "url": "https://github.com/php-http/httplug/issues",
+          "comment": "as detected from Composer manifest 'support.issues'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/php-http/httplug/tree/2.4.1",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "5cad731844891a4c282f3f3e1b582c46839d22f4"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "5cad731844891a4c282f3f3e1b582c46839d22f4"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
+      "bom-ref": "php-http/promise-1.3.1.0",
+      "type": "library",
+      "name": "promise",
+      "version": "1.3.1",
+      "group": "php-http",
+      "description": "Promise used for asynchronous HTTP requests",
+      "author": "Joel Wurtz, Márk Sági-Kazár",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:composer/php-http/promise@1.3.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/php-http/promise/zipball/fc85b1fba37c169a69a07ef0d5a8075770cc1f83",
+          "comment": "dist reference: fc85b1fba37c169a69a07ef0d5a8075770cc1f83"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/php-http/promise.git",
+          "comment": "source reference: fc85b1fba37c169a69a07ef0d5a8075770cc1f83"
+        },
+        {
+          "type": "website",
+          "url": "http://httplug.io",
+          "comment": "as detected from Composer manifest 'homepage'"
+        },
+        {
+          "type": "issue-tracker",
+          "url": "https://github.com/php-http/promise/issues",
+          "comment": "as detected from Composer manifest 'support.issues'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/php-http/promise/tree/1.3.1",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "fc85b1fba37c169a69a07ef0d5a8075770cc1f83"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "fc85b1fba37c169a69a07ef0d5a8075770cc1f83"
         },
         {
           "name": "cdx:composer:package:type",
@@ -1426,10 +1772,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/dependency-injection-6.4.35.0",
+      "bom-ref": "symfony/dependency-injection-6.4.36.0",
       "type": "library",
       "name": "dependency-injection",
-      "version": "v6.4.35",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Allows you to standardize and centralize the way objects are constructed in your application",
       "author": "Fabien Potencier, Symfony Community",
@@ -1440,17 +1786,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/dependency-injection@v6.4.35",
+      "purl": "pkg:composer/symfony/dependency-injection@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/dependency-injection/zipball/d95712d0e9446b9f244b64811ffb6af7b7434213",
-          "comment": "dist reference: d95712d0e9446b9f244b64811ffb6af7b7434213"
+          "url": "https://api.github.com/repos/symfony/dependency-injection/zipball/cd7881a6dc84b780411199cd0584e1a53a3b9ba7",
+          "comment": "dist reference: cd7881a6dc84b780411199cd0584e1a53a3b9ba7"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/dependency-injection.git",
-          "comment": "source reference: d95712d0e9446b9f244b64811ffb6af7b7434213"
+          "comment": "source reference: cd7881a6dc84b780411199cd0584e1a53a3b9ba7"
         },
         {
           "type": "website",
@@ -1459,18 +1805,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/dependency-injection/tree/v6.4.35",
+          "url": "https://github.com/symfony/dependency-injection/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "d95712d0e9446b9f244b64811ffb6af7b7434213"
+          "value": "cd7881a6dc84b780411199cd0584e1a53a3b9ba7"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "d95712d0e9446b9f244b64811ffb6af7b7434213"
+          "value": "cd7881a6dc84b780411199cd0584e1a53a3b9ba7"
         },
         {
           "name": "cdx:composer:package:type",
@@ -1532,10 +1878,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/error-handler-6.4.32.0",
+      "bom-ref": "symfony/error-handler-6.4.36.0",
       "type": "library",
       "name": "error-handler",
-      "version": "v6.4.32",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Provides tools to manage errors and ease debugging PHP code",
       "author": "Fabien Potencier, Symfony Community",
@@ -1546,17 +1892,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/error-handler@v6.4.32",
+      "purl": "pkg:composer/symfony/error-handler@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/error-handler/zipball/8c18400784fcb014dc73c8d5601a9576af7f8ad4",
-          "comment": "dist reference: 8c18400784fcb014dc73c8d5601a9576af7f8ad4"
+          "url": "https://api.github.com/repos/symfony/error-handler/zipball/2ea68f0e1835ad6a126f93bbc14cd236c10ab361",
+          "comment": "dist reference: 2ea68f0e1835ad6a126f93bbc14cd236c10ab361"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/error-handler.git",
-          "comment": "source reference: 8c18400784fcb014dc73c8d5601a9576af7f8ad4"
+          "comment": "source reference: 2ea68f0e1835ad6a126f93bbc14cd236c10ab361"
         },
         {
           "type": "website",
@@ -1565,18 +1911,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/error-handler/tree/v6.4.32",
+          "url": "https://github.com/symfony/error-handler/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "8c18400784fcb014dc73c8d5601a9576af7f8ad4"
+          "value": "2ea68f0e1835ad6a126f93bbc14cd236c10ab361"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "8c18400784fcb014dc73c8d5601a9576af7f8ad4"
+          "value": "2ea68f0e1835ad6a126f93bbc14cd236c10ab361"
         },
         {
           "name": "cdx:composer:package:type",
@@ -1638,10 +1984,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/event-dispatcher-6.4.32.0",
+      "bom-ref": "symfony/event-dispatcher-6.4.36.0",
       "type": "library",
       "name": "event-dispatcher",
-      "version": "v6.4.32",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Provides tools that allow your application components to communicate with each other by dispatching events and listening to them",
       "author": "Fabien Potencier, Symfony Community",
@@ -1652,17 +1998,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/event-dispatcher@v6.4.32",
+      "purl": "pkg:composer/symfony/event-dispatcher@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/99d7e101826e6610606b9433248f80c1997cd20b",
-          "comment": "dist reference: 99d7e101826e6610606b9433248f80c1997cd20b"
+          "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/fc828863e26ceec86e2513b5e46aa0b149d76b69",
+          "comment": "dist reference: fc828863e26ceec86e2513b5e46aa0b149d76b69"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/event-dispatcher.git",
-          "comment": "source reference: 99d7e101826e6610606b9433248f80c1997cd20b"
+          "comment": "source reference: fc828863e26ceec86e2513b5e46aa0b149d76b69"
         },
         {
           "type": "website",
@@ -1671,18 +2017,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/event-dispatcher/tree/v6.4.32",
+          "url": "https://github.com/symfony/event-dispatcher/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "99d7e101826e6610606b9433248f80c1997cd20b"
+          "value": "fc828863e26ceec86e2513b5e46aa0b149d76b69"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "99d7e101826e6610606b9433248f80c1997cd20b"
+          "value": "fc828863e26ceec86e2513b5e46aa0b149d76b69"
         },
         {
           "name": "cdx:composer:package:type",
@@ -1797,10 +2143,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/http-kernel-6.4.35.0",
+      "bom-ref": "symfony/http-kernel-6.4.36.0",
       "type": "library",
       "name": "http-kernel",
-      "version": "v6.4.35",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Provides a structured process for converting a Request into a Response",
       "author": "Fabien Potencier, Symfony Community",
@@ -1811,17 +2157,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/http-kernel@v6.4.35",
+      "purl": "pkg:composer/symfony/http-kernel@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/http-kernel/zipball/ece1a0da7745a5243683f178155c0412c92691eb",
-          "comment": "dist reference: ece1a0da7745a5243683f178155c0412c92691eb"
+          "url": "https://api.github.com/repos/symfony/http-kernel/zipball/4087ec02119de450e9ebb60806d69c6bb8c6e468",
+          "comment": "dist reference: 4087ec02119de450e9ebb60806d69c6bb8c6e468"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/http-kernel.git",
-          "comment": "source reference: ece1a0da7745a5243683f178155c0412c92691eb"
+          "comment": "source reference: 4087ec02119de450e9ebb60806d69c6bb8c6e468"
         },
         {
           "type": "website",
@@ -1830,18 +2176,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/http-kernel/tree/v6.4.35",
+          "url": "https://github.com/symfony/http-kernel/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "ece1a0da7745a5243683f178155c0412c92691eb"
+          "value": "4087ec02119de450e9ebb60806d69c6bb8c6e468"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "ece1a0da7745a5243683f178155c0412c92691eb"
+          "value": "4087ec02119de450e9ebb60806d69c6bb8c6e468"
         },
         {
           "name": "cdx:composer:package:type",
@@ -1948,6 +2294,59 @@
         {
           "name": "cdx:composer:package:sourceReference",
           "value": "6d857f4d76bd4b343eac26d6b539585d2bc56493"
+        },
+        {
+          "name": "cdx:composer:package:type",
+          "value": "library"
+        }
+      ]
+    },
+    {
+      "bom-ref": "symfony/polyfill-php82-1.33.0.0",
+      "type": "library",
+      "name": "polyfill-php82",
+      "version": "v1.33.0",
+      "group": "symfony",
+      "description": "Symfony polyfill backporting some PHP 8.2+ features to lower PHP versions",
+      "author": "Nicolas Grekas, Symfony Community",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:composer/symfony/polyfill-php82@v1.33.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://api.github.com/repos/symfony/polyfill-php82/zipball/5d2ed36f7734637dacc025f179698031951b1692",
+          "comment": "dist reference: 5d2ed36f7734637dacc025f179698031951b1692"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/symfony/polyfill-php82.git",
+          "comment": "source reference: 5d2ed36f7734637dacc025f179698031951b1692"
+        },
+        {
+          "type": "website",
+          "url": "https://symfony.com",
+          "comment": "as detected from Composer manifest 'homepage'"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/symfony/polyfill-php82/tree/v1.33.0",
+          "comment": "as detected from Composer manifest 'support.source'"
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:composer:package:distReference",
+          "value": "5d2ed36f7734637dacc025f179698031951b1692"
+        },
+        {
+          "name": "cdx:composer:package:sourceReference",
+          "value": "5d2ed36f7734637dacc025f179698031951b1692"
         },
         {
           "name": "cdx:composer:package:type",
@@ -2221,10 +2620,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/twig-bridge-6.4.35.0",
+      "bom-ref": "symfony/twig-bridge-6.4.36.0",
       "type": "library",
       "name": "twig-bridge",
-      "version": "v6.4.35",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Provides integration for Twig with various Symfony components",
       "author": "Fabien Potencier, Symfony Community",
@@ -2235,17 +2634,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/twig-bridge@v6.4.35",
+      "purl": "pkg:composer/symfony/twig-bridge@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/twig-bridge/zipball/352acf608d1c9c00692fc3bba9f445176c14ce0f",
-          "comment": "dist reference: 352acf608d1c9c00692fc3bba9f445176c14ce0f"
+          "url": "https://api.github.com/repos/symfony/twig-bridge/zipball/3ae963a108fd6fc14d09a7fe5e41fe64d8ac11ba",
+          "comment": "dist reference: 3ae963a108fd6fc14d09a7fe5e41fe64d8ac11ba"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/twig-bridge.git",
-          "comment": "source reference: 352acf608d1c9c00692fc3bba9f445176c14ce0f"
+          "comment": "source reference: 3ae963a108fd6fc14d09a7fe5e41fe64d8ac11ba"
         },
         {
           "type": "website",
@@ -2254,18 +2653,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/twig-bridge/tree/v6.4.35",
+          "url": "https://github.com/symfony/twig-bridge/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "352acf608d1c9c00692fc3bba9f445176c14ce0f"
+          "value": "3ae963a108fd6fc14d09a7fe5e41fe64d8ac11ba"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "352acf608d1c9c00692fc3bba9f445176c14ce0f"
+          "value": "3ae963a108fd6fc14d09a7fe5e41fe64d8ac11ba"
         },
         {
           "name": "cdx:composer:package:type",
@@ -2380,10 +2779,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/var-dumper-6.4.32.0",
+      "bom-ref": "symfony/var-dumper-6.4.36.0",
       "type": "library",
       "name": "var-dumper",
-      "version": "v6.4.32",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Provides mechanisms for walking through any arbitrary PHP variable",
       "author": "Nicolas Grekas, Symfony Community",
@@ -2394,17 +2793,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/var-dumper@v6.4.32",
+      "purl": "pkg:composer/symfony/var-dumper@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/var-dumper/zipball/131fc9915e0343052af5ed5040401b481ca192aa",
-          "comment": "dist reference: 131fc9915e0343052af5ed5040401b481ca192aa"
+          "url": "https://api.github.com/repos/symfony/var-dumper/zipball/7c8ad9ce4faf6c8a99948e70ce02b601a0439782",
+          "comment": "dist reference: 7c8ad9ce4faf6c8a99948e70ce02b601a0439782"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/var-dumper.git",
-          "comment": "source reference: 131fc9915e0343052af5ed5040401b481ca192aa"
+          "comment": "source reference: 7c8ad9ce4faf6c8a99948e70ce02b601a0439782"
         },
         {
           "type": "website",
@@ -2413,18 +2812,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/var-dumper/tree/v6.4.32",
+          "url": "https://github.com/symfony/var-dumper/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "131fc9915e0343052af5ed5040401b481ca192aa"
+          "value": "7c8ad9ce4faf6c8a99948e70ce02b601a0439782"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "131fc9915e0343052af5ed5040401b481ca192aa"
+          "value": "7c8ad9ce4faf6c8a99948e70ce02b601a0439782"
         },
         {
           "name": "cdx:composer:package:type",
@@ -2433,10 +2832,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/var-exporter-6.4.26.0",
+      "bom-ref": "symfony/var-exporter-6.4.36.0",
       "type": "library",
       "name": "var-exporter",
-      "version": "v6.4.26",
+      "version": "v6.4.36",
       "group": "symfony",
       "description": "Allows exporting any serializable PHP data structure to plain PHP code",
       "author": "Nicolas Grekas, Symfony Community",
@@ -2447,17 +2846,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/var-exporter@v6.4.26",
+      "purl": "pkg:composer/symfony/var-exporter@v6.4.36",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/var-exporter/zipball/466fcac5fa2e871f83d31173f80e9c2684743bfc",
-          "comment": "dist reference: 466fcac5fa2e871f83d31173f80e9c2684743bfc"
+          "url": "https://api.github.com/repos/symfony/var-exporter/zipball/f9c4a9695a9e2bbc65c920e147d8d7ae28f8d79a",
+          "comment": "dist reference: f9c4a9695a9e2bbc65c920e147d8d7ae28f8d79a"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/var-exporter.git",
-          "comment": "source reference: 466fcac5fa2e871f83d31173f80e9c2684743bfc"
+          "comment": "source reference: f9c4a9695a9e2bbc65c920e147d8d7ae28f8d79a"
         },
         {
           "type": "website",
@@ -2466,18 +2865,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/var-exporter/tree/v6.4.26",
+          "url": "https://github.com/symfony/var-exporter/tree/v6.4.36",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "466fcac5fa2e871f83d31173f80e9c2684743bfc"
+          "value": "f9c4a9695a9e2bbc65c920e147d8d7ae28f8d79a"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "466fcac5fa2e871f83d31173f80e9c2684743bfc"
+          "value": "f9c4a9695a9e2bbc65c920e147d8d7ae28f8d79a"
         },
         {
           "name": "cdx:composer:package:type",
@@ -3517,8 +3916,8 @@
       "type": "library",
       "name": "nextcloud-vue",
       "group": "@conduction",
-      "version": "0.1.0-beta.4",
-      "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4",
+      "version": "0.1.0-beta.6",
+      "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6",
       "author": "Conduction B.V.",
       "description": "Shared Vue component library for Conduction Nextcloud apps — complements @nextcloud/vue with higher-level components, OpenRegister integration, and NL Design System support",
       "licenses": [
@@ -3528,15 +3927,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40conduction/nextcloud-vue@0.1.0-beta.4",
+      "purl": "pkg:npm/%40conduction/nextcloud-vue@0.1.0-beta.6",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/@conduction/nextcloud-vue/-/nextcloud-vue-0.1.0-beta.4.tgz",
+          "url": "https://registry.npmjs.org/@conduction/nextcloud-vue/-/nextcloud-vue-0.1.0-beta.6.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "32d7239670624755d795aa3c72272e953e64dd3d07cc3ee1c3714d442f53515ad3696706ff7d5292fd66a66f9b2a3bff7344b30f2c5949f7993412ecd8bbf8d5"
+              "content": "81d4367b070d99ebb3a165b5519776f88f97e2547b9afa3b84a5d8ea6d91e9c083d22c38b6d5dba02f5b8a86573dfde2c69945d2c30c7435e5b5b6b5db3225ef"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -3554,7 +3953,7 @@
           "name": "dialogs",
           "group": "@nextcloud",
           "version": "7.3.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0",
           "description": "Nextcloud dialog helpers",
           "licenses": [
             {
@@ -3604,7 +4003,7 @@
               "name": "vue",
               "group": "@nextcloud",
               "version": "9.6.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@nextcloud/vue@9.6.0",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@nextcloud/vue@9.6.0",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Nextcloud vue components",
               "licenses": [
@@ -3655,7 +4054,7 @@
               "name": "core",
               "group": "@vueuse",
               "version": "14.2.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@vueuse/core@14.2.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@vueuse/core@14.2.1",
               "author": "Anthony Fu",
               "description": "Collection of essential Vue Composition Utilities",
               "licenses": [
@@ -3704,8 +4103,8 @@
             {
               "type": "library",
               "name": "vue",
-              "version": "3.5.30",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|vue@3.5.30",
+              "version": "3.5.31",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|vue@3.5.31",
               "author": "Evan You",
               "description": "The progressive JavaScript framework for building modern web UI.",
               "licenses": [
@@ -3715,7 +4114,7 @@
                   }
                 }
               ],
-              "purl": "pkg:npm/vue@3.5.30",
+              "purl": "pkg:npm/vue@3.5.31",
               "externalReferences": [
                 {
                   "url": "git+https://github.com/vuejs/core.git",
@@ -3733,12 +4132,12 @@
                   "comment": "as detected from PackageJson property \"bugs.url\""
                 },
                 {
-                  "url": "https://registry.npmjs.org/vue/-/vue-3.5.30.tgz",
+                  "url": "https://registry.npmjs.org/vue/-/vue-3.5.31.tgz",
                   "type": "distribution",
                   "hashes": [
                     {
                       "alg": "SHA-512",
-                      "content": "8531cb73a54d672cf3107fe5ecf1468e9713bd482268f2b999d2e46e3ad37964917047f116bbf9ea0fd7724218944f5c92ea1bb1dc2a7799a4da0d6c06431ec2"
+                      "content": "895fec53d4b33a5980ff4b728129a390437a25bb379cfa083c584230b0f6493ae380e53c0d7ed9b733218386a15707f9469f4aa05cdc5de07566b55b2c1a79fd"
                     }
                   ],
                   "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -3756,7 +4155,7 @@
               "name": "vue-color",
               "group": "@ckpack",
               "version": "1.6.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@ckpack/vue-color@1.6.0",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@ckpack/vue-color@1.6.0",
               "author": "chenkai",
               "description": "(vue3.0) 🎨 Vue Color Pickers for Sketch, Photoshop, Chrome & more",
               "licenses": [
@@ -3807,7 +4206,7 @@
               "name": "vue-datepicker",
               "group": "@vuepic",
               "version": "11.0.3",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@vuepic/vue-datepicker@11.0.3",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@vuepic/vue-datepicker@11.0.3",
               "author": "Vuepic",
               "description": "Datepicker component for Vue 3",
               "licenses": [
@@ -3858,7 +4257,7 @@
               "name": "components",
               "group": "@vueuse",
               "version": "14.2.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@vueuse/components@14.2.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@vueuse/components@14.2.1",
               "author": "Jacob Clevenger",
               "description": "Renderless components for VueUse",
               "licenses": [
@@ -3908,7 +4307,7 @@
               "type": "library",
               "name": "floating-vue",
               "version": "5.2.2",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2",
               "author": "Guillaume Chau",
               "description": "Easy Vue tooltips, dropdowns, menus & popovers using floating-ui",
               "licenses": [
@@ -3959,7 +4358,7 @@
                   "name": "dom",
                   "group": "@floating-ui",
                   "version": "1.1.1",
-                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2|@floating-ui/dom@1.1.1",
+                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2|@floating-ui/dom@1.1.1",
                   "author": "atomiks",
                   "description": "Floating UI for the web",
                   "licenses": [
@@ -4011,7 +4410,7 @@
               "type": "library",
               "name": "splitpanes",
               "version": "4.0.4",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|splitpanes@4.0.4",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|splitpanes@4.0.4",
               "author": "Antoni Andre",
               "description": "A Vue.js reliable, simple and touch-ready panes splitter / resizer",
               "licenses": [
@@ -4061,7 +4460,7 @@
               "type": "library",
               "name": "vue-router",
               "version": "5.0.4",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|vue-router@5.0.4",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|vue-router@5.0.4",
               "author": "Eduardo San Martin Morote",
               "licenses": [
                 {
@@ -4110,8 +4509,8 @@
                   "type": "library",
                   "name": "devtools-api",
                   "group": "@vue",
-                  "version": "8.1.0",
-                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|vue-router@5.0.4|@vue/devtools-api@8.1.0",
+                  "version": "8.1.1",
+                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|vue-router@5.0.4|@vue/devtools-api@8.1.1",
                   "author": "webfansplz",
                   "licenses": [
                     {
@@ -4120,7 +4519,7 @@
                       }
                     }
                   ],
-                  "purl": "pkg:npm/%40vue/devtools-api@8.1.0",
+                  "purl": "pkg:npm/%40vue/devtools-api@8.1.1",
                   "externalReferences": [
                     {
                       "url": "git+https://github.com/vuejs/devtools.git#packages/devtools-api",
@@ -4138,12 +4537,12 @@
                       "comment": "as detected from PackageJson property \"bugs.url\""
                     },
                     {
-                      "url": "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-8.1.0.tgz",
+                      "url": "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-8.1.1.tgz",
                       "type": "distribution",
                       "hashes": [
                         {
                           "alg": "SHA-512",
-                          "content": "3b8e17e7b8e390b29b2c47383a02ffe9f10f38e6a744953c918a4213ca9f2a557de9141971dceb70b2399b132e55151e5e11ca2071a10a91da7320a4d07c8ee3"
+                          "content": "6ec0cc274edbdc6375a6e57025bfdfc859e3fd4da29b2b302b951054b670565eced398c3aede811f1786e577df98e39d6ac3a3fdb3a6223c49bc63f153ba5cab"
                         }
                       ],
                       "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -4162,7 +4561,7 @@
               "type": "library",
               "name": "vue-select",
               "version": "4.0.0-beta.6",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|vue-select@4.0.0-beta.6",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|vue-select@4.0.0-beta.6",
               "author": "Jeff Sagal",
               "description": "Everything you wish the HTML <select> element could do, wrapped up into a lightweight, extensible Vue component.",
               "licenses": [
@@ -4213,7 +4612,7 @@
               "name": "shared",
               "group": "@vueuse",
               "version": "14.2.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@vueuse/shared@14.2.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@vueuse/shared@14.2.1",
               "author": "Anthony Fu",
               "licenses": [
                 {
@@ -4262,8 +4661,8 @@
               "type": "library",
               "name": "server-renderer",
               "group": "@vue",
-              "version": "3.5.30",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@vue/server-renderer@3.5.30",
+              "version": "3.5.31",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@vue/server-renderer@3.5.31",
               "author": "Evan You",
               "description": "@vue/server-renderer",
               "licenses": [
@@ -4273,7 +4672,7 @@
                   }
                 }
               ],
-              "purl": "pkg:npm/%40vue/server-renderer@3.5.30",
+              "purl": "pkg:npm/%40vue/server-renderer@3.5.31",
               "externalReferences": [
                 {
                   "url": "git+https://github.com/vuejs/core.git#packages/server-renderer",
@@ -4291,12 +4690,12 @@
                   "comment": "as detected from PackageJson property \"bugs.url\""
                 },
                 {
-                  "url": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.30.tgz",
+                  "url": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.31.tgz",
                   "type": "distribution",
                   "hashes": [
                     {
                       "alg": "SHA-512",
-                      "content": "bfe477e2271aa72751c1b6510f4b17c2d1eaad026fdfc26e301e09c5b3b177c344a462e7cbb72770ca79dd6f541ffce8e23f1e0c78d0d5d1095f0cc54249e3b5"
+                      "content": "189bb046f31c7595ff0ab8949f2208386931deb315dc7eac3aed0985d29b76e69e0a38bacdbeb488e18c63bb45a0ddb835fb1462814186c859b46c46a713b888"
                     }
                   ],
                   "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -4313,7 +4712,7 @@
               "type": "library",
               "name": "vue-resize",
               "version": "2.0.0-alpha.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|vue-resize@2.0.0-alpha.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|vue-resize@2.0.0-alpha.1",
               "author": "Guillaume Chau",
               "description": "Detects DOM element resizing",
               "licenses": [
@@ -4363,7 +4762,7 @@
               "type": "library",
               "name": "pinia",
               "version": "3.0.4",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|pinia@3.0.4",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|pinia@3.0.4",
               "author": "Eduardo San Martin Morote",
               "description": "Intuitive, type safe and flexible Store for Vue",
               "scope": "optional",
@@ -4414,8 +4813,8 @@
               "type": "library",
               "name": "devtools-kit",
               "group": "@vue",
-              "version": "8.1.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/dialogs@7.3.0|@vue/devtools-kit@8.1.0",
+              "version": "8.1.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/dialogs@7.3.0|@vue/devtools-kit@8.1.1",
               "author": "webfansplz",
               "licenses": [
                 {
@@ -4424,7 +4823,7 @@
                   }
                 }
               ],
-              "purl": "pkg:npm/%40vue/devtools-kit@8.1.0",
+              "purl": "pkg:npm/%40vue/devtools-kit@8.1.1",
               "externalReferences": [
                 {
                   "url": "git+https://github.com/vuejs/devtools.git#packages/devtools-kit",
@@ -4442,12 +4841,12 @@
                   "comment": "as detected from PackageJson property \"bugs.url\""
                 },
                 {
-                  "url": "https://registry.npmjs.org/@vue/devtools-kit/-/devtools-kit-8.1.0.tgz",
+                  "url": "https://registry.npmjs.org/@vue/devtools-kit/-/devtools-kit-8.1.1.tgz",
                   "type": "distribution",
                   "hashes": [
                     {
                       "alg": "SHA-512",
-                      "content": "fcd6654b85ad188079e0303fcf5d20ce4fa7fd5ef36aa4b3619395960d827dd9e920a741eb56ddec90c83317ffcebb57e35ce877c136fdb6c40685bf77bc7bd1"
+                      "content": "81505a06ffbe8be69d8382691fbd64f69a65e2ca3247b63631c12a3b960d82fd0123590c67b0435f9827c2467908e620882ca17a3646fb218dac10238fa0a8aa"
                     }
                   ],
                   "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -4466,7 +4865,7 @@
           "type": "library",
           "name": "vue-apexcharts",
           "version": "1.7.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|vue-apexcharts@1.7.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|vue-apexcharts@1.7.0",
           "author": "Juned Chhipa",
           "description": "Vue.js wrapper for ApexCharts",
           "licenses": [
@@ -4517,7 +4916,7 @@
           "name": "files",
           "group": "@nextcloud",
           "version": "4.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/files@4.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/files@4.0.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Nextcloud files utils",
           "licenses": [
@@ -4568,7 +4967,7 @@
               "name": "sharing",
               "group": "@nextcloud",
               "version": "0.3.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/files@4.0.0|@nextcloud/sharing@0.3.0",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/files@4.0.0|@nextcloud/sharing@0.3.0",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Front-end utilities for Nextcloud files sharing",
               "licenses": [
@@ -4604,7 +5003,7 @@
               "name": "files",
               "group": "@nextcloud",
               "version": "3.12.2",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/files@4.0.0|@nextcloud/files@3.12.2",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/files@4.0.0|@nextcloud/files@3.12.2",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Nextcloud files utils",
               "scope": "optional",
@@ -4658,7 +5057,7 @@
           "name": "initial-state",
           "group": "@nextcloud",
           "version": "3.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/initial-state@3.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/initial-state@3.0.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Access data from the nextcloud server-side initial state API within apps.",
           "licenses": [
@@ -4709,7 +5108,7 @@
           "name": "sharing",
           "group": "@nextcloud",
           "version": "0.4.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@nextcloud/sharing@0.4.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@nextcloud/sharing@0.4.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Front-end utilities for Nextcloud files sharing",
           "licenses": [
@@ -4759,7 +5158,7 @@
           "type": "library",
           "name": "p-queue",
           "version": "9.1.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|p-queue@9.1.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|p-queue@9.1.0",
           "description": "Promise queue with concurrency control",
           "licenses": [
             {
@@ -4808,7 +5207,7 @@
           "type": "library",
           "name": "apexcharts",
           "version": "5.10.4",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|apexcharts@5.10.4",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|apexcharts@5.10.4",
           "description": "A JavaScript Chart Library",
           "licenses": [
             {
@@ -4857,7 +5256,7 @@
           "type": "library",
           "name": "debounce",
           "version": "3.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|debounce@3.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|debounce@3.0.0",
           "description": "Delay function calls until a set time elapses after the last invocation",
           "licenses": [
             {
@@ -4905,8 +5304,8 @@
         {
           "type": "library",
           "name": "focus-trap",
-          "version": "8.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|focus-trap@8.0.0",
+          "version": "8.0.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|focus-trap@8.0.1",
           "author": "David Clark",
           "description": "Trap focus within a DOM node.",
           "licenses": [
@@ -4916,7 +5315,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/focus-trap@8.0.0",
+          "purl": "pkg:npm/focus-trap@8.0.1",
           "externalReferences": [
             {
               "url": "git+https://github.com/focus-trap/focus-trap.git",
@@ -4934,12 +5333,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/focus-trap/-/focus-trap-8.0.0.tgz",
+              "url": "https://registry.npmjs.org/focus-trap/-/focus-trap-8.0.1.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "01af3814e187b3df6f570b9f0cc76adaa80ec173c2d9ef54eba19ca81867d7f8c41cf0e125a3fc3d886421ba86f6585f2f929d764ff9ebb963e3a2cb1d809153"
+                  "content": "f69b521bacf9d5840eb2d23fa0de17b9518fff4deeda787483ffeacfb2facd7d22e8f6623e791c7f719e9d7abb3768599c049768cc533e96cac1d23e3c5bf197"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -4956,7 +5355,7 @@
           "type": "library",
           "name": "rehype-react",
           "version": "8.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|rehype-react@8.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|rehype-react@8.0.0",
           "author": "rhysd",
           "description": "rehype plugin to transform to React",
           "licenses": [
@@ -5007,7 +5406,7 @@
           "name": "web-bluetooth",
           "group": "@types",
           "version": "0.0.21",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@types/web-bluetooth@0.0.21",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@types/web-bluetooth@0.0.21",
           "description": "TypeScript definitions for web-bluetooth",
           "licenses": [
             {
@@ -5057,7 +5456,7 @@
           "name": "metadata",
           "group": "@vueuse",
           "version": "14.2.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@vueuse/metadata@14.2.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@vueuse/metadata@14.2.1",
           "author": "Anthony Fu",
           "description": "Metadata for VueUse functions",
           "licenses": [
@@ -5107,7 +5506,7 @@
           "type": "library",
           "name": "p-timeout",
           "version": "7.0.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|p-timeout@7.0.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|p-timeout@7.0.1",
           "author": "Sindre Sorhus",
           "description": "Timeout a promise after a specified amount of time",
           "licenses": [
@@ -5157,8 +5556,8 @@
           "type": "library",
           "name": "compiler-sfc",
           "group": "@vue",
-          "version": "3.5.30",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@vue/compiler-sfc@3.5.30",
+          "version": "3.5.31",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@vue/compiler-sfc@3.5.31",
           "author": "Evan You",
           "description": "@vue/compiler-sfc",
           "licenses": [
@@ -5168,7 +5567,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/%40vue/compiler-sfc@3.5.30",
+          "purl": "pkg:npm/%40vue/compiler-sfc@3.5.31",
           "externalReferences": [
             {
               "url": "git+https://github.com/vuejs/core.git#packages/compiler-sfc",
@@ -5186,12 +5585,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.30.tgz",
+              "url": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.31.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "2ea9853c39fcf5db54f6f237c07267c1a57a19f4d10fcec08d6a535a9cab75538e6d5b6322e49e66bd7cd73e42e0f995c7f5778f6a7ed1fede74528644ca50e4"
+                  "content": "33cc293e047d509f0c8911a3a69bf1f6e5897cb57b03f4fefeb2fcb3fcb7406deed1cdbf61981f7f777a4ae8a62912217189d68397d37c3325cf613ab1e516f1"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -5208,7 +5607,7 @@
           "type": "library",
           "name": "chokidar",
           "version": "5.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|chokidar@5.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|chokidar@5.0.0",
           "author": "Paul Miller",
           "description": "Minimal and efficient cross-platform file watching library",
           "licenses": [
@@ -5257,8 +5656,8 @@
         {
           "type": "library",
           "name": "picomatch",
-          "version": "4.0.3",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|picomatch@4.0.3",
+          "version": "4.0.4",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|picomatch@4.0.4",
           "author": "Jon Schlinkert",
           "description": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions.",
           "licenses": [
@@ -5268,7 +5667,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/picomatch@4.0.3",
+          "purl": "pkg:npm/picomatch@4.0.4",
           "externalReferences": [
             {
               "url": "git+https://github.com/micromatch/picomatch.git",
@@ -5286,12 +5685,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.3.tgz",
+              "url": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.4.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "e604e680463fb2a2ba8055cb22c40d1f5f6559be1e6cf0cb03849d2cfeddb169085c75a51baea83ee56f5d21853e9a58673f190d9ab475862b6c77c109551bd5"
+                  "content": "40ff3c0402af31a9bfdcdc47eaf8f6a36d51e8c8f165401dea7970012fe99c6bcdf4854ba1c2c7c46608cc5860e9f510fb9b61e8fe1dbf8796f635f70d2223ec"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -5308,7 +5707,7 @@
           "type": "library",
           "name": "readdirp",
           "version": "5.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|readdirp@5.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|readdirp@5.0.0",
           "author": "Thorsten Lorenz",
           "description": "Recursive version of fs.readdir with small RAM & CPU footprint",
           "licenses": [
@@ -5359,7 +5758,7 @@
           "name": "devtools-api",
           "group": "@vue",
           "version": "7.7.9",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@vue/devtools-api@7.7.9",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@vue/devtools-api@7.7.9",
           "author": "webfansplz",
           "scope": "optional",
           "licenses": [
@@ -5409,8 +5808,8 @@
           "type": "library",
           "name": "devtools-shared",
           "group": "@vue",
-          "version": "8.1.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|@vue/devtools-shared@8.1.0",
+          "version": "8.1.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|@vue/devtools-shared@8.1.1",
           "author": "webfansplz",
           "licenses": [
             {
@@ -5419,7 +5818,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/%40vue/devtools-shared@8.1.0",
+          "purl": "pkg:npm/%40vue/devtools-shared@8.1.1",
           "externalReferences": [
             {
               "url": "git+https://github.com/vuejs/devtools.git#packages/shared",
@@ -5437,12 +5836,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/@vue/devtools-shared/-/devtools-shared-8.1.0.tgz",
+              "url": "https://registry.npmjs.org/@vue/devtools-shared/-/devtools-shared-8.1.1.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "87cb826f842cf144fc55d4d3e728d8ead389fffa87ec4a714e88b1474c6a7a3479e6de4e74848883b009ede064841b3c8aed6a1b9818dd040d3750c5d447a500"
+                  "content": "fa1e2db6625897fb71a711ca6a865c68aa42fa9bdc9202f3203892425690ee42ad84a87c2aec282d6d83f213c9127a8acd73afbb5e541c4a06ca78005c2cf411"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -5459,7 +5858,7 @@
           "type": "library",
           "name": "perfect-debounce",
           "version": "2.1.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.4|perfect-debounce@2.1.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.6|perfect-debounce@2.1.0",
           "licenses": [
             {
               "license": {
@@ -8789,6 +9188,57 @@
     },
     {
       "type": "library",
+      "name": "timezones",
+      "group": "@nextcloud",
+      "version": "0.2.0",
+      "bom-ref": "opencatalogi@1.0.0|@nextcloud/timezones@0.2.0",
+      "author": "Richard Steinmetz",
+      "description": "A small library containing common time zone logic and data",
+      "licenses": [
+        {
+          "license": {
+            "id": "AGPL-3.0-or-later"
+          }
+        }
+      ],
+      "purl": "pkg:npm/%40nextcloud/timezones@0.2.0",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/nextcloud-libraries/timezones.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/nextcloud-libraries/timezones",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/nextcloud-libraries/timezones/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/@nextcloud/timezones/-/timezones-0.2.0.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "d66c10f9ab1314e82ff6bc4fa003046c317c25f9de9c86b6106352fbc3004c2ca2e965f1621d0b8646aad5dde5dbec4d6d43c780c9e4e1c458b2f228df5f6590"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/@nextcloud/timezones"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "typings",
       "group": "@nextcloud",
       "version": "1.10.0",
@@ -8893,8 +9343,8 @@
       "type": "library",
       "name": "vue",
       "group": "@nextcloud",
-      "version": "8.37.0",
-      "bom-ref": "opencatalogi@1.0.0|@nextcloud/vue@8.37.0",
+      "version": "8.35.0",
+      "bom-ref": "opencatalogi@1.0.0|@nextcloud/vue@8.35.0",
       "author": "Nextcloud GmbH and Nextcloud contributors",
       "description": "Nextcloud vue components",
       "licenses": [
@@ -8904,7 +9354,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40nextcloud/vue@8.37.0",
+      "purl": "pkg:npm/%40nextcloud/vue@8.35.0",
       "externalReferences": [
         {
           "url": "git+https://github.com/nextcloud-libraries/nextcloud-vue.git",
@@ -8922,12 +9372,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@nextcloud/vue/-/vue-8.37.0.tgz",
+          "url": "https://registry.npmjs.org/@nextcloud/vue/-/vue-8.35.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "45b2b471ce4c282c454604dcd83a38c53888fc0c05de78008bdba9845d00f64c2bbd7a83c642cdc772dbf95340d9b7d84e65cfc8d5c8c3823101c57ed6d65b65"
+              "content": "a8f9b469a3db9edee7ebde1643ded3f843104f109adfe44f283cec0550fabdbd35378b866308efac410e2d5981325116aa4172fa4b37b6978e8e40cf3a825b34"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -8944,8 +9394,8 @@
           "type": "library",
           "name": "sharing",
           "group": "@nextcloud",
-          "version": "0.4.0",
-          "bom-ref": "opencatalogi@1.0.0|@nextcloud/vue@8.37.0|@nextcloud/sharing@0.4.0",
+          "version": "0.3.0",
+          "bom-ref": "opencatalogi@1.0.0|@nextcloud/vue@8.35.0|@nextcloud/sharing@0.3.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Front-end utilities for Nextcloud files sharing",
           "licenses": [
@@ -8955,30 +9405,15 @@
               }
             }
           ],
-          "purl": "pkg:npm/%40nextcloud/sharing@0.4.0",
+          "purl": "pkg:npm/%40nextcloud/sharing@0.3.0",
           "externalReferences": [
             {
-              "url": "git+https://github.com/nextcloud-libraries/nextcloud-sharing.git",
-              "type": "vcs",
-              "comment": "as detected from PackageJson property \"repository.url\""
-            },
-            {
-              "url": "https://github.com/nextcloud-libraries/nextcloud-sharing#readme",
-              "type": "website",
-              "comment": "as detected from PackageJson property \"homepage\""
-            },
-            {
-              "url": "https://github.com/nextcloud-libraries/nextcloud-sharing/issues",
-              "type": "issue-tracker",
-              "comment": "as detected from PackageJson property \"bugs.url\""
-            },
-            {
-              "url": "https://registry.npmjs.org/@nextcloud/sharing/-/sharing-0.4.0.tgz",
+              "url": "https://registry.npmjs.org/@nextcloud/sharing/-/sharing-0.3.0.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "d6150dc9ceee25d0699e298e9c4b2126312d00f023cc361597aaa65aa179671a0df703af6c4c70d108d7df11486c76d7d9d9af6d134b063d11ccbce2a666727a"
+                  "content": "915eea79466f7757d329e1721fe5b942ae6b34ea86f6b2c04d933753d301c565c726cdcec4ca9841bf1443735838dcec5f7cc318999d4040881879b57a2dac08"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -8996,7 +9431,7 @@
               "name": "initial-state",
               "group": "@nextcloud",
               "version": "3.0.0",
-              "bom-ref": "opencatalogi@1.0.0|@nextcloud/vue@8.37.0|@nextcloud/sharing@0.4.0|@nextcloud/initial-state@3.0.0",
+              "bom-ref": "opencatalogi@1.0.0|@nextcloud/vue@8.35.0|@nextcloud/sharing@0.3.0|@nextcloud/initial-state@3.0.0",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Access data from the nextcloud server-side initial state API within apps.",
               "licenses": [
@@ -9656,8 +10091,8 @@
         {
           "type": "library",
           "name": "minimatch",
-          "version": "9.0.9",
-          "bom-ref": "opencatalogi@1.0.0|@npmcli/map-workspaces@3.0.6|minimatch@9.0.9",
+          "version": "9.0.5",
+          "bom-ref": "opencatalogi@1.0.0|@npmcli/map-workspaces@3.0.6|minimatch@9.0.5",
           "author": "Isaac Z. Schlueter",
           "description": "a glob matcher in javascript",
           "licenses": [
@@ -9667,7 +10102,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/minimatch@9.0.9",
+          "purl": "pkg:npm/minimatch@9.0.5",
           "externalReferences": [
             {
               "url": "git://github.com/isaacs/minimatch.git",
@@ -9685,12 +10120,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.9.tgz",
+              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "381c0137d00be1daa61139694b6cdab31faf4de59c956ce46e57d993b2930398f78de38e373fed4429d9a26532bcd83cdf02f966ff52b3a1cc2570202fc47662"
+                  "content": "1ba4f4657e3cc60a33c7be7cee4a1e5fd62cd8d632e869affff3fcf6c12d7bd57dc2121aa4c345e2274ac675b642d09c2e24d695bff07c269b02d0055a1841a3"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -10110,8 +10545,8 @@
         {
           "type": "library",
           "name": "minimatch",
-          "version": "9.0.9",
-          "bom-ref": "opencatalogi@1.0.0|@npmcli/package-json@5.2.1|minimatch@9.0.9",
+          "version": "9.0.5",
+          "bom-ref": "opencatalogi@1.0.0|@npmcli/package-json@5.2.1|minimatch@9.0.5",
           "author": "Isaac Z. Schlueter",
           "description": "a glob matcher in javascript",
           "licenses": [
@@ -10121,7 +10556,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/minimatch@9.0.9",
+          "purl": "pkg:npm/minimatch@9.0.5",
           "externalReferences": [
             {
               "url": "git://github.com/isaacs/minimatch.git",
@@ -10139,12 +10574,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.9.tgz",
+              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "381c0137d00be1daa61139694b6cdab31faf4de59c956ce46e57d993b2930398f78de38e373fed4429d9a26532bcd83cdf02f966ff52b3a1cc2570202fc47662"
+                  "content": "1ba4f4657e3cc60a33c7be7cee4a1e5fd62cd8d632e869affff3fcf6c12d7bd57dc2121aa4c345e2274ac675b642d09c2e24d695bff07c269b02d0055a1841a3"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -10861,6 +11296,56 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/@toast-ui/editor"
+        }
+      ],
+      "components": [
+        {
+          "type": "library",
+          "name": "dompurify",
+          "version": "2.5.8",
+          "bom-ref": "opencatalogi@1.0.0|@toast-ui/editor@3.2.2|dompurify@2.5.8",
+          "author": "Mario Heiderich",
+          "description": "DOMPurify is a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, MathML and SVG. It's written in JavaScript and works in all modern browsers (Safari, Opera (15+), Internet Explorer (10+), Firefox and Chrome - as well as almost anything else using Blink or WebKit). DOMPurify is written by security people who have vast background in web attacks and XSS. Fear not.",
+          "licenses": [
+            {
+              "expression": "(MPL-2.0 OR Apache-2.0)"
+            }
+          ],
+          "purl": "pkg:npm/dompurify@2.5.8",
+          "externalReferences": [
+            {
+              "url": "git://github.com/cure53/DOMPurify.git",
+              "type": "vcs",
+              "comment": "as detected from PackageJson property \"repository.url\""
+            },
+            {
+              "url": "https://github.com/cure53/DOMPurify",
+              "type": "website",
+              "comment": "as detected from PackageJson property \"homepage\""
+            },
+            {
+              "url": "https://github.com/cure53/DOMPurify/issues",
+              "type": "issue-tracker",
+              "comment": "as detected from PackageJson property \"bugs.url\""
+            },
+            {
+              "url": "https://registry.npmjs.org/dompurify/-/dompurify-2.5.8.tgz",
+              "type": "distribution",
+              "hashes": [
+                {
+                  "alg": "SHA-512",
+                  "content": "a35bd2360ae660c40e6db492bc5ff56eb0581103c7855d7e82c9abbac3bbfc65eda754fdac24bc71716a5712bff5cad3d6303a09cbfee4c4d28c136aafb4a8bf"
+                }
+              ],
+              "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+            }
+          ],
+          "properties": [
+            {
+              "name": "cdx:npm:package:path",
+              "value": "node_modules/@toast-ui/editor/node_modules/dompurify"
+            }
+          ]
         }
       ]
     },
@@ -12475,8 +12960,8 @@
           "type": "library",
           "name": "compiler-sfc",
           "group": "@vue",
-          "version": "3.5.30",
-          "bom-ref": "opencatalogi@1.0.0|@vue-macros/common@3.1.2|@vue/compiler-sfc@3.5.30",
+          "version": "3.5.31",
+          "bom-ref": "opencatalogi@1.0.0|@vue-macros/common@3.1.2|@vue/compiler-sfc@3.5.31",
           "author": "Evan You",
           "description": "@vue/compiler-sfc",
           "licenses": [
@@ -12486,7 +12971,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/%40vue/compiler-sfc@3.5.30",
+          "purl": "pkg:npm/%40vue/compiler-sfc@3.5.31",
           "externalReferences": [
             {
               "url": "git+https://github.com/vuejs/core.git#packages/compiler-sfc",
@@ -12504,12 +12989,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.30.tgz",
+              "url": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.31.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "2ea9853c39fcf5db54f6f237c07267c1a57a19f4d10fcec08d6a535a9cab75538e6d5b6322e49e66bd7cd73e42e0f995c7f5778f6a7ed1fede74528644ca50e4"
+                  "content": "33cc293e047d509f0c8911a3a69bf1f6e5897cb57b03f4fefeb2fcb3fcb7406deed1cdbf61981f7f777a4ae8a62912217189d68397d37c3325cf613ab1e516f1"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -12528,8 +13013,8 @@
       "type": "library",
       "name": "compiler-core",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/compiler-core@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/compiler-core@3.5.31",
       "author": "Evan You",
       "description": "@vue/compiler-core",
       "licenses": [
@@ -12539,7 +13024,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/compiler-core@3.5.30",
+      "purl": "pkg:npm/%40vue/compiler-core@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/compiler-core",
@@ -12557,12 +13042,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "b370df75991cbbfa84c59fad77be74d79963cc773abc4fb7d1c14c1913d13988ea92ba18239355d97d7200c5fd51ec8135607d33109f3dcb23a4b4b5d67ce493"
+              "content": "93fb9e2f5e1a348132e4e9dfd0e57347c922a85fd64e180b745871c1ae1efca17fd2a7b7f08c087687e8496053befc5039eb1acfaae20050146988e817d7cb2d"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -12579,7 +13064,7 @@
           "type": "library",
           "name": "entities",
           "version": "7.0.1",
-          "bom-ref": "opencatalogi@1.0.0|@vue/compiler-core@3.5.30|entities@7.0.1",
+          "bom-ref": "opencatalogi@1.0.0|@vue/compiler-core@3.5.31|entities@7.0.1",
           "author": "Felix Boehm",
           "description": "Encode & decode XML and HTML entities with ease & speed",
           "licenses": [
@@ -12631,8 +13116,8 @@
       "type": "library",
       "name": "compiler-dom",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/compiler-dom@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/compiler-dom@3.5.31",
       "author": "Evan You",
       "description": "@vue/compiler-dom",
       "licenses": [
@@ -12642,7 +13127,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/compiler-dom@3.5.30",
+      "purl": "pkg:npm/%40vue/compiler-dom@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/compiler-dom",
@@ -12660,12 +13145,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "7821581125045581e188cb8ae1241395d3b7458c72311fd440be0a7460f562b91f771e26fc762e67d8d27cf740fa7589637e155a776261d5bfc195f288f101f6"
+              "content": "04c63fa334bfc718d8a9114bfad29d4690132580d34e0592a34f8026f24d8388a0f8781bd1d3ac1cf5ef9681d0e619a58af52ac3562dda93c8aa9e1ed2fd4653"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -12762,8 +13247,8 @@
       "type": "library",
       "name": "compiler-ssr",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/compiler-ssr@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/compiler-ssr@3.5.31",
       "author": "Evan You",
       "description": "@vue/compiler-ssr",
       "licenses": [
@@ -12773,7 +13258,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/compiler-ssr@3.5.30",
+      "purl": "pkg:npm/%40vue/compiler-ssr@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/compiler-ssr",
@@ -12791,12 +13276,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "36c60ae8e3139f1d74f4f48bd880327fad893fa114764e039a3e80916709181bcdd1d428318b557a402676a813b56420109a3e3a4b2d6dfff5a7ba99af91fe6c"
+              "content": "874c48331aedfcb1cebc928cae2faf7584fdd81acadc714bb43aaaf4faff95555f1382322992af59fd2f2455b5d18afa9d7d36391e0c909c08d1cd470dad61a2"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -13269,8 +13754,8 @@
       "type": "library",
       "name": "reactivity",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/reactivity@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/reactivity@3.5.31",
       "author": "Evan You",
       "description": "@vue/reactivity",
       "licenses": [
@@ -13280,7 +13765,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/reactivity@3.5.30",
+      "purl": "pkg:npm/%40vue/reactivity@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/reactivity",
@@ -13298,12 +13783,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "d7bf583602804eec23f6007eebab27b244433a2b438ae399aa46226bb9872896a274e328fd62711ca17c0ee19ce15e176d84c900d95f10a6f4cb14d0a2d9f1e1"
+              "content": "0ed297c64f44fcab95bedf15c56bbee8bb9cf48f444cd72a4754f5a16d607f4da75da67592e031e7ca15bbbb97f57c494748890aba3a7ea04bc3da120442e8e6"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -13320,8 +13805,8 @@
       "type": "library",
       "name": "runtime-core",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/runtime-core@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/runtime-core@3.5.31",
       "author": "Evan You",
       "description": "@vue/runtime-core",
       "licenses": [
@@ -13331,7 +13816,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/runtime-core@3.5.30",
+      "purl": "pkg:npm/%40vue/runtime-core@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/runtime-core",
@@ -13349,12 +13834,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "7b467ef0f42c51377057c4ed12c2f350ced2cc2ee543060a78fc9d6fb2b6667992ea38cd0fe5895e49a67e1fecc18cd1c9f3f5118ddfa5d7acc98a32982cd87e"
+              "content": "0193e62075c403286992637b69696a8d27d8ca79a45a596e0cd3c730264a1471fe94bb713ffdf45099a85615e66c3a0fd4d8348c6d1fc98db30a3d4f9d2480e9"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -13371,8 +13856,8 @@
       "type": "library",
       "name": "runtime-dom",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/runtime-dom@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/runtime-dom@3.5.31",
       "author": "Evan You",
       "description": "@vue/runtime-dom",
       "licenses": [
@@ -13382,7 +13867,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/runtime-dom@3.5.30",
+      "purl": "pkg:npm/%40vue/runtime-dom@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/runtime-dom",
@@ -13400,12 +13885,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "d942066a48d4e16490d13e22c03116d16eef423ea7ec0167eed6aa67d0af9b443f440d8514ece22c44ab0cbe069ad235c15de35e0e6732825260eeba7a00d407"
+              "content": "c5026c3519863de0c226afeef35dedca89cd8160458f37d5901c034447445a77419c67472c7824c0d050c4bb60e330ebcca4c47278a4532d5450d79c6f7949ea"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -13422,8 +13907,8 @@
       "type": "library",
       "name": "shared",
       "group": "@vue",
-      "version": "3.5.30",
-      "bom-ref": "opencatalogi@1.0.0|@vue/shared@3.5.30",
+      "version": "3.5.31",
+      "bom-ref": "opencatalogi@1.0.0|@vue/shared@3.5.31",
       "author": "Evan You",
       "description": "internal utils shared across @vue packages",
       "licenses": [
@@ -13433,7 +13918,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40vue/shared@3.5.30",
+      "purl": "pkg:npm/%40vue/shared@3.5.31",
       "externalReferences": [
         {
           "url": "git+https://github.com/vuejs/core.git#packages/shared",
@@ -13451,12 +13936,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/@vue/shared/-/shared-3.5.30.tgz",
+          "url": "https://registry.npmjs.org/@vue/shared/-/shared-3.5.31.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "617810ec98da3b5f0d78ad8af554db0c7685cbad96ace6cc6ba5c444d7cd3a40210f5175a0349fdd927b2ba1aa69b67406f4831da8e9f2a7d2e526b623d9fcb9"
+              "content": "9c1c6e8ae4bd2e3e5b3e43db5a880f5278f1c56a64467897edee540500d697a16c7f8ae8abdc3057e711edecd0e335ecc0dbcf225b1d8f5b2570b07b5c2b1103"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -15546,6 +16031,57 @@
     },
     {
       "type": "library",
+      "name": "monotone-cubic-spline",
+      "group": "@yr",
+      "version": "1.0.3",
+      "bom-ref": "opencatalogi@1.0.0|@yr/monotone-cubic-spline@1.0.3",
+      "author": "Alexander Pope",
+      "description": "Convert a series of points to a monotone cubic spline",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/%40yr/monotone-cubic-spline@1.0.3",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/YR/monotone-cubic-spline.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/YR/monotone-cubic-spline#readme",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/YR/monotone-cubic-spline/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/@yr/monotone-cubic-spline/-/monotone-cubic-spline-1.0.3.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "1505e43ad6b45c14943c79dd20a38dd98f49790cf965e32a2d865554af7716588d0459bb2cd30866663a16b30407d5cf7036c4d9b7a431b643ea4cc3931c188c"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/@yr/monotone-cubic-spline"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "abbrev",
       "version": "2.0.0",
       "bom-ref": "opencatalogi@1.0.0|abbrev@2.0.0",
@@ -15746,8 +16282,8 @@
         {
           "type": "library",
           "name": "ajv",
-          "version": "8.18.0",
-          "bom-ref": "opencatalogi@1.0.0|ajv-formats@2.1.1|ajv@8.18.0",
+          "version": "8.17.1",
+          "bom-ref": "opencatalogi@1.0.0|ajv-formats@2.1.1|ajv@8.17.1",
           "author": "Evgeny Poberezkin",
           "description": "Another JSON Schema Validator",
           "licenses": [
@@ -15757,7 +16293,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/ajv@8.18.0",
+          "purl": "pkg:npm/ajv@8.17.1",
           "externalReferences": [
             {
               "url": "git+https://github.com/ajv-validator/ajv.git",
@@ -15775,12 +16311,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
+              "url": "https://registry.npmjs.org/ajv/-/ajv-8.17.1.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "3e55cf78458c5cc67bb0f60e1ea983c8227371f36b52bddf18d2ad7b35f5e3291738422fc8af3577eab2771f3d298e4eef514a30f690daf05f04523934747adc"
+                  "content": "07f801b8d8394a2313acf902f80dbe716d11b33c316269fa558c41fe29e5052b52e67c7ac4722dfde84a46120c86abac97b6bc2e34286678c2b39be1c31390d6"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -15992,6 +16528,61 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/anymatch"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "apexcharts",
+      "version": "3.54.1",
+      "bom-ref": "opencatalogi@1.0.0|apexcharts@3.54.1",
+      "description": "A JavaScript Chart Library",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT",
+            "url": "http://www.opensource.org/licenses/mit-license.php"
+          }
+        }
+      ],
+      "purl": "pkg:npm/apexcharts@3.54.1",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/apexcharts/apexcharts.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://apexcharts.com",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/apexcharts/apexcharts.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/apexcharts/-/apexcharts-3.54.1.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "1387add21fc9d54debdc4c12fd696a2424086dea4a6e9eb019499a03024e3231d43f80a2d20c5a9cb6bb151de8931ea9f5ca22e2cb7a27ce77fc26f534fd2fa4"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/apexcharts"
         }
       ]
     },
@@ -16247,8 +16838,8 @@
     {
       "type": "library",
       "name": "axios",
-      "version": "1.13.6",
-      "bom-ref": "opencatalogi@1.0.0|axios@1.13.6",
+      "version": "1.13.2",
+      "bom-ref": "opencatalogi@1.0.0|axios@1.13.2",
       "author": "Matt Zabriskie",
       "description": "Promise based HTTP client for the browser and node.js",
       "licenses": [
@@ -16258,7 +16849,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/axios@1.13.6",
+      "purl": "pkg:npm/axios@1.13.2",
       "externalReferences": [
         {
           "url": "git+https://github.com/axios/axios.git",
@@ -16276,12 +16867,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/axios/-/axios-1.13.6.tgz",
+          "url": "https://registry.npmjs.org/axios/-/axios-1.13.2.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "0a14c21cca2e11eda49fbd775876d019cb98aebe9f5d3062bb8eb4393c16ad6a1bd7a8356d79f8bedcf4ecea5eedec0ca332409c4aae2e4e655905ad06283d0d"
+              "content": "54f93d79b36a3dccb99511ae4a52b1ef9d889436ad3a34fda5a3e59bc03bc8eb96d856efa785f72739c9b53e1fd06cc62cb89613d5bca27cf9d52a8b630cc668"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -23144,8 +23735,8 @@
     {
       "type": "library",
       "name": "dompurify",
-      "version": "3.3.3",
-      "bom-ref": "opencatalogi@1.0.0|dompurify@3.3.3",
+      "version": "3.3.1",
+      "bom-ref": "opencatalogi@1.0.0|dompurify@3.3.1",
       "author": "Dr.-Ing. Mario Heiderich, Cure53",
       "description": "DOMPurify is a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, MathML and SVG. It's written in JavaScript and works in all modern browsers (Safari, Opera (15+), Internet Explorer (10+), Firefox and Chrome - as well as almost anything else using Blink or WebKit). DOMPurify is written by security people who have vast background in web attacks and XSS. Fear not.",
       "licenses": [
@@ -23153,7 +23744,7 @@
           "expression": "(MPL-2.0 OR Apache-2.0)"
         }
       ],
-      "purl": "pkg:npm/dompurify@3.3.3",
+      "purl": "pkg:npm/dompurify@3.3.1",
       "externalReferences": [
         {
           "url": "git://github.com/cure53/DOMPurify.git",
@@ -23171,12 +23762,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/dompurify/-/dompurify-3.3.3.tgz",
+          "url": "https://registry.npmjs.org/dompurify/-/dompurify-3.3.1.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "3a3ea9cc8dbe46a05f146faa39a38b6c55cb43dd004697061ba51e3cbf366c92ed76c6ba098243ee79a253c316f6740d3ad087577959fc1cead57d1061b05908"
+              "content": "aa47422b32cdb6b80f14fd55a3ef7c151cc99c14467b87dfc8279af48c070757f2c4f39e3531e92ca606778524f71bcda07d19a0e8f0671369b72330aab21dd5"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -25194,8 +25785,8 @@
     {
       "type": "library",
       "name": "focus-trap",
-      "version": "7.8.0",
-      "bom-ref": "opencatalogi@1.0.0|focus-trap@7.8.0",
+      "version": "7.7.0",
+      "bom-ref": "opencatalogi@1.0.0|focus-trap@7.7.0",
       "author": "David Clark",
       "description": "Trap focus within a DOM node.",
       "licenses": [
@@ -25205,7 +25796,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/focus-trap@7.8.0",
+      "purl": "pkg:npm/focus-trap@7.7.0",
       "externalReferences": [
         {
           "url": "git+https://github.com/focus-trap/focus-trap.git",
@@ -25223,12 +25814,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/focus-trap/-/focus-trap-7.8.0.tgz",
+          "url": "https://registry.npmjs.org/focus-trap/-/focus-trap-7.7.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "ff235d94892959b334a6dc67a3738d4ee7feda0df5f248767b3dca49e64de5d67c602e8002681e5b3f866ac61888124f15a61c4803debb819f8546828732095c"
+              "content": "0c92431e9120a126cff1913530d794d88cc2a5f17215d3596518a5aa67c7d97890b0f2ba3ed0fc01f26a5b3101b9d510076c87c197398aae78ae34da190fa58f"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -27047,6 +27638,56 @@
     },
     {
       "type": "library",
+      "name": "ical.js",
+      "version": "2.2.1",
+      "bom-ref": "opencatalogi@1.0.0|ical.js@2.2.1",
+      "author": "Philipp Kewisch",
+      "description": "Javascript parser for ics (rfc5545) and vcard (rfc6350) data",
+      "licenses": [
+        {
+          "license": {
+            "id": "MPL-2.0"
+          }
+        }
+      ],
+      "purl": "pkg:npm/ical.js@2.2.1",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/kewisch/ical.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/kewisch/ical.js#readme",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/kewisch/ical.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/ical.js/-/ical.js-2.2.1.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "c8afd494f6c4b37d7a8a06ffb634606c503c655ef9ac2b01269fe158e6ada7268f365830d1d183994f85a2270e7305f8c5791e5ce91888e982a8d3c5a4d3e442"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/ical.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "iconv-lite",
       "version": "0.6.3",
       "bom-ref": "opencatalogi@1.0.0|iconv-lite@0.6.3",
@@ -28646,8 +29287,8 @@
     {
       "type": "library",
       "name": "katex",
-      "version": "0.16.39",
-      "bom-ref": "opencatalogi@1.0.0|katex@0.16.39",
+      "version": "0.16.44",
+      "bom-ref": "opencatalogi@1.0.0|katex@0.16.44",
       "description": "Fast math typesetting for the web.",
       "licenses": [
         {
@@ -28656,7 +29297,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/katex@0.16.39",
+      "purl": "pkg:npm/katex@0.16.44",
       "externalReferences": [
         {
           "url": "git+https://github.com/KaTeX/KaTeX.git",
@@ -28674,12 +29315,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/katex/-/katex-0.16.39.tgz",
+          "url": "https://registry.npmjs.org/katex/-/katex-0.16.44.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "151d9feb2f39fbcd592ced063e1c90f84265fc4e482cd5a5b4986901e393cd19f2f79d99d77c76f3aee54c50e6bcc662c7ffd4c770ae310d9590b5d16d4c0e16"
+              "content": "124c680d393cb9f1ea1e57fd4311b073178b916451de23ae61f4697ce46061fa9cf2cd776e06fe62d458e7d34ae59a51682c2ad64a80e9ae65a57f02fde2e985"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -28696,7 +29337,7 @@
           "type": "library",
           "name": "commander",
           "version": "8.3.0",
-          "bom-ref": "opencatalogi@1.0.0|katex@0.16.39|commander@8.3.0",
+          "bom-ref": "opencatalogi@1.0.0|katex@0.16.44|commander@8.3.0",
           "author": "TJ Holowaychuk",
           "description": "the complete solution for node.js command-line programs",
           "licenses": [
@@ -29296,8 +29937,8 @@
     {
       "type": "library",
       "name": "lodash",
-      "version": "4.17.23",
-      "bom-ref": "opencatalogi@1.0.0|lodash@4.17.23",
+      "version": "4.17.21",
+      "bom-ref": "opencatalogi@1.0.0|lodash@4.17.21",
       "author": "John-David Dalton",
       "description": "Lodash modular utilities.",
       "licenses": [
@@ -29307,7 +29948,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/lodash@4.17.23",
+      "purl": "pkg:npm/lodash@4.17.21",
       "externalReferences": [
         {
           "url": "git+https://github.com/lodash/lodash.git",
@@ -29325,12 +29966,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/lodash/-/lodash-4.17.23.tgz",
+          "url": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "2e055332942d228a428bbf5225e0e23f44df5a2e4234473f2ff691753877c88be66574e785e5a92a3499867bcc97c8976c2d6d160f607471c330ba15ec29c6fb"
+              "content": "bf690311ee7b95e713ba568322e3533f2dd1cb880b189e99d4edef13592b81764daec43e2c54c61d5c558dc5cfb35ecb85b65519e74026ff17675b6f8f916f4a"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -32342,8 +32983,8 @@
     {
       "type": "library",
       "name": "minimatch",
-      "version": "3.1.5",
-      "bom-ref": "opencatalogi@1.0.0|minimatch@3.1.5",
+      "version": "3.1.2",
+      "bom-ref": "opencatalogi@1.0.0|minimatch@3.1.2",
       "author": "Isaac Z. Schlueter",
       "description": "a glob matcher in javascript",
       "licenses": [
@@ -32353,7 +32994,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/minimatch@3.1.5",
+      "purl": "pkg:npm/minimatch@3.1.2",
       "externalReferences": [
         {
           "url": "git://github.com/isaacs/minimatch.git",
@@ -32371,12 +33012,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.5.tgz",
+          "url": "https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "5608d652c9e74fa9fe35493a799abbef37857695b62d60f33facc51ab09b1d789836e9790f3aa4d871d0e6e147d83356e576e9f3e8d5cda78db7de2cb04125e3"
+              "content": "27ba7ade1462023c35343130c355bb8b7efe07222b3963b95d0400cd9dd539c2f43cdc9bc297e657f374e73140cf043d512c84717eaddd43be2b96aa0503881f"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -32542,8 +33183,8 @@
     {
       "type": "library",
       "name": "mlly",
-      "version": "1.8.1",
-      "bom-ref": "opencatalogi@1.0.0|mlly@1.8.1",
+      "version": "1.8.2",
+      "bom-ref": "opencatalogi@1.0.0|mlly@1.8.2",
       "description": "Missing ECMAScript module utils for Node.js",
       "licenses": [
         {
@@ -32552,7 +33193,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/mlly@1.8.1",
+      "purl": "pkg:npm/mlly@1.8.2",
       "externalReferences": [
         {
           "url": "git+https://github.com/unjs/mlly.git",
@@ -32570,12 +33211,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/mlly/-/mlly-1.8.1.tgz",
+          "url": "https://registry.npmjs.org/mlly/-/mlly-1.8.2.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "4a72fab0dbad4f0456591fef7260981d20038e211eb29e53190434a57c8b856e48a1e89b46517f09b48b6a295b07708da89524f5c549f5d5039db0fb1ab70705"
+              "content": "77e39bc4c40599bb75d2cadeb4d0f2b70b7ce55adb92185403f2411a6d4c3da589eb90a5e303a02da075358bc9499d047f4dcc30453fd31a4f317508436f547c"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -32592,7 +33233,7 @@
           "type": "library",
           "name": "pkg-types",
           "version": "1.3.1",
-          "bom-ref": "opencatalogi@1.0.0|mlly@1.8.1|pkg-types@1.3.1",
+          "bom-ref": "opencatalogi@1.0.0|mlly@1.8.2|pkg-types@1.3.1",
           "description": "Node.js utilities and TypeScript definitions for `package.json` and `tsconfig.json`",
           "licenses": [
             {
@@ -32641,7 +33282,7 @@
           "type": "library",
           "name": "confbox",
           "version": "0.1.8",
-          "bom-ref": "opencatalogi@1.0.0|mlly@1.8.1|confbox@0.1.8",
+          "bom-ref": "opencatalogi@1.0.0|mlly@1.8.2|confbox@0.1.8",
           "description": "Compact and high quality YAML, TOML, JSONC and JSON5 parsers",
           "licenses": [
             {
@@ -34246,8 +34887,8 @@
     {
       "type": "library",
       "name": "path-expression-matcher",
-      "version": "1.1.3",
-      "bom-ref": "opencatalogi@1.0.0|path-expression-matcher@1.1.3",
+      "version": "1.2.0",
+      "bom-ref": "opencatalogi@1.0.0|path-expression-matcher@1.2.0",
       "author": "Amit Gupta",
       "description": "Efficient path tracking and pattern matching for XML/JSON parsers",
       "licenses": [
@@ -34257,7 +34898,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/path-expression-matcher@1.1.3",
+      "purl": "pkg:npm/path-expression-matcher@1.2.0",
       "externalReferences": [
         {
           "url": "git+https://github.com/NaturalIntelligence/path-expression-matcher.git",
@@ -34275,12 +34916,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/path-expression-matcher/-/path-expression-matcher-1.1.3.tgz",
+          "url": "https://registry.npmjs.org/path-expression-matcher/-/path-expression-matcher-1.2.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "a9d56063c297995749651492d497443ce28f7538842bfa62d1191c4f6b30d51857c6885dba35252453ee4b54d291ebd9f6fcdddd994bed42e5d4c1c64c0a4acd"
+              "content": "0f098f59e167fadabb4e2c89d82c5ecc2022ad78c5c6f6a20f4de7a5a9377118e53fdf8e8d3992cb512922b11b87e97a26052e9dd9e296830b0d0ffa5537612d"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -36130,6 +36771,55 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/querystringify"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "randombytes",
+      "version": "2.1.0",
+      "bom-ref": "opencatalogi@1.0.0|randombytes@2.1.0",
+      "description": "random bytes from browserify stand alone",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/randombytes@2.1.0",
+      "externalReferences": [
+        {
+          "url": "git+ssh://git@github.com/crypto-browserify/randombytes.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/crypto-browserify/randombytes",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/crypto-browserify/randombytes/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/randombytes/-/randombytes-2.1.0.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "bd897788e5fee022945aec468bd5248627ba7eca97a92f4513665a89ce2d3450f637641069738c15bb8a2b84260c70b424ee81d59a78d49d0ba53d2847af1a99"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/randombytes"
         }
       ]
     },
@@ -39241,8 +39931,8 @@
         {
           "type": "library",
           "name": "ajv",
-          "version": "8.18.0",
-          "bom-ref": "opencatalogi@1.0.0|schema-utils@4.3.3|ajv@8.18.0",
+          "version": "8.17.1",
+          "bom-ref": "opencatalogi@1.0.0|schema-utils@4.3.3|ajv@8.17.1",
           "author": "Evgeny Poberezkin",
           "description": "Another JSON Schema Validator",
           "licenses": [
@@ -39252,7 +39942,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/ajv@8.18.0",
+          "purl": "pkg:npm/ajv@8.17.1",
           "externalReferences": [
             {
               "url": "git+https://github.com/ajv-validator/ajv.git",
@@ -39270,12 +39960,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
+              "url": "https://registry.npmjs.org/ajv/-/ajv-8.17.1.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "3e55cf78458c5cc67bb0f60e1ea983c8227371f36b52bddf18d2ad7b35f5e3291738422fc8af3577eab2771f3d298e4eef514a30f690daf05f04523934747adc"
+                  "content": "07f801b8d8394a2313acf902f80dbe716d11b33c316269fa558c41fe29e5052b52e67c7ac4722dfde84a46120c86abac97b6bc2e34286678c2b39be1c31390d6"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -39486,6 +40176,56 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/semver"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "serialize-javascript",
+      "version": "6.0.2",
+      "bom-ref": "opencatalogi@1.0.0|serialize-javascript@6.0.2",
+      "author": "Eric Ferraiuolo",
+      "description": "Serialize JavaScript to a superset of JSON that includes regular expressions and functions.",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl": "pkg:npm/serialize-javascript@6.0.2",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/yahoo/serialize-javascript.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/yahoo/serialize-javascript",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/yahoo/serialize-javascript/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/serialize-javascript/-/serialize-javascript-6.0.2.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "49a6b5c4f0724d3ab681d7856582cba3e445137e4d1d99006ea65e58d777069ce9a5e562b00aa90e3729f1dc9feae22f12a251778ea37a69b203888521e564f2"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/serialize-javascript"
         }
       ]
     },
@@ -41001,6 +41741,414 @@
     },
     {
       "type": "library",
+      "name": "svg.draggable.js",
+      "version": "2.2.2",
+      "bom-ref": "opencatalogi@1.0.0|svg.draggable.js@2.2.2",
+      "author": "Wout Fierens",
+      "description": "An extension for svg.js which allows to drag elements with your mouse",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.draggable.js@2.2.2",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/svgdotjs/svg.draggable.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.draggable.js",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.draggable.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.draggable.js/-/svg.draggable.js-2.2.2.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "27334705cd9f2d033360267dd0a647376a215cbd014091908a62b590693a02f49e89bb8a7087435fd2abd1d4fdf942793bc9d8034441f37f4b86f938098e0c67"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.draggable.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "svg.easing.js",
+      "version": "2.0.0",
+      "bom-ref": "opencatalogi@1.0.0|svg.easing.js@2.0.0",
+      "author": "Wout Fierens",
+      "description": "Additional easing equations for the fx module in the svgjs.com library",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.easing.js@2.0.0",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/wout/svg.easing.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/wout/svg.easing.js",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/wout/svg.easing.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.easing.js/-/svg.easing.js-2.0.0.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "fff72d3dd24c1b2db662860657edc711f1db9baffaf4b2544c0a88dbfe6a06f68d1d9f6e505542f360743e5dbdf47ce01f5deb2ab0608b8f97c975f25565ad84"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.easing.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "svg.filter.js",
+      "version": "2.0.2",
+      "bom-ref": "opencatalogi@1.0.0|svg.filter.js@2.0.2",
+      "author": "Wout Fierens",
+      "description": "A plugin for svg.js adding filter functionality",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.filter.js@2.0.2",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/wout/svg.filter.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/wout/svg.filter.js",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/wout/svg.filter.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.filter.js/-/svg.filter.js-2.0.2.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "c64181c14f9d281cea8393ed8a56936f41183ea3df27d43ab1a565757fb9bc2472df53fa4e54423f753d3711f71c4b9f90a9293607532c12679a10c7793a8093"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.filter.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "svg.js",
+      "version": "2.7.1",
+      "bom-ref": "opencatalogi@1.0.0|svg.js@2.7.1",
+      "author": "Wout Fierens",
+      "description": "A lightweight library for manipulating and animating SVG.",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT",
+            "url": "http://www.opensource.org/licenses/mit-license.php"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.js@2.7.1",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/svgdotjs/svg.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://svgdotjs.github.io/",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.js/-/svg.js-2.7.1.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "c9c6f1a62cc4424b64dc562f9fff011feebf12e59783b669411109be069caa7e3a80875d1b6e2d34d7b84a89faa267570a748e680a67a59c3a30f08103574e0c"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "svg.pathmorphing.js",
+      "version": "0.1.3",
+      "bom-ref": "opencatalogi@1.0.0|svg.pathmorphing.js@0.1.3",
+      "author": "Ulrich-Matthias Schäfer",
+      "description": "Enables pathmorphing / path animation in svg.js",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.pathmorphing.js@0.1.3",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/svgdotjs/svg.pathmorphing.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.pathmorphing.js#readme",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.pathmorphing.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.pathmorphing.js/-/svg.pathmorphing.js-0.1.3.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "e3d1d623d5f85d047f246d6a5e448357cc558ae4cb2169bf07fed8b9010b57928c38fb578e2c07e173c9bebfe08440e26e62d0f4e736d9da56a46d2f5030cdc3"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.pathmorphing.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "svg.resize.js",
+      "version": "1.4.3",
+      "bom-ref": "opencatalogi@1.0.0|svg.resize.js@1.4.3",
+      "author": "Ulrich-Matthias Schäfer",
+      "description": "An extension for svg.js which allows to resize elements which are selected",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.resize.js@1.4.3",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/svgdotjs/svg.resize.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.resize.js",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.resize.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.resize.js/-/svg.resize.js-1.4.3.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "f64e6c5c9b8f2a9fa65735cdbf1cfb534b82f6854c42badfedc16c113ce7cd40c39b4c7cfbbeddb5991674c7d19666e410462f527f5bb4ab99de7e35a0d03ebb"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.resize.js"
+        }
+      ],
+      "components": [
+        {
+          "type": "library",
+          "name": "svg.select.js",
+          "version": "2.1.2",
+          "bom-ref": "opencatalogi@1.0.0|svg.resize.js@1.4.3|svg.select.js@2.1.2",
+          "author": "Ulrich-Matthias Schäfer",
+          "description": "An extension of svg.js which allows to select elements with mouse",
+          "licenses": [
+            {
+              "license": {
+                "id": "MIT"
+              }
+            }
+          ],
+          "purl": "pkg:npm/svg.select.js@2.1.2",
+          "externalReferences": [
+            {
+              "url": "git+https://github.com/svgdotjs/svg.select.js.git",
+              "type": "vcs",
+              "comment": "as detected from PackageJson property \"repository.url\""
+            },
+            {
+              "url": "https://github.com/svgdotjs/svg.select.js",
+              "type": "website",
+              "comment": "as detected from PackageJson property \"homepage\""
+            },
+            {
+              "url": "https://github.com/svgdotjs/svg.select.js/issues",
+              "type": "issue-tracker",
+              "comment": "as detected from PackageJson property \"bugs.url\""
+            },
+            {
+              "url": "https://registry.npmjs.org/svg.select.js/-/svg.select.js-2.1.2.tgz",
+              "type": "distribution",
+              "hashes": [
+                {
+                  "alg": "SHA-512",
+                  "content": "b47e80044c89b00395021c1c0a317c9b0e1cae35d223569aee3d95411f19b89dfb1f630151bc9ea98af99c43bbb12377732f4047d0d4c0d834b7ff7ad879436d"
+                }
+              ],
+              "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+            }
+          ],
+          "properties": [
+            {
+              "name": "cdx:npm:package:path",
+              "value": "node_modules/svg.resize.js/node_modules/svg.select.js"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "svg.select.js",
+      "version": "3.0.1",
+      "bom-ref": "opencatalogi@1.0.0|svg.select.js@3.0.1",
+      "author": "Ulrich-Matthias Schäfer",
+      "description": "An extension of svg.js which allows to select elements with mouse",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/svg.select.js@3.0.1",
+      "externalReferences": [
+        {
+          "url": "git+https://github.com/svgdotjs/svg.select.js.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.select.js",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        },
+        {
+          "url": "https://github.com/svgdotjs/svg.select.js/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/svg.select.js/-/svg.select.js-3.0.1.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "879212fe12a4b9509b29289e47db900a3f70fb32c7a0f87e71ed7d6c1632a85e7783a9a73c1f2c02d21b7b5b3d761d92d9f0a6617db17a5d4b9f73c905b2b893"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/svg.select.js"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "tabbable",
       "version": "6.4.0",
       "bom-ref": "opencatalogi@1.0.0|tabbable@6.4.0",
@@ -41102,8 +42250,8 @@
     {
       "type": "library",
       "name": "terser-webpack-plugin",
-      "version": "5.4.0",
-      "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.4.0",
+      "version": "5.3.16",
+      "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.3.16",
       "author": "webpack Contrib Team",
       "description": "Terser plugin for webpack",
       "licenses": [
@@ -41113,7 +42261,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/terser-webpack-plugin@5.4.0",
+      "purl": "pkg:npm/terser-webpack-plugin@5.3.16",
       "externalReferences": [
         {
           "url": "git+https://github.com/webpack/terser-webpack-plugin.git",
@@ -41131,12 +42279,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/terser-webpack-plugin/-/terser-webpack-plugin-5.4.0.tgz",
+          "url": "https://registry.npmjs.org/terser-webpack-plugin/-/terser-webpack-plugin-5.3.16.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "067e6fc66e3c7e53887e4765e42683dbed4289455ba27590dca40fc8feff12e225f466f3abf81014ecda3055048158c1d77f7ab5c2b4486f1770d27fda40c7f2"
+              "content": "87da011425ababbf0dc96595712c196ab264674d5cd80c86af3b3572b98764edd0520f43eb55aee0d3e3072ebd9fb26aca5145e72f82b14658998108677991f9"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -41153,7 +42301,7 @@
           "type": "library",
           "name": "jest-worker",
           "version": "27.5.1",
-          "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.4.0|jest-worker@27.5.1",
+          "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.3.16|jest-worker@27.5.1",
           "licenses": [
             {
               "license": {
@@ -41201,7 +42349,7 @@
           "type": "library",
           "name": "supports-color",
           "version": "8.1.1",
-          "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.4.0|supports-color@8.1.1",
+          "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.3.16|supports-color@8.1.1",
           "author": "Sindre Sorhus",
           "description": "Detect whether a terminal supports color",
           "licenses": [
@@ -41251,7 +42399,7 @@
           "type": "library",
           "name": "has-flag",
           "version": "4.0.0",
-          "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.4.0|has-flag@4.0.0",
+          "bom-ref": "opencatalogi@1.0.0|terser-webpack-plugin@5.3.16|has-flag@4.0.0",
           "author": "Sindre Sorhus",
           "description": "Check if argv has a specific flag",
           "licenses": [
@@ -43056,8 +44204,8 @@
         {
           "type": "library",
           "name": "minimatch",
-          "version": "9.0.9",
-          "bom-ref": "opencatalogi@1.0.0|unified-engine@11.2.2|minimatch@9.0.9",
+          "version": "9.0.5",
+          "bom-ref": "opencatalogi@1.0.0|unified-engine@11.2.2|minimatch@9.0.5",
           "author": "Isaac Z. Schlueter",
           "description": "a glob matcher in javascript",
           "licenses": [
@@ -43067,7 +44215,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/minimatch@9.0.9",
+          "purl": "pkg:npm/minimatch@9.0.5",
           "externalReferences": [
             {
               "url": "git://github.com/isaacs/minimatch.git",
@@ -43085,12 +44233,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.9.tgz",
+              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "381c0137d00be1daa61139694b6cdab31faf4de59c956ce46e57d993b2930398f78de38e373fed4429d9a26532bcd83cdf02f966ff52b3a1cc2570202fc47662"
+                  "content": "1ba4f4657e3cc60a33c7be7cee4a1e5fd62cd8d632e869affff3fcf6c12d7bd57dc2121aa4c345e2274ac675b642d09c2e24d695bff07c269b02d0055a1841a3"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -44008,8 +45156,8 @@
         {
           "type": "library",
           "name": "picomatch",
-          "version": "4.0.3",
-          "bom-ref": "opencatalogi@1.0.0|unplugin-utils@0.3.1|picomatch@4.0.3",
+          "version": "4.0.4",
+          "bom-ref": "opencatalogi@1.0.0|unplugin-utils@0.3.1|picomatch@4.0.4",
           "author": "Jon Schlinkert",
           "description": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions.",
           "licenses": [
@@ -44019,7 +45167,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/picomatch@4.0.3",
+          "purl": "pkg:npm/picomatch@4.0.4",
           "externalReferences": [
             {
               "url": "git+https://github.com/micromatch/picomatch.git",
@@ -44037,12 +45185,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.3.tgz",
+              "url": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.4.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "e604e680463fb2a2ba8055cb22c40d1f5f6559be1e6cf0cb03849d2cfeddb169085c75a51baea83ee56f5d21853e9a58673f190d9ab475862b6c77c109551bd5"
+                  "content": "40ff3c0402af31a9bfdcdc47eaf8f6a36d51e8c8f165401dea7970012fe99c6bcdf4854ba1c2c7c46608cc5860e9f510fb9b61e8fe1dbf8796f635f70d2223ec"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -44109,8 +45257,8 @@
         {
           "type": "library",
           "name": "picomatch",
-          "version": "4.0.3",
-          "bom-ref": "opencatalogi@1.0.0|unplugin@3.0.0|picomatch@4.0.3",
+          "version": "4.0.4",
+          "bom-ref": "opencatalogi@1.0.0|unplugin@3.0.0|picomatch@4.0.4",
           "author": "Jon Schlinkert",
           "description": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions.",
           "licenses": [
@@ -44120,7 +45268,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/picomatch@4.0.3",
+          "purl": "pkg:npm/picomatch@4.0.4",
           "externalReferences": [
             {
               "url": "git+https://github.com/micromatch/picomatch.git",
@@ -44138,12 +45286,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.3.tgz",
+              "url": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.4.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "e604e680463fb2a2ba8055cb22c40d1f5f6559be1e6cf0cb03849d2cfeddb169085c75a51baea83ee56f5d21853e9a58673f190d9ab475862b6c77c109551bd5"
+                  "content": "40ff3c0402af31a9bfdcdc47eaf8f6a36d51e8c8f165401dea7970012fe99c6bcdf4854ba1c2c7c46608cc5860e9f510fb9b61e8fe1dbf8796f635f70d2223ec"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -45164,9 +46312,49 @@
     },
     {
       "type": "library",
+      "name": "vue-apexcharts",
+      "version": "1.6.2",
+      "bom-ref": "opencatalogi@1.0.0|vue-apexcharts@1.6.2",
+      "author": "Juned Chhipa",
+      "description": "Vue.js wrapper for ApexCharts",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/vue-apexcharts@1.6.2",
+      "externalReferences": [
+        {
+          "url": "https://github.com/apexcharts/vue-apexcharts/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "https://registry.npmjs.org/vue-apexcharts/-/vue-apexcharts-1.6.2.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "f474b7b1c2705a02a39a471621ffa774d0d1d16cad5090fc26ed15d9961c8d8b654cbc0901fd9229494165a4139039b08deff3320ba5bd9462f8c5e68be5a42b"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/vue-apexcharts"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "vue-codemirror6",
-      "version": "1.4.3",
-      "bom-ref": "opencatalogi@1.0.0|vue-codemirror6@1.4.3",
+      "version": "1.5.0",
+      "bom-ref": "opencatalogi@1.0.0|vue-codemirror6@1.5.0",
       "author": "Logue",
       "description": "CodeMirror6 Component for vue2 and vue3.",
       "licenses": [
@@ -45176,7 +46364,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/vue-codemirror6@1.4.3",
+      "purl": "pkg:npm/vue-codemirror6@1.5.0",
       "externalReferences": [
         {
           "url": "git+ssh://git@github.com/logue/vue-codemirror6.git",
@@ -45194,12 +46382,12 @@
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "https://registry.npmjs.org/vue-codemirror6/-/vue-codemirror6-1.4.3.tgz",
+          "url": "https://registry.npmjs.org/vue-codemirror6/-/vue-codemirror6-1.5.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "4cb69b01aa72e2f7ad848116c0f30db6feb6ff31e3a6f4efd242651b2e51b456af28d966e0d25d4f77cf153d83b5555b43566f1d6a47ac733b1428c6d903460c"
+              "content": "949ebcbfa884c1d395c5249a0fc47b64605ffe8a1f3df0d056a8b3bb97c95b123bbf4eea8404ba4472ceab6d2f3c21e7b171b5d5d7ec36fbfb4163c29e7f8d5a"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -45216,7 +46404,7 @@
           "type": "library",
           "name": "vue-demi",
           "version": "0.14.10",
-          "bom-ref": "opencatalogi@1.0.0|vue-codemirror6@1.4.3|vue-demi@0.14.10",
+          "bom-ref": "opencatalogi@1.0.0|vue-codemirror6@1.5.0|vue-demi@0.14.10",
           "author": "Anthony Fu",
           "licenses": [
             {
@@ -46365,8 +47553,8 @@
         {
           "type": "library",
           "name": "fast-xml-parser",
-          "version": "5.5.7",
-          "bom-ref": "opencatalogi@1.0.0|webdav@5.9.0|fast-xml-parser@5.5.7",
+          "version": "5.5.9",
+          "bom-ref": "opencatalogi@1.0.0|webdav@5.9.0|fast-xml-parser@5.5.9",
           "author": "Amit Gupta",
           "description": "Validate XML, Parse XML, Build XML without C/C++ based libraries",
           "licenses": [
@@ -46376,7 +47564,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/fast-xml-parser@5.5.7",
+          "purl": "pkg:npm/fast-xml-parser@5.5.9",
           "externalReferences": [
             {
               "url": "git+https://github.com/NaturalIntelligence/fast-xml-parser.git",
@@ -46394,12 +47582,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-5.5.7.tgz",
+              "url": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-5.5.9.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "2ed78eb08490d861220c765c87a2fd841d3e30ba1854b4e847bc68b6bcd4d28a42202064c4e3e01c0cb51f102fb717c93570c9a6002c40ddf49a4adfa4ed8fae"
+                  "content": "8e576fc6bd4c0baaed8992a0ac59c34af4fcc6e1fe789ab1a8e05385456362bc6cb184e8d5abd92c6aa5e65d1ad01004451d3509a758cd9f379151246f20e0fa"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -46415,8 +47603,8 @@
         {
           "type": "library",
           "name": "minimatch",
-          "version": "9.0.9",
-          "bom-ref": "opencatalogi@1.0.0|webdav@5.9.0|minimatch@9.0.9",
+          "version": "9.0.5",
+          "bom-ref": "opencatalogi@1.0.0|webdav@5.9.0|minimatch@9.0.5",
           "author": "Isaac Z. Schlueter",
           "description": "a glob matcher in javascript",
           "licenses": [
@@ -46426,7 +47614,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/minimatch@9.0.9",
+          "purl": "pkg:npm/minimatch@9.0.5",
           "externalReferences": [
             {
               "url": "git://github.com/isaacs/minimatch.git",
@@ -46444,12 +47632,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.9.tgz",
+              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "381c0137d00be1daa61139694b6cdab31faf4de59c956ce46e57d993b2930398f78de38e373fed4429d9a26532bcd83cdf02f966ff52b3a1cc2570202fc47662"
+                  "content": "1ba4f4657e3cc60a33c7be7cee4a1e5fd62cd8d632e869affff3fcf6c12d7bd57dc2121aa4c345e2274ac675b642d09c2e24d695bff07c269b02d0055a1841a3"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -46515,8 +47703,8 @@
         {
           "type": "library",
           "name": "strnum",
-          "version": "2.2.1",
-          "bom-ref": "opencatalogi@1.0.0|webdav@5.9.0|strnum@2.2.1",
+          "version": "2.2.2",
+          "bom-ref": "opencatalogi@1.0.0|webdav@5.9.0|strnum@2.2.2",
           "author": "Amit Gupta",
           "description": "Parse String to Number based on configuration",
           "licenses": [
@@ -46526,7 +47714,7 @@
               }
             }
           ],
-          "purl": "pkg:npm/strnum@2.2.1",
+          "purl": "pkg:npm/strnum@2.2.2",
           "externalReferences": [
             {
               "url": "git+https://github.com/NaturalIntelligence/strnum.git",
@@ -46544,12 +47732,12 @@
               "comment": "as detected from PackageJson property \"bugs.url\""
             },
             {
-              "url": "https://registry.npmjs.org/strnum/-/strnum-2.2.1.tgz",
+              "url": "https://registry.npmjs.org/strnum/-/strnum-2.2.2.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "07046f35de7f42802dc96d676b5cb52ec24640dbd196475ee90fe2a6aa846a2be831d57e07538c39355dc11f8dfdcc1551c22df4f6321e657c1f27b10994aea6"
+                  "content": "0e747dd08fa3b573524d759dc2b132f456a45bb517faa519836f208f97e4dafc7197bb92ff76e92387e315856674af5eb69b5804f364a5a86e427130870102a8"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -47425,6 +48613,27 @@
       "ref": "adbario/php-dot-notation-3.3.0.0"
     },
     {
+      "ref": "elastic/transport-8.11.0.0",
+      "dependsOn": [
+        "open-telemetry/api-1.9.0.0",
+        "php-http/httplug-2.4.1.0",
+        "psr/http-client-1.0.3.0",
+        "psr/http-factory-1.1.0.0",
+        "psr/http-message-2.0.0.0",
+        "psr/log-3.0.2.0"
+      ]
+    },
+    {
+      "ref": "elasticsearch/elasticsearch-8.19.0.0",
+      "dependsOn": [
+        "elastic/transport-8.11.0.0",
+        "guzzlehttp/guzzle-7.10.0.0",
+        "psr/http-client-1.0.3.0",
+        "psr/http-message-2.0.0.0",
+        "psr/log-3.0.2.0"
+      ]
+    },
+    {
       "ref": "guzzlehttp/guzzle-7.10.0.0",
       "dependsOn": [
         "guzzlehttp/promises-2.3.0.0",
@@ -47472,6 +48681,20 @@
       "ref": "myclabs/deep-copy-1.13.4.0"
     },
     {
+      "ref": "open-telemetry/api-1.9.0.0",
+      "dependsOn": [
+        "open-telemetry/context-1.5.0.0",
+        "psr/log-3.0.2.0",
+        "symfony/polyfill-php82-1.33.0.0"
+      ]
+    },
+    {
+      "ref": "open-telemetry/context-1.5.0.0",
+      "dependsOn": [
+        "symfony/polyfill-php82-1.33.0.0"
+      ]
+    },
+    {
       "ref": "opis/json-schema-2.6.0.0",
       "dependsOn": [
         "opis/string-2.1.0.0",
@@ -47489,6 +48712,17 @@
     },
     {
       "ref": "paragonie/random_compat-9.99.100.0"
+    },
+    {
+      "ref": "php-http/httplug-2.4.1.0",
+      "dependsOn": [
+        "php-http/promise-1.3.1.0",
+        "psr/http-client-1.0.3.0",
+        "psr/http-message-2.0.0.0"
+      ]
+    },
+    {
+      "ref": "php-http/promise-1.3.1.0"
     },
     {
       "ref": "psr/container-2.0.2.0"
@@ -47542,26 +48776,26 @@
       ]
     },
     {
-      "ref": "symfony/dependency-injection-6.4.35.0",
+      "ref": "symfony/dependency-injection-6.4.36.0",
       "dependsOn": [
         "psr/container-2.0.2.0",
         "symfony/deprecation-contracts-3.6.0.0",
         "symfony/service-contracts-3.6.1.0",
-        "symfony/var-exporter-6.4.26.0"
+        "symfony/var-exporter-6.4.36.0"
       ]
     },
     {
       "ref": "symfony/deprecation-contracts-3.6.0.0"
     },
     {
-      "ref": "symfony/error-handler-6.4.32.0",
+      "ref": "symfony/error-handler-6.4.36.0",
       "dependsOn": [
         "psr/log-3.0.2.0",
-        "symfony/var-dumper-6.4.32.0"
+        "symfony/var-dumper-6.4.36.0"
       ]
     },
     {
-      "ref": "symfony/event-dispatcher-6.4.32.0",
+      "ref": "symfony/event-dispatcher-6.4.36.0",
       "dependsOn": [
         "symfony/event-dispatcher-contracts-3.6.0.0"
       ]
@@ -47588,12 +48822,12 @@
       ]
     },
     {
-      "ref": "symfony/http-kernel-6.4.35.0",
+      "ref": "symfony/http-kernel-6.4.36.0",
       "dependsOn": [
         "psr/log-3.0.2.0",
         "symfony/deprecation-contracts-3.6.0.0",
-        "symfony/error-handler-6.4.32.0",
-        "symfony/event-dispatcher-6.4.32.0",
+        "symfony/error-handler-6.4.36.0",
+        "symfony/event-dispatcher-6.4.36.0",
         "symfony/http-foundation-6.4.35.0",
         "symfony/polyfill-ctype-1.33.0.0"
       ]
@@ -47603,6 +48837,9 @@
     },
     {
       "ref": "symfony/polyfill-mbstring-1.33.0.0"
+    },
+    {
+      "ref": "symfony/polyfill-php82-1.33.0.0"
     },
     {
       "ref": "symfony/polyfill-php83-1.33.0.0"
@@ -47624,7 +48861,7 @@
       "ref": "symfony/translation-contracts-3.6.1.0"
     },
     {
-      "ref": "symfony/twig-bridge-6.4.35.0",
+      "ref": "symfony/twig-bridge-6.4.36.0",
       "dependsOn": [
         "symfony/deprecation-contracts-3.6.0.0",
         "symfony/translation-contracts-3.6.1.0",
@@ -47635,10 +48872,10 @@
       "ref": "symfony/twig-bundle-6.4.32.0",
       "dependsOn": [
         "symfony/config-6.4.34.0",
-        "symfony/dependency-injection-6.4.35.0",
+        "symfony/dependency-injection-6.4.36.0",
         "symfony/http-foundation-6.4.35.0",
-        "symfony/http-kernel-6.4.35.0",
-        "symfony/twig-bridge-6.4.35.0",
+        "symfony/http-kernel-6.4.36.0",
+        "symfony/twig-bridge-6.4.36.0",
         "twig/twig-3.24.0.0"
       ]
     },
@@ -47649,14 +48886,14 @@
       ]
     },
     {
-      "ref": "symfony/var-dumper-6.4.32.0",
+      "ref": "symfony/var-dumper-6.4.36.0",
       "dependsOn": [
         "symfony/deprecation-contracts-3.6.0.0",
         "symfony/polyfill-mbstring-1.33.0.0"
       ]
     },
     {
-      "ref": "symfony/var-exporter-6.4.26.0",
+      "ref": "symfony/var-exporter-6.4.36.0",
       "dependsOn": [
         "symfony/deprecation-contracts-3.6.0.0"
       ]
@@ -47670,9 +48907,10 @@
       ]
     },
     {
-      "ref": "conductionnl/opencatalogi-dev-fix/ci-quality-checks",
+      "ref": "conductionnl/opencatalogi-dev-feature/nextcloud-vue",
       "dependsOn": [
         "adbario/php-dot-notation-3.3.0.0",
+        "elasticsearch/elasticsearch-8.19.0.0",
         "guzzlehttp/guzzle-7.10.0.0",
         "mpdf/mpdf-8.3.1.0",
         "opis/json-schema-2.6.0.0",

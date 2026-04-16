@@ -65,21 +65,33 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 		<!-- Custom column: URLs -->
 		<template #column-publications="{ row }">
-			<a v-if="row.publications" :href="row.publications" target="_blank" class="urlLink">
+			<a
+				v-if="row.publications"
+				:href="row.publications"
+				target="_blank"
+				class="urlLink">
 				{{ truncateUrl(row.publications) }}
 			</a>
 			<span v-else>-</span>
 		</template>
 
 		<template #column-search="{ row }">
-			<a v-if="row.search" :href="row.search" target="_blank" class="urlLink">
+			<a
+				v-if="row.search"
+				:href="row.search"
+				target="_blank"
+				class="urlLink">
 				{{ truncateUrl(row.search) }}
 			</a>
 			<span v-else>-</span>
 		</template>
 
 		<template #column-directory="{ row }">
-			<a v-if="row.directory" :href="row.directory" target="_blank" class="urlLink">
+			<a
+				v-if="row.directory"
+				:href="row.directory"
+				target="_blank"
+				class="urlLink">
 				{{ truncateUrl(row.directory) }}
 			</a>
 			<span v-else>-</span>
