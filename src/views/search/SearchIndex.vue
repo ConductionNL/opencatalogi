@@ -30,7 +30,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 				<div class="viewActions">
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
-							v-tooltip="'See publications as cards'"
+							:v-tooltip="t('opencatalogi', 'See publications as cards')"
 							:checked="searchStore.getViewMode === 'cards'"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
@@ -39,10 +39,10 @@ import { useSearchStore } from '../../store/modules/search.ts'
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => searchStore.setViewMode('cards')">
-							Cards
+							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							v-tooltip="'See publications as a table'"
+							:v-tooltip="t('opencatalogi', 'See publications as a table')"
 							:checked="searchStore.getViewMode === 'table'"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
@@ -51,7 +51,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => searchStore.setViewMode('table')">
-							Table
+							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 
@@ -66,15 +66,15 @@ import { useSearchStore } from '../../store/modules/search.ts'
 							<template #icon>
 								<Refresh :size="20" />
 							</template>
-							Refresh
+							{{ t('opencatalogi', 'Refresh') }}
 						</NcActionButton>
 						<NcActionButton
-							title="View documentation about search"
+							:title="t('opencatalogi', 'View documentation about search')"
 							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/zoeken', '_blank')">
 							<template #icon>
 								<HelpCircleOutline :size="20" />
 							</template>
-							Help
+							{{ t('opencatalogi', 'Help') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -130,25 +130,25 @@ import { useSearchStore } from '../../store/modules/search.ts'
 										<template #icon>
 											<Eye :size="20" />
 										</template>
-										View
+										{{ t('opencatalogi', 'View') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="viewPublicationUses(publication)">
 										<template #icon>
 											<LinkVariant :size="20" />
 										</template>
-										View Uses
+										{{ t('opencatalogi', 'View Uses') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="viewPublicationUsed(publication)">
 										<template #icon>
 											<LinkVariantOff :size="20" />
 										</template>
-										View Used By
+										{{ t('opencatalogi', 'View Used By') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="downloadPublication(publication)">
 										<template #icon>
 											<Download :size="20" />
 										</template>
-										Download
+										{{ t('opencatalogi', 'Download') }}
 									</NcActionButton>
 								</NcActions>
 							</div>
@@ -165,39 +165,39 @@ import { useSearchStore } from '../../store/modules/search.ts'
 									<tr v-if="publication.status">
 										<td>{{ t('opencatalogi', 'Status') }}</td>
 										<td>{{ publication.status }}</td>
-										<td>{{ publication.published ? 'Published' : 'Draft' }}</td>
+										<td>{{ publication.published ? t('opencatalogi', 'Published') : t('opencatalogi', 'Draft') }}</td>
 									</tr>
 									<tr v-if="publication.summary || publication.description">
 										<td>{{ t('opencatalogi', 'Description') }}</td>
 										<td class="truncatedText">
 											{{ publication.summary || publication.description }}
 										</td>
-										<td>{{ 'Available' }}</td>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="publication.license">
 										<td>{{ t('opencatalogi', 'License') }}</td>
 										<td>{{ publication.license }}</td>
-										<td>{{ 'Available' }}</td>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="publication.version">
 										<td>{{ t('opencatalogi', 'Version') }}</td>
 										<td>{{ publication.version }}</td>
-										<td>{{ 'Available' }}</td>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="publication.modified">
 										<td>{{ t('opencatalogi', 'Last Modified') }}</td>
 										<td>{{ formatDate(publication.modified) }}</td>
-										<td>{{ 'Available' }}</td>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="formatCatalogs(publication) !== '-'">
 										<td>{{ t('opencatalogi', 'Catalogs') }}</td>
 										<td>{{ formatCatalogs(publication) }}</td>
-										<td>{{ 'Available' }}</td>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 									<tr v-if="formatSchema(publication) !== '-'">
 										<td>{{ t('opencatalogi', 'Schema') }}</td>
 										<td>{{ formatSchema(publication) }}</td>
-										<td>{{ 'Available' }}</td>
+										<td>{{ t('opencatalogi', 'Available') }}</td>
 									</tr>
 								</tbody>
 							</table>
@@ -245,7 +245,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 											</span>
 										</div>
 									</td>
-									<td>{{ publication.status || 'Unknown' }}</td>
+									<td>{{ publication.status || t('opencatalogi', 'Unknown') }}</td>
 									<td>{{ publication.license || '-' }}</td>
 									<td>{{ publication.version || '-' }}</td>
 									<td>{{ formatCatalogs(publication) }}</td>
@@ -263,25 +263,25 @@ import { useSearchStore } from '../../store/modules/search.ts'
 												<template #icon>
 													<Eye :size="20" />
 												</template>
-												View
+												{{ t('opencatalogi', 'View') }}
 											</NcActionButton>
 											<NcActionButton close-after-click @click="viewPublicationUses(publication)">
 												<template #icon>
 													<LinkVariant :size="20" />
 												</template>
-												View Uses
+												{{ t('opencatalogi', 'View Uses') }}
 											</NcActionButton>
 											<NcActionButton close-after-click @click="viewPublicationUsed(publication)">
 												<template #icon>
 													<LinkVariantOff :size="20" />
 												</template>
-												View Used By
+												{{ t('opencatalogi', 'View Used By') }}
 											</NcActionButton>
 											<NcActionButton close-after-click @click="downloadPublication(publication)">
 												<template #icon>
 													<Download :size="20" />
 												</template>
-												Download
+												{{ t('opencatalogi', 'Download') }}
 											</NcActionButton>
 										</NcActions>
 									</td>

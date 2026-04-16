@@ -99,11 +99,11 @@ onMounted(() => {
 					<template #icon>
 						<RefreshIcon />
 					</template>
-					{{ t('opencatalogi', 'Vernieuwen') }}
+					{{ t('opencatalogi', 'Refresh') }}
 				</NcActionButton>
 			</div>
 		</div>
-		<NcEmptyContent v-if="!hasResults" :title="t('opencatalogi', 'Geen resultaten gevonden')">
+		<NcEmptyContent v-if="!hasResults" :title="t('opencatalogi', 'No results found')">
 			<template #icon>
 				<FolderIcon />
 			</template>
