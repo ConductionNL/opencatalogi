@@ -1526,7 +1526,7 @@ export default {
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		initializeData() {
+		async initializeData() {
 			if (!this.currentObject) {
 				// For new objects, initialize with empty form data and auto-select if possible
 				this.formData = {}
@@ -1553,20 +1553,17 @@ export default {
 					}
 				}
 
-				// Use nextTick to ensure the computed properties are updated
-				this.$nextTick(() => {
-					// Auto-select register if there's only one
-					if (this.registerOptions.length === 1) {
-						this.selectedRegister = this.registerOptions[0]
-
-						this.$nextTick(() => {
-							// Auto-select schema if there's only one
-							if (this.schemaOptions.length === 1) {
-								this.selectedSchema = this.schemaOptions[0]
-							}
-						})
+				// Auto-select register and schema if only one option exists.
+				// Existing watchers on selectedCatalog/selectedRegister handle
+				// the cascading updates, so a single tick is sufficient.
+				await this.$nextTick()
+				if (this.registerOptions.length === 1) {
+					this.selectedRegister = this.registerOptions[0]
+					await this.$nextTick()
+					if (this.schemaOptions.length === 1) {
+						this.selectedSchema = this.schemaOptions[0]
 					}
-				})
+				}
 
 				return
 			}
