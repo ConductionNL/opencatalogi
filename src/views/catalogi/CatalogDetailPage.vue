@@ -82,6 +82,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 import { CnDetailPage, CnDetailGrid, CnJsonViewer } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'

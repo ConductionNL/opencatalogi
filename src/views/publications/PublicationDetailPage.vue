@@ -103,6 +103,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnDetailPage, CnObjectDataWidget, CnObjectMetadataWidget, buildHeaders } from '@conduction/nextcloud-vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
@@ -197,9 +198,8 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/opencatalogi/api/${this.catalogSlug}/${this.publicationId}`,
+					generateUrl(`/apps/opencatalogi/api/${this.catalogSlug}/${this.publicationId}`),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (!response.ok) {
@@ -222,9 +222,8 @@ export default {
 		},
 		async loadSchema(schemaId) {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/schemas/${schemaId}`,
+					generateUrl(`/apps/openregister/api/schemas/${schemaId}`),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (!response.ok) {

@@ -195,6 +195,7 @@
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 // eslint-disable-next-line import/named -- CnChartWidget available in local source; will be in next npm release
 import { CnDashboardPage, CnStatsBlock, CnChartWidget, buildHeaders } from '@conduction/nextcloud-vue'
@@ -341,9 +342,8 @@ export default {
 
 		async fetchAllPublications() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/opencatalogi/api/publications?_page=1&_limit=1000&_extend=@self.schema,@self.register`,
+					generateUrl('/apps/opencatalogi/api/publications?_page=1&_limit=1000&_extend=@self.schema,@self.register'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
@@ -378,9 +378,8 @@ export default {
 
 		async fetchSchemaChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/objects-by-schema`,
+					generateUrl('/apps/openregister/api/dashboard/charts/objects-by-schema'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
@@ -397,9 +396,8 @@ export default {
 
 		async fetchActivityChart() {
 			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
 				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
+					generateUrl('/apps/openregister/api/dashboard/charts/audit-trail-actions'),
 					{ method: 'GET', headers: buildHeaders() },
 				)
 				if (response.ok) {
