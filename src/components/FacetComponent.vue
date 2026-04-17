@@ -78,7 +78,7 @@
 							@update:checked="(enabled) => toggleFacet(fieldName, fieldInfo, enabled)">
 							{{ getFieldDisplayName(fieldName, fieldInfo) }}
 							<span class="facet-info">
-								({{ fieldInfo.appearance_rate }} {{ t('opencatalogi', 'Items') }})
+								({{ t('opencatalogi', '{count} items', { count: fieldInfo.appearance_rate }) }})
 							</span>
 						</NcCheckboxRadioSwitch>
 
