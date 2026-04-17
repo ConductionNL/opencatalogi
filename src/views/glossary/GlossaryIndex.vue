@@ -25,7 +25,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-delete="false"
 		:view-mode="viewMode"
 		:schema="glossarySchema"
-		:add-label="t('opencatalogi', 'Add Term')"
+		:add-label="t('opencatalogi', 'Add term')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No glossary terms found')"
 		:refreshing="isRefreshing"
@@ -57,7 +57,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					:value="formData.description || ''"
 					@update:value="v => updateField('description', v)" />
 				<NcTextField
-					:label="t('opencatalogi', 'External Link')"
+					:label="t('opencatalogi', 'External link')"
 					:value="formData.externalLink || ''"
 					@update:value="v => updateField('externalLink', v)" />
 				<NcSelect
@@ -155,7 +155,7 @@ export default {
 					title: { type: 'string', title: t('opencatalogi', 'Title'), required: true, minLength: 1 },
 					summary: { type: 'string', title: t('opencatalogi', 'Summary') },
 					description: { type: 'string', title: t('opencatalogi', 'Description') },
-					externalLink: { type: 'string', title: t('opencatalogi', 'External Link') },
+					externalLink: { type: 'string', title: t('opencatalogi', 'External link') },
 					keywords: { type: 'array', title: t('opencatalogi', 'Keywords') },
 				},
 				required: ['title'],
@@ -165,7 +165,7 @@ export default {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
 				{ key: 'published', label: t('opencatalogi', 'Status'), sortable: true },
-				{ key: 'relatedTerms', label: t('opencatalogi', 'Related Terms') },
+				{ key: 'relatedTerms', label: t('opencatalogi', 'Related terms') },
 				{ key: 'keywords', label: t('opencatalogi', 'Keywords') },
 			]
 		},

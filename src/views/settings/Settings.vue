@@ -11,7 +11,7 @@
 			:configured-version="versionInfo.configuredVersion"
 			:is-up-to-date="versionInfo.versionsMatch"
 			:show-update-button="versionInfo.needsUpdate"
-			:title="t('opencatalogi', 'Version Information')"
+			:title="t('opencatalogi', 'Version information')"
 			:description="t('opencatalogi', 'Current application and configuration versions')">
 			<template #actions>
 				<NcButton
@@ -22,7 +22,7 @@
 						<NcLoadingIcon v-if="importing" :size="20" />
 						<Refresh v-else :size="20" />
 					</template>
-					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update Configuration') : t('opencatalogi', 'Reimport Configuration') }}
+					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update configuration') : t('opencatalogi', 'Reimport configuration') }}
 				</NcButton>
 
 				<NcButton
@@ -33,7 +33,7 @@
 						<NcLoadingIcon v-if="importing" :size="20" />
 						<Refresh v-else :size="20" />
 					</template>
-					{{ t('opencatalogi', 'Force Import') }}
+					{{ t('opencatalogi', 'Force import') }}
 				</NcButton>
 			</template>
 			<template #default>

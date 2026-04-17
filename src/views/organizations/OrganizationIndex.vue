@@ -25,7 +25,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:show-mass-delete="false"
 		:view-mode="viewMode"
 		:schema="organizationSchema"
-		:add-label="t('opencatalogi', 'Add Organization')"
+		:add-label="t('opencatalogi', 'Add organization')"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No organizations found')"
 		:refreshing="isRefreshing"
@@ -89,15 +89,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		<template #action-items>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDelete">
 				<template #icon><Delete :size="20" /></template>
-				{{ t('opencatalogi', 'Delete Selected') }}
+				{{ t('opencatalogi', 'Delete selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassPublish">
 				<template #icon><PublishIcon :size="20" /></template>
-				{{ t('opencatalogi', 'Publish Selected') }}
+				{{ t('opencatalogi', 'Publish selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDepublish">
 				<template #icon><PublishOffIcon :size="20" /></template>
-				{{ t('opencatalogi', 'Depublish Selected') }}
+				{{ t('opencatalogi', 'Depublish selected') }}
 			</NcActionButton>
 		</template>
 

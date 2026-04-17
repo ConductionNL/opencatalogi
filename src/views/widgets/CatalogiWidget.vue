@@ -9,7 +9,7 @@ import { objectStore } from '../../store/store.js'
 		:item-menu="itemMenu"
 		@show="onShow">
 		<template #empty-content>
-			<NcEmptyContent :title="t('opencatalogi', 'Geen catalogi gevonden')">
+			<NcEmptyContent :title="t('opencatalogi', 'No catalogs found')">
 				<template #icon>
 					<FolderIcon />
 				</template>

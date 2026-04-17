@@ -23,7 +23,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:object-id="publicationId"
 		:sidebar-props="{ register: String(publication?.['@self']?.register || ''), schema: String(publication?.['@self']?.schema || '') }">
 		<!-- Header actions -->
-		<template #header-actions>
+		<template #actions>
 			<NcButton @click="goBack">
 				<template #icon>
 					<ArrowLeft :size="20" />
