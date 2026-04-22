@@ -11,6 +11,7 @@
  */
 
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -24,7 +25,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 			<div v-if="listing" class="directoryDetails">
 				<div class="detailSection">
-					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
+					<h3>{{ t('opencatalogi', 'Basic information') }}</h3>
 					<div class="detailGrid">
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Name') }}:</strong>
@@ -46,7 +47,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</div>
 
 				<div v-if="listing.publicationTypes?.length" class="detailSection">
-					<h3>{{ t('opencatalogi', 'Publication Types') }}</h3>
+					<h3>{{ t('opencatalogi', 'Publication types') }}</h3>
 					<div class="publicationTypesList">
 						<div v-for="publicationType in listing.publicationTypes"
 							:key="publicationType.id || publicationType"

@@ -131,7 +131,7 @@ const handleDelete = async () => {
 			if (itemIndex === -1) {
 				itemIndex = menuItems.findIndex(item =>
 					item.name === activeMenuItem.name
-					&& item.order === activeMenuItem.order
+					&& item.order === activeMenuItem.order,
 				)
 			}
 		}

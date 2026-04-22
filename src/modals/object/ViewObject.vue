@@ -4,810 +4,808 @@ import { EventBus } from '../../eventBus.js'
 </script>
 
 <template>
-	<div>
-		<NcDialog v-if="navigationStore.modal === 'viewObject'"
-			:name="getModalTitle()"
-			size="large"
-			:can-close="true"
-			@update:open="handleDialogClose">
-			<template #name>
-				<div class="dialog__name">
-					<PublishedIcon v-if="shouldShowPublishedIcon"
-						:object="currentObject"
-						:size="30"
-						class="status-icon draft-icon" />
-					<Pencil v-else
-						:size="30"
-						class="status-icon draft-icon" />
-					<span>{{ getModalTitle() }}</span>
-				</div>
-			</template>
-			<div class="formContainer viewObjectDialog">
-				<!-- Display Object -->
-				<div v-if="objectStore.getActiveObject('publication') || isNewObject">
-					<!-- For new objects, show catalog/register/schema selection first -->
-					<div v-if="isNewObject && !hasSelectedSchema" class="selectionContainer">
-						<div v-if="catalogOptions.length > 1" class="selectionStep">
-							<h3>Select Catalog</h3>
-							<p>Choose the catalog where this publication will be stored.</p>
-							<NcSelect
-								v-model="selectedCatalog"
-								:options="catalogOptions"
-								input-label="Catalog"
-								placeholder="Select a catalog..."
-								:disabled="catalogStore.isLoading" />
-						</div>
-
-						<div v-if="selectedCatalog && registerOptions.length > 1" class="selectionStep">
-							<h3>Select Register</h3>
-							<p>Choose the register that will store this publication.</p>
-							<NcSelect
-								v-model="selectedRegister"
-								:options="registerOptions"
-								input-label="Register"
-								placeholder="Select a register..."
-								:disabled="catalogStore.isLoading" />
-						</div>
-
-						<div v-if="selectedRegister && schemaOptions.length > 1" class="selectionStep">
-							<h3>Select Schema</h3>
-							<p>Choose the schema that defines the structure of this publication.</p>
-							<NcSelect
-								v-model="selectedSchema"
-								:options="schemaOptions"
-								input-label="Schema"
-								placeholder="Select a schema..."
-								:disabled="catalogStore.isLoading" />
-						</div>
-
-						<div v-if="hasSelectedSchema && !allSelectionsComplete" class="selectionStep">
-							<NcButton type="primary" @click="proceedToProperties">
-								<template #icon>
-									<ArrowRight :size="20" />
-								</template>
-								Continue to Properties
-							</NcButton>
-						</div>
+	<NcDialog v-if="navigationStore.modal === 'viewObject'"
+		:name="getModalTitle()"
+		size="large"
+		:can-close="true"
+		@update:open="handleDialogClose">
+		<template #name>
+			<div class="dialog__name">
+				<PublishedIcon v-if="shouldShowPublishedIcon"
+					:object="currentObject"
+					:size="30"
+					class="status-icon draft-icon" />
+				<Pencil v-else
+					:size="30"
+					class="status-icon draft-icon" />
+				<span>{{ getModalTitle() }}</span>
+			</div>
+		</template>
+		<div class="formContainer viewObjectDialog">
+			<!-- Display Object -->
+			<div v-if="objectStore.getActiveObject('publication') || isNewObject">
+				<!-- For new objects, show catalog/register/schema selection first -->
+				<div v-if="isNewObject && !hasSelectedSchema" class="selectionContainer">
+					<div v-if="catalogOptions.length > 1" class="selectionStep">
+						<h3>Select Catalog</h3>
+						<p>Choose the catalog where this publication will be stored.</p>
+						<NcSelect
+							v-model="selectedCatalog"
+							:options="catalogOptions"
+							input-label="Catalog"
+							placeholder="Select a catalog..."
+							:disabled="catalogStore.isLoading" />
 					</div>
 
-					<!-- For new objects with schema selected, show properties table -->
-					<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="viewTableContainer">
-						<table class="viewTable">
-							<thead>
-								<tr class="viewTableRow">
-									<th class="tableColumnConstrained">
-										Property
-									</th>
-									<th class="tableColumnExpanded">
-										Value
-									</th>
-									<th class="tableColumnActions actions-header-cell">
-										<!-- Show/Hide Constant & Immutable Properties Toggle -->
-										<NcButton v-if="hasConstantOrImmutableProperties"
-											v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-											type="primary"
-											size="small"
-											class="action-btn eye-toggle-btn"
-											:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-											@click="showConstantProperties = !showConstantProperties">
-											<template #icon>
-												<Eye v-if="!showConstantProperties" :size="16" />
-												<EyeOff v-else :size="16" />
-											</template>
-										</NcButton>
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr
-									v-for="([key, value]) in filteredObjectProperties"
-									:key="key"
-									class="viewTableRow"
-									:class="{
-										'selected-row': selectedProperty === key,
-										'edited-row': formData[key] !== undefined,
-										'non-editable-row': !isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value),
-										...getPropertyValidationClass(key, value)
-									}"
-									@click="handleRowClick(key, $event)">
-									<td class="tableColumnConstrained prop-cell">
-										<div class="prop-cell-content">
-											<AlertCircle v-if="getPropertyValidationClass(key, value) === 'property-invalid'"
-												v-tooltip="getPropertyErrorMessage(key, value)"
-												class="validation-icon error-icon"
-												:size="16" />
-											<Alert v-else-if="getPropertyValidationClass(key, value) === 'property-warning'"
-												v-tooltip="getPropertyWarningMessage(key, value)"
-												class="validation-icon warning-icon"
-												:size="16" />
-											<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-												v-tooltip="getPropertyNewMessage(key)"
-												class="validation-icon new-icon"
-												:size="16" />
-											<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
-												v-tooltip="getEditabilityWarning(key, formData[key] !== undefined ? formData[key] : value)"
-												class="validation-icon lock-icon"
-												:size="16" />
-											<span
-												v-tooltip="getPropertyTooltip(key)">
+					<div v-if="selectedCatalog && registerOptions.length > 1" class="selectionStep">
+						<h3>Select Register</h3>
+						<p>Choose the register that will store this publication.</p>
+						<NcSelect
+							v-model="selectedRegister"
+							:options="registerOptions"
+							input-label="Register"
+							placeholder="Select a register..."
+							:disabled="catalogStore.isLoading" />
+					</div>
+
+					<div v-if="selectedRegister && schemaOptions.length > 1" class="selectionStep">
+						<h3>Select Schema</h3>
+						<p>Choose the schema that defines the structure of this publication.</p>
+						<NcSelect
+							v-model="selectedSchema"
+							:options="schemaOptions"
+							input-label="Schema"
+							placeholder="Select a schema..."
+							:disabled="catalogStore.isLoading" />
+					</div>
+
+					<div v-if="hasSelectedSchema && !allSelectionsComplete" class="selectionStep">
+						<NcButton type="primary" @click="proceedToProperties">
+							<template #icon>
+								<ArrowRight :size="20" />
+							</template>
+							Continue to Properties
+						</NcButton>
+					</div>
+				</div>
+
+				<!-- For new objects with schema selected, show properties table -->
+				<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="viewTableContainer">
+					<table class="viewTable">
+						<thead>
+							<tr class="viewTableRow">
+								<th class="tableColumnConstrained">
+									Property
+								</th>
+								<th class="tableColumnExpanded">
+									Value
+								</th>
+								<th class="tableColumnActions actions-header-cell">
+									<!-- Show/Hide Constant & Immutable Properties Toggle -->
+									<NcButton v-if="hasConstantOrImmutableProperties"
+										v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+										type="primary"
+										size="small"
+										class="action-btn eye-toggle-btn"
+										:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+										@click="showConstantProperties = !showConstantProperties">
+										<template #icon>
+											<Eye v-if="!showConstantProperties" :size="16" />
+											<EyeOff v-else :size="16" />
+										</template>
+									</NcButton>
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr
+								v-for="([key, value]) in filteredObjectProperties"
+								:key="key"
+								class="viewTableRow"
+								:class="{
+									'selected-row': selectedProperty === key,
+									'edited-row': formData[key] !== undefined,
+									'non-editable-row': !isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value),
+									...getPropertyValidationClass(key, value)
+								}"
+								@click="handleRowClick(key, $event)">
+								<td class="tableColumnConstrained prop-cell">
+									<div class="prop-cell-content">
+										<AlertCircle v-if="getPropertyValidationClass(key, value) === 'property-invalid'"
+											v-tooltip="getPropertyErrorMessage(key, value)"
+											class="validation-icon error-icon"
+											:size="16" />
+										<Alert v-else-if="getPropertyValidationClass(key, value) === 'property-warning'"
+											v-tooltip="getPropertyWarningMessage(key, value)"
+											class="validation-icon warning-icon"
+											:size="16" />
+										<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
+											v-tooltip="getPropertyNewMessage(key)"
+											class="validation-icon new-icon"
+											:size="16" />
+										<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
+											v-tooltip="getEditabilityWarning(key, formData[key] !== undefined ? formData[key] : value)"
+											class="validation-icon lock-icon"
+											:size="16" />
+										<span
+											v-tooltip="getPropertyTooltip(key)">
+											{{ getPropertyDisplayName(key) }}
+										</span>
+									</div>
+								</td>
+								<td class="tableColumnExpanded value-cell">
+									<div class="value-cell-content">
+										<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
+											<!-- Boolean properties -->
+											<NcCheckboxRadioSwitch
+												v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
+												:checked="formData[key] !== undefined ? formData[key] : value"
+												type="switch"
+												@update:checked="updatePropertyValue(key, $event)">
 												{{ getPropertyDisplayName(key) }}
-											</span>
-										</div>
-									</td>
-									<td class="tableColumnExpanded value-cell">
-										<div class="value-cell-content">
-											<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
-												<!-- Boolean properties -->
-												<NcCheckboxRadioSwitch
-													v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
-													:checked="formData[key] !== undefined ? formData[key] : value"
-													type="switch"
-													@update:checked="updatePropertyValue(key, $event)">
-													{{ getPropertyDisplayName(key) }}
-												</NcCheckboxRadioSwitch>
+											</NcCheckboxRadioSwitch>
 
-												<!-- Date/Time properties -->
-												<NcDateTimePicker
-													v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
-													:key="`datetime-${key}-edit`"
-													:append-to-body="true"
-													:popup-class="'view-object-datepicker'"
-													:popup-style="{ zIndex: 12000 }"
-													:value="getDateTimePickerValue(key, value)"
-													:label="getPropertyDisplayName(key)"
-													:type="getDateTimePickerType(key)"
-													:placeholder="getPropertyDisplayName(key)"
-													:clearable="true"
-													@input="handleDateTimeUpdate(key, $event)"
-													@update:value="handleDateTimeUpdate(key, $event)"
-													@change="handleDateTimeUpdate(key, $event)"
-													@update:modelValue="handleDateTimeUpdate(key, $event)" />
+											<!-- Date/Time properties -->
+											<NcDateTimePicker
+												v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
+												:key="`datetime-${key}-edit`"
+												:append-to-body="true"
+												:popup-class="'view-object-datepicker'"
+												:popup-style="{ zIndex: 12000 }"
+												:value="getDateTimePickerValue(key, value)"
+												:label="getPropertyDisplayName(key)"
+												:type="getDateTimePickerType(key)"
+												:placeholder="getPropertyDisplayName(key)"
+												:clearable="true"
+												@input="handleDateTimeUpdate(key, $event)"
+												@update:value="handleDateTimeUpdate(key, $event)"
+												@change="handleDateTimeUpdate(key, $event)"
+												@update:modelValue="handleDateTimeUpdate(key, $event)" />
 
-												<!-- Text area properties -->
-												<NcTextArea
-													v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
-													ref="propertyValueInput"
-													:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-													:placeholder="getPropertyDisplayName(key)"
-													:rows="4"
-													@update:value="updatePropertyValue(key, $event)" />
+											<!-- Text area properties -->
+											<NcTextArea
+												v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
+												ref="propertyValueInput"
+												:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+												:placeholder="getPropertyDisplayName(key)"
+												:rows="4"
+												@update:value="updatePropertyValue(key, $event)" />
 
-												<!-- Markdown editor properties -->
-												<Editor
-													v-else-if="getPropertyInputComponent(key) === 'Editor'"
-													:key="`editor-${key}`"
-													:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
-													:options="getMarkdownEditorOptions(key)"
-													initial-edit-type="wysiwyg"
-													height="400px"
-													@load="(editor) => markdownEditors[key] = editor"
-													@blur="updateMarkdownValue(key, markdownEditors[key])" />
+											<!-- Markdown editor properties -->
+											<Editor
+												v-else-if="getPropertyInputComponent(key) === 'Editor'"
+												:key="`editor-${key}`"
+												:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
+												:options="getMarkdownEditorOptions(key)"
+												initial-edit-type="wysiwyg"
+												height="400px"
+												@load="(editor) => markdownEditors[key] = editor"
+												@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
-												<!-- Themes properties -->
-												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
-													<NcSelect
-														v-model="themeFormData"
-														:options="themeOptions"
-														input-label="Themes"
-														multiple
-														:placeholder="getPropertyDisplayName(key)" />
-												</div>
-												<!-- Array properties -->
-												<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
-													<NcTextField
-														ref="propertyValueInput"
-														:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
-														:type="getPropertyInputType(key)"
-														:placeholder="getPropertyDisplayName(key)"
-														:min="getPropertyMinimum(key)"
-														:max="getPropertyMaximum(key)"
-														:step="getPropertyStep(key)"
-														@update:value="updatePropertyValue(key, $event)" />
-													<InformationOutline
-														v-tooltip="'Array values should be separated by commas'"
-														:size="25"
-														class="info-icon" />
-												</div>
-
-												<!-- Text/Number properties -->
+											<!-- Themes properties -->
+											<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
+												<NcSelect
+													v-model="themeFormData"
+													:options="themeOptions"
+													input-label="Themes"
+													multiple
+													:placeholder="getPropertyDisplayName(key)" />
+											</div>
+											<!-- Array properties -->
+											<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
 												<NcTextField
-													v-else
 													ref="propertyValueInput"
-													:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+													:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
 													:type="getPropertyInputType(key)"
 													:placeholder="getPropertyDisplayName(key)"
 													:min="getPropertyMinimum(key)"
 													:max="getPropertyMaximum(key)"
 													:step="getPropertyStep(key)"
 													@update:value="updatePropertyValue(key, $event)" />
+												<InformationOutline
+													v-tooltip="'Array values should be separated by commas'"
+													:size="25"
+													class="info-icon" />
 											</div>
-											<div v-else>
-												<template v-if="formData[key] !== undefined">
-													<!-- Show edited value -->
-													<pre
-														v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
-														v-tooltip="'JSON object (edited)'"
-														class="json-value">{{ formatValue(formData[key]) }}</pre>
-													<span
-														v-else-if="isDateTimeProperty(key) && formData[key]"
-														v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
-													<span
-														v-else-if="isValidDate(formData[key])"
-														v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
-													<span
-														v-else
-														v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-												</template>
-												<template v-else>
-													<!-- Show original value -->
-													<pre
-														v-if="key !== 'themes' && typeof value === 'object' && value !== null"
-														v-tooltip="'JSON object'"
-														class="json-value">{{ formatValue(value) }}</pre>
-													<span
-														v-else-if="isDateTimeProperty(key) && value"
-														v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
-													<span
-														v-else-if="isValidDate(value)"
-														v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
-													<span
-														v-else
-														v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-												</template>
-											</div>
+
+											<!-- Text/Number properties -->
+											<NcTextField
+												v-else
+												ref="propertyValueInput"
+												:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+												:type="getPropertyInputType(key)"
+												:placeholder="getPropertyDisplayName(key)"
+												:min="getPropertyMinimum(key)"
+												:max="getPropertyMaximum(key)"
+												:step="getPropertyStep(key)"
+												@update:value="updatePropertyValue(key, $event)" />
 										</div>
-									</td>
-									<td class="tableColumnActions">
-										<NcButton v-if="canDropProperty(key, value)"
-											v-tooltip="getDropPropertyTooltip(key)"
-											type="tertiary-no-background"
-											size="small"
-											class="drop-property-btn"
-											:aria-label="getDropPropertyTooltip(key)"
-											@click.stop="dropProperty(key)">
-											<template #icon>
-												<Close :size="16" />
+										<div v-else>
+											<template v-if="formData[key] !== undefined">
+												<!-- Show edited value -->
+												<pre
+													v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
+													v-tooltip="'JSON object (edited)'"
+													class="json-value">{{ formatValue(formData[key]) }}</pre>
+												<span
+													v-else-if="isDateTimeProperty(key) && formData[key]"
+													v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
+												<span
+													v-else-if="isValidDate(formData[key])"
+													v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
+												<span
+													v-else
+													v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
 											</template>
-										</NcButton>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+											<template v-else>
+												<!-- Show original value -->
+												<pre
+													v-if="key !== 'themes' && typeof value === 'object' && value !== null"
+													v-tooltip="'JSON object'"
+													class="json-value">{{ formatValue(value) }}</pre>
+												<span
+													v-else-if="isDateTimeProperty(key) && value"
+													v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
+												<span
+													v-else-if="isValidDate(value)"
+													v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
+												<span
+													v-else
+													v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+											</template>
+										</div>
+									</div>
+								</td>
+								<td class="tableColumnActions">
+									<NcButton v-if="canDropProperty(key, value)"
+										v-tooltip="getDropPropertyTooltip(key)"
+										type="tertiary-no-background"
+										size="small"
+										class="drop-property-btn"
+										:aria-label="getDropPropertyTooltip(key)"
+										@click.stop="dropProperty(key)">
+										<template #icon>
+											<Close :size="16" />
+										</template>
+									</NcButton>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 
-					<!-- For existing objects, show tabs -->
-					<div v-else class="tabContainer">
-						<BTabs v-model="activeTab" content-class="mt-3" justified>
-							<BTab title="Properties" active>
-								<div class="viewTableContainer">
-									<table class="viewTable">
-										<thead>
-											<tr class="viewTableRow">
-												<th class="tableColumnConstrained">
-													Property
-												</th>
-												<th class="tableColumnExpanded">
-													Value
-												</th>
-												<th class="tableColumnActions actions-header-cell">
-													<!-- Show/Hide Constant & Immutable Properties Toggle -->
-													<NcButton v-if="hasConstantOrImmutableProperties"
-														v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-														type="primary"
-														size="small"
-														class="action-btn eye-toggle-btn"
-														:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-														@click="showConstantProperties = !showConstantProperties">
-														<template #icon>
-															<Eye v-if="!showConstantProperties" :size="16" />
-															<EyeOff v-else :size="16" />
-														</template>
-													</NcButton>
-												</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr
-												v-for="([key, value]) in filteredObjectProperties"
-												:key="key"
-												class="viewTableRow"
-												:class="{
-													'selected-row': selectedProperty === key,
-													'edited-row': formData[key] !== undefined,
-													'non-editable-row': !isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value),
-													...getPropertyValidationClass(key, value)
-												}"
-												@click="handleRowClick(key, $event)">
-												<td class="tableColumnConstrained prop-cell">
-													<div class="prop-cell-content">
-														<AlertCircle v-if="getPropertyValidationClass(key, value) === 'property-invalid'"
-															v-tooltip="getPropertyErrorMessage(key, value)"
-															class="validation-icon error-icon"
-															:size="16" />
-														<Alert v-else-if="getPropertyValidationClass(key, value) === 'property-warning'"
-															v-tooltip="getPropertyWarningMessage(key, value)"
-															class="validation-icon warning-icon"
-															:size="16" />
-														<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-															v-tooltip="getPropertyNewMessage(key)"
-															class="validation-icon new-icon"
-															:size="16" />
-														<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
-															v-tooltip="getEditabilityWarning(key, formData[key] !== undefined ? formData[key] : value)"
-															class="validation-icon lock-icon"
-															:size="16" />
-														<span
-															v-tooltip="getPropertyTooltip(key)">
+				<!-- For existing objects, show tabs -->
+				<div v-else class="tabContainer">
+					<BTabs v-model="activeTab" content-class="mt-3" justified>
+						<BTab title="Properties" active>
+							<div class="viewTableContainer">
+								<table class="viewTable">
+									<thead>
+										<tr class="viewTableRow">
+											<th class="tableColumnConstrained">
+												Property
+											</th>
+											<th class="tableColumnExpanded">
+												Value
+											</th>
+											<th class="tableColumnActions actions-header-cell">
+												<!-- Show/Hide Constant & Immutable Properties Toggle -->
+												<NcButton v-if="hasConstantOrImmutableProperties"
+													v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+													type="primary"
+													size="small"
+													class="action-btn eye-toggle-btn"
+													:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+													@click="showConstantProperties = !showConstantProperties">
+													<template #icon>
+														<Eye v-if="!showConstantProperties" :size="16" />
+														<EyeOff v-else :size="16" />
+													</template>
+												</NcButton>
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr
+											v-for="([key, value]) in filteredObjectProperties"
+											:key="key"
+											class="viewTableRow"
+											:class="{
+												'selected-row': selectedProperty === key,
+												'edited-row': formData[key] !== undefined,
+												'non-editable-row': !isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value),
+												...getPropertyValidationClass(key, value)
+											}"
+											@click="handleRowClick(key, $event)">
+											<td class="tableColumnConstrained prop-cell">
+												<div class="prop-cell-content">
+													<AlertCircle v-if="getPropertyValidationClass(key, value) === 'property-invalid'"
+														v-tooltip="getPropertyErrorMessage(key, value)"
+														class="validation-icon error-icon"
+														:size="16" />
+													<Alert v-else-if="getPropertyValidationClass(key, value) === 'property-warning'"
+														v-tooltip="getPropertyWarningMessage(key, value)"
+														class="validation-icon warning-icon"
+														:size="16" />
+													<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
+														v-tooltip="getPropertyNewMessage(key)"
+														class="validation-icon new-icon"
+														:size="16" />
+													<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
+														v-tooltip="getEditabilityWarning(key, formData[key] !== undefined ? formData[key] : value)"
+														class="validation-icon lock-icon"
+														:size="16" />
+													<span
+														v-tooltip="getPropertyTooltip(key)">
+														{{ getPropertyDisplayName(key) }}
+													</span>
+												</div>
+											</td>
+											<td class="tableColumnExpanded value-cell">
+												<div class="value-cell-content">
+													<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
+														<!-- Boolean properties -->
+														<NcCheckboxRadioSwitch
+															v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
+															:checked="formData[key] !== undefined ? formData[key] : value"
+															type="switch"
+															@update:checked="updatePropertyValue(key, $event)">
 															{{ getPropertyDisplayName(key) }}
-														</span>
-													</div>
-												</td>
-												<td class="tableColumnExpanded value-cell">
-													<div class="value-cell-content">
-														<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
-															<!-- Boolean properties -->
-															<NcCheckboxRadioSwitch
-																v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
-																:checked="formData[key] !== undefined ? formData[key] : value"
-																type="switch"
-																@update:checked="updatePropertyValue(key, $event)">
-																{{ getPropertyDisplayName(key) }}
-															</NcCheckboxRadioSwitch>
+														</NcCheckboxRadioSwitch>
 
-															<!-- Date/Time properties -->
-															<NcDateTimePicker
-																v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
-																:key="`datetime-${key}`"
-																:append-to-body="true"
-																:popup-class="'view-object-datepicker'"
-																:popup-style="{ zIndex: 12000 }"
-																:value="getDateTimePickerValue(key, value)"
-																:label="getPropertyDisplayName(key)"
-																:type="getDateTimePickerType(key)"
-																:placeholder="getPropertyDisplayName(key)"
-																:clearable="true"
-																@input="handleDateTimeUpdate(key, $event)"
-																@update:value="handleDateTimeUpdate(key, $event)"
-																@change="handleDateTimeUpdate(key, $event)"
-																@update:modelValue="handleDateTimeUpdate(key, $event)" />
+														<!-- Date/Time properties -->
+														<NcDateTimePicker
+															v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
+															:key="`datetime-${key}`"
+															:append-to-body="true"
+															:popup-class="'view-object-datepicker'"
+															:popup-style="{ zIndex: 12000 }"
+															:value="getDateTimePickerValue(key, value)"
+															:label="getPropertyDisplayName(key)"
+															:type="getDateTimePickerType(key)"
+															:placeholder="getPropertyDisplayName(key)"
+															:clearable="true"
+															@input="handleDateTimeUpdate(key, $event)"
+															@update:value="handleDateTimeUpdate(key, $event)"
+															@change="handleDateTimeUpdate(key, $event)"
+															@update:modelValue="handleDateTimeUpdate(key, $event)" />
 
-															<!-- Text area properties -->
-															<NcTextArea
-																v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
-																ref="propertyValueInput"
-																class="textarea-property"
-																:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-																:placeholder="getPropertyDisplayName(key)"
-																:rows="4"
-																@update:value="updatePropertyValue(key, $event)" />
+														<!-- Text area properties -->
+														<NcTextArea
+															v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
+															ref="propertyValueInput"
+															class="textarea-property"
+															:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+															:placeholder="getPropertyDisplayName(key)"
+															:rows="4"
+															@update:value="updatePropertyValue(key, $event)" />
 
-															<!-- Markdown editor properties -->
-															<Editor
-																v-else-if="getPropertyInputComponent(key) === 'Editor'"
-																:key="`editor-${key}-tab`"
-																:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
-																:options="getMarkdownEditorOptions(key)"
-																initial-edit-type="wysiwyg"
-																height="400px"
-																@load="(editor) => markdownEditors[key] = editor"
-																@blur="updateMarkdownValue(key, markdownEditors[key])" />
+														<!-- Markdown editor properties -->
+														<Editor
+															v-else-if="getPropertyInputComponent(key) === 'Editor'"
+															:key="`editor-${key}-tab`"
+															:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
+															:options="getMarkdownEditorOptions(key)"
+															initial-edit-type="wysiwyg"
+															height="400px"
+															@load="(editor) => markdownEditors[key] = editor"
+															@blur="updateMarkdownValue(key, markdownEditors[key])" />
 
-															<!-- Themes properties -->
-															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
-																<NcSelect
-																	v-model="themeFormData"
-																	:options="themeOptions"
-																	input-label="Themes"
-																	multiple
-																	:placeholder="getPropertyDisplayName(key)" />
-															</div>
-															<!-- Array properties -->
-															<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
-																<NcTextField
-																	ref="propertyValueInput"
-																	:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
-																	:type="getPropertyInputType(key)"
-																	:placeholder="getPropertyDisplayName(key)"
-																	:min="getPropertyMinimum(key)"
-																	:max="getPropertyMaximum(key)"
-																	:step="getPropertyStep(key)"
-																	@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
-																<InformationOutline
-																	v-tooltip="'Array values should be separated by commas'"
-																	:size="25"
-																	class="info-icon" />
-															</div>
-
-															<!-- Text/Number properties -->
+														<!-- Themes properties -->
+														<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
+															<NcSelect
+																v-model="themeFormData"
+																:options="themeOptions"
+																input-label="Themes"
+																multiple
+																:placeholder="getPropertyDisplayName(key)" />
+														</div>
+														<!-- Array properties -->
+														<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
 															<NcTextField
-																v-else
 																ref="propertyValueInput"
-																:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+																:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
 																:type="getPropertyInputType(key)"
 																:placeholder="getPropertyDisplayName(key)"
 																:min="getPropertyMinimum(key)"
 																:max="getPropertyMaximum(key)"
 																:step="getPropertyStep(key)"
-																@update:value="updatePropertyValue(key, $event)" />
+																@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
+															<InformationOutline
+																v-tooltip="'Array values should be separated by commas'"
+																:size="25"
+																class="info-icon" />
 														</div>
-														<div v-else>
-															<template v-if="formData[key] !== undefined">
-																<!-- Show edited value -->
-																<pre
-																	v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
-																	v-tooltip="'JSON object (edited)'"
-																	class="json-value">{{ formatValue(formData[key]) }}</pre>
-																<span
-																	v-else-if="isDateTimeProperty(key) && formData[key]"
-																	v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
-																<span
-																	v-else-if="isValidDate(formData[key])"
-																	v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
-																<span
-																	v-else
-																	v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-															</template>
-															<template v-else>
-																<!-- Show original value -->
-																<pre
-																	v-if="key !== 'themes' && typeof value === 'object' && value !== null"
-																	v-tooltip="'JSON object'"
-																	class="json-value">{{ formatValue(value) }}</pre>
-																<span
-																	v-else-if="isDateTimeProperty(key) && value"
-																	v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
-																<span
-																	v-else-if="isValidDate(value)"
-																	v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
-																<span
-																	v-else
-																	v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-															</template>
-														</div>
+
+														<!-- Text/Number properties -->
+														<NcTextField
+															v-else
+															ref="propertyValueInput"
+															:value="String(formData[key] !== undefined ? formData[key] : value || '')"
+															:type="getPropertyInputType(key)"
+															:placeholder="getPropertyDisplayName(key)"
+															:min="getPropertyMinimum(key)"
+															:max="getPropertyMaximum(key)"
+															:step="getPropertyStep(key)"
+															@update:value="updatePropertyValue(key, $event)" />
 													</div>
-												</td>
-												<td class="tableColumnActions">
-													<NcButton v-if="canDropProperty(key, value)"
-														v-tooltip="getDropPropertyTooltip(key)"
-														type="tertiary-no-background"
-														size="small"
-														class="drop-property-btn"
-														:aria-label="getDropPropertyTooltip(key)"
-														@click.stop="dropProperty(key)">
-														<template #icon>
-															<Close :size="16" />
+													<div v-else>
+														<template v-if="formData[key] !== undefined">
+															<!-- Show edited value -->
+															<pre
+																v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
+																v-tooltip="'JSON object (edited)'"
+																class="json-value">{{ formatValue(formData[key]) }}</pre>
+															<span
+																v-else-if="isDateTimeProperty(key) && formData[key]"
+																v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
+															<span
+																v-else-if="isValidDate(formData[key])"
+																v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
+															<span
+																v-else
+																v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
 														</template>
-													</NcButton>
-												</td>
-											</tr>
-										</tbody>
-									</table>
+														<template v-else>
+															<!-- Show original value -->
+															<pre
+																v-if="key !== 'themes' && typeof value === 'object' && value !== null"
+																v-tooltip="'JSON object'"
+																class="json-value">{{ formatValue(value) }}</pre>
+															<span
+																v-else-if="isDateTimeProperty(key) && value"
+																v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
+															<span
+																v-else-if="isValidDate(value)"
+																v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
+															<span
+																v-else
+																v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+														</template>
+													</div>
+												</div>
+											</td>
+											<td class="tableColumnActions">
+												<NcButton v-if="canDropProperty(key, value)"
+													v-tooltip="getDropPropertyTooltip(key)"
+													type="tertiary-no-background"
+													size="small"
+													class="drop-property-btn"
+													:aria-label="getDropPropertyTooltip(key)"
+													@click.stop="dropProperty(key)">
+													<template #icon>
+														<Close :size="16" />
+													</template>
+												</NcButton>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</BTab>
+						<BTab title="Metadata">
+							<div class="viewTableContainer">
+								<table class="viewTable">
+									<thead>
+										<tr class="viewTableRow">
+											<th class="tableColumnConstrained">
+												Metadata
+											</th>
+											<th class="tableColumnExpanded">
+												Value
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr
+											v-for="([key, value]) in metadataProperties"
+											:key="key"
+											class="viewTableRow">
+											<td class="tableColumnConstrained">
+												{{ key }}
+											</td>
+											<td class="tableColumnExpanded">
+												{{ value }}
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</BTab>
+						<BTab>
+							<template #title>
+								<div class="tab-title">
+									<span>Files</span>
+									<NcLoadingIcon v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)" :size="16" />
+									<NcCounterBubble v-else :count="filesTotalItems" />
 								</div>
-							</BTab>
-							<BTab title="Metadata">
+							</template>
+							<!-- Info box for new objects -->
+							<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
+								<p><strong>Files can be added after the publication is created.</strong></p>
+								<p>Save the publication first, then you'll be able to upload and manage files.</p>
+							</NcNoteCard>
+
+							<NcEmptyContent v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)"
+								title="Loading files..."
+								:description="'Loading files for this publication...'">
+								<template #icon>
+									<NcLoadingIcon :size="64" />
+								</template>
+							</NcEmptyContent>
+							<template v-else-if="paginatedFiles.length > 0">
+								<div class="multi-actions-container">
+									<NcActions
+										:force-name="true"
+										:disabled="selectedAttachments.length === 0"
+										:title="selectedAttachments.length === 0 ? 'Select one or more files to use mass actions' : `Mass actions (${selectedAttachments.length} selected)`"
+										:menu-name="`Mass Actions (${selectedAttachments.length})`">
+										<template #icon>
+											<FormatListChecks :size="20" />
+										</template>
+										<NcActionButton
+											:disabled="publishLoading.length > 0 || publishableCount === 0"
+											close-after-click
+											@click="publishSelectedFiles">
+											<template #icon>
+												<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
+												<FileOutline v-else :size="20" />
+											</template>
+											Publish {{ publishableCount }} attachment{{ publishableCount === 1 ? '' : 's' }}
+										</NcActionButton>
+										<NcActionButton
+											:disabled="depublishLoading.length > 0 || depublishableCount === 0"
+											close-after-click
+											@click="depublishSelectedFiles">
+											<template #icon>
+												<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
+												<LockOutline v-else :size="20" />
+											</template>
+											Depublish {{ depublishableCount }} attachment{{ depublishableCount === 1 ? '' : 's' }}
+										</NcActionButton>
+										<NcActionButton
+											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
+											close-after-click
+											@click="deleteSelectedFiles">
+											<template #icon>
+												<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
+												<Delete v-else :size="20" />
+											</template>
+											Delete {{ selectedAttachments.length }} attachment{{ selectedAttachments.length === 1 ? '' : 's' }}
+										</NcActionButton>
+									</NcActions>
+								</div>
 								<div class="viewTableContainer">
 									<table class="viewTable">
 										<thead>
 											<tr class="viewTableRow">
-												<th class="tableColumnConstrained">
-													Metadata
+												<th class="tableColumnCheckbox">
+													<NcCheckboxRadioSwitch
+														:checked="allFilesSelected"
+														:indeterminate="someFilesSelected"
+														@update:checked="toggleSelectAllFiles" />
 												</th>
-												<th class="tableColumnExpanded">
-													Value
+												<th class="tableColumnExpanded table-row-title">
+													Name
 												</th>
+												<th class="tableColumnConstrained short-column">
+													Size
+												</th>
+												<th class="tableColumnConstrained table-row-type">
+													Type
+												</th>
+												<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
+													Labels
+												</th>
+												<th class="table-row-actions" />
 											</tr>
 										</thead>
 										<tbody>
-											<tr
-												v-for="([key, value]) in metadataProperties"
-												:key="key"
-												class="viewTableRow">
-												<td class="tableColumnConstrained">
-													{{ key }}
+											<tr v-for="(attachment, i) in paginatedFiles"
+												:key="`${attachment.id}${i}`"
+												:class="{ 'active': activeAttachment === attachment.id }"
+												class="viewTableRow"
+												@click="() => {
+													if (activeAttachment === attachment.id) activeAttachment = null
+													else activeAttachment = attachment.id
+												}">
+												<td class="tableColumnCheckbox">
+													<NcCheckboxRadioSwitch
+														:checked="objectStore.selectedAttachments.includes(attachment.id)"
+														@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
 												</td>
-												<td class="tableColumnExpanded">
-													{{ value }}
+												<td class="tableColumnExpanded table-row-title">
+													<div class="file-name-container">
+														<div class="file-status-icons">
+															<!-- Show warning icon if file is not shared -->
+															<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
+																v-tooltip="'Not shared'"
+																class="warningIcon"
+																:size="20" />
+															<!-- Show published icon if file is shared -->
+															<FileOutline v-else class="publishedIcon" :size="20" />
+														</div>
+														<span class="file-name">{{ attachment.name ?? attachment?.title }}</span>
+													</div>
+												</td>
+												<td class="tableColumnConstrained short-column">
+													{{ formatFileSize(attachment?.size) }}
+												</td>
+												<td class="tableColumnConstrained table-row-type">
+													{{ attachment?.type || 'No type' }}
+												</td>
+												<td class="tableColumnConstrained td-labels">
+													<div class="fileLabelsContainer">
+														<span v-if="editingTags !== attachment.id"
+															class="files-list__row-action--inline files-list__row-action-system-tags">
+															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+																<li v-for="label of attachment.labels"
+																	:key="label"
+																	class="files-list__system-tag"
+																	:title="label">
+																	{{ label }}
+																</li>
+															</ul>
+															<span v-if="!attachment.labels || attachment.labels.length === 0">
+																No labels
+															</span>
+														</span>
+														<div v-if="editingTags === attachment.id" class="label-edit-container">
+															<NcSelect
+																v-model="editedTags"
+																:disabled="tagsLoading"
+																:loading="tagsLoading"
+																:taggable="true"
+																:multiple="true"
+																:aria-label-combobox="labelOptionsEdit.inputLabel"
+																:options="labelOptionsEdit.options"
+																@tag="addNewTag" />
+															<NcButton
+																v-tooltip="'Save labels'"
+																type="primary"
+																size="small"
+																:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
+																class="editTagsButton"
+																@click="saveTags(attachment, editedTags)">
+																<template #icon>
+																	<ContentSaveOutline :size="20" />
+																</template>
+															</NcButton>
+															<NcButton
+																v-tooltip="'Cancel'"
+																type="secondary"
+																size="small"
+																@click="cancelFileLabelEditing">
+																<template #icon>
+																	<Cancel :size="20" />
+																</template>
+															</NcButton>
+														</div>
+													</div>
+												</td>
+												<td class="table-row-actions">
+													<NcActions
+														v-if="editingTags !== attachment.id"
+														:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
+														<NcActionButton @click="openFile(attachment)">
+															<template #icon>
+																<OpenInNew :size="20" />
+															</template>
+															View
+														</NcActionButton>
+														<NcActionButton
+															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
+															@click="editFileLabels(attachment)">
+															<template #icon>
+																<Tag :size="20" />
+															</template>
+															Edit Labels
+														</NcActionButton>
+														<NcActionButton
+															v-if="!attachment.accessUrl && !attachment.downloadUrl"
+															:disabled="publishLoading.includes(attachment.id)"
+															@click="publishFile(attachment)">
+															<template #icon>
+																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
+																<FileOutline v-else :size="20" />
+															</template>
+															Publish
+														</NcActionButton>
+														<NcActionButton
+															v-else
+															:disabled="depublishLoading.includes(attachment.id)"
+															@click="depublishFile(attachment)">
+															<template #icon>
+																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
+																<LockOutline v-else :size="20" />
+															</template>
+															Depublish
+														</NcActionButton>
+														<NcActionButton
+															:disabled="fileIdsLoading.includes(attachment.id)"
+															@click="deleteFile(attachment)">
+															<template #icon>
+																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
+																<Delete v-else :size="20" />
+															</template>
+															Delete
+														</NcActionButton>
+													</NcActions>
 												</td>
 											</tr>
 										</tbody>
 									</table>
 								</div>
-							</BTab>
-							<BTab>
-								<template #title>
-									<div class="tab-title">
-										<span>Files</span>
-										<NcLoadingIcon v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)" :size="16" />
-										<NcCounterBubble v-else :count="filesTotalItems" />
-									</div>
+							</template>
+							<NcEmptyContent v-else-if="!isNewObject"
+								name="No files attached"
+								description="No files have been attached to this object">
+								<template #icon>
+									<FileOutline :size="64" />
 								</template>
-								<!-- Info box for new objects -->
-								<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
-									<p><strong>Files can be added after the publication is created.</strong></p>
-									<p>Save the publication first, then you'll be able to upload and manage files.</p>
-								</NcNoteCard>
+							</NcEmptyContent>
 
-								<NcEmptyContent v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)"
-									title="Loading files..."
-									:description="'Loading files for this publication...'">
-									<template #icon>
-										<NcLoadingIcon :size="64" />
-									</template>
-								</NcEmptyContent>
-								<template v-else-if="paginatedFiles.length > 0">
-									<div class="multi-actions-container">
-										<NcActions
-											:force-name="true"
-											:disabled="selectedAttachments.length === 0"
-											:title="selectedAttachments.length === 0 ? 'Select one or more files to use mass actions' : `Mass actions (${selectedAttachments.length} selected)`"
-											:menu-name="`Mass Actions (${selectedAttachments.length})`">
-											<template #icon>
-												<FormatListChecks :size="20" />
-											</template>
-											<NcActionButton
-												:disabled="publishLoading.length > 0 || publishableCount === 0"
-												close-after-click
-												@click="publishSelectedFiles">
-												<template #icon>
-													<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
-													<FileOutline v-else :size="20" />
-												</template>
-												Publish {{ publishableCount }} attachment{{ publishableCount === 1 ? '' : 's' }}
-											</NcActionButton>
-											<NcActionButton
-												:disabled="depublishLoading.length > 0 || depublishableCount === 0"
-												close-after-click
-												@click="depublishSelectedFiles">
-												<template #icon>
-													<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
-													<LockOutline v-else :size="20" />
-												</template>
-												Depublish {{ depublishableCount }} attachment{{ depublishableCount === 1 ? '' : 's' }}
-											</NcActionButton>
-											<NcActionButton
-												:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
-												close-after-click
-												@click="deleteSelectedFiles">
-												<template #icon>
-													<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
-													<Delete v-else :size="20" />
-												</template>
-												Delete {{ selectedAttachments.length }} attachment{{ selectedAttachments.length === 1 ? '' : 's' }}
-											</NcActionButton>
-										</NcActions>
-									</div>
-									<div class="viewTableContainer">
-										<table class="viewTable">
-											<thead>
-												<tr class="viewTableRow">
-													<th class="tableColumnCheckbox">
-														<NcCheckboxRadioSwitch
-															:checked="allFilesSelected"
-															:indeterminate="someFilesSelected"
-															@update:checked="toggleSelectAllFiles" />
-													</th>
-													<th class="tableColumnExpanded table-row-title">
-														Name
-													</th>
-													<th class="tableColumnConstrained short-column">
-														Size
-													</th>
-													<th class="tableColumnConstrained table-row-type">
-														Type
-													</th>
-													<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
-														Labels
-													</th>
-													<th class="table-row-actions" />
-												</tr>
-											</thead>
-											<tbody>
-												<tr v-for="(attachment, i) in paginatedFiles"
-													:key="`${attachment.id}${i}`"
-													:class="{ 'active': activeAttachment === attachment.id }"
-													class="viewTableRow"
-													@click="() => {
-														if (activeAttachment === attachment.id) activeAttachment = null
-														else activeAttachment = attachment.id
-													}">
-													<td class="tableColumnCheckbox">
-														<NcCheckboxRadioSwitch
-															:checked="objectStore.selectedAttachments.includes(attachment.id)"
-															@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
-													</td>
-													<td class="tableColumnExpanded table-row-title">
-														<div class="file-name-container">
-															<div class="file-status-icons">
-																<!-- Show warning icon if file is not shared -->
-																<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
-																	v-tooltip="'Not shared'"
-																	class="warningIcon"
-																	:size="20" />
-																<!-- Show published icon if file is shared -->
-																<FileOutline v-else class="publishedIcon" :size="20" />
-															</div>
-															<span class="file-name">{{ attachment.name ?? attachment?.title }}</span>
-														</div>
-													</td>
-													<td class="tableColumnConstrained short-column">
-														{{ formatFileSize(attachment?.size) }}
-													</td>
-													<td class="tableColumnConstrained table-row-type">
-														{{ attachment?.type || 'No type' }}
-													</td>
-													<td class="tableColumnConstrained td-labels">
-														<div class="fileLabelsContainer">
-															<span v-if="editingTags !== attachment.id"
-																class="files-list__row-action--inline files-list__row-action-system-tags">
-																<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
-																	<li v-for="label of attachment.labels"
-																		:key="label"
-																		class="files-list__system-tag"
-																		:title="label">
-																		{{ label }}
-																	</li>
-																</ul>
-																<span v-if="!attachment.labels || attachment.labels.length === 0">
-																	No labels
-																</span>
-															</span>
-															<div v-if="editingTags === attachment.id" class="label-edit-container">
-																<NcSelect
-																	v-model="editedTags"
-																	:disabled="tagsLoading"
-																	:loading="tagsLoading"
-																	:taggable="true"
-																	:multiple="true"
-																	:aria-label-combobox="labelOptionsEdit.inputLabel"
-																	:options="labelOptionsEdit.options"
-																	@tag="addNewTag" />
-																<NcButton
-																	v-tooltip="'Save labels'"
-																	type="primary"
-																	size="small"
-																	:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
-																	class="editTagsButton"
-																	@click="saveTags(attachment, editedTags)">
-																	<template #icon>
-																		<ContentSaveOutline :size="20" />
-																	</template>
-																</NcButton>
-																<NcButton
-																	v-tooltip="'Cancel'"
-																	type="secondary"
-																	size="small"
-																	@click="cancelFileLabelEditing">
-																	<template #icon>
-																		<Cancel :size="20" />
-																	</template>
-																</NcButton>
-															</div>
-														</div>
-													</td>
-													<td class="table-row-actions">
-														<NcActions
-															v-if="editingTags !== attachment.id"
-															:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
-															<NcActionButton @click="openFile(attachment)">
-																<template #icon>
-																	<OpenInNew :size="20" />
-																</template>
-																View
-															</NcActionButton>
-															<NcActionButton
-																:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
-																@click="editFileLabels(attachment)">
-																<template #icon>
-																	<Tag :size="20" />
-																</template>
-																Edit Labels
-															</NcActionButton>
-															<NcActionButton
-																v-if="!attachment.accessUrl && !attachment.downloadUrl"
-																:disabled="publishLoading.includes(attachment.id)"
-																@click="publishFile(attachment)">
-																<template #icon>
-																	<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
-																	<FileOutline v-else :size="20" />
-																</template>
-																Publish
-															</NcActionButton>
-															<NcActionButton
-																v-else
-																:disabled="depublishLoading.includes(attachment.id)"
-																@click="depublishFile(attachment)">
-																<template #icon>
-																	<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
-																	<LockOutline v-else :size="20" />
-																</template>
-																Depublish
-															</NcActionButton>
-															<NcActionButton
-																:disabled="fileIdsLoading.includes(attachment.id)"
-																@click="deleteFile(attachment)">
-																<template #icon>
-																	<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
-																	<Delete v-else :size="20" />
-																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-											</tbody>
-										</table>
-									</div>
-								</template>
-								<NcEmptyContent v-else-if="!isNewObject"
-									name="No files attached"
-									description="No files have been attached to this object">
-									<template #icon>
-										<FileOutline :size="64" />
-									</template>
-								</NcEmptyContent>
-
-								<!-- Files Pagination -->
-								<PaginationComponent
-									v-if="filesTotalItems > 10"
-									:current-page="objectStore.getPagination('publication_files').page"
-									:total-pages="filesTotalPages"
-									:total-items="filesTotalItems"
-									:current-page-size="filesCurrentPageSize"
-									:page-size-options="pageSizeOptions"
-									:min-items-to-show="5"
-									@page-changed="onFilesPageChanged"
-									@page-size-changed="onFilesPageSizeChanged" />
-							</BTab>
-						</BTabs>
-					</div>
+							<!-- Files Pagination -->
+							<PaginationComponent
+								v-if="filesTotalItems > 10"
+								:current-page="objectStore.getPagination('publication_files').page"
+								:total-pages="filesTotalPages"
+								:total-items="filesTotalItems"
+								:current-page-size="filesCurrentPageSize"
+								:page-size-options="pageSizeOptions"
+								:min-items-to-show="5"
+								@page-changed="onFilesPageChanged"
+								@page-size-changed="onFilesPageSizeChanged" />
+						</BTab>
+					</BTabs>
 				</div>
 			</div>
+		</div>
 
-			<template #actions>
-				<NcButton @click="closeModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					Close
-				</NcButton>
-				<NcButton v-if="!isNewObject" @click="uploadFiles">
-					<template #icon>
-						<Upload :size="20" />
-					</template>
-					Add File
-				</NcButton>
-				<NcButton v-if="shouldShowPublishAction(currentObject)"
-					@click="singlePublishObject">
-					<template #icon>
-						<Publish :size="20" />
-					</template>
-					Publish
-				</NcButton>
-				<NcButton v-if="shouldShowDepublishAction(currentObject)"
-					@click="singleDepublishObject">
-					<template #icon>
-						<PublishOff :size="20" />
-					</template>
-					Depublish
-				</NcButton>
-				<NcButton v-if="!isNewObject"
-					type="error"
-					@click="singleDeleteObject">
-					<template #icon>
-						<Delete :size="20" />
-					</template>
-					Delete
-				</NcButton>
-				<NcButton type="primary" :disabled="isSaving" @click="saveObject">
-					<template #icon>
-						<NcLoadingIcon v-if="isSaving" :size="20" />
-						<ContentSave v-else :size="20" />
-					</template>
-					{{ isSaving ? (isNewObject ? 'Creating...' : 'Saving...') : (isNewObject ? 'Create' : 'Save') }}
-				</NcButton>
-			</template>
-		</NcDialog>
-	</div>
+		<template #actions>
+			<NcButton @click="closeModal">
+				<template #icon>
+					<Cancel :size="20" />
+				</template>
+				Close
+			</NcButton>
+			<NcButton v-if="!isNewObject" @click="uploadFiles">
+				<template #icon>
+					<Upload :size="20" />
+				</template>
+				Add File
+			</NcButton>
+			<NcButton v-if="shouldShowPublishAction(currentObject)"
+				@click="singlePublishObject">
+				<template #icon>
+					<Publish :size="20" />
+				</template>
+				Publish
+			</NcButton>
+			<NcButton v-if="shouldShowDepublishAction(currentObject)"
+				@click="singleDepublishObject">
+				<template #icon>
+					<PublishOff :size="20" />
+				</template>
+				Depublish
+			</NcButton>
+			<NcButton v-if="!isNewObject"
+				type="error"
+				@click="singleDeleteObject">
+				<template #icon>
+					<Delete :size="20" />
+				</template>
+				Delete
+			</NcButton>
+			<NcButton type="primary" :disabled="isSaving" @click="saveObject">
+				<template #icon>
+					<NcLoadingIcon v-if="isSaving" :size="20" />
+					<ContentSave v-else :size="20" />
+				</template>
+				{{ isSaving ? (isNewObject ? 'Creating...' : 'Saving...') : (isNewObject ? 'Create' : 'Save') }}
+			</NcButton>
+		</template>
+	</NcDialog>
 </template>
 
 <script>
@@ -1528,7 +1526,7 @@ export default {
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		initializeData() {
+		async initializeData() {
 			if (!this.currentObject) {
 				// For new objects, initialize with empty form data and auto-select if possible
 				this.formData = {}
@@ -1555,20 +1553,17 @@ export default {
 					}
 				}
 
-				// Use nextTick to ensure the computed properties are updated
-				this.$nextTick(() => {
-					// Auto-select register if there's only one
-					if (this.registerOptions.length === 1) {
-						this.selectedRegister = this.registerOptions[0]
-
-						this.$nextTick(() => {
-							// Auto-select schema if there's only one
-							if (this.schemaOptions.length === 1) {
-								this.selectedSchema = this.schemaOptions[0]
-							}
-						})
+				// Auto-select register and schema if only one option exists.
+				// Existing watchers on selectedCatalog/selectedRegister handle
+				// the cascading updates, so a single tick is sufficient.
+				await this.$nextTick()
+				if (this.registerOptions.length === 1) {
+					this.selectedRegister = this.registerOptions[0]
+					await this.$nextTick()
+					if (this.schemaOptions.length === 1) {
+						this.selectedSchema = this.schemaOptions[0]
 					}
-				})
+				}
 
 				return
 			}

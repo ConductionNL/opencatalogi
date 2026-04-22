@@ -18,8 +18,6 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use OCP\IAppConfig;
-use OCP\IRequest;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -27,47 +25,34 @@ use Psr\Container\NotFoundExceptionInterface;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Log\LoggerInterface;
 use Exception;
+use RuntimeException;
 
 /**
  * Service for handling events and auto-publishing logic.
  *
  * Provides functionality for processing object creation and update events,
  * implementing auto-publishing features based on configuration settings.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class EventService
 {
-
-    /**
-     * This property holds the name of the application, which is used for identification and configuration purposes.
-     *
-     * @var string $appName The name of the app.
-     */
-    private string $appName;
-
-
     /**
      * EventService constructor.
      *
-     * @param IAppConfig         $config          App configuration interface.
-     * @param IRequest           $request         Request interface.
      * @param ContainerInterface $container       Container for dependency injection.
      * @param IAppManager        $appManager      App manager interface.
      * @param SettingsService    $settingsService Settings service for configuration access.
      * @param LoggerInterface    $logger          PSR-3 logger.
      */
     public function __construct(
-        private readonly IAppConfig $config,
-        private readonly IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly LoggerInterface $logger
     ) {
-        // Set the application name for identification and configuration purposes.
-        $this->appName = 'opencatalogi';
 
     }//end __construct()
-
 
     /**
      * Attempts to retrieve the OpenRegister object service from the container.
@@ -81,10 +66,9 @@ class EventService
             return $this->container->get('OCA\OpenRegister\Service\ObjectService');
         }
 
-        throw new \RuntimeException('OpenRegister object service is not available.');
+        throw new RuntimeException('OpenRegister object service is not available.');
 
     }//end getObjectService()
-
 
     /**
      * Attempts to retrieve the OpenRegister file service from the container.
@@ -98,10 +82,9 @@ class EventService
             return $this->container->get('OCA\OpenRegister\Service\FileService');
         }
 
-        throw new \RuntimeException('OpenRegister file service is not available.');
+        throw new RuntimeException('OpenRegister file service is not available.');
 
     }//end getFileService()
-
 
     /**
      * Get the FileMapper from the container.
@@ -118,10 +101,9 @@ class EventService
             return $this->container->get('OCA\OpenRegister\Db\FileMapper');
         }
 
-        throw new \RuntimeException('OpenRegister FileMapper is not available.');
+        throw new RuntimeException('OpenRegister FileMapper is not available.');
 
     }//end getFileMapper()
-
 
     /**
      * Handle object creation events with auto-publishing logic.
@@ -133,6 +115,8 @@ class EventService
      *
      * @return array Results of the event processing including any auto-publishing actions.
      * @throws \RuntimeException If event processing fails.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function handleObjectCreateEvents(array $objects): array
     {
@@ -166,16 +150,20 @@ class EventService
                             if ($publishResult['success'] === true) {
                                 $objectResult['actions'][] = 'object_published';
                                 $results['published']++;
-                            } else {
+                            }
+
+                            if ($publishResult['success'] !== true) {
                                 $objectResult['errors'][] = 'Failed to auto-publish object: '.$publishResult['error'];
                             }
                         }
                     }
 
                     // Check if auto-publish attachments is enabled and object has published status.
-                    if ($publishingOptions['auto_publish_attachments'] === true && $this->isObjectPublished($objectData) === true) {
-                        $attachmentResult                 = $this->publishObjectAttachments($objectData);
-                        $objectResult['actions'][]        = 'attachments_processed';
+                    if ($publishingOptions['auto_publish_attachments'] === true
+                        && $this->isObjectPublished($objectData) === true
+                    ) {
+                        $attachmentResult          = $this->publishObjectAttachments($objectData);
+                        $objectResult['actions'][] = 'attachments_processed';
                         $results['attachmentsPublished'] += $attachmentResult['published'];
 
                         if (empty($attachmentResult['errors']) === false) {
@@ -194,11 +182,10 @@ class EventService
 
             return $results;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to handle object create events: '.$e->getMessage());
+            throw new RuntimeException('Failed to handle object create events: '.$e->getMessage());
         }//end try
 
     }//end handleObjectCreateEvents()
-
 
     /**
      * Handle object update events with auto-publishing logic.
@@ -235,9 +222,11 @@ class EventService
 
                 try {
                     // Check if auto-publish attachments is enabled and object is published.
-                    if ($publishingOptions['auto_publish_attachments'] === true && $this->isObjectPublished($objectData) === true) {
-                        $attachmentResult                 = $this->publishObjectAttachments($objectData);
-                        $objectResult['actions'][]        = 'attachments_processed';
+                    if ($publishingOptions['auto_publish_attachments'] === true
+                        && $this->isObjectPublished($objectData) === true
+                    ) {
+                        $attachmentResult          = $this->publishObjectAttachments($objectData);
+                        $objectResult['actions'][] = 'attachments_processed';
                         $results['attachmentsPublished'] += $attachmentResult['published'];
 
                         if (empty($attachmentResult['errors']) === false) {
@@ -256,11 +245,10 @@ class EventService
 
             return $results;
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to handle object update events: '.$e->getMessage());
+            throw new RuntimeException('Failed to handle object update events: '.$e->getMessage());
         }//end try
 
     }//end handleObjectUpdateEvents()
-
 
     /**
      * Determine if an object should be auto-published based on catalog matching.
@@ -291,10 +279,10 @@ class EventService
             $catalogRegister = $settings['configuration']['catalog_register'] ?? null;
             $catalogSchema   = $settings['configuration']['catalog_schema'] ?? null;
 
-            if ($catalogRegister && $catalogSchema) {
+            if ($catalogRegister !== null && $catalogSchema !== null) {
                 // Get all catalog objects using searchObjects with proper filters.
                 $catalogObjects = $objectService->searchObjects(
-                    [
+                    query: [
                         '@self' => [
                             'register' => $catalogRegister,
                             'schema'   => $catalogSchema,
@@ -313,7 +301,9 @@ class EventService
                     $objectSchemaInt   = (int) $objectSchema;
 
                     // Check if this catalog includes the object's register and schema.
-                    if (in_array($objectRegisterInt, $catalogRegisters) && in_array($objectSchemaInt, $catalogSchemas)) {
+                    if (in_array($objectRegisterInt, $catalogRegisters) === true
+                        && in_array($objectSchemaInt, $catalogSchemas) === true
+                    ) {
                         return true;
                     }
                 }
@@ -322,12 +312,14 @@ class EventService
             return false;
         } catch (\Exception $e) {
             // Log error but don't fail the process.
-            $this->logger->error('OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: '.$e->getMessage(), ['exception' => $e]);
+            $this->logger->error(
+                'OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: '.$e->getMessage(),
+                ['exception' => $e]
+            );
             return false;
         }//end try
 
     }//end shouldAutoPublishObject()
-
 
     /**
      * Check if an object is currently published.
@@ -359,7 +351,6 @@ class EventService
         return false;
 
     }//end isObjectPublished()
-
 
     /**
      * Publish an object using the OpenRegister service.
@@ -395,7 +386,6 @@ class EventService
 
     }//end publishObject()
 
-
     /**
      * Publish all unpublished attachments for an object.
      *
@@ -405,6 +395,8 @@ class EventService
      * @param array $objectData The object data containing object information.
      *
      * @return array Result of the attachment publishing operation.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function publishObjectAttachments(array $objectData): array
     {
@@ -420,9 +412,9 @@ class EventService
             $fileService = $this->getFileService();
             $fileMapper  = $this->getFileMapper();
 
-            // Use FileMapper to get files directly from database without triggering object updates
-            // This completely avoids the infinite loop issue
-            // First, we need to get the ObjectEntity to use with FileMapper
+            // Use FileMapper to get files directly from database without triggering object updates.
+            // This completely avoids the infinite loop issue.
+            // First, we need to get the ObjectEntity to use with FileMapper.
             $objectService = $this->getObjectService();
             $objectEntity  = $objectService->find($objectId);
 
@@ -430,40 +422,45 @@ class EventService
                 return $result;
             }
 
-            // Use FileMapper to get files directly from database (no object updates triggered)
+            // Use FileMapper to get files directly from database (no object updates triggered).
             $files = $fileMapper->getFilesForObject($objectEntity);
 
             // Process each file from the FileMapper.
             foreach ($files as $file) {
-                try {
-                    $fileName = ($file['name'] ?? 'unknown');
-                    $filePath = ($file['path'] ?? '');
+                $fileName = ($file['name'] ?? 'unknown');
+                $filePath = ($file['path'] ?? '');
 
-                    // Check if file is already published by checking if it has a share token
-                    // FileMapper already includes share information in the file data
-                    if (!empty($file['share_token'])) {
-                        $result['skipped']++;
-                        continue;
+                // Check if file is already published by checking if it has a share token.
+                // FileMapper already includes share information in the file data.
+                if (empty($file['share_token']) === false) {
+                    $result['skipped']++;
+                    continue;
+                }
+
+                // Create share link directly without updating the object.
+                // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix.
+                $openRegisterPath = '/OpenRegister/'.$filePath;
+
+                try {
+                    // Use the converted OpenRegister path format.
+                    $shareLink = $fileService->createShareLink($openRegisterPath);
+
+                    if ($shareLink !== null
+                        && $shareLink !== ''
+                        && str_contains($shareLink, 'not found') === false
+                        && str_contains($shareLink, 'couldn\'t be found') === false
+                    ) {
+                        $result['published']++;
                     }
 
-                    // Create share link directly without updating the object.
-                    // Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix
-                    $openRegisterPath = '/OpenRegister/'.$filePath;
-
-                    try {
-                        // Use the converted OpenRegister path format
-                        $shareLink = $fileService->createShareLink($openRegisterPath);
-
-                        if ($shareLink && !str_contains($shareLink, 'not found') && !str_contains($shareLink, 'couldn\'t be found')) {
-                            $result['published']++;
-                        } else {
-                            $result['errors'][] = "Failed to create share link for file {$fileName}";
-                        }
-                    } catch (\Exception $shareException) {
-                        $result['errors'][] = "Exception creating share link for file {$fileName}: ".$shareException->getMessage();
+                    if ($shareLink === null
+                        || $shareLink === ''
+                        || str_contains($shareLink, 'not found') === true
+                        || str_contains($shareLink, 'couldn\'t be found') === true
+                    ) {
+                        $result['errors'][] = "Failed to create share link for file {$fileName}";
                     }
                 } catch (\Exception $e) {
-                    $fileName           = ($file['name'] ?? 'unknown');
                     $result['errors'][] = "Failed to publish file {$fileName}: ".$e->getMessage();
                 }//end try
             }//end foreach
@@ -475,6 +472,4 @@ class EventService
         }//end try
 
     }//end publishObjectAttachments()
-
-
 }//end class

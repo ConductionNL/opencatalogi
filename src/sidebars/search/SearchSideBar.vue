@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-// NOTE: Using component instance $router/$route in watchers below
+import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
 import {
@@ -31,6 +30,9 @@ const emit = defineEmits(['update:open'])
 // Store
 const searchStore = useSearchStore()
 
+// Vue 2 instance for $route/$router access in <script setup>
+const instance = getCurrentInstance()?.proxy
+
 // Local state
 const searchTerm = ref('')
 const searchTimeout = ref(null)
@@ -57,10 +59,10 @@ const sortOptions = computed(() => [
 	{ value: 'relevance', label: t('opencatalogi', 'Relevance'), field: null, direction: null },
 	{ value: 'title-asc', label: t('opencatalogi', 'Title A-Z'), field: 'title', direction: 'ASC' },
 	{ value: 'title-desc', label: t('opencatalogi', 'Title Z-A'), field: 'title', direction: 'DESC' },
-	{ value: 'modified-desc', label: t('opencatalogi', 'Recently Modified'), field: '@self.updated', direction: 'DESC' },
-	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest First'), field: '@self.updated', direction: 'ASC' },
-	{ value: 'created-desc', label: t('opencatalogi', 'Recently Created'), field: '@self.created', direction: 'DESC' },
-	{ value: 'created-asc', label: t('opencatalogi', 'Oldest Created'), field: '@self.created', direction: 'ASC' },
+	{ value: 'modified-desc', label: t('opencatalogi', 'Recently modified'), field: '@self.updated', direction: 'DESC' },
+	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest first'), field: '@self.updated', direction: 'ASC' },
+	{ value: 'created-desc', label: t('opencatalogi', 'Recently created'), field: '@self.created', direction: 'DESC' },
+	{ value: 'created-asc', label: t('opencatalogi', 'Oldest created'), field: '@self.created', direction: 'ASC' },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -237,17 +239,17 @@ function shallowEqualQuery(a, b) {
 	return true
 }
 
-function writeUrlFromStateIfChanged(vm) {
-	if (vm.$route.path !== '/search') return
+function writeUrlFromStateIfChanged() {
+	if (!instance?.$route || instance.$route.path !== '/search') return
 	const nextQuery = buildQueryFromState()
-	if (shallowEqualQuery(nextQuery, vm.$route.query)) return
-	vm.$router.replace({ path: vm.$route.path, query: nextQuery })
+	if (shallowEqualQuery(nextQuery, instance.$route.query)) return
+	instance.$router.replace({ path: instance.$route.path, query: nextQuery })
 }
 
 // Lifecycle
-onMounted(async function() {
+onMounted(async () => {
 	// Initialize from URL -> store
-	applyQueryToState(this.$route.query || {})
+	applyQueryToState(instance?.$route?.query || {})
 
 	// Initialize search term local mirror
 	searchTerm.value = searchStore.getSearchTerm
@@ -260,11 +262,11 @@ onMounted(async function() {
 })
 
 // Watch route changes -> apply to state
-watch(() => this && this.$route && this.$route.fullPath, function() {
-	if (!this || !this.$route) return
-	if (this.$route.path !== '/search') return
-	applyQueryToState(this.$route.query || {})
-}.bind(this))
+watch(() => instance?.$route?.fullPath, () => {
+	if (!instance?.$route) return
+	if (instance.$route.path !== '/search') return
+	applyQueryToState(instance.$route.query || {})
+})
 
 // Watch state changes -> write to URL (debounced)
 watch([
@@ -272,12 +274,12 @@ watch([
 	() => searchStore.getViewMode,
 	() => searchStore.getOrdering,
 	() => searchStore.getFilters,
-], function() {
+], () => {
 	if (debounceTimer.value) clearTimeout(debounceTimer.value)
 	debounceTimer.value = setTimeout(() => {
-		writeUrlFromStateIfChanged(this)
+		writeUrlFromStateIfChanged()
 	}, 400)
-}.bind(this))
+})
 </script>
 
 <template>
@@ -295,7 +297,7 @@ watch([
 
 			<!-- Search Section -->
 			<div class="search-section">
-				<h3>{{ t('opencatalogi', 'Search Publications') }}</h3>
+				<h3>{{ t('opencatalogi', 'Search publications') }}</h3>
 
 				<!-- Search input -->
 				<div class="search-group">
@@ -320,7 +322,7 @@ watch([
 
 				<!-- Filter Results Section -->
 				<div v-if="searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0" class="filter-results-section">
-					<h4>{{ t('opencatalogi', 'Filter Results') }}</h4>
+					<h4>{{ t('opencatalogi', 'Filter results') }}</h4>
 
 					<div class="filter-results-list">
 						<div v-for="(facetResult, fieldName) in searchStore.currentFacets"
@@ -341,7 +343,7 @@ watch([
 
 				<!-- Quick filters -->
 				<div class="quick-filters">
-					<h4>{{ t('opencatalogi', 'Quick Filters') }}</h4>
+					<h4>{{ t('opencatalogi', 'Quick filters') }}</h4>
 
 					<!-- Sort options -->
 					<div class="filter-group">
@@ -357,7 +359,7 @@ watch([
 
 					<!-- View mode toggle -->
 					<div class="filter-group">
-						<label>{{ t('opencatalogi', 'View Mode') }}</label>
+						<label>{{ t('opencatalogi', 'View mode') }}</label>
 						<div class="view-mode-toggle">
 							<NcButton
 								:type="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
@@ -383,7 +385,7 @@ watch([
 
 				<!-- Active filters display -->
 				<div v-if="hasActiveFilters" class="active-filters">
-					<h4>{{ t('opencatalogi', 'Active Filters') }}</h4>
+					<h4>{{ t('opencatalogi', 'Active filters') }}</h4>
 					<div class="active-filters-list">
 						<div v-for="(value, key) in searchStore.getFilters"
 							:key="`filter-${key}`"
@@ -404,14 +406,14 @@ watch([
 						type="tertiary"
 						:aria-label="t('opencatalogi', 'Clear all filters')"
 						@click="clearAllFilters">
-						{{ t('opencatalogi', 'Clear All Filters') }}
+						{{ t('opencatalogi', 'Clear all filters') }}
 					</NcButton>
 				</div>
 
 				<!-- Faceted Filtering Section -->
 				<div class="facets-section">
 					<div class="facets-header">
-						<h3>{{ t('opencatalogi', 'Faceted Filtering') }}</h3>
+						<h3>{{ t('opencatalogi', 'Faceted filtering') }}</h3>
 						<NcButton
 							type="tertiary"
 							:disabled="searchStore.isFacetsLoading"

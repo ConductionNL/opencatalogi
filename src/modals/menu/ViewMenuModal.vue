@@ -11,6 +11,7 @@
  */
 
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -192,7 +193,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Plus :size="20" />
 				</template>
-				{{ t('opencatalogi', 'Add Item') }}
+				{{ t('opencatalogi', 'Add item') }}
 			</NcButton>
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
@@ -421,6 +422,7 @@ export default {
 		/**
 		 * Open the delete modal for a specific menu item
 		 * @param {object} item - The menu item to delete
+		 * @param index
 		 */
 		deleteItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })

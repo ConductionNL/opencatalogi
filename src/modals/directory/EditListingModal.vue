@@ -11,6 +11,7 @@
  */
 
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcButton, NcInputField } from '@nextcloud/vue'
@@ -57,18 +58,18 @@ const handleCancel = () => {
 	<div class="edit-listing-modal">
 		<NcInputField
 			:value.sync="listing.title"
-			:label="t('opencatalogi', 'Titel')"
+			:label="t('opencatalogi', 'Title')"
 			:disabled="loading" />
 		<NcInputField
 			:value.sync="listing.description"
-			:label="t('opencatalogi', 'Beschrijving')"
+			:label="t('opencatalogi', 'Description')"
 			:disabled="loading" />
 		<div class="edit-listing-modal__actions">
 			<NcButton :disabled="loading" @click="handleCancel">
-				{{ t('opencatalogi', 'Annuleren') }}
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton type="primary" :disabled="loading" @click="handleSave">
-				{{ t('opencatalogi', 'Opslaan') }}
+				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>
 	</div>

@@ -16,13 +16,13 @@
 		<!-- Facet management interface -->
 		<div v-else class="facet-management">
 			<h4 class="facet-section-title">
-				{{ t('opencatalogi', 'Available Facets') }}
+				{{ t('opencatalogi', 'Available facets') }}
 			</h4>
 
 			<!-- Metadata facets (@self) -->
 			<div v-if="Object.keys(searchStore.availableMetadataFacets).length > 0" class="facet-category">
 				<h5 class="facet-category-title">
-					{{ t('opencatalogi', 'Metadata Facets') }}
+					{{ t('opencatalogi', 'Metadata facets') }}
 				</h5>
 				<div class="facet-controls">
 					<div
@@ -34,7 +34,7 @@
 							:title="fieldInfo.description || `Filter by ${fieldName}`"
 							@update:checked="(enabled) => toggleFacet(`@self.${fieldName}`, fieldInfo, enabled)">
 							{{ getFieldDisplayName(fieldName, fieldInfo) }}
-							<span v-if="fieldInfo.has_labels" class="facet-badge">{{ t('opencatalogi', 'with labels') }}</span>
+							<span v-if="fieldInfo.has_labels" class="facet-badge">{{ t('opencatalogi', 'With labels') }}</span>
 						</NcCheckboxRadioSwitch>
 
 						<!-- Facet type selection for multi-type fields -->
@@ -65,7 +65,7 @@
 			<!-- Object field facets -->
 			<div v-if="Object.keys(searchStore.availableObjectFieldFacets).length > 0" class="facet-category">
 				<h5 class="facet-category-title">
-					{{ t('opencatalogi', 'Content Facets') }}
+					{{ t('opencatalogi', 'Content facets') }}
 				</h5>
 				<div class="facet-controls">
 					<div
@@ -78,7 +78,7 @@
 							@update:checked="(enabled) => toggleFacet(fieldName, fieldInfo, enabled)">
 							{{ getFieldDisplayName(fieldName, fieldInfo) }}
 							<span class="facet-info">
-								({{ fieldInfo.appearance_rate }} {{ t('opencatalogi', 'items') }})
+								({{ t('opencatalogi', '{count} items', { count: fieldInfo.appearance_rate }) }})
 							</span>
 						</NcCheckboxRadioSwitch>
 
@@ -99,7 +99,7 @@
 			<!-- Active facets summary -->
 			<div v-if="searchStore.hasActiveFacets" class="active-facets-summary">
 				<h5 class="facet-category-title">
-					{{ t('opencatalogi', 'Active Facets') }}
+					{{ t('opencatalogi', 'Active facets') }}
 					<NcButton
 						type="tertiary"
 						:aria-label="t('opencatalogi', 'Clear all facets')"
@@ -107,7 +107,7 @@
 						<template #icon>
 							<Close :size="16" />
 						</template>
-						{{ t('opencatalogi', 'Clear All') }}
+						{{ t('opencatalogi', 'Clear all') }}
 					</NcButton>
 				</h5>
 				<div class="active-facets-list">

@@ -11,6 +11,7 @@
  */
 
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -23,7 +24,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		<div class="modal__content">
 			<div v-if="theme" class="themeDetails">
 				<div class="detailSection">
-					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
+					<h3>{{ t('opencatalogi', 'Basic information') }}</h3>
 					<div class="detailGrid">
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Title') }}:</strong>
@@ -53,7 +54,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</div>
 
 				<div v-if="theme.image || theme.screenshot" class="detailSection">
-					<h3>{{ t('opencatalogi', 'Visual Preview') }}</h3>
+					<h3>{{ t('opencatalogi', 'Visual preview') }}</h3>
 					<div class="imageContainer">
 						<img v-if="theme.image"
 							:src="theme.image"
@@ -81,7 +82,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</div>
 
 				<div v-if="theme.author || theme.license || theme.repository" class="detailSection">
-					<h3>{{ t('opencatalogi', 'Theme Information') }}</h3>
+					<h3>{{ t('opencatalogi', 'Theme information') }}</h3>
 					<div class="detailGrid">
 						<div v-if="theme.author" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Author') }}:</strong>
@@ -108,7 +109,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							</span>
 						</div>
 						<div v-if="theme.updatedAt" class="detailItem">
-							<strong>{{ t('opencatalogi', 'Last Updated') }}:</strong>
+							<strong>{{ t('opencatalogi', 'Last updated') }}:</strong>
 							<span>{{ new Date(theme.updatedAt).toLocaleDateString() }}</span>
 						</div>
 						<div v-if="theme.createdAt" class="detailItem">
@@ -135,7 +136,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					{{ t('opencatalogi', 'Edit Theme') }}
+					{{ t('opencatalogi', 'Edit theme') }}
 				</NcButton>
 				<NcButton @click="closeModal">
 					<template #icon>

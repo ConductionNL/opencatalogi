@@ -1,381 +1,165 @@
 <script setup>
+import { inject } from 'vue'
+import { translate as t } from '@nextcloud/l10n'
+import { useListView } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('page', {
+	sidebarState,
+	objectStore,
+})
 </script>
 
 <template>
-	<NcAppContent>
-		<div class="viewContainer">
-			<!-- Header -->
-			<div class="viewHeader">
-				<h1 class="viewHeaderTitleIndented">
-					{{ t('opencatalogi', 'Pages') }}
-				</h1>
-				<p>{{ t('opencatalogi', 'Manage your content pages and their components') }}</p>
-			</div>
+	<CnIndexPage
+		ref="indexPage"
+		:title="t('opencatalogi', 'Pages')"
+		:description="t('opencatalogi', 'Manage your content pages and their components')"
+		:show-title="true"
+		:schema="schema"
+		:objects="currentObjects"
+		:columns="tableColumns"
+		:pagination="currentPagination"
+		:loading="objectStore.isLoading('page')"
+		:selectable="true"
+		:selected-ids="selectedIds"
+		:show-view-toggle="true"
+		:show-edit-action="false"
+		:show-copy-action="false"
+		:show-delete-action="false"
+		:show-mass-import="false"
+		:show-mass-export="false"
+		:show-mass-copy="false"
+		:show-mass-delete="false"
+		:view-mode="viewMode"
+		:sort-key="sortKey"
+		:sort-order="sortOrder"
+		:include-columns="visibleColumns"
+		:add-label="t('opencatalogi', 'Add Page')"
+		row-key="id"
+		:empty-text="t('opencatalogi', 'No pages found')"
+		:refreshing="isRefreshing"
+		@add="onAdd"
+		@refresh="refresh"
+		@sort="onSort"
+		@page-changed="onPageChange"
+		@page-size-changed="onPageSizeChange"
+		@view-mode-change="viewMode = $event"
+		@select="onSelect"
+		@row-click="onRowClick">
+		<!-- Custom column: content items count -->
+		<template #column-contents="{ row }">
+			{{ row.contents?.length || 0 }}
+		</template>
 
-			<!-- Actions Bar -->
-			<div class="viewActionsBar">
-				<div class="viewInfo">
-					<span class="viewTotalCount">
-						{{ t('opencatalogi', 'Showing {showing} of {total} pages', { showing: filteredPages.length, total: currentPagination.total || filteredPages.length }) }}
-					</span>
-					<span v-if="selectedPages.length > 0" class="viewIndicator">
-						({{ t('opencatalogi', '{count} selected', { count: selectedPages.length }) }})
-					</span>
-				</div>
-				<div class="viewActions">
-					<div class="viewModeSwitchContainer">
-						<NcCheckboxRadioSwitch
-							v-tooltip="'See pages as cards'"
-							:checked="viewMode === 'cards'"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
-							value="cards"
-							name="pages_view_mode"
-							type="radio"
-							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('cards')">
-							Cards
-						</NcCheckboxRadioSwitch>
-						<NcCheckboxRadioSwitch
-							v-tooltip="'See pages as a table'"
-							:checked="viewMode === 'table'"
-							:button-variant="true"
-							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
-							value="table"
-							name="pages_view_mode"
-							type="radio"
-							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('table')">
-							Table
-						</NcCheckboxRadioSwitch>
-					</div>
+		<!-- Custom column: updated date -->
+		<template #column-updatedAt="{ row }">
+			{{ row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : '-' }}
+		</template>
 
-					<NcActions
-						:force-name="true"
-						:inline="3"
-						menu-name="Actions">
-						<NcActionButton
-							:primary="true"
-							close-after-click
-							@click="objectStore.clearActiveObject('page'); navigationStore.setModal('viewPage')">
-							<template #icon>
-								<Plus :size="20" />
-							</template>
-							Add Page
-						</NcActionButton>
-						<NcActionButton
-							close-after-click
-							:disabled="objectStore.isLoading('page')"
-							@click="objectStore.fetchCollection('page')">
-							<template #icon>
-								<Refresh :size="20" />
-							</template>
-							Refresh
-						</NcActionButton>
-						<NcActionButton
-							title="View documentation about pages"
-							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/pages', '_blank')">
-							<template #icon>
-								<HelpCircleOutline :size="20" />
-							</template>
-							Help
-						</NcActionButton>
-					</NcActions>
-				</div>
-			</div>
-
-			<!-- Loading, Error, and Empty States -->
-			<NcEmptyContent v-if="objectStore.isLoading('page') || !filteredPages.length"
-				:name="emptyContentName"
-				:description="emptyContentDescription">
+		<!-- Row actions -->
+		<template #row-actions="{ row }">
+			<NcActions>
 				<template #icon>
-					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="64" />
-					<Web v-else :size="64" />
+					<DotsHorizontal :size="20" />
 				</template>
-				<template v-if="!objectStore.isLoading('page') && !objectStore.getCollection('page')?.results?.length" #action>
-					<NcButton type="primary" @click="objectStore.clearActiveObject('page'); navigationStore.setModal('viewPage')">
-						{{ t('opencatalogi', 'Add page') }}
-					</NcButton>
-				</template>
-			</NcEmptyContent>
-
-			<!-- Content -->
-			<div v-else>
-				<template v-if="viewMode === 'cards'">
-					<div class="cardGrid">
-						<div v-for="page in paginatedPages" :key="page.id" class="card">
-							<div class="cardHeader">
-								<h2 v-tooltip.bottom="page.slug">
-									<Web :size="20" />
-									{{ page.title }}
-								</h2>
-								<NcActions :primary="true" menu-name="Actions">
-									<template #icon>
-										<DotsHorizontal :size="20" />
-									</template>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
-										<template #icon>
-											<Pencil :size="20" />
-										</template>
-										Edit
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setDialog('copyObject', { objectType: 'page', dialogTitle: 'Pagina' })">
-										<template #icon>
-											<ContentCopy :size="20" />
-										</template>
-										Copy
-									</NcActionButton>
-									<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setDialog('deleteObject', { objectType: 'page', dialogTitle: 'Pagina' })">
-										<template #icon>
-											<TrashCanOutline :size="20" />
-										</template>
-										Delete
-									</NcActionButton>
-								</NcActions>
-							</div>
-							<!-- Page Statistics Table -->
-							<table class="statisticsTable pageStats">
-								<thead>
-									<tr>
-										<th>{{ t('opencatalogi', 'Property') }}</th>
-										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-if="page.slug">
-										<td>{{ t('opencatalogi', 'Slug') }}</td>
-										<td>{{ page.slug }}</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-									<tr v-if="page.description">
-										<td>{{ t('opencatalogi', 'Description') }}</td>
-										<td class="truncatedText">
-											{{ page.description }}
-										</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-									<tr>
-										<td>{{ t('opencatalogi', 'Content Items') }}</td>
-										<td>{{ page.contents?.length || 0 }}</td>
-										<td>{{ page.contents?.length > 0 ? 'Configured' : 'Empty' }}</td>
-									</tr>
-									<tr v-if="page.updatedAt">
-										<td>{{ t('opencatalogi', 'Last Updated') }}</td>
-										<td>{{ new Date(page.updatedAt).toLocaleDateString() }}</td>
-										<td>{{ 'Available' }}</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</template>
-				<template v-else>
-					<div class="viewTableContainer">
-						<table class="viewTable">
-							<thead>
-								<tr>
-									<th class="tableColumnCheckbox">
-										<NcCheckboxRadioSwitch
-											:checked="allSelected"
-											:indeterminate="someSelected"
-											@update:checked="toggleSelectAll" />
-									</th>
-									<th>{{ t('opencatalogi', 'Title') }}</th>
-									<th>{{ t('opencatalogi', 'Slug') }}</th>
-									<th>{{ t('opencatalogi', 'Content Items') }}</th>
-									<th>{{ t('opencatalogi', 'Last Updated') }}</th>
-									<th class="tableColumnActions">
-										{{ t('opencatalogi', 'Actions') }}
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="page in paginatedPages"
-									:key="page.id"
-									class="viewTableRow"
-									:class="{ viewTableRowSelected: selectedPages.includes(page.id) }">
-									<td class="tableColumnCheckbox">
-										<NcCheckboxRadioSwitch
-											:checked="selectedPages.includes(page.id)"
-											@update:checked="(checked) => togglePageSelection(page.id, checked)" />
-									</td>
-									<td class="tableColumnTitle">
-										<div class="titleContent">
-											<strong>{{ page.title }}</strong>
-											<span v-if="page.description" class="textDescription textEllipsis">{{ page.description }}</span>
-										</div>
-									</td>
-									<td>{{ page.slug || '-' }}</td>
-									<td>{{ page.contents?.length || 0 }}</td>
-									<td class="tableColumnConstrained">
-										<span v-if="page.updatedAt">{{ new Date(page.updatedAt).toLocaleDateString() }}</span>
-										<span v-else>-</span>
-									</td>
-									<td class="tableColumnActions">
-										<NcActions :primary="false">
-											<template #icon>
-												<DotsHorizontal :size="20" />
-											</template>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setModal('viewPage')">
-												<template #icon>
-													<Pencil :size="20" />
-												</template>
-												Edit
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setDialog('copyObject', { objectType: 'page', dialogTitle: 'Pagina' })">
-												<template #icon>
-													<ContentCopy :size="20" />
-												</template>
-												Copy
-											</NcActionButton>
-											<NcActionButton close-after-click @click="objectStore.setActiveObject('page', page); navigationStore.setDialog('deleteObject', { objectType: 'page', dialogTitle: 'Pagina' })">
-												<template #icon>
-													<TrashCanOutline :size="20" />
-												</template>
-												Delete
-											</NcActionButton>
-										</NcActions>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</template>
-			</div>
-
-			<!-- Pagination -->
-			<PaginationComponent
-				:current-page="currentPagination.page || 1"
-				:total-pages="currentPagination.pages || Math.ceil(filteredPages.length / (currentPagination.limit || 20))"
-				:total-items="currentPagination.total || filteredPages.length"
-				:current-page-size="currentPagination.limit || 20"
-				:min-items-to-show="0"
-				@page-changed="onPageChanged"
-				@page-size-changed="onPageSizeChanged" />
-		</div>
-	</NcAppContent>
+				<NcActionButton close-after-click @click="editPage(row)">
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Edit') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="copyPage(row)">
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Copy') }}
+				</NcActionButton>
+				<NcActionButton close-after-click @click="deletePage(row)">
+					<template #icon>
+						<TrashCanOutline :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Delete') }}
+				</NcActionButton>
+			</NcActions>
+		</template>
+	</CnIndexPage>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcLoadingIcon, NcActions, NcActionButton, NcCheckboxRadioSwitch, NcButton } from '@nextcloud/vue'
-import Web from 'vue-material-design-icons/Web.vue'
+import { NcActions, NcActionButton } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import HelpCircleOutline from 'vue-material-design-icons/HelpCircleOutline.vue'
-
-import PaginationComponent from '../../components/PaginationComponent.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 export default {
 	name: 'PageIndex',
 	components: {
-		NcAppContent,
-		NcEmptyContent,
-		NcLoadingIcon,
+		CnIndexPage,
 		NcActions,
 		NcActionButton,
-		NcCheckboxRadioSwitch,
-		NcButton,
-		Web,
 		DotsHorizontal,
 		Pencil,
-		TrashCanOutline,
-		Refresh,
-		Plus,
 		ContentCopy,
-		HelpCircleOutline,
-		PaginationComponent,
+		TrashCanOutline,
 	},
 	data() {
 		return {
-			selectedPages: [],
-			viewMode: 'cards',
+			selectedIds: [],
+			viewMode: 'table',
+			isRefreshing: false,
 		}
 	},
 	computed: {
-		filteredPages() {
-			return objectStore.getCollection('page')?.results || []
+		tableColumns() {
+			return [
+				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
+				{ key: 'slug', label: t('opencatalogi', 'Slug'), sortable: true },
+				{ key: 'contents', label: t('opencatalogi', 'Content Items') },
+				{ key: 'updatedAt', label: t('opencatalogi', 'Last Updated'), sortable: true },
+			]
+		},
+		currentObjects() {
+			const collection = objectStore.getCollection('page')
+			if (Array.isArray(collection)) return collection
+			return collection?.results || []
 		},
 		currentPagination() {
-			const pagination = objectStore.getPagination('page')
-			console.info('Current pagination data:', pagination)
-			return pagination
+			return objectStore.getPagination('page')
+				|| { total: 0, page: 1, pages: 1, limit: 20 }
 		},
-		paginatedPages() {
-			return this.filteredPages
-		},
-		allSelected() {
-			return this.filteredPages.length > 0 && this.filteredPages.every(page => this.selectedPages.includes(page.id))
-		},
-		someSelected() {
-			return this.selectedPages.length > 0 && !this.allSelected
-		},
-		emptyContentName() {
-			if (objectStore.isLoading('page')) {
-				return t('opencatalogi', 'Loading pages...')
-			} else if (!objectStore.getCollection('page')?.results?.length) {
-				return t('opencatalogi', 'No pages found')
-			}
-			return ''
-		},
-		emptyContentDescription() {
-			if (objectStore.isLoading('page')) {
-				return t('opencatalogi', 'Please wait while we fetch your pages.')
-			} else if (!objectStore.getCollection('page')?.results?.length) {
-				return t('opencatalogi', 'No pages are available.')
-			}
-			return ''
-		},
-	},
-	mounted() {
-		console.info('PageIndex mounted, fetching pages...')
-		objectStore.fetchCollection('page')
 	},
 	methods: {
-		setViewMode(mode) {
-			console.info('Setting view mode to:', mode)
-			this.viewMode = mode
+		onAdd() {
+			objectStore.clearActiveObject('page')
+			navigationStore.setModal('viewPage')
 		},
-		toggleSelectAll(checked) {
-			if (checked) {
-				this.selectedPages = this.filteredPages.map(page => page.id)
-			} else {
-				this.selectedPages = []
+		onSelect(ids) {
+			this.selectedIds = ids
+		},
+		onRowClick(row) {
+			const id = row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'PageDetail', params: { id } })
 			}
 		},
-		togglePageSelection(pageId, checked) {
-			if (checked) {
-				this.selectedPages.push(pageId)
-			} else {
-				this.selectedPages = this.selectedPages.filter(id => id !== pageId)
+		editPage(page) {
+			const id = page?.['@self']?.id || page?.id
+			if (id) {
+				this.$router.push({ name: 'PageDetail', params: { id } })
 			}
 		},
-		onPageChanged(page) {
-			console.info('Page changed to:', page)
-			objectStore.fetchCollection('page', { _page: page, _limit: this.currentPagination.limit || 20 })
+		copyPage(page) {
+			objectStore.setActiveObject('page', page)
+			navigationStore.setDialog('copyObject', { objectType: 'page', dialogTitle: 'Pagina' })
 		},
-		onPageSizeChanged(pageSize) {
-			console.info('Page size changed to:', pageSize)
-			objectStore.fetchCollection('page', { _page: 1, _limit: pageSize })
-		},
-		openLink(url, type = '') {
-			window.open(url, type)
+		deletePage(page) {
+			objectStore.setActiveObject('page', page)
+			navigationStore.setDialog('deleteObject', { objectType: 'page', dialogTitle: 'Pagina' })
 		},
 	},
 }
 </script>
-
-<style scoped>
-.truncatedText {
-	max-width: 200px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	display: inline-block;
-}
-</style>

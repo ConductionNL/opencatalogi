@@ -11,6 +11,7 @@
  */
 
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -160,7 +161,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Plus :size="20" />
 				</template>
-				{{ t('opencatalogi', 'Add Content') }}
+				{{ t('opencatalogi', 'Add content') }}
 			</NcButton>
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
