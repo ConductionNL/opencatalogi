@@ -103,10 +103,10 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/**
 		 * Fetch publications for a catalog
-		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @param {object} params - Optional parameters for pagination and filtering
 		 * @param {number} params.page - Page number (default: 1)
 		 * @param {number} params.limit - Items per page (default: 20)
+		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @return {Promise<void>}
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
