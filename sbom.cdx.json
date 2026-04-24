@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:c60861c6-01f0-49f3-9a3b-22f9b03d709b",
+  "serialNumber": "urn:uuid:cc9bf57a-9ed6-439c-b292-753309cb89c3",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-04-23T07:41:30Z",
+    "timestamp": "2026-04-24T08:55:46Z",
     "tools": [
       {
         "name": "composer",
@@ -82,10 +82,10 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/opencatalogi-dev-fix/composer-conflict-20260423",
+      "bom-ref": "conductionnl/opencatalogi-dev-fix/consistent-rbac",
       "type": "application",
       "name": "opencatalogi",
-      "version": "dev-fix/composer-conflict-20260423",
+      "version": "dev-fix/consistent-rbac",
       "group": "conductionnl",
       "description": "This is a DSO Nextcloud project for the municipality Buren and is done by ConductionNL",
       "author": "Conduction b.v., Remko Huisman (Conduction), Ruben van der Linde (Conduction)",
@@ -96,15 +96,15 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/opencatalogi@dev-fix/composer-conflict-20260423",
+      "purl": "pkg:composer/conductionnl/opencatalogi@dev-fix/consistent-rbac",
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "c07cadcef7d90a856795cd8f57ca87a6e100561a"
+          "value": "7f8848571218928465281da36272964272c34ca8"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "c07cadcef7d90a856795cd8f57ca87a6e100561a"
+          "value": "7f8848571218928465281da36272964272c34ca8"
         },
         {
           "name": "cdx:composer:package:type",
@@ -48819,7 +48819,7 @@
       ]
     },
     {
-      "ref": "conductionnl/opencatalogi-dev-fix/composer-conflict-20260423",
+      "ref": "conductionnl/opencatalogi-dev-fix/consistent-rbac",
       "dependsOn": [
         "adbario/php-dot-notation-3.3.0.0",
         "guzzlehttp/guzzle-7.10.0.0",
