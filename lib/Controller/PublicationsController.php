@@ -528,7 +528,7 @@ class PublicationsController extends Controller
 
                         $objects = $objectService->searchObjects(
                             query: $searchQuery,
-                            _rbac: false,
+                            _rbac: true,
                             _multitenancy: false,
                         );
 
@@ -555,7 +555,7 @@ class PublicationsController extends Controller
 
                     $objects = $objectService->searchObjects(
                         query: $searchQuery,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false,
                     );
 
@@ -606,7 +606,7 @@ class PublicationsController extends Controller
                 filter: [],
                 fields: [],
                 unset: [],
-                _rbac: false,
+                _rbac: true,
                 _multitenancy: false,
             );
 
@@ -675,6 +675,7 @@ class PublicationsController extends Controller
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
+
         try {
             // Get the catalog from cache or database.
             $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
@@ -724,7 +725,7 @@ class PublicationsController extends Controller
                         files: false,
                         register: $register,
                         schema: $schemaId,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false
                     );
                     if ($object !== null) {
@@ -841,7 +842,7 @@ class PublicationsController extends Controller
                         files: false,
                         register: $register,
                         schema: $schemaId,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false
                     );
                     if ($object !== null) {
