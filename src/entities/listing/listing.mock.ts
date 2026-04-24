@@ -12,6 +12,9 @@
 import { Listing } from './listing'
 import { TListing } from './listing.types'
 
+/** @typedef {import('./listing.types').TListing} TListing */
+/** @typedef {import('./listing').Listing} Listing */
+
 /**
  * Mock listing data for testing purposes
  * @return {TListing[]} Array of mock listing data

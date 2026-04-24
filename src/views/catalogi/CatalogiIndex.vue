@@ -1,14 +1,8 @@
 <script setup>
 import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
-import { useListView } from '@conduction/nextcloud-vue'
+import { useListView, CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
-
-const sidebarState = inject('sidebarState', null)
-const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('catalog', {
-	sidebarState,
-	objectStore,
-})
 </script>
 
 <template>
@@ -113,13 +107,18 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 
 <script>
 import { NcActions, NcActionButton } from '@nextcloud/vue'
-import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+
+const sidebarState = inject('sidebarState', null)
+const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('catalog', {
+	sidebarState,
+	objectStore,
+})
 
 export default {
 	name: 'CatalogiIndex',
