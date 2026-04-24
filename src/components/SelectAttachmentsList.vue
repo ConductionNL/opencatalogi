@@ -173,7 +173,7 @@ export default {
 
 		/**
 		 * Format file size (bytes to human-readable)
-		 * @param {number} bytes
+		 * @param {number} bytes - File size in bytes to format
 		 * @return {string}
 		 */
 		formatFileSize(bytes) {

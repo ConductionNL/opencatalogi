@@ -2,9 +2,9 @@ name: SBOM
 
 on:
   push:
-    branches: [main, development, feature/**, bugfix/**, hotfix/**]
+    branches: [false]
   pull_request:
-    branches: [main, development]
+    branches: [false]
 
 jobs:
   sbom:

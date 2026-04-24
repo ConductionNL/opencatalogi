@@ -2,6 +2,9 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TPage, TPageContent } from './page.types'
 
+/** @typedef {import('./page.types').TPage} TPage */
+/** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
+
 /**
  * Page class representing a page entity with validation
  * Implements the TPage interface for type safety

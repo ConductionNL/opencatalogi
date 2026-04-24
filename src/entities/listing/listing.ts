@@ -14,6 +14,9 @@ import { TOrganization } from '../organization'
 import { TListing } from './listing.types'
 import { SafeParseReturnType, z } from 'zod'
 
+/** @typedef {import('./listing.types').TListing} TListing */
+/** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
+
 /**
  * Listing class representing a catalog listing in the system
  */
