@@ -212,12 +212,16 @@ export default {
 			return objectStore.getCollection('publication').results || []
 		},
 		conceptPublications() {
-			return this.allPublications.filter(
-				(publication) => publication.status === 'Concept',
-			)
+			return this.allPublications.filter((p) => this.isConcept(p))
 		},
+		// TODO: Attachments in OpenCatalogi are per-publication files (see
+		// catalogStore.getPublicationAttachments) rather than a queryable
+		// collection. Wire up a real source later — either aggregate
+		// per-publication attachments or add a backend endpoint that returns
+		// concept attachments across all publications. For now this returns
+		// [] so the widgets show 0.
 		allAttachments() {
-			return objectStore.getCollection('attachment').results || []
+			return []
 		},
 		conceptAttachments() {
 			return this.allAttachments.filter(
@@ -270,7 +274,6 @@ export default {
 				await Promise.allSettled([
 					objectStore.fetchCollection('catalog'),
 					objectStore.fetchCollection('publication'),
-					objectStore.fetchCollection('attachment'),
 					this.fetchSchemaChart(),
 					this.fetchActivityChart(),
 				])
@@ -318,6 +321,16 @@ export default {
 			} catch (err) {
 				console.warn('Failed to load activity chart:', err)
 			}
+		},
+
+		normalizeDate(value) {
+			if (value == null || value === '') return null
+			return String(value).slice(0, 10)
+		},
+
+		isConcept(obj) {
+			return !this.normalizeDate(obj?.publicatiedatum)
+				&& !this.normalizeDate(obj?.depublicatiedatum)
 		},
 
 		createPublication() {
