@@ -101,14 +101,16 @@
   "overrides": {
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
-    "dompurify": ">=2.5.8",
+    "dompurify": ">=3.3.4",
     "d3-color": "^3.1.0",
-    "mermaid": {
-      "dompurify": "^3.2.4",
-      "d3": "^7.0.0"
-    },
+    "mermaid": ">=11.4.1",
     "json5": "^2.2.3",
     "@braintree/sanitize-url": "^7.0.0",
-    "katex": "^0.16.0"
+    "katex": "^0.16.0",
+    "@tootallnate/once": ">=3.0.1",
+    "postcss": ">=8.4.47",
+    "fast-xml-parser": ">=5.7.0",
+    "markdown-it": ">=12.3.2",
+    "uuid": ">=14.0.0"
   }
 }
