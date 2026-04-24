@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:cc9bf57a-9ed6-439c-b292-753309cb89c3",
+  "serialNumber": "urn:uuid:80a1cbe6-ecb9-469b-8e93-91dd5e70d27f",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-04-24T08:55:46Z",
+    "timestamp": "2026-04-24T08:39:24Z",
     "tools": [
       {
         "name": "composer",
@@ -82,10 +82,10 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/opencatalogi-dev-fix/consistent-rbac",
+      "bom-ref": "conductionnl/opencatalogi-dev-feat/nextcloud-vue-css",
       "type": "application",
       "name": "opencatalogi",
-      "version": "dev-fix/consistent-rbac",
+      "version": "dev-feat/nextcloud-vue-css",
       "group": "conductionnl",
       "description": "This is a DSO Nextcloud project for the municipality Buren and is done by ConductionNL",
       "author": "Conduction b.v., Remko Huisman (Conduction), Ruben van der Linde (Conduction)",
@@ -96,15 +96,15 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/opencatalogi@dev-fix/consistent-rbac",
+      "purl": "pkg:composer/conductionnl/opencatalogi@dev-feat/nextcloud-vue-css",
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "7f8848571218928465281da36272964272c34ca8"
+          "value": "c260aff2d56707deb0a5a548527df0cabf06bbde"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "7f8848571218928465281da36272964272c34ca8"
+          "value": "c260aff2d56707deb0a5a548527df0cabf06bbde"
         },
         {
           "name": "cdx:composer:package:type",
@@ -3670,8 +3670,8 @@
       "type": "library",
       "name": "nextcloud-vue",
       "group": "@conduction",
-      "version": "0.1.0-beta.10",
-      "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10",
+      "version": "0.1.0-beta.13",
+      "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13",
       "author": "Conduction B.V.",
       "description": "Shared Vue component library for Conduction Nextcloud apps — complements @nextcloud/vue with higher-level components, OpenRegister integration, and NL Design System support",
       "licenses": [
@@ -3681,15 +3681,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40conduction/nextcloud-vue@0.1.0-beta.10",
+      "purl": "pkg:npm/%40conduction/nextcloud-vue@0.1.0-beta.13",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/@conduction/nextcloud-vue/-/nextcloud-vue-0.1.0-beta.10.tgz",
+          "url": "https://registry.npmjs.org/@conduction/nextcloud-vue/-/nextcloud-vue-0.1.0-beta.13.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "7d91b84db66102381f011192372d59c109a497d9983ebaa71b7d08e159164944b85d7ff86e05394f27d910c253a68682d746e7646803d420796aa23ee1198054"
+              "content": "18c02dabcb5716f534c4c358d25fb0f5ecf18dab8dd924fa0627178fdf2b3771955df5363f361ac12b3bafda7cf06dbd2f8af4e8b9b3a7ebcc9f2d497a0377fd"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -3707,7 +3707,7 @@
           "name": "dialogs",
           "group": "@nextcloud",
           "version": "7.3.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0",
           "description": "Nextcloud dialog helpers",
           "licenses": [
             {
@@ -3757,7 +3757,7 @@
               "name": "vue",
               "group": "@nextcloud",
               "version": "9.6.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@nextcloud/vue@9.6.0",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@nextcloud/vue@9.6.0",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Nextcloud vue components",
               "licenses": [
@@ -3808,7 +3808,7 @@
               "name": "core",
               "group": "@vueuse",
               "version": "14.2.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@vueuse/core@14.2.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@vueuse/core@14.2.1",
               "author": "Anthony Fu",
               "description": "Collection of essential Vue Composition Utilities",
               "licenses": [
@@ -3858,7 +3858,7 @@
               "type": "library",
               "name": "vue",
               "version": "3.5.31",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|vue@3.5.31",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|vue@3.5.31",
               "author": "Evan You",
               "description": "The progressive JavaScript framework for building modern web UI.",
               "licenses": [
@@ -3909,7 +3909,7 @@
               "name": "vue-color",
               "group": "@ckpack",
               "version": "1.6.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@ckpack/vue-color@1.6.0",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@ckpack/vue-color@1.6.0",
               "author": "chenkai",
               "description": "(vue3.0) 🎨 Vue Color Pickers for Sketch, Photoshop, Chrome & more",
               "licenses": [
@@ -3960,7 +3960,7 @@
               "name": "vue-datepicker",
               "group": "@vuepic",
               "version": "11.0.3",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@vuepic/vue-datepicker@11.0.3",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@vuepic/vue-datepicker@11.0.3",
               "author": "Vuepic",
               "description": "Datepicker component for Vue 3",
               "licenses": [
@@ -4011,7 +4011,7 @@
               "name": "components",
               "group": "@vueuse",
               "version": "14.2.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@vueuse/components@14.2.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@vueuse/components@14.2.1",
               "author": "Jacob Clevenger",
               "description": "Renderless components for VueUse",
               "licenses": [
@@ -4061,7 +4061,7 @@
               "type": "library",
               "name": "floating-vue",
               "version": "5.2.2",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2",
               "author": "Guillaume Chau",
               "description": "Easy Vue tooltips, dropdowns, menus & popovers using floating-ui",
               "licenses": [
@@ -4112,7 +4112,7 @@
                   "name": "dom",
                   "group": "@floating-ui",
                   "version": "1.1.1",
-                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2|@floating-ui/dom@1.1.1",
+                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|floating-vue@5.2.2|@floating-ui/dom@1.1.1",
                   "author": "atomiks",
                   "description": "Floating UI for the web",
                   "licenses": [
@@ -4164,7 +4164,7 @@
               "type": "library",
               "name": "splitpanes",
               "version": "4.0.4",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|splitpanes@4.0.4",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|splitpanes@4.0.4",
               "author": "Antoni Andre",
               "description": "A Vue.js reliable, simple and touch-ready panes splitter / resizer",
               "licenses": [
@@ -4214,7 +4214,7 @@
               "type": "library",
               "name": "vue-router",
               "version": "5.0.4",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|vue-router@5.0.4",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|vue-router@5.0.4",
               "author": "Eduardo San Martin Morote",
               "licenses": [
                 {
@@ -4264,7 +4264,7 @@
                   "name": "devtools-api",
                   "group": "@vue",
                   "version": "8.1.1",
-                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|vue-router@5.0.4|@vue/devtools-api@8.1.1",
+                  "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|vue-router@5.0.4|@vue/devtools-api@8.1.1",
                   "author": "webfansplz",
                   "licenses": [
                     {
@@ -4315,7 +4315,7 @@
               "type": "library",
               "name": "vue-select",
               "version": "4.0.0-beta.6",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|vue-select@4.0.0-beta.6",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|vue-select@4.0.0-beta.6",
               "author": "Jeff Sagal",
               "description": "Everything you wish the HTML <select> element could do, wrapped up into a lightweight, extensible Vue component.",
               "licenses": [
@@ -4366,7 +4366,7 @@
               "name": "shared",
               "group": "@vueuse",
               "version": "14.2.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@vueuse/shared@14.2.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@vueuse/shared@14.2.1",
               "author": "Anthony Fu",
               "licenses": [
                 {
@@ -4416,7 +4416,7 @@
               "name": "server-renderer",
               "group": "@vue",
               "version": "3.5.31",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@vue/server-renderer@3.5.31",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@vue/server-renderer@3.5.31",
               "author": "Evan You",
               "description": "@vue/server-renderer",
               "licenses": [
@@ -4466,7 +4466,7 @@
               "type": "library",
               "name": "vue-resize",
               "version": "2.0.0-alpha.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|vue-resize@2.0.0-alpha.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|vue-resize@2.0.0-alpha.1",
               "author": "Guillaume Chau",
               "description": "Detects DOM element resizing",
               "licenses": [
@@ -4516,7 +4516,7 @@
               "type": "library",
               "name": "pinia",
               "version": "3.0.4",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|pinia@3.0.4",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|pinia@3.0.4",
               "author": "Eduardo San Martin Morote",
               "description": "Intuitive, type safe and flexible Store for Vue",
               "scope": "optional",
@@ -4568,7 +4568,7 @@
               "name": "devtools-kit",
               "group": "@vue",
               "version": "8.1.1",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/dialogs@7.3.0|@vue/devtools-kit@8.1.1",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/dialogs@7.3.0|@vue/devtools-kit@8.1.1",
               "author": "webfansplz",
               "licenses": [
                 {
@@ -4619,7 +4619,7 @@
           "type": "library",
           "name": "vue-apexcharts",
           "version": "1.7.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|vue-apexcharts@1.7.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|vue-apexcharts@1.7.0",
           "author": "Juned Chhipa",
           "description": "Vue.js wrapper for ApexCharts",
           "licenses": [
@@ -4670,7 +4670,7 @@
           "name": "files",
           "group": "@nextcloud",
           "version": "4.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/files@4.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/files@4.0.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Nextcloud files utils",
           "licenses": [
@@ -4721,7 +4721,7 @@
               "name": "sharing",
               "group": "@nextcloud",
               "version": "0.3.0",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/files@4.0.0|@nextcloud/sharing@0.3.0",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/files@4.0.0|@nextcloud/sharing@0.3.0",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Front-end utilities for Nextcloud files sharing",
               "licenses": [
@@ -4757,7 +4757,7 @@
               "name": "files",
               "group": "@nextcloud",
               "version": "3.12.2",
-              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/files@4.0.0|@nextcloud/files@3.12.2",
+              "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/files@4.0.0|@nextcloud/files@3.12.2",
               "author": "Nextcloud GmbH and Nextcloud contributors",
               "description": "Nextcloud files utils",
               "scope": "optional",
@@ -4811,7 +4811,7 @@
           "name": "initial-state",
           "group": "@nextcloud",
           "version": "3.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/initial-state@3.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/initial-state@3.0.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Access data from the nextcloud server-side initial state API within apps.",
           "licenses": [
@@ -4862,7 +4862,7 @@
           "name": "sharing",
           "group": "@nextcloud",
           "version": "0.4.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@nextcloud/sharing@0.4.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@nextcloud/sharing@0.4.0",
           "author": "Nextcloud GmbH and Nextcloud contributors",
           "description": "Front-end utilities for Nextcloud files sharing",
           "licenses": [
@@ -4912,7 +4912,7 @@
           "type": "library",
           "name": "p-queue",
           "version": "9.1.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|p-queue@9.1.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|p-queue@9.1.1",
           "description": "Promise queue with concurrency control",
           "licenses": [
             {
@@ -4961,7 +4961,7 @@
           "type": "library",
           "name": "apexcharts",
           "version": "5.10.4",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|apexcharts@5.10.4",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|apexcharts@5.10.4",
           "description": "A JavaScript Chart Library",
           "licenses": [
             {
@@ -5010,7 +5010,7 @@
           "type": "library",
           "name": "debounce",
           "version": "3.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|debounce@3.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|debounce@3.0.0",
           "description": "Delay function calls until a set time elapses after the last invocation",
           "licenses": [
             {
@@ -5059,7 +5059,7 @@
           "type": "library",
           "name": "focus-trap",
           "version": "8.0.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|focus-trap@8.0.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|focus-trap@8.0.1",
           "author": "David Clark",
           "description": "Trap focus within a DOM node.",
           "licenses": [
@@ -5109,7 +5109,7 @@
           "type": "library",
           "name": "rehype-react",
           "version": "8.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|rehype-react@8.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|rehype-react@8.0.0",
           "author": "rhysd",
           "description": "rehype plugin to transform to React",
           "licenses": [
@@ -5160,7 +5160,7 @@
           "name": "web-bluetooth",
           "group": "@types",
           "version": "0.0.21",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@types/web-bluetooth@0.0.21",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@types/web-bluetooth@0.0.21",
           "description": "TypeScript definitions for web-bluetooth",
           "licenses": [
             {
@@ -5210,7 +5210,7 @@
           "name": "metadata",
           "group": "@vueuse",
           "version": "14.2.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@vueuse/metadata@14.2.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@vueuse/metadata@14.2.1",
           "author": "Anthony Fu",
           "description": "Metadata for VueUse functions",
           "licenses": [
@@ -5260,7 +5260,7 @@
           "type": "library",
           "name": "p-timeout",
           "version": "7.0.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|p-timeout@7.0.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|p-timeout@7.0.1",
           "author": "Sindre Sorhus",
           "description": "Timeout a promise after a specified amount of time",
           "licenses": [
@@ -5311,7 +5311,7 @@
           "name": "compiler-sfc",
           "group": "@vue",
           "version": "3.5.31",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@vue/compiler-sfc@3.5.31",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@vue/compiler-sfc@3.5.31",
           "author": "Evan You",
           "description": "@vue/compiler-sfc",
           "licenses": [
@@ -5361,7 +5361,7 @@
           "type": "library",
           "name": "chokidar",
           "version": "5.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|chokidar@5.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|chokidar@5.0.0",
           "author": "Paul Miller",
           "description": "Minimal and efficient cross-platform file watching library",
           "licenses": [
@@ -5411,7 +5411,7 @@
           "type": "library",
           "name": "picomatch",
           "version": "4.0.4",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|picomatch@4.0.4",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|picomatch@4.0.4",
           "author": "Jon Schlinkert",
           "description": "Blazing fast and accurate glob matcher written in JavaScript, with no dependencies and full support for standard and extended Bash glob features, including braces, extglobs, POSIX brackets, and regular expressions.",
           "licenses": [
@@ -5461,7 +5461,7 @@
           "type": "library",
           "name": "readdirp",
           "version": "5.0.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|readdirp@5.0.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|readdirp@5.0.0",
           "author": "Thorsten Lorenz",
           "description": "Recursive version of fs.readdir with small RAM & CPU footprint",
           "licenses": [
@@ -5512,7 +5512,7 @@
           "name": "devtools-api",
           "group": "@vue",
           "version": "7.7.9",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@vue/devtools-api@7.7.9",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@vue/devtools-api@7.7.9",
           "author": "webfansplz",
           "scope": "optional",
           "licenses": [
@@ -5563,7 +5563,7 @@
           "name": "devtools-shared",
           "group": "@vue",
           "version": "8.1.1",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|@vue/devtools-shared@8.1.1",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|@vue/devtools-shared@8.1.1",
           "author": "webfansplz",
           "licenses": [
             {
@@ -5612,7 +5612,7 @@
           "type": "library",
           "name": "perfect-debounce",
           "version": "2.1.0",
-          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.10|perfect-debounce@2.1.0",
+          "bom-ref": "opencatalogi@1.0.0|@conduction/nextcloud-vue@0.1.0-beta.13|perfect-debounce@2.1.0",
           "licenses": [
             {
               "license": {
@@ -48819,7 +48819,7 @@
       ]
     },
     {
-      "ref": "conductionnl/opencatalogi-dev-fix/consistent-rbac",
+      "ref": "conductionnl/opencatalogi-dev-feat/nextcloud-vue-css",
       "dependsOn": [
         "adbario/php-dot-notation-3.3.0.0",
         "guzzlehttp/guzzle-7.10.0.0",
