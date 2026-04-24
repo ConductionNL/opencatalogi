@@ -1,6 +1,9 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TMenu, TMenuItem } from './menu.types'
 
+/** @typedef {import('./menu.types').TMenu} TMenu */
+/** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
+
 /**
  * Menu class representing a navigation menu entity with validation
  * Implements the TMenu interface for type safety

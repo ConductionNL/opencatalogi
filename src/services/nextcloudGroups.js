@@ -50,6 +50,7 @@
  */
 
 import axios from '@nextcloud/axios'
+import { getCurrentUser } from '@nextcloud/auth'
 import { generateUrl } from '@nextcloud/router'
 
 /**
@@ -183,9 +184,9 @@ export function isUserLoggedIn() {
 	// Nextcloud's user context or session management
 	try {
 		// Check if we're in a Nextcloud context and have user info
-		if (typeof OC !== 'undefined' && OC.getCurrentUser) {
-			const currentUser = OC.getCurrentUser()
-			return currentUser && currentUser.uid && currentUser.uid !== ''
+		const currentUser = getCurrentUser()
+		if (currentUser) {
+			return currentUser.uid && currentUser.uid !== ''
 		}
 
 		// Fallback: check if we have any user-related data in localStorage
