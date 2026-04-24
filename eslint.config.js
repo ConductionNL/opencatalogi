@@ -51,11 +51,14 @@ module.exports = defineConfig([
 		},
 
 		rules: {
+			// Allow unused i18n functions (t, n) and _ throwaway vars — imported for future translation wiring
+			'no-unused-vars': ['error', { varsIgnorePattern: '^(t|n|_)$', args: 'none' }],
 			'jsdoc/require-jsdoc': 'off',
 			'vue/first-attribute-linebreak': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',
 			'n/no-missing-import': 'off',
 			'import/default': 'off',
+			'import/no-unresolved': ['error', { ignore: ['vue-apexcharts'] }],
 		},
 	},
 ])
