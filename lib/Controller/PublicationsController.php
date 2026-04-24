@@ -842,7 +842,7 @@ class PublicationsController extends Controller
                         files: false,
                         register: $register,
                         schema: $schemaId,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false
                     );
                     if ($object !== null) {
