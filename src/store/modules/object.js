@@ -2375,7 +2375,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mass publish attachments for the active publication
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
-		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
@@ -2412,7 +2412,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mass depublish attachments for the active publication
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
-		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {

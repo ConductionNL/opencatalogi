@@ -1,6 +1,9 @@
 import { Page } from './page'
 import { TPage } from './page.types'
 
+/** @typedef {import('./page.types').TPage} TPage */
+/** @typedef {import('./page').Page} Page */
+
 /**
  * Mock data function that returns an array of page data objects
  * Used for testing and development purposes

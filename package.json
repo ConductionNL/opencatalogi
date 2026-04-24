@@ -16,15 +16,20 @@
     "test-coverage": "jest --silent --coverage",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css"
   },
-  "browserslist": ["extends @nextcloud/browserslist-config"],
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
   "dependencies": {
-    "@conduction/nextcloud-vue": "^0.1.0-beta.10",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-xml": "^6.1.0",
+    "@conduction/nextcloud-vue": "^0.1.0-beta.13",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-brands-svg-icons": "6.6.0",
     "@fortawesome/free-regular-svg-icons": "6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/vue-fontawesome": "^2.0.10",
     "@kangc/v-md-editor": "^1.7.12",
+    "@nextcloud/auth": "^2.6.0",
     "@nextcloud/axios": "^2.5.0",
     "@nextcloud/dialogs": "^5.3.7",
     "@nextcloud/initial-state": "^2.2.0",
@@ -50,16 +55,14 @@
     "validator": "^13.12.0",
     "vue": "^2.7.14",
     "vue-apexcharts": "~1.6.2",
+    "vue-codemirror6": "^1.5.0",
     "vue-draggable-plus": "^0.6.0",
     "vue-loader": "^15.11.1 <16.0.0",
     "vue-loading-overlay": "^3.4.3",
     "vue-material-design-icons": "^5.3.0",
     "vue-router": "^3.6.5",
     "vue-template-compiler": "^2.7.16",
-    "zod": "^3.23.8",
-    "@codemirror/lang-json": "^6.0.2",
-    "@codemirror/lang-xml": "^6.1.0",
-    "vue-codemirror6": "^1.5.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.25.3",
@@ -98,14 +101,16 @@
   "overrides": {
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
-    "dompurify": ">=2.5.8",
+    "dompurify": ">=3.3.4",
     "d3-color": "^3.1.0",
-    "mermaid": {
-      "dompurify": "^3.2.4",
-      "d3": "^7.0.0"
-    },
+    "mermaid": ">=11.4.1",
     "json5": "^2.2.3",
     "@braintree/sanitize-url": "^7.0.0",
-    "katex": "^0.16.0"
+    "katex": "^0.16.0",
+    "@tootallnate/once": ">=3.0.1",
+    "postcss": ">=8.4.47",
+    "fast-xml-parser": ">=5.7.0",
+    "markdown-it": ">=12.3.2",
+    "uuid": ">=14.0.0"
   }
 }
