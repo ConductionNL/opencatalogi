@@ -26,6 +26,14 @@ import { EventBus } from '../../eventBus.js'
 			<div v-if="objectStore.getActiveObject('publication') || isNewObject">
 				<!-- For new objects, show catalog/register/schema selection first -->
 				<div v-if="isNewObject && !hasSelectedSchema" class="selectionContainer">
+					<NcEmptyContent
+						v-if="catalogOptions.length === 0"
+						name="No catalogs available"
+						description="You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.">
+						<template #icon>
+							<FolderOutline :size="64" />
+						</template>
+					</NcEmptyContent>
 					<div v-if="catalogOptions.length > 1" class="selectionStep">
 						<h3>Select Catalog</h3>
 						<p>Choose the catalog where this publication will be stored.</p>
@@ -528,6 +536,7 @@ import { Editor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
@@ -569,6 +578,7 @@ export default {
 		BTab,
 		Cancel,
 		FileOutline,
+		FolderOutline,
 		OpenInNew,
 		Delete,
 		Upload,
