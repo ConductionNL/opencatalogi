@@ -376,11 +376,6 @@
   color: var(--color-error);
 }
 
-/* Dialogs */
-.dialog__content {
-  padding: var(--OC-margin-15);
-}
-
 /* File drag and drop */
 
 .filesListDragDropNotice {

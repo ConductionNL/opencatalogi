@@ -78,141 +78,28 @@ import { EventBus } from '../../eventBus.js'
 				</div>
 
 				<!-- For new objects with schema selected, show properties table -->
-				<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="properties-section">
-					<div v-if="hasConstantOrImmutableProperties" class="properties-toolbar">
-						<NcButton
-							v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-							type="primary"
-							size="small"
-							class="eye-toggle-btn"
-							:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-							@click="showConstantProperties = !showConstantProperties">
-							<template #icon>
-								<Eye v-if="!showConstantProperties" :size="16" />
-								<EyeOff v-else :size="16" />
-							</template>
-						</NcButton>
-					</div>
-					<CnPropertiesTab
-						ref="propertiesTabNew"
-						:schema="resolvedSchema"
-						:item="currentObject || {}"
-						:form-data="formData"
-						:selected-property="selectedProperty"
-						:show-constant-properties="showConstantProperties"
-						:property-overrides="propertyOverrides"
-						@update:selected-property="selectedProperty = $event"
-						@update:property-value="onPropertyValueUpdate">
-						<template #value-cell="{ propertyKey, resolvedValue, isEditing, isEditable, displayName, schemaProp, editabilityWarning, onUpdate }">
-							<Editor
-								v-if="isMarkdownProperty(schemaProp) && isEditing"
-								:key="`editor-${propertyKey}`"
-								:initial-value="String(resolvedValue || '')"
-								:options="getMarkdownEditorOptions(propertyKey)"
-								initial-edit-type="wysiwyg"
-								height="400px"
-								@load="(editor) => markdownEditors[propertyKey] = editor"
-								@blur="onUpdate(getMarkdownContent(markdownEditors[propertyKey]))" />
-							<CnPropertyValueCell
-								v-else
-								:property-key="propertyKey"
-								:schema="resolvedSchema"
-								:value="resolvedValue"
-								:is-editable="isEditable"
-								:is-editing="isEditing"
-								:display-name="displayName"
-								:editability-warning="editabilityWarning"
-								:widget="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].widget) || null"
-								:select-options="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].selectOptions) || null"
-								:select-multiple="propertyOverrides[propertyKey] ? propertyOverrides[propertyKey].selectMultiple !== false : true"
-								@update:value="onUpdate" />
-						</template>
-						<template #row-actions="{ propertyKey, resolvedValue }">
-							<NcButton
-								v-if="canDropProperty(propertyKey, resolvedValue)"
-								v-tooltip="getDropPropertyTooltip(propertyKey)"
-								type="tertiary-no-background"
-								size="small"
-								class="drop-property-btn"
-								:aria-label="getDropPropertyTooltip(propertyKey)"
-								@click.stop="dropProperty(propertyKey)">
-								<template #icon>
-									<Close :size="16" />
-								</template>
-							</NcButton>
-						</template>
-					</CnPropertiesTab>
-				</div>
+				<PropertiesPanel
+					v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)"
+					v-bind="propertiesPanelBindings"
+					@update:selected-property="selectedProperty = $event"
+					@update:show-constant-properties="showConstantProperties = $event"
+					@update:property-value="onPropertyValueUpdate"
+					@drop-property="dropProperty"
+					@editor-load="onEditorLoad"
+					@editor-blur="onEditorBlur" />
 
 				<!-- For existing objects, show tabs -->
 				<div v-else class="tabContainer">
 					<BTabs v-model="activeTab" content-class="mt-3" justified>
 						<BTab title="Properties" active>
-							<div class="properties-section">
-								<div v-if="hasConstantOrImmutableProperties" class="properties-toolbar">
-									<NcButton
-										v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-										type="primary"
-										size="small"
-										class="eye-toggle-btn"
-										:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-										@click="showConstantProperties = !showConstantProperties">
-										<template #icon>
-											<Eye v-if="!showConstantProperties" :size="16" />
-											<EyeOff v-else :size="16" />
-										</template>
-									</NcButton>
-								</div>
-								<CnPropertiesTab
-									ref="propertiesTabEdit"
-									:schema="resolvedSchema"
-									:item="currentObject || {}"
-									:form-data="formData"
-									:selected-property="selectedProperty"
-									:show-constant-properties="showConstantProperties"
-									:property-overrides="propertyOverrides"
-									@update:selected-property="selectedProperty = $event"
-									@update:property-value="onPropertyValueUpdate">
-									<template #value-cell="{ propertyKey, resolvedValue, isEditing, isEditable, displayName, schemaProp, editabilityWarning, onUpdate }">
-										<Editor
-											v-if="isMarkdownProperty(schemaProp) && isEditing"
-											:key="`editor-${propertyKey}-tab`"
-											:initial-value="String(resolvedValue || '')"
-											:options="getMarkdownEditorOptions(propertyKey)"
-											initial-edit-type="wysiwyg"
-											height="400px"
-											@load="(editor) => markdownEditors[propertyKey] = editor"
-											@blur="onUpdate(getMarkdownContent(markdownEditors[propertyKey]))" />
-										<CnPropertyValueCell
-											v-else
-											:property-key="propertyKey"
-											:schema="resolvedSchema"
-											:value="resolvedValue"
-											:is-editable="isEditable"
-											:is-editing="isEditing"
-											:display-name="displayName"
-											:editability-warning="editabilityWarning"
-											:widget="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].widget) || null"
-											:select-options="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].selectOptions) || null"
-											:select-multiple="propertyOverrides[propertyKey] ? propertyOverrides[propertyKey].selectMultiple !== false : true"
-											@update:value="onUpdate" />
-									</template>
-									<template #row-actions="{ propertyKey, resolvedValue }">
-										<NcButton
-											v-if="canDropProperty(propertyKey, resolvedValue)"
-											v-tooltip="getDropPropertyTooltip(propertyKey)"
-											type="tertiary-no-background"
-											size="small"
-											class="drop-property-btn"
-											:aria-label="getDropPropertyTooltip(propertyKey)"
-											@click.stop="dropProperty(propertyKey)">
-											<template #icon>
-												<Close :size="16" />
-											</template>
-										</NcButton>
-									</template>
-								</CnPropertiesTab>
-							</div>
+							<PropertiesPanel
+								v-bind="propertiesPanelBindings"
+								@update:selected-property="selectedProperty = $event"
+								@update:show-constant-properties="showConstantProperties = $event"
+								@update:property-value="onPropertyValueUpdate"
+								@drop-property="dropProperty"
+								@editor-load="onEditorLoad"
+								@editor-blur="onEditorBlur" />
 						</BTab>
 						<BTab title="Metadata">
 							<CnMetadataTab
@@ -529,10 +416,8 @@ import {
 	NcEmptyContent,
 	NcSelect,
 } from '@nextcloud/vue'
-import { CnPropertiesTab, CnPropertyValueCell, CnMetadataTab } from '@conduction/nextcloud-vue'
+import { CnMetadataTab } from '@conduction/nextcloud-vue'
 import { BTabs, BTab } from 'bootstrap-vue'
-import { getTheme } from '../../services/getTheme.js'
-import { Editor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
@@ -551,11 +436,9 @@ import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ExclamationThick from 'vue-material-design-icons/ExclamationThick.vue'
 import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
-import Close from 'vue-material-design-icons/Close.vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
+import PropertiesPanel from '../../components/PropertiesPanel.vue'
 
 export default {
 	name: 'ViewObject',
@@ -570,10 +453,7 @@ export default {
 		NcActionButton,
 		NcEmptyContent,
 		NcSelect,
-		CnPropertiesTab,
-		CnPropertyValueCell,
 		CnMetadataTab,
-		Editor,
 		BTabs,
 		BTab,
 		Cancel,
@@ -592,22 +472,16 @@ export default {
 		Pencil,
 		ExclamationThick,
 		ArrowRight,
-		Close,
-		Eye,
-		EyeOff,
 		PaginationComponent,
 		PublishedIcon,
+		PropertiesPanel,
 	},
 	data() {
 		return {
 			activeTab: 0,
 			formData: {}, // Ensure this is always an object, never an array
-			jsonData: '',
 			selectedProperty: null,
 			isSaving: false,
-			success: null,
-			error: null,
-			isCopied: false,
 
 			// Markdown editors instances
 			markdownEditors: {},
@@ -865,6 +739,21 @@ export default {
 			const files = this.paginatedFiles || []
 			return files.filter(f => selected.includes(f.id)).filter(f => (f.accessUrl || f.downloadUrl)).length
 		},
+		propertiesPanelBindings() {
+			return {
+				resolvedSchema: this.resolvedSchema,
+				currentObject: this.currentObject,
+				formData: this.formData,
+				selectedProperty: this.selectedProperty,
+				showConstantProperties: this.showConstantProperties,
+				hasConstantOrImmutableProperties: this.hasConstantOrImmutableProperties,
+				propertyOverrides: this.propertyOverrides,
+				isMarkdownProperty: this.isMarkdownProperty,
+				getMarkdownEditorOptions: this.getMarkdownEditorOptions,
+				canDropProperty: this.canDropProperty,
+				getDropPropertyTooltip: this.getDropPropertyTooltip,
+			}
+		},
 	},
 	watch: {
 		currentObject: {
@@ -874,25 +763,6 @@ export default {
 				}
 			},
 			deep: true,
-		},
-		jsonData: {
-			handler(newValue) {
-				if (this.isValidJson(newValue)) {
-					this.updateFormFromJson()
-				}
-			},
-		},
-		formData: {
-			deep: true,
-			immediate: true,
-			handler(obj) {
-				// Create a clean copy of the form data
-				const draft = JSON.stringify(obj, null, 2)
-				// Only update if the content is different to avoid infinite loops
-				if (this.jsonData !== draft) {
-					this.jsonData = draft
-				}
-			},
 		},
 		selectedCatalog: {
 			handler(newCatalog) {
@@ -1028,9 +898,6 @@ export default {
 		closeModal() {
 			// Clear state first
 			this.activeTab = 0
-			this.success = null
-			this.error = null
-			this.isCopied = false
 			this.selectedProperty = null
 
 			// Clear Files tab state
@@ -1065,7 +932,6 @@ export default {
 			if (!this.currentObject) {
 				// For new objects, initialize with empty form data and auto-select if possible
 				this.formData = {}
-				this.jsonData = JSON.stringify({}, null, 2)
 
 				const catalogs = objectStore.getCollection('catalog').results
 
@@ -1140,19 +1006,15 @@ export default {
 					typeof theme === 'object' ? theme.id : theme,
 				)
 			}
-
-			this.jsonData = JSON.stringify(filtered, null, 2)
 		},
 		async saveObject() {
 			this.isSaving = true
-			this.error = null
 
 			try {
 				const isCreating = this.isNewObject
 
 				// For new objects, validate we have the required selections
 				if (isCreating && (!this.selectedSchema || !this.selectedRegister || !this.selectedCatalog)) {
-					this.error = 'Please select catalog, register, and schema before saving'
 					return
 				}
 
@@ -1198,61 +1060,21 @@ export default {
 				// Clear form data since we now have the saved object
 				this.formData = {}
 
-				this.success = `Publication ${isCreating ? 'created' : 'updated'} successfully`
-
 				// Refresh the publications list
 				catalogStore.fetchPublications()
 
 				// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
 				if (!isCreating) {
-					// For existing objects (edit mode), close the modal after save
 					setTimeout(() => {
 						this.closeModal()
-					}, 1000) // Give time for success message to show
+					}, 1000)
 				}
-
-				setTimeout(() => {
-					this.success = null
-				}, 3000)
-
 			} catch (e) {
 				console.error('Save error:', e)
-				this.error = e.message || 'Failed to save object'
-				this.success = false
 			} finally {
 				this.isSaving = false
 			}
 		},
-		updateFormFromJson() {
-			try {
-				const parsed = JSON.parse(this.jsonData)
-				this.formData = parsed
-			} catch (e) {
-				this.error = 'Invalid JSON format'
-			}
-		},
-		isValidJson(str) {
-			if (!str || !str.trim()) {
-				return false
-			}
-			try {
-				JSON.parse(str)
-				return true
-			} catch (e) {
-				return false
-			}
-		},
-		formatJSON() {
-			try {
-				if (this.jsonData) {
-					const parsed = JSON.parse(this.jsonData)
-					this.jsonData = JSON.stringify(parsed, null, 2)
-				}
-			} catch (e) {
-				// Keep invalid JSON as-is
-			}
-		},
-		getTheme,
 		// Property validation and editing methods
 		getPropertyDisplayName(key) {
 			// Ensure we always have a valid key
@@ -1335,171 +1157,6 @@ export default {
 				console.warn('Could not remove borders from editor:', error)
 			}
 		},
-		// Publish/Depublish methods
-		openPublishModal() {
-			if (this.currentObject['@self']?.published) {
-				this.publishDate = new Date(this.currentObject['@self'].published)
-			} else {
-				this.publishDate = null
-			}
-			this.showPublishModal = true
-		},
-		openDepublishModal() {
-			if (this.currentObject['@self']?.depublished) {
-				this.depublishDate = new Date(this.currentObject['@self'].depublished)
-			} else {
-				this.depublishDate = null
-			}
-			this.showDepublishModal = true
-		},
-		closePublishModal() {
-			this.showPublishModal = false
-			this.publishDate = null
-			this.isPublishing = false
-		},
-		closeDepublishModal() {
-			this.showDepublishModal = false
-			this.depublishDate = null
-			this.isDepublishing = false
-		},
-		async publishObject() {
-			this.isPublishing = true
-			try {
-				if (!this.currentObject) {
-					throw new Error('No object to publish')
-				}
-
-				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
-				const objectId = this.currentObject['@self']?.id || this.currentObject.id
-
-				let endpoint
-				let body = {}
-
-				if (this.showPublishModal && this.publishDate) {
-					// Publishing with a specific date from the modal
-					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
-					body = {
-						...this.currentObject,
-						'@self': {
-							...this.currentObject['@self'],
-							published: this.publishDate instanceof Date ? this.publishDate.toISOString() : this.publishDate,
-						},
-					}
-				} else {
-					// Direct publish action (publish now)
-					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`
-				}
-
-				const response = await fetch(endpoint, {
-					method: this.showPublishModal ? 'PUT' : 'POST',
-					headers: this.showPublishModal
-						? {
-							'Content-Type': 'application/json',
-						}
-						: undefined,
-					body: this.showPublishModal ? JSON.stringify(body) : undefined,
-				})
-
-				if (!response.ok) {
-					const errorText = await response.text()
-					throw new Error(`Failed to publish object: ${response.status} ${response.statusText} - ${errorText}`)
-				}
-
-				const result = await response.json()
-
-				// Rebuild the object with schema properties like we do in objectProperties computed
-				const updatedObject = this.rebuildObjectWithSchemaProperties(result)
-
-				// Update the current object with the rebuilt data
-				objectStore.setActiveObject('publication', updatedObject)
-
-				// Refresh the publications list
-				catalogStore.fetchPublications()
-
-				this.closePublishModal()
-				this.success = 'Object published successfully'
-				setTimeout(() => {
-					this.success = null
-				}, 3000)
-			} catch (error) {
-				console.error('Failed to publish object:', error)
-				this.error = 'Failed to publish object: ' + error.message
-				setTimeout(() => {
-					this.error = null
-				}, 5000)
-			} finally {
-				this.isPublishing = false
-			}
-		},
-		async depublishObject() {
-			this.isDepublishing = true
-			try {
-				if (!this.currentObject) {
-					throw new Error('No object to depublish')
-				}
-
-				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
-				const objectId = this.currentObject['@self']?.id || this.currentObject.id
-
-				let endpoint
-				let body = {}
-
-				if (this.showDepublishModal && this.depublishDate) {
-					// Depublishing with a specific date from the modal
-					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
-					body = {
-						...this.currentObject,
-						'@self': {
-							...this.currentObject['@self'],
-							depublished: this.depublishDate instanceof Date ? this.depublishDate.toISOString() : this.depublishDate,
-						},
-					}
-				} else {
-					// Direct depublish action (depublish now)
-					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`
-				}
-
-				const response = await fetch(endpoint, {
-					method: this.showDepublishModal ? 'PUT' : 'POST',
-					headers: this.showDepublishModal
-						? {
-							'Content-Type': 'application/json',
-						}
-						: undefined,
-					body: this.showDepublishModal ? JSON.stringify(body) : undefined,
-				})
-
-				if (!response.ok) {
-					const errorText = await response.text()
-					throw new Error(`Failed to depublish object: ${response.status} ${response.statusText} - ${errorText}`)
-				}
-
-				const result = await response.json()
-
-				// Rebuild the object with schema properties like we do in objectProperties computed
-				const updatedObject = this.rebuildObjectWithSchemaProperties(result)
-
-				// Update the current object with the rebuilt data
-				objectStore.setActiveObject('publication', updatedObject)
-
-				// Refresh the publications list
-				catalogStore.fetchPublications()
-
-				this.closeDepublishModal()
-				this.success = 'Object depublished successfully'
-				setTimeout(() => {
-					this.success = null
-				}, 3000)
-			} catch (error) {
-				console.error('Failed to depublish object:', error)
-				this.error = 'Failed to depublish object: ' + error.message
-				setTimeout(() => {
-					this.error = null
-				}, 5000)
-			} finally {
-				this.isDepublishing = false
-			}
-		},
 		// Files tab methods
 		/**
 		 * Open a file in the Nextcloud Files app
@@ -1547,59 +1204,36 @@ export default {
 				objectStore.selectedAttachments = objectStore.selectedAttachments.filter(id => id !== fileId)
 			}
 		},
-		async onFilesPageChanged(page) {
+		onFilesPageChanged(page) {
 			if (!this.currentObject) return
-
-			const publication = this.currentObject
-			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-			const publicationData = {
-				source: 'openregister',
-				schema: schemaId,
-				register: registerId,
-			}
-
-			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
-				_page: page,
-				_limit: this.filesCurrentPageSize,
-			}, publicationData)
+			return this.refreshFiles({ _page: page, _limit: this.filesCurrentPageSize })
 		},
-		async onFilesPageSizeChanged(pageSize) {
+		onFilesPageSizeChanged(pageSize) {
 			if (!this.currentObject) return
-
-			const publication = this.currentObject
-			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-			const publicationData = {
+			return this.refreshFiles({ _page: 1, _limit: pageSize })
+		},
+		async refreshFiles(params = {}) {
+			const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', params, {
 				source: 'openregister',
 				schema: schemaId,
 				register: registerId,
-			}
-
-			await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {
-				_page: 1,
-				_limit: pageSize,
-			}, publicationData)
+			})
+		},
+		massSelectedFiles(operation, predicate) {
+			const selected = objectStore.selectedAttachments || []
+			if (selected.length === 0) return
+			const ids = (this.paginatedFiles || [])
+				.filter(f => selected.includes(f.id) && predicate(f))
+				.map(f => f.id)
+			if (ids.length === 0) return
+			navigationStore.setDialog('massAttachment', { operation, attachments: ids })
 		},
 		publishSelectedFiles() {
-			const selected = objectStore.selectedAttachments || []
-			if (selected.length === 0) return
-			const files = this.paginatedFiles || []
-			const idsToPublish = files
-				.filter(f => selected.includes(f.id))
-				.filter(f => !f.accessUrl && !f.downloadUrl)
-				.map(f => f.id)
-			if (idsToPublish.length === 0) return
-			navigationStore.setDialog('massAttachment', { operation: 'publish', attachments: idsToPublish })
+			this.massSelectedFiles('publish', f => !f.accessUrl && !f.downloadUrl)
 		},
 		depublishSelectedFiles() {
-			const selected = objectStore.selectedAttachments || []
-			if (selected.length === 0) return
-			const files = this.paginatedFiles || []
-			const idsToDepublish = files
-				.filter(f => selected.includes(f.id))
-				.filter(f => (f.accessUrl || f.downloadUrl))
-				.map(f => f.id)
-			if (idsToDepublish.length === 0) return
-			navigationStore.setDialog('massAttachment', { operation: 'depublish', attachments: idsToDepublish })
+			this.massSelectedFiles('depublish', f => f.accessUrl || f.downloadUrl)
 		},
 		async deleteSelectedFiles() {
 			if (objectStore.selectedAttachments.length === 0) return
@@ -1607,38 +1241,21 @@ export default {
 			try {
 				this.fileIdsLoading = [...objectStore.selectedAttachments]
 
-				// Get the selected files
 				const selectedFiles = this.paginatedFiles.filter(item =>
 					objectStore.selectedAttachments.includes(item.id),
 				)
+				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
 
-				// Delete each selected file
 				for (const file of selectedFiles) {
-					const publication = this.currentObject
-					const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
-
-					const response = await fetch(endpoint, {
-						method: 'DELETE',
-					})
-
+					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${this.currentObject.id}/files/${file.id}`
+					const response = await fetch(endpoint, { method: 'DELETE' })
 					if (!response.ok) {
 						throw new Error(`Failed to delete file ${file.title || file.name}: ${response.statusText}`)
 					}
 				}
 
-				// Refresh files list once after all operations with publication data
-				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const publicationData = {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				await this.refreshFiles()
 				catalogStore.fetchPublications()
-
-				// Clear selection - files list is automatically refreshed by the store methods
 				objectStore.selectedAttachments = []
 			} catch (error) {
 				console.error('Failed to delete selected files:', error)
@@ -1646,96 +1263,29 @@ export default {
 				this.fileIdsLoading = []
 			}
 		},
-		async publishFile(file) {
+		// action: 'publish' | 'depublish' | 'delete'
+		async runFileAction(file, action) {
+			const loadingList = action === 'delete' ? 'fileIdsLoading' : `${action}Loading`
 			try {
-				this.publishLoading.push(file.id)
-
-				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/publish`
-
-				const response = await fetch(endpoint, {
-					method: 'POST',
-				})
-
+				this[loadingList].push(file.id)
+				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const base = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${this.currentObject.id}/files/${file.id}`
+				const endpoint = action === 'delete' ? base : `${base}/${action}`
+				const response = await fetch(endpoint, { method: action === 'delete' ? 'DELETE' : 'POST' })
 				if (!response.ok) {
-					throw new Error(`Failed to publish file: ${response.statusText}`)
+					throw new Error(`Failed to ${action} file: ${response.statusText}`)
 				}
-
-				// Refresh files list with publication data
-				const publicationData = {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
+				await this.refreshFiles()
 				catalogStore.fetchPublications()
 			} catch (error) {
-				console.error('Failed to publish file:', error)
+				console.error(`Failed to ${action} file:`, error)
 			} finally {
-				this.publishLoading = this.publishLoading.filter(id => id !== file.id)
+				this[loadingList] = this[loadingList].filter(id => id !== file.id)
 			}
 		},
-		async depublishFile(file) {
-			try {
-				this.depublishLoading.push(file.id)
-
-				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}/depublish`
-
-				const response = await fetch(endpoint, {
-					method: 'POST',
-				})
-
-				if (!response.ok) {
-					throw new Error(`Failed to depublish file: ${response.statusText}`)
-				}
-
-				// Refresh files list with publication data
-				const publicationData = {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
-				catalogStore.fetchPublications()
-			} catch (error) {
-				console.error('Failed to depublish file:', error)
-			} finally {
-				this.depublishLoading = this.depublishLoading.filter(id => id !== file.id)
-			}
-		},
-		async deleteFile(file) {
-			try {
-				this.fileIdsLoading.push(file.id)
-
-				const publication = this.currentObject
-				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
-
-				const response = await fetch(endpoint, {
-					method: 'DELETE',
-				})
-
-				if (!response.ok) {
-					throw new Error(`Failed to delete file: ${response.statusText}`)
-				}
-
-				// Refresh files list with publication data
-				const publicationData = {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				}
-				await objectStore.fetchRelatedData('publication', this.currentObject.id, 'files', {}, publicationData)
-				catalogStore.fetchPublications()
-			} catch (error) {
-				console.error('Failed to delete file:', error)
-			} finally {
-				this.fileIdsLoading = this.fileIdsLoading.filter(id => id !== file.id)
-			}
-		},
+		publishFile(file) { return this.runFileAction(file, 'publish') },
+		depublishFile(file) { return this.runFileAction(file, 'depublish') },
+		deleteFile(file) { return this.runFileAction(file, 'delete') },
 		editFileLabels(file) {
 			this.editingTags = file.id
 			this.editedTags = file.labels || []
@@ -1811,18 +1361,8 @@ export default {
 
 				this.editingTags = null
 				this.editedTags = []
-
-				// Show success message
-				this.success = 'File labels updated successfully'
-				setTimeout(() => {
-					this.success = null
-				}, 3000)
 			} catch (error) {
 				console.error('Error saving tags:', error)
-				this.error = 'Failed to save file labels: ' + error.message
-				setTimeout(() => {
-					this.error = null
-				}, 5000)
 			}
 		},
 		// Utility method to get register and schema IDs from publication object
@@ -1848,45 +1388,17 @@ export default {
 			if (!object || !object['@self']) return false
 			return object['@self'].published !== null && object['@self'].published !== undefined
 		},
-		singlePublishObject() {
+		openSingleObjectDialog(dialog) {
 			if (!this.currentObject) return
-
-			// Set the single publication as selected object (as full object, not just ID)
-			const publicationObject = {
+			objectStore.setSelectedObjects([{
 				...this.currentObject,
 				id: this.currentObject['@self']?.id || this.currentObject.id,
-			}
-			objectStore.setSelectedObjects([publicationObject])
-
-			// Open the mass publish dialog
-			navigationStore.setDialog('massPublishObjects')
+			}])
+			navigationStore.setDialog(dialog)
 		},
-		singleDepublishObject() {
-			if (!this.currentObject) return
-
-			// Set the single publication as selected object (as full object, not just ID)
-			const publicationObject = {
-				...this.currentObject,
-				id: this.currentObject['@self']?.id || this.currentObject.id,
-			}
-			objectStore.setSelectedObjects([publicationObject])
-
-			// Open the mass depublish dialog
-			navigationStore.setDialog('massDepublishObjects')
-		},
-		singleDeleteObject() {
-			if (!this.currentObject) return
-
-			// Set the single publication as selected object (as full object, not just ID)
-			const publicationObject = {
-				...this.currentObject,
-				id: this.currentObject['@self']?.id || this.currentObject.id,
-			}
-			objectStore.setSelectedObjects([publicationObject])
-
-			// Open the mass delete dialog
-			navigationStore.setDialog('massDeleteObject')
-		},
+		singlePublishObject() { this.openSingleObjectDialog('massPublishObjects') },
+		singleDepublishObject() { this.openSingleObjectDialog('massDepublishObjects') },
+		singleDeleteObject() { this.openSingleObjectDialog('massDeleteObject') },
 		// Schema handling methods
 		getSchemaProperties() {
 			let properties = {}
@@ -1913,9 +1425,6 @@ export default {
 						properties = fullSchema.properties
 					}
 				}
-			} else if (this.currentSchema?.properties) {
-				// Try to get schema properties from the catalogStore
-				properties = this.currentSchema.properties
 			}
 
 			return properties
@@ -2223,6 +1732,14 @@ export default {
 				this.formData = {}
 			}
 			this.$set(this.formData, key, value)
+		},
+
+		onEditorLoad({ propertyKey, editor }) {
+			this.markdownEditors[propertyKey] = editor
+		},
+
+		onEditorBlur({ propertyKey, onUpdate }) {
+			onUpdate(this.getMarkdownContent(this.markdownEditors[propertyKey]))
 		},
 
 		/**
