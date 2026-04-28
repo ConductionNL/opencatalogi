@@ -70,23 +70,83 @@ import { EventBus } from '../../eventBus.js'
 				</div>
 
 				<!-- For new objects with schema selected, show properties table -->
-				<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="viewTableContainer">
-					<table class="viewTable">
-						<thead>
-							<tr class="viewTableRow">
-								<th class="tableColumnConstrained">
-									Property
-								</th>
-								<th class="tableColumnExpanded">
-									Value
-								</th>
-								<th class="tableColumnActions actions-header-cell">
-									<!-- Show/Hide Constant & Immutable Properties Toggle -->
-									<NcButton v-if="hasConstantOrImmutableProperties"
+				<div v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)" class="properties-section">
+					<div v-if="hasConstantOrImmutableProperties" class="properties-toolbar">
+						<NcButton
+							v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+							type="primary"
+							size="small"
+							class="eye-toggle-btn"
+							:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
+							@click="showConstantProperties = !showConstantProperties">
+							<template #icon>
+								<Eye v-if="!showConstantProperties" :size="16" />
+								<EyeOff v-else :size="16" />
+							</template>
+						</NcButton>
+					</div>
+					<CnPropertiesTab
+						ref="propertiesTabNew"
+						:schema="resolvedSchema"
+						:item="currentObject || {}"
+						:form-data="formData"
+						:selected-property="selectedProperty"
+						:show-constant-properties="showConstantProperties"
+						:property-overrides="propertyOverrides"
+						@update:selected-property="selectedProperty = $event"
+						@update:property-value="onPropertyValueUpdate">
+						<template #value-cell="{ propertyKey, resolvedValue, isEditing, isEditable, displayName, schemaProp, editabilityWarning, onUpdate }">
+							<Editor
+								v-if="isMarkdownProperty(schemaProp) && isEditing"
+								:key="`editor-${propertyKey}`"
+								:initial-value="String(resolvedValue || '')"
+								:options="getMarkdownEditorOptions(propertyKey)"
+								initial-edit-type="wysiwyg"
+								height="400px"
+								@load="(editor) => markdownEditors[propertyKey] = editor"
+								@blur="onUpdate(getMarkdownContent(markdownEditors[propertyKey]))" />
+							<CnPropertyValueCell
+								v-else
+								:property-key="propertyKey"
+								:schema="resolvedSchema"
+								:value="resolvedValue"
+								:is-editable="isEditable"
+								:is-editing="isEditing"
+								:display-name="displayName"
+								:editability-warning="editabilityWarning"
+								:widget="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].widget) || null"
+								:select-options="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].selectOptions) || null"
+								:select-multiple="propertyOverrides[propertyKey] ? propertyOverrides[propertyKey].selectMultiple !== false : true"
+								@update:value="onUpdate" />
+						</template>
+						<template #row-actions="{ propertyKey, resolvedValue }">
+							<NcButton
+								v-if="canDropProperty(propertyKey, resolvedValue)"
+								v-tooltip="getDropPropertyTooltip(propertyKey)"
+								type="tertiary-no-background"
+								size="small"
+								class="drop-property-btn"
+								:aria-label="getDropPropertyTooltip(propertyKey)"
+								@click.stop="dropProperty(propertyKey)">
+								<template #icon>
+									<Close :size="16" />
+								</template>
+							</NcButton>
+						</template>
+					</CnPropertiesTab>
+				</div>
+
+				<!-- For existing objects, show tabs -->
+				<div v-else class="tabContainer">
+					<BTabs v-model="activeTab" content-class="mt-3" justified>
+						<BTab title="Properties" active>
+							<div class="properties-section">
+								<div v-if="hasConstantOrImmutableProperties" class="properties-toolbar">
+									<NcButton
 										v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
 										type="primary"
 										size="small"
-										class="action-btn eye-toggle-btn"
+										class="eye-toggle-btn"
 										:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
 										@click="showConstantProperties = !showConstantProperties">
 										<template #icon>
@@ -94,423 +154,63 @@ import { EventBus } from '../../eventBus.js'
 											<EyeOff v-else :size="16" />
 										</template>
 									</NcButton>
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr
-								v-for="([key, value]) in filteredObjectProperties"
-								:key="key"
-								class="viewTableRow"
-								:class="{
-									'selected-row': selectedProperty === key,
-									'edited-row': formData[key] !== undefined,
-									'non-editable-row': !isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value),
-									...getPropertyValidationClass(key, value)
-								}"
-								@click="handleRowClick(key, $event)">
-								<td class="tableColumnConstrained prop-cell">
-									<div class="prop-cell-content">
-										<AlertCircle v-if="getPropertyValidationClass(key, value) === 'property-invalid'"
-											v-tooltip="getPropertyErrorMessage(key, value)"
-											class="validation-icon error-icon"
-											:size="16" />
-										<Alert v-else-if="getPropertyValidationClass(key, value) === 'property-warning'"
-											v-tooltip="getPropertyWarningMessage(key, value)"
-											class="validation-icon warning-icon"
-											:size="16" />
-										<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-											v-tooltip="getPropertyNewMessage(key)"
-											class="validation-icon new-icon"
-											:size="16" />
-										<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
-											v-tooltip="getEditabilityWarning(key, formData[key] !== undefined ? formData[key] : value)"
-											class="validation-icon lock-icon"
-											:size="16" />
-										<span
-											v-tooltip="getPropertyTooltip(key)">
-											{{ getPropertyDisplayName(key) }}
-										</span>
-									</div>
-								</td>
-								<td class="tableColumnExpanded value-cell">
-									<div class="value-cell-content">
-										<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
-											<!-- Boolean properties -->
-											<NcCheckboxRadioSwitch
-												v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
-												:checked="formData[key] !== undefined ? formData[key] : value"
-												type="switch"
-												@update:checked="updatePropertyValue(key, $event)">
-												{{ getPropertyDisplayName(key) }}
-											</NcCheckboxRadioSwitch>
-
-											<!-- Date/Time properties -->
-											<NcDateTimePicker
-												v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
-												:key="`datetime-${key}-edit`"
-												:append-to-body="true"
-												:popup-class="'view-object-datepicker'"
-												:popup-style="{ zIndex: 12000 }"
-												:value="getDateTimePickerValue(key, value)"
-												:label="getPropertyDisplayName(key)"
-												:type="getDateTimePickerType(key)"
-												:placeholder="getPropertyDisplayName(key)"
-												:clearable="true"
-												@input="handleDateTimeUpdate(key, $event)"
-												@update:value="handleDateTimeUpdate(key, $event)"
-												@change="handleDateTimeUpdate(key, $event)"
-												@update:modelValue="handleDateTimeUpdate(key, $event)" />
-
-											<!-- Text area properties -->
-											<NcTextArea
-												v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
-												ref="propertyValueInput"
-												:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-												:placeholder="getPropertyDisplayName(key)"
-												:rows="4"
-												@update:value="updatePropertyValue(key, $event)" />
-
-											<!-- Markdown editor properties -->
-											<Editor
-												v-else-if="getPropertyInputComponent(key) === 'Editor'"
-												:key="`editor-${key}`"
-												:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
-												:options="getMarkdownEditorOptions(key)"
-												initial-edit-type="wysiwyg"
-												height="400px"
-												@load="(editor) => markdownEditors[key] = editor"
-												@blur="updateMarkdownValue(key, markdownEditors[key])" />
-
-											<!-- Themes properties -->
-											<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
-												<NcSelect
-													v-model="themeFormData"
-													:options="themeOptions"
-													input-label="Themes"
-													multiple
-													:placeholder="getPropertyDisplayName(key)" />
-											</div>
-											<!-- Array properties -->
-											<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
-												<NcTextField
-													ref="propertyValueInput"
-													:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
-													:type="getPropertyInputType(key)"
-													:placeholder="getPropertyDisplayName(key)"
-													:min="getPropertyMinimum(key)"
-													:max="getPropertyMaximum(key)"
-													:step="getPropertyStep(key)"
-													@update:value="updatePropertyValue(key, $event)" />
-												<InformationOutline
-													v-tooltip="'Array values should be separated by commas'"
-													:size="25"
-													class="info-icon" />
-											</div>
-
-											<!-- Text/Number properties -->
-											<NcTextField
-												v-else
-												ref="propertyValueInput"
-												:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-												:type="getPropertyInputType(key)"
-												:placeholder="getPropertyDisplayName(key)"
-												:min="getPropertyMinimum(key)"
-												:max="getPropertyMaximum(key)"
-												:step="getPropertyStep(key)"
-												@update:value="updatePropertyValue(key, $event)" />
-										</div>
-										<div v-else>
-											<template v-if="formData[key] !== undefined">
-												<!-- Show edited value -->
-												<pre
-													v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
-													v-tooltip="'JSON object (edited)'"
-													class="json-value">{{ formatValue(formData[key]) }}</pre>
-												<span
-													v-else-if="isDateTimeProperty(key) && formData[key]"
-													v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
-												<span
-													v-else-if="isValidDate(formData[key])"
-													v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
-												<span
-													v-else
-													v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
+								</div>
+								<CnPropertiesTab
+									ref="propertiesTabEdit"
+									:schema="resolvedSchema"
+									:item="currentObject || {}"
+									:form-data="formData"
+									:selected-property="selectedProperty"
+									:show-constant-properties="showConstantProperties"
+									:property-overrides="propertyOverrides"
+									@update:selected-property="selectedProperty = $event"
+									@update:property-value="onPropertyValueUpdate">
+									<template #value-cell="{ propertyKey, resolvedValue, isEditing, isEditable, displayName, schemaProp, editabilityWarning, onUpdate }">
+										<Editor
+											v-if="isMarkdownProperty(schemaProp) && isEditing"
+											:key="`editor-${propertyKey}-tab`"
+											:initial-value="String(resolvedValue || '')"
+											:options="getMarkdownEditorOptions(propertyKey)"
+											initial-edit-type="wysiwyg"
+											height="400px"
+											@load="(editor) => markdownEditors[propertyKey] = editor"
+											@blur="onUpdate(getMarkdownContent(markdownEditors[propertyKey]))" />
+										<CnPropertyValueCell
+											v-else
+											:property-key="propertyKey"
+											:schema="resolvedSchema"
+											:value="resolvedValue"
+											:is-editable="isEditable"
+											:is-editing="isEditing"
+											:display-name="displayName"
+											:editability-warning="editabilityWarning"
+											:widget="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].widget) || null"
+											:select-options="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].selectOptions) || null"
+											:select-multiple="propertyOverrides[propertyKey] ? propertyOverrides[propertyKey].selectMultiple !== false : true"
+											@update:value="onUpdate" />
+									</template>
+									<template #row-actions="{ propertyKey, resolvedValue }">
+										<NcButton
+											v-if="canDropProperty(propertyKey, resolvedValue)"
+											v-tooltip="getDropPropertyTooltip(propertyKey)"
+											type="tertiary-no-background"
+											size="small"
+											class="drop-property-btn"
+											:aria-label="getDropPropertyTooltip(propertyKey)"
+											@click.stop="dropProperty(propertyKey)">
+											<template #icon>
+												<Close :size="16" />
 											</template>
-											<template v-else>
-												<!-- Show original value -->
-												<pre
-													v-if="key !== 'themes' && typeof value === 'object' && value !== null"
-													v-tooltip="'JSON object'"
-													class="json-value">{{ formatValue(value) }}</pre>
-												<span
-													v-else-if="isDateTimeProperty(key) && value"
-													v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
-												<span
-													v-else-if="isValidDate(value)"
-													v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
-												<span
-													v-else
-													v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-											</template>
-										</div>
-									</div>
-								</td>
-								<td class="tableColumnActions">
-									<NcButton v-if="canDropProperty(key, value)"
-										v-tooltip="getDropPropertyTooltip(key)"
-										type="tertiary-no-background"
-										size="small"
-										class="drop-property-btn"
-										:aria-label="getDropPropertyTooltip(key)"
-										@click.stop="dropProperty(key)">
-										<template #icon>
-											<Close :size="16" />
-										</template>
-									</NcButton>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-
-				<!-- For existing objects, show tabs -->
-				<div v-else class="tabContainer">
-					<BTabs v-model="activeTab" content-class="mt-3" justified>
-						<BTab title="Properties" active>
-							<div class="viewTableContainer">
-								<table class="viewTable">
-									<thead>
-										<tr class="viewTableRow">
-											<th class="tableColumnConstrained">
-												Property
-											</th>
-											<th class="tableColumnExpanded">
-												Value
-											</th>
-											<th class="tableColumnActions actions-header-cell">
-												<!-- Show/Hide Constant & Immutable Properties Toggle -->
-												<NcButton v-if="hasConstantOrImmutableProperties"
-													v-tooltip="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-													type="primary"
-													size="small"
-													class="action-btn eye-toggle-btn"
-													:aria-label="showConstantProperties ? 'Hide constant & immutable properties' : 'Show constant & immutable properties'"
-													@click="showConstantProperties = !showConstantProperties">
-													<template #icon>
-														<Eye v-if="!showConstantProperties" :size="16" />
-														<EyeOff v-else :size="16" />
-													</template>
-												</NcButton>
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr
-											v-for="([key, value]) in filteredObjectProperties"
-											:key="key"
-											class="viewTableRow"
-											:class="{
-												'selected-row': selectedProperty === key,
-												'edited-row': formData[key] !== undefined,
-												'non-editable-row': !isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value),
-												...getPropertyValidationClass(key, value)
-											}"
-											@click="handleRowClick(key, $event)">
-											<td class="tableColumnConstrained prop-cell">
-												<div class="prop-cell-content">
-													<AlertCircle v-if="getPropertyValidationClass(key, value) === 'property-invalid'"
-														v-tooltip="getPropertyErrorMessage(key, value)"
-														class="validation-icon error-icon"
-														:size="16" />
-													<Alert v-else-if="getPropertyValidationClass(key, value) === 'property-warning'"
-														v-tooltip="getPropertyWarningMessage(key, value)"
-														class="validation-icon warning-icon"
-														:size="16" />
-													<Plus v-else-if="getPropertyValidationClass(key, value) === 'property-new'"
-														v-tooltip="getPropertyNewMessage(key)"
-														class="validation-icon new-icon"
-														:size="16" />
-													<LockOutline v-else-if="!isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)"
-														v-tooltip="getEditabilityWarning(key, formData[key] !== undefined ? formData[key] : value)"
-														class="validation-icon lock-icon"
-														:size="16" />
-													<span
-														v-tooltip="getPropertyTooltip(key)">
-														{{ getPropertyDisplayName(key) }}
-													</span>
-												</div>
-											</td>
-											<td class="tableColumnExpanded value-cell">
-												<div class="value-cell-content">
-													<div v-if="selectedProperty === key && isPropertyEditable(key, formData[key] !== undefined ? formData[key] : value)" class="value-input-container" @click.stop>
-														<!-- Boolean properties -->
-														<NcCheckboxRadioSwitch
-															v-if="getPropertyInputComponent(key) === 'NcCheckboxRadioSwitch'"
-															:checked="formData[key] !== undefined ? formData[key] : value"
-															type="switch"
-															@update:checked="updatePropertyValue(key, $event)">
-															{{ getPropertyDisplayName(key) }}
-														</NcCheckboxRadioSwitch>
-
-														<!-- Date/Time properties -->
-														<NcDateTimePicker
-															v-else-if="getPropertyInputComponent(key) === 'NcDateTimePicker'"
-															:key="`datetime-${key}`"
-															:append-to-body="true"
-															:popup-class="'view-object-datepicker'"
-															:popup-style="{ zIndex: 12000 }"
-															:value="getDateTimePickerValue(key, value)"
-															:label="getPropertyDisplayName(key)"
-															:type="getDateTimePickerType(key)"
-															:placeholder="getPropertyDisplayName(key)"
-															:clearable="true"
-															@input="handleDateTimeUpdate(key, $event)"
-															@update:value="handleDateTimeUpdate(key, $event)"
-															@change="handleDateTimeUpdate(key, $event)"
-															@update:modelValue="handleDateTimeUpdate(key, $event)" />
-
-														<!-- Text area properties -->
-														<NcTextArea
-															v-else-if="getPropertyInputComponent(key) === 'NcTextArea'"
-															ref="propertyValueInput"
-															class="textarea-property"
-															:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-															:placeholder="getPropertyDisplayName(key)"
-															:rows="4"
-															@update:value="updatePropertyValue(key, $event)" />
-
-														<!-- Markdown editor properties -->
-														<Editor
-															v-else-if="getPropertyInputComponent(key) === 'Editor'"
-															:key="`editor-${key}-tab`"
-															:initial-value="String(formData[key] !== undefined ? formData[key] : value || '')"
-															:options="getMarkdownEditorOptions(key)"
-															initial-edit-type="wysiwyg"
-															height="400px"
-															@load="(editor) => markdownEditors[key] = editor"
-															@blur="updateMarkdownValue(key, markdownEditors[key])" />
-
-														<!-- Themes properties -->
-														<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray' && key === 'themes'" class="input-with-icon">
-															<NcSelect
-																v-model="themeFormData"
-																:options="themeOptions"
-																input-label="Themes"
-																multiple
-																:placeholder="getPropertyDisplayName(key)" />
-														</div>
-														<!-- Array properties -->
-														<div v-else-if="getPropertyInputComponent(key) === 'NcTextFieldArray'" class="input-with-icon">
-															<NcTextField
-																ref="propertyValueInput"
-																:value="String(formData[key] !== undefined ? (Array.isArray(formData[key]) ? formData[key].join(',') : formData[key]) : (Array.isArray(value) ? value.join(',') : value || ''))"
-																:type="getPropertyInputType(key)"
-																:placeholder="getPropertyDisplayName(key)"
-																:min="getPropertyMinimum(key)"
-																:max="getPropertyMaximum(key)"
-																:step="getPropertyStep(key)"
-																@update:value="updatePropertyValue(key, $event.split(/ *, */g).filter(Boolean))" />
-															<InformationOutline
-																v-tooltip="'Array values should be separated by commas'"
-																:size="25"
-																class="info-icon" />
-														</div>
-
-														<!-- Text/Number properties -->
-														<NcTextField
-															v-else
-															ref="propertyValueInput"
-															:value="String(formData[key] !== undefined ? formData[key] : value || '')"
-															:type="getPropertyInputType(key)"
-															:placeholder="getPropertyDisplayName(key)"
-															:min="getPropertyMinimum(key)"
-															:max="getPropertyMaximum(key)"
-															:step="getPropertyStep(key)"
-															@update:value="updatePropertyValue(key, $event)" />
-													</div>
-													<div v-else>
-														<template v-if="formData[key] !== undefined">
-															<!-- Show edited value -->
-															<pre
-																v-if="key !== 'themes' && typeof formData[key] === 'object' && formData[key] !== null"
-																v-tooltip="'JSON object (edited)'"
-																class="json-value">{{ formatValue(formData[key]) }}</pre>
-															<span
-																v-else-if="isDateTimeProperty(key) && formData[key]"
-																v-tooltip="`${getDateTimePropertyFormat(key)}: ${formData[key]} (edited)`">{{ formatDateTimeValue(key, formData[key]) }}</span>
-															<span
-																v-else-if="isValidDate(formData[key])"
-																v-tooltip="`Date: ${new Date(formData[key]).toISOString()} (edited)`">{{ new Date(formData[key]).toLocaleString() }}</span>
-															<span
-																v-else
-																v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-														</template>
-														<template v-else>
-															<!-- Show original value -->
-															<pre
-																v-if="key !== 'themes' && typeof value === 'object' && value !== null"
-																v-tooltip="'JSON object'"
-																class="json-value">{{ formatValue(value) }}</pre>
-															<span
-																v-else-if="isDateTimeProperty(key) && value"
-																v-tooltip="`${getDateTimePropertyFormat(key)}: ${value}`">{{ formatDateTimeValue(key, value) }}</span>
-															<span
-																v-else-if="isValidDate(value)"
-																v-tooltip="`Date: ${new Date(value).toISOString()}`">{{ new Date(value).toLocaleString() }}</span>
-															<span
-																v-else
-																v-tooltip="getPropertyTooltip(key)">{{ getDisplayValue(key, value) }}</span>
-														</template>
-													</div>
-												</div>
-											</td>
-											<td class="tableColumnActions">
-												<NcButton v-if="canDropProperty(key, value)"
-													v-tooltip="getDropPropertyTooltip(key)"
-													type="tertiary-no-background"
-													size="small"
-													class="drop-property-btn"
-													:aria-label="getDropPropertyTooltip(key)"
-													@click.stop="dropProperty(key)">
-													<template #icon>
-														<Close :size="16" />
-													</template>
-												</NcButton>
-											</td>
-										</tr>
-									</tbody>
-								</table>
+										</NcButton>
+									</template>
+								</CnPropertiesTab>
 							</div>
 						</BTab>
 						<BTab title="Metadata">
-							<div class="viewTableContainer">
-								<table class="viewTable">
-									<thead>
-										<tr class="viewTableRow">
-											<th class="tableColumnConstrained">
-												Metadata
-											</th>
-											<th class="tableColumnExpanded">
-												Value
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr
-											v-for="([key, value]) in metadataProperties"
-											:key="key"
-											class="viewTableRow">
-											<td class="tableColumnConstrained">
-												{{ key }}
-											</td>
-											<td class="tableColumnExpanded">
-												{{ value }}
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
+							<CnMetadataTab
+								:item="currentObject"
+								:replace-rows="true"
+								:extra-rows="metadataExtraRows" />
 						</BTab>
 						<BTab>
 							<template #title>
@@ -816,16 +516,12 @@ import {
 	NcActionButton,
 	NcNoteCard,
 	NcCounterBubble,
-	NcTextField,
-	NcTextArea,
 	NcCheckboxRadioSwitch,
 	NcLoadingIcon,
-	NcDateTimePicker,
 	NcEmptyContent,
 	NcSelect,
 } from '@nextcloud/vue'
-// import { json, jsonParseLinter } from '@codemirror/lang-json'
-// import CodeMirror from 'vue-codemirror6'
+import { CnPropertiesTab, CnPropertyValueCell, CnMetadataTab } from '@conduction/nextcloud-vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import { getTheme } from '../../services/getTheme.js'
 import { Editor } from '@toast-ui/vue-editor'
@@ -841,9 +537,6 @@ import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
-import Alert from 'vue-material-design-icons/Alert.vue'
-import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -854,7 +547,6 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
-import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 
 export default {
 	name: 'ViewObject',
@@ -863,17 +555,16 @@ export default {
 		NcButton,
 		NcNoteCard,
 		NcCounterBubble,
-		NcTextField,
-		NcTextArea,
 		NcCheckboxRadioSwitch,
 		NcLoadingIcon,
 		NcActions,
 		NcActionButton,
-		NcDateTimePicker,
 		NcEmptyContent,
 		NcSelect,
+		CnPropertiesTab,
+		CnPropertyValueCell,
+		CnMetadataTab,
 		Editor,
-		// CodeMirror,
 		BTabs,
 		BTab,
 		Cancel,
@@ -881,15 +572,11 @@ export default {
 		OpenInNew,
 		Delete,
 		Upload,
-
 		ContentSave,
 		ContentSaveOutline,
 		LockOutline,
 		Tag,
 		FormatListChecks,
-		Alert,
-		AlertCircle,
-		Plus,
 		Publish,
 		PublishOff,
 		Pencil,
@@ -900,7 +587,6 @@ export default {
 		EyeOff,
 		PaginationComponent,
 		PublishedIcon,
-		InformationOutline,
 	},
 	data() {
 		return {
@@ -962,243 +648,101 @@ export default {
 			const obj = objectStore.getActiveObject('publication')
 			return !obj || !obj?.['@self']?.id
 		},
-		objectProperties() {
-			// Return array of [key, value] pairs, excluding '@self' and 'id'
-			const objectData = this.currentObject || {}
-			const schemaProperties = this.getSchemaProperties()
-
-			const propertiesWithOrder = []
-			const propertiesWithoutOrder = []
-
-			// First, add all schema properties in their defined order
-			for (const [schemaKey, schemaProperty] of Object.entries(schemaProperties)) {
-				let propertyValue
-				if (Object.prototype.hasOwnProperty.call(objectData, schemaKey)) {
-					// Property exists in object, use its value
-					propertyValue = objectData[schemaKey]
-				} else {
-					// Property doesn't exist in object, use appropriate default value
-					let defaultValue = ''
-					switch (schemaProperty.type) {
-					case 'string':
-						defaultValue = schemaProperty.const || ''
-						break
-					case 'number':
-					case 'integer':
-						defaultValue = 0
-						break
-					case 'boolean':
-						defaultValue = false
-						break
-					case 'array':
-						defaultValue = []
-						break
-					case 'object':
-						defaultValue = {}
-						break
-					default:
-						defaultValue = ''
-					}
-					propertyValue = defaultValue
-				}
-
-				const propertyData = [schemaKey, propertyValue, schemaProperty]
-
-				// Check if property has an order value
-				if (schemaProperty.order !== undefined && schemaProperty.order !== null) {
-					propertiesWithOrder.push(propertyData)
-				} else {
-					propertiesWithoutOrder.push(propertyData)
+		/**
+		 * Full JSON schema selected for the current/new object. Sourced from objectStore.availableSchemas.
+		 * Returns null when no schema is resolvable yet.
+		 */
+		resolvedSchema() {
+			if (this.isNewObject && this.selectedSchema) {
+				return objectStore.availableSchemas.find(schema => schema.id === this.selectedSchema.id) || null
+			}
+			if (this.currentObject && this.currentObject['@self']?.schema) {
+				const schemaRef = this.currentObject['@self'].schema
+				const schemaId = typeof schemaRef === 'object' ? (schemaRef.id || schemaRef.uuid) : schemaRef
+				if (schemaId) {
+					return objectStore.availableSchemas.find(schema => schema.id === schemaId) || null
 				}
 			}
-
-			// Then, add any additional properties from the object that aren't in the schema
-			const additionalProperties = []
-			for (const [objectKey, objectValue] of Object.entries(objectData)) {
-				// Skip metadata and properties already handled by schema
-				// Also skip properties that have been marked for deletion (undefined in formData)
-				if (objectKey !== '@self'
-					&& objectKey !== 'id'
-					&& !Object.prototype.hasOwnProperty.call(schemaProperties, objectKey)
-					&& !(this.formData[objectKey] === undefined)) {
-					additionalProperties.push([objectKey, objectValue, null])
-				}
-			}
-
-			// Sort properties with order: ascending by order value, then alphabetically by key
-			propertiesWithOrder.sort((a, b) => {
-				const [keyA, , schemaA] = a
-				const [keyB, , schemaB] = b
-
-				// First sort by order (ascending)
-				const orderA = schemaA?.order || 0
-				const orderB = schemaB?.order || 0
-
-				if (orderA !== orderB) {
-					return orderA - orderB // Ascending order
-				}
-
-				// If same order, sort alphabetically
-				return keyA.localeCompare(keyB)
-			})
-
-			// Sort properties without order alphabetically by key
-			propertiesWithoutOrder.sort((a, b) => {
-				const [keyA] = a
-				const [keyB] = b
-				return keyA.localeCompare(keyB)
-			})
-
-			// Sort additional properties alphabetically for consistency
-			additionalProperties.sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-
-			// If we have no properties to show (new object with no schema), provide some basic ones
-			if (propertiesWithoutOrder.length === 0 && propertiesWithOrder.length === 0 && additionalProperties.length === 0) {
-				return [
-					['title', ''],
-					['description', ''],
-					['summary', ''],
-					['category', ''],
-					['status', 'draft'],
-				]
-			}
-
-			// Combine: properties with order first (descending order), then properties without order, then additional properties
-			const combinedProperties = [
-				...propertiesWithOrder.map(([key, value]) => [key, value]),
-				...propertiesWithoutOrder.map(([key, value]) => [key, value]),
-				...additionalProperties,
-			]
-
-			return combinedProperties
+			return null
 		},
 		/**
-		 * Filter out constant and immutable properties based on showConstantProperties state
-		 * @return {Array} Filtered properties array
+		 * Per-property cell-config overrides forwarded into CnPropertiesTab → CnPropertyValueCell.
+		 * Only properties that need runtime-driven options (e.g. `themes` from objectStore) need entries here.
 		 */
-		filteredObjectProperties() {
-			if (this.showConstantProperties) {
-				return this.objectProperties
+		propertyOverrides() {
+			return {
+				themes: {
+					widget: 'select',
+					selectOptions: this.themeOptions,
+					selectMultiple: true,
+				},
 			}
-
-			return this.objectProperties.filter(([key, value]) => {
-				// Use the same detection logic as isConstantOrImmutable method
-				const isConstantOrImmutableProperty = this.isConstantOrImmutable(key)
-
-				// Debug: Log property filtering
-				if (process.env.NODE_ENV === 'development' && isConstantOrImmutableProperty) {
-					// eslint-disable-next-line no-console
-					console.log(`Filtering out property ${key}: constant or immutable`)
-				}
-
-				return !isConstantOrImmutableProperty
-			})
 		},
 		/**
-		 * Check if there are any constant or immutable properties
-		 * @return {boolean} True if there are constant/immutable properties
+		 * Publication-specific metadata rows for CnMetadataTab.
+		 * Includes the standard ID/Created/Updated rows plus version/register/schema/locked/published/depublished.
 		 */
-		hasConstantOrImmutableProperties() {
-			return this.objectProperties.some(([key, value]) => {
-				return this.isConstantOrImmutable(key)
-			})
-		},
-		metadataProperties() {
-			// Return array of [key, value] for metadata display
+		metadataExtraRows() {
 			if (!this.currentObject) return []
-
 			const obj = this.currentObject
-			const metadata = []
 
-			// ID
-			metadata.push([
-				'ID',
-				obj.id || 'Not set',
-			])
-
-			// Version
-			metadata.push([
-				'Version',
-				obj['@self']?.version || 'Not set',
-			])
-
-			// Register
 			const register = obj['@self']?.register
 			let registerDisplay = 'Not set'
 			if (register) {
 				if (typeof register === 'object') {
 					registerDisplay = register.title || register.name || register.id || register
 				} else {
-					// Try to find the register title from available registers
 					const availableRegister = objectStore.availableRegisters.find(r => r.id === register)
 					registerDisplay = availableRegister?.title || register
 				}
 			}
-			metadata.push([
-				'Register',
-				registerDisplay,
-			])
 
-			// Schema
 			const schema = obj['@self']?.schema
 			let schemaDisplay = 'Not set'
 			if (schema) {
 				if (typeof schema === 'object') {
 					schemaDisplay = schema.title || schema.name || schema.id || schema
 				} else {
-					// Try to find the schema title from available schemas
 					const availableSchema = objectStore.availableSchemas.find(s => s.id === schema)
 					schemaDisplay = availableSchema?.title || schema
 				}
 			}
-			metadata.push([
-				'Schema',
-				schemaDisplay,
-			])
 
-			// Locked
 			const locked = obj['@self']?.locked
 			let lockedDisplay = 'Not locked'
 			if (locked) {
 				if (typeof locked === 'object') {
 					const lockedBy = locked.lockedBy || 'Unknown user'
 					const lockedAt = locked.lockedAt ? new Date(locked.lockedAt).toLocaleString() : 'Unknown time'
-					const process = locked.process ? ` (${locked.process})` : ''
-					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${process}`
+					const proc = locked.process ? ` (${locked.process})` : ''
+					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${proc}`
 				} else {
 					lockedDisplay = 'Locked'
 				}
 			}
-			metadata.push([
-				'Locked',
-				lockedDisplay,
-			])
 
-			// Created
-			metadata.push([
-				'Created',
-				obj['@self']?.created ? new Date(obj['@self'].created).toLocaleString() : 'Not set',
-			])
+			const fmtDate = (v, fallback) => v ? new Date(v).toLocaleString() : fallback
 
-			// Updated
-			metadata.push([
-				'Updated',
-				obj['@self']?.updated ? new Date(obj['@self'].updated).toLocaleString() : 'Not set',
-			])
-
-			// Published
-			metadata.push([
-				'Published',
-				obj['@self']?.published ? new Date(obj['@self'].published).toLocaleString() : 'Not published',
-			])
-
-			// Depublished
-			metadata.push([
-				'Depublished',
-				obj['@self']?.depublished ? new Date(obj['@self'].depublished).toLocaleString() : 'Not depublished',
-			])
-
-			return metadata
+			return [
+				['ID', obj.id || 'Not set'],
+				['Version', obj['@self']?.version || 'Not set'],
+				['Register', registerDisplay],
+				['Schema', schemaDisplay],
+				['Locked', lockedDisplay],
+				['Created', fmtDate(obj['@self']?.created, 'Not set')],
+				['Updated', fmtDate(obj['@self']?.updated, 'Not set')],
+				['Published', fmtDate(obj['@self']?.published, 'Not published')],
+				['Depublished', fmtDate(obj['@self']?.depublished, 'Not depublished')],
+			]
+		},
+		/**
+		 * Whether the resolved schema has any properties marked const/immutable. Used to gate the
+		 * "show constant & immutable properties" toggle button.
+		 */
+		hasConstantOrImmutableProperties() {
+			const props = this.resolvedSchema?.properties
+			if (!props) return false
+			return Object.values(props).some(p => p && (p.const !== undefined || p.immutable === true || p.readOnly === true))
 		},
 		// Files tab computed properties
 		paginatedFiles() {
@@ -1298,25 +842,6 @@ export default {
 				id: theme.id,
 				label: theme.title || `#${theme.id}`,
 			}))
-		},
-		// Replace the existing themeFormData with this new version
-		themeFormData: {
-			get() {
-				if (!this.formData.themes || !Array.isArray(this.formData.themes)) {
-					return []
-				}
-
-				const themes = objectStore.getCollection('theme').results || []
-				return this.formData.themes.map(themeId => {
-					const theme = themes.find(t => t.id === themeId)
-					return theme ? { id: theme.id, label: theme.title || `#${theme.id}` } : { id: themeId, label: themeId }
-				})
-			},
-			set(selectedThemes) {
-				// Extract just the IDs from the selected theme objects
-				const themeIds = selectedThemes.map(theme => typeof theme === 'object' ? theme.id : theme)
-				this.$set(this.formData, 'themes', themeIds)
-			},
 		},
 		publishableCount() {
 			const selected = objectStore.selectedAttachments || []
@@ -1717,432 +1242,8 @@ export default {
 				// Keep invalid JSON as-is
 			}
 		},
-		isValidDate(value) {
-			if (!value || typeof value !== 'string') return false
-
-			// Don't treat simple strings like "test 12" as dates
-			if (value.length < 8) return false
-
-			// Check if it looks like a date format
-			const datePatterns = [
-				/^\d{4}-\d{2}-\d{2}/, // YYYY-MM-DD
-				/^\d{1,2}-\d{1,2}-\d{4}/, // M-D-YYYY or MM-DD-YYYY
-				/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO datetime
-			]
-
-			const looksLikeDate = datePatterns.some(pattern => pattern.test(value))
-			if (!looksLikeDate) return false
-
-			// Try to parse it
-			const date = new Date(value)
-			return date instanceof Date && !isNaN(date) && date.getFullYear() > 1900
-		},
-		isDateTimeProperty(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			return schemaProperty && schemaProperty.type === 'string' && ['date', 'time', 'date-time'].includes(schemaProperty.format)
-		},
-		getDateTimePropertyFormat(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			return schemaProperty?.format || 'unknown'
-		},
-		formatDateTimeValue(key, value) {
-			if (!value) return ''
-
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			const format = schemaProperty?.format
-
-			try {
-				switch (format) {
-				case 'date':
-					// For date-only, show as date without time
-					if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-						return new Date(value + 'T12:00:00').toLocaleDateString()
-					}
-					return new Date(value).toLocaleDateString()
-				case 'time':
-					// For time-only, show just the time part
-					if (typeof value === 'string' && value.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
-						return value
-					}
-					return new Date(value).toLocaleTimeString()
-				case 'date-time':
-					// For date-time, show full date and time
-					return new Date(value).toLocaleString()
-				default:
-					return value
-				}
-			} catch (e) {
-				return value
-			}
-		},
-		formatValue(val) {
-			return JSON.stringify(val, null, 2)
-		},
 		getTheme,
-		async copyToClipboard(text) {
-			try {
-				await navigator.clipboard.writeText(text)
-				this.isCopied = true
-				setTimeout(() => { this.isCopied = false }, 2000)
-			} catch (err) {
-				// console.error('Failed to copy text:', err)
-			}
-		},
 		// Property validation and editing methods
-		getPropertyValidationClass(key, value) {
-			// Skip @self as it's metadata
-			if (key === '@self') {
-				return ''
-			}
-
-			// Get schema properties
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			const existsInObject = this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)
-
-			if (!schemaProperty) {
-				// Property exists in object but not in schema - warning (yellow)
-				if (existsInObject) {
-					return 'property-warning'
-				}
-				return ''
-			}
-
-			if (!existsInObject) {
-				// Property exists in schema but not in object yet - neutral (no special class)
-				return 'property-new'
-			}
-
-			// Property exists in both schema and object, validate the value
-			if (this.isValidPropertyValue(key, value, schemaProperty)) {
-				// Valid property - success (green)
-				return 'property-valid'
-			} else {
-				// Invalid property - error (red)
-				return 'property-invalid'
-			}
-		},
-		getPropertyErrorMessage(key, value) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-
-			if (!schemaProperty) {
-				return `Property '${key}' is not defined in the current schema. This property exists in the object but is not part of the schema definition.`
-			}
-
-			// Check if required but empty
-			const isRequired = schemaProperty.required
-			if ((value === null || value === undefined || value === '') && isRequired) {
-				return `Required property '${key}' is missing or empty`
-			}
-
-			// Check type mismatch
-			const expectedType = schemaProperty.type
-			const actualType = Array.isArray(value) ? 'array' : typeof value
-
-			if (expectedType !== actualType) {
-				return `Property '${key}' should be ${expectedType} but is ${actualType}`
-			}
-
-			// Check format constraints
-			if (schemaProperty.format === 'date-time' && !this.isValidDate(value)) {
-				return `Property '${key}' should be a valid date-time format`
-			}
-
-			// Check const constraint
-			if (schemaProperty.const && value !== schemaProperty.const) {
-				return `Property '${key}' should be '${schemaProperty.const}' but is '${value}'`
-			}
-
-			return `Property '${key}' has an invalid value`
-		},
-		getPropertyWarningMessage(key, value) {
-			return `Property '${key}' exists in the object but is not defined in the current schema. This might happen when property names are changed in the schema.`
-		},
-		getPropertyNewMessage(key) {
-			return `Property '${key}' is defined in the schema but doesn't have a value yet. Click to add a value.`
-		},
-		isPropertyEditable(key, value) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-
-			// If no schema property, allow editing (it's a free-form property)
-			if (!schemaProperty) return true
-
-			// Check if property is const
-			if (schemaProperty.const !== undefined) {
-				return false // Const properties cannot be edited
-			}
-
-			// Check if property is immutable and already has a value
-			if (schemaProperty.immutable && (value !== null && value !== undefined && value !== '')) {
-				return false // Immutable properties with values cannot be edited
-			}
-
-			return true
-		},
-		getEditabilityWarning(key, value) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-
-			if (schemaProperty?.const !== undefined) {
-				return `This property is constant and must always be '${schemaProperty.const}'. Const properties cannot be modified to maintain data integrity.`
-			}
-
-			if (schemaProperty?.immutable && (value !== null && value !== undefined && value !== '')) {
-				return `This property is immutable and cannot be changed once it has a value. Current value: '${value}'. Immutable properties preserve data consistency.`
-			}
-
-			return null
-		},
-		handleRowClick(key, event) {
-			// Don't select if clicking on an input or button
-			if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' || event.target.closest('.value-input-container')) {
-				return
-			}
-
-			// Don't deselect if already selected
-			if (this.selectedProperty === key) {
-				return
-			}
-
-			// Check if property is editable
-			const value = this.formData[key] !== undefined ? this.formData[key] : this.objectProperties.find(([k]) => k === key)?.[1]
-			if (!this.isPropertyEditable(key, value)) {
-				return
-			}
-
-			this.selectProperty(key)
-		},
-		selectProperty(key) {
-			this.selectedProperty = key
-
-			// Focus the input field after Vue updates the DOM
-			this.$nextTick(() => {
-				if (this.$refs.propertyValueInput && this.$refs.propertyValueInput[0]) {
-					const input = this.$refs.propertyValueInput[0].$el.querySelector('input')
-					if (input) {
-						input.focus()
-						input.select()
-					}
-				}
-			})
-		},
-		updatePropertyValue(key, newValue) {
-			// Ensure formData is an object before updating
-			if (!this.formData || Array.isArray(this.formData)) {
-				this.formData = {}
-			}
-
-			// Special handling for themes: extract IDs from selected objects
-			if (key === 'themes' && Array.isArray(newValue)) {
-				// Extract just the IDs from the selected theme objects
-				const themeIds = newValue.map(theme => typeof theme === 'object' ? theme.id : theme)
-				this.$set(this.formData, key, themeIds)
-				return
-			}
-
-			// Convert date/time values to proper format for storage
-			const processedValue = this.processDateTimeValue(key, newValue)
-
-			// Update the form data using Vue 2 reactivity
-			this.$set(this.formData, key, processedValue)
-		},
-		// Test method to verify Vue methods are working
-		testVueMethod(message) {
-			if (process.env.NODE_ENV === 'development') {
-				alert(`Vue method works: ${message}`)
-			}
-		},
-		handleDateTimeUpdate(key, newValue) {
-			// Ensure formData is an object before updating
-			if (!this.formData || Array.isArray(this.formData)) {
-				this.formData = {}
-			}
-
-			// Get schema information to determine the correct format
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			const format = schemaProperty?.format
-
-			// Helper to format date in local TZ as YYYY-MM-DD
-			const toLocalDateString = date => {
-				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
-				const yyyy = date.getFullYear()
-				const mm = String(date.getMonth() + 1).padStart(2, '0')
-				const dd = String(date.getDate()).padStart(2, '0')
-				return `${yyyy}-${mm}-${dd}`
-			}
-
-			let processedValue = newValue
-
-			// Handle Date objects from NcDateTimePicker
-			if (newValue instanceof Date && !isNaN(newValue.getTime())) {
-				try {
-					switch (format) {
-					case 'date':
-						processedValue = toLocalDateString(newValue)
-						break
-					case 'time':
-						processedValue = newValue.toTimeString().split(' ')[0].substring(0, 5)
-						break
-					case 'date-time':
-						processedValue = newValue.toISOString()
-						break
-					default:
-						processedValue = newValue.toISOString()
-					}
-
-				} catch (e) {
-					processedValue = ''
-				}
-			} else if (newValue === null || newValue === undefined) {
-				processedValue = ''
-			}
-
-			// Update the form data using Vue 2 reactivity
-			this.$set(this.formData, key, processedValue)
-
-		},
-		processDateTimeValue(key, value) {
-			// Get schema information to determine if this is a date/time field
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-
-			if (!schemaProperty || schemaProperty.type !== 'string') {
-				return value
-			}
-
-			const format = schemaProperty.format
-			if (!format || !['date', 'time', 'date-time'].includes(format)) {
-				return value
-			}
-
-			// Helper to format date in local TZ as YYYY-MM-DD
-			const toLocalDateString = date => {
-				if (!(date instanceof Date) || isNaN(date.getTime())) return ''
-				const yyyy = date.getFullYear()
-				const mm = String(date.getMonth() + 1).padStart(2, '0')
-				const dd = String(date.getDate()).padStart(2, '0')
-				return `${yyyy}-${mm}-${dd}`
-			}
-
-			// If value is empty or null, return empty string
-			if (!value || value === '') {
-				return ''
-			}
-
-			// Handle Date objects from NcDateTimePicker
-			if (value instanceof Date) {
-				try {
-					switch (format) {
-					case 'date':
-						// Return YYYY-MM-DD format **in local timezone**
-						return toLocalDateString(value)
-					case 'time':
-						// Return HH:MM format for consistency with HTML time input
-						return value.toTimeString().split(' ')[0].substring(0, 5)
-					case 'date-time':
-						// Return full ISO string
-						return value.toISOString()
-					default:
-						return value.toISOString()
-					}
-				} catch (e) {
-					return ''
-				}
-			}
-
-			// Handle string values (legacy or fallback)
-			try {
-				switch (format) {
-				case 'date':
-					// Expect YYYY-MM-DD string already in local TZ
-					return value
-				case 'time':
-					// HTML time input returns HH:MM, keep as HH:MM for consistency
-					if (value.length === 5 && value.match(/^\d{2}:\d{2}$/)) {
-						return value // Keep as HH:MM
-					}
-					return value
-				case 'date-time': {
-					// HTML datetime-local input returns YYYY-MM-DDTHH:MM
-					if (value.length === 16) {
-						// Add seconds and timezone
-						return `${value}:00.000Z`
-					}
-					return value
-				}
-				default:
-					return value
-				}
-			} catch (e) {
-				return value
-			}
-		},
-		getPropertyInputType(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			if (!schemaProperty) return 'text'
-
-			const type = schemaProperty.type
-			const format = schemaProperty.format
-
-			// Handle different types and formats
-			switch (type) {
-			case 'string':
-				if (format === 'date') return 'date'
-				if (format === 'time') return 'time'
-				if (format === 'date-time') return 'datetime-local'
-				if (format === 'email') return 'email'
-				if (format === 'url' || format === 'uri') return 'url'
-				if (format === 'password') return 'password'
-				return 'text'
-			case 'number':
-			case 'integer':
-				return 'number'
-			case 'boolean':
-				return 'checkbox'
-			default:
-				return 'text'
-			}
-		},
-		getPropertyInputComponent(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			if (!schemaProperty) return 'NcTextField'
-
-			const type = schemaProperty.type
-			const format = schemaProperty.format
-
-			// Handle different types and formats
-			switch (type) {
-			case 'boolean':
-				return 'NcCheckboxRadioSwitch'
-			case 'string':
-				if (format === 'date' || format === 'date-time' || format === 'time') {
-					return 'NcDateTimePicker'
-				}
-				if (format === 'text') {
-					return 'NcTextArea'
-				}
-				if (format === 'markdown') {
-					return 'Editor'
-				}
-				return 'NcTextField'
-			case 'number':
-			case 'integer':
-				return 'NcTextField'
-			case 'array':
-				return 'NcTextFieldArray'
-
-			default:
-				return 'NcTextField'
-			}
-		},
 		getPropertyDisplayName(key) {
 			// Ensure we always have a valid key
 			if (!key || typeof key !== 'string') {
@@ -2160,43 +1261,6 @@ export default {
 			}
 
 			return key
-		},
-		getPropertyTooltip(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-
-			if (schemaProperty?.description) {
-				// If we have both title and description, show both
-				if (schemaProperty.title && schemaProperty.title !== key) {
-					return `${schemaProperty.title}: ${schemaProperty.description}`
-				}
-				// If only description or title same as key, just show description
-				return schemaProperty.description
-			}
-
-			// Fallback to property key info
-			return `Property: ${key}`
-		},
-		getPropertyMinimum(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			return schemaProperty?.minimum
-		},
-		getPropertyMaximum(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			return schemaProperty?.maximum
-		},
-		getPropertyStep(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			if (schemaProperty?.type === 'integer') {
-				return '1'
-			}
-			if (schemaProperty?.type === 'number') {
-				return 'any'
-			}
-			return undefined
 		},
 		getMarkdownEditorOptions(key) {
 			return {
@@ -2260,217 +1324,6 @@ export default {
 			} catch (error) {
 				console.warn('Could not remove borders from editor:', error)
 			}
-		},
-		updateMarkdownValue(key, editorInstance) {
-			// Get the current content from the editor as MARKDOWN
-			let content = ''
-
-			try {
-				// Always prefer markdown output over HTML
-				if (editorInstance && typeof editorInstance.getMarkdown === 'function') {
-					content = editorInstance.getMarkdown()
-				} else if (editorInstance && typeof editorInstance.getHTML === 'function') {
-					// Fallback to HTML if markdown not available
-					content = editorInstance.getHTML()
-				} else {
-					// Fallback: if it's a string, use it directly
-					content = typeof editorInstance === 'string' ? editorInstance : ''
-				}
-			} catch (error) {
-				console.warn('Error getting content from markdown editor:', error)
-				content = ''
-			}
-
-			// Update the form data
-			this.updatePropertyValue(key, content)
-		},
-		getDisplayValue(key, value) {
-			if (key === 'themes') {
-				const themes = objectStore.getCollection('theme').results || []
-				const idToLabel = (id) => {
-					const themeObj = themes.find(t => t.id === id)
-					return themeObj ? (themeObj.title || `#${themeObj.id}`) : id
-				}
-				const currentVal = this.formData[key] !== undefined ? this.formData[key] : value
-				if (Array.isArray(currentVal)) {
-					return currentVal.map(idToLabel).join(', ')
-				}
-				return idToLabel(currentVal)
-			}
-			// Get the schema information to determine format
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			const format = schemaProperty?.format
-
-			// If we have an edited value in formData, use that
-			if (this.formData[key] !== undefined) {
-				const editedValue = this.formData[key]
-
-				// Handle specific format display
-				if (format === 'time' && typeof editedValue === 'string') {
-					// For time format, ensure we show HH:MM without seconds
-					if (editedValue.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
-						return editedValue.substring(0, 5) // Remove seconds if present
-					}
-				}
-
-				// Handle date formatting for edited values
-				if (this.isValidDate(editedValue) && typeof editedValue === 'string' && editedValue.includes('T')) {
-					return new Date(editedValue).toLocaleString()
-				}
-				return editedValue
-			}
-
-			// Handle original value
-			if (value === null || value === undefined) {
-				return ''
-			}
-
-			// Handle specific format display for original values
-			if (format === 'time' && typeof value === 'string') {
-				// For time format, ensure we show HH:MM without seconds
-				if (value.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
-					return value.substring(0, 5) // Remove seconds if present
-				}
-			}
-
-			// Handle date formatting for original values - only if it's actually a date string
-			if (this.isValidDate(value) && typeof value === 'string' && (value.includes('T') || value.includes('-'))) {
-				// Check if it looks like a date (has date separators)
-				const datePattern = /^\d{4}-\d{2}-\d{2}|^\d{1,2}-\d{1,2}-\d{4}/
-				if (datePattern.test(value)) {
-					return new Date(value).toLocaleString()
-				}
-			}
-
-			// For arrays and objects, format them nicely
-			if (Array.isArray(value)) {
-				return JSON.stringify(value)
-			}
-			if (typeof value === 'object' && value !== null) {
-				return JSON.stringify(value)
-			}
-
-			// Return the value as-is for everything else
-			return value
-		},
-		getDateTimeValue(key, value) {
-			// Get the current value (either from formData or original value)
-			const currentValue = this.formData[key] !== undefined ? this.formData[key] : value
-
-			if (!currentValue) {
-				return ''
-			}
-
-			// Get the input type to determine the expected format
-			const inputType = this.getPropertyInputType(key)
-
-			// Convert to appropriate format for the input type
-			try {
-				const date = new Date(currentValue)
-				if (isNaN(date.getTime())) {
-					return ''
-				}
-
-				switch (inputType) {
-				case 'date':
-					// Format as YYYY-MM-DD
-					return date.toISOString().split('T')[0]
-				case 'time':
-					// Format as HH:MM for HTML time input
-					return date.toTimeString().split(' ')[0].substring(0, 5)
-				case 'datetime-local': {
-					// Format as YYYY-MM-DDTHH:MM
-					const isoString = date.toISOString()
-					return isoString.substring(0, 16) // Remove seconds and timezone
-				}
-				default:
-					return currentValue
-				}
-			} catch (e) {
-				return currentValue
-			}
-		},
-		getDateTimePickerValue(key, value) {
-			// Get the current value (either from formData or original value)
-			const currentValue = this.formData[key] !== undefined ? this.formData[key] : value
-
-			if (!currentValue) {
-				return null
-			}
-
-			// Get schema information to handle different date formats properly
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-			const format = schemaProperty?.format
-
-			// NcDateTimePicker expects a Date object or null
-			try {
-				let date
-
-				if (format === 'date') {
-					// For date-only fields, ensure we create the date correctly
-					// to avoid timezone issues
-					if (typeof currentValue === 'string' && currentValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-						// Create date at noon to avoid timezone issues
-						date = new Date(currentValue + 'T12:00:00')
-					} else {
-						date = new Date(currentValue)
-					}
-				} else if (format === 'time') {
-					// For time-only fields, create a date with today's date
-					if (typeof currentValue === 'string' && currentValue.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
-						const today = new Date().toISOString().split('T')[0]
-						date = new Date(today + 'T' + currentValue)
-					} else {
-						date = new Date(currentValue)
-					}
-				} else {
-					// For datetime fields, use as-is
-					date = new Date(currentValue)
-				}
-
-				if (isNaN(date.getTime())) {
-					return null
-				}
-
-				return date
-			} catch (e) {
-				return null
-			}
-		},
-		getDateTimePickerType(key) {
-			const schemaProperties = this.getSchemaProperties()
-			const schemaProperty = schemaProperties[key]
-
-			if (!schemaProperty || !schemaProperty.format) {
-				return 'datetime'
-			}
-
-			let pickerType = 'datetime'
-
-			// Map schema formats to NcDateTimePicker types
-			switch (schemaProperty.format) {
-			case 'date':
-				pickerType = 'date'
-				break
-			case 'date-time':
-				pickerType = 'datetime'
-				break
-			case 'time':
-				pickerType = 'time'
-				break
-			default:
-				// For string type with no specific format, default to datetime
-				if (schemaProperty.type === 'string') {
-					pickerType = 'datetime'
-				} else {
-					pickerType = 'datetime'
-				}
-				break
-			}
-
-			return pickerType
 		},
 		// Publish/Depublish methods
 		openPublishModal() {
@@ -3349,43 +2202,45 @@ export default {
 			}
 		},
 
-		// Enhanced property validation and editing methods (from openregister version)
-		isValidPropertyValue(key, value, schemaProperty) {
-			// Handle null/undefined values
-			if (value === null || value === undefined || value === '') {
-				// Check if property is required
-				const isRequired = schemaProperty.required
-				return !isRequired // Valid if not required, invalid if required
+		// Property-cell helpers used by CnPropertiesTab template
+
+		/**
+		 * Bridge between CnPropertiesTab's `update:property-value` event and `formData`.
+		 * @param {{ key: string, value: * }} payload - The property key and its new value.
+		 */
+		onPropertyValueUpdate({ key, value }) {
+			if (!this.formData || Array.isArray(this.formData)) {
+				this.formData = {}
 			}
+			this.$set(this.formData, key, value)
+		},
 
-			// Validate based on schema type
-			switch (schemaProperty.type) {
-			case 'string':
-				if (typeof value !== 'string') return false
-				// Check format constraints
-				if (schemaProperty.format === 'date-time') {
-					return this.isValidDate(value)
+		/**
+		 * Whether a schema property should render with the Toast UI markdown editor.
+		 * @param {object} schemaProp - The JSON-schema entry for the property.
+		 * @return {boolean}
+		 */
+		isMarkdownProperty(schemaProp) {
+			return !!(schemaProp && schemaProp.type === 'string' && schemaProp.format === 'markdown')
+		},
+
+		/**
+		 * Extract the current content from a Toast UI Editor instance, preferring markdown.
+		 * @param {object} editorInstance - The Toast UI Editor instance from `@load`.
+		 * @return {string}
+		 */
+		getMarkdownContent(editorInstance) {
+			try {
+				if (editorInstance && typeof editorInstance.getMarkdown === 'function') {
+					return editorInstance.getMarkdown()
 				}
-				// Check const constraint
-				if (schemaProperty.const && value !== schemaProperty.const) {
-					return false
+				if (editorInstance && typeof editorInstance.getHTML === 'function') {
+					return editorInstance.getHTML()
 				}
-				return true
-
-			case 'number':
-				return typeof value === 'number' && !isNaN(value)
-
-			case 'boolean':
-				return typeof value === 'boolean'
-
-			case 'array':
-				return Array.isArray(value)
-
-			case 'object':
-				return typeof value === 'object' && value !== null && !Array.isArray(value)
-
-			default:
-				return true // Unknown type, assume valid
+				return typeof editorInstance === 'string' ? editorInstance : ''
+			} catch (error) {
+				console.warn('Error getting content from markdown editor:', error)
+				return ''
 			}
 		},
 	},
