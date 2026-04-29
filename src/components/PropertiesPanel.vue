@@ -23,30 +23,6 @@
 			:property-overrides="propertyOverrides"
 			@update:selected-property="$emit('update:selected-property', $event)"
 			@update:property-value="$emit('update:property-value', $event)">
-			<template #value-cell="{ propertyKey, resolvedValue, isEditing, isEditable, displayName, schemaProp, editabilityWarning, onUpdate }">
-				<Editor
-					v-if="isMarkdownProperty(schemaProp) && isEditing"
-					:key="`editor-${propertyKey}`"
-					:initial-value="String(resolvedValue || '')"
-					:options="getMarkdownEditorOptions(propertyKey)"
-					initial-edit-type="wysiwyg"
-					height="400px"
-					@load="(editor) => $emit('editor-load', { propertyKey, editor })"
-					@blur="$emit('editor-blur', { propertyKey, onUpdate })" />
-				<CnPropertyValueCell
-					v-else
-					:property-key="propertyKey"
-					:schema="resolvedSchema"
-					:value="resolvedValue"
-					:is-editable="isEditable"
-					:is-editing="isEditing"
-					:display-name="displayName"
-					:editability-warning="editabilityWarning"
-					:widget="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].widget) || null"
-					:select-options="(propertyOverrides[propertyKey] && propertyOverrides[propertyKey].selectOptions) || null"
-					:select-multiple="propertyOverrides[propertyKey] ? propertyOverrides[propertyKey].selectMultiple !== false : true"
-					@update:value="onUpdate" />
-			</template>
 			<template #row-actions="{ propertyKey, resolvedValue }">
 				<NcButton
 					v-if="canDropProperty(propertyKey, resolvedValue)"
@@ -67,8 +43,7 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
-import { CnPropertiesTab, CnPropertyValueCell } from '@conduction/nextcloud-vue'
-import { Editor } from '@toast-ui/vue-editor'
+import { CnPropertiesTab } from '@conduction/nextcloud-vue'
 import Close from 'vue-material-design-icons/Close.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
@@ -78,8 +53,6 @@ export default {
 	components: {
 		NcButton,
 		CnPropertiesTab,
-		CnPropertyValueCell,
-		Editor,
 		Close,
 		Eye,
 		EyeOff,
@@ -92,8 +65,6 @@ export default {
 		showConstantProperties: { type: Boolean, default: false },
 		hasConstantOrImmutableProperties: { type: Boolean, default: false },
 		propertyOverrides: { type: Object, default: () => ({}) },
-		isMarkdownProperty: { type: Function, required: true },
-		getMarkdownEditorOptions: { type: Function, required: true },
 		canDropProperty: { type: Function, required: true },
 		getDropPropertyTooltip: { type: Function, required: true },
 	},
@@ -102,8 +73,6 @@ export default {
 		'update:property-value',
 		'update:show-constant-properties',
 		'drop-property',
-		'editor-load',
-		'editor-blur',
 	],
 }
 </script>

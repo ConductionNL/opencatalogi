@@ -78,15 +78,29 @@ import { EventBus } from '../../eventBus.js'
 				</div>
 
 				<!-- For new objects with schema selected, show properties table -->
-				<PropertiesPanel
-					v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)"
-					v-bind="propertiesPanelBindings"
-					@update:selected-property="selectedProperty = $event"
-					@update:show-constant-properties="showConstantProperties = $event"
-					@update:property-value="onPropertyValueUpdate"
-					@drop-property="dropProperty"
-					@editor-load="onEditorLoad"
-					@editor-blur="onEditorBlur" />
+				<template v-else-if="isNewObject && (hasSelectedSchema || allSelectionsComplete)">
+					<NcNoteCard v-if="showRequiredFieldError && hasMissingRequired"
+						type="error"
+						class="required-field-error">
+						Please fill in the required fields: {{ missingRequiredLabels.join(', ') }}.
+					</NcNoteCard>
+					<NcNoteCard v-if="showRequiredFieldError && hasFieldErrors"
+						type="error"
+						class="required-field-error">
+						<p>Some fields have invalid values:</p>
+						<ul>
+							<li v-for="err in fieldErrors" :key="err.key">
+								<strong>{{ err.label }}:</strong> {{ err.error }}
+							</li>
+						</ul>
+					</NcNoteCard>
+					<PropertiesPanel
+						v-bind="propertiesPanelBindings"
+						@update:selected-property="selectedProperty = $event"
+						@update:show-constant-properties="showConstantProperties = $event"
+						@update:property-value="onPropertyValueUpdate"
+						@drop-property="dropProperty" />
+				</template>
 
 				<!-- For existing objects, show tabs -->
 				<div v-else class="tabContainer">
@@ -97,9 +111,7 @@ import { EventBus } from '../../eventBus.js'
 								@update:selected-property="selectedProperty = $event"
 								@update:show-constant-properties="showConstantProperties = $event"
 								@update:property-value="onPropertyValueUpdate"
-								@drop-property="dropProperty"
-								@editor-load="onEditorLoad"
-								@editor-blur="onEditorBlur" />
+								@drop-property="dropProperty" />
 						</BTab>
 						<BTab title="Metadata">
 							<CnMetadataTab
@@ -392,7 +404,10 @@ import { EventBus } from '../../eventBus.js'
 				</template>
 				Delete
 			</NcButton>
-			<NcButton type="primary" :disabled="isSaving" @click="saveObject">
+			<NcButton type="primary"
+				:title="saveButtonTooltip"
+				:disabled="isSaving || !canSave"
+				@click="saveObject">
 				<template #icon>
 					<NcLoadingIcon v-if="isSaving" :size="20" />
 					<ContentSave v-else :size="20" />
@@ -416,7 +431,7 @@ import {
 	NcEmptyContent,
 	NcSelect,
 } from '@nextcloud/vue'
-import { CnMetadataTab } from '@conduction/nextcloud-vue'
+import { CnMetadataTab, validateValue } from '@conduction/nextcloud-vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
@@ -511,6 +526,9 @@ export default {
 
 			// Constant/immutable properties visibility
 			showConstantProperties: false,
+
+			// Validation: turned on after the user tries to save with missing required fields
+			showRequiredFieldError: false,
 
 			// Label editing properties (from UploadFiles.vue)
 			editingTags: null,
@@ -748,11 +766,108 @@ export default {
 				showConstantProperties: this.showConstantProperties,
 				hasConstantOrImmutableProperties: this.hasConstantOrImmutableProperties,
 				propertyOverrides: this.propertyOverrides,
-				isMarkdownProperty: this.isMarkdownProperty,
-				getMarkdownEditorOptions: this.getMarkdownEditorOptions,
 				canDropProperty: this.canDropProperty,
 				getDropPropertyTooltip: this.getDropPropertyTooltip,
 			}
+		},
+
+		/**
+		 * Keys of all schema-required properties (top-level `required` array
+		 * plus per-property `required: true`), excluding metadata keys.
+		 */
+		requiredPropertyKeys() {
+			const schema = this.resolvedSchema
+			if (!schema) return []
+			const props = schema.properties || {}
+			const set = new Set(schema.required || [])
+			for (const [key, prop] of Object.entries(props)) {
+				if (prop && prop.required === true) set.add(key)
+			}
+			set.delete('@self')
+			set.delete('id')
+			return [...set]
+		},
+
+		/**
+		 * Required keys whose effective value (formData override or current object value)
+		 * is empty. Used to disable Save and surface an inline error.
+		 */
+		missingRequiredKeys() {
+			const result = []
+			const obj = this.currentObject || {}
+			for (const key of this.requiredPropertyKeys) {
+				const value = Object.prototype.hasOwnProperty.call(this.formData, key)
+					? this.formData[key]
+					: obj[key]
+				if (value === null || value === undefined || value === '') {
+					result.push(key)
+					continue
+				}
+				if (Array.isArray(value) && value.length === 0) {
+					result.push(key)
+				}
+			}
+			return result
+		},
+
+		/** Human-readable labels for the missing required keys. */
+		missingRequiredLabels() {
+			const props = this.resolvedSchema?.properties || {}
+			return this.missingRequiredKeys.map((key) => props[key]?.title || key)
+		},
+
+		hasMissingRequired() {
+			return this.missingRequiredKeys.length > 0
+		},
+
+		/**
+		 * Per-property validation errors (type, length, format, range, pattern, ...)
+		 * for any property that has a non-empty value. Required-emptiness is tracked
+		 * separately by `missingRequiredKeys`.
+		 *
+		 * @return {Array<{ key: string, label: string, error: string }>}
+		 */
+		fieldErrors() {
+			const schema = this.resolvedSchema
+			if (!schema) return []
+			const props = schema.properties || {}
+			const obj = this.currentObject || {}
+			const errors = []
+			for (const [key, prop] of Object.entries(props)) {
+				if (!prop || prop.hideOnForm === true) continue
+				if (key === '@self' || key === 'id') continue
+				const value = Object.prototype.hasOwnProperty.call(this.formData, key)
+					? this.formData[key]
+					: obj[key]
+				if (value === null || value === undefined || value === '') continue
+				const err = validateValue(value, prop)
+				if (err) {
+					errors.push({
+						key,
+						label: prop.title || key,
+						error: err,
+					})
+				}
+			}
+			return errors
+		},
+
+		hasFieldErrors() {
+			return this.fieldErrors.length > 0
+		},
+
+		canSave() {
+			return !this.hasMissingRequired && !this.hasFieldErrors
+		},
+
+		saveButtonTooltip() {
+			if (this.hasMissingRequired) {
+				return `Required fields missing: ${this.missingRequiredLabels.join(', ')}`
+			}
+			if (this.hasFieldErrors) {
+				return `Invalid fields: ${this.fieldErrors.map((e) => e.label).join(', ')}`
+			}
+			return ''
 		},
 	},
 	watch: {
@@ -791,11 +906,20 @@ export default {
 			handler(newSchema) {
 				if (!newSchema) {
 					this.showProperties = false
-				} else if (this.allSelectionsComplete) {
-					// Automatically show properties when all selections are complete
+					return
+				}
+				if (this.allSelectionsComplete) {
 					this.showProperties = true
 				}
+				// Seed formData with schema-declared defaults / consts so the user
+				// sees pre-filled values when creating a new object.
+				if (this.isNewObject) {
+					this.applySchemaDefaults(newSchema)
+				}
 			},
+		},
+		canSave(ok) {
+			if (ok) this.showRequiredFieldError = false
 		},
 	},
 	mounted() {
@@ -1008,6 +1132,13 @@ export default {
 			}
 		},
 		async saveObject() {
+			// Block saving while required schema fields are still empty,
+			// or any populated field has an active validation error.
+			if (!this.canSave) {
+				this.showRequiredFieldError = true
+				return
+			}
+
 			this.isSaving = true
 
 			try {
@@ -1615,13 +1746,16 @@ export default {
 				return false
 			}
 
-			// Show drop button if:
-			// 1. Property has a value (either in formData or original object)
-			// 2. Property exists in current object or has been edited
-			const hasFormValue = this.formData[key] !== undefined
-			const hasOriginalValue = this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)
-
-			return hasFormValue || hasOriginalValue
+			// Hide the X when there's effectively nothing to clear. Use the
+			// resolved value (formData override falls back to the persisted
+			// object value) so a property cleared in the form drops the X.
+			const resolved = Object.prototype.hasOwnProperty.call(this.formData, key)
+				? this.formData[key]
+				: (this.currentObject && this.currentObject[key])
+			if (resolved === null || resolved === undefined || resolved === '') return false
+			if (Array.isArray(resolved) && resolved.length === 0) return false
+			if (typeof resolved === 'object' && Object.keys(resolved).length === 0) return false
+			return true
 		},
 		/**
 		 * Check if a property is constant or immutable
@@ -1675,33 +1809,18 @@ export default {
 			const isSchemaProperty = Object.prototype.hasOwnProperty.call(schemaProperties, key)
 
 			if (isSchemaProperty) {
-				// For schema properties, reset to appropriate default/null value
+				// Clear the value: null for primitives, empty container for
+				// arrays/objects. `null`/`''` is what the validator and the
+				// display logic both treat as empty, so the X-button gate
+				// (canDropProperty) hides itself afterward.
 				const schemaProperty = schemaProperties[key]
-				let defaultValue = null
-
+				let cleared = null
 				switch (schemaProperty.type) {
-				case 'string':
-					defaultValue = schemaProperty.const || ''
-					break
-				case 'number':
-				case 'integer':
-					defaultValue = 0
-					break
-				case 'boolean':
-					defaultValue = false
-					break
-				case 'array':
-					defaultValue = []
-					break
-				case 'object':
-					defaultValue = {}
-					break
-				default:
-					defaultValue = ''
+				case 'array': cleared = []; break
+				case 'object': cleared = {}; break
+				default: cleared = null
 				}
-
-				// Set the default value in formData
-				this.$set(this.formData, key, defaultValue)
+				this.$set(this.formData, key, cleared)
 			} else {
 				// For non-schema properties, remove completely from formData
 				if (this.formData[key] !== undefined) {
@@ -1732,6 +1851,26 @@ export default {
 				this.formData = {}
 			}
 			this.$set(this.formData, key, value)
+		},
+
+		/**
+		 * Pre-fill formData with schema `default` / `const` values for properties
+		 * the user hasn't already touched. Called when a schema is selected for
+		 * a new object so visible inputs aren't empty.
+		 * @param {object} schema - The schema whose properties to seed from.
+		 */
+		applySchemaDefaults(schema) {
+			const props = schema?.properties || {}
+			for (const [key, prop] of Object.entries(props)) {
+				if (!prop) continue
+				if (prop.hideOnForm === true) continue
+				if (Object.prototype.hasOwnProperty.call(this.formData, key)) continue
+				if (prop.default !== undefined) {
+					this.$set(this.formData, key, prop.default)
+				} else if (prop.const !== undefined) {
+					this.$set(this.formData, key, prop.const)
+				}
+			}
 		},
 
 		onEditorLoad({ propertyKey, editor }) {
