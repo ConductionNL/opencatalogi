@@ -222,10 +222,10 @@ export default {
 			objectStore.setSelectedObjects(selectedObjects)
 		},
 		onPageChanged(page) {
-			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 })
+			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 }, this.$route.params.catalogSlug)
 		},
 		onPageSizeChanged(pageSize) {
-			catalogStore.fetchPublications({ page: 1, limit: pageSize })
+			catalogStore.fetchPublications({ page: 1, limit: pageSize }, this.$route.params.catalogSlug)
 		},
 		addPublication() {
 			objectStore.setActiveObject('publication', null)
@@ -234,7 +234,7 @@ export default {
 		async refreshPublications() {
 			this.isRefreshing = true
 			try {
-				await catalogStore.fetchPublications()
+				await catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
 				objectStore.setSelectedObjects([])
 			} finally {
 				this.isRefreshing = false
