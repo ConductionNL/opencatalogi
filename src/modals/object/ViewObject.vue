@@ -97,7 +97,6 @@ import { EventBus } from '../../eventBus.js'
 					<PropertiesPanel
 						v-bind="propertiesPanelBindings"
 						@update:selected-property="selectedProperty = $event"
-						@update:show-constant-properties="showConstantProperties = $event"
 						@update:property-value="onPropertyValueUpdate"
 						@drop-property="dropProperty" />
 				</template>
@@ -109,7 +108,6 @@ import { EventBus } from '../../eventBus.js'
 							<PropertiesPanel
 								v-bind="propertiesPanelBindings"
 								@update:selected-property="selectedProperty = $event"
-								@update:show-constant-properties="showConstantProperties = $event"
 								@update:property-value="onPropertyValueUpdate"
 								@drop-property="dropProperty" />
 						</BTab>
@@ -524,9 +522,6 @@ export default {
 			selectedSchema: null,
 			showProperties: false,
 
-			// Constant/immutable properties visibility
-			showConstantProperties: false,
-
 			// Validation: turned on after the user tries to save with missing required fields
 			showRequiredFieldError: false,
 
@@ -636,15 +631,6 @@ export default {
 				['Published', fmtDate(obj['@self']?.published, 'Not published')],
 				['Depublished', fmtDate(obj['@self']?.depublished, 'Not depublished')],
 			]
-		},
-		/**
-		 * Whether the resolved schema has any properties marked const/immutable. Used to gate the
-		 * "show constant & immutable properties" toggle button.
-		 */
-		hasConstantOrImmutableProperties() {
-			const props = this.resolvedSchema?.properties
-			if (!props) return false
-			return Object.values(props).some(p => p && (p.const !== undefined || p.immutable === true || p.readOnly === true))
 		},
 		// Files tab computed properties
 		paginatedFiles() {
@@ -763,8 +749,6 @@ export default {
 				currentObject: this.currentObject,
 				formData: this.formData,
 				selectedProperty: this.selectedProperty,
-				showConstantProperties: this.showConstantProperties,
-				hasConstantOrImmutableProperties: this.hasConstantOrImmutableProperties,
 				propertyOverrides: this.propertyOverrides,
 				canDropProperty: this.canDropProperty,
 				getDropPropertyTooltip: this.getDropPropertyTooltip,
