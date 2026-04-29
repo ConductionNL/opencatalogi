@@ -216,7 +216,7 @@ export default {
 			}
 		},
 		onPageChange(page) {
-			objectStore.fetchCollection('listing', { _page: page })
+			objectStore.fetchCollection('listing', { _page: page, _limit: this.currentPagination.limit || 20 })
 		},
 		onPageSizeChange(size) {
 			objectStore.fetchCollection('listing', { _page: 1, _limit: size })
