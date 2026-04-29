@@ -221,7 +221,7 @@ export default {
 			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save organization' }) }
 		},
 		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('organization') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page }) },
+		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page, _limit: this.currentPagination.limit || 20 }) },
 		onPageSizeChange(size) { objectStore.fetchCollection('organization', { _page: 1, _limit: size }) },
 		onSelect(ids) { this.selectedIds = ids; objectStore.setSelectedObjects(ids) },
 		onRowClick(row) { objectStore.setActiveObject('organization', row); navigationStore.setModal('viewOrganization') },
