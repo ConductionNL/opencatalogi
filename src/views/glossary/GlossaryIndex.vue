@@ -209,7 +209,7 @@ export default {
 			}
 		},
 		onPageChange(page) {
-			objectStore.fetchCollection('glossary', { _page: page })
+			objectStore.fetchCollection('glossary', { _page: page, _limit: this.currentPagination.limit || 20 })
 		},
 		onPageSizeChange(size) {
 			objectStore.fetchCollection('glossary', { _page: 1, _limit: size })
