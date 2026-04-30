@@ -16,6 +16,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					:clearable="false"
 					:searchable="false"
 					label-attribute="label"
+					:aria-label-combobox="t('opencatalogi', 'Publishing mode')"
 					:disabled="loading">
 					<template #option="option">
 						<span :title="option.title || ''"
