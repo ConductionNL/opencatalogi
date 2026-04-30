@@ -51,6 +51,12 @@ export const useCatalogStore = defineStore('catalog', {
 
 		/** @type {string|null} */
 		lastCatalogId: null,
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		schemas: {},
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		registers: {},
 	}),
 
 	actions: {
@@ -161,6 +167,14 @@ export const useCatalogStore = defineStore('catalog', {
 				this.pagination = {
 					page: data.page || 1,
 					limit: data.limit || 20,
+				}
+
+				// Store schema and register metadata from root @self for name lookups
+				if (data['@self']?.schemas) {
+					this.schemas = data['@self'].schemas
+				}
+				if (data['@self']?.registers) {
+					this.registers = data['@self'].registers
 				}
 
 				// Process each publication to register its type in the object store
