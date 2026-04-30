@@ -71,9 +71,18 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</span>
 		</template>
 
-		<!-- Custom column: published date -->
+		<!-- Custom column: status -->
 		<template #column-published="{ row }">
-			{{ row.publicatiedatum ? formatDate(row.publicatiedatum) : t('opencatalogi', 'No') }}
+			<template v-if="getPublicationStatus(row) === 'concept'">
+				<span v-if="row.publicatiedatum">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicatiedatum) }}</span>
+				<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
+			</template>
+			<template v-else-if="getPublicationStatus(row) === 'published'">
+				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicatiedatum) }}
+			</template>
+			<template v-else>
+				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicatiedatum) }}
+			</template>
 		</template>
 
 		<!-- Custom column: files count -->
@@ -143,7 +152,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import { NcActions, NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
-import { isPublished } from '../../services/publicationStatus.js'
+import { isPublished, getPublicationStatus } from '../../services/publicationStatus.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
@@ -181,7 +190,7 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true },
-				{ key: 'published', label: t('opencatalogi', 'Published'), sortable: true },
+				{ key: 'published', label: t('opencatalogi', 'Status'), sortable: true },
 				{ key: 'files', label: t('opencatalogi', 'Files') },
 				{ key: 'updated', label: t('opencatalogi', 'Updated'), sortable: true },
 			]
@@ -287,6 +296,7 @@ export default {
 			return isPublished(publication)
 		},
 		getValidISOstring,
+		getPublicationStatus,
 	},
 }
 </script>
