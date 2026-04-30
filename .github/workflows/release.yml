@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    branches: [main, beta, development]
+
+jobs:
+  unstable:
+    if: github.ref == 'refs/heads/development'
+    uses: ConductionNL/.github/.github/workflows/release.yml@main
+    with:
+      release-type: unstable
+      app-name: opencatalogi
+    secrets: inherit
+
+  beta:
+    if: github.ref == 'refs/heads/beta'
+    uses: ConductionNL/.github/.github/workflows/release.yml@main
+    with:
+      release-type: beta
+      app-name: opencatalogi
+    secrets: inherit
+
+  stable:
+    if: github.ref == 'refs/heads/main'
+    uses: ConductionNL/.github/.github/workflows/release.yml@main
+    with:
+      release-type: stable
+      app-name: opencatalogi
+    secrets: inherit
