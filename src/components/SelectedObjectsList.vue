@@ -190,13 +190,15 @@ export default {
 		 * @return {string} The schema name or fallback text
 		 */
 		getObjectSchema(obj) {
-			// Try to get schema name from various possible locations
 			const schema = obj['@self']?.schema || obj.schema
 
-			if (typeof schema === 'object') {
-				return schema.name || schema.title || schema.id || 'Unknown Schema'
-			} else if (typeof schema === 'string') {
-				return schema
+			if (schema && typeof schema === 'object') {
+				return schema.title || schema.name || schema.id || 'Unknown Schema'
+			}
+
+			if (schema != null && schema !== '') {
+				const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schema))
+				return match?.title || match?.name || String(schema)
 			}
 
 			return 'No Schema'

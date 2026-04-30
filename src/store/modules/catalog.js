@@ -169,26 +169,31 @@ export const useCatalogStore = defineStore('catalog', {
 					limit: data.limit || 20,
 				}
 
-				// Store schema and register metadata from root @self for name lookups
-				if (data['@self']?.schemas) {
-					this.schemas = data['@self'].schemas
-				}
-				if (data['@self']?.registers) {
-					this.registers = data['@self'].registers
-				}
-
-				// Process each publication to register its type in the object store
+				// Process each publication to register its type in the object store.
+				// The backend returns per-publication @self.schema / @self.register as IDs,
+				// with the resolved schema/register objects on data['@self'].schemas / .registers
+				// (keyed by id). Older shapes embedded the full object on the publication itself.
+				const schemasMap = data['@self']?.schemas || {}
+				const registersMap = data['@self']?.registers || {}
 				for (const publication of data.results || []) {
-					if (publication.schema && publication.register) {
-						const slug = publication.schema.slug
-						if (!this.registeredTypes.has(slug)) {
-							await objectStore.registerObjectType(
-								slug,
-								publication.schema.id,
-								publication.register.id,
-							)
-							this.registeredTypes.add(slug)
-						}
+					const schemaRef = publication['@self']?.schema ?? publication.schema
+					const registerRef = publication['@self']?.register ?? publication.register
+					if (!schemaRef || !registerRef) continue
+
+					const schemaObj = typeof schemaRef === 'object'
+						? schemaRef
+						: schemasMap[String(schemaRef)] || schemasMap[Number(schemaRef)]
+					const registerObj = typeof registerRef === 'object'
+						? registerRef
+						: registersMap[String(registerRef)] || registersMap[Number(registerRef)]
+
+					const slug = schemaObj?.slug
+					const schemaId = schemaObj?.id ?? schemaRef
+					const registerId = registerObj?.id ?? registerRef
+
+					if (slug && !this.registeredTypes.has(slug)) {
+						await objectStore.registerObjectType(slug, schemaId, registerId)
+						this.registeredTypes.add(slug)
 					}
 				}
 

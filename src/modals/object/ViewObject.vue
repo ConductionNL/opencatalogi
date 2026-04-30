@@ -995,24 +995,16 @@ export default {
 
 			// Try to get schema name from the object itself
 			let schemaName = 'Publication'
+			const rawSchema = this.currentObject.schema ?? this.currentObject['@self']?.schema
 
-			// Check if schema is an object with title/name properties
-			if (this.currentObject.schema && typeof this.currentObject.schema === 'object') {
-				schemaName = this.currentObject.schema.title
-					|| this.currentObject.schema.name
-					|| this.currentObject.schema.id
+			if (rawSchema && typeof rawSchema === 'object') {
+				schemaName = rawSchema.title
+					|| rawSchema.name
+					|| rawSchema.id
 					|| 'Publication'
-			} else if (this.currentObject['@self']?.schema && typeof this.currentObject['@self'].schema === 'object') {
-				// Check if @self.schema is an object with title/name properties
-				schemaName = this.currentObject['@self'].schema.title
-					|| this.currentObject['@self'].schema.name
-					|| this.currentObject['@self'].schema.id
-					|| 'Publication'
-			} else if (typeof this.currentObject['@self']?.schema === 'string') {
-				// Look up the schema title from the catalog store's metadata map
-				const schemaId = this.currentObject['@self'].schema
-				const schemaMeta = catalogStore.schemas?.[schemaId]
-				schemaName = schemaMeta?.title || schemaMeta?.slug || schemaId
+			} else if (rawSchema != null && rawSchema !== '') {
+				const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(rawSchema))
+				schemaName = match?.title || match?.name || String(rawSchema)
 			}
 
 			return `${name} (${schemaName})`
