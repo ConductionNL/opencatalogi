@@ -68,7 +68,6 @@ import ObjectModal from './object/ObjectModal.vue'
 // Object Modals
 import ViewObject from './object/ViewObject.vue'
 
-import DeleteObject from './object/DeleteObject.vue'
 import MergeObject from './object/MergeObject.vue'
 import UploadObject from './object/UploadObject.vue'
 import DownloadObject from './object/DownloadObject.vue'
@@ -106,7 +105,6 @@ export default {
 		ObjectModal,
 		// Object Modals
 		ViewObject,
-		DeleteObject,
 		MergeObject,
 		UploadObject,
 		DownloadObject,
