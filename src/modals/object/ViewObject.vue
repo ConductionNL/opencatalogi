@@ -3030,31 +3030,37 @@ export default {
 		getSchemaProperties() {
 			let properties = {}
 
+			const findSchema = (schemaId) => objectStore.availableSchemas.find(
+				schema => String(schema.id) === String(schemaId)
+					|| schema.uuid === schemaId
+					|| schema.slug === schemaId,
+			)
+
 			// For new objects, use the selected schema
 			if (this.isNewObject && this.selectedSchema) {
-				const fullSchema = objectStore.availableSchemas.find(schema => schema.id === this.selectedSchema.id)
+				const fullSchema = findSchema(this.selectedSchema.id)
 				properties = fullSchema?.properties || {}
 			} else if (this.currentObject && this.currentObject['@self']?.schema) {
 				// For existing objects, try to get schema from the object's schema reference
 				const schemaRef = this.currentObject['@self'].schema
-				let schemaId = null
 
-				// Handle both object and string schema references
-				if (typeof schemaRef === 'object') {
-					schemaId = schemaRef.id || schemaRef.uuid
-				} else {
-					schemaId = schemaRef
+				// If schema is already an extended object, use its properties directly
+				if (typeof schemaRef === 'object' && schemaRef !== null && schemaRef.properties) {
+					return schemaRef.properties
 				}
 
+				// Handle both object and string schema references
+				// @self.schema can be a UUID string, numeric ID, or slug — match against all
+				const schemaId = typeof schemaRef === 'object' && schemaRef !== null
+					? (schemaRef.id || schemaRef.uuid)
+					: schemaRef
+
 				if (schemaId) {
-					const fullSchema = objectStore.availableSchemas.find(schema => schema.id === schemaId)
+					const fullSchema = findSchema(schemaId)
 					if (fullSchema?.properties) {
 						properties = fullSchema.properties
 					}
 				}
-			} else if (this.currentSchema?.properties) {
-				// Try to get schema properties from the catalogStore
-				properties = this.currentSchema.properties
 			}
 
 			return properties
