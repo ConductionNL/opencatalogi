@@ -996,8 +996,10 @@ export default {
 					|| this.currentObject['@self'].schema.id
 					|| 'Publication'
 			} else if (typeof this.currentObject['@self']?.schema === 'string') {
-				// If it's a string, use it directly
-				schemaName = this.currentObject['@self'].schema
+				// Look up the schema title from the catalog store's metadata map
+				const schemaId = this.currentObject['@self'].schema
+				const schemaMeta = catalogStore.schemas?.[schemaId]
+				schemaName = schemaMeta?.title || schemaMeta?.slug || schemaId
 			}
 
 			return `${name} (${schemaName})`
