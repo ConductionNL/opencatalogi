@@ -204,8 +204,14 @@ export default {
 		},
 
 		/**
-		 * Determine if an object is currently depublished: depublish date is the
-		 * most recent, or the only one set. Tiebreaker on equal dates: depublish wins.
+		 * Determine if an object is currently depublished: depublish date is set,
+		 * has already passed (today or earlier), and is the most recent of
+		 * publicatiedatum/depublicatiedatum. A future depublicatiedatum means the
+		 * item is *scheduled* to be depublished but is still published today, so
+		 * it should NOT be treated as depublished here — the user must be able to
+		 * reschedule or depublish it immediately.
+		 *
+		 * Tiebreaker on equal dates: depublish wins.
 		 *
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently depublished
@@ -213,6 +219,7 @@ export default {
 		isDepublished(obj) {
 			const depub = this.normalizeDate(obj?.depublicatiedatum)
 			if (!depub) return false
+			if (depub > this.today) return false
 			const pub = this.normalizeDate(obj?.publicatiedatum)
 			if (!pub) return true
 			return depub >= pub
