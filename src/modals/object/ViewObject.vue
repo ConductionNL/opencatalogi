@@ -553,14 +553,27 @@ export default {
 			if (this.isNewObject && this.selectedSchema) {
 				return objectStore.availableSchemas.find(schema => schema.id === this.selectedSchema.id) || null
 			}
-			if (this.currentObject && this.currentObject['@self']?.schema) {
-				const schemaRef = this.currentObject['@self'].schema
-				const schemaId = typeof schemaRef === 'object' ? (schemaRef.id || schemaRef.uuid) : schemaRef
-				if (schemaId) {
-					return objectStore.availableSchemas.find(schema => schema.id === schemaId) || null
-				}
+			const schemaRef = this.currentObject?.['@self']?.schema
+			if (!schemaRef) return null
+
+			// `@self.schema` is the full embedded schema object when the API
+			// extends it; prefer it directly so we keep `properties`.
+			if (typeof schemaRef === 'object' && schemaRef.properties) {
+				return schemaRef
 			}
-			return null
+
+			// Fall back to looking up by id/uuid in availableSchemas. The id
+			// in @self.schema arrives as a string (e.g. "1") while
+			// availableSchemas[i].id is a number — match on both id and uuid
+			// using loose comparison, plus slug as a last resort.
+			const schemaId = typeof schemaRef === 'object' ? (schemaRef.id ?? schemaRef.uuid ?? schemaRef.slug) : schemaRef
+			if (schemaId === null || schemaId === undefined || schemaId === '') return null
+			const idStr = String(schemaId)
+			return objectStore.availableSchemas.find(schema =>
+				String(schema.id) === idStr
+				|| String(schema.uuid) === idStr
+				|| String(schema.slug) === idStr,
+			) || null
 		},
 		/**
 		 * Per-property cell-config overrides forwarded into CnPropertiesTab → CnPropertyValueCell.
