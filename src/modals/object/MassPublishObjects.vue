@@ -16,6 +16,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					:clearable="false"
 					:searchable="false"
 					label-attribute="label"
+					:aria-label-combobox="t('opencatalogi', 'Publishing mode')"
 					:disabled="loading">
 					<template #option="option">
 						<span :title="option.title || ''"
@@ -184,12 +185,12 @@ export default {
 		},
 		infoText() {
 			if (this.mode === 'later') {
-				return t('opencatalogi', 'The publication date will be set to the chosen date. If any objects have a depublication date set, it will remain unchanged.')
+				return t('opencatalogi', 'The publication date will be set to the chosen date. Any existing depublication date will be removed.')
 			}
 			if (this.mode === 'retroactive') {
 				return t('opencatalogi', 'The depublish date will be removed. The publish date will not change.')
 			}
-			return t('opencatalogi', 'Publications will be published with today\'s date. If any objects have a depublication date set, it will remain unchanged.')
+			return t('opencatalogi', 'Publications will be published with today\'s date. Any existing depublication date will be removed.')
 		},
 		submitDisabled() {
 			if (this.loading) return true
@@ -360,6 +361,7 @@ export default {
 						clone.depublicatiedatum = null
 					} else {
 						clone.publicatiedatum = targetDate
+						clone.depublicatiedatum = null
 					}
 
 					const register = clone['@self']?.register ?? clone.register
