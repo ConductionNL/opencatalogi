@@ -662,8 +662,6 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 <script>
 import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcNoteCard, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTab, BTabs, BPagination } from 'bootstrap-vue'
-import VueApexCharts from 'vue-apexcharts'
-
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -704,7 +702,6 @@ export default {
 		NcCheckboxRadioSwitch,
 		BTab,
 		BTabs,
-		apexchart: VueApexCharts,
 	},
 	data() {
 		return {

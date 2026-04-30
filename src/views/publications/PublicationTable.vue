@@ -34,7 +34,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		@page-size-changed="onPageSizeChanged"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
-		@row-click="viewPublication">
+		@row-click="toggleSelection">
 		<!-- Mass actions -->
 		<template #action-items>
 			<NcActionButton close-after-click
@@ -63,6 +63,66 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcActionButton>
 		</template>
 
+		<!-- Card view: custom publication card -->
+		<template #card="{ object, selected }">
+			<PublicationCard
+				:object="object"
+				:selected="selected"
+				:selectable="true"
+				@click="toggleSelection(object)"
+				@select="toggleSelection(object)">
+				<template #actions="{ object: pub }">
+					<NcActions>
+						<template #icon>
+							<DotsHorizontal :size="20" />
+						</template>
+						<NcActionButton close-after-click @click="viewPublication(pub)">
+							<template #icon>
+								<Pencil :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Edit') }}
+						</NcActionButton>
+						<NcActionButton close-after-click @click="copyPublication(pub)">
+							<template #icon>
+								<ContentCopy :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Copy') }}
+						</NcActionButton>
+						<NcActionButton
+							v-if="shouldShowPublishAction(pub)"
+							close-after-click
+							@click="singlePublishPublication(pub)">
+							<template #icon>
+								<Publish :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Publish') }}
+						</NcActionButton>
+						<NcActionButton
+							v-if="shouldShowDepublishAction(pub)"
+							close-after-click
+							@click="singleDepublishPublication(pub)">
+							<template #icon>
+								<PublishOff :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Depublish') }}
+						</NcActionButton>
+						<NcActionButton close-after-click @click="addAttachment(pub)">
+							<template #icon>
+								<FilePlusOutline :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Add Attachment') }}
+						</NcActionButton>
+						<NcActionButton close-after-click @click="singleDeletePublication(pub)">
+							<template #icon>
+								<TrashCanOutline :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Delete') }}
+						</NcActionButton>
+					</NcActions>
+				</template>
+			</PublicationCard>
+		</template>
+
 		<!-- Custom column: name with published icon -->
 		<template #column-name="{ row }">
 			<span class="titleWithIcon">
@@ -71,9 +131,18 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</span>
 		</template>
 
-		<!-- Custom column: published date -->
+		<!-- Custom column: status -->
 		<template #column-published="{ row }">
-			{{ row['@self']?.published ? formatDate(row['@self'].published) : t('opencatalogi', 'No') }}
+			<template v-if="getPublicationStatus(row) === 'concept'">
+				<span v-if="row.publicatiedatum">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicatiedatum) }}</span>
+				<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
+			</template>
+			<template v-else-if="getPublicationStatus(row) === 'published'">
+				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicatiedatum) }}
+			</template>
+			<template v-else>
+				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicatiedatum) }}
+			</template>
 		</template>
 
 		<!-- Custom column: files count -->
@@ -143,6 +212,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import { NcActions, NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
+import { isPublished, getPublicationStatus } from '../../services/publicationStatus.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
@@ -152,6 +222,7 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
+import PublicationCard from '../../components/PublicationCard.vue'
 
 export default {
 	name: 'PublicationTable',
@@ -169,6 +240,7 @@ export default {
 		PublishOff,
 		FilePlusOutline,
 		PublishedIcon,
+		PublicationCard,
 	},
 	data() {
 		return {
@@ -180,7 +252,7 @@ export default {
 		tableColumns() {
 			return [
 				{ key: 'name', label: t('opencatalogi', 'Name'), sortable: true },
-				{ key: 'published', label: t('opencatalogi', 'Published'), sortable: true },
+				{ key: 'published', label: t('opencatalogi', 'Status'), sortable: true },
 				{ key: 'files', label: t('opencatalogi', 'Files') },
 				{ key: 'updated', label: t('opencatalogi', 'Updated'), sortable: true },
 			]
@@ -222,10 +294,10 @@ export default {
 			objectStore.setSelectedObjects(selectedObjects)
 		},
 		onPageChanged(page) {
-			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 })
+			catalogStore.fetchPublications({ page, limit: this.currentPagination.limit || 20 }, this.$route.params.catalogSlug)
 		},
 		onPageSizeChanged(pageSize) {
-			catalogStore.fetchPublications({ page: 1, limit: pageSize })
+			catalogStore.fetchPublications({ page: 1, limit: pageSize }, this.$route.params.catalogSlug)
 		},
 		addPublication() {
 			objectStore.setActiveObject('publication', null)
@@ -234,7 +306,7 @@ export default {
 		async refreshPublications() {
 			this.isRefreshing = true
 			try {
-				await catalogStore.fetchPublications()
+				await catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
 				objectStore.setSelectedObjects([])
 			} finally {
 				this.isRefreshing = false
@@ -280,12 +352,21 @@ export default {
 			navigationStore.setDialog('massDepublishObjects')
 		},
 		shouldShowPublishAction(publication) {
-			return !publication['@self']?.published || publication['@self']?.depublished
+			return !isPublished(publication)
 		},
 		shouldShowDepublishAction(publication) {
-			return publication['@self']?.published && !publication['@self']?.depublished
+			return isPublished(publication)
 		},
 		getValidISOstring,
+		getPublicationStatus,
+		toggleSelection(object) {
+			const id = object['@self']?.id || object.id
+			const currentIds = [...this.selectedPublicationIds]
+			const newIds = currentIds.includes(id)
+				? currentIds.filter(i => i !== id)
+				: [...currentIds, id]
+			this.onSelect(newIds)
+		},
 	},
 }
 </script>

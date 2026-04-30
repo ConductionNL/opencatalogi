@@ -48,6 +48,15 @@ export const useCatalogStore = defineStore('catalog', {
 			page: 1,
 			limit: 20,
 		},
+
+		/** @type {string|null} */
+		lastCatalogId: null,
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		schemas: {},
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		registers: {},
 	}),
 
 	actions: {
@@ -110,10 +119,13 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @return {Promise<void>}
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			if (!catalogId && !this.activeCatalog) {
+			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId
+			if (!resolvedCatalogId) {
 				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
 				return
 			}
+
+			this.lastCatalogId = resolvedCatalogId
 
 			this.loading = true
 			objectStore.setLoading('publication', true)
@@ -135,7 +147,7 @@ export const useCatalogStore = defineStore('catalog', {
 			const queryParams = new URLSearchParams(searchParams)
 
 			try {
-				const catalogIdToUse = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id
+				const catalogIdToUse = resolvedCatalogId
 
 				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
 				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
@@ -155,6 +167,14 @@ export const useCatalogStore = defineStore('catalog', {
 				this.pagination = {
 					page: data.page || 1,
 					limit: data.limit || 20,
+				}
+
+				// Store schema and register metadata from root @self for name lookups
+				if (data['@self']?.schemas) {
+					this.schemas = data['@self'].schemas
+				}
+				if (data['@self']?.registers) {
+					this.registers = data['@self'].registers
 				}
 
 				// Process each publication to register its type in the object store

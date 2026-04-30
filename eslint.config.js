@@ -15,6 +15,8 @@ const compat = new FlatCompat({
 })
 
 module.exports = defineConfig([
+	{ ignores: ['l10n/**'] },
+
 	...compat.extends('@nextcloud'),
 
 	{
