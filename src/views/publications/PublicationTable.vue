@@ -73,7 +73,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 		<!-- Custom column: published date -->
 		<template #column-published="{ row }">
-			{{ row['@self']?.published ? formatDate(row['@self'].published) : t('opencatalogi', 'No') }}
+			{{ row.publicatiedatum ? formatDate(row.publicatiedatum) : t('opencatalogi', 'No') }}
 		</template>
 
 		<!-- Custom column: files count -->
@@ -143,6 +143,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 import { NcActions, NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
+import { isPublished } from '../../services/publicationStatus.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
@@ -280,10 +281,10 @@ export default {
 			navigationStore.setDialog('massDepublishObjects')
 		},
 		shouldShowPublishAction(publication) {
-			return !publication['@self']?.published || publication['@self']?.depublished
+			return !isPublished(publication)
 		},
 		shouldShowDepublishAction(publication) {
-			return publication['@self']?.published && !publication['@self']?.depublished
+			return isPublished(publication)
 		},
 		getValidISOstring,
 	},
