@@ -34,7 +34,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		@page-size-changed="onPageSizeChanged"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
-		@row-click="viewPublication">
+		@row-click="toggleSelection">
 		<!-- Mass actions -->
 		<template #action-items>
 			<NcActionButton close-after-click
@@ -61,6 +61,66 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</template>
 				{{ t('opencatalogi', 'Depublish Selected') }}
 			</NcActionButton>
+		</template>
+
+		<!-- Card view: custom publication card -->
+		<template #card="{ object, selected }">
+			<PublicationCard
+				:object="object"
+				:selected="selected"
+				:selectable="true"
+				@click="toggleSelection(object)"
+				@select="toggleSelection(object)">
+				<template #actions="{ object: pub }">
+					<NcActions>
+						<template #icon>
+							<DotsHorizontal :size="20" />
+						</template>
+						<NcActionButton close-after-click @click="viewPublication(pub)">
+							<template #icon>
+								<Pencil :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Edit') }}
+						</NcActionButton>
+						<NcActionButton close-after-click @click="copyPublication(pub)">
+							<template #icon>
+								<ContentCopy :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Copy') }}
+						</NcActionButton>
+						<NcActionButton
+							v-if="shouldShowPublishAction(pub)"
+							close-after-click
+							@click="singlePublishPublication(pub)">
+							<template #icon>
+								<Publish :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Publish') }}
+						</NcActionButton>
+						<NcActionButton
+							v-if="shouldShowDepublishAction(pub)"
+							close-after-click
+							@click="singleDepublishPublication(pub)">
+							<template #icon>
+								<PublishOff :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Depublish') }}
+						</NcActionButton>
+						<NcActionButton close-after-click @click="addAttachment(pub)">
+							<template #icon>
+								<FilePlusOutline :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Add Attachment') }}
+						</NcActionButton>
+						<NcActionButton close-after-click @click="singleDeletePublication(pub)">
+							<template #icon>
+								<TrashCanOutline :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Delete') }}
+						</NcActionButton>
+					</NcActions>
+				</template>
+			</PublicationCard>
 		</template>
 
 		<!-- Custom column: name with published icon -->
@@ -162,6 +222,7 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import FilePlusOutline from 'vue-material-design-icons/FilePlusOutline.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
+import PublicationCard from '../../components/PublicationCard.vue'
 
 export default {
 	name: 'PublicationTable',
@@ -179,6 +240,7 @@ export default {
 		PublishOff,
 		FilePlusOutline,
 		PublishedIcon,
+		PublicationCard,
 	},
 	data() {
 		return {
@@ -297,6 +359,14 @@ export default {
 		},
 		getValidISOstring,
 		getPublicationStatus,
+		toggleSelection(object) {
+			const id = object['@self']?.id || object.id
+			const currentIds = [...this.selectedPublicationIds]
+			const newIds = currentIds.includes(id)
+				? currentIds.filter(i => i !== id)
+				: [...currentIds, id]
+			this.onSelect(newIds)
+		},
 	},
 }
 </script>
