@@ -1012,7 +1012,7 @@ class PublicationService
      * AGGREGATION FEATURES:
      * - Proper pagination: Collects sufficient data from all sources, merges and deduplicates,
      *   then applies pagination to ensure consistent totals and page counts
-     * - Ordering: Supports _order parameters like _order[@self.published]=DESC to sort the
+     * - Ordering: Supports _order parameters like _order[@self.created]=DESC to sort the
      *   combined dataset from all sources according to specified criteria
      * - Deduplication: Removes duplicate entries based on object ID across all sources
      * - Faceting: Merges facet data from multiple sources when _facetable=true
@@ -1379,7 +1379,7 @@ class PublicationService
             // Apply ordering to the merged and deduplicated results
             // This is crucial for aggregation because each source may have different ordering,
             // so we need to re-sort the combined dataset according to the requested criteria
-            // Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
+            // Supports formats like: _order[@self.created]=DESC, _order[title]=ASC, etc.
             $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
 
             // Apply pagination to the merged results.
@@ -2128,7 +2128,7 @@ class PublicationService
                 foreach ($orderParams as $field => $direction) {
                     // Handle both associative array format: ['field' => 'direction']
                     // and indexed array format: [0 => ['field' => 'direction']]
-                    // Format: ['@self.published' => 'DESC'].
+                    // Format: ['@self.created' => 'DESC'].
                     $fieldName     = $field;
                     $sortDirection = 'ASC';
                     if (is_string($direction) === true) {
@@ -2136,7 +2136,7 @@ class PublicationService
                     }
 
                     if (is_numeric($field) === true && is_array($direction) === true) {
-                        // Format: [0 => ['@self.published' => 'DESC']].
+                        // Format: [0 => ['@self.created' => 'DESC']].
                         $fieldName     = array_key_first($direction);
                         $sortDirection = strtoupper(($direction[$fieldName] ?? 'ASC'));
                     }
@@ -2172,7 +2172,7 @@ class PublicationService
     /**
      * Extract field value from a result object using dot notation
      *
-     * Supports nested field access like '@self.published' or 'data.title'
+     * Supports nested field access like '@self.created' or 'data.title'
      *
      * @param array  $result    The result object to extract value from
      * @param string $fieldPath The field path in dot notation

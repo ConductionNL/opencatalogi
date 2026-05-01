@@ -29,6 +29,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Module Overlay Rendering](./module-overlay-rendering.md) | Renders organization application nodes on top of GEMMA ArchiMate views with visual distinction | [module-overlay-rendering.md](./module-overlay-rendering.md) |
 | [Deelnames Gebruik](./deelnames-gebruik.md) | Query and display shared usage (inter-organizational cooperation) alongside owned modules | [deelnames-gebruik.md](./deelnames-gebruik.md) |
 | [Prometheus Metrics](./prometheus-metrics.md) | Monitoring endpoint in Prometheus text format: publication counts, catalog metrics, listing health | [prometheus-metrics.md](./prometheus-metrics.md) |
+| [Public API: `_extend=files`](./public-api-files-extend.md) | Opt-in switch for full attachment metadata in publication responses; default is lightweight file IDs | [public-api-files-extend.md](./public-api-files-extend.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
 | DCAT-AP export | Dataset metadata export in DCAT-AP NL and EU DCAT-AP format | — |
 | Organisatiebeheer | Organizations as owners of publications with RBAC | — |
