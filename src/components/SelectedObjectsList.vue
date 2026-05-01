@@ -13,7 +13,8 @@ import { objectStore } from '../store/store.js'
 				<div v-for="obj in selectedObjects"
 					:key="obj.id"
 					class="selected-object-item"
-					:class="{ 'has-error': getObjectError(obj) }">
+					:class="{ 'has-error': getObjectError(obj), 'is-disabled': isItemDisabled(obj) }"
+					:title="getDisabledReason(obj) || undefined">
 					<div class="object-info">
 						<strong>{{ getObjectName(obj) }}</strong>
 						<p class="object-schema">
@@ -112,6 +113,25 @@ export default {
 		subtitleAttribute: {
 			type: String,
 			default: 'schema',
+		},
+		/**
+		 * Optional predicate marking individual items as disabled. Disabled
+		 * items render at reduced opacity to communicate that they will be
+		 * skipped by the parent action. Receives the object and returns a
+		 * boolean.
+		 */
+		isDisabled: {
+			type: Function,
+			default: null,
+		},
+		/**
+		 * Optional helper returning a tooltip string explaining why an item
+		 * is disabled. Receives the object. Only consulted for items where
+		 * `isDisabled` returns true.
+		 */
+		disabledReason: {
+			type: Function,
+			default: null,
 		},
 	},
 	computed: {
@@ -228,6 +248,26 @@ export default {
 			const objectId = obj.id || obj['@self']?.id
 			return objectStore.getObjectError(objectId)
 		},
+
+		/**
+		 * Whether the item should render in its disabled state.
+		 * @param {object} obj - The object to check.
+		 * @return {boolean} true when the parent's `isDisabled` predicate returns true.
+		 */
+		isItemDisabled(obj) {
+			return typeof this.isDisabled === 'function' ? !!this.isDisabled(obj) : false
+		},
+
+		/**
+		 * Tooltip text for a disabled item, if the parent supplied a reason helper.
+		 * @param {object} obj - The object to inspect.
+		 * @return {string|null} The reason or null.
+		 */
+		getDisabledReason(obj) {
+			if (!this.isItemDisabled(obj)) return null
+			if (typeof this.disabledReason !== 'function') return null
+			return this.disabledReason(obj) || null
+		},
 	},
 }
 </script>
@@ -282,6 +322,10 @@ export default {
 .selected-object-item.has-error {
 	border-left: 3px solid var(--color-error);
 	background-color: var(--color-background-dark);
+}
+
+.selected-object-item.is-disabled {
+	opacity: 0.5;
 }
 
 /* Transition animations for list items */

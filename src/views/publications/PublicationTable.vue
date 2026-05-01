@@ -118,6 +118,8 @@ import { NcActionButton, NcCounterBubble } from '@nextcloud/vue'
 import { CnIndexPage, CnRowActions } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
 import { isPublished, getPublicationStatus } from '../../services/publicationStatus.js'
+import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
@@ -184,12 +186,20 @@ export default {
 					icon: Publish,
 					handler: (row) => this.singlePublishPublication(row),
 					visible: (row) => !isPublished(row),
+					disabled: (row) => !schemaHasPublicationDateFields(row),
+					title: (row) => schemaHasPublicationDateFields(row)
+						? undefined
+						: t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.'),
 				},
 				{
 					label: t('opencatalogi', 'Depublish'),
 					icon: PublishOff,
 					handler: (row) => this.singleDepublishPublication(row),
 					visible: (row) => isPublished(row),
+					disabled: (row) => !schemaHasPublicationDateFields(row),
+					title: (row) => schemaHasPublicationDateFields(row)
+						? undefined
+						: t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.'),
 				},
 				{
 					label: t('opencatalogi', 'Add Attachment'),
