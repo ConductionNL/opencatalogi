@@ -119,7 +119,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</template>
 							Depublish
 						</NcActionButton>
-						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('addAttachment')">
+						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setTransferData({ initialTab: 'files' }); navigationStore.setModal('viewObject')">
 							<template #icon>
 								<FilePlusOutline :size="20" />
 							</template>

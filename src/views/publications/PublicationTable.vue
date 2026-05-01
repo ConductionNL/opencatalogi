@@ -258,7 +258,8 @@ export default {
 		},
 		addAttachment(publication) {
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('addAttachment')
+			navigationStore.setTransferData({ initialTab: 'files' })
+			navigationStore.setModal('viewObject')
 		},
 		singleDeletePublication(publication) {
 			const publicationObject = { ...publication, id: publication['@self']?.id || publication.id }
