@@ -40,7 +40,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<SelectedObjectsList
 				hide-title
 				subtitle-attribute="summary"
-				:show-remove="true" />
+				:show-remove="true"
+				:is-disabled="isObjectUnsupported"
+				:disabled-reason="unsupportedReason" />
 		</div>
 
 		<NcNoteCard type="info">
@@ -48,6 +50,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		</NcNoteCard>
 		<NcNoteCard v-if="alreadyDepublishedCount > 0" type="warning">
 			{{ alreadyDepublishedWarning }}
+		</NcNoteCard>
+		<NcNoteCard v-if="unsupportedCount > 0" type="warning">
+			{{ unsupportedWarning }}
 		</NcNoteCard>
 
 		<NcNoteCard v-if="success" type="success">
@@ -91,6 +96,7 @@ import {
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
 export default {
 	name: 'MassDepublishObjects',
@@ -148,6 +154,16 @@ export default {
 			}
 			return t('opencatalogi', '{count} of the selected publications are already depublished and will be skipped. Their depublication dates will not be changed.', { count })
 		},
+		unsupportedCount() {
+			return this.selectedObjects.filter(obj => !schemaHasPublicationDateFields(obj)).length
+		},
+		unsupportedWarning() {
+			const count = this.unsupportedCount
+			if (count === 1) {
+				return t('opencatalogi', '1 of the selected publications has a schema that does not support depublishing and will be skipped. Ask your IT manager for help.')
+			}
+			return t('opencatalogi', '{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help.', { count })
+		},
 		modeOptions() {
 			return [
 				{ id: 'now', label: t('opencatalogi', 'Depublish now') },
@@ -172,6 +188,7 @@ export default {
 			if (this.selectedObjects.length === 0) return true
 			if (this.mode === 'later' && !this.depublishDate) return true
 			// Nothing to do if every selected item would be skipped.
+			if (this.unsupportedCount === this.selectedObjects.length) return true
 			if (this.alreadyDepublishedCount === this.selectedObjects.length) return true
 			return false
 		},
@@ -223,6 +240,27 @@ export default {
 			const pub = this.normalizeDate(obj?.publicatiedatum)
 			if (!pub) return true
 			return depub >= pub
+		},
+
+		/**
+		 * Predicate passed to SelectedObjectsList: items whose schema does not
+		 * declare both publicatiedatum and depublicatiedatum render at reduced
+		 * opacity and are skipped during the depublish loop.
+		 *
+		 * @param {object} obj - The publication object.
+		 * @return {boolean} true when the object will be skipped.
+		 */
+		isObjectUnsupported(obj) {
+			return !schemaHasPublicationDateFields(obj)
+		},
+
+		/**
+		 * Tooltip text explaining why an unsupported item is greyed out.
+		 *
+		 * @return {string} The reason.
+		 */
+		unsupportedReason() {
+			return t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.')
 		},
 
 		/**
@@ -289,6 +327,11 @@ export default {
 
 			for (const obj of objectsToProcess) {
 				try {
+					// Skip publications whose schema lacks the publication date
+					// fields the depublish flow writes to.
+					if (!schemaHasPublicationDateFields(obj)) {
+						continue
+					}
 					// Skip already-depublished items: their depublicatiedatum must not be overwritten.
 					if (this.isDepublished(obj)) {
 						continue

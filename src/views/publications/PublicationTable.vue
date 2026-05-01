@@ -16,6 +16,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		:selectable="true"
 		:selected-ids="selectedPublicationIds"
 		:show-view-toggle="true"
+		:show-view-action="false"
 		:show-edit-action="false"
 		:show-copy-action="false"
 		:show-delete-action="false"
@@ -28,6 +29,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No publications found')"
 		:refreshing="isRefreshing"
+		:actions="rowActions"
 		@add="addPublication"
 		@refresh="refreshPublications"
 		@page-changed="onPageChanged"
@@ -72,53 +74,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				@click="toggleSelection(object)"
 				@select="toggleSelection(object)">
 				<template #actions="{ object: pub }">
-					<NcActions>
-						<template #icon>
-							<DotsHorizontal :size="20" />
-						</template>
-						<NcActionButton close-after-click @click="viewPublication(pub)">
-							<template #icon>
-								<Pencil :size="20" />
-							</template>
-							{{ t('opencatalogi', 'Edit') }}
-						</NcActionButton>
-						<NcActionButton close-after-click @click="copyPublication(pub)">
-							<template #icon>
-								<ContentCopy :size="20" />
-							</template>
-							{{ t('opencatalogi', 'Copy') }}
-						</NcActionButton>
-						<NcActionButton
-							v-if="shouldShowPublishAction(pub)"
-							close-after-click
-							@click="singlePublishPublication(pub)">
-							<template #icon>
-								<Publish :size="20" />
-							</template>
-							{{ t('opencatalogi', 'Publish') }}
-						</NcActionButton>
-						<NcActionButton
-							v-if="shouldShowDepublishAction(pub)"
-							close-after-click
-							@click="singleDepublishPublication(pub)">
-							<template #icon>
-								<PublishOff :size="20" />
-							</template>
-							{{ t('opencatalogi', 'Depublish') }}
-						</NcActionButton>
-						<NcActionButton close-after-click @click="addAttachment(pub)">
-							<template #icon>
-								<FilePlusOutline :size="20" />
-							</template>
-							{{ t('opencatalogi', 'Add Attachment') }}
-						</NcActionButton>
-						<NcActionButton close-after-click @click="singleDeletePublication(pub)">
-							<template #icon>
-								<TrashCanOutline :size="20" />
-							</template>
-							{{ t('opencatalogi', 'Delete') }}
-						</NcActionButton>
-					</NcActions>
+					<CnRowActions :actions="rowActions" :row="pub" />
 				</template>
 			</PublicationCard>
 		</template>
@@ -154,66 +110,15 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<template #column-updated="{ row }">
 			{{ row['@self']?.updated ? formatDate(row['@self'].updated) : 'N/A' }}
 		</template>
-
-		<!-- Row actions -->
-		<template #row-actions="{ row }">
-			<NcActions>
-				<template #icon>
-					<DotsHorizontal :size="20" />
-				</template>
-				<NcActionButton close-after-click @click="viewPublication(row)">
-					<template #icon>
-						<Pencil :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Edit') }}
-				</NcActionButton>
-				<NcActionButton close-after-click @click="copyPublication(row)">
-					<template #icon>
-						<ContentCopy :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Copy') }}
-				</NcActionButton>
-				<NcActionButton
-					v-if="shouldShowPublishAction(row)"
-					close-after-click
-					@click="singlePublishPublication(row)">
-					<template #icon>
-						<Publish :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Publish') }}
-				</NcActionButton>
-				<NcActionButton
-					v-if="shouldShowDepublishAction(row)"
-					close-after-click
-					@click="singleDepublishPublication(row)">
-					<template #icon>
-						<PublishOff :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Depublish') }}
-				</NcActionButton>
-				<NcActionButton close-after-click @click="addAttachment(row)">
-					<template #icon>
-						<FilePlusOutline :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Add Attachment') }}
-				</NcActionButton>
-				<NcActionButton close-after-click @click="singleDeletePublication(row)">
-					<template #icon>
-						<TrashCanOutline :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Delete') }}
-				</NcActionButton>
-			</NcActions>
-		</template>
 	</CnIndexPage>
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcCounterBubble } from '@nextcloud/vue'
-import { CnIndexPage } from '@conduction/nextcloud-vue'
+import { NcActionButton, NcCounterBubble } from '@nextcloud/vue'
+import { CnIndexPage, CnRowActions } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
 import { isPublished, getPublicationStatus } from '../../services/publicationStatus.js'
-import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
@@ -228,17 +133,12 @@ export default {
 	name: 'PublicationTable',
 	components: {
 		CnIndexPage,
-		NcActions,
+		CnRowActions,
 		NcActionButton,
 		NcCounterBubble,
-		DotsHorizontal,
-		Pencil,
-		ContentCopy,
-		TrashCanOutline,
 		Delete,
 		Publish,
 		PublishOff,
-		FilePlusOutline,
 		PublishedIcon,
 		PublicationCard,
 	},
@@ -267,6 +167,51 @@ export default {
 			return (objectStore.selectedObjects || []).map(obj =>
 				obj.id || obj['@self']?.id,
 			).filter(Boolean)
+		},
+		rowActions() {
+			return [
+				{
+					label: t('opencatalogi', 'Edit'),
+					icon: Pencil,
+					handler: (row) => this.viewPublication(row),
+				},
+				{
+					label: t('opencatalogi', 'Copy'),
+					icon: ContentCopy,
+					handler: (row) => this.copyPublication(row),
+				},
+				{
+					label: t('opencatalogi', 'Publish'),
+					icon: Publish,
+					handler: (row) => this.singlePublishPublication(row),
+					visible: (row) => !isPublished(row),
+					disabled: (row) => !schemaHasPublicationDateFields(row),
+					title: (row) => schemaHasPublicationDateFields(row)
+						? undefined
+						: t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.'),
+				},
+				{
+					label: t('opencatalogi', 'Depublish'),
+					icon: PublishOff,
+					handler: (row) => this.singleDepublishPublication(row),
+					visible: (row) => isPublished(row),
+					disabled: (row) => !schemaHasPublicationDateFields(row),
+					title: (row) => schemaHasPublicationDateFields(row)
+						? undefined
+						: t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.'),
+				},
+				{
+					label: t('opencatalogi', 'Add Attachment'),
+					icon: FilePlusOutline,
+					handler: (row) => this.addAttachment(row),
+				},
+				{
+					label: t('opencatalogi', 'Delete'),
+					icon: TrashCanOutline,
+					handler: (row) => this.singleDeletePublication(row),
+					destructive: true,
+				},
+			]
 		},
 	},
 	mounted() {
@@ -318,11 +263,12 @@ export default {
 		},
 		copyPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setDialog('copyPublication')
+			navigationStore.setDialog('copyObject', { objectType: 'publication', dialogTitle: 'Publication' })
 		},
 		addAttachment(publication) {
 			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('AddAttachment')
+			navigationStore.setTransferData({ initialTab: 'files' })
+			navigationStore.setModal('viewObject')
 		},
 		singleDeletePublication(publication) {
 			const publicationObject = { ...publication, id: publication['@self']?.id || publication.id }
@@ -350,12 +296,6 @@ export default {
 		bulkDepublishPublications() {
 			if (this.selectedPublicationIds.length === 0) return
 			navigationStore.setDialog('massDepublishObjects')
-		},
-		shouldShowPublishAction(publication) {
-			return !isPublished(publication)
-		},
-		shouldShowDepublishAction(publication) {
-			return isPublished(publication)
 		},
 		getValidISOstring,
 		getPublicationStatus,

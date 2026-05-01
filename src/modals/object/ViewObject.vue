@@ -921,6 +921,7 @@ export default {
 	},
 	mounted() {
 		this.initializeData()
+		this.applyInitialTabFromTransferData()
 		// Fetch themes for the theme options dropdown
 		objectStore.fetchCollection('theme')
 		// Fetch tags for the label options dropdown
@@ -1042,6 +1043,16 @@ export default {
 		},
 		proceedToProperties() {
 			this.showProperties = true
+		},
+		applyInitialTabFromTransferData() {
+			const data = navigationStore.getTransferData()
+			if (data && typeof data === 'object' && data.initialTab === 'files') {
+				// Defer until BTabs has finished its own mount-time activation,
+				// otherwise the `active` attribute on the Properties tab wins.
+				this.$nextTick(() => {
+					this.activeTab = 2
+				})
+			}
 		},
 		async initializeData() {
 			if (!this.currentObject) {
