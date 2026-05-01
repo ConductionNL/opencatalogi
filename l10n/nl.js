@@ -1,6 +1,8 @@
 OC.L10N.register(
     "opencatalogi",
     {
+    "1 of the selected publications has a schema that does not support depublishing and will be skipped. Ask your IT manager for help." : "1 van de geselecteerde publicaties heeft een schema dat depubliceren niet ondersteunt en wordt overgeslagen. Vraag hulp aan uw ICT-beheerder.",
+    "1 of the selected publications has a schema that does not support publishing and will be skipped. Ask your IT manager for help." : "1 van de geselecteerde publicaties heeft een schema dat publiceren niet ondersteunt en wordt overgeslagen. Vraag hulp aan uw ICT-beheerder.",
     "Actions" : "Acties",
     "Active Facets" : "Actieve facetten",
     "Active Filters" : "Actieve filters",
@@ -238,6 +240,8 @@ OC.L10N.register(
     "This catalog has no associated organization." : "Deze catalogus heeft geen gekoppelde organisatie.",
     "This catalog has no associated registers." : "Deze catalogus heeft geen gekoppelde registers.",
     "This catalog has no associated schemas." : "Deze catalogus heeft geen gekoppelde schema's.",
+    "This schema does not support depublishing. Ask your IT manager for help." : "Dit schema ondersteunt geen depubliceren. Vraag hulp aan uw ICT-beheerder.",
+    "This schema does not support publishing. Ask your IT manager for help." : "Dit schema ondersteunt geen publiceren. Vraag hulp aan uw ICT-beheerder.",
     "Titel" : "Titel",
     "Title" : "Titel",
     "Title A-Z" : "Titel A-Z",
@@ -261,6 +265,8 @@ OC.L10N.register(
     "publications" : "publicaties",
     "verwijderen van" : "verwijderen van",
     "with labels" : "met labels",
+    "{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help." : "{count} van de geselecteerde publicaties hebben schema's die depubliceren niet ondersteunen en worden overgeslagen. Vraag hulp aan uw ICT-beheerder.",
+    "{count} of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help." : "{count} van de geselecteerde publicaties hebben schema's die publiceren niet ondersteunen en worden overgeslagen. Vraag hulp aan uw ICT-beheerder.",
     "{count} selected" : "{count} geselecteerd"
 },
 "nplurals=2; plural=(n != 1);"

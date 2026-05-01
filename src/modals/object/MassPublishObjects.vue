@@ -43,7 +43,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<SelectedObjectsList
 				hide-title
 				subtitle-attribute="summary"
-				:show-remove="true" />
+				:show-remove="true"
+				:is-disabled="isObjectUnsupported"
+				:disabled-reason="unsupportedReason" />
 		</div>
 
 		<NcNoteCard type="info">
@@ -52,6 +54,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<NcNoteCard v-if="alreadyPublishedCount > 0 && mode !== 'retroactive'"
 			type="warning">
 			{{ alreadyPublishedWarning }}
+		</NcNoteCard>
+		<NcNoteCard v-if="unsupportedCount > 0" type="warning">
+			{{ unsupportedWarning }}
 		</NcNoteCard>
 
 		<NcNoteCard v-if="success" type="success">
@@ -95,6 +100,7 @@ import {
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
 export default {
 	name: 'MassPublishObjects',
@@ -159,6 +165,16 @@ export default {
 			}
 			return t('opencatalogi', '{count} of the selected publications are already published and will be skipped. Their publication dates will not be changed.', { count })
 		},
+		unsupportedCount() {
+			return this.selectedObjects.filter(obj => !schemaHasPublicationDateFields(obj)).length
+		},
+		unsupportedWarning() {
+			const count = this.unsupportedCount
+			if (count === 1) {
+				return t('opencatalogi', '1 of the selected publications has a schema that does not support publishing and will be skipped. Ask your IT manager for help.')
+			}
+			return t('opencatalogi', '{count} of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help.', { count })
+		},
 		modeOptions() {
 			const options = [
 				{ id: 'now', label: t('opencatalogi', 'Publish now') },
@@ -198,6 +214,9 @@ export default {
 			if (this.selectedMode?.disabled) return true
 			if (this.mode === 'later' && !this.publishDate) return true
 			// Nothing to do if every selected item would be skipped.
+			if (this.unsupportedCount === this.selectedObjects.length) {
+				return true
+			}
 			if (this.mode !== 'retroactive'
 				&& this.alreadyPublishedCount === this.selectedObjects.length) {
 				return true
@@ -285,6 +304,27 @@ export default {
 		},
 
 		/**
+		 * Predicate passed to SelectedObjectsList: items whose schema does not
+		 * declare both publicatiedatum and depublicatiedatum render at reduced
+		 * opacity and are skipped during the publish loop.
+		 *
+		 * @param {object} obj - The publication object.
+		 * @return {boolean} true when the object will be skipped.
+		 */
+		isObjectUnsupported(obj) {
+			return !schemaHasPublicationDateFields(obj)
+		},
+
+		/**
+		 * Tooltip text explaining why an unsupported item is greyed out.
+		 *
+		 * @return {string} The reason.
+		 */
+		unsupportedReason() {
+			return t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.')
+		},
+
+		/**
 		 * Predicate for NcDateTimePicker's :disabled-date prop. Returns true for any
 		 * date strictly before `minPublishDate` so the picker greys them out.
 		 *
@@ -349,6 +389,11 @@ export default {
 
 			for (const obj of objectsToProcess) {
 				try {
+					// Skip publications whose schema lacks the publication date
+					// fields the publish flow writes to.
+					if (!schemaHasPublicationDateFields(obj)) {
+						continue
+					}
 					// Skip already-published items in publish-now / publish-later modes:
 					// their publicatiedatum must not be overwritten.
 					if (this.mode !== 'retroactive' && this.isAlreadyPublished(obj)) {

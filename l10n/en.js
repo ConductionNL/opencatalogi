@@ -1,6 +1,8 @@
 OC.L10N.register(
     "opencatalogi",
     {
+    "1 of the selected publications has a schema that does not support depublishing and will be skipped. Ask your IT manager for help." : "1 of the selected publications has a schema that does not support depublishing and will be skipped. Ask your IT manager for help.",
+    "1 of the selected publications has a schema that does not support publishing and will be skipped. Ask your IT manager for help." : "1 of the selected publications has a schema that does not support publishing and will be skipped. Ask your IT manager for help.",
     "Actions" : "Actions",
     "Active Facets" : "Active Facets",
     "Active Filters" : "Active Filters",
@@ -238,6 +240,8 @@ OC.L10N.register(
     "This catalog has no associated organization." : "This catalog has no associated organization.",
     "This catalog has no associated registers." : "This catalog has no associated registers.",
     "This catalog has no associated schemas." : "This catalog has no associated schemas.",
+    "This schema does not support depublishing. Ask your IT manager for help." : "This schema does not support depublishing. Ask your IT manager for help.",
+    "This schema does not support publishing. Ask your IT manager for help." : "This schema does not support publishing. Ask your IT manager for help.",
     "Titel" : "Titel",
     "Title" : "Title",
     "Title A-Z" : "Title A-Z",
@@ -261,6 +265,8 @@ OC.L10N.register(
     "publications" : "publications",
     "verwijderen van" : "verwijderen van",
     "with labels" : "with labels",
+    "{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help." : "{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help.",
+    "{count} of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help." : "{count} of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help.",
     "{count} selected" : "{count} selected"
 },
 "nplurals=2; plural=(n != 1);"
