@@ -48,6 +48,15 @@ export const useCatalogStore = defineStore('catalog', {
 			page: 1,
 			limit: 20,
 		},
+
+		/** @type {string|null} */
+		lastCatalogId: null,
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		schemas: {},
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		registers: {},
 	}),
 
 	actions: {
@@ -110,10 +119,13 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @return {Promise<void>}
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			if (!catalogId && !this.activeCatalog) {
+			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId
+			if (!resolvedCatalogId) {
 				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
 				return
 			}
+
+			this.lastCatalogId = resolvedCatalogId
 
 			this.loading = true
 			objectStore.setLoading('publication', true)
@@ -135,7 +147,7 @@ export const useCatalogStore = defineStore('catalog', {
 			const queryParams = new URLSearchParams(searchParams)
 
 			try {
-				const catalogIdToUse = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id
+				const catalogIdToUse = resolvedCatalogId
 
 				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
 				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
@@ -157,18 +169,31 @@ export const useCatalogStore = defineStore('catalog', {
 					limit: data.limit || 20,
 				}
 
-				// Process each publication to register its type in the object store
+				// Process each publication to register its type in the object store.
+				// The backend returns per-publication @self.schema / @self.register as IDs,
+				// with the resolved schema/register objects on data['@self'].schemas / .registers
+				// (keyed by id). Older shapes embedded the full object on the publication itself.
+				const schemasMap = data['@self']?.schemas || {}
+				const registersMap = data['@self']?.registers || {}
 				for (const publication of data.results || []) {
-					if (publication.schema && publication.register) {
-						const slug = publication.schema.slug
-						if (!this.registeredTypes.has(slug)) {
-							await objectStore.registerObjectType(
-								slug,
-								publication.schema.id,
-								publication.register.id,
-							)
-							this.registeredTypes.add(slug)
-						}
+					const schemaRef = publication['@self']?.schema ?? publication.schema
+					const registerRef = publication['@self']?.register ?? publication.register
+					if (!schemaRef || !registerRef) continue
+
+					const schemaObj = typeof schemaRef === 'object'
+						? schemaRef
+						: schemasMap[String(schemaRef)] || schemasMap[Number(schemaRef)]
+					const registerObj = typeof registerRef === 'object'
+						? registerRef
+						: registersMap[String(registerRef)] || registersMap[Number(registerRef)]
+
+					const slug = schemaObj?.slug
+					const schemaId = schemaObj?.id ?? schemaRef
+					const registerId = registerObj?.id ?? registerRef
+
+					if (slug && !this.registeredTypes.has(slug)) {
+						await objectStore.registerObjectType(slug, schemaId, registerId)
+						this.registeredTypes.add(slug)
 					}
 				}
 
