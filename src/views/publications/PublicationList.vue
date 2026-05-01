@@ -101,7 +101,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyPublication')">
+						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('copyObject', { objectType: 'publication', dialogTitle: 'Publication' })">
 							<template #icon>
 								<ContentCopy :size="20" />
 							</template>
@@ -119,7 +119,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</template>
 							Depublish
 						</NcActionButton>
-						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('AddAttachment')">
+						<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('addAttachment')">
 							<template #icon>
 								<FilePlusOutline :size="20" />
 							</template>
