@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore } from './../store/store.js'
+import { navigationStore } from './../store/store.js'
 </script>
 
 <template>
@@ -15,7 +15,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<ViewPageModal />
 		<ViewThemeModal />
 		<!--Specific-->
-		<AddAttachmentModal :drop-files="objectStore.getActiveObject('attachment')" />
 		<EditAttachmentModal />
 		<AddDirectoryModal />
 		<EditListingModal v-if="navigationStore.modal === 'editListing'" />
@@ -55,7 +54,6 @@ import ViewMenuModal from './menu/ViewMenuModal.vue'
 import ViewPageModal from './page/ViewPageModal.vue'
 import ViewThemeModal from './theme/ViewThemeModal.vue'
 // Specific
-import AddAttachmentModal from './attachment/AddAttachmentModal.vue'
 import EditAttachmentModal from './attachment/EditAttachmentModal.vue'
 
 import AddDirectoryModal from './directory/AddDirectoryModal.vue'
@@ -86,7 +84,6 @@ import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
 export default {
 	name: 'Modals',
 	components: {
-		AddAttachmentModal,
 		EditAttachmentModal,
 		CatalogModal,
 		AddDirectoryModal,
