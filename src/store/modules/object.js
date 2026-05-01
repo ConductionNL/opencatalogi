@@ -1761,9 +1761,13 @@ export const useObjectStore = defineStore('object', {
 		 * Copy an existing object
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID to copy
+		 * @param {string|null} nameFieldPath - Optional dot-notation path of the schema's
+		 *   configured objectNameField. When set and the path resolves to a string,
+		 *   the "Kopie van" prefix is applied to that field instead of title/name.
+		 *   Twig templates (e.g. "{{ voornaam }} {{ achternaam }}") are not supported.
 		 * @return {Promise<object>} The newly created copy
 		 */
-		async copyObject(type, id) {
+		async copyObject(type, id, nameFieldPath = null) {
 			this.setLoading(`${type}_${id}_copy`, true)
 			this.setError(`${type}_${id}_copy`, null)
 			this.setState(type, { success: null, error: null })
@@ -1791,11 +1795,37 @@ export const useObjectStore = defineStore('object', {
 					}
 				}
 
-				// Add "Copy of" to the title or name
-				if (objectData.title) {
-					objectData.title = `Kopie van ${objectData.title}`
-				} else if (objectData.name) {
-					objectData.name = `Kopie van ${objectData.name}`
+				// Prefix "Kopie van" to a name-bearing field. Prefer the schema's
+				// configured objectNameField (supports nested dot-notation like
+				// "contact.naam"); fall back to top-level title/name. Twig template
+				// fields (e.g. "{{ voornaam }} {{ achternaam }}") are skipped — they
+				// are server-rendered and not safe to mutate client-side.
+				const useConfiguredField = typeof nameFieldPath === 'string'
+					&& nameFieldPath.length > 0
+					&& !nameFieldPath.includes('{{')
+				let prefixed = false
+				if (useConfiguredField) {
+					const segments = nameFieldPath.split('.')
+					const leaf = segments.pop()
+					let cursor = objectData
+					for (const seg of segments) {
+						if (cursor[seg] === undefined || cursor[seg] === null || typeof cursor[seg] !== 'object') {
+							cursor = null
+							break
+						}
+						cursor = cursor[seg]
+					}
+					if (cursor && typeof cursor[leaf] === 'string' && cursor[leaf].length > 0) {
+						cursor[leaf] = `Kopie van ${cursor[leaf]}`
+						prefixed = true
+					}
+				}
+				if (!prefixed) {
+					if (objectData.title) {
+						objectData.title = `Kopie van ${objectData.title}`
+					} else if (objectData.name) {
+						objectData.name = `Kopie van ${objectData.name}`
+					}
 				}
 
 				// The publication "type" is a generic slug whose registry config
