@@ -314,12 +314,13 @@ class PublicationsController extends Controller
                     // Keys arrive from the frontend with _ prefix (e.g., _order[_created]=desc).
                     // _name, _description, _summary are metadata columns in every magic table.
                     // _relevance is computed dynamically from search terms via pg_trgm similarity().
+                    // NOTE: _published / _depublished were removed when openregister deprecated
+                    // object-level publish metadata in favour of RBAC `$now` rules
+                    // (see openspec/changes/deprecate-published-metadata in openregister).
                     $universalOrderFields = [
                         '_uuid',
                         '_created',
                         '_updated',
-                        '_published',
-                        '_depublished',
                         '_name',
                         '_description',
                         '_summary',
