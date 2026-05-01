@@ -473,6 +473,19 @@ export const useObjectStore = defineStore('object', {
 				},
 			}
 
+			// Mirror results into the per-id objects cache so lookups like
+			// copyObject's this.objects[type][id] work for callers (e.g. catalog.js
+			// fetchPublications) that bypass fetchCollection.
+			if (!this.objects[type]) {
+				this.objects[type] = {}
+			}
+			for (const item of newResults || []) {
+				const itemId = item?.id ?? item?.['@self']?.id
+				if (itemId) {
+					this.objects[type][itemId] = { ...item }
+				}
+			}
+
 			console.info('Collection after update:', {
 				type,
 				collection: this.collections[type],
@@ -996,9 +1009,10 @@ export const useObjectStore = defineStore('object', {
 		 * Create new object
 		 * @param {string} type - Object type
 		 * @param {object} data - Object data
+		 * @param {object|null} publicationData - Optional override with explicit { register, schema } so copies/creates target the source's actual schema instead of the type's default config
 		 * @return {Promise<object>}
 		 */
-		async createObject(type, data) {
+		async createObject(type, data, publicationData = null) {
 			this.setLoading(`${type}_create`, true)
 			this.setError(`${type}_create`, null)
 			this.setState(type, { success: null, error: null })
@@ -1010,7 +1024,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const response = await fetch(
-					this._constructApiUrl(type),
+					this._constructApiUrl(type, null, null, {}, publicationData),
 					{
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -1023,8 +1037,14 @@ export const useObjectStore = defineStore('object', {
 				if (!this.objects[type]) this.objects[type] = {}
 				this.objects[type][newObject.id] = newObject
 
-				// Refresh the collection to ensure it's up to date
-				await this.fetchCollection(type)
+				// Refresh the collection to ensure it's up to date.
+				// Publications are not loaded via fetchCollection — they use the
+				// catalog-aware /api/{catalogSlug} endpoint via catalogStore.fetchPublications().
+				// Hitting fetchCollection here would overwrite the table with results
+				// from the wrong (default) schema, so callers refresh publications themselves.
+				if (type !== 'publication') {
+					await this.fetchCollection(type)
+				}
 
 				// Set the active object
 				this.setActiveObject(type, newObject)
@@ -1760,8 +1780,16 @@ export const useObjectStore = defineStore('object', {
 					throw new Error(`Object ${id} of type ${type} not found`)
 				}
 
-				// Create a copy of the object without the id
-				const { id: _, ...objectData } = originalObject
+				// Drop id and strip @self down to register/schema so the server
+				// allocates a fresh identity instead of inheriting the source's.
+				const { id: _, '@self': self, ...rest } = originalObject
+				const objectData = { ...rest }
+				if (self && (self.register || self.schema)) {
+					objectData['@self'] = {
+						...(self.register ? { register: self.register } : {}),
+						...(self.schema ? { schema: self.schema } : {}),
+					}
+				}
 
 				// Add "Copy of" to the title or name
 				if (objectData.title) {
@@ -1770,8 +1798,17 @@ export const useObjectStore = defineStore('object', {
 					objectData.name = `Kopie van ${objectData.name}`
 				}
 
+				// The publication "type" is a generic slug whose registry config
+				// points at the catalog's default schema, not the source object's
+				// schema. Without this override, createObject would POST to the
+				// wrong register/schema endpoint and the server would silently drop
+				// any properties not defined on the default schema.
+				const publicationData = self && (self.register || self.schema)
+					? { source: 'openregister', register: self.register, schema: self.schema }
+					: null
+
 				// Create the new object
-				const newObject = await this.createObject(type, objectData)
+				const newObject = await this.createObject(type, objectData, publicationData)
 
 				// Set success state
 				this.setState(type, { success: true, error: null })

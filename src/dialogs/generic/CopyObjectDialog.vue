@@ -2,7 +2,7 @@
 import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
-import { navigationStore, objectStore } from '../../store/store.js'
+import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 import { computed } from 'vue'
 
 const dialogProperties = computed(() => navigationStore.dialogProperties)
@@ -13,6 +13,22 @@ const isMultiple = computed(() => dialogProperties.value?.isMultiple ?? false)
 
 // Check if this dialog should be shown
 const shouldShowDialog = computed(() => navigationStore.dialog === 'copyObject')
+
+/**
+ * Refresh the listing for the given object type. Publications are loaded via
+ * the catalog-aware endpoint, so they need a different refresh path than the
+ * generic objectStore.fetchCollection.
+ *
+ * @param {string} type - Object type
+ * @return {void}
+ */
+const refreshObjectList = (type) => {
+	if (type === 'publication') {
+		catalogStore.fetchPublications()
+	} else {
+		objectStore.fetchCollection(type)
+	}
+}
 
 /**
  * Copy the object(s)
@@ -28,6 +44,7 @@ const copyObject = () => {
 			objectStore.copyObject(objectType.value, obj.id),
 		))
 			.then(() => {
+				refreshObjectList(objectType.value)
 				closeDialog()
 			})
 	} else {
@@ -36,6 +53,7 @@ const copyObject = () => {
 
 		objectStore.copyObject(objectType.value, activeObject.id)
 			.then(() => {
+				refreshObjectList(objectType.value)
 				closeDialog()
 			})
 	}
