@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "x-openregister": {
     "type": "application",
@@ -146,9 +146,21 @@
       "catalog": {
         "slug": "catalog",
         "title": "Catalog",
-        "version": "0.0.6",
+        "version": "0.1.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
+        "configuration": {
+          "x-openregister-lifecycle": {
+            "field": "status",
+            "initial": "development",
+            "final": ["obsolete"],
+            "transitions": {
+              "promoteToBeta":   { "from": ["development"], "to": "beta",   "description": "Promote a catalog from development to beta." },
+              "promoteToStable": { "from": ["beta"],        "to": "stable", "description": "Promote a beta catalog to stable." },
+              "obsolete":        { "from": ["development", "beta", "stable"], "to": "obsolete", "description": "Mark the catalog as obsolete." }
+            }
+          }
+        },
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
         "icon": null,
         "required": [
@@ -285,9 +297,21 @@
       "listing": {
         "slug": "listing",
         "title": "Listing",
-        "version": "0.0.4",
+        "version": "0.1.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A filtered view of publications within a catalog",
+        "configuration": {
+          "x-openregister-lifecycle": {
+            "field": "status",
+            "initial": "development",
+            "final": ["obsolete"],
+            "transitions": {
+              "promoteToBeta":   { "from": ["development"], "to": "beta",   "description": "Promote a listing from development to beta." },
+              "promoteToStable": { "from": ["beta"],        "to": "stable", "description": "Promote a beta listing to stable." },
+              "obsolete":        { "from": ["development", "beta", "stable"], "to": "obsolete", "description": "Mark the listing as obsolete." }
+            }
+          }
+        },
         "description": "A listing provides a customizable view of publications within a catalog. It allows for the creation of specific publication collections based on filters, sorting, and presentation preferences. Listings can be used to create featured sections, topic-based collections, or any other organized view of publications.",
         "icon": null,
         "required": [
