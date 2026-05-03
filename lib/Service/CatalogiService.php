@@ -197,32 +197,40 @@ class CatalogiService
         $schemas   = $object['schemas'];
 
         // First, attempt to rewrite the registers.
-        $registers = array_map(function ($register) {
-            if (preg_match("/^\d+$/", $register)) {
-                return $register;
-            }
-            try {
-                $registerObject = $this->getRegisterMapper()->find($register);
+        $registers = array_map(
+                function ($register) {
+                    if (preg_match("/^\d+$/", $register) === 1) {
+                        return $register;
+                    }
 
-                return $registerObject->getId();
-            } catch (NotFoundException $e) {
-                throw new \RuntimeException('Register ' . $register . ' not found.');
-            }
-        }, $registers);
+                    try {
+                        $registerObject = $this->getRegisterMapper()->find($register);
+
+                        return $registerObject->getId();
+                    } catch (NotFoundException $e) {
+                        throw new \RuntimeException('Register '.$register.' not found.');
+                    }
+                },
+                $registers
+                );
 
         // Then, attempt to rewrite the schemas.
-        $schemas = array_map(function ($schema) {
-            if (preg_match("/^\d+$/", $schema)) {
-                return $schema;
-            }
-            try {
-                $schemaObject = $this->getSchemaMapper()->find($schema);
+        $schemas = array_map(
+                function ($schema) {
+                    if (preg_match("/^\d+$/", $schema) === 1) {
+                        return $schema;
+                    }
 
-                return $schemaObject->getId();
-            } catch (NotFoundException $e) {
-                throw new \RuntimeException('Register ' . $schema . ' not found.');
-            }
-        }, $schemas);
+                    try {
+                        $schemaObject = $this->getSchemaMapper()->find($schema);
+
+                        return $schemaObject->getId();
+                    } catch (NotFoundException $e) {
+                        throw new \RuntimeException('Register '.$schema.' not found.');
+                    }
+                },
+                $schemas
+                );
 
         // Set the registers and schemas in the object and update the object.
         $object['registers'] = $registers;
@@ -264,7 +272,7 @@ class CatalogiService
         // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
         // on the object's own 'slug' field.
         if ($catalogId !== null) {
-              if (Uuid::isValid($catalogId) === true) {
+            if (Uuid::isValid($catalogId) === true) {
                 $query['@self']['uuid'] = $catalogId;
             } else {
                 $query['slug'] = $catalogId;

@@ -38,13 +38,16 @@ class CatalogSchemaEventListener implements IEventListener
 {
     /**
      * CatalogCacheEventListener constructor.
+     *
+     * @param CatalogiService $catalogiService Service used to invalidate and warm the catalog cache.
+     * @param LoggerInterface $logger          Logger for event-handling diagnostics.
+     * @param IAppConfig      $appConfig       App configuration for feature flags.
      */
     public function __construct(
         private readonly CatalogiService $catalogiService,
         private readonly LoggerInterface $logger,
         private readonly IAppConfig $appConfig
-    )
-    {
+    ) {
 
     }//end __construct()
 
@@ -85,6 +88,7 @@ class CatalogSchemaEventListener implements IEventListener
             if ($objectEntity->getSchema() !== $catalogSchema || $objectEntity->getRegister() !== $catalogRegister) {
                 return;
             }
+
             $this->catalogiService->rewriteSchemasAndRegisters($objectEntity);
         } catch (\Exception $e) {
             // Log unexpected errors and continue gracefully.

@@ -99,7 +99,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					{ label: t('opencatalogi', 'Status'), value: isPublished ? t('opencatalogi', 'Published') : t('opencatalogi', 'Concept') },
 				]" />
 		</template>
-
 	</CnDetailPage>
 </template>
 

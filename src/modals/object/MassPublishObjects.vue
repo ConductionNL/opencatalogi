@@ -1,12 +1,3 @@
-/**
- * @file MassPublishObjects.vue
- * @module Modals/Object
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- */
-
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
@@ -17,19 +8,59 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		size="normal"
 		class="mass-action-dialog"
 		@update:open="handleDialogClose">
-		<!-- Object Selection Review -->
 		<div v-if="success === null" class="publish-step">
-			<NcNoteCard type="info">
-				Objects will be published with the current date and time. If any objects have a depublication date set, it will be removed to make them fully published.
-			</NcNoteCard>
+			<div class="mode-row">
+				<NcSelect v-model="selectedMode"
+					class="mode-row__mode"
+					:options="modeOptions"
+					:clearable="false"
+					:searchable="false"
+					label-attribute="label"
+					:aria-label-combobox="t('opencatalogi', 'Publishing mode')"
+					:disabled="loading">
+					<template #option="option">
+						<span :title="option.title || ''"
+							:class="{ 'mode-option-disabled': option.disabled }">
+							{{ option.label }}
+						</span>
+					</template>
+				</NcSelect>
+				<NcDateTimePicker v-if="mode === 'later'"
+					:key="'publish-later-date'"
+					class="mode-row__date"
+					:value="publishDateObj"
+					:label="t('opencatalogi', 'Publication date')"
+					type="date"
+					:min="minPublishDate"
+					:disabled-date="isDateBeforeMin"
+					:clearable="false"
+					@input="handleDateInput"
+					@update:value="handleDateInput"
+					@change="handleDateInput"
+					@update:modelValue="handleDateInput" />
+			</div>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Publish' : 'Selected Publications'"
-				:show-remove="true" />
+				hide-title
+				subtitle-attribute="summary"
+				:show-remove="true"
+				:is-disabled="isObjectUnsupported"
+				:disabled-reason="unsupportedReason" />
 		</div>
 
+		<NcNoteCard type="info">
+			{{ infoText }}
+		</NcNoteCard>
+		<NcNoteCard v-if="alreadyPublishedCount > 0 && mode !== 'retroactive'"
+			type="warning">
+			{{ alreadyPublishedWarning }}
+		</NcNoteCard>
+		<NcNoteCard v-if="unsupportedCount > 0" type="warning">
+			{{ unsupportedWarning }}
+		</NcNoteCard>
+
 		<NcNoteCard v-if="success" type="success">
-			<p>Object{{ originalSelectedCount > 1 ? 's' : '' }} successfully published</p>
+			<p>{{ successMessage }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -40,17 +71,17 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
+				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="success === null"
-				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
+				:disabled="submitDisabled"
 				type="primary"
 				@click="publishObjects()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Publish v-if="!loading" :size="20" />
 				</template>
-				Publish
+				{{ t('opencatalogi', 'Publish') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -59,118 +90,353 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 <script>
 import {
 	NcButton,
+	NcDateTimePicker,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
+	NcSelect,
 } from '@nextcloud/vue'
 
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
 export default {
 	name: 'MassPublishObjects',
 	components: {
 		NcDialog,
 		NcButton,
+		NcDateTimePicker,
 		NcLoadingIcon,
 		NcNoteCard,
+		NcSelect,
 		SelectedObjectsList,
-		// Icons
 		Publish,
 		Cancel,
 	},
 
-	props: {
-		// No props needed - always uses selected objects from store
-	},
-
 	data() {
 		return {
+			selectedMode: null,
+			publishDate: null,
 			success: null,
 			loading: false,
 			error: false,
-			result: null,
 			closeModalTimeout: null,
 			originalSelectedCount: 0,
 		}
 	},
 
 	computed: {
-		/**
-		 * Get the objects to operate on from selected objects
-		 * @return {Array<object>} Array of objects to publish
-		 */
-		objectsToPublish() {
+		mode() {
+			return this.selectedMode?.id || 'now'
+		},
+		today() {
+			return new Date().toISOString().slice(0, 10)
+		},
+		minPublishDate() {
+			const start = new Date()
+			start.setHours(0, 0, 0, 0)
+			return start
+		},
+		publishDateObj() {
+			if (!this.publishDate) return null
+			const [year, month, day] = this.publishDate.split('-').map(Number)
+			return new Date(year, month - 1, day)
+		},
+		selectedObjects() {
 			return objectStore.selectedObjects || []
+		},
+		anyDepublished() {
+			return this.selectedObjects.some(obj => this.isDepublished(obj))
+		},
+		allDepublished() {
+			return this.selectedObjects.length > 0
+				&& this.selectedObjects.every(obj => this.isDepublished(obj))
+		},
+		alreadyPublishedCount() {
+			return this.selectedObjects.filter(obj => this.isAlreadyPublished(obj)).length
+		},
+		alreadyPublishedWarning() {
+			const count = this.alreadyPublishedCount
+			if (count === 1) {
+				return t('opencatalogi', '1 of the selected publications is already published and will be skipped. Its publication date will not be changed.')
+			}
+			return t('opencatalogi', '{count} of the selected publications are already published and will be skipped. Their publication dates will not be changed.', { count })
+		},
+		unsupportedCount() {
+			return this.selectedObjects.filter(obj => !schemaHasPublicationDateFields(obj)).length
+		},
+		unsupportedWarning() {
+			const count = this.unsupportedCount
+			if (count === 1) {
+				return t('opencatalogi', '1 of the selected publications has a schema that does not support publishing and will be skipped. Ask your IT manager for help.')
+			}
+			return t('opencatalogi', '{count} of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help.', { count })
+		},
+		modeOptions() {
+			const options = [
+				{ id: 'now', label: t('opencatalogi', 'Publish now') },
+				{ id: 'later', label: t('opencatalogi', 'Publish later') },
+			]
+			if (this.anyDepublished) {
+				options.push({
+					id: 'retroactive',
+					label: t('opencatalogi', 'Publish retroactive'),
+					disabled: !this.allDepublished,
+					title: this.allDepublished
+						? ''
+						: t('opencatalogi', 'Only available when all selected items are depublished'),
+				})
+			}
+			return options
+		},
+		dialogTitle() {
+			const count = this.selectedObjects.length
+			if (count === 1) {
+				return t('opencatalogi', 'Publish publication')
+			}
+			return t('opencatalogi', 'Publish {count} publications', { count })
+		},
+		infoText() {
+			if (this.mode === 'later') {
+				return t('opencatalogi', 'The publication date will be set to the chosen date. Any existing depublication date will be removed.')
+			}
+			if (this.mode === 'retroactive') {
+				return t('opencatalogi', 'The depublish date will be removed. The publish date will not change.')
+			}
+			return t('opencatalogi', 'Publications will be published with today\'s date. Any existing depublication date will be removed.')
+		},
+		submitDisabled() {
+			if (this.loading) return true
+			if (this.selectedObjects.length === 0) return true
+			if (this.selectedMode?.disabled) return true
+			if (this.mode === 'later' && !this.publishDate) return true
+			// Nothing to do if every selected item would be skipped.
+			if (this.unsupportedCount === this.selectedObjects.length) {
+				return true
+			}
+			if (this.mode !== 'retroactive'
+				&& this.alreadyPublishedCount === this.selectedObjects.length) {
+				return true
+			}
+			return false
+		},
+		successMessage() {
+			const plural = this.originalSelectedCount > 1
+			if (this.mode === 'retroactive') {
+				return plural
+					? t('opencatalogi', 'Publications successfully published retroactive')
+					: t('opencatalogi', 'Publication successfully published retroactive')
+			}
+			return plural
+				? t('opencatalogi', 'Publications successfully published')
+				: t('opencatalogi', 'Publication successfully published')
+		},
+	},
+
+	watch: {
+		selectedObjects: {
+			deep: true,
+			handler() {
+				// If the user removed items so retroactive is no longer valid,
+				// reset the mode to the default.
+				if (this.mode === 'retroactive'
+					&& (!this.anyDepublished || !this.allDepublished)) {
+					this.selectedMode = this.modeOptions[0]
+				}
+			},
+		},
+	},
+
+	mounted() {
+		this.originalSelectedCount = this.selectedObjects.length
+		this.selectedMode = this.modeOptions[0]
+	},
+
+	methods: {
+		/**
+		 * Normalize a date-like value to a YYYY-MM-DD string for comparison, or null.
+		 * Absent/empty values return null. publicatiedatum is schema-declared as
+		 * format: 'date', so values are YYYY-MM-DD strings; lexicographic comparison
+		 * matches chronological order.
+		 *
+		 * @param {unknown} value - The raw date value from the object
+		 * @return {string|null} The normalized YYYY-MM-DD string or null
+		 */
+		normalizeDate(value) {
+			if (value == null || value === '') return null
+			return String(value).slice(0, 10)
 		},
 
 		/**
-		 * Get the dialog title based on number of objects
-		 * @return {string} Dialog title
+		 * Determine if an object is currently published: the most recent of
+		 * publicatiedatum / depublicatiedatum is the publish date. Tiebreaker on
+		 * equal dates: depublish wins (so equal dates means NOT published).
+		 * A future publicatiedatum still counts as published for this modal's UX.
+		 *
+		 * @param {object} obj - The publication object
+		 * @return {boolean} true if currently published
 		 */
-		dialogTitle() {
-			const count = objectStore.selectedObjects?.length || 0
-			if (count === 1) {
-				return 'Publish publication'
+		isAlreadyPublished(obj) {
+			const pub = this.normalizeDate(obj?.publicatiedatum)
+			if (!pub) return false
+			const depub = this.normalizeDate(obj?.depublicatiedatum)
+			if (!depub) return true
+			return pub > depub
+		},
+
+		/**
+		 * Determine if an object is currently depublished: depublish date is the
+		 * most recent, or the only one set. Drives the 'Publish retroactive' option.
+		 *
+		 * @param {object} obj - The publication object
+		 * @return {boolean} true if currently depublished
+		 */
+		isDepublished(obj) {
+			const depub = this.normalizeDate(obj?.depublicatiedatum)
+			if (!depub) return false
+			const pub = this.normalizeDate(obj?.publicatiedatum)
+			if (!pub) return true
+			// Tiebreaker: depublish wins on equal dates.
+			return depub >= pub
+		},
+
+		/**
+		 * Predicate passed to SelectedObjectsList: items whose schema does not
+		 * declare both publicatiedatum and depublicatiedatum render at reduced
+		 * opacity and are skipped during the publish loop.
+		 *
+		 * @param {object} obj - The publication object.
+		 * @return {boolean} true when the object will be skipped.
+		 */
+		isObjectUnsupported(obj) {
+			return !schemaHasPublicationDateFields(obj)
+		},
+
+		/**
+		 * Tooltip text explaining why an unsupported item is greyed out.
+		 *
+		 * @return {string} The reason.
+		 */
+		unsupportedReason() {
+			return t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.')
+		},
+
+		/**
+		 * Predicate for NcDateTimePicker's :disabled-date prop. Returns true for any
+		 * date strictly before `minPublishDate` so the picker greys them out.
+		 *
+		 * @param {Date} date - A day passed by the picker
+		 * @return {boolean} true if the date should be unselectable
+		 */
+		isDateBeforeMin(date) {
+			if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false
+			const d = new Date(date)
+			d.setHours(0, 0, 0, 0)
+			return d.getTime() < this.minPublishDate.getTime()
+		},
+
+		handleDateInput(value) {
+			if (!value) {
+				this.publishDate = null
+				return
 			}
-			return `Publish ${count} publication${count !== 1 ? 's' : ''}`
+			const date = value instanceof Date ? value : new Date(value)
+			if (Number.isNaN(date.getTime())) {
+				this.publishDate = null
+				return
+			}
+			// Active guard: reject any date before the minimum regardless of what
+			// the picker allowed through. submitDisabled then stays true because
+			// publishDate remains null.
+			const dayStart = new Date(date)
+			dayStart.setHours(0, 0, 0, 0)
+			if (dayStart.getTime() < this.minPublishDate.getTime()) {
+				this.publishDate = null
+				return
+			}
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			this.publishDate = `${year}-${month}-${day}`
 		},
-	},
-	mounted() {
-		this.initializeSelection()
-	},
-	methods: {
-		initializeSelection() {
-			// Store the original count for success message
-			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
-		},
+
 		closeDialog() {
-			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
 				clearTimeout(this.closeModalTimeout)
 				this.closeModalTimeout = null
 			}
 			navigationStore.setDialog(false)
 		},
+
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+
 		async publishObjects() {
+			if (this.selectedMode?.disabled) return
 			this.loading = true
+			this.error = false
 
-			try {
-				// Get the objects to publish
-				const objectsToProcess = [...(objectStore.selectedObjects || [])]
+			const targetDate = this.mode === 'later' ? this.publishDate : this.today
+			const objectsToProcess = [...this.selectedObjects]
+			const successful = []
+			const failed = []
 
-				// Use the store's mass publish method
-				const { successful, failed } = await objectStore.massPublishObjects(objectsToProcess)
+			for (const obj of objectsToProcess) {
+				try {
+					// Skip publications whose schema lacks the publication date
+					// fields the publish flow writes to.
+					if (!schemaHasPublicationDateFields(obj)) {
+						continue
+					}
+					// Skip already-published items in publish-now / publish-later modes:
+					// their publicatiedatum must not be overwritten.
+					if (this.mode !== 'retroactive' && this.isAlreadyPublished(obj)) {
+						continue
+					}
 
+					const clone = JSON.parse(JSON.stringify(obj))
+					if (this.mode === 'retroactive') {
+						// publicatiedatum is left unchanged on purpose
+						clone.depublicatiedatum = null
+					} else {
+						clone.publicatiedatum = targetDate
+						clone.depublicatiedatum = null
+					}
+
+					const register = clone['@self']?.register ?? clone.register
+					const schema = clone['@self']?.schema ?? clone.schema
+
+					await objectStore.saveObject(clone, { register, schema })
+					successful.push(obj)
+				} catch (err) {
+					console.error('Error publishing object:', err)
+					failed.push({ object: obj, error: err })
+				}
+			}
+
+			if (successful.length > 0) {
+				catalogStore.fetchPublications()
+			}
+
+			if (failed.length === 0 && successful.length > 0) {
+				this.success = true
+				this.closeModalTimeout = setTimeout(() => {
+					this.closeDialog()
+				}, 2000)
+			} else if (failed.length > 0) {
+				this.error = t('opencatalogi', 'Failed to publish {count} object(s)', { count: failed.length })
 				if (successful.length > 0) {
 					this.success = true
-					// Refresh publications using catalogStore
-					catalogStore.fetchPublications()
-
-					// Only auto-close if there are no failures
-					if (failed.length === 0) {
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
 				}
-
-				if (failed.length > 0) {
-					this.error = `Failed to publish ${failed.length} object${failed.length > 1 ? 's' : ''}`
-				}
-
-			} catch (error) {
-				this.success = false
-				this.error = error.message || 'An error occurred while publishing objects'
-			} finally {
-				this.loading = false
 			}
+
+			this.loading = false
 		},
 	},
 }
@@ -179,17 +445,35 @@ export default {
 <style scoped>
 .publish-step {
 	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
-.step-title {
-	margin-top: 0 !important;
-	margin-bottom: 16px;
-	color: var(--color-main-text);
+.mode-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.mode-row__mode {
+	min-width: 170px;
+	width: auto;
+	flex: 0 0 auto;
+}
+
+.mode-row__date {
+	flex: 0 0 auto;
+}
+
+.mode-option-disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 </style>
 
 <style>
-/* Ensure mass action dialogs appear on top of other modals */
 .mass-action-dialog {
 	z-index: 10000 !important;
 }

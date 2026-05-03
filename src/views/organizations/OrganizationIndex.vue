@@ -88,15 +88,21 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		<!-- Mass actions -->
 		<template #action-items>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDelete">
-				<template #icon><Delete :size="20" /></template>
+				<template #icon>
+					<Delete :size="20" />
+				</template>
 				{{ t('opencatalogi', 'Delete selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassPublish">
-				<template #icon><PublishIcon :size="20" /></template>
+				<template #icon>
+					<PublishIcon :size="20" />
+				</template>
 				{{ t('opencatalogi', 'Publish selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDepublish">
-				<template #icon><PublishOffIcon :size="20" /></template>
+				<template #icon>
+					<PublishOffIcon :size="20" />
+				</template>
 				{{ t('opencatalogi', 'Depublish selected') }}
 			</NcActionButton>
 		</template>
@@ -104,21 +110,31 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		<!-- Row actions -->
 		<template #row-actions="{ row }">
 			<NcActions>
-				<template #icon><DotsHorizontal :size="20" /></template>
+				<template #icon>
+					<DotsHorizontal :size="20" />
+				</template>
 				<NcActionButton close-after-click @click="viewOrganization(row)">
-					<template #icon><Eye :size="20" /></template>
+					<template #icon>
+						<Eye :size="20" />
+					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
-					<template #icon><Pencil :size="20" /></template>
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="copyOrganization(row)">
-					<template #icon><ContentCopy :size="20" /></template>
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="deleteOrganization(row)">
-					<template #icon><TrashCanOutline :size="20" /></template>
+					<template #icon>
+						<TrashCanOutline :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Delete') }}
 				</NcActionButton>
 			</NcActions>
@@ -141,8 +157,19 @@ import PublishOffIcon from 'vue-material-design-icons/PublishOff.vue'
 export default {
 	name: 'OrganizationIndex',
 	components: {
-		CnIndexPage, NcActions, NcActionButton, NcTextField, NcTextArea,
-		DotsHorizontal, Eye, Pencil, ContentCopy, TrashCanOutline, Delete, PublishIcon, PublishOffIcon,
+		CnIndexPage,
+		NcActions,
+		NcActionButton,
+		NcTextField,
+		NcTextArea,
+		DotsHorizontal,
+		Eye,
+		Pencil,
+		ContentCopy,
+		TrashCanOutline,
+		Delete,
+		PublishIcon,
+		PublishOffIcon,
 	},
 	data() {
 		return { selectedIds: [], viewMode: 'table', isRefreshing: false }
@@ -194,7 +221,7 @@ export default {
 			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save organization' }) }
 		},
 		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('organization') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page }) },
+		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page, _limit: this.currentPagination.limit || 20 }) },
 		onPageSizeChange(size) { objectStore.fetchCollection('organization', { _page: 1, _limit: size }) },
 		onSelect(ids) { this.selectedIds = ids; objectStore.setSelectedObjects(ids) },
 		onRowClick(row) { objectStore.setActiveObject('organization', row); navigationStore.setModal('viewOrganization') },

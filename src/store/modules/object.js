@@ -473,6 +473,19 @@ export const useObjectStore = defineStore('object', {
 				},
 			}
 
+			// Mirror results into the per-id objects cache so lookups like
+			// copyObject's this.objects[type][id] work for callers (e.g. catalog.js
+			// fetchPublications) that bypass fetchCollection.
+			if (!this.objects[type]) {
+				this.objects[type] = {}
+			}
+			for (const item of newResults || []) {
+				const itemId = item?.id ?? item?.['@self']?.id
+				if (itemId) {
+					this.objects[type][itemId] = { ...item }
+				}
+			}
+
 			console.info('Collection after update:', {
 				type,
 				collection: this.collections[type],
@@ -996,9 +1009,10 @@ export const useObjectStore = defineStore('object', {
 		 * Create new object
 		 * @param {string} type - Object type
 		 * @param {object} data - Object data
+		 * @param {object|null} publicationData - Optional override with explicit { register, schema } so copies/creates target the source's actual schema instead of the type's default config
 		 * @return {Promise<object>}
 		 */
-		async createObject(type, data) {
+		async createObject(type, data, publicationData = null) {
 			this.setLoading(`${type}_create`, true)
 			this.setError(`${type}_create`, null)
 			this.setState(type, { success: null, error: null })
@@ -1010,7 +1024,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const response = await fetch(
-					this._constructApiUrl(type),
+					this._constructApiUrl(type, null, null, {}, publicationData),
 					{
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -1023,8 +1037,14 @@ export const useObjectStore = defineStore('object', {
 				if (!this.objects[type]) this.objects[type] = {}
 				this.objects[type][newObject.id] = newObject
 
-				// Refresh the collection to ensure it's up to date
-				await this.fetchCollection(type)
+				// Refresh the collection to ensure it's up to date.
+				// Publications are not loaded via fetchCollection — they use the
+				// catalog-aware /api/{catalogSlug} endpoint via catalogStore.fetchPublications().
+				// Hitting fetchCollection here would overwrite the table with results
+				// from the wrong (default) schema, so callers refresh publications themselves.
+				if (type !== 'publication') {
+					await this.fetchCollection(type)
+				}
 
 				// Set the active object
 				this.setActiveObject(type, newObject)
@@ -1741,9 +1761,13 @@ export const useObjectStore = defineStore('object', {
 		 * Copy an existing object
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID to copy
+		 * @param {string|null} nameFieldPath - Optional dot-notation path of the schema's
+		 *   configured objectNameField. When set and the path resolves to a string,
+		 *   the "Kopie van" prefix is applied to that field instead of title/name.
+		 *   Twig templates (e.g. "{{ voornaam }} {{ achternaam }}") are not supported.
 		 * @return {Promise<object>} The newly created copy
 		 */
-		async copyObject(type, id) {
+		async copyObject(type, id, nameFieldPath = null) {
 			this.setLoading(`${type}_${id}_copy`, true)
 			this.setError(`${type}_${id}_copy`, null)
 			this.setState(type, { success: null, error: null })
@@ -1760,18 +1784,61 @@ export const useObjectStore = defineStore('object', {
 					throw new Error(`Object ${id} of type ${type} not found`)
 				}
 
-				// Create a copy of the object without the id
-				const { id: _, ...objectData } = originalObject
-
-				// Add "Copy of" to the title or name
-				if (objectData.title) {
-					objectData.title = `Kopie van ${objectData.title}`
-				} else if (objectData.name) {
-					objectData.name = `Kopie van ${objectData.name}`
+				// Drop id and strip @self down to register/schema so the server
+				// allocates a fresh identity instead of inheriting the source's.
+				const { id: _, '@self': self, ...rest } = originalObject
+				const objectData = { ...rest }
+				if (self && (self.register || self.schema)) {
+					objectData['@self'] = {
+						...(self.register ? { register: self.register } : {}),
+						...(self.schema ? { schema: self.schema } : {}),
+					}
 				}
 
+				// Prefix "Kopie van" to a name-bearing field. Prefer the schema's
+				// configured objectNameField (supports nested dot-notation like
+				// "contact.naam"); fall back to top-level title/name. Twig template
+				// fields (e.g. "{{ voornaam }} {{ achternaam }}") are skipped — they
+				// are server-rendered and not safe to mutate client-side.
+				const useConfiguredField = typeof nameFieldPath === 'string'
+					&& nameFieldPath.length > 0
+					&& !nameFieldPath.includes('{{')
+				let prefixed = false
+				if (useConfiguredField) {
+					const segments = nameFieldPath.split('.')
+					const leaf = segments.pop()
+					let cursor = objectData
+					for (const seg of segments) {
+						if (cursor[seg] === undefined || cursor[seg] === null || typeof cursor[seg] !== 'object') {
+							cursor = null
+							break
+						}
+						cursor = cursor[seg]
+					}
+					if (cursor && typeof cursor[leaf] === 'string' && cursor[leaf].length > 0) {
+						cursor[leaf] = `Kopie van ${cursor[leaf]}`
+						prefixed = true
+					}
+				}
+				if (!prefixed) {
+					if (objectData.title) {
+						objectData.title = `Kopie van ${objectData.title}`
+					} else if (objectData.name) {
+						objectData.name = `Kopie van ${objectData.name}`
+					}
+				}
+
+				// The publication "type" is a generic slug whose registry config
+				// points at the catalog's default schema, not the source object's
+				// schema. Without this override, createObject would POST to the
+				// wrong register/schema endpoint and the server would silently drop
+				// any properties not defined on the default schema.
+				const publicationData = self && (self.register || self.schema)
+					? { source: 'openregister', register: self.register, schema: self.schema }
+					: null
+
 				// Create the new object
-				const newObject = await this.createObject(type, objectData)
+				const newObject = await this.createObject(type, objectData, publicationData)
 
 				// Set success state
 				this.setState(type, { success: true, error: null })
@@ -2375,7 +2442,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mass publish attachments for the active publication
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
-		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
@@ -2412,7 +2479,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mass depublish attachments for the active publication
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
-		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {

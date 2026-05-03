@@ -12,6 +12,9 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TOrganization } from './organization.types'
 
+/** @typedef {import('./organization.types').TOrganization} TOrganization */
+/** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
+
 /**
  * Organization class representing an organization in the system
  */

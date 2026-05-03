@@ -1,6 +1,7 @@
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { useSearchStore } from '../../store/modules/search.ts'
+import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -441,8 +442,15 @@ export default {
 			return publication['@self'].catalogs.map(catalog => catalog.title || catalog.name || 'Unknown').join(', ')
 		},
 		formatSchema(publication) {
-			if (!publication['@self'] || !publication['@self'].schema) return '-'
-			return publication['@self'].schema.title || publication['@self'].schema.name || 'Unknown'
+			const schema = publication['@self']?.schema
+			if (!schema) return '-'
+
+			if (typeof schema === 'object') {
+				return schema.title || schema.name || 'Unknown'
+			}
+
+			const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schema))
+			return match?.title || match?.name || String(schema)
 		},
 	},
 }

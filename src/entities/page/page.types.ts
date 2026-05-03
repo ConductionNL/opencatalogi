@@ -8,29 +8,8 @@ export type TPageContent = {
     type: string
     id: string
     data: Record<string, any>
-    /**
-     * Nextcloud groups that have access to this content block
-     * @phpstan-var string[]|null
-     * @psalm-var string[]|null
-     */
     groups?: string[]
-    /**
-     * Whether to hide this content block after user login
-     * @phpstan-var bool|null
-     * @psalm-var bool|null
-     */
-
-    /**
-     * Whether to hide this content block after user login
-     * @phpstan-var bool|null
-     * @psalm-var bool|null
-     */
     hideAfterLogin?: boolean
-    /**
-     * Whether to hide this content block before user login
-     * @phpstan-var bool|null
-     * @psalm-var bool|null
-     */
     hideBeforeLogin?: boolean
 }
 
@@ -43,28 +22,7 @@ export type TPage = {
 	title: string
     contents: TPageContent[] | null
 	slug: string
-    /**
-     * Nextcloud groups that have access to this page
-     * @phpstan-var string[]|null
-     * @psalm-var string[]|null
-     */
     groups?: string[]
-    /**
-     * Whether to hide this page after user login
-     * @phpstan-var bool|null
-     * @psalm-var bool|null
-     */
-
-    /**
-     * Whether to hide this page after user login
-     * @phpstan-var bool|null
-     * @psalm-var bool|null
-     */
     hideAfterLogin?: boolean
-    /**
-     * Whether to hide this page before user login
-     * @phpstan-var bool|null
-     * @psalm-var bool|null
-     */
     hideBeforeLogin?: boolean
 }

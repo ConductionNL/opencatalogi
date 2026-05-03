@@ -63,7 +63,22 @@
 					:route="{ name: 'Catalogs' }" />
 			</template>
 
+			<!-- Published Publications count widget -->
+			<template #widget-count-published-publications>
+				<CnStatsBlock
+					:title="t('opencatalogi', 'Published')"
+					:count="kpis.publishedPublicationCount"
+					:count-label="t('opencatalogi', 'published')"
+					:icon="FileDocumentCheckOutline"
+					variant="success"
+					horizontal
+					:route="{ name: 'Catalogs' }" />
+			</template>
+
 			<!-- Concept Attachments count widget -->
+			<!-- TODO: Re-add concept attachments widget once a scalable fetch strategy is in place.
+			     Fetching files per-publication does not scale for large catalogs.
+			     Do NOT remove this code.
 			<template #widget-count-concept-attachments>
 				<CnStatsBlock
 					:title="t('opencatalogi', 'Concept Attachments')"
@@ -73,6 +88,7 @@
 					:variant="kpis.conceptAttachmentCount > 0 ? 'warning' : 'default'"
 					horizontal />
 			</template>
+			-->
 
 			<!-- Activity graph widget (audit trail actions over time) -->
 			<template #widget-activity>
@@ -101,7 +117,7 @@
 							class="concept-item">
 							<FileDocumentEditOutline :size="20" class="concept-item-icon" />
 							<div class="concept-item-content">
-								<span class="concept-item-title">{{ publication.title }}</span>
+								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span v-if="publication.summary" class="concept-item-summary">{{ publication.summary }}</span>
 							</div>
 							<span class="concept-item-status">{{ t('opencatalogi', 'Concept') }}</span>
@@ -111,6 +127,9 @@
 			</template>
 
 			<!-- Concept Attachments widget -->
+			<!-- TODO: Re-add concept attachments widget once a scalable fetch strategy is in place.
+			     Fetching files per-publication does not scale for large catalogs.
+			     Do NOT remove this code.
 			<template #widget-concept-attachments>
 				<div class="concept-widget-content">
 					<div v-if="conceptAttachments.length === 0" class="widget-empty">
@@ -127,6 +146,29 @@
 								<span v-if="attachment.summary" class="concept-item-summary">{{ attachment.summary }}</span>
 							</div>
 							<span class="concept-item-status">{{ t('opencatalogi', 'Concept') }}</span>
+						</div>
+					</div>
+				</div>
+			</template>
+			-->
+
+			<!-- Published Publications widget -->
+			<template #widget-published-publications>
+				<div class="concept-widget-content">
+					<div v-if="publishedPublications.length === 0" class="widget-empty">
+						{{ t('opencatalogi', 'No published publications') }}
+					</div>
+					<div v-else class="concept-list">
+						<div
+							v-for="publication in publishedPublications"
+							:key="publication.id"
+							class="concept-item">
+							<DatabaseEyeOutline :size="20" class="concept-item-icon" />
+							<div class="concept-item-content">
+								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
+								<span v-if="publication.summary" class="concept-item-summary">{{ publication.summary }}</span>
+							</div>
+							<span class="published-item-status">{{ t('opencatalogi', 'Published') }}</span>
 						</div>
 					</div>
 				</div>
@@ -160,8 +202,10 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
-import Paperclip from 'vue-material-design-icons/Paperclip.vue'
-import PaperclipOff from 'vue-material-design-icons/PaperclipOff.vue'
+import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
+// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+// import Paperclip from 'vue-material-design-icons/Paperclip.vue'
+// import PaperclipOff from 'vue-material-design-icons/PaperclipOff.vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 
 /**
@@ -171,11 +215,15 @@ import { objectStore, navigationStore } from '../../store/store.js'
 const DEFAULT_LAYOUT = [
 	{ id: 1, widgetId: 'count-publications', gridX: 0, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
 	{ id: 2, widgetId: 'count-concept-publications', gridX: 3, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
-	{ id: 3, widgetId: 'count-concept-attachments', gridX: 6, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
+	{ id: 3, widgetId: 'count-published-publications', gridX: 6, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
+	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+	// { id: 3, widgetId: 'count-concept-attachments', gridX: 6, gridY: 0, gridWidth: 3, gridHeight: 2, showTitle: false },
 	{ id: 4, widgetId: 'objects-by-schema', gridX: 9, gridY: 0, gridWidth: 3, gridHeight: 5 },
 	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 2, gridWidth: 9, gridHeight: 4 },
 	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
-	{ id: 7, widgetId: 'concept-attachments', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
+	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+	// { id: 7, widgetId: 'concept-attachments', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
+	{ id: 8, widgetId: 'published-publications', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
 ]
 
 export default {
@@ -187,21 +235,28 @@ export default {
 		CnChartWidget,
 		Plus,
 		Refresh,
+		DatabaseEyeOutline,
 		FileDocumentEditOutline,
-		Paperclip,
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// Paperclip,
 	},
 	data() {
 		return {
 			// Icon components for CnStatsBlock :icon prop
 			DatabaseEyeOutline,
 			FileDocumentEditOutline,
-			PaperclipOff,
+			FileDocumentCheckOutline,
+			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+			// PaperclipOff,
 			globalLoading: false,
 			error: null,
 			refreshTimer: null,
 			dashboardLayout: [...DEFAULT_LAYOUT],
 			schemaChartData: { labels: [], series: [] },
 			activityChartData: { labels: [], series: [] },
+			publicationTotal: 0,
+			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+			// attachmentsList: [],
 		}
 	},
 	computed: {
@@ -212,40 +267,43 @@ export default {
 			return objectStore.getCollection('publication').results || []
 		},
 		conceptPublications() {
-			return this.allPublications.filter(
-				(publication) => publication.status === 'Concept',
-			)
+			return this.allPublications.filter((p) => this.isConcept(p))
 		},
-		allAttachments() {
-			return objectStore.getCollection('attachment').results || []
-		},
-		conceptAttachments() {
-			return this.allAttachments.filter(
-				(attachment) => attachment.status === 'Concept',
-			)
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// allAttachments() { return this.attachmentsList },
+		// conceptAttachments() {
+		//   return this.allAttachments.filter((attachment) => attachment.status === 'Concept')
+		// },
+		publishedPublications() {
+			return this.allPublications.filter((p) => !!this.normalizeDate(p?.publicatiedatum))
 		},
 		kpis() {
 			return {
 				catalogCount: this.catalogs.length,
-				publicationCount: this.allPublications.length,
+				publicationCount: this.publicationTotal || this.allPublications.length,
 				conceptPublicationCount: this.conceptPublications.length,
-				conceptAttachmentCount: this.conceptAttachments.length,
+				publishedPublicationCount: this.publishedPublications.length,
+				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
 		},
 		hasData() {
 			return this.catalogs.length > 0
 				|| this.allPublications.length > 0
-				|| this.allAttachments.length > 0
 		},
 		widgetDefs() {
 			return [
 				{ id: 'count-publications', title: t('opencatalogi', 'Publications'), type: 'custom' },
 				{ id: 'count-concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
-				{ id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+				{ id: 'count-published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom' },
+				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+				// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 				{ id: 'objects-by-schema', title: t('opencatalogi', 'Objects by Type'), type: 'custom' },
 				{ id: 'activity', title: t('opencatalogi', 'Activity'), type: 'custom' },
 				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
-				{ id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+				// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+				{ id: 'published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom' },
 			]
 		},
 	},
@@ -269,8 +327,7 @@ export default {
 			try {
 				await Promise.allSettled([
 					objectStore.fetchCollection('catalog'),
-					objectStore.fetchCollection('publication'),
-					objectStore.fetchCollection('attachment'),
+					this.fetchAllPublications(),
 					this.fetchSchemaChart(),
 					this.fetchActivityChart(),
 				])
@@ -281,6 +338,43 @@ export default {
 				this.globalLoading = false
 			}
 		},
+
+		async fetchAllPublications() {
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/opencatalogi/api/publications?_page=1&_limit=1000&_extend=@self.schema,@self.register`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					this.publicationTotal = data.total || 0
+					objectStore.setCollection('publication', data.results || [])
+				}
+			} catch (err) {
+				console.warn('Failed to load publications:', err)
+			}
+		},
+
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// fetchConceptAttachments fetches files for every publication and filters by status === 'Concept'.
+		// Disabled because it issues one HTTP request per publication and does not scale.
+		// async fetchConceptAttachments() {
+		//   const publications = objectStore.getCollection('publication').results || []
+		//   const withFiles = publications.filter((p) => { const c = p['@self']?.files; return c === undefined || c === null || c > 0 })
+		//   if (withFiles.length === 0) return
+		//   const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+		//   const results = await Promise.allSettled(withFiles.map(async (pub) => {
+		//     const register = pub['@self']?.register; const schema = pub['@self']?.schema; const id = pub.id || pub['@self']?.id
+		//     if (!register || !schema || !id) return []
+		//     const registerId = typeof register === 'object' ? register?.id || register?.uuid : register
+		//     const schemaId = typeof schema === 'object' ? schema?.id || schema?.uuid : schema
+		//     const response = await fetch(`${prefix}/apps/openregister/api/objects/${registerId}/${schemaId}/${id}/files`, { headers: buildHeaders() })
+		//     if (!response.ok) return []
+		//     const data = await response.json(); return data.results || []
+		//   }))
+		//   this.attachmentsList = results.filter((r) => r.status === 'fulfilled').flatMap((r) => r.value)
+		// },
 
 		async fetchSchemaChart() {
 			try {
@@ -318,6 +412,16 @@ export default {
 			} catch (err) {
 				console.warn('Failed to load activity chart:', err)
 			}
+		},
+
+		normalizeDate(value) {
+			if (value == null || value === '') return null
+			return String(value).slice(0, 10)
+		},
+
+		isConcept(obj) {
+			return !this.normalizeDate(obj?.publicatiedatum)
+				&& !this.normalizeDate(obj?.depublicatiedatum)
 		},
 
 		createPublication() {
@@ -390,6 +494,17 @@ export default {
 	font-weight: 600;
 	background: var(--color-warning-hover, rgba(233, 163, 0, 0.1));
 	color: var(--color-warning-text, #7a5700);
+	flex-shrink: 0;
+}
+
+.published-item-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	background: var(--color-success-hover, rgba(233, 163, 0, 0.1));
+	color: var(--color-success-text, #7a5700);
 	flex-shrink: 0;
 }
 
