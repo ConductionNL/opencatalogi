@@ -20,21 +20,21 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="validate-step">
 			<NcNoteCard type="info">
-				<strong>When to use mass validation:</strong><br>
-				• After updating the schema to apply new validation rules<br>
-				• When publications need to be re-enriched with updated name/description logic<br>
-				• To refresh computed properties or auto-generated fields<br>
-				• After changing schema configuration that affects existing publications<br><br>
-				Publications will be saved without modification to trigger validation and enrichment processes against the current schema.
+				<strong>{{ t('opencatalogi', 'When to use mass validation:') }}</strong><br>
+				{{ t('opencatalogi', '• After updating the schema to apply new validation rules') }}<br>
+				{{ t('opencatalogi', '• When publications need to be re-enriched with updated name/description logic') }}<br>
+				{{ t('opencatalogi', '• To refresh computed properties or auto-generated fields') }}<br>
+				{{ t('opencatalogi', '• After changing schema configuration that affects existing publications') }}<br><br>
+				{{ t('opencatalogi', 'Publications will be saved without modification to trigger validation and enrichment processes against the current schema.') }}
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Validate' : 'Selected Publications'"
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? t('opencatalogi', 'Publication to Validate') : t('opencatalogi', 'Selected Publications')"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Publication{{ originalSelectedCount > 1 ? 's' : '' }} successfully validated</p>
+			<p>{{ originalSelectedCount > 1 ? t('opencatalogi', '{type}s successfully validated', { type: t('opencatalogi', 'Publication') }) : t('opencatalogi', '{type} successfully validated', { type: t('opencatalogi', 'Publication') }) }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -45,7 +45,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
+				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
@@ -55,7 +55,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<CheckCircle v-if="!loading" :size="20" />
 				</template>
-				Validate
+				{{ t('opencatalogi', 'Validate') }}
 			</NcButton>
 		</template>
 	</NcDialog>
