@@ -27,7 +27,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div v-if="objectStore.getState('page').success === null" class="tabContainer">
 				<BTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab title="Configuration" active>
+					<BTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-group">
 							<p>
 								The order in which you add contents makes a difference, so pay attention to the order.
@@ -130,8 +130,8 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 													input-label="Icon"
 													style="min-width: 160px;" />
 											</div>
-											<NcTextField label="Title" :value.sync="item.title" />
-											<NcTextField label="Description" :value.sync="item.text" />
+											<NcTextField :label="t('opencatalogi', 'Title')" :value.sync="item.title" />
+											<NcTextField :label="t('opencatalogi', 'Description')" :value.sync="item.text" />
 											<NcTextField label="Link URL" :value.sync="item.linkUrl" placeholder="/zoeken" />
 											<NcTextField label="Link text" :value.sync="item.linkTitle" placeholder="Meer informatie" />
 										</div>

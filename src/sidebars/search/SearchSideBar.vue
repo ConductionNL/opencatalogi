@@ -290,7 +290,7 @@ watch([
 		subname="Across all federated catalogs"
 		:open="sidebarOpen"
 		@update:open="(e) => updateSidebarOpen(e)">
-		<NcAppSidebarTab id="search-tab" name="Search" :order="1">
+		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>

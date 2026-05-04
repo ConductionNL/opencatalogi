@@ -124,12 +124,12 @@ const getTags = async () => {
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="attachment.title"
-					label="Title"
+					:label="t('opencatalogi', 'Title')"
 					:disabled="loading"
 					:loading="loading" />
 				<NcTextField
 					v-model="attachment.description"
-					label="Description"
+					:label="t('opencatalogi', 'Description')"
 					:disabled="loading"
 					:loading="loading" />
 				<NcSelectTags
@@ -141,7 +141,7 @@ const getTags = async () => {
 					v-model="attachment.published"
 					:disabled="loading"
 					:loading="loading">
-					Published
+					{{ t('opencatalogi', 'Published') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 

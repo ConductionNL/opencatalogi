@@ -59,7 +59,7 @@ import { objectStore } from '../../store/store.js'
 					<NcActions
 						:force-name="true"
 						:inline="3"
-						menu-name="Actions">
+						:menu-name="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							close-after-click
 							:disabled="searchStore.isLoading"

@@ -551,17 +551,17 @@ export default {
 		},
 		emptyContentName() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', `Loading ${this.objectTypePlural}...`)
+				return t('opencatalogi', 'Loading {objectType}...', { objectType: this.objectTypePlural })
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', `No ${this.objectTypePlural} found`)
+				return t('opencatalogi', 'No {objectType} found', { objectType: this.objectTypePlural })
 			}
 			return ''
 		},
 		emptyContentDescription() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', `Please wait while we fetch your ${this.objectTypePlural}.`)
+				return t('opencatalogi', 'Please wait while we fetch your {objectType}.', { objectType: this.objectTypePlural })
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', `No ${this.objectTypePlural} are available.`)
+				return t('opencatalogi', 'No {objectType} are available.', { objectType: this.objectTypePlural })
 			}
 			return ''
 		},

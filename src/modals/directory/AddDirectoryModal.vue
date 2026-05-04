@@ -103,7 +103,7 @@ import { navigationStore } from '../../store/store.js'
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="directoryUrl"
-					label="Directory URL"
+					:label="t('opencatalogi', 'Directory URL')"
 					placeholder="https://directory.opencatalogi.nl/apps/opencatalogi/api/directory"
 					:disabled="loading"
 					:loading="loading"

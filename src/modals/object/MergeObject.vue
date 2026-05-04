@@ -59,7 +59,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</div>
 			</div>
 
-			<NcEmptyContent v-else-if="!loading" name="No objects found">
+			<NcEmptyContent v-else-if="!loading" :name="t('opencatalogi', 'No objects found')">
 				<template #description>
 					{{ searchTerm ? 'No objects match your search criteria' : 'No objects available for merging' }}
 				</template>

@@ -13,7 +13,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			<h2>{{ publication.title }} {{ publication.status === 'Published' ? 'depubliceren' : 'publiceren' }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Publication successfully published</p>
+					<p>{{ t('opencatalogi', 'Publication successfully published') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
 					<p>Something went wrong while publishing the publication</p>

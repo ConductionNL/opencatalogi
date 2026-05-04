@@ -24,7 +24,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div v-if="objectStore.getState('menu').success === null" class="tabContainer">
 				<BTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab title="Configuration" active>
+					<BTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-container">
 							<NcTextField
 								:disabled="loading"
@@ -45,7 +45,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<NcTextField
 								:disabled="loading"
-								label="Description"
+								:label="t('opencatalogi', 'Description')"
 								:value.sync="menuItem.description"
 								:error="!!inputValidation.getError(`items.${index}.description`)"
 								:helper-text="inputValidation.getError(`items.${index}.description`)" />
@@ -95,7 +95,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('value')">
-									Value
+									{{ t('opencatalogi', 'Value') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									v-tooltip="'Use a title (no link)'"
@@ -107,7 +107,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('title')">
-									Title
+									{{ t('opencatalogi', 'Title') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									v-tooltip="'Use a multi-row text'"
@@ -126,14 +126,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<NcTextArea
 								v-if="isFooterPosition && valueMode === 'multiRow'"
 								:disabled="loading"
-								label="Value"
+								:label="t('opencatalogi', 'Value')"
 								:value.sync="menuItem.value"
 								:helper-text="inputValidation.getError(`items.${index}.value`) || 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.'" />
 
 							<NcTextField
 								v-if="isFooterPosition && valueMode !== 'multiRow'"
 								:disabled="loading"
-								label="Value"
+								:label="t('opencatalogi', 'Value')"
 								:value.sync="menuItem.value"
 								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.' : 'If no value is set, the name will be used.')"
 								@update:value="onSingleLineValueChange" />

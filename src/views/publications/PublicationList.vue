@@ -8,7 +8,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			<div class="listHeader">
 				<NcTextField class="searchField"
 					:value="objectStore.getSearchTerm('publication')"
-					label="Search"
+					:label="t('opencatalogi', 'Search')"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
 					@update:value="objectStore.setSearchTerm('publication', $event)"
@@ -16,25 +16,25 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionCaption name="Search" />
+					<NcActionCaption :name="t('opencatalogi', 'Search')" />
 					<NcActionCheckbox
 						:checked="conceptChecked"
 						:value="'concept'"
 						@change="handleCheckboxChange('concept', $event)">
-						Concept
+						{{ t('opencatalogi', 'Concept') }}
 					</NcActionCheckbox>
 					<NcActionCheckbox
 						:checked="gepubliceerdChecked"
 						:value="'gepubliceerd'"
 						@change="handleCheckboxChange('gepubliceerd', $event)">
-						Published
+						{{ t('opencatalogi', 'Published') }}
 					</NcActionCheckbox>
 					<NcActionSeparator />
 					<NcActionCaption name="Sort" />
 					<NcActionInput
 						v-model="sortField"
 						type="multiselect"
-						input-label="Property"
+						:input-label="t('opencatalogi', 'Property')"
 						:options="['Title', 'Published date', 'Modified date']">
 						<template #icon>
 							<Pencil :size="20" />

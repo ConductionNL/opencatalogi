@@ -28,13 +28,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Summary"
+					:label="t('opencatalogi', 'Summary')"
 					maxlength="255"
 					:value.sync="catalogi.summary"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Description"
+					:label="t('opencatalogi', 'Description')"
 					maxlength="255"
 					:value.sync="catalogi.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
@@ -45,7 +45,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:value.sync="catalogi.slug"
 					:error="!!inputValidation.fieldErrors?.['slug']"
 					:helper-text="inputValidation.fieldErrors?.['slug']?.[0] || 'URL-friendly identifier (e.g., publications, datasets)'"
-					placeholder="publications" />
+					:placeholder="t('opencatalogi', 'publications')" />
 				<NcCheckboxRadioSwitch :disabled="objectStore.isLoading('catalog')"
 					label="Publicly available"
 					:checked.sync="catalogi.listed">
@@ -53,7 +53,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcCheckboxRadioSwitch>
 				<NcSelect v-model="selectedOrganization"
 					:options="organizationOptions"
-					input-label="Organization"
+					:input-label="t('opencatalogi', 'Organization')"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcSelect v-model="selectedRegisters"
 					:options="registerOptions"

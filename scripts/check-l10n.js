@@ -126,6 +126,13 @@ function extractTCalls(files, app) {
  * This is heuristic and can produce false positives; each hit is reported with
  * file:line so humans can audit.
  */
+// Attributes whose value is an internal identifier (route name, slot key, etc.)
+// rather than user-visible prose. Values on these attrs may coincidentally
+// match an l10n key but must NOT be wrapped in t().
+const NON_DISPLAY_ATTRS = new Set([
+	'back-route', // Vue Router route name passed to $router.push({ name })
+])
+
 function findUnwrapped(vueFiles, keys) {
 	const hits = []
 	for (const file of vueFiles) {
@@ -171,6 +178,7 @@ function findUnwrapped(vueFiles, keys) {
 			while ((am = attrRe.exec(tagText)) !== null) {
 				const name = am[2]
 				if (name.startsWith(':') || name.startsWith('@') || name.startsWith('v-')) continue
+				if (NON_DISPLAY_ATTRS.has(name.toLowerCase())) continue
 				const value = am[4] !== undefined ? am[4] : am[5]
 				const trimmed = value.trim()
 				if (!trimmed) continue
