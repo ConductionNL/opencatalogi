@@ -285,8 +285,8 @@ watch([
 <template>
 	<NcAppSidebar
 		ref="sidebar"
-		name="Search Publications"
-		subtitle="Filter and explore publications"
+		:name="t('opencatalogi', 'Search Publications')"
+		:subtitle="t('opencatalogi', 'Filter and explore publications')"
 		subname="Across all federated catalogs"
 		:open="sidebarOpen"
 		@update:open="(e) => updateSidebarOpen(e)">
@@ -304,7 +304,7 @@ watch([
 					<input
 						v-model="searchTerm"
 						type="search"
-						placeholder="Type to search publications..."
+						:placeholder="t('opencatalogi', 'Type to search publications...')"
 						class="search-input"
 						:aria-label="t('opencatalogi', 'Search publications')">
 

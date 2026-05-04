@@ -109,13 +109,13 @@ const getTags = async () => {
 		label-id="editAttachmentModal"
 		@close="handleCancel">
 		<div class="modal__content">
-			<h2>Edit Attachment</h2>
+			<h2>{{ t('opencatalogi', 'Edit Attachment') }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Attachment successfully updated</p>
+					<p>{{ t('opencatalogi', 'Attachment successfully updated') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while updating the attachment</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while updating the attachment') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -148,7 +148,7 @@ const getTags = async () => {
 			<span class="buttonContainer">
 				<NcButton
 					@click="handleCancel">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -160,7 +160,7 @@ const getTags = async () => {
 							<ContentSave v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Save
+					{{ t('opencatalogi', 'Save') }}
 				</NcButton>
 			</span>
 		</div>

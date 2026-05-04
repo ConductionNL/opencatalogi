@@ -585,6 +585,14 @@ function scanTagAttrs(tagText, tagStartInTpl, tplStartInFile, tCallRanges, hits)
 		// https://vue-select.org/api/props.html#label
 		if (name.toLowerCase() === 'label' && /^NcSelect/.test(tagName)) continue
 
+		// `<slot name="...">` and `<router-view name="...">` use `name` as a
+		// structural identifier (slot name / named view), not display text.
+		if (name.toLowerCase() === 'name' && (tagName === 'slot' || tagName === 'router-view')) continue
+
+		// Project-specific: `back-route` on EntityDetailPage is a Vue Router
+		// route name passed to $router.push({ name }), not display text.
+		if (name.toLowerCase() === 'back-route') continue
+
 		const value = am[4] !== undefined ? am[4] : am[5]
 		if (!value) continue
 

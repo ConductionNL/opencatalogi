@@ -8,7 +8,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
-			<h2>Add attachment</h2>
+			<h2>{{ t('opencatalogi', 'Add attachment') }}</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
