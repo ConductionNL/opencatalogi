@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { PiniaVuePlugin } from 'pinia'
 import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t, translatePlural as n, getLanguage, unregister } from '@nextcloud/l10n'
 import { registerTranslations } from '@conduction/nextcloud-vue'
 import pinia from './pinia.js'
 import App from './App.vue'
@@ -50,6 +50,13 @@ Vue.use(PiniaVuePlugin)
 Vue.directive('tooltip', Tooltip) // it would be nice if this was in the documentation.. NEXT CLOUD!!!
 
 registerTranslations()
+
+// Nextcloud falls back to the server's default language (Dutch) when the user's language
+// has no l10n file. Unregister those translations so t() returns the English key instead.
+const _lang = (getLanguage() || 'en').split(/[-_]/)[0]
+if (_lang !== 'nl') {
+	unregister('opencatalogi')
+}
 
 new Vue(
 	{
