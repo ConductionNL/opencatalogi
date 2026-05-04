@@ -765,6 +765,7 @@ export default {
 				propertyOverrides: this.propertyOverrides,
 				canDropProperty: this.canDropProperty,
 				getDropPropertyTooltip: this.getDropPropertyTooltip,
+				isNew: this.isNewObject,
 			}
 		},
 
