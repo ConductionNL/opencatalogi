@@ -49,6 +49,7 @@ const PROSE_ATTRS = new Set([
 	'input-label', 'menu-name', 'item-text',
 	'error-message', 'helper-text', 'success-message',
 	'empty-content-name', 'empty-content-description',
+	'empty-title', 'empty-description',
 	'submit-button-text', 'cancel-button-text', 'confirm-button-text',
 	'button-text', 'accept-label', 'dismiss-label',
 	'no-options-text', 'loading-text', 'loading-label',
@@ -498,8 +499,20 @@ function scanTagAttrs(tagText, tagStartInTpl, tplStartInFile, tCallRanges, hits)
 		// too much noise without component-level context.
 		if (!isTooltipDirective && !PROSE_ATTRS.has(name.toLowerCase())) continue
 
+		// Component-specific opt-out: NcSelect (and NcSelectTags / NcSelectUsers)
+		// use `label` as the option-key prop — i.e. the property name to read
+		// from each option, not display text. vue-select docs:
+		// https://vue-select.org/api/props.html#label
+		if (name.toLowerCase() === 'label' && /^NcSelect/.test(tagName)) continue
+
 		const value = am[4] !== undefined ? am[4] : am[5]
 		if (!value) continue
+
+		// Slot-prop / option-key pattern: when the literal value matches the
+		// attribute name itself (`label="label"`, `name="name"`, etc.) it's
+		// almost always a reference to a property/slot name, not user-visible
+		// prose. Skip to avoid the false positive.
+		if (!treatAsBound && value === name) continue
 
 		// Position of the value's contents (just past the opening quote) for both paths.
 		const valueOffsetInAttrSpan = attrSpan.indexOf(am[3], am.index) + 1
