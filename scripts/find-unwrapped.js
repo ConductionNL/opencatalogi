@@ -294,11 +294,12 @@ function isInsideRange(pos, ranges) {
  * that almost certainly isn't user-visible display text. Used to suppress the
  * common false-positive cases the bound-attr / interpolation scanner produces:
  *
- *   - Bracketed property access:  obj?.['title']?.[0]    → 'title' is a key
+ *   - Bracketed property access:  obj?.['title']?.[0]      → 'title' is a key
  *   - Equality comparison:        linkType === 'markdown'  → 'markdown' is a value
+ *   - Store method call argument: objectStore.foo('bar')   → 'bar' is a store key
  *
- * Both cases are detectable from the characters immediately surrounding the
- * literal in the expression; we don't need a real parser.
+ * All three cases are detectable from the characters surrounding the literal
+ * in the expression; we don't need a real parser.
  */
 function looksLikeNonDisplayContext(expr, start, end) {
 	// Walk back over whitespace before the opening quote to find the prior token.
@@ -323,7 +324,86 @@ function looksLikeNonDisplayContext(expr, start, end) {
 		if (op === '==' || op === '===' || op === '!=' || op === '!==') return true
 	}
 
+	// Store-call argument: literal is an argument to a method call on a `*Store`
+	// identifier (Pinia / Vuex convention). Examples:
+	//   objectStore.getActiveObject('publication')
+	//   navigationStore.setDialog('copyObject', { objectType: 'theme' })
+	//   catalogStore.isLoading('publicationAttachments')
+	// These string literals are store-namespace keys / event names, not user text.
+	if (isInsideStoreCall(expr, start)) return true
+
 	return false
+}
+
+/**
+ * Return true if the position `pos` (the opening quote of a string literal) is
+ * an argument to a method call whose receiver chain starts with an identifier
+ * ending in `Store`. Walks back from `pos` through balanced commas/brackets
+ * until it finds the nearest unmatched `(`, then checks the call target.
+ */
+function isInsideStoreCall(expr, pos) {
+	// Walk back to find the nearest enclosing unmatched `(`.
+	let depth = 0
+	let i = pos - 1
+	while (i >= 0) {
+		const c = expr[i]
+		if (c === ')' || c === ']' || c === '}') {
+			depth++
+		} else if (c === '(' || c === '[' || c === '{') {
+			if (depth === 0) {
+				// Found the enclosing opener. We only care if it's `(`.
+				if (c !== '(') return false
+				break
+			}
+			depth--
+		} else if (c === '\'' || c === '"' || c === '`') {
+			// Skip string contents (going backward is awkward — find the matching
+			// opening quote). Walk back one quote-pair.
+			const quote = c
+			i--
+			while (i >= 0 && expr[i] !== quote) {
+				if (i > 0 && expr[i - 1] === '\\') i -= 2
+				else i--
+			}
+		}
+		i--
+	}
+	if (i < 0) return false // no enclosing `(` — top-level literal
+
+	// `i` is at the `(`. Walk back through chained `.method` segments to find
+	// the base identifier of the call target.
+	let j = i - 1
+	while (j >= 0 && /\s/.test(expr[j])) j--
+
+	// Read identifier characters back.
+	const readIdentBackwards = (from) => {
+		let k = from
+		while (k >= 0 && /[\w$]/.test(expr[k])) k--
+		return { start: k + 1, end: from + 1 } // [start, end)
+	}
+
+	let ident = readIdentBackwards(j)
+	if (ident.end <= ident.start) return false
+
+	// Step over zero or more `.<ident>` segments to reach the base.
+	while (true) {
+		const before = ident.start - 1
+		// Allow optional whitespace then a `.` (or `?.`)
+		let k = before
+		while (k >= 0 && /\s/.test(expr[k])) k--
+		if (k < 0 || expr[k] !== '.') break
+		// Optional `?` for optional chaining `obj?.method`
+		k--
+		if (k >= 0 && expr[k] === '?') k--
+		while (k >= 0 && /\s/.test(expr[k])) k--
+		if (k < 0) break
+		const next = readIdentBackwards(k)
+		if (next.end <= next.start) break
+		ident = next
+	}
+
+	const baseIdent = expr.slice(ident.start, ident.end)
+	return /Store$/.test(baseIdent)
 }
 
 function findStringLiteralsInExpression(expr) {
