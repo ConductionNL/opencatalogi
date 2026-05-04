@@ -270,6 +270,114 @@ function isInsideRange(pos, ranges) {
 	return false
 }
 
+/**
+ * Scan a JS expression string for string literals — single-quoted, double-quoted,
+ * and template literals without ${...} interpolations. Returns [{ value, offset }]
+ * where `offset` is the position of the literal's *content* (just past the opening
+ * quote) within the expression string.
+ *
+ * Used to surface hardcoded prose inside Vue interpolations like
+ * `{{ isMultiple ? 'are' : 'is' }}` and bound attribute expressions like
+ * `:name="isAddMode ? 'Add Menu' : getModalTitle()"` that the single-literal
+ * fast path skips.
+ *
+ * Skips literals inside identifier-prefixed call arguments — specifically, any
+ * literal whose preceding non-whitespace token looks like a function call or
+ * member access (e.g. `someFn('x')`, `obj.method('y')`). This avoids flagging
+ * keys passed to known non-prose APIs (event names, store keys, css class
+ * helpers, etc.). t('app', ...) is filtered separately via tCallRanges in the
+ * caller.
+ */
+/**
+ * Return true when a string literal at [start..end] in `expr` is in a context
+ * that almost certainly isn't user-visible display text. Used to suppress the
+ * common false-positive cases the bound-attr / interpolation scanner produces:
+ *
+ *   - Bracketed property access:  obj?.['title']?.[0]    → 'title' is a key
+ *   - Equality comparison:        linkType === 'markdown'  → 'markdown' is a value
+ *
+ * Both cases are detectable from the characters immediately surrounding the
+ * literal in the expression; we don't need a real parser.
+ */
+function looksLikeNonDisplayContext(expr, start, end) {
+	// Walk back over whitespace before the opening quote to find the prior token.
+	let p = start - 1
+	while (p >= 0 && /\s/.test(expr[p])) p--
+
+	// Bracketed access: literal sits directly inside [ ... ]. Detect by the
+	// previous non-space char being `[` and the next being `]`.
+	if (p >= 0 && expr[p] === '[') {
+		let q = end + 1
+		while (q < expr.length && /\s/.test(expr[q])) q++
+		if (q < expr.length && expr[q] === ']') return true
+	}
+
+	// Equality comparison: literal preceded by `===`, `==`, `!==`, or `!=`.
+	if (p >= 0 && (expr[p] === '=' || expr[p] === '!')) {
+		// Walk back over the operator (1–3 chars: `=`, `==`, `===`, `!=`, `!==`).
+		const opEnd = p
+		let opStart = p
+		while (opStart > 0 && (expr[opStart - 1] === '=' || expr[opStart - 1] === '!')) opStart--
+		const op = expr.slice(opStart, opEnd + 1)
+		if (op === '==' || op === '===' || op === '!=' || op === '!==') return true
+	}
+
+	return false
+}
+
+function findStringLiteralsInExpression(expr) {
+	const out = []
+	let i = 0
+	while (i < expr.length) {
+		const c = expr[i]
+		if (c === '\'' || c === '"' || c === '`') {
+			const quote = c
+			const start = i
+			let j = i + 1
+			let hasInterp = false
+			while (j < expr.length && expr[j] !== quote) {
+				if (expr[j] === '\\' && j + 1 < expr.length) {
+					j += 2
+					continue
+				}
+				if (quote === '`' && expr[j] === '$' && expr[j + 1] === '{') {
+					hasInterp = true
+					// Skip past the matching '}' (with depth tracking for nested braces)
+					j += 2
+					let depth = 1
+					while (j < expr.length && depth > 0) {
+						if (expr[j] === '{') depth++
+						else if (expr[j] === '}') depth--
+						j++
+					}
+					continue
+				}
+				j++
+			}
+			if (j >= expr.length) {
+				// Unterminated string — bail.
+				break
+			}
+			if (!hasInterp && !looksLikeNonDisplayContext(expr, start, j)) {
+				const value = expr.slice(start + 1, j)
+				out.push({ value, offset: start + 1 })
+			}
+			i = j + 1
+		} else if (c === '/' && expr[i + 1] === '/') {
+			// Line comment.
+			while (i < expr.length && expr[i] !== '\n') i++
+		} else if (c === '/' && expr[i + 1] === '*') {
+			// Block comment.
+			i += 2
+			while (i + 1 < expr.length && !(expr[i] === '*' && expr[i + 1] === '/')) i++
+			i += 2
+		} else {
+			i++
+		}
+	}
+	return out
+}
+
 // ---------- scanners ----------
 
 /**
@@ -319,7 +427,7 @@ function scanTemplate(file, fullText, tplStart, tplEnd, tCallRanges) {
 			while (i < tpl.length && tpl[i] !== '<') i++
 			const textEnd = i
 			const raw = tpl.slice(textStart, textEnd)
-			// Strip {{ ... }} interpolations.
+			// Strip {{ ... }} interpolations for the existing static-text check.
 			const stripped = raw.replace(/\{\{[\s\S]*?\}\}/g, ' ')
 			const trimmed = stripped.trim()
 			if (trimmed) {
@@ -328,6 +436,24 @@ function scanTemplate(file, fullText, tplStart, tplEnd, tCallRanges) {
 				if (!isInsideRange(absPos, tCallRanges)
 					&& looksLikeProse(trimmed, { strictForGenericContext: true })) {
 					hits.push({ kind: 'text', value: trimmed, pos: absPos })
+				}
+			}
+
+			// Additionally, scan each {{ expr }} block for string literals so
+			// patterns like {{ isMultiple ? 'are' : 'is' }} surface their hardcoded
+			// English. This is in addition to the static-text check above; literal
+			// content stripped from `raw` is examined here.
+			const interpRe = /\{\{([\s\S]*?)\}\}/g
+			let interpMatch
+			while ((interpMatch = interpRe.exec(raw)) !== null) {
+				const exprStartInRaw = interpMatch.index + 2 // skip "{{"
+				const expr = interpMatch[1]
+				const literals = findStringLiteralsInExpression(expr)
+				for (const lit of literals) {
+					const absPos = tplStart + textStart + exprStartInRaw + lit.offset
+					if (isInsideRange(absPos, tCallRanges)) continue
+					if (!looksLikeProse(lit.value)) continue
+					hits.push({ kind: 'interp', value: lit.value, pos: absPos })
 				}
 			}
 		}
@@ -375,7 +501,13 @@ function scanTagAttrs(tagText, tagStartInTpl, tplStartInFile, tCallRanges, hits)
 		const value = am[4] !== undefined ? am[4] : am[5]
 		if (!value) continue
 
+		// Position of the value's contents (just past the opening quote) for both paths.
+		const valueOffsetInAttrSpan = attrSpan.indexOf(am[3], am.index) + 1
+		const valueOffsetInTag = attrSpanOffset + valueOffsetInAttrSpan
+		const valueAbsPos = tplStartInFile + tagStartInTpl + valueOffsetInTag
+
 		let literal = null
+		let valueIsSingleLiteral = false
 		if (treatAsBound) {
 			// `:title="'Save'"` / `v-tooltip="'Edit'"` — accept only single-literal expressions.
 			const v = value.trim()
@@ -385,19 +517,30 @@ function scanTagAttrs(tagText, tagStartInTpl, tplStartInFile, tCallRanges, hits)
 			if (q1) literal = q1[1]
 			else if (q2) literal = q2[1]
 			else if (q3) literal = q3[1]
-			else continue
+			if (literal !== null) valueIsSingleLiteral = true
 		} else {
 			literal = value
+			valueIsSingleLiteral = true
 		}
 
-		if (!looksLikeProse(literal)) continue
+		if (valueIsSingleLiteral) {
+			if (!looksLikeProse(literal)) continue
+			if (isInsideRange(valueAbsPos, tCallRanges)) continue
+			hits.push({ kind: `attr ${rawName}`, value: literal, pos: valueAbsPos })
+			continue
+		}
 
-		// Absolute position of the value (just past the opening quote).
-		const valueOffsetInAttrSpan = attrSpan.indexOf(am[3], am.index) + 1
-		const valueOffsetInTag = attrSpanOffset + valueOffsetInAttrSpan
-		const absPos = tplStartInFile + tagStartInTpl + valueOffsetInTag
-		if (isInsideRange(absPos, tCallRanges)) continue
-		hits.push({ kind: `attr ${rawName}`, value: literal, pos: absPos })
+		// Bound-attr expression that isn't a single literal — e.g.
+		// `:name="isAddMode ? 'Add Menu' : getModalTitle()"`. Scan for embedded
+		// string literals so the hardcoded prose surfaces. Only runs for bound
+		// attrs (treatAsBound), so static-value behavior is unchanged.
+		const literals = findStringLiteralsInExpression(value)
+		for (const lit of literals) {
+			const absPos = valueAbsPos + lit.offset
+			if (isInsideRange(absPos, tCallRanges)) continue
+			if (!looksLikeProse(lit.value)) continue
+			hits.push({ kind: `attr ${rawName} (in expr)`, value: lit.value, pos: absPos })
+		}
 	}
 }
 
