@@ -133,14 +133,20 @@ function looksLikeProse(s, { strictForGenericContext = false } = {}) {
 
 	// Single-token boolean-ish / common code values.
 	if (!/\s/.test(t)) {
+		// Strip trailing user-text punctuation before classification, so
+		// `Title*`, `Order:`, `Name?`, `Done!` evaluate as `Title`/`Order`/etc.
+		// These are the form-label / list-header / prompt patterns where the
+		// punctuation is part of the displayed prose, not the identifier.
+		const core = t.replace(/[:*?!.]+$/, '')
+
 		// One word. Keep it only if it looks like an English word (capital +
 		// lowercase, e.g. "Concept", "Published"). Reject snake_case, kebab-case,
 		// and lowercase identifiers like "title", "name", "asc".
-		if (/[_]/.test(t)) return false
-		if (/^[a-z][\w-]*$/.test(t)) {
+		if (/[_]/.test(core)) return false
+		if (/^[a-z][\w-]*$/.test(core)) {
 			// If we're in a generic context (not a known prose attr), be strict:
 			// require at least 4 letters AND not match common code tokens.
-			if (strictForGenericContext) return false
+			if (strictForGenericContext && core === t) return false
 			const codeTokens = new Set([
 				'true', 'false', 'null', 'undefined', 'asc', 'desc',
 				'lg', 'md', 'sm', 'xs', 'xl',
@@ -148,13 +154,13 @@ function looksLikeProse(s, { strictForGenericContext = false } = {}) {
 				'auto', 'none', 'block', 'inline', 'flex', 'grid',
 				'primary', 'secondary', 'success', 'warning', 'error', 'info',
 			])
-			if (codeTokens.has(t.toLowerCase())) return false
+			if (codeTokens.has(core.toLowerCase())) return false
 			return true
 		}
 		// A single capitalized word like "Concept" or "Themes" — accept.
-		if (/^[A-Z][a-z]+$/.test(t)) return true
+		if (/^[A-Z][a-z]+$/.test(core)) return true
 		// CamelCase like "BackRoute" — likely an identifier; reject.
-		if (/^[A-Z][a-z]+([A-Z][a-z]+)+$/.test(t)) return false
+		if (/^[A-Z][a-z]+([A-Z][a-z]+)+$/.test(core)) return false
 		// Mixed-case / has digits / has uppercase tail — reject.
 		return false
 	}
@@ -350,21 +356,28 @@ function scanTagAttrs(tagText, tagStartInTpl, tplStartInFile, tCallRanges, hits)
 		const rawName = am[2]
 		const isBound = rawName.startsWith(':')
 		const isEvent = rawName.startsWith('@') || rawName.startsWith('v-on')
-		const isDirective = rawName.startsWith('v-') && !isEvent
-		if (isEvent || isDirective) continue
-		const name = isBound ? rawName.slice(1) : rawName
 
-		// Only consider attributes whose name is in our prose set. Anything else
-		// (class, style, icon, rel, sortDirection-style 'name' on form inputs,
-		// etc.) produces too much noise without component-level context.
-		if (!PROSE_ATTRS.has(name.toLowerCase())) continue
+		// v-tooltip / v-tooltip:placement render their value as user-visible text,
+		// so they belong in the prose-attr set even though they're directives.
+		// Treat them as bound (value is a JS expression — usually a single literal).
+		const isTooltipDirective = /^v-tooltip(\b|:|\.)/.test(rawName)
+		const isOtherDirective = rawName.startsWith('v-') && !isEvent && !isTooltipDirective
+		if (isEvent || isOtherDirective) continue
+
+		const name = isBound ? rawName.slice(1) : rawName
+		const treatAsBound = isBound || isTooltipDirective
+
+		// Only consider attributes whose name is in our prose set. v-tooltip is
+		// always prose. Anything else (class, style, icon, rel, etc.) produces
+		// too much noise without component-level context.
+		if (!isTooltipDirective && !PROSE_ATTRS.has(name.toLowerCase())) continue
 
 		const value = am[4] !== undefined ? am[4] : am[5]
 		if (!value) continue
 
 		let literal = null
-		if (isBound) {
-			// `:title="'Save'"` etc. — accept only single-literal expressions.
+		if (treatAsBound) {
+			// `:title="'Save'"` / `v-tooltip="'Edit'"` — accept only single-literal expressions.
 			const v = value.trim()
 			const q1 = v.match(/^'([^'\\]*(?:\\.[^'\\]*)*)'$/)
 			const q2 = v.match(/^"([^"\\]*(?:\\.[^"\\]*)*)"$/)
