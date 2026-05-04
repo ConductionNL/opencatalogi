@@ -164,7 +164,7 @@ class CatalogiService
     /**
      * Attempts to retrieve the RegisterMapper from the Container
      *
-     * @return \OCA\OpenRegister\Db\SchemaMapper|null
+     * @return \OCA\OpenRegister\Db\RegisterMapper|null
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -180,67 +180,102 @@ class CatalogiService
     }//end getRegisterMapper()
 
     /**
-     * Attempts to rewrite slugs and uuids in register and schema fields of a Catalog to actual ids
+     * Compute rewritten register and schema arrays for a catalog object.
      *
-     * @param ObjectEntity $objectEntity The catalog object to rewrite
+     * Resolves slug-or-id values in `registers` and `schemas` to integer ids. Returns
+     * only the keys that actually changed, so callers can pass the result straight
+     * into a pre-save hook's `setModifiedData(...)` without overwriting unrelated fields.
+     *
+     * @param array<string, mixed> $object The decoded catalog object payload.
+     *
+     * @return array<string, array<int|string>> Map containing only the changed keys
+     *                                          (`registers` and/or `schemas`). Empty
+     *                                          when nothing needs rewriting.
+     *
+     * @throws \RuntimeException When a slug cannot be resolved to a register/schema.
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function computeRewrittenRegistersAndSchemas(array $object): array
+    {
+        $modified = [];
+
+        if (isset($object['registers']) === true && is_array($object['registers']) === true) {
+            $rewrittenRegisters = array_map(
+                function ($register) {
+                    if (preg_match("/^\d+$/", (string) $register) === 1) {
+                        return $register;
+                    }
+
+                    try {
+                        return $this->getRegisterMapper()->find($register)->getId();
+                    } catch (NotFoundException $e) {
+                        throw new \RuntimeException('Register '.$register.' not found.');
+                    }
+                },
+                $object['registers']
+            );
+
+            if ($rewrittenRegisters !== $object['registers']) {
+                $modified['registers'] = $rewrittenRegisters;
+            }
+        }
+
+        if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
+            $rewrittenSchemas = array_map(
+                function ($schema) {
+                    if (preg_match("/^\d+$/", (string) $schema) === 1) {
+                        return $schema;
+                    }
+
+                    try {
+                        return $this->getSchemaMapper()->find($schema)->getId();
+                    } catch (NotFoundException $e) {
+                        throw new \RuntimeException('Schema '.$schema.' not found.');
+                    }
+                },
+                $object['schemas']
+            );
+
+            if ($rewrittenSchemas !== $object['schemas']) {
+                $modified['schemas'] = $rewrittenSchemas;
+            }
+        }
+
+        return $modified;
+
+    }//end computeRewrittenRegistersAndSchemas()
+
+    /**
+     * Rewrite slugs and uuids in register and schema fields of a Catalog to actual ids.
+     *
+     * @param ObjectEntity $objectEntity The catalog object to rewrite.
      *
      * @return bool Whether the object has been updated.
      *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @deprecated Calling this from a post-save event handler causes an infinite loop
+     *             because the inner `saveObject(...)` re-emits `ObjectUpdatedEvent`. Subscribe
+     *             to the pre-save events (`ObjectCreatingEvent` / `ObjectUpdatingEvent`) and use
+     *             {@see self::computeRewrittenRegistersAndSchemas()} together with
+     *             `$event->setModifiedData(...)` instead.
      */
     public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
     {
-        $object = $objectEntity->getObject();
+        $object   = $objectEntity->getObject() ?? [];
+        $modified = $this->computeRewrittenRegistersAndSchemas($object);
 
-        $registers = $object['registers'];
-        $schemas   = $object['schemas'];
+        if ($modified === []) {
+            return false;
+        }
 
-        // First, attempt to rewrite the registers.
-        $registers = array_map(
-                function ($register) {
-                    if (preg_match("/^\d+$/", $register) === 1) {
-                        return $register;
-                    }
-
-                    try {
-                        $registerObject = $this->getRegisterMapper()->find($register);
-
-                        return $registerObject->getId();
-                    } catch (NotFoundException $e) {
-                        throw new \RuntimeException('Register '.$register.' not found.');
-                    }
-                },
-                $registers
-                );
-
-        // Then, attempt to rewrite the schemas.
-        $schemas = array_map(
-                function ($schema) {
-                    if (preg_match("/^\d+$/", $schema) === 1) {
-                        return $schema;
-                    }
-
-                    try {
-                        $schemaObject = $this->getSchemaMapper()->find($schema);
-
-                        return $schemaObject->getId();
-                    } catch (NotFoundException $e) {
-                        throw new \RuntimeException('Register '.$schema.' not found.');
-                    }
-                },
-                $schemas
-                );
-
-        // Set the registers and schemas in the object and update the object.
-        $object['registers'] = $registers;
-        $object['schemas']   = $schemas;
-
-        $objectEntity->setObject($object);
-
+        $objectEntity->setObject(array_merge($object, $modified));
         $this->getObjectService()->saveObject($objectEntity);
 
         return true;
+
     }//end rewriteSchemasAndRegisters()
 
     /**
@@ -272,7 +307,7 @@ class CatalogiService
         // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
         // on the object's own 'slug' field.
         if ($catalogId !== null) {
-            if (Uuid::isValid($catalogId) === true) {
+            if (Uuid::isValid((string) $catalogId) === true) {
                 $query['@self']['uuid'] = $catalogId;
             } else {
                 $query['slug'] = $catalogId;

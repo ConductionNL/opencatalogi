@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Db\Register;
+use OCA\OpenRegister\Db\RegisterMapper;
+use OCA\OpenRegister\Db\Schema;
+use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\OpenRegister\Service\FileService;
+use OCP\Common\Exception\NotFoundException;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\App\IAppManager;
@@ -26,12 +32,19 @@ class CatalogiServiceTest extends TestCase
 {
 
     private IAppConfig|MockObject $config;
+
     private IRequest|MockObject $request;
+
     private ContainerInterface|MockObject $container;
+
     private IAppManager|MockObject $appManager;
+
     private ICacheFactory|MockObject $cacheFactory;
+
     private LoggerInterface|MockObject $logger;
+
     private ICache|MockObject $cache;
+
     private CatalogiService $service;
 
     protected function setUp(): void
@@ -56,12 +69,11 @@ class CatalogiServiceTest extends TestCase
             $this->cacheFactory,
             $this->logger,
         );
-    }
+    }//end setUp()
 
     // ──────────────────────────────────────────────────────────
     // getObjectService
     // ──────────────────────────────────────────────────────────
-
     public function testGetObjectServiceAvailable(): void
     {
         $objectService = $this->createMock(ObjectService::class);
@@ -75,7 +87,7 @@ class CatalogiServiceTest extends TestCase
 
         $result = $this->service->getObjectService();
         $this->assertSame($objectService, $result);
-    }
+    }//end testGetObjectServiceAvailable()
 
     public function testGetObjectServiceNotAvailable(): void
     {
@@ -86,12 +98,11 @@ class CatalogiServiceTest extends TestCase
         $this->expectExceptionMessage('OpenRegister service is not available.');
 
         $this->service->getObjectService();
-    }
+    }//end testGetObjectServiceNotAvailable()
 
     // ──────────────────────────────────────────────────────────
     // getFileService
     // ──────────────────────────────────────────────────────────
-
     public function testGetFileServiceAvailable(): void
     {
         $fileService = $this->createMock(FileService::class);
@@ -105,7 +116,7 @@ class CatalogiServiceTest extends TestCase
 
         $result = $this->service->getFileService();
         $this->assertSame($fileService, $result);
-    }
+    }//end testGetFileServiceAvailable()
 
     public function testGetFileServiceNotAvailable(): void
     {
@@ -116,24 +127,27 @@ class CatalogiServiceTest extends TestCase
         $this->expectExceptionMessage('OpenRegister service is not available.');
 
         $this->service->getFileService();
-    }
+    }//end testGetFileServiceNotAvailable()
 
     // ──────────────────────────────────────────────────────────
     // getCatalogFilters
     // ──────────────────────────────────────────────────────────
-
     public function testGetCatalogFiltersWithoutCatalogId(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $catalogObject = $this->createMockCatalogObject([
-            'registers' => ['reg-a', 'reg-b'],
-            'schemas'   => ['sch-x', 'sch-y'],
-        ]);
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-a', 'reg-b'],
+                    'schemas'   => ['sch-x', 'sch-y'],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
@@ -147,20 +161,24 @@ class CatalogiServiceTest extends TestCase
         $this->assertArrayHasKey('schemas', $result);
         $this->assertEquals(['reg-a', 'reg-b'], $result['registers']);
         $this->assertEquals(['sch-x', 'sch-y'], $result['schemas']);
-    }
+    }//end testGetCatalogFiltersWithoutCatalogId()
 
     public function testGetCatalogFiltersWithCatalogId(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $catalogObject = $this->createMockCatalogObject([
-            'registers' => ['reg-c'],
-            'schemas'   => ['sch-z'],
-        ]);
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-c'],
+                    'schemas'   => ['sch-z'],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
@@ -172,24 +190,30 @@ class CatalogiServiceTest extends TestCase
 
         $this->assertEquals(['reg-c'], $result['registers']);
         $this->assertEquals(['sch-z'], $result['schemas']);
-    }
+    }//end testGetCatalogFiltersWithCatalogId()
 
     public function testGetCatalogFiltersWithMultipleCatalogsDeduplicated(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $cat1 = $this->createMockCatalogObject([
-            'registers' => ['reg-a', 'reg-b'],
-            'schemas'   => ['sch-x'],
-        ]);
-        $cat2 = $this->createMockCatalogObject([
-            'registers' => ['reg-b', 'reg-c'],
-            'schemas'   => ['sch-x', 'sch-y'],
-        ]);
+        $cat1 = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-a', 'reg-b'],
+                    'schemas'   => ['sch-x'],
+                ]
+                );
+        $cat2 = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-b', 'reg-c'],
+                    'schemas'   => ['sch-x', 'sch-y'],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
@@ -204,15 +228,17 @@ class CatalogiServiceTest extends TestCase
         $this->assertContains('reg-b', $result['registers']);
         $this->assertContains('reg-c', $result['registers']);
         $this->assertCount(2, $result['schemas']);
-    }
+    }//end testGetCatalogFiltersWithMultipleCatalogsDeduplicated()
 
     public function testGetCatalogFiltersEmptyResults(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
@@ -224,12 +250,11 @@ class CatalogiServiceTest extends TestCase
 
         $this->assertEquals([], $result['registers']);
         $this->assertEquals([], $result['schemas']);
-    }
+    }//end testGetCatalogFiltersEmptyResults()
 
     // ──────────────────────────────────────────────────────────
     // getAvailableRegisters / getAvailableSchemas
     // ──────────────────────────────────────────────────────────
-
     public function testGetAvailableRegistersReturnsStoredValues(): void
     {
         $reflection = new \ReflectionClass($this->service);
@@ -238,12 +263,12 @@ class CatalogiServiceTest extends TestCase
         $prop->setValue($this->service, ['reg-1', 'reg-2']);
 
         $this->assertEquals(['reg-1', 'reg-2'], $this->service->getAvailableRegisters());
-    }
+    }//end testGetAvailableRegistersReturnsStoredValues()
 
     public function testGetAvailableRegistersDefaultEmpty(): void
     {
         $this->assertEquals([], $this->service->getAvailableRegisters());
-    }
+    }//end testGetAvailableRegistersDefaultEmpty()
 
     public function testGetAvailableSchemasReturnsStoredValues(): void
     {
@@ -253,17 +278,16 @@ class CatalogiServiceTest extends TestCase
         $prop->setValue($this->service, ['sch-a', 'sch-b']);
 
         $this->assertEquals(['sch-a', 'sch-b'], $this->service->getAvailableSchemas());
-    }
+    }//end testGetAvailableSchemasReturnsStoredValues()
 
     public function testGetAvailableSchemasDefaultEmpty(): void
     {
         $this->assertEquals([], $this->service->getAvailableSchemas());
-    }
+    }//end testGetAvailableSchemasDefaultEmpty()
 
     // ──────────────────────────────────────────────────────────
     // getCatalogBySlug
     // ──────────────────────────────────────────────────────────
-
     public function testGetCatalogBySlugCacheHit(): void
     {
         $cachedData = ['id' => '1', 'slug' => 'test-catalog', 'title' => 'Test'];
@@ -275,7 +299,7 @@ class CatalogiServiceTest extends TestCase
         $result = $this->service->getCatalogBySlug('test-catalog');
 
         $this->assertEquals($cachedData, $result);
-    }
+    }//end testGetCatalogBySlugCacheHit()
 
     public function testGetCatalogBySlugCacheMissWithDbResult(): void
     {
@@ -286,10 +310,12 @@ class CatalogiServiceTest extends TestCase
             ->willReturn(null);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $catalogObject = $this->createMockCatalogObject($catalogData);
 
@@ -306,7 +332,7 @@ class CatalogiServiceTest extends TestCase
         $result = $this->service->getCatalogBySlug('my-catalog');
 
         $this->assertEquals($catalogData, $result);
-    }
+    }//end testGetCatalogBySlugCacheMissWithDbResult()
 
     public function testGetCatalogBySlugNotFound(): void
     {
@@ -314,10 +340,12 @@ class CatalogiServiceTest extends TestCase
             ->willReturn(null);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
@@ -331,7 +359,7 @@ class CatalogiServiceTest extends TestCase
         $result = $this->service->getCatalogBySlug('nonexistent');
 
         $this->assertNull($result);
-    }
+    }//end testGetCatalogBySlugNotFound()
 
     public function testGetCatalogBySlugEmptyConfig(): void
     {
@@ -339,10 +367,12 @@ class CatalogiServiceTest extends TestCase
             ->willReturn(null);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', ''],
-                ['opencatalogi', 'catalog_register', '', ''],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', ''],
+                        ['opencatalogi', 'catalog_register', '', ''],
+                    ]
+                    );
 
         $this->logger->expects($this->atLeastOnce())
             ->method('error');
@@ -350,7 +380,7 @@ class CatalogiServiceTest extends TestCase
         $result = $this->service->getCatalogBySlug('some-slug');
 
         $this->assertNull($result);
-    }
+    }//end testGetCatalogBySlugEmptyConfig()
 
     public function testGetCatalogBySlugExceptionReturnsNull(): void
     {
@@ -358,10 +388,12 @@ class CatalogiServiceTest extends TestCase
             ->willReturn(null);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
@@ -372,12 +404,11 @@ class CatalogiServiceTest extends TestCase
         $result = $this->service->getCatalogBySlug('broken');
 
         $this->assertNull($result);
-    }
+    }//end testGetCatalogBySlugExceptionReturnsNull()
 
     // ──────────────────────────────────────────────────────────
     // invalidateCatalogCache
     // ──────────────────────────────────────────────────────────
-
     public function testInvalidateCatalogCache(): void
     {
         $this->cache->expects($this->once())
@@ -385,19 +416,20 @@ class CatalogiServiceTest extends TestCase
             ->with('catalog_slug_test-slug');
 
         $this->service->invalidateCatalogCache('test-slug');
-    }
+    }//end testInvalidateCatalogCache()
 
     // ──────────────────────────────────────────────────────────
     // invalidateCatalogCacheById
     // ──────────────────────────────────────────────────────────
-
     public function testInvalidateCatalogCacheByIdSuccess(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $catalogEntity = new \OCA\OpenRegister\Db\ObjectEntity();
         $catalogEntity->setObject(['slug' => 'found-slug']);
@@ -413,15 +445,17 @@ class CatalogiServiceTest extends TestCase
             ->with('catalog_slug_found-slug');
 
         $this->service->invalidateCatalogCacheById(42);
-    }
+    }//end testInvalidateCatalogCacheByIdSuccess()
 
     public function testInvalidateCatalogCacheByIdExceptionLogsError(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('find')
@@ -433,15 +467,17 @@ class CatalogiServiceTest extends TestCase
             ->method('error');
 
         $this->service->invalidateCatalogCacheById(999);
-    }
+    }//end testInvalidateCatalogCacheByIdExceptionLogsError()
 
     public function testInvalidateCatalogCacheByIdNoSlug(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $catalogEntity = new \OCA\OpenRegister\Db\ObjectEntity();
         $catalogEntity->setObject(['title' => 'No Slug']);
@@ -457,12 +493,11 @@ class CatalogiServiceTest extends TestCase
             ->method('remove');
 
         $this->service->invalidateCatalogCacheById(42);
-    }
+    }//end testInvalidateCatalogCacheByIdNoSlug()
 
     // ──────────────────────────────────────────────────────────
     // warmupCatalogCache
     // ──────────────────────────────────────────────────────────
-
     public function testWarmupCatalogCache(): void
     {
         // warmupCatalogCache invalidates, then calls getCatalogBySlug.
@@ -476,10 +511,12 @@ class CatalogiServiceTest extends TestCase
             ->willReturn(null);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $catalogData   = ['slug' => 'warm-slug', 'title' => 'Warmed'];
         $catalogObject = $this->createMockCatalogObject($catalogData);
@@ -491,19 +528,20 @@ class CatalogiServiceTest extends TestCase
         $this->injectObjectService($objectService);
 
         $this->service->warmupCatalogCache('warm-slug');
-    }
+    }//end testWarmupCatalogCache()
 
     // ──────────────────────────────────────────────────────────
     // warmupCatalogCacheById
     // ──────────────────────────────────────────────────────────
-
     public function testWarmupCatalogCacheByIdSuccess(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $catalogData   = ['slug' => 'warmup-by-id'];
         $catalogEntity = new \OCA\OpenRegister\Db\ObjectEntity();
@@ -528,15 +566,17 @@ class CatalogiServiceTest extends TestCase
             ->willReturn(null);
 
         $this->service->warmupCatalogCacheById(10);
-    }
+    }//end testWarmupCatalogCacheByIdSuccess()
 
     public function testWarmupCatalogCacheByIdExceptionLogsError(): void
     {
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('find')
@@ -548,12 +588,11 @@ class CatalogiServiceTest extends TestCase
             ->method('error');
 
         $this->service->warmupCatalogCacheById(999);
-    }
+    }//end testWarmupCatalogCacheByIdExceptionLogsError()
 
     // ──────────────────────────────────────────────────────────
     // getConfig (private, via reflection)
     // ──────────────────────────────────────────────────────────
-
     public function testGetConfigDefaults(): void
     {
         $this->request->method('getParams')
@@ -571,36 +610,40 @@ class CatalogiServiceTest extends TestCase
         $this->assertNull($result['unset']);
         $this->assertEquals([], $result['queries']);
         $this->assertNull($result['ids']);
-    }
+    }//end testGetConfigDefaults()
 
     public function testGetConfigWithLimitAndOffset(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                'limit'  => '50',
-                'offset' => '100',
-            ]);
+            ->willReturn(
+                    [
+                        'limit'  => '50',
+                        'offset' => '100',
+                    ]
+                    );
 
         $method = $this->getPrivateMethod('getConfig');
         $result = $method->invoke($this->service);
 
         $this->assertEquals(50, $result['limit']);
         $this->assertEquals(100, $result['offset']);
-    }
+    }//end testGetConfigWithLimitAndOffset()
 
     public function testGetConfigWithUnderscorePrefixedParams(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                '_limit'   => '30',
-                '_offset'  => '60',
-                '_page'    => '3',
-                '_search'  => 'test query',
-                '_extend'  => ['relation1'],
-                '_fields'  => ['title', 'description'],
-                '_unset'   => ['internal'],
-                '_queries' => 'some-query',
-            ]);
+            ->willReturn(
+                    [
+                        '_limit'   => '30',
+                        '_offset'  => '60',
+                        '_page'    => '3',
+                        '_search'  => 'test query',
+                        '_extend'  => ['relation1'],
+                        '_fields'  => ['title', 'description'],
+                        '_unset'   => ['internal'],
+                        '_queries' => 'some-query',
+                    ]
+                    );
 
         $method = $this->getPrivateMethod('getConfig');
         $result = $method->invoke($this->service);
@@ -613,15 +656,17 @@ class CatalogiServiceTest extends TestCase
         $this->assertEquals(['title', 'description'], $result['fields']);
         $this->assertEquals(['internal'], $result['unset']);
         $this->assertEquals(['some-query'], $result['queries']);
-    }
+    }//end testGetConfigWithUnderscorePrefixedParams()
 
     public function testGetConfigPageCalculatesOffset(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                'page'  => '3',
-                'limit' => '10',
-            ]);
+            ->willReturn(
+                    [
+                        'page'  => '3',
+                        'limit' => '10',
+                    ]
+                    );
 
         $method = $this->getPrivateMethod('getConfig');
         $result = $method->invoke($this->service);
@@ -629,32 +674,36 @@ class CatalogiServiceTest extends TestCase
         $this->assertEquals(3, $result['page']);
         // offset = (3 - 1) * 10 = 20
         $this->assertEquals(20, $result['offset']);
-    }
+    }//end testGetConfigPageCalculatesOffset()
 
     public function testGetConfigPageDoesNotOverrideExplicitOffset(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                'page'   => '5',
-                'offset' => '10',
-                'limit'  => '20',
-            ]);
+            ->willReturn(
+                    [
+                        'page'   => '5',
+                        'offset' => '10',
+                        'limit'  => '20',
+                    ]
+                    );
 
         $method = $this->getPrivateMethod('getConfig');
         $result = $method->invoke($this->service);
 
         // Explicit offset takes precedence.
         $this->assertEquals(10, $result['offset']);
-    }
+    }//end testGetConfigPageDoesNotOverrideExplicitOffset()
 
     public function testGetConfigStripsIdAndRoute(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                'id'       => '123',
-                '_route'   => 'some.route',
-                'title'    => 'Test',
-            ]);
+            ->willReturn(
+                    [
+                        'id'     => '123',
+                        '_route' => 'some.route',
+                        'title'  => 'Test',
+                    ]
+                    );
 
         $method = $this->getPrivateMethod('getConfig');
         $result = $method->invoke($this->service);
@@ -662,63 +711,72 @@ class CatalogiServiceTest extends TestCase
         $this->assertArrayNotHasKey('id', $result['filters']);
         $this->assertArrayNotHasKey('_route', $result['filters']);
         $this->assertEquals('Test', $result['filters']['title']);
-    }
+    }//end testGetConfigStripsIdAndRoute()
 
     public function testGetConfigQueriesArrayPassthrough(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                'queries' => ['q1', 'q2'],
-            ]);
+            ->willReturn(
+                    [
+                        'queries' => ['q1', 'q2'],
+                    ]
+                    );
 
         $method = $this->getPrivateMethod('getConfig');
         $result = $method->invoke($this->service);
 
         $this->assertEquals(['q1', 'q2'], $result['queries']);
-    }
+    }//end testGetConfigQueriesArrayPassthrough()
 
     // ──────────────────────────────────────────────────────────
     // index
     // ──────────────────────────────────────────────────────────
-
     public function testIndexWithFilters(): void
     {
         $this->request->method('getParams')
             ->willReturn(['limit' => '10']);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $catalogObject = $this->createMockCatalogObject([
-            'registers' => ['reg-1'],
-            'schemas'   => ['sch-1'],
-        ]);
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1'],
+                    'schemas'   => ['sch-1'],
+                ]
+                );
 
-        $resultObject = $this->createMockResultObject([
-            'id'    => 'obj-1',
-            'title' => 'Test',
-            '@self' => [
-                'register'      => 'reg-1',
-                'schema'        => 'sch-1',
-                'owner'         => 'admin',
-                'deleted'       => false,
-                'schemaVersion' => '1.0',
-            ],
-        ]);
+        $resultObject = $this->createMockResultObject(
+                [
+                    'id'    => 'obj-1',
+                    'title' => 'Test',
+                    '@self' => [
+                        'register'      => 'reg-1',
+                        'schema'        => 'sch-1',
+                        'owner'         => 'admin',
+                        'deleted'       => false,
+                        'schemaVersion' => '1.0',
+                    ],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
             ->willReturn([$catalogObject]);
         $objectService->method('searchObjectsPaginated')
-            ->willReturn([
-                'results' => [$resultObject],
-                'total'   => 1,
-                'page'    => 1,
-                'pages'   => 1,
-            ]);
+            ->willReturn(
+                    [
+                        'results' => [$resultObject],
+                        'total'   => 1,
+                        'page'    => 1,
+                        'pages'   => 1,
+                    ]
+                    );
 
         $this->injectObjectService($objectService);
 
@@ -736,7 +794,7 @@ class CatalogiServiceTest extends TestCase
         // Verify kept properties.
         $this->assertArrayHasKey('register', $firstResult['@self']);
         $this->assertArrayHasKey('schema', $firstResult['@self']);
-    }
+    }//end testIndexWithFilters()
 
     public function testIndexWithMultipleRegistersAndSchemas(): void
     {
@@ -744,26 +802,32 @@ class CatalogiServiceTest extends TestCase
             ->willReturn([]);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $catalogObject = $this->createMockCatalogObject([
-            'registers' => ['reg-1', 'reg-2'],
-            'schemas'   => ['sch-1', 'sch-2'],
-        ]);
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1', 'reg-2'],
+                    'schemas'   => ['sch-1', 'sch-2'],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
             ->willReturn([$catalogObject]);
         $objectService->method('searchObjectsPaginated')
-            ->willReturn([
-                'results' => [],
-                'total'   => 0,
-                'page'    => 1,
-                'pages'   => 0,
-            ]);
+            ->willReturn(
+                    [
+                        'results' => [],
+                        'total'   => 0,
+                        'page'    => 1,
+                        'pages'   => 0,
+                    ]
+                    );
 
         $this->injectObjectService($objectService);
 
@@ -772,7 +836,7 @@ class CatalogiServiceTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
         $data = $response->getData();
         $this->assertCount(0, $data['results']);
-    }
+    }//end testIndexWithMultipleRegistersAndSchemas()
 
     public function testIndexWithCatalogId(): void
     {
@@ -780,78 +844,308 @@ class CatalogiServiceTest extends TestCase
             ->willReturn([]);
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $catalogObject = $this->createMockCatalogObject([
-            'registers' => ['reg-1'],
-            'schemas'   => ['sch-1'],
-        ]);
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1'],
+                    'schemas'   => ['sch-1'],
+                ]
+                );
 
-        $resultObject = $this->createMockResultObject([
-            'id'    => 'obj-1',
-            'title' => 'Filtered',
-            '@self' => ['register' => 'reg-1', 'schema' => 'sch-1'],
-        ]);
+        $resultObject = $this->createMockResultObject(
+                [
+                    'id'    => 'obj-1',
+                    'title' => 'Filtered',
+                    '@self' => ['register' => 'reg-1', 'schema' => 'sch-1'],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
             ->willReturn([$catalogObject]);
         $objectService->method('searchObjectsPaginated')
-            ->willReturn([
-                'results' => [$resultObject],
-                'total'   => 1,
-            ]);
+            ->willReturn(
+                    [
+                        'results' => [$resultObject],
+                        'total'   => 1,
+                    ]
+                    );
 
         $this->injectObjectService($objectService);
 
         $response = $this->service->index('catalog-uuid');
 
         $this->assertInstanceOf(JSONResponse::class, $response);
-    }
+    }//end testIndexWithCatalogId()
 
     public function testIndexPagination(): void
     {
         $this->request->method('getParams')
-            ->willReturn([
-                'limit' => '5',
-                'page'  => '2',
-            ]);
+            ->willReturn(
+                    [
+                        'limit' => '5',
+                        'page'  => '2',
+                    ]
+                    );
 
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
-                ['opencatalogi', 'catalog_register', '', 'register-1'],
-            ]);
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
 
-        $catalogObject = $this->createMockCatalogObject([
-            'registers' => ['reg-1'],
-            'schemas'   => [],
-        ]);
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1'],
+                    'schemas'   => [],
+                ]
+                );
 
         $objectService = $this->createMock(ObjectService::class);
         $objectService->method('searchObjects')
             ->willReturn([$catalogObject]);
         $objectService->method('searchObjectsPaginated')
-            ->willReturn([
-                'results' => [],
-                'total'   => 0,
-                'page'    => 2,
-                'pages'   => 2,
-            ]);
+            ->willReturn(
+                    [
+                        'results' => [],
+                        'total'   => 0,
+                        'page'    => 2,
+                        'pages'   => 2,
+                    ]
+                    );
 
         $this->injectObjectService($objectService);
 
         $response = $this->service->index();
 
         $this->assertInstanceOf(JSONResponse::class, $response);
-    }
+    }//end testIndexPagination()
+
+    // ──────────────────────────────────────────────────────────
+    // computeRewrittenRegistersAndSchemas
+    //
+    // Regression guards for the catalog-update infinite-loop fix: this method
+    // MUST be a pure function returning only the changed keys, so the
+    // pre-save listener can hand the result to `setModifiedData(...)` without
+    // triggering a second save.
+    // ──────────────────────────────────────────────────────────
+    public function testComputeRewrittenRegistersAndSchemasResolvesSlugsToIds(): void
+    {
+        $register       = $this->createEntityMock(Register::class, 42);
+        $registerMapper = $this->createMock(RegisterMapper::class);
+        $registerMapper->expects($this->once())
+            ->method('find')
+            ->with('my-register')
+            ->willReturn($register);
+
+        $schema       = $this->createEntityMock(Schema::class, 7);
+        $schemaMapper = $this->createMock(SchemaMapper::class);
+        $schemaMapper->expects($this->once())
+            ->method('find')
+            ->with('my-schema')
+            ->willReturn($schema);
+
+        $this->injectMappers($registerMapper, $schemaMapper);
+
+        $result = $this->service->computeRewrittenRegistersAndSchemas(
+                [
+                    'registers' => ['my-register'],
+                    'schemas'   => ['my-schema'],
+                ]
+                );
+
+        $this->assertSame(['registers' => [42], 'schemas' => [7]], $result);
+    }//end testComputeRewrittenRegistersAndSchemasResolvesSlugsToIds()
+
+    public function testComputeRewrittenRegistersAndSchemasIsIdempotentOnIntegerIds(): void
+    {
+        // No mapper lookups should happen when everything is already an integer id.
+        $registerMapper = $this->createMock(RegisterMapper::class);
+        $registerMapper->expects($this->never())->method('find');
+        $schemaMapper = $this->createMock(SchemaMapper::class);
+        $schemaMapper->expects($this->never())->method('find');
+
+        $this->injectMappers($registerMapper, $schemaMapper);
+
+        $result = $this->service->computeRewrittenRegistersAndSchemas(
+                [
+                    'registers' => ['1', '2'],
+                    'schemas'   => ['3'],
+                ]
+                );
+
+        // No changes -> empty diff. This is what stops the listener loop.
+        $this->assertSame([], $result);
+    }//end testComputeRewrittenRegistersAndSchemasIsIdempotentOnIntegerIds()
+
+    public function testComputeRewrittenRegistersAndSchemasReturnsOnlyChangedKey(): void
+    {
+        $register       = $this->createEntityMock(Register::class, 99);
+        $registerMapper = $this->createMock(RegisterMapper::class);
+        $registerMapper->expects($this->once())
+            ->method('find')
+            ->with('publication')
+            ->willReturn($register);
+
+        $schemaMapper = $this->createMock(SchemaMapper::class);
+        $schemaMapper->expects($this->never())->method('find');
+
+        $this->injectMappers($registerMapper, $schemaMapper);
+
+        $result = $this->service->computeRewrittenRegistersAndSchemas(
+                [
+                    'registers' => ['publication'],
+                    'schemas'   => ['12'],
+                ]
+                );
+
+        // Only the registers key was rewritten; schemas was already numeric.
+        $this->assertSame(['registers' => [99]], $result);
+    }//end testComputeRewrittenRegistersAndSchemasReturnsOnlyChangedKey()
+
+    public function testComputeRewrittenRegistersAndSchemasThrowsOnUnresolvableRegister(): void
+    {
+        $registerMapper = $this->createMock(RegisterMapper::class);
+        $registerMapper->method('find')
+            ->willThrowException(new NotFoundException('nope'));
+        $schemaMapper = $this->createMock(SchemaMapper::class);
+
+        $this->injectMappers($registerMapper, $schemaMapper);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Register ghost not found.');
+
+        $this->service->computeRewrittenRegistersAndSchemas(
+                [
+                    'registers' => ['ghost'],
+                    'schemas'   => [],
+                ]
+                );
+    }//end testComputeRewrittenRegistersAndSchemasThrowsOnUnresolvableRegister()
+
+    public function testComputeRewrittenRegistersAndSchemasTolerateMissingKeys(): void
+    {
+        $registerMapper = $this->createMock(RegisterMapper::class);
+        $registerMapper->expects($this->never())->method('find');
+        $schemaMapper = $this->createMock(SchemaMapper::class);
+        $schemaMapper->expects($this->never())->method('find');
+
+        $this->injectMappers($registerMapper, $schemaMapper);
+
+        $this->assertSame([], $this->service->computeRewrittenRegistersAndSchemas([]));
+    }//end testComputeRewrittenRegistersAndSchemasTolerateMissingKeys()
+
+    // ──────────────────────────────────────────────────────────
+    // rewriteSchemasAndRegisters (deprecated wrapper)
+    // ──────────────────────────────────────────────────────────
+    public function testRewriteSchemasAndRegistersSkipsSaveWhenNothingChanged(): void
+    {
+        $registerMapper = $this->createMock(RegisterMapper::class);
+        $registerMapper->expects($this->never())->method('find');
+        $schemaMapper = $this->createMock(SchemaMapper::class);
+        $schemaMapper->expects($this->never())->method('find');
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->expects($this->never())->method('saveObject');
+
+        $this->injectAll($registerMapper, $schemaMapper, $objectService);
+
+        $entity = $this->createMockObjectEntity(['registers' => ['1'], 'schemas' => ['2']]);
+
+        $this->assertFalse($this->service->rewriteSchemasAndRegisters($entity));
+    }//end testRewriteSchemasAndRegistersSkipsSaveWhenNothingChanged()
 
     // ──────────────────────────────────────────────────────────
     // Helper methods
     // ──────────────────────────────────────────────────────────
+
+    /**
+     * Inject RegisterMapper + SchemaMapper into the container so
+     * computeRewrittenRegistersAndSchemas can resolve slugs.
+     */
+    private function injectMappers(RegisterMapper $registerMapper, SchemaMapper $schemaMapper): void
+    {
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+
+        $this->container->method('get')
+            ->willReturnCallback(
+                    function (string $class) use ($registerMapper, $schemaMapper) {
+                        return match ($class) {
+                            'OCA\OpenRegister\Db\RegisterMapper' => $registerMapper,
+                            'OCA\OpenRegister\Db\SchemaMapper'   => $schemaMapper,
+                            default                              => null,
+                        };
+                    }
+                    );
+    }//end injectMappers()
+
+    /**
+     * Inject mappers + ObjectService into the container.
+     */
+    private function injectAll(
+        RegisterMapper $registerMapper,
+        SchemaMapper $schemaMapper,
+        ObjectService $objectService
+    ): void {
+        $this->appManager->method('getInstalledApps')
+            ->willReturn(['openregister']);
+
+        $this->container->method('get')
+            ->willReturnCallback(
+                    function (string $class) use ($registerMapper, $schemaMapper, $objectService) {
+                        return match ($class) {
+                            'OCA\OpenRegister\Db\RegisterMapper'        => $registerMapper,
+                            'OCA\OpenRegister\Db\SchemaMapper'          => $schemaMapper,
+                            'OCA\OpenRegister\Service\ObjectService'    => $objectService,
+                            default                                     => null,
+                        };
+                    }
+                    );
+    }//end injectAll()
+
+    /**
+     * Build a NextCloud Entity mock that responds to the magic `getId()` accessor.
+     *
+     * @template T of object
+     * @param    class-string<T> $class The Entity subclass to mock.
+     * @param    int             $id    The id to return from the magic `getId()`.
+     *
+     * @return T&MockObject
+     */
+    private function createEntityMock(string $class, int $id): object
+    {
+        $mock = $this->getMockBuilder($class)
+            ->disableOriginalConstructor()
+            ->addMethods(['getId'])
+            ->getMock();
+        $mock->method('getId')->willReturn($id);
+
+        return $mock;
+    }//end createEntityMock()
+
+    /**
+     * Build an ObjectEntity mock with `getObject` and the magic `setObject` accessor.
+     */
+    private function createMockObjectEntity(array $object): ObjectEntity
+    {
+        $entity = $this->getMockBuilder(ObjectEntity::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['setObject'])
+            ->onlyMethods(['getObject'])
+            ->getMock();
+        $entity->method('getObject')->willReturn($object);
+
+        return $entity;
+    }//end createMockObjectEntity()
 
     /**
      * Create a mock object that implements jsonSerialize() returning the given data.
@@ -859,21 +1153,22 @@ class CatalogiServiceTest extends TestCase
     private function createMockCatalogObject(array $data): object
     {
         $mock = new class ($data) {
+
             private array $data;
 
             public function __construct(array $data)
             {
                 $this->data = $data;
-            }
+            }//end __construct()
 
             public function jsonSerialize(): array
             {
                 return $this->data;
-            }
+            }//end jsonSerialize()
         };
 
         return $mock;
-    }
+    }//end createMockCatalogObject()
 
     /**
      * Create a mock result object with jsonSerialize support.
@@ -881,7 +1176,7 @@ class CatalogiServiceTest extends TestCase
     private function createMockResultObject(array $data): object
     {
         return $this->createMockCatalogObject($data);
-    }
+    }//end createMockResultObject()
 
     /**
      * Inject a mock object service into the service using reflection.
@@ -893,7 +1188,7 @@ class CatalogiServiceTest extends TestCase
 
         $this->container->method('get')
             ->willReturn($objectService);
-    }
+    }//end injectObjectService()
 
     /**
      * Get a private method via reflection.
@@ -905,5 +1200,5 @@ class CatalogiServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method;
-    }
-}
+    }//end getPrivateMethod()
+}//end class
