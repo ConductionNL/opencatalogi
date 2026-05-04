@@ -78,7 +78,7 @@
 				<!-- Register Selection -->
 				<div class="register-selection">
 					<h3>{{ t('opencatalogi', 'Register') }}</h3>
-					<p>{{ t('opencatalogi', 'Select the register to store all your publicatie data') }}</p>
+					<p>{{ t('opencatalogi', 'Select the register to store all your publication data') }}</p>
 
 					<NcSelect
 						v-model="selectedRegister"

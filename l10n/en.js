@@ -649,7 +649,7 @@ OC.L10N.register(
 		"Select Target Object": "Select Target Object",
 		"Select Target Register and Schema": "Select Target Register and Schema",
 		"Select the object to merge {name} into:": "Select the object to merge {name} into:",
-		"Select the register to store all your publicatie data": "Select the register to store all your publicatie data",
+		"Select the register to store all your publication data": "Select the register to store all your publicatie data",
 		"Select which schema to use for each object type": "Select which schema to use for each object type",
 		"Selected Attachments": "Selected Attachments",
 		"Selected attachments will be depublished immediately and will no longer be publicly accessible.": "Selected attachments will be depublished immediately and will no longer be publicly accessible.",
