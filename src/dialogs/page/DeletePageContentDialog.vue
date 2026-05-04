@@ -5,23 +5,23 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog v-if="navigationStore.dialog === 'deletePageContent'"
 		ref="dialogRef"
-		name="Delete content"
+		:name="t('opencatalogi', 'Delete content')"
 		:can-close="false"
 		@close="closeDialog">
 		<div>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Content successfully deleted</p>
+					<p>{{ t('opencatalogi', 'Content successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while deleting content</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while deleting content') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<p v-if="success === null">
-				Do you want to delete this content item? This action cannot be undone.
+				{{ t('opencatalogi', 'Do you want to delete this content item? This action cannot be undone.') }}
 			</p>
 
 			<span class="modalActions">
@@ -29,7 +29,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -39,7 +39,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<NcLoadingIcon v-if="loading" :size="20" />
 						<Delete v-if="!loading" :size="20" />
 					</template>
-					Delete
+					{{ t('opencatalogi', 'Delete') }}
 				</NcButton>
 			</span>
 		</div>

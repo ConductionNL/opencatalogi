@@ -71,6 +71,44 @@ const SKIP_TAGS_FOR_TEXT = new Set([
 	// e.g. 'style', 'script' — but those don't appear inside <template> anyway
 ])
 
+// Component-specific opt-outs: attributes that LOOK prose-shaped but are
+// structural / technical on a specific component. Each entry suppresses the
+// listed attribute names on tags whose name matches `tag` (string for an exact
+// match, RegExp for a family).
+//
+// Add new entries here as false positives surface. This is configuration —
+// not a heuristic — so accuracy is whatever the list says.
+const COMPONENT_ATTR_OPT_OUTS = [
+	// NcSelect family — `label` is the option-key prop (which property to read
+	// from each option), not display text. https://vue-select.org/api/props.html#label
+	{ tag: /^NcSelect/, attrs: ['label'] },
+	// <slot name="..."> / <router-view name="..."> — `name` is a slot name /
+	// named view, not display text.
+	{ tag: 'slot', attrs: ['name'] },
+	{ tag: 'router-view', attrs: ['name'] },
+	// Radio-group form controls — `name` groups radios together, not display.
+	{ tag: 'NcActionRadio', attrs: ['name'] },
+	{ tag: 'NcCheckboxRadioSwitch', attrs: ['name'] },
+	// Vue's built-in <Transition> / <TransitionGroup> — `name` is the CSS
+	// transition class prefix, not display text.
+	{ tag: 'TransitionGroup', attrs: ['name'] },
+	{ tag: 'Transition', attrs: ['name'] },
+]
+
+/**
+ * Return true if (tagName, attrName) is in the opt-out list.
+ */
+function isComponentAttrOptOut(tagName, attrName) {
+	const lcAttr = attrName.toLowerCase()
+	for (const rule of COMPONENT_ATTR_OPT_OUTS) {
+		const matches = typeof rule.tag === 'string'
+			? rule.tag === tagName
+			: rule.tag.test(tagName)
+		if (matches && rule.attrs.some((a) => a.toLowerCase() === lcAttr)) return true
+	}
+	return false
+}
+
 // ---------- CLI ----------
 
 function parseFlags(argv) {
@@ -579,15 +617,8 @@ function scanTagAttrs(tagText, tagStartInTpl, tplStartInFile, tCallRanges, hits)
 		// too much noise without component-level context.
 		if (!isTooltipDirective && !PROSE_ATTRS.has(name.toLowerCase())) continue
 
-		// Component-specific opt-out: NcSelect (and NcSelectTags / NcSelectUsers)
-		// use `label` as the option-key prop — i.e. the property name to read
-		// from each option, not display text. vue-select docs:
-		// https://vue-select.org/api/props.html#label
-		if (name.toLowerCase() === 'label' && /^NcSelect/.test(tagName)) continue
-
-		// `<slot name="...">` and `<router-view name="...">` use `name` as a
-		// structural identifier (slot name / named view), not display text.
-		if (name.toLowerCase() === 'name' && (tagName === 'slot' || tagName === 'router-view')) continue
+		// Component-specific opt-outs (see COMPONENT_ATTR_OPT_OUTS at top of file).
+		if (isComponentAttrOptOut(tagName, name)) continue
 
 		// Project-specific: `back-route` on EntityDetailPage is a Vue Router
 		// route name passed to $router.push({ name }), not display text.
