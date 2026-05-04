@@ -271,10 +271,10 @@ export default {
 		},
 
 		/**
-		 * Determine if an object is currently published: the most recent of
-		 * publicatiedatum / depublicatiedatum is the publish date. Tiebreaker on
-		 * equal dates: depublish wins (so equal dates means NOT published).
-		 * A future publicatiedatum still counts as published for this modal's UX.
+		 * Determine if an object is currently published (live): publicatiedatum is in
+		 * the past or today, and is more recent than any depublicatiedatum.
+		 * A future publicatiedatum means the publication is scheduled but not yet live,
+		 * so it is not considered "already published" and can be re-targeted to now.
 		 *
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently published
@@ -282,6 +282,8 @@ export default {
 		isAlreadyPublished(obj) {
 			const pub = this.normalizeDate(obj?.publicatiedatum)
 			if (!pub) return false
+			// Future publication date → scheduled but not yet live; allow re-publishing.
+			if (pub > this.today) return false
 			const depub = this.normalizeDate(obj?.depublicatiedatum)
 			if (!depub) return true
 			return pub > depub
