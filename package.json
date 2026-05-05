@@ -14,10 +14,7 @@
     "lint-fix": "npm run lint -- --fix",
     "test": "jest --silent",
     "test-coverage": "jest --silent --coverage",
-    "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
-    "check:l10n": "node scripts/check-l10n.js",
-    "clean:l10n": "node scripts/clean-l10n.js --apply",
-    "find:unwrapped": "node scripts/find-unwrapped.js"
+    "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
@@ -67,6 +64,7 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.25.3",
+    "@babel/preset-typescript": "^7.28.5",
     "@codemirror/lang-html": "^6.4.11",
     "@cyclonedx/cyclonedx-npm": "^4.2.1",
     "@eslint/config-helpers": "^0.4.2",
