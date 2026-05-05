@@ -14,12 +14,12 @@ import { TGlossary } from './glossary.types'
 
 export class Glossary implements TGlossary {
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public externalLink: string
-	public keywords: string[]
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public externalLink!: string
+	public keywords!: string[]
 
 	constructor(data: TGlossary) {
 		this.hydrate(data)

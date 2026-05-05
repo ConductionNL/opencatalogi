@@ -14,19 +14,19 @@ import { CatalogStatus, TCatalogi } from './catalogi.types'
 
 export class Catalogi implements TCatalogi {
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public image: string
-	public listed: boolean
-	public status: CatalogStatus
-	public organization: string
-	public registers: string[]
-	public schemas: string[]
-	public filters: Record<string, unknown>
-	public slug: string
-	public hasWooSitemap: boolean
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public image!: string
+	public listed!: boolean
+	public status!: CatalogStatus
+	public organization!: string
+	public registers!: string[]
+	public schemas!: string[]
+	public filters!: Record<string, unknown>
+	public slug!: string
+	public hasWooSitemap!: boolean
 
 	constructor(data: TCatalogi) {
 		this.hydrate(data)

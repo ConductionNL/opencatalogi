@@ -7,48 +7,48 @@ type TStatus = 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 
 
 export class Publication implements TPublication {
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public reference: string
-	public image: string
-	public category: string
-	public portal: string
-	public featured: boolean
-	public source: string
-	public status: TStatus
-	public themes: string[]
-	public organization: string
-	public data: Record<string, unknown>
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public reference!: string
+	public image!: string
+	public category!: string
+	public portal!: string
+	public featured!: boolean
+	public source!: string
+	public status!: TStatus
+	public themes!: string[]
+	public organization!: string
+	public data!: Record<string, unknown>
 
-	public anonymization: {
+	public anonymization!: {
         anonymized: boolean
         results: string
     }
 
-	public language: {
+	public language!: {
         code: string
         level: string
     }
 
-	public published: string | Date
-	public modified: string | Date
-	public license: string
-	public archive: {
+	public published!: string | Date
+	public modified!: string | Date
+	public license!: string
+	public archive!: {
         date: string | Date
     }
 
-	public geo: {
+	public geo!: {
         type: 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon'
         coordinates: [number, number]
     }
 
 	public '@self'?: object
 
-	public catalog: TCatalogi | any
-	public register: number | null
-	public schema: number | null
+	public catalog!: TCatalogi | any
+	public register!: number | null
+	public schema!: number | null
 
 	constructor(data: TPublication) {
 		this.hydrate(data)
