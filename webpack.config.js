@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs')
+const webpack = require('webpack')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
 const { VueLoaderPlugin } = require('vue-loader')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
@@ -67,6 +68,12 @@ webpackConfig.plugins = [
 	new NodePolyfillPlugin({
 		additionalAliases: ['process'],
 	}),
+	// `@nextcloud/vue` reads the build-time `appName` / `appVersion` constants
+	// to identify the host app in console messages and telemetry. Without
+	// these defines the library logs '@nextcloud/vue: The `appName` was not
+	// set / replaced' as an error on every widget mount.
+	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
+	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package
