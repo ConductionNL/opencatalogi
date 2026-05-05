@@ -3,27 +3,27 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog :name="`Migrate ${selectedObjects.length} object${selectedObjects.length !== 1 ? 's' : ''}`"
+	<NcDialog :name="selectedObjects.length === 1 ? t('opencatalogi', 'Migrate {count} object', { count: selectedObjects.length }) : t('opencatalogi', 'Migrate {count} objects', { count: selectedObjects.length })"
 		size="large"
 		:can-close="false">
 		<!-- Source and Target Information -->
 		<div class="migration-overview">
 			<div class="source-info">
-				<h4>Source</h4>
+				<h4>{{ t('opencatalogi', 'Source') }}</h4>
 				<div class="info-card">
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<DatabaseOutline :size="16" />
-							<span class="card-label">Register:</span>
+							<span class="card-label">{{ t('opencatalogi', 'Register:') }}</span>
 						</div>
-						<span class="card-value">{{ sourceRegister?.title || sourceRegister?.id || 'Unknown' }}</span>
+						<span class="card-value">{{ sourceRegister?.title || sourceRegister?.id || t('opencatalogi', 'Unknown') }}</span>
 					</div>
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<FileTreeOutline :size="16" />
-							<span class="card-label">Schema:</span>
+							<span class="card-label">{{ t('opencatalogi', 'Schema:') }}</span>
 						</div>
-						<span class="card-value">{{ sourceSchema?.title || sourceSchema?.id || 'Unknown' }}</span>
+						<span class="card-value">{{ sourceSchema?.title || sourceSchema?.id || t('opencatalogi', 'Unknown') }}</span>
 					</div>
 				</div>
 			</div>
@@ -33,21 +33,21 @@ import { objectStore, navigationStore } from '../../store/store.js'
 			</div>
 
 			<div class="source-info">
-				<h4>Target</h4>
+				<h4>{{ t('opencatalogi', 'Target') }}</h4>
 				<div class="info-card">
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<DatabaseOutline :size="16" />
-							<span class="card-label">Register:</span>
+							<span class="card-label">{{ t('opencatalogi', 'Register:') }}</span>
 						</div>
-						<span class="card-value">{{ targetRegister?.title || 'Not selected' }}</span>
+						<span class="card-value">{{ targetRegister?.title || t('opencatalogi', 'Not selected') }}</span>
 					</div>
 					<div class="card-item">
 						<div class="card-label-with-icon">
 							<FileTreeOutline :size="16" />
-							<span class="card-label">Schema:</span>
+							<span class="card-label">{{ t('opencatalogi', 'Schema:') }}</span>
 						</div>
-						<span class="card-value">{{ targetSchema?.title || 'Not selected' }}</span>
+						<span class="card-value">{{ targetSchema?.title || t('opencatalogi', 'Not selected') }}</span>
 					</div>
 				</div>
 			</div>
@@ -56,28 +56,28 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		<!-- Step 1: Confirm Selection -->
 		<div v-if="step === 1" class="migration-step step-1">
 			<h3 class="step-title">
-				Confirm Object Selection
+				{{ t('opencatalogi', 'Confirm Object Selection') }}
 			</h3>
 
 			<NcNoteCard type="info">
-				Review the selected objects below. You can remove any objects you don't want to migrate by clicking the remove button.
+				{{ t('opencatalogi', "Review the selected objects below. You can remove any objects you don't want to migrate by clicking the remove button.") }}
 			</NcNoteCard>
 
 			<div class="selected-objects-container">
-				<h4>Selected Objects ({{ selectedObjects.length }})</h4>
+				<h4>{{ t('opencatalogi', 'Selected Objects ({count})', { count: selectedObjects.length }) }}</h4>
 
 				<div v-if="selectedObjects.length" class="selected-objects-list">
 					<div v-for="obj in selectedObjects"
 						:key="obj.id"
 						class="selected-object-item">
 						<div class="object-info">
-							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || 'Unnamed Object' }}</strong>
+							<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || t('opencatalogi', 'Unnamed Object') }}</strong>
 							<p class="object-id">
 								ID: {{ obj.id || obj['@self']?.id }}
 							</p>
 						</div>
 						<NcButton type="tertiary"
-							:aria-label="`Remove ${obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id}`"
+							:aria-label="t('opencatalogi', 'Remove {name}', { name: obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id })"
 							@click="removeObject(obj.id)">
 							<template #icon>
 								<Close :size="20" />
@@ -86,9 +86,9 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					</div>
 				</div>
 
-				<NcEmptyContent v-else name="No objects selected">
+				<NcEmptyContent v-else :name="t('opencatalogi', 'No objects selected')">
 					<template #description>
-						No objects are currently selected for migration.
+						{{ t('opencatalogi', 'No objects are currently selected for migration.') }}
 					</template>
 				</NcEmptyContent>
 			</div>
@@ -96,55 +96,54 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 		<!-- Step 2: Select Target Register and Schema -->
 		<div v-if="step === 2" class="migration-step">
-			<h3>Select Target Register and Schema</h3>
-			<p>Choose the destination register and schema for the {{ selectedObjects.length }} selected object{{ selectedObjects.length > 1 ? 's' : '' }}:</p>
+			<h3>{{ t('opencatalogi', 'Select Target Register and Schema') }}</h3>
+			<p>{{ selectedObjects.length === 1 ? t('opencatalogi', 'Choose the destination register and schema for the {count} selected object', { count: selectedObjects.length }) : t('opencatalogi', 'Choose the destination register and schema for the {count} selected objects', { count: selectedObjects.length }) }}</p>
 
 			<!-- Target Register Selection -->
 			<div class="selection-section">
-				<h4>Target Register</h4>
+				<h4>{{ t('opencatalogi', 'Target Register') }}</h4>
 				<NcSelect
 					v-model="targetRegister"
 					:options="availableRegisters"
 					label="title"
 					track-by="id"
-					placeholder="Select a register..."
+					:placeholder="t('opencatalogi', 'Select a register...')"
 					@update:model-value="onRegisterChange" />
 			</div>
 
 			<!-- Target Schema Selection -->
 			<div v-if="targetRegister" class="selection-section">
-				<h4>Target Schema</h4>
+				<h4>{{ t('opencatalogi', 'Target Schema') }}</h4>
 				<NcSelect
 					v-model="targetSchema"
 					:options="availableSchemas"
 					label="title"
 					track-by="id"
-					placeholder="Select a schema..."
+					:placeholder="t('opencatalogi', 'Select a schema...')"
 					@update:model-value="onSchemaChange" />
 			</div>
 		</div>
 
 		<!-- Step 3: Property Mapping -->
 		<div v-if="step === 3" class="migration-step">
-			<h3>Property Mapping</h3>
-			<p>Map properties from the source schema to the target schema. Properties not mapped will be discarded.</p>
+			<h3>{{ t('opencatalogi', 'Property Mapping') }}</h3>
+			<p>{{ t('opencatalogi', 'Map properties from the source schema to the target schema. Properties not mapped will be discarded.') }}</p>
 
 			<NcNoteCard type="info">
-				Configure how properties should be mapped when migrating from source schema
-				<strong>{{ sourceSchema?.title }}</strong> to target schema <strong>{{ targetSchema?.title }}</strong>
+				{{ t('opencatalogi', 'Configure how properties should be mapped when migrating from source schema {source} to target schema {target}', { source: sourceSchema?.title, target: targetSchema?.title }) }}
 			</NcNoteCard>
 
 			<div class="mapping-container">
 				<div class="mapping-header">
 					<div class="source-header">
-						<h4>Source Properties</h4>
+						<h4>{{ t('opencatalogi', 'Source Properties') }}</h4>
 						<span class="schema-name">{{ sourceSchema?.title }}</span>
 					</div>
 					<div class="arrow-header">
 						→
 					</div>
 					<div class="target-header">
-						<h4>Target Properties</h4>
+						<h4>{{ t('opencatalogi', 'Target Properties') }}</h4>
 						<span class="schema-name">{{ targetSchema?.title }}</span>
 					</div>
 				</div>
@@ -166,7 +165,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 								:options="targetPropertyOptions"
 								label="label"
 								track-by="value"
-								:placeholder="'Map to target property...'"
+								:placeholder="t('opencatalogi', 'Map to target property...')"
 								:clearable="true"
 								@update:model-value="updateMappingFromUI(sourceProperty.name)" />
 						</div>
@@ -178,30 +177,30 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		<!-- Step 4: Migration Report -->
 		<div v-if="step === 4" class="migration-step">
 			<h3 class="report-title">
-				Migration Report
+				{{ t('opencatalogi', 'Migration Report') }}
 			</h3>
 
 			<NcNoteCard v-if="migrationResult?.success" type="success">
-				<p>Objects successfully migrated!</p>
+				<p>{{ t('opencatalogi', 'Objects successfully migrated!') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="migrationResult && !migrationResult.success" type="error">
-				<p>Migration failed. Please check the details below.</p>
+				<p>{{ t('opencatalogi', 'Migration failed. Please check the details below.') }}</p>
 			</NcNoteCard>
 
 			<div v-if="migrationResult" class="migration-report">
 				<!-- Migration Summary -->
 				<div class="report-section">
-					<h4>Migration Summary</h4>
+					<h4>{{ t('opencatalogi', 'Migration Summary') }}</h4>
 					<div class="migration-info">
 						<div class="migration-detail">
-							<strong>Source:</strong>
+							<strong>{{ t('opencatalogi', 'Source:') }}</strong>
 							<div class="migration-meta">
 								<span>{{ sourceRegister?.title }} / {{ sourceSchema?.title }}</span>
-								<span class="object-count">{{ selectedObjects.length }} object{{ selectedObjects.length > 1 ? 's' : '' }}</span>
+								<span class="object-count">{{ selectedObjects.length === 1 ? t('opencatalogi', '{count} object', { count: selectedObjects.length }) : t('opencatalogi', '{count} objects', { count: selectedObjects.length }) }}</span>
 							</div>
 						</div>
 						<div class="migration-detail">
-							<strong>Target:</strong>
+							<strong>{{ t('opencatalogi', 'Target:') }}</strong>
 							<div class="migration-meta">
 								<span>{{ targetRegister?.title }} / {{ targetSchema?.title }}</span>
 							</div>
@@ -211,18 +210,18 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 				<!-- Statistics -->
 				<div class="report-section">
-					<h4>Statistics</h4>
+					<h4>{{ t('opencatalogi', 'Statistics') }}</h4>
 					<ul>
-						<li>Objects migrated: {{ migrationResult.statistics?.objectsMigrated || 0 }}</li>
-						<li>Objects failed: {{ migrationResult.statistics?.objectsFailed || 0 }}</li>
-						<li>Properties mapped: {{ migrationResult.statistics?.propertiesMapped || 0 }}</li>
-						<li>Properties discarded: {{ migrationResult.statistics?.propertiesDiscarded || 0 }}</li>
+						<li>{{ t('opencatalogi', 'Objects migrated: {count}', { count: migrationResult.statistics?.objectsMigrated || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Objects failed: {count}', { count: migrationResult.statistics?.objectsFailed || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Properties mapped: {count}', { count: migrationResult.statistics?.propertiesMapped || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Properties discarded: {count}', { count: migrationResult.statistics?.propertiesDiscarded || 0 }) }}</li>
 					</ul>
 				</div>
 
 				<!-- Migration Details -->
 				<div v-if="migrationResult.details?.length" class="report-section">
-					<h4>Migration Details</h4>
+					<h4>{{ t('opencatalogi', 'Migration Details') }}</h4>
 					<div class="migration-details">
 						<div v-for="detail in migrationResult.details"
 							:key="detail.objectId"
@@ -230,7 +229,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<div class="detail-header">
 								<strong>{{ detail.objectTitle || detail.objectId }}</strong>
 								<span :class="['status', detail.success ? 'success' : 'error']">
-									{{ detail.success ? 'Success' : 'Failed' }}
+									{{ detail.success ? t('opencatalogi', 'Success') : t('opencatalogi', 'Failed') }}
 								</span>
 							</div>
 							<div v-if="detail.error" class="detail-error">
@@ -242,7 +241,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 				<!-- Warnings -->
 				<div v-if="migrationResult.warnings?.length" class="report-section">
-					<h4>Warnings</h4>
+					<h4>{{ t('opencatalogi', 'Warnings') }}</h4>
 					<ul>
 						<li v-for="warning in migrationResult.warnings" :key="warning" class="warning-text">
 							{{ warning }}
@@ -252,7 +251,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 				<!-- Errors -->
 				<div v-if="migrationResult.errors?.length" class="report-section">
-					<h4>Errors</h4>
+					<h4>{{ t('opencatalogi', 'Errors') }}</h4>
 					<ul>
 						<li v-for="error in migrationResult.errors" :key="error" class="error-text">
 							{{ error }}
@@ -267,7 +266,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ step === 4 ? 'Close' : 'Cancel' }}
+				{{ step === 4 ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 
 			<NcButton v-if="step === 1"
@@ -277,7 +276,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<ArrowRight :size="20" />
 				</template>
-				Next
+				{{ t('opencatalogi', 'Next') }}
 			</NcButton>
 
 			<NcButton v-if="step === 2"
@@ -286,7 +285,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back
+				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
 
 			<NcButton v-if="step === 2"
@@ -296,7 +295,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<ArrowRight :size="20" />
 				</template>
-				Next
+				{{ t('opencatalogi', 'Next') }}
 			</NcButton>
 
 			<NcButton v-if="step === 3"
@@ -305,7 +304,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back
+				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
 
 			<NcButton v-if="step === 3"
@@ -316,7 +315,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<DatabaseExport v-else :size="20" />
 				</template>
-				Migrate Objects
+				{{ t('opencatalogi', 'Migrate Objects') }}
 			</NcButton>
 		</template>
 	</NcDialog>

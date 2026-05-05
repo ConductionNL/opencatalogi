@@ -8,7 +8,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
-			<h2>Add attachment</h2>
+			<h2>{{ t('opencatalogi', 'Add attachment') }}</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					label="Automatically share"
+					:label="t('opencatalogi', 'Automatically share')"
 					type="switch"
 					:checked.sync="share">
-					Automatically share
+					{{ t('opencatalogi', 'Automatically share') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -30,22 +30,22 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Select or create labels or select "No label" to add files</p>
+							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
-							<p>Files added successfully</p>
+							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Something went wrong when adding files</p>
+							<p>{{ t('opencatalogi', 'Something went wrong when adding files') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Select files with the correct extension</p>
+								<p>{{ t('opencatalogi', 'Select files with the correct extension') }}</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -53,12 +53,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Drag a file or files here
+								{{ t('opencatalogi', 'Drag a file or files here') }}
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Or
+							{{ t('opencatalogi', 'Or') }}
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -69,7 +69,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Add a file or files
+								{{ t('opencatalogi', 'Add a file or files') }}
 							</NcButton>
 						</div>
 					</div>
@@ -80,39 +80,39 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Select or create labels or select "No label" to add files</p>
+							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="checkForTooBigFiles(files)">
 						<NcNoteCard type="warning">
 							<p class="folderLink">
-								If you want to add files larger than or equal to 512MB, go to the
+								{{ t('opencatalogi', 'If you want to add files larger than or equal to 512MB, go to the') }}
 								<NcButton type="secondary"
 									class="folderLinkButton"
-									aria-label="Open map"
+									:aria-label="t('opencatalogi', 'Open folder')"
 									@click="openFolder(publicationStore.publicationItem?.['@self']?.folder)">
 									<template #icon>
 										<FolderOutline :size="20" />
 									</template>
-									map
+									{{ t('opencatalogi', 'folder') }}
 								</NcButton>
-								and add the files there.
+								{{ t('opencatalogi', 'and add the files there.') }}
 							</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="success !== null || error">
 						<NcNoteCard v-if="success" type="success">
-							<p>Files added successfully</p>
+							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Something went wrong when adding files</p>
+							<p>{{ t('opencatalogi', 'Something went wrong when adding files') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Select files with the correct extension</p>
+								<p>{{ t('opencatalogi', 'Select files with the correct extension') }}</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -120,12 +120,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Drag a file or files here
+								{{ t('opencatalogi', 'Drag a file or files here') }}
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Or
+							{{ t('opencatalogi', 'Or') }}
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -136,16 +136,16 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Add a file or files
+								{{ t('opencatalogi', 'Add a file or files') }}
 							</NcButton>
 						</div>
 					</div>
 				</div>
 				<div v-if="!files">
-					No files selected
+					{{ t('opencatalogi', 'No files selected') }}
 				</div>
 				<div v-if="files" class="uploadSummaryContainer">
-					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} files uploaded</span>
+					<span class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
 					<div class="buttonContainer">
 						<NcButton v-if="failedCount > 0"
 							type="primary"
@@ -154,7 +154,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							<template #icon>
 								<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
 							</template>
-							{{ retryLoading ? 'In progress...' : 'Retry all (' + failedCount + ')' }}
+							{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
 						</NcButton>
 					</div>
 				</div>
@@ -163,13 +163,13 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<tr class="files-table-tr">
 							<th class="files-table-td-status" />
 							<th>
-								File name
+								{{ t('opencatalogi', 'File name') }}
 							</th>
 							<th>
-								Size
+								{{ t('opencatalogi', 'Size') }}
 							</th>
 							<th>
-								Labels
+								{{ t('opencatalogi', 'Labels') }}
 							</th>
 						</tr>
 					</thead>
@@ -191,7 +191,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							<td class="files-table-td-labels">
 								<span v-if="editingTags !== file.name"
 									class="files-list__row-action--inline files-list__row-action-system-tags">
-									<ul v-if="file.tags && file.tags.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+									<ul v-if="file.tags && file.tags.length > 0" class="files-list__system-tags" :aria-label="t('opencatalogi', 'Assigned collaborative tags')">
 										<li v-for="label of file.tags"
 											:key="label"
 											class="files-list__system-tag"
@@ -200,7 +200,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 										</li>
 									</ul>
 									<span v-if="!file.tags || file.tags.length === 0">
-										No labels
+										{{ t('opencatalogi', 'No labels') }}
 									</span>
 								</span>
 								<NcSelect
@@ -217,9 +217,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<!-- Tags Buttons -->
 									<NcButton
 										v-if="editingTags !== file.name"
-										v-tooltip="'Edit labels'"
+										v-tooltip="t('opencatalogi', 'Edit labels')"
 										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
-										:aria-label="`edit tags for ${file.name}`"
+										:aria-label="t('opencatalogi', 'Edit tags for {name}', { name: file.name })"
 										type="secondary"
 										class="editTagsButton"
 										@click="editingTags = file.name, editedTags = file.tags">
@@ -229,9 +229,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="'Save labels'"
+										v-tooltip="t('opencatalogi', 'Save labels')"
 										type="primary"
-										:aria-label="`save tags for ${file.name}`"
+										:aria-label="t('opencatalogi', 'Save tags for {name}', { name: file.name })"
 										class="editTagsButton"
 										@click="saveTags(file, editedTags)">
 										<template #icon>
@@ -240,7 +240,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="'Cancel'"
+										v-tooltip="t('opencatalogi', 'Cancel')"
 										type="secondary"
 										@click="cancelFileLabelEditing">
 										<template #icon>
@@ -250,7 +250,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
-										v-tooltip="'Retry upload'"
+										v-tooltip="t('opencatalogi', 'Retry upload')"
 										type="primary"
 										@click="addAttachments(file)">
 										<template #icon>
@@ -259,7 +259,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
-										v-tooltip="'Remove from list'"
+										v-tooltip="t('opencatalogi', 'Remove from list')"
 										type="primary"
 										@click="removeFile(file.name)">
 										<template #icon>
