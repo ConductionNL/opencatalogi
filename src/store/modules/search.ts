@@ -593,7 +593,7 @@ export const useSearchStore = defineStore('search', {
 
 			} catch (error) {
 				console.error('Search failed:', error)
-				this.error = error.message || 'An error occurred while searching'
+				this.error = (error instanceof Error && error.message) || 'An error occurred while searching'
 				this.searchResults = []
 				this.pagination = {
 					page: 1,
