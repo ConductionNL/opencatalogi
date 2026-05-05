@@ -27,7 +27,7 @@ import { objectStore } from '../store/store.js'
 					</div>
 					<NcButton v-if="showRemove"
 						type="tertiary"
-						:aria-label="`Remove ${getObjectName(obj)}`"
+						:aria-label="t('opencatalogi', 'Remove {name}', { name: getObjectName(obj) })"
 						@click="removeObject(obj.id || obj['@self']?.id)">
 						<template #icon>
 							<Close :size="20" />
