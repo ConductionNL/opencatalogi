@@ -25,17 +25,23 @@
 				</NcButton>
 			</template>
 
-			<!-- Objects by Schema donut chart -->
-			<template #widget-objects-by-schema>
+			<!-- Publications by Category donut chart -->
+			<template #widget-publications-by-category>
 				<CnChartWidget
-					v-if="schemaChartData.series.length > 0"
+					v-if="publicationsByCategoryData.series.length > 0"
 					type="donut"
-					:series="schemaChartData.series"
-					:labels="schemaChartData.labels"
-					:height="220"
-					:options="{ legend: { position: 'bottom', fontSize: '12px' }, plotOptions: { pie: { donut: { size: '55%' } } } }" />
+					:series="publicationsByCategoryData.series"
+					:labels="publicationsByCategoryData.labels"
+					:height="360"
+					:options="{
+						legend: { position: 'bottom', fontSize: '13px', itemMargin: { horizontal: 8, vertical: 4 } },
+						plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: t('opencatalogi', 'Total'), fontSize: '14px', fontWeight: 600 }, value: { fontSize: '28px', fontWeight: 700 } } } } },
+						dataLabels: { enabled: false },
+						tooltip: { y: { formatter: (val) => val + ' ' + t('opencatalogi', 'publications') } }
+					}" />
 				<div v-else class="widget-empty">
-					{{ t('opencatalogi', 'No objects found') }}
+					<DatabaseEyeOutline :size="40" class="widget-empty-icon" />
+					<p>{{ t('opencatalogi', 'No publications found') }}</p>
 				</div>
 			</template>
 
@@ -109,14 +115,26 @@
 					type="area"
 					:series="activityChartData.series"
 					:categories="activityChartData.labels"
-					:height="220"
-					:options="{ stroke: { curve: 'smooth', width: 2 }, xaxis: { labels: { rotate: -45, style: { fontSize: '10px' } } }, dataLabels: { enabled: false } }" />
+					:height="280"
+					:options="{
+						stroke: { curve: 'smooth', width: 2 },
+						fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
+						xaxis: { labels: { rotate: -30, style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+						yaxis: { labels: { style: { fontSize: '11px' } } },
+						grid: { borderColor: 'var(--color-border, #e0e0e0)', strokeDashArray: 4 },
+						dataLabels: { enabled: false },
+						tooltip: { shared: true, intersect: false }
+					}" />
 				<div v-else class="widget-empty">
-					{{ t('opencatalogi', 'No activity data') }}
+					<ChartAreaspline :size="40" class="widget-empty-icon" />
+					<p>{{ t('opencatalogi', 'No activity recorded yet') }}</p>
 				</div>
 			</template>
 
 			<!-- Concept Publications widget -->
+			<template #widget-concept-publications-title-icon>
+				<FileDocumentEditOutline :size="20" />
+			</template>
 			<template #widget-concept-publications>
 				<div class="concept-widget-content">
 					<div v-if="conceptPublications.length === 0" class="widget-empty">
@@ -128,10 +146,9 @@
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
 							@click="openPublication(publication)">
-							<FileDocumentEditOutline :size="20" class="concept-item-icon" />
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
-								<span v-if="publication.summary" class="concept-item-summary">{{ publication.summary }}</span>
+								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
 							</div>
 							<span class="concept-item-status">{{ t('opencatalogi', 'Concept') }}</span>
 						</div>
@@ -166,6 +183,9 @@
 			-->
 
 			<!-- Published Publications widget -->
+			<template #widget-published-publications-title-icon>
+				<FileDocumentCheckOutline :size="20" />
+			</template>
 			<template #widget-published-publications>
 				<div class="concept-widget-content">
 					<div v-if="publishedPublications.length === 0" class="widget-empty">
@@ -177,10 +197,9 @@
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
 							@click="openPublication(publication)">
-							<DatabaseEyeOutline :size="20" class="concept-item-icon" />
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
-								<span v-if="publication.summary" class="concept-item-summary">{{ publication.summary }}</span>
+								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
 							</div>
 							<span class="published-item-status">{{ t('opencatalogi', 'Published') }}</span>
 						</div>
@@ -189,6 +208,9 @@
 			</template>
 
 			<!-- Depublished Publications widget -->
+			<template #widget-depublished-publications-title-icon>
+				<AlertOutline :size="20" />
+			</template>
 			<template #widget-depublished-publications>
 				<div class="concept-widget-content">
 					<div v-if="depublishedPublications.length === 0" class="widget-empty">
@@ -200,10 +222,9 @@
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
 							@click="openPublication(publication)">
-							<AlertOutline :size="20" class="depublished-item-icon" />
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
-								<span v-if="publication.summary" class="concept-item-summary">{{ publication.summary }}</span>
+								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
 							</div>
 							<span class="depublished-item-status">{{ t('opencatalogi', 'Depublished') }}</span>
 						</div>
@@ -241,6 +262,7 @@ import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
 import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
 // TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 // import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 // import PaperclipOff from 'vue-material-design-icons/PaperclipOff.vue'
@@ -248,21 +270,24 @@ import { objectStore, navigationStore } from '../../store/store.js'
 import { isPublished, isDepublished, isConcept } from '../../services/publicationStatus.js'
 
 /**
- * Default dashboard layout -- 4 count tiles across the top row (3 cols each),
- * then catalogi and concept publications side by side, concept attachments full width.
+ * Default dashboard layout:
+ * - 2×2 KPI grid (left half, rows 0-5)
+ * - Publications by category donut (right half, rows 0-5)
+ * - Activity chart (full width, rows 6-10)
+ * - Three publication lists (each 4 cols, rows 11-15)
  */
 const DEFAULT_LAYOUT = [
-	{ id: 1, widgetId: 'count-publications', gridX: 0, gridY: 0, gridWidth: 4, gridHeight: 2, showTitle: false },
-	{ id: 2, widgetId: 'count-concept-publications', gridX: 4, gridY: 0, gridWidth: 4, gridHeight: 2, showTitle: false },
-	{ id: 3, widgetId: 'count-published-publications', gridX: 0, gridY: 2, gridWidth: 4, gridHeight: 2, showTitle: false },
-	{ id: 9, widgetId: 'count-depublished-publications', gridX: 4, gridY: 2, gridWidth: 4, gridHeight: 2, showTitle: false },
+	{ id: 1, widgetId: 'count-publications', gridX: 0, gridY: 0, gridWidth: 3, gridHeight: 3, showTitle: false },
+	{ id: 2, widgetId: 'count-concept-publications', gridX: 3, gridY: 0, gridWidth: 3, gridHeight: 3, showTitle: false },
+	{ id: 3, widgetId: 'count-published-publications', gridX: 0, gridY: 3, gridWidth: 3, gridHeight: 3, showTitle: false },
+	{ id: 9, widgetId: 'count-depublished-publications', gridX: 3, gridY: 3, gridWidth: 3, gridHeight: 3, showTitle: false },
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 	// { id: x, widgetId: 'count-concept-attachments', ... },
-	{ id: 4, widgetId: 'objects-by-schema', gridX: 8, gridY: 0, gridWidth: 4, gridHeight: 5 },
-	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 4, gridWidth: 8, gridHeight: 4 },
-	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 8, gridWidth: 4, gridHeight: 4 },
-	{ id: 8, widgetId: 'published-publications', gridX: 4, gridY: 8, gridWidth: 4, gridHeight: 4 },
-	{ id: 10, widgetId: 'depublished-publications', gridX: 8, gridY: 8, gridWidth: 4, gridHeight: 4 },
+	{ id: 4, widgetId: 'publications-by-category', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 6 },
+	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
+	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 11, gridWidth: 4, gridHeight: 5 },
+	{ id: 8, widgetId: 'published-publications', gridX: 4, gridY: 11, gridWidth: 4, gridHeight: 5 },
+	{ id: 10, widgetId: 'depublished-publications', gridX: 8, gridY: 11, gridWidth: 4, gridHeight: 5 },
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 	// { id: 7, widgetId: 'concept-attachments', ... },
 ]
@@ -278,7 +303,9 @@ export default {
 		Refresh,
 		DatabaseEyeOutline,
 		FileDocumentEditOutline,
+		FileDocumentCheckOutline,
 		AlertOutline,
+		ChartAreaspline,
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// Paperclip,
 	},
@@ -295,7 +322,6 @@ export default {
 			error: null,
 			refreshTimer: null,
 			dashboardLayout: [...DEFAULT_LAYOUT],
-			schemaChartData: { labels: [], series: [] },
 			activityChartData: { labels: [], series: [] },
 			publicationTotal: 0,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
@@ -334,6 +360,26 @@ export default {
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
 		},
+		publicationsByCategoryData() {
+			const counts = {}
+			for (const pub of this.allPublications) {
+				const schemaRef = pub['@self']?.schema
+				let name
+				if (typeof schemaRef === 'object' && schemaRef) {
+					name = schemaRef.title || schemaRef.name || t('opencatalogi', 'Unknown')
+				} else if (schemaRef) {
+					const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schemaRef))
+					name = match?.title || match?.name || String(schemaRef)
+				} else {
+					name = t('opencatalogi', 'Unknown')
+				}
+				counts[name] = (counts[name] || 0) + 1
+			}
+			return {
+				labels: Object.keys(counts),
+				series: Object.values(counts),
+			}
+		},
 		hasData() {
 			return this.catalogs.length > 0
 				|| this.allPublications.length > 0
@@ -346,11 +392,11 @@ export default {
 				{ id: 'count-depublished-publications', title: t('opencatalogi', 'Depublished Publications'), type: 'custom' },
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
-				{ id: 'objects-by-schema', title: t('opencatalogi', 'Objects by Type'), type: 'custom' },
+				{ id: 'publications-by-category', title: t('opencatalogi', 'Publications by Category'), type: 'custom' },
 				{ id: 'activity', title: t('opencatalogi', 'Activity'), type: 'custom' },
-				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom' },
-				{ id: 'published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom' },
-				{ id: 'depublished-publications', title: t('opencatalogi', 'Depublished Publications'), type: 'custom' },
+				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-warning)' },
+				{ id: 'published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-success)' },
+				{ id: 'depublished-publications', title: t('opencatalogi', 'Depublished Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-error)' },
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 			]
@@ -377,7 +423,6 @@ export default {
 				await Promise.allSettled([
 					objectStore.fetchCollection('catalog'),
 					this.fetchAllPublications(),
-					this.fetchSchemaChart(),
 					this.fetchActivityChart(),
 				])
 			} catch (err) {
@@ -425,25 +470,6 @@ export default {
 		//   this.attachmentsList = results.filter((r) => r.status === 'fulfilled').flatMap((r) => r.value)
 		// },
 
-		async fetchSchemaChart() {
-			try {
-				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
-				const response = await fetch(
-					`${prefix}/apps/openregister/api/dashboard/charts/objects-by-schema`,
-					{ method: 'GET', headers: buildHeaders() },
-				)
-				if (response.ok) {
-					const data = await response.json()
-					this.schemaChartData = {
-						labels: data.labels || [],
-						series: data.series || [],
-					}
-				}
-			} catch (err) {
-				console.warn('Failed to load schema chart:', err)
-			}
-		},
-
 		async fetchActivityChart() {
 			try {
 				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
@@ -461,6 +487,16 @@ export default {
 			} catch (err) {
 				console.warn('Failed to load activity chart:', err)
 			}
+		},
+
+		resolveSchemaName(publication) {
+			const schemaRef = publication['@self']?.schema
+			if (!schemaRef) return ''
+			if (typeof schemaRef === 'object') {
+				return schemaRef.title || schemaRef.name || ''
+			}
+			const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schemaRef))
+			return match?.title || match?.name || ''
 		},
 
 		createPublication() {
@@ -538,6 +574,16 @@ export default {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.concept-item-schema {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--color-primary-element, #0082c9);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-top: 1px;
 }
 
 .concept-item-status {
