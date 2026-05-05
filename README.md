@@ -57,7 +57,6 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 ### Search & Discovery
 - **Faceted Search** — Filter publications by category, organization, catalog, date range, and custom metadata fields
 - **Full-Text Search** — Search across publication content and attached documents
-- **ElasticSearch Support** — Optional ElasticSearch backend for high-performance search at scale
 - **Public Search API** — RESTful endpoints for external frontends and third-party integrations
 
 ### Content Management
@@ -87,7 +86,6 @@ graph TD
     C --> D[(PostgreSQL JSON store)]
     B --> E[Federation Directory]
     E -->|sync| F[External OpenCatalogi Instances]
-    B --> G[ElasticSearch — optional]
     H[Public Frontend — Tilburg WOO UI] -->|Public API| B
     B --> I[Nextcloud Activity]
 ```
@@ -211,7 +209,7 @@ composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan, tests
 | Build | Webpack 5, @nextcloud/webpack-vue-config |
 | Backend | PHP 8.1+, Nextcloud App Framework |
 | Data | OpenRegister (PostgreSQL JSON objects) |
-| Search | ElasticSearch 8 (optional), SQL full-text (default) |
+| Search | OpenRegister (SQL full-text + optional Solr/ES via OpenRegister) |
 | PDF | mPDF for document generation |
 | Templates | Twig for content rendering |
 | Quality | PHPCS, PHPMD, Psalm, PHPStan, phpmetrics, ESLint, Stylelint |

@@ -16,7 +16,6 @@ describe('Configuration Store', () => {
 		const configuration = new Configuration(mockConfiguration()[1])
 
 		expect(configuration).toBeInstanceOf(Configuration)
-		expect(configuration.useElastic).toBe(mockConfiguration()[1].useElastic)
 
 		expect(configuration.validate().success).toBe(true)
 	})
@@ -27,6 +26,6 @@ describe('Configuration Store', () => {
 		expect(configuration).toBeInstanceOf(Configuration)
 		expect(configuration).toEqual(mockConfiguration()[2])
 
-		expect(configuration.validate().success).toBe(false)
+		expect(configuration.validate().success).toBe(true)
 	})
 })
