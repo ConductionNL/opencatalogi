@@ -37,8 +37,6 @@ webpackConfig.entry = {
 	},
 }
 
-webpackConfig.devtool = 'inline-source-map'
-
 webpackConfig.module = {
 	rules: [
 		{
