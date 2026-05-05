@@ -1,10 +1,3 @@
-<script setup>
-import { inject } from 'vue'
-import { translate as t } from '@nextcloud/l10n'
-import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -82,17 +75,15 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { inject } from 'vue'
+import { translate as t } from '@nextcloud/l10n'
+import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
+import { objectStore, navigationStore } from '../../store/store.js'
 import { NcActions, NcActionButton } from '@nextcloud/vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
-
-const sidebarState = inject('sidebarState', null)
-const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('page', {
-	sidebarState,
-	objectStore,
-})
 
 export default {
 	name: 'PageIndex',
@@ -104,6 +95,14 @@ export default {
 		Pencil,
 		ContentCopy,
 		TrashCanOutline,
+	},
+	setup() {
+		const sidebarState = inject('sidebarState', null)
+		const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('page', {
+			sidebarState,
+			objectStore,
+		})
+		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh }
 	},
 	data() {
 		return {

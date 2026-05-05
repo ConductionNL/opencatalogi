@@ -27,7 +27,6 @@ import { navigationStore } from './../store/store.js'
 		<!-- Object Modals -->
 		<ViewObject v-if="navigationStore.modal === 'viewObject'" />
 
-		<DeleteObject />
 		<MergeObject v-if="navigationStore.modal === 'mergeObject'" />
 		<UploadObject v-if="navigationStore.modal === 'uploadObject'" />
 		<DownloadObject />
