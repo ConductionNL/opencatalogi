@@ -128,28 +128,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Debug information (always show) -->
-		<div v-if="false" class="debug-info" style="margin-top: 20px;">
-			<h5>Debug Information</h5>
-			<p>Active facets: {{ Object.keys(searchStore.getActiveFacets).join(', ') || 'None' }}</p>
-			<p>Active facets count: {{ Object.keys(searchStore.getActiveFacets).length }}</p>
-			<p>Facet results keys: {{ Object.keys(searchStore.currentFacets).join(', ') || 'None' }}</p>
-			<p>Has @self facets: {{ searchStore.currentFacets['@self'] ? 'Yes' : 'No' }}</p>
-			<p>Has facet results: {{ searchStore.hasFacetResults ? 'Yes' : 'No' }}</p>
-			<p>Has active facets (getter): {{ searchStore.hasActiveFacets ? 'Yes' : 'No' }}</p>
-			<p>Has active facets (direct): {{ Object.keys(searchStore.getActiveFacets).length > 0 ? 'Yes' : 'No' }}</p>
-			<p>Show filter results condition: {{ searchStore.hasFacetResults && searchStore.hasActiveFacets ? 'Yes' : 'No' }}</p>
-			<p>Direct condition check: {{ searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0 ? 'Yes' : 'No' }}</p>
-			<details>
-				<summary>Raw facet data</summary>
-				<pre>{{ JSON.stringify(searchStore.currentFacets, null, 2) }}</pre>
-			</details>
-			<details>
-				<summary>Raw active facets</summary>
-				<pre>{{ JSON.stringify(searchStore.getActiveFacets, null, 2) }}</pre>
-			</details>
-		</div>
 	</div>
 </template>
 

@@ -21,7 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		label-id="viewDirectoryModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>{{ listing?.name || listing?.title || 'Directory Listing' }}</h2>
+			<h2>{{ listing?.name || listing?.title || t('opencatalogi', 'Directory Listing') }}</h2>
 
 			<div v-if="listing" class="directoryDetails">
 				<div class="detailSection">

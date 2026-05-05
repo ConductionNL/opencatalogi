@@ -6,12 +6,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcModal
 		v-if="navigationStore.modal === 'addPublicationTheme'"
 		ref="modalRef"
-		name="Add publication theme"
+		:name="t('opencatalogi', 'Add publication theme')"
 		label-id="addPublicationThemeModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<NcNoteCard v-if="successState" type="success">
-				<p>Theme successfully saved</p>
+				<p>{{ t('opencatalogi', 'Theme successfully saved') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="errorState" type="error">
 				<p>{{ errorState }}</p>
@@ -35,7 +35,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="isSaving" :size="20" />
 					<ContentSaveOutline v-else :size="20" />
 				</template>
-				Save
+				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>
 	</NcModal>

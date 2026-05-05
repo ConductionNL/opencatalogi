@@ -59,7 +59,7 @@ import { objectStore } from '../../store/store.js'
 					<NcActions
 						:force-name="true"
 						:inline="3"
-						menu-name="Actions">
+						:menu-name="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							close-after-click
 							:disabled="searchStore.isLoading"
@@ -123,7 +123,7 @@ import { objectStore } from '../../store/store.js'
 									<FileDocumentOutline :size="20" />
 									{{ publication.title || publication.name }}
 								</h2>
-								<NcActions :primary="true" menu-name="Actions">
+								<NcActions :primary="true" :menu-name="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>

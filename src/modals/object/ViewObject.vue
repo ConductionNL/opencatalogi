@@ -28,42 +28,42 @@ import { EventBus } from '../../eventBus.js'
 				<div v-if="isNewObject && !hasSelectedSchema" class="selectionContainer">
 					<NcEmptyContent
 						v-if="catalogOptions.length === 0"
-						name="No catalogs available"
-						description="You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.">
+						:name="t('opencatalogi', 'No catalogs available')"
+						:description="t('opencatalogi', 'You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.')">
 						<template #icon>
 							<FolderOutline :size="64" />
 						</template>
 					</NcEmptyContent>
 					<div v-if="catalogOptions.length > 1" class="selectionStep">
-						<h3>Select Catalog</h3>
-						<p>Choose the catalog where this publication will be stored.</p>
+						<h3>{{ t('opencatalogi', 'Select Catalog') }}</h3>
+						<p>{{ t('opencatalogi', 'Choose the catalog where this publication will be stored.') }}</p>
 						<NcSelect
 							v-model="selectedCatalog"
 							:options="catalogOptions"
-							input-label="Catalog"
-							placeholder="Select a catalog..."
+							:input-label="t('opencatalogi', 'Catalog')"
+							:placeholder="t('opencatalogi', 'Select a catalog...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
 					<div v-if="selectedCatalog && registerOptions.length > 1" class="selectionStep">
-						<h3>Select Register</h3>
-						<p>Choose the register that will store this publication.</p>
+						<h3>{{ t('opencatalogi', 'Select Register') }}</h3>
+						<p>{{ t('opencatalogi', 'Choose the register that will store this publication.') }}</p>
 						<NcSelect
 							v-model="selectedRegister"
 							:options="registerOptions"
-							input-label="Register"
-							placeholder="Select a register..."
+							:input-label="t('opencatalogi', 'Register')"
+							:placeholder="t('opencatalogi', 'Select a register...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
 					<div v-if="selectedRegister && schemaOptions.length > 1" class="selectionStep">
-						<h3>Select Schema</h3>
-						<p>Choose the schema that defines the structure of this publication.</p>
+						<h3>{{ t('opencatalogi', 'Select Schema') }}</h3>
+						<p>{{ t('opencatalogi', 'Choose the schema that defines the structure of this publication.') }}</p>
 						<NcSelect
 							v-model="selectedSchema"
 							:options="schemaOptions"
-							input-label="Schema"
-							placeholder="Select a schema..."
+							:input-label="t('opencatalogi', 'Schema')"
+							:placeholder="t('opencatalogi', 'Select a schema...')"
 							:disabled="catalogStore.isLoading" />
 					</div>
 
@@ -72,7 +72,7 @@ import { EventBus } from '../../eventBus.js'
 							<template #icon>
 								<ArrowRight :size="20" />
 							</template>
-							Continue to Properties
+							{{ t('opencatalogi', 'Continue to Properties') }}
 						</NcButton>
 					</div>
 				</div>
@@ -82,12 +82,12 @@ import { EventBus } from '../../eventBus.js'
 					<NcNoteCard v-if="showRequiredFieldError && hasMissingRequired"
 						type="error"
 						class="required-field-error">
-						Please fill in the required fields: {{ missingRequiredLabels.join(', ') }}.
+						{{ t('opencatalogi', 'Please fill in the required fields: {fields}.', { fields: missingRequiredLabels.join(', ') }) }}
 					</NcNoteCard>
 					<NcNoteCard v-if="showRequiredFieldError && hasFieldErrors"
 						type="error"
 						class="required-field-error">
-						<p>Some fields have invalid values:</p>
+						<p>{{ t('opencatalogi', 'Some fields have invalid values:') }}</p>
 						<ul>
 							<li v-for="err in fieldErrors" :key="err.key">
 								<strong>{{ err.label }}:</strong> {{ err.error }}
@@ -104,14 +104,14 @@ import { EventBus } from '../../eventBus.js'
 				<!-- For existing objects, show tabs -->
 				<div v-else class="tabContainer">
 					<BTabs v-model="activeTab" content-class="mt-3" justified>
-						<BTab title="Properties" active>
+						<BTab :title="t('opencatalogi', 'Properties')" active>
 							<PropertiesPanel
 								v-bind="propertiesPanelBindings"
 								@update:selected-property="selectedProperty = $event"
 								@update:property-value="onPropertyValueUpdate"
 								@drop-property="dropProperty" />
 						</BTab>
-						<BTab title="Metadata">
+						<BTab :title="t('opencatalogi', 'Metadata')">
 							<CnMetadataTab
 								:item="currentObject"
 								:replace-rows="true"
@@ -120,20 +120,20 @@ import { EventBus } from '../../eventBus.js'
 						<BTab>
 							<template #title>
 								<div class="tab-title">
-									<span>Files</span>
+									<span>{{ t('opencatalogi', 'Files') }}</span>
 									<NcLoadingIcon v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)" :size="16" />
 									<NcCounterBubble v-else :count="filesTotalItems" />
 								</div>
 							</template>
 							<!-- Info box for new objects -->
 							<NcNoteCard v-if="isNewObject" type="info" class="files-info-card">
-								<p><strong>Files can be added after the publication is created.</strong></p>
-								<p>Save the publication first, then you'll be able to upload and manage files.</p>
+								<p><strong>{{ t('opencatalogi', 'Files can be added after the publication is created.') }}</strong></p>
+								<p>{{ t('opencatalogi', "Save the publication first, then you'll be able to upload and manage files.") }}</p>
 							</NcNoteCard>
 
 							<NcEmptyContent v-if="currentObject && objectStore.isLoading(`publication_${currentObject.id}_files`)"
-								title="Loading files..."
-								:description="'Loading files for this publication...'">
+								:title="t('opencatalogi', 'Loading files...')"
+								:description="t('opencatalogi', 'Loading files for this publication...')">
 								<template #icon>
 									<NcLoadingIcon :size="64" />
 								</template>
@@ -143,8 +143,8 @@ import { EventBus } from '../../eventBus.js'
 									<NcActions
 										:force-name="true"
 										:disabled="selectedAttachments.length === 0"
-										:title="selectedAttachments.length === 0 ? 'Select one or more files to use mass actions' : `Mass actions (${selectedAttachments.length} selected)`"
-										:menu-name="`Mass Actions (${selectedAttachments.length})`">
+										:title="selectedAttachments.length === 0 ? t('opencatalogi', 'Select one or more files to use mass actions') : t('opencatalogi', 'Mass actions ({count} selected)', { count: selectedAttachments.length })"
+										:menu-name="t('opencatalogi', 'Mass Actions ({count})', { count: selectedAttachments.length })">
 										<template #icon>
 											<FormatListChecks :size="20" />
 										</template>
@@ -156,7 +156,7 @@ import { EventBus } from '../../eventBus.js'
 												<NcLoadingIcon v-if="publishLoading.length > 0" :size="20" />
 												<FileOutline v-else :size="20" />
 											</template>
-											Publish {{ publishableCount }} attachment{{ publishableCount === 1 ? '' : 's' }}
+											{{ publishableCount === 1 ? t('opencatalogi', 'Publish {count} attachment', { count: publishableCount }) : t('opencatalogi', 'Publish {count} attachments', { count: publishableCount }) }}
 										</NcActionButton>
 										<NcActionButton
 											:disabled="depublishLoading.length > 0 || depublishableCount === 0"
@@ -166,7 +166,7 @@ import { EventBus } from '../../eventBus.js'
 												<NcLoadingIcon v-if="depublishLoading.length > 0" :size="20" />
 												<LockOutline v-else :size="20" />
 											</template>
-											Depublish {{ depublishableCount }} attachment{{ depublishableCount === 1 ? '' : 's' }}
+											{{ depublishableCount === 1 ? t('opencatalogi', 'Depublish {count} attachment', { count: depublishableCount }) : t('opencatalogi', 'Depublish {count} attachments', { count: depublishableCount }) }}
 										</NcActionButton>
 										<NcActionButton
 											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
@@ -176,7 +176,7 @@ import { EventBus } from '../../eventBus.js'
 												<NcLoadingIcon v-if="fileIdsLoading.length > 0" :size="20" />
 												<Delete v-else :size="20" />
 											</template>
-											Delete {{ selectedAttachments.length }} attachment{{ selectedAttachments.length === 1 ? '' : 's' }}
+											{{ selectedAttachments.length === 1 ? t('opencatalogi', 'Delete {count} attachment', { count: selectedAttachments.length }) : t('opencatalogi', 'Delete {count} attachments', { count: selectedAttachments.length }) }}
 										</NcActionButton>
 									</NcActions>
 								</div>
@@ -191,16 +191,16 @@ import { EventBus } from '../../eventBus.js'
 														@update:checked="toggleSelectAllFiles" />
 												</th>
 												<th class="tableColumnExpanded table-row-title">
-													Name
+													{{ t('opencatalogi', 'Name') }}
 												</th>
 												<th class="tableColumnConstrained short-column">
-													Size
+													{{ t('opencatalogi', 'Size') }}
 												</th>
 												<th class="tableColumnConstrained table-row-type">
-													Type
+													{{ t('opencatalogi', 'Type') }}
 												</th>
 												<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
-													Labels
+													{{ t('opencatalogi', 'Labels') }}
 												</th>
 												<th class="table-row-actions" />
 											</tr>
@@ -224,7 +224,7 @@ import { EventBus } from '../../eventBus.js'
 														<div class="file-status-icons">
 															<!-- Show warning icon if file is not shared -->
 															<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
-																v-tooltip="'Not shared'"
+																v-tooltip="t('opencatalogi', 'Not shared')"
 																class="warningIcon"
 																:size="20" />
 															<!-- Show published icon if file is shared -->
@@ -237,13 +237,13 @@ import { EventBus } from '../../eventBus.js'
 													{{ formatFileSize(attachment?.size) }}
 												</td>
 												<td class="tableColumnConstrained table-row-type">
-													{{ attachment?.type || 'No type' }}
+													{{ attachment?.type || t('opencatalogi', 'No type') }}
 												</td>
 												<td class="tableColumnConstrained td-labels">
 													<div class="fileLabelsContainer">
 														<span v-if="editingTags !== attachment.id"
 															class="files-list__row-action--inline files-list__row-action-system-tags">
-															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+															<ul v-if="attachment.labels && attachment.labels.length > 0" class="files-list__system-tags" :aria-label="t('opencatalogi', 'Assigned collaborative tags')">
 																<li v-for="label of attachment.labels"
 																	:key="label"
 																	class="files-list__system-tag"
@@ -252,7 +252,7 @@ import { EventBus } from '../../eventBus.js'
 																</li>
 															</ul>
 															<span v-if="!attachment.labels || attachment.labels.length === 0">
-																No labels
+																{{ t('opencatalogi', 'No labels') }}
 															</span>
 														</span>
 														<div v-if="editingTags === attachment.id" class="label-edit-container">
@@ -266,10 +266,10 @@ import { EventBus } from '../../eventBus.js'
 																:options="labelOptionsEdit.options"
 																@tag="addNewTag" />
 															<NcButton
-																v-tooltip="'Save labels'"
+																v-tooltip="t('opencatalogi', 'Save labels')"
 																type="primary"
 																size="small"
-																:aria-label="`save labels for ${attachment.name ?? attachment?.title ?? 'file'}`"
+																:aria-label="t('opencatalogi', 'Save labels for {name}', { name: attachment.name ?? attachment?.title ?? 'file' })"
 																class="editTagsButton"
 																@click="saveTags(attachment, editedTags)">
 																<template #icon>
@@ -277,7 +277,7 @@ import { EventBus } from '../../eventBus.js'
 																</template>
 															</NcButton>
 															<NcButton
-																v-tooltip="'Cancel'"
+																v-tooltip="t('opencatalogi', 'Cancel')"
 																type="secondary"
 																size="small"
 																@click="cancelFileLabelEditing">
@@ -291,12 +291,12 @@ import { EventBus } from '../../eventBus.js'
 												<td class="table-row-actions">
 													<NcActions
 														v-if="editingTags !== attachment.id"
-														:aria-label="`Actions for ${attachment.name ?? attachment?.title ?? 'file'}`">
+														:aria-label="t('opencatalogi', 'Actions for {name}', { name: attachment.name ?? attachment?.title ?? 'file' })">
 														<NcActionButton @click="openFile(attachment)">
 															<template #icon>
 																<OpenInNew :size="20" />
 															</template>
-															View
+															{{ t('opencatalogi', 'View') }}
 														</NcActionButton>
 														<NcActionButton
 															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
@@ -304,7 +304,7 @@ import { EventBus } from '../../eventBus.js'
 															<template #icon>
 																<Tag :size="20" />
 															</template>
-															Edit Labels
+															{{ t('opencatalogi', 'Edit Labels') }}
 														</NcActionButton>
 														<NcActionButton
 															v-if="!attachment.accessUrl && !attachment.downloadUrl"
@@ -314,7 +314,7 @@ import { EventBus } from '../../eventBus.js'
 																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
 																<FileOutline v-else :size="20" />
 															</template>
-															Publish
+															{{ t('opencatalogi', 'Publish') }}
 														</NcActionButton>
 														<NcActionButton
 															v-else
@@ -324,7 +324,7 @@ import { EventBus } from '../../eventBus.js'
 																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
 																<LockOutline v-else :size="20" />
 															</template>
-															Depublish
+															{{ t('opencatalogi', 'Depublish') }}
 														</NcActionButton>
 														<NcActionButton
 															:disabled="fileIdsLoading.includes(attachment.id)"
@@ -333,7 +333,7 @@ import { EventBus } from '../../eventBus.js'
 																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
 																<Delete v-else :size="20" />
 															</template>
-															Delete
+															{{ t('opencatalogi', 'Delete') }}
 														</NcActionButton>
 													</NcActions>
 												</td>
@@ -343,8 +343,8 @@ import { EventBus } from '../../eventBus.js'
 								</div>
 							</template>
 							<NcEmptyContent v-else-if="!isNewObject"
-								name="No files attached"
-								description="No files have been attached to this object">
+								:name="t('opencatalogi', 'No files attached')"
+								:description="t('opencatalogi', 'No files have been attached to this object')">
 								<template #icon>
 									<FileOutline :size="64" />
 								</template>
@@ -372,27 +372,27 @@ import { EventBus } from '../../eventBus.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="!isNewObject" @click="uploadFiles">
 				<template #icon>
 					<Upload :size="20" />
 				</template>
-				Add File
+				{{ t('opencatalogi', 'Add File') }}
 			</NcButton>
 			<NcButton v-if="shouldShowPublishAction(currentObject)"
 				@click="singlePublishObject">
 				<template #icon>
 					<Publish :size="20" />
 				</template>
-				Publish
+				{{ t('opencatalogi', 'Publish') }}
 			</NcButton>
 			<NcButton v-if="shouldShowDepublishAction(currentObject)"
 				@click="singleDepublishObject">
 				<template #icon>
 					<PublishOff :size="20" />
 				</template>
-				Depublish
+				{{ t('opencatalogi', 'Depublish') }}
 			</NcButton>
 			<NcButton v-if="!isNewObject"
 				type="error"
@@ -400,7 +400,7 @@ import { EventBus } from '../../eventBus.js'
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 			<NcButton type="primary"
 				:title="saveButtonTooltip"
@@ -410,7 +410,7 @@ import { EventBus } from '../../eventBus.js'
 					<NcLoadingIcon v-if="isSaving" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				{{ isSaving ? (isNewObject ? 'Creating...' : 'Saving...') : (isNewObject ? 'Create' : 'Save') }}
+				{{ isSaving ? (isNewObject ? t('opencatalogi', 'Creating...') : t('opencatalogi', 'Saving...')) : (isNewObject ? t('opencatalogi', 'Create') : t('opencatalogi', 'Save')) }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -765,6 +765,7 @@ export default {
 				propertyOverrides: this.propertyOverrides,
 				canDropProperty: this.canDropProperty,
 				getDropPropertyTooltip: this.getDropPropertyTooltip,
+				isNew: this.isNewObject,
 			}
 		},
 
@@ -1514,12 +1515,24 @@ export default {
 			navigationStore.setDialog('uploadFiles')
 		},
 		shouldShowPublishAction(object) {
-			if (!object || !object['@self']) return false
-			return object['@self'].published === null || object['@self'].published === undefined
+			if (!object) return false
+			const now = new Date()
+			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
+			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+
+			if (depublished && depublished < now) return true // currently depublished
+			if (!published && !depublished) return true // never published
+			if (!depublished && published && published > now) return true // scheduled but not yet live
+			return false
 		},
 		shouldShowDepublishAction(object) {
-			if (!object || !object['@self']) return false
-			return object['@self'].published !== null && object['@self'].published !== undefined
+			if (!object) return false
+			const now = new Date()
+			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
+			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+
+			// Currently live: published in the past and not yet depublished
+			return !!(published && published <= now && (!depublished || depublished > now))
 		},
 		openSingleObjectDialog(dialog) {
 			if (!this.currentObject) return

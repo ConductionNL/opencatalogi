@@ -222,7 +222,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 			const response = await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`)
 			const data = await response.json()
-			objectStore.setCollection('publicationAttachments', data)
+			objectStore.setCollection('publicationAttachments', data.results || [])
 		},
 
 		/**
