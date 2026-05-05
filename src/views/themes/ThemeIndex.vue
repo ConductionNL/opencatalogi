@@ -100,7 +100,7 @@ export default {
 			sidebarState,
 			objectStore,
 		})
-		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh }
+		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, navigationStore }
 	},
 	data() {
 		return {

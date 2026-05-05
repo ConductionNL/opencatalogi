@@ -765,6 +765,7 @@ export default {
 				propertyOverrides: this.propertyOverrides,
 				canDropProperty: this.canDropProperty,
 				getDropPropertyTooltip: this.getDropPropertyTooltip,
+				isNew: this.isNewObject,
 			}
 		},
 
@@ -1514,12 +1515,24 @@ export default {
 			navigationStore.setDialog('uploadFiles')
 		},
 		shouldShowPublishAction(object) {
-			if (!object || !object['@self']) return false
-			return object['@self'].published === null || object['@self'].published === undefined
+			if (!object) return false
+			const now = new Date()
+			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
+			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+
+			if (depublished && depublished < now) return true // currently depublished
+			if (!published && !depublished) return true // never published
+			if (!depublished && published && published > now) return true // scheduled but not yet live
+			return false
 		},
 		shouldShowDepublishAction(object) {
-			if (!object || !object['@self']) return false
-			return object['@self'].published !== null && object['@self'].published !== undefined
+			if (!object) return false
+			const now = new Date()
+			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
+			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+
+			// Currently live: published in the past and not yet depublished
+			return !!(published && published <= now && (!depublished || depublished > now))
 		},
 		openSingleObjectDialog(dialog) {
 			if (!this.currentObject) return
