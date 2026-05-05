@@ -3,7 +3,6 @@
 		class="publication-card"
 		:class="[`publication-card--${status}`, { 'publication-card--selected': selected }]"
 		@click="$emit('click', object)">
-
 		<div v-if="selectable" class="publication-card__checkbox" @click.stop>
 			<NcCheckboxRadioSwitch
 				:checked="selected"

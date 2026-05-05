@@ -1,4 +1,3 @@
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
