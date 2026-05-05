@@ -34,6 +34,7 @@
 					:labels="publicationsByCategoryData.labels"
 					:height="360"
 					:options="{
+						colors: ['#0082C9', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2', '#DB2777'],
 						legend: { position: 'bottom', fontSize: '13px', itemMargin: { horizontal: 8, vertical: 4 } },
 						plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: t('opencatalogi', 'Total'), fontSize: '14px', fontWeight: 600 }, value: { fontSize: '28px', fontWeight: 700 } } } } },
 						dataLabels: { enabled: false },
