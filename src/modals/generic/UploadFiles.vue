@@ -604,7 +604,7 @@ export default {
 
 					const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 					const attachments = await getAttachments.json().catch(() => null)
-					try { objectStore.setCollection('publicationAttachments', attachments) } catch (_) {}
+					try { objectStore.setCollection('publicationAttachments', attachments?.results || []) } catch (_) {}
 					catalogStore.fetchPublications()
 
 					this.success = 'File labels updated successfully'
@@ -702,7 +702,7 @@ export default {
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 				const attachments = await getAttachments.json()
-				objectStore.setCollection('publicationAttachments', attachments)
+				objectStore.setCollection('publicationAttachments', attachments?.results || [])
 
 				catalogStore.fetchPublications()
 

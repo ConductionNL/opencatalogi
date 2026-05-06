@@ -70,8 +70,11 @@ webpackConfig.module.rules.push({
 // them, so we re-add explicitly.
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
-	// TODO: Remove NodePolyfillPlugin when upgrading to Vue 3.
-	new NodePolyfillPlugin({ additionalAliases: ['process'] }),
+	// TODO: Remove NodePolyfillPlugin when upgrading to Vue 3. This is a temporary hack required
+	// because we are using an outdated version of @nextcloud/vue which still targets Vue 2.
+	new NodePolyfillPlugin({
+		additionalAliases: ['process'],
+	}),
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
 	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
