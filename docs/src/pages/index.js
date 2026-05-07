@@ -215,6 +215,7 @@ export default function Home() {
       <main className="marketing-page">
         <DetailHero
           appId="opencatalogi"
+          background="cobalt"
           status={{ label: 'Stable', color: 'var(--c-mint-500)' }}
           version="v2.4"
           locales="NL · EN"
