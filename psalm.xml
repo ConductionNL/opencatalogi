@@ -81,7 +81,9 @@
                 <referencedClass name="OCP\Search\IFilteringProvider"/>
                 <!-- OpenRegister classes (external app dependency) -->
                 <referencedClass name="OCA\OpenRegister\Event\ObjectCreatedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectCreatingEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatingEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectDeletedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ToolRegistrationEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
