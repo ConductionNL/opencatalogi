@@ -227,7 +227,6 @@ class MenusController extends Controller
         $searchQuery = [
             '_ids'    => [$id],
             '_limit'  => 1,
-            '_source' => 'database',
         ];
         $result      = $this->getObjectService()->searchObjectsPaginated(
             $searchQuery,

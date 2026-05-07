@@ -235,7 +235,6 @@ class PagesController extends Controller
         $searchQuery = [
             'slug'    => $slug,
             '_limit'  => 1,
-            '_source' => 'database',
         ];
 
         // Add schema filter if configured using _schema for magic mapper routing.
