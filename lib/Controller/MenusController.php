@@ -225,8 +225,8 @@ class MenusController extends Controller
     {
         // Use searchObjectsPaginated to find single menu.
         $searchQuery = [
-            '_ids'    => [$id],
-            '_limit'  => 1,
+            '_ids'   => [$id],
+            '_limit' => 1,
         ];
         $result      = $this->getObjectService()->searchObjectsPaginated(
             $searchQuery,

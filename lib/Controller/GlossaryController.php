@@ -264,8 +264,8 @@ class GlossaryController extends Controller
     {
         // Use searchObjectsPaginated to find single glossary term.
         $searchQuery = [
-            '_ids'    => [$id],
-            '_limit'  => 1,
+            '_ids'   => [$id],
+            '_limit' => 1,
         ];
         $result      = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
