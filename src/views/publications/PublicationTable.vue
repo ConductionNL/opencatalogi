@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
@@ -138,7 +138,6 @@ export default {
 		CnRowActions,
 		NcActionButton,
 		NcCounterBubble,
-		Eye,
 		Delete,
 		Publish,
 		PublishOff,

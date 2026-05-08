@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
 </script>
