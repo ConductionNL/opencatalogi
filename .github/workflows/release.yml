@@ -4,6 +4,10 @@ on:
   push:
     branches: [main, beta, development]
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   unstable:
     if: github.ref == 'refs/heads/development'
