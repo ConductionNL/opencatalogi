@@ -1,6 +1,8 @@
 <?php
 /**
- * UiController for OpenCatalogi.
+ * OpenCatalogi UI Controller.
+ *
+ * Serves SPA entry for history-mode deep links.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -14,7 +16,6 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
@@ -26,18 +27,20 @@ use OCP\IRequest;
  * UiController that serves SPA entry for history-mode deep links.
  *
  * @psalm-type TemplateName = 'index'
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
 class UiController extends Controller
 {
     /**
-     * UiController constructor.
+     * Constructor.
      *
-     * @param string   $appName The name of the application.
-     * @param IRequest $request The incoming request object.
+     * @param string   $appName The application name.
+     * @param IRequest $request The HTTP request.
      */
     public function __construct(string $appName, IRequest $request)
     {
-        parent::__construct(appName: $appName, request: $request);
+        parent::__construct($appName, $request);
 
     }//end __construct()
 
@@ -47,7 +50,7 @@ class UiController extends Controller
      * @phpstan-return TemplateResponse
      * @psalm-return   TemplateResponse
      *
-     * @return TemplateResponse The SPA template response.
+     * @return TemplateResponse
      */
     private function makeSpaResponse(): TemplateResponse
     {
@@ -78,15 +81,12 @@ class UiController extends Controller
     }//end makeSpaResponse()
 
     /**
-     * Renders the dashboard page.
+     * Serve dashboard page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function dashboard(): TemplateResponse
     {
@@ -95,15 +95,12 @@ class UiController extends Controller
     }//end dashboard()
 
     /**
-     * Renders the catalogi page.
+     * Serve catalogi page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function catalogi(): TemplateResponse
     {
@@ -112,15 +109,12 @@ class UiController extends Controller
     }//end catalogi()
 
     /**
-     * Renders the publications index page.
+     * Serve publications index page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function publicationsIndex(): TemplateResponse
     {
@@ -129,15 +123,12 @@ class UiController extends Controller
     }//end publicationsIndex()
 
     /**
-     * Renders a single publication page.
+     * Serve publications detail page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function publicationsPage(): TemplateResponse
     {
@@ -146,15 +137,12 @@ class UiController extends Controller
     }//end publicationsPage()
 
     /**
-     * Renders the search page.
+     * Serve search page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function search(): TemplateResponse
     {
@@ -163,15 +151,12 @@ class UiController extends Controller
     }//end search()
 
     /**
-     * Renders the organizations page.
+     * Serve organizations page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function organizations(): TemplateResponse
     {
@@ -180,15 +165,12 @@ class UiController extends Controller
     }//end organizations()
 
     /**
-     * Renders the themes page.
+     * Serve themes page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function themes(): TemplateResponse
     {
@@ -197,15 +179,12 @@ class UiController extends Controller
     }//end themes()
 
     /**
-     * Renders the glossary page.
+     * Serve glossary page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function glossary(): TemplateResponse
     {
@@ -214,15 +193,12 @@ class UiController extends Controller
     }//end glossary()
 
     /**
-     * Renders the pages page.
+     * Serve pages page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function pages(): TemplateResponse
     {
@@ -231,15 +207,12 @@ class UiController extends Controller
     }//end pages()
 
     /**
-     * Renders the menus page.
+     * Serve menus page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function menus(): TemplateResponse
     {
@@ -248,15 +221,12 @@ class UiController extends Controller
     }//end menus()
 
     /**
-     * Renders the directory page.
+     * Serve directory page.
+     *
+     * @return TemplateResponse
      *
      * @NoAdminRequired
      * @NoCSRFRequired
-     *
-     * @phpstan-return TemplateResponse
-     * @psalm-return   TemplateResponse
-     *
-     * @return TemplateResponse The SPA template response.
      */
     public function directory(): TemplateResponse
     {

@@ -30,3 +30,4 @@
 * [#29](https://github.com/ConductionNL/opencatalogi/pull/29): Copy metadata from listing
 * [#30](https://github.com/ConductionNL/opencatalogi/pull/30): fix migration
 * [#31](https://github.com/ConductionNL/opencatalogi/pull/31): Cast id's
+

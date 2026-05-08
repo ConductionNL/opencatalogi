@@ -26,6 +26,7 @@
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import { isPublished, isDepublished } from '../services/publicationStatus.js'
 
 export default {
 	name: 'PublishedIcon',
@@ -85,56 +86,8 @@ export default {
 		},
 	},
 	computed: {
-		icon() {
-			const published = this.object?.['@self']?.published
-			const depublished = this.object?.['@self']?.depublished
-
-			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
-				return 'ListBoxOutline'
-			}
-			if (depublished !== null && depublished !== undefined) {
-				return 'AlertOutline'
-			}
-			return 'Pencil'
-		},
-		iconColor() {
-			const published = this.object?.['@self']?.published
-			const depublished = this.object?.['@self']?.depublished
-
-			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
-				return 'published-icon'
-			}
-			if (depublished !== null && depublished !== undefined) {
-				return 'depublished-icon'
-			}
-			return 'draft-icon'
-		},
-		tooltip() {
-			const published = this.object?.['@self']?.published
-			const depublished = this.object?.['@self']?.depublished
-
-			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
-				return this.publishedTooltip
-			}
-			if (depublished !== null && depublished !== undefined) {
-				return this.depublishedTooltip
-			}
-			return this.draftTooltip
-		},
-		/**
-		 * Check if the object is published
-		 * @return {boolean} True if the object is published
-		 */
-		isPublished() {
-			return !!(this.object?.['@self']?.published && !this.object?.['@self']?.depublished)
-		},
-		/**
-		 * Check if the object is depublished
-		 * @return {boolean} True if the object is depublished
-		 */
-		isDepublished() {
-			return !!(this.object?.['@self']?.depublished)
-		},
+		isPublished() { return isPublished(this.object) },
+		isDepublished() { return isDepublished(this.object) },
 	},
 }
 </script>

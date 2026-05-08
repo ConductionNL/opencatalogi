@@ -24,6 +24,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
 use OCA\OpenCatalogi\Service\FileService;
+use OCA\OpenRegister\Service\ObjectService;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use Psr\Container\ContainerExceptionInterface;
@@ -44,7 +45,7 @@ use Exception;
 class DownloadService
 {
     /**
-     * Constructor for DownloadService
+     * Constructor for DownloadService.
      *
      * @param FileService $fileService The file service for handling file operations
      */
@@ -57,11 +58,15 @@ class DownloadService
     /**
      * Creates a pdf file containing all metadata of the given publication.
      *
-     * @param ObjectService  $objectService The ObjectService, used to connect to a MongoDB database.
-     * @param string|integer $id            The id of a Publication we want to create / update a pdf file for.
-     * @param array|null     $options       Options for this function. Keys: download, saveToNextCloud, publication.
+     * @param ObjectService  $objectService The ObjectService for database access.
+     * @param string|integer $id            The id of the Publication to create a pdf for.
+     * @param array|null     $options       Options for this function.
+     *                                      "download" and "saveToNextCloud" cannot both be false.
+     *                                      "download" = return a download response (true default).
+     *                                      "saveToNextCloud" = save file in NextCloud (true default).
+     *                                      "publication" = pre-fetched publication body.
      *
-     * @return JSONResponse A JSONResponse for downloading the pdf file or an error response.
+     * @return JSONResponse A download response, download URL, or error response.
      * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
      */
     public function createPublicationFile(
@@ -76,13 +81,13 @@ class DownloadService
         // Validate options.
         if ($options['download'] === false && $options['saveToNextCloud'] === false) {
             return new JSONResponse(
-                data: ['error' => '$options "download" & "saveToNextCloud" for function createPublicationFile should not be both set to false'],
+                data: ['error' => 'Options "download" and "saveToNextCloud" should not both be false'],
                 statusCode: 500
             );
         }
 
         // Get publication data if not provided.
-        $publication = ($options['publication'] ?? $this->getPublicationData(id: $id, objectService: $objectService));
+        $publication = ($options['publication'] ?? $this->getPublicationData($id, $objectService));
         if ($publication instanceof JSONResponse) {
             return $publication;
         }
@@ -96,7 +101,7 @@ class DownloadService
         $shareLink = null;
         if ($options['saveToNextCloud'] ?? true) {
             $mpdf->Output($filename, Destination::FILE);
-            $shareLink = $this->saveFileToNextCloud(filename: $filename, publication: $publication);
+            $shareLink = $this->saveFileToNextCloud($filename, $publication);
             if ($shareLink instanceof JSONResponse) {
                 return $shareLink;
             }
@@ -136,21 +141,37 @@ class DownloadService
     private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse
     {
         try {
-            return $objectService->getObject('publication', $id);
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-        }
+            $entity = $objectService->find($id);
+            if ($entity !== null) {
+                return $entity->jsonSerialize();
+            }
+
+            return new JSONResponse(
+                data: ['error' => 'Publication not found'],
+                statusCode: 404
+            );
+        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        }//end try
 
     }//end getPublicationData()
 
     /**
-     * Create/updates a metadata file in NextCloud files and returns a share link.
+     * Store a publication metadata file in NextCloud and return its share link.
      *
-     * @param string $filename    The (tmp) filename of the file to store in NextCloud files
-     * @param array  $publication The publication data used to find/create the publication specific folder in NextCloud files
+     * @param string $filename    The filename of the file to store in NextCloud
+     * @param array  $publication The publication data for folder creation
      *
      * @return string|JSONResponse A share link url or an error JSONResponse
-     * @throws Exception When a function reading or writing to NextCloud files goes wrong
+     * @throws Exception When reading or writing to NextCloud files fails
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -175,15 +196,17 @@ class DownloadService
 
         // Check if file creation was successful.
         if ($created === false) {
-            return new JSONResponse(data: ['error' => "Failed to upload this file: $filePath to NextCloud"], statusCode: 500);
+            return new JSONResponse(
+                data: ['error' => "Failed to upload this file: $filePath to NextCloud"],
+                statusCode: 500
+            );
         }
 
         // Create or find ShareLink.
-        $share = $this->fileService->findShare(path: $filePath);
+        $share     = $this->fileService->findShare(path: $filePath);
+        $shareLink = $this->fileService->createShareLink(path: $filePath);
         if ($share !== null) {
-            $shareLink = $this->fileService->getShareLink(share: $share);
-        } else {
-            $shareLink = $this->fileService->createShareLink(path: $filePath);
+            $shareLink = $this->fileService->getShareLink($share);
         }
 
         return $shareLink;
@@ -191,11 +214,11 @@ class DownloadService
     }//end saveFileToNextCloud()
 
     /**
-     * Prepares the creation of a ZIP archive for a publication
+     * Prepares the creation of a ZIP archive for a publication.
      *
-     * @param string $tempFolder      The tmp location used as input for creating the ZIP archive.
-     * @param array  $attachments     An array containing all Attachments (Bijlagen) for the Publication.
-     * @param array  $publicationFile The downloadUrl and filename of the metadata PDF.
+     * @param string $tempFolder      The tmp location for creating the ZIP archive.
+     * @param array  $attachments     All Attachments (Bijlagen) for the Publication.
+     * @param array  $publicationFile The downloadUrl and filename of the metadata pdf.
      *
      * @return void
      */
@@ -217,7 +240,10 @@ class DownloadService
 
         // Add all attachments to Bijlagen folder.
         foreach ($attachments as $attachment) {
-            $attachment  = $attachment->jsonSerialize();
+            if (is_object($attachment) === true && method_exists($attachment, 'jsonSerialize') === true) {
+                $attachment = $attachment->jsonSerialize();
+            }
+
             $fileContent = file_get_contents($attachment['downloadUrl']);
             if ($fileContent !== false) {
                 $filePath = explode('/', $attachment['reference']);
@@ -228,23 +254,23 @@ class DownloadService
     }//end prepareZip()
 
     /**
-     * Creates a ZIP archive containing a pdf file with all metadata of the publication and its attachments
+     * Creates a ZIP archive with metadata pdf and attachments for a publication.
      *
-     * @param ObjectService  $objectService The ObjectService, used to connect to a MongoDB database.
-     * @param string|integer $id            The id of a Publication we want to download a ZIP archive for.
+     * @param ObjectService  $objectService The ObjectService for database access.
+     * @param string|integer $id            The id of the Publication to create a ZIP for.
      *
-     * @return JSONResponse A JSONResponse for downloading the ZIP archive. Or an error response.
+     * @return JSONResponse A download response or an error response.
      * @throws LoaderError|MpdfException|RuntimeError|SyntaxError
      */
     public function createPublicationZip(ObjectService $objectService, string|int $id): JSONResponse
     {
         // Get the publication data.
-        $publication = $this->getPublicationData(id: $id, objectService: $objectService);
+        $publication = $this->getPublicationData($id, $objectService);
         if ($publication instanceof JSONResponse) {
             return $publication;
         }
 
-        // Create/update the publication PDF file.
+        // Create or update the publication PDF file.
         $jsonResponse = $this->createPublicationFile(
             objectService: $objectService,
             id: $id,
@@ -260,7 +286,7 @@ class DownloadService
         $publicationFile = $jsonResponse->getData();
 
         // Get all publication attachments.
-        $attachments = $this->publicationAttachments(id: $id, objectService: $objectService);
+        $attachments = $this->publicationAttachments($id, $objectService);
         if ($attachments instanceof JSONResponse) {
             return $attachments;
         }
@@ -278,7 +304,7 @@ class DownloadService
             return new JSONResponse(['error' => "Failed to create ZIP archive for this publication: $id"], 500);
         }
 
-        // Return a download response and clean up temp files/folders.
+        // Return a download response and clean up temp files and folders.
         $this->fileService->downloadZip($tempZip, $tempFolder);
 
         return new JSONResponse([], 200);
@@ -291,20 +317,44 @@ class DownloadService
      * @param string|integer $id            The id of a publication.
      * @param ObjectService  $objectService The objectService.
      *
-     * @return array|JSONResponse An array containing all attachments for the publication or an error JSONResponse.
+     * @return array|JSONResponse All attachments for the publication or an error JSONResponse.
      */
     public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse
     {
         // Fetch attachment objects.
         try {
             // Fetch the publication object by its ID.
-            $object = $objectService->getObject(objectType: 'publication', id: $id);
+            $entity = $objectService->find($id);
+            $object = null;
+            if ($entity !== null) {
+                $object = $entity->jsonSerialize();
+            }
 
-            // Fetch attachment objects.
-            return $objectService->getMultipleObjects(objectType: 'attachment', ids: $object['attachments']);
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-        }
+            if ($object === null) {
+                return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 500);
+            }
+
+            // Fetch attachment objects by their IDs.
+            $attachments = [];
+            foreach (($object['attachments'] ?? []) as $attId) {
+                $attEntity = $objectService->find($attId);
+                if ($attEntity !== null) {
+                    $attachments[] = $attEntity->jsonSerialize();
+                }
+            }
+
+            return $attachments;
+        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        }//end try
 
     }//end publicationAttachments()
 }//end class

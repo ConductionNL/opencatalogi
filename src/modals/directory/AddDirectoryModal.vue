@@ -22,49 +22,49 @@ import { navigationStore } from '../../store/store.js'
 		label-id="addDirectoryModal"
 		@close="closeModal">
 		<div class="modal__content">
-			<h2>Synchronize Directory</h2>
+			<h2>{{ t('opencatalogi', 'Synchronize Directory') }}</h2>
 			<p class="description">
-				Enter the URL of an OpenCatalogi directory to synchronize with their catalogs and publications.
+				{{ t('opencatalogi', 'Enter the URL of an OpenCatalogi directory to synchronize with their catalogs and publications.') }}
 			</p>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p><strong>Directory successfully synchronized</strong></p>
+					<p><strong>{{ t('opencatalogi', 'Directory successfully synchronized') }}</strong></p>
 					<div v-if="syncResults" class="sync-report">
-						<h4>Synchronization report</h4>
+						<h4>{{ t('opencatalogi', 'Synchronization report') }}</h4>
 						<div class="sync-stats">
 							<div class="stat-item">
-								<span class="stat-label">Directory URL:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'Directory URL:') }}</span>
 								<span class="stat-value">{{ syncResults.directory_url }}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">Sync time:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'Sync time:') }}</span>
 								<span class="stat-value">{{ formatDateTime(syncResults.sync_time) }}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">Total processed:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'Total processed:') }}</span>
 								<span class="stat-value">{{ syncResults.total_processed }}</span>
 							</div>
 							<div class="stat-item success">
-								<span class="stat-label">New listings:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'New listings:') }}</span>
 								<span class="stat-value">{{ syncResults.listings_created }}</span>
 							</div>
 							<div class="stat-item warning">
-								<span class="stat-label">Updated listings:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'Updated listings:') }}</span>
 								<span class="stat-value">{{ syncResults.listings_updated }}</span>
 							</div>
 							<div class="stat-item">
-								<span class="stat-label">Unchanged listings:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'Unchanged listings:') }}</span>
 								<span class="stat-value">{{ syncResults.listings_unchanged }}</span>
 							</div>
 							<div v-if="syncResults.listings_failed > 0" class="stat-item error">
-								<span class="stat-label">Failed listings:</span>
+								<span class="stat-label">{{ t('opencatalogi', 'Failed listings:') }}</span>
 								<span class="stat-value">{{ syncResults.listings_failed }}</span>
 							</div>
 						</div>
 
 						<!-- Show errors if any -->
 						<div v-if="syncResults.errors && syncResults.errors.length > 0" class="sync-errors">
-							<h5>Errors during synchronization:</h5>
+							<h5>{{ t('opencatalogi', 'Errors during synchronization:') }}</h5>
 							<ul>
 								<li v-for="(syncError, index) in syncResults.errors" :key="index" class="error-item">
 									{{ syncError }}
@@ -74,7 +74,7 @@ import { navigationStore } from '../../store/store.js'
 
 						<!-- Show detailed listing results if available -->
 						<div v-if="showDetails && syncResults.listing_details && syncResults.listing_details.length > 0" class="listing-details">
-							<h5>Detailed results:</h5>
+							<h5>{{ t('opencatalogi', 'Detailed results:') }}</h5>
 							<div class="listing-list">
 								<div v-for="listing in syncResults.listing_details"
 									:key="listing.listing_id"
@@ -91,29 +91,29 @@ import { navigationStore } from '../../store/store.js'
 							type="tertiary"
 							class="toggle-details"
 							@click="showDetails = !showDetails">
-							{{ showDetails ? 'Hide details' : 'Show details' }}
+							{{ showDetails ? t('opencatalogi', 'Hide details') : t('opencatalogi', 'Show details') }}
 						</NcButton>
 					</div>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success && error" type="error">
-					<p><strong>Synchronization failed</strong></p>
+					<p><strong>{{ t('opencatalogi', 'Synchronization failed') }}</strong></p>
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
 				<NcTextField
 					v-model="directoryUrl"
-					label="Directory URL"
+					:label="t('opencatalogi', 'Directory URL')"
 					placeholder="https://directory.opencatalogi.nl/apps/opencatalogi/api/directory"
 					:disabled="loading"
 					:loading="loading"
-					helper-text="The URL of the OpenCatalogi directory API endpoint" />
+					:helper-text="t('opencatalogi', 'The URL of the OpenCatalogi directory API endpoint')" />
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="closeModal">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading || !directoryUrl"
@@ -125,7 +125,7 @@ import { navigationStore } from '../../store/store.js'
 							<Sync v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Sync
+					{{ t('opencatalogi', 'Sync') }}
 				</NcButton>
 			</span>
 		</div>

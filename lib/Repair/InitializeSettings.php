@@ -2,14 +2,16 @@
 /**
  * Repair step for initializing OpenCatalogi settings.
  *
- * Runs during app install or upgrade to load configuration.
- *
  * @category Repair
  * @package  OCA\OpenCatalogi\Repair
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  */
 
 declare(strict_types=1);
@@ -18,7 +20,6 @@ namespace OCA\OpenCatalogi\Repair;
 
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use OCP\IConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCA\OpenCatalogi\AppInfo\Application;
@@ -28,38 +29,39 @@ use OCA\OpenCatalogi\Service\SettingsService;
  * Repair step that initializes OpenCatalogi settings on install/upgrade.
  *
  * This runs only during app install or upgrade, not on every request.
- * The configuration import is idempotent - running multiple times will not create duplicates.
+ * The configuration import is idempotent - running multiple times
+ * will not create duplicates.
  */
 class InitializeSettings implements IRepairStep
 {
     /**
-     * Constructor for InitializeSettings repair step.
+     * Constructor.
      *
-     * @param IConfig            $config     The Nextcloud config service.
      * @param IAppManager        $appManager The app manager.
-     * @param ContainerInterface $container  The dependency injection container.
+     * @param ContainerInterface $container  The container.
      */
     public function __construct(
-        private readonly IConfig $config,
         private readonly IAppManager $appManager,
         private readonly ContainerInterface $container
     ) {
+
     }//end __construct()
 
     /**
      * Get the name of this repair step.
      *
-     * @return string The repair step name.
+     * @return string
      */
     public function getName(): string
     {
         return "Initialize OpenCatalogi settings";
+
     }//end getName()
 
     /**
-     * Run the repair step to initialize settings.
+     * Run the repair step.
      *
-     * @param IOutput $output The output handler for progress reporting.
+     * @param IOutput $output The output interface.
      *
      * @return void
      */
@@ -80,7 +82,7 @@ class InitializeSettings implements IRepairStep
 
         try {
             // Get the settings service and load configuration.
-            // The import is idempotent - existing objects will be skipped, not duplicated.
+            // The import is idempotent.
             $settingsService = $this->container->get(SettingsService::class);
             $result          = $settingsService->loadSettings(force: false);
 
@@ -92,11 +94,12 @@ class InitializeSettings implements IRepairStep
                 "Configuration loaded: {$registerCount} registers, {$schemaCount} schemas, {$objectCount} objects"
             );
         } catch (\Exception $e) {
-            // Non-fatal: log warning but dont fail the repair step.
+            // Non-fatal: log warning but don't fail the repair step.
             $output->warning("Failed to load configuration: ".$e->getMessage());
         }
 
         $output->advance(1);
         $output->finishProgress();
+
     }//end run()
 }//end class

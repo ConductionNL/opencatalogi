@@ -1,6 +1,6 @@
 <?php
 /**
- * DirectorySync for OpenCatalogi.
+ * Directory sync cron job.
  *
  * @category Cron
  * @package  OCA\OpenCatalogi\Cron
@@ -14,7 +14,6 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Cron;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
@@ -23,41 +22,45 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 
 /**
- * Docs: https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
+ * Background job for periodic directory synchronization.
+ *
+ * @see https://docs.nextcloud.com/server/latest/developer_manual/basics/backgroundjobs.html
  */
 class DirectorySync extends TimedJob
 {
     /**
-     * Constructor for DirectorySync cron job.
+     * Constructor.
      *
-     * @param ITimeFactory     $time             The time factory for scheduling.
-     * @param DirectoryService $directoryService The directory sync service.
+     * @param ITimeFactory     $time             Time factory for scheduling.
+     * @param DirectoryService $directoryService The directory service.
      */
     public function __construct(
         ITimeFactory $time,
         private readonly DirectoryService $directoryService
     ) {
-        parent::__construct(time: $time);
+        parent::__construct($time);
 
         // Run every hour.
-        $this->setInterval(interval: 3600);
+        $this->setInterval(3600);
 
         // Delay until low-load time.
-        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
 
         // Only run one instance of this job at a time.
-        $this->setAllowParallelRuns(allow: false);
+        $this->setAllowParallelRuns(false);
 
     }//end __construct()
 
     /**
      * Run the cron sync.
      *
-     * @param array $arguments The job arguments.
+     * @param array $argument Arguments passed to the job.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    protected function run($arguments)
+    protected function run($argument): void
     {
         $this->directoryService->doCronSync();
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Migration to add uri columns to all tables and create missing tables.
+ * Migration to add URI columns to tables.
  *
  * @category Migration
  * @package  OCA\OpenCatalogi\Migration
@@ -8,6 +8,10 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  */
 
 declare(strict_types=1);
@@ -21,18 +25,18 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Class Version6Date20241208222530
+ * Migration to add URI columns to all tables and create missing tables.
  *
- * Migration to add uri columns to all tables and create missing tables.
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class Version6Date20241208222530 extends SimpleMigrationStep
 {
     /**
-     * Pre-schema change handler.
+     * Pre-schema change hook.
      *
-     * @param IOutput                   $output        The output handler.
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                     $options       Migration options.
+     * @param IOutput                  $output        The output handler.
+     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                    $options       Migration options.
      *
      * @return void
      */
@@ -42,17 +46,17 @@ class Version6Date20241208222530 extends SimpleMigrationStep
     }//end preSchemaChange()
 
     /**
-     * Apply schema changes to add uri columns.
+     * Apply schema changes.
      *
-     * @param IOutput                   $output        The output handler.
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                     $options       Migration options.
+     * @param IOutput                  $output        The output handler.
+     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                    $options       Migration options.
      *
-     * @return null|ISchemaWrapper The updated schema or null.
+     * @return null|ISchemaWrapper
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {
-        // Get the schema from the closure.
+        // @var ISchemaWrapper $schema
         $schema = $schemaClosure();
 
         // Update the ocat_attachments table.
@@ -144,11 +148,11 @@ class Version6Date20241208222530 extends SimpleMigrationStep
     }//end changeSchema()
 
     /**
-     * Post-schema change handler.
+     * Post-schema change hook.
      *
-     * @param IOutput                   $output        The output handler.
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure.
-     * @param array                     $options       Migration options.
+     * @param IOutput                  $output        The output handler.
+     * @param Closure():ISchemaWrapper $schemaClosure The schema closure.
+     * @param array                    $options       Migration options.
      *
      * @return void
      */

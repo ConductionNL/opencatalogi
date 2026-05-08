@@ -1,111 +1,102 @@
 <template>
 	<div>
 		<NcSettingsSection
-			name="Open Catalogi"
-			description="A central place for managing your Catalogi and publications"
+			:name="t('opencatalogi', 'Open Catalogi')"
+			:description="t('opencatalogi', 'A central place for managing your Catalogi and publications')"
 			doc-url="https://docs.opencatalogi.nl" />
 
-		<NcSettingsSection
-			name="Version Information"
-			description="Current application and configuration versions">
-			<div v-if="!loadingVersionInfo" class="version-info">
-				<div class="version-details">
-					<div class="version-item">
-						<strong>Application:</strong> {{ versionInfo.appName }} v{{ versionInfo.appVersion }}
-					</div>
-					<div class="version-item">
-						<strong>Configured Version:</strong>
-						<span v-if="versionInfo.configuredVersion">{{ versionInfo.configuredVersion }}</span>
-						<span v-else class="no-version">Not configured</span>
-					</div>
-					<div class="version-item">
-						<strong>Status:</strong>
-						<span v-if="versionInfo.versionsMatch" class="status-ok">✓ Up to date</span>
-						<span v-else-if="versionInfo.needsUpdate" class="status-warning">⚠ Update needed</span>
-						<span v-else class="status-error">✗ Version mismatch</span>
-					</div>
+		<CnVersionInfoCard
+			app-name="OpenCatalogi"
+			:app-version="versionInfo.appVersion"
+			:configured-version="versionInfo.configuredVersion"
+			:is-up-to-date="versionInfo.versionsMatch"
+			:show-update-button="versionInfo.needsUpdate"
+			:title="t('opencatalogi', 'Version information')"
+			:description="t('opencatalogi', 'Current application and configuration versions')">
+			<template #actions>
+				<NcButton
+					type="secondary"
+					:disabled="importing"
+					@click="manualImport(false)">
+					<template #icon>
+						<NcLoadingIcon v-if="importing" :size="20" />
+						<Refresh v-else :size="20" />
+					</template>
+					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update configuration') : t('opencatalogi', 'Reimport configuration') }}
+				</NcButton>
+
+				<NcButton
+					type="primary"
+					:disabled="importing"
+					@click="manualImport(true)">
+					<template #icon>
+						<NcLoadingIcon v-if="importing" :size="20" />
+						<Refresh v-else :size="20" />
+					</template>
+					{{ t('opencatalogi', 'Force import') }}
+				</NcButton>
+			</template>
+			<template #default>
+				<!-- Import Results -->
+				<div v-if="importResult" class="import-result">
+					<NcNoteCard
+						v-if="importResult.success"
+						type="success">
+						{{ importResult.message }}
+					</NcNoteCard>
+					<NcNoteCard
+						v-else
+						type="error">
+						{{ importResult.message }}
+					</NcNoteCard>
 				</div>
-
-				<!-- Manual Import Section -->
-				<div class="manual-import">
-					<div class="import-actions">
-						<NcButton
-							type="secondary"
-							:disabled="importing"
-							@click="manualImport(false)">
-							<template #icon>
-								<NcLoadingIcon v-if="importing" :size="20" />
-								<Refresh v-else :size="20" />
-							</template>
-							{{ versionInfo.needsUpdate ? 'Update Configuration' : 'Reimport Configuration' }}
-						</NcButton>
-
-						<NcButton
-							type="primary"
-							:disabled="importing"
-							@click="manualImport(true)">
-							<template #icon>
-								<NcLoadingIcon v-if="importing" :size="20" />
-								<Refresh v-else :size="20" />
-							</template>
-							Force Import
-						</NcButton>
-					</div>
-
-					<!-- Import Results -->
-					<div v-if="importResult" class="import-result">
-						<NcNoteCard
-							v-if="importResult.success"
-							type="success">
-							{{ importResult.message }}
-						</NcNoteCard>
-						<NcNoteCard
-							v-else
-							type="error">
-							{{ importResult.message }}
-						</NcNoteCard>
-					</div>
+			</template>
+			<template #footer>
+				<div class="cn-support-info">
+					<h4>{{ t('opencatalogi', 'Support') }}</h4>
+					<p>
+						{{ t('opencatalogi', 'For support, contact us at') }}
+						<a href="mailto:support@conduction.nl">support@conduction.nl</a>
+					</p>
+					<p>
+						{{ t('opencatalogi', 'For a Service Level Agreement (SLA), contact') }}
+						<a href="mailto:sales@conduction.nl">sales@conduction.nl</a>
+					</p>
 				</div>
-			</div>
-
-			<!-- Loading State -->
-			<NcLoadingIcon v-else
-				class="loading-icon"
-				:size="64"
-				appearance="dark" />
-		</NcSettingsSection>
+			</template>
+		</CnVersionInfoCard>
 
 		<NcSettingsSection
-			name="Data storage"
-			description="Configure where to store your publication data">
+			:name="t('opencatalogi', 'Data storage')"
+			:description="t('opencatalogi', 'Configure where to store your publication data')">
 			<div v-if="!loading">
 				<!-- Warning if OpenRegister is not installed -->
 				<NcNoteCard v-if="!settings.openRegisters" type="warning">
-					Open Register is not installed. Please install it to use the Open Catalogi app with full functionality.
+					{{ t('opencatalogi', 'Open Register is not installed. Please install it to use the Open Catalogi app with full functionality.') }}
 				</NcNoteCard>
 
 				<!-- Register Selection -->
 				<div class="register-selection">
-					<h3>Register</h3>
-					<p>Select the register to store all your publicatie data</p>
+					<h3>{{ t('opencatalogi', 'Register') }}</h3>
+					<p>{{ t('opencatalogi', 'Select the register to store all your publication data') }}</p>
 
 					<NcSelect
 						v-model="selectedRegister"
 						:options="registerOptions"
-						input-label="Register"
+						:input-label="t('opencatalogi', 'Register')"
 						:disabled="loading || !settings.openRegisters"
 						@change="handleRegisterChange" />
 				</div>
 
 				<!-- Warning if selected register has no schemas -->
 				<NcNoteCard v-if="selectedRegister && !hasSchemas" type="warning">
-					The selected register has no schemas. Please create schemas in this register or select a different register.
+					{{ t('opencatalogi', 'The selected register has no schemas. Please create schemas in this register or select a different register.') }}
 				</NcNoteCard>
 
 				<!-- Object Type Schema Configuration -->
 				<div v-if="selectedRegister && hasSchemas" class="schema-configuration">
-					<h3>Schema Configuration</h3>
-					<p>Select which schema to use for each object type</p>
+					<h3>{{ t('opencatalogi', 'Schema Configuration') }}</h3>
+					<p>{{ t('opencatalogi', 'Select which schema to use for each object type') }}</p>
 
 					<div v-for="objectType in settings.objectTypes" :key="objectType" class="object-type-section">
 						<div class="object-type-header">
@@ -115,7 +106,7 @@
 						<NcSelect
 							v-model="configuration[objectType].schema"
 							:options="computedSchemaOptions"
-							input-label="Schema"
+							:input-label="t('opencatalogi', 'Schema')"
 							:disabled="loading" />
 					</div>
 				</div>
@@ -130,7 +121,7 @@
 							<NcLoadingIcon v-if="saving" :size="20" />
 							<Save v-else :size="20" />
 						</template>
-						Save Configuration
+						{{ t('opencatalogi', 'Save Configuration') }}
 					</NcButton>
 				</div>
 			</div>
@@ -143,18 +134,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
-			name="Publishing Options"
-			description="Configure automatic publishing behavior and interface preferences">
+			:name="t('opencatalogi', 'Publishing Options')"
+			:description="t('opencatalogi', 'Configure automatic publishing behavior and interface preferences')">
 			<div v-if="!loading" class="publishing-options">
 				<!-- Auto Publish Attachments -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
 						:checked.sync="publishingOptions.autoPublishAttachments"
 						:disabled="saving">
-						Auto publish attachments
+						{{ t('opencatalogi', 'Auto publish attachments') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						When an object that has published not null automatically publish all publications
+						{{ t('opencatalogi', 'When an object is published, automatically publish all its attachments as Nextcloud shares') }}
 					</p>
 				</div>
 
@@ -163,10 +154,10 @@
 					<NcCheckboxRadioSwitch
 						:checked.sync="publishingOptions.autoPublishObjects"
 						:disabled="saving">
-						Auto publish objects
+						{{ t('opencatalogi', 'Auto publish objects') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						When an object that has a schema and register matching a catalog is created automatically set it to published
+						{{ t('opencatalogi', 'When an object matching a catalog schema is created, automatically apply public read access via RBAC rules') }}
 					</p>
 				</div>
 
@@ -175,10 +166,10 @@
 					<NcCheckboxRadioSwitch
 						:checked.sync="publishingOptions.useOldStylePublishingView"
 						:disabled="saving">
-						Use old style publishing view
+						{{ t('opencatalogi', 'Use old style publishing view') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						Use the legacy publishing interface instead of the new interface
+						{{ t('opencatalogi', 'Use the legacy publishing interface instead of the new interface') }}
 					</p>
 				</div>
 
@@ -192,7 +183,7 @@
 							<NcLoadingIcon v-if="saving" :size="20" />
 							<Save v-else :size="20" />
 						</template>
-						Save Publishing Options
+						{{ t('opencatalogi', 'Save Publishing Options') }}
 					</NcButton>
 				</div>
 			</div>
@@ -216,6 +207,7 @@ import {
 	NcLoadingIcon,
 	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
+import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 
@@ -241,6 +233,7 @@ export default defineComponent({
 		NcButton,
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
+		CnVersionInfoCard,
 		Save,
 		Refresh,
 	},
@@ -836,58 +829,6 @@ export default defineComponent({
 	color: var(--color-text-lighter);
 	font-size: 0.9rem;
 	line-height: 1.4;
-}
-
-.version-info {
-	max-width: 600px;
-}
-
-.version-details {
-	margin-bottom: 2rem;
-	padding: 1rem;
-	background-color: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-}
-
-.version-item {
-	margin-bottom: 0.5rem;
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.version-item:last-child {
-	margin-bottom: 0;
-}
-
-.no-version {
-	color: var(--color-text-lighter);
-	font-style: italic;
-}
-
-.status-ok {
-	color: var(--color-success);
-	font-weight: bold;
-}
-
-.status-warning {
-	color: var(--color-warning);
-	font-weight: bold;
-}
-
-.status-error {
-	color: var(--color-error);
-	font-weight: bold;
-}
-
-.manual-import {
-	margin-top: 1.5rem;
-}
-
-.import-actions {
-	display: flex;
-	gap: 1rem;
-	margin-bottom: 1rem;
 }
 
 .import-result {

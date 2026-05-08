@@ -1,3 +1,4 @@
+import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 
 /**
@@ -62,6 +63,10 @@ export const useObjectStore = defineStore('object', {
 		success: {},
 		/** @type {{[key: string]: {schema: string, register: string}}} */
 		objectTypeRegistry: {},
+		/** @type {{[key: string]: object}} */
+		schemas: {},
+		/** @type {{[key: string]: object}} */
+		facets: {},
 		/** @type {Array<string>} */
 		selectedObjects: [],
 		/** @type {Array<string>} */
@@ -468,6 +473,19 @@ export const useObjectStore = defineStore('object', {
 				},
 			}
 
+			// Mirror results into the per-id objects cache so lookups like
+			// copyObject's this.objects[type][id] work for callers (e.g. catalog.js
+			// fetchPublications) that bypass fetchCollection.
+			if (!this.objects[type]) {
+				this.objects[type] = {}
+			}
+			for (const item of newResults || []) {
+				const itemId = item?.id ?? item?.['@self']?.id
+				if (itemId) {
+					this.objects[type][itemId] = { ...item }
+				}
+			}
+
 			console.info('Collection after update:', {
 				type,
 				collection: this.collections[type],
@@ -503,77 +521,77 @@ export const useObjectStore = defineStore('object', {
 			}
 		},
 
-	/**
-	 * Set active object for type and fetch related data
-	 * @param {string} type - Object type
-	 * @param {object} object - Object to set as active
-	 * @return {Promise<void>}
-	 */
-	async setActiveObject(type, object) {
-		console.info('setActiveObject called with:', { type, object })
-		// Log the current state before update
-		console.info('Current activeObjects state:', { ...this.activeObjects })
-		// Update using reactive assignment
-		this.activeObjects = {
-			...this.activeObjects,
-			[type]: object,
-		}
-		// Log the state after update
-		console.info('Updated activeObjects state:', { ...this.activeObjects })
+		/**
+		 * Set active object for type and fetch related data
+		 * @param {string} type - Object type
+		 * @param {object} object - Object to set as active
+		 * @return {Promise<void>}
+		 */
+		async setActiveObject(type, object) {
+			console.info('setActiveObject called with:', { type, object })
+			// Log the current state before update
+			console.info('Current activeObjects state:', { ...this.activeObjects })
+			// Update using reactive assignment
+			this.activeObjects = {
+				...this.activeObjects,
+				[type]: object,
+			}
+			// Log the state after update
+			console.info('Updated activeObjects state:', { ...this.activeObjects })
 
-		// List of virtual types that don't have API schemas and should not fetch related data
-		const virtualTypes = ['pageContent']
+			// List of virtual types that don't have API schemas and should not fetch related data
+			const virtualTypes = ['pageContent']
 
-		// Skip fetching related data for virtual types
-		if (virtualTypes.includes(type)) {
-			console.info('Skipping related data fetch for virtual type:', type)
-			console.info('setActiveObject completed')
-			return
-		}
-
-		// Initialize related data structure if not exists
-		console.info('Initializing relatedData for type:', type)
-		this.relatedData = {
-			...this.relatedData,
-			[type]: {
-				logs: null,
-				uses: null,
-				used: null,
-				files: null,
-			},
-		}
-
-		// Fetch related data in parallel
-		if (object?.id) {
-			console.info('Fetching related data for:', { type, objectId: object.id })
-
-			// For publications, extract schema and register info from the object itself
-			let publicationData = null
-			if (type === 'publication' && object['@self']) {
-				publicationData = {
-					source: 'openregister',
-					schema: object['@self'].schema,
-					register: object['@self'].register,
-				}
-				console.info('Using publication-specific config:', publicationData)
+			// Skip fetching related data for virtual types
+			if (virtualTypes.includes(type)) {
+				console.info('Skipping related data fetch for virtual type:', type)
+				console.info('setActiveObject completed')
+				return
 			}
 
-			const fetchPromises = []
-			const dataTypes = ['logs', 'uses', 'used', 'files']
-			for (const dataType of dataTypes) {
-				if (!this.relatedData[type][dataType]) {
+			// Initialize related data structure if not exists
+			console.info('Initializing relatedData for type:', type)
+			this.relatedData = {
+				...this.relatedData,
+				[type]: {
+					logs: null,
+					uses: null,
+					used: null,
+					files: null,
+				},
+			}
+
+			// Fetch related data in parallel
+			if (object?.id) {
+				console.info('Fetching related data for:', { type, objectId: object.id })
+
+				// For publications, extract schema and register info from the object itself
+				let publicationData = null
+				if (type === 'publication' && object['@self']) {
+					publicationData = {
+						source: 'openregister',
+						schema: object['@self'].schema,
+						register: object['@self'].register,
+					}
+					console.info('Using publication-specific config:', publicationData)
+				}
+
+				const fetchPromises = []
+				const dataTypes = ['logs', 'uses', 'used', 'files']
+				for (const dataType of dataTypes) {
+					if (!this.relatedData[type][dataType]) {
 					// Set default limit to 500 for files, 20 for other data types
-					const defaultLimit = dataType === 'files' ? 500 : 20
-					fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
+						const defaultLimit = dataType === 'files' ? 500 : 20
+						fetchPromises.push(this.fetchRelatedData(type, object.id, dataType, { _limit: defaultLimit, _page: 1 }, publicationData))
+					}
 				}
+				await Promise.all(fetchPromises)
+				console.info('Finished fetching related data')
+			} else {
+				console.info('No object ID provided, skipping related data fetch')
 			}
-			await Promise.all(fetchPromises)
-			console.info('Finished fetching related data')
-		} else {
-			console.info('No object ID provided, skipping related data fetch')
-		}
-		console.info('setActiveObject completed')
-	},
+			console.info('setActiveObject completed')
+		},
 
 		/**
 		 * Clear active object for type
@@ -627,6 +645,38 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * Fetch and cache the JSON Schema for a registered object type.
+		 * Required by useListView composable for CnIndexSidebar integration.
+		 * @param {string} type - The object type slug
+		 * @return {Promise<object|null>} The schema object or null on failure
+		 */
+		async fetchSchema(type) {
+			if (this.schemas[type]) {
+				return this.schemas[type]
+			}
+			// Ensure settings (and type registration) are loaded
+			if (!this.settings) {
+				await this.fetchSettings()
+			}
+			const config = this.objectTypeRegistry[type]
+			if (!config?.schema) {
+				return null
+			}
+			try {
+				const response = await fetch(
+					generateUrl(`/apps/openregister/api/schemas/${config.schema}`),
+					{ method: 'GET', headers: { 'Content-Type': 'application/json' } },
+				)
+				if (!response.ok) return null
+				const schema = await response.json()
+				this.schemas = { ...this.schemas, [type]: schema }
+				return schema
+			} catch {
+				return null
+			}
+		},
+
+		/**
 		 * Unregister an object type
 		 * @param {string} slug - The schema slug to unregister
 		 */
@@ -664,12 +714,25 @@ export const useObjectStore = defineStore('object', {
 		 */
 		getSchemaConfig(objectType) {
 			// First check if this is a registered object type
-			const objectTypeConfig = this.objectTypeRegistry[objectType]
+			let objectTypeConfig = this.objectTypeRegistry[objectType]
 			if (objectTypeConfig) {
 				return {
 					source: 'openregister',
 					schema: objectTypeConfig.schema,
 					register: objectTypeConfig.register,
+				}
+			}
+
+			// If settings are loaded but types aren't registered yet, register now
+			if (this.settings && Object.keys(this.objectTypeRegistry).length === 0) {
+				this._registerTypesFromSettings()
+				objectTypeConfig = this.objectTypeRegistry[objectType]
+				if (objectTypeConfig) {
+					return {
+						source: 'openregister',
+						schema: objectTypeConfig.schema,
+						register: objectTypeConfig.register,
+					}
 				}
 			}
 
@@ -927,6 +990,8 @@ export const useObjectStore = defineStore('object', {
 				const response = await fetch('/index.php/apps/opencatalogi/api/settings')
 				if (!response.ok) throw new Error('Failed to fetch settings')
 				this.settings = await response.json()
+				// Register types immediately so useListView.fetchSchema works
+				this._registerTypesFromSettings()
 			} catch (error) {
 				console.error('Error fetching settings:', error)
 				throw error
@@ -937,9 +1002,10 @@ export const useObjectStore = defineStore('object', {
 		 * Create new object
 		 * @param {string} type - Object type
 		 * @param {object} data - Object data
+		 * @param {object|null} publicationData - Optional override with explicit { register, schema } so copies/creates target the source's actual schema instead of the type's default config
 		 * @return {Promise<object>}
 		 */
-		async createObject(type, data) {
+		async createObject(type, data, publicationData = null) {
 			this.setLoading(`${type}_create`, true)
 			this.setError(`${type}_create`, null)
 			this.setState(type, { success: null, error: null })
@@ -951,7 +1017,7 @@ export const useObjectStore = defineStore('object', {
 				}
 
 				const response = await fetch(
-					this._constructApiUrl(type),
+					this._constructApiUrl(type, null, null, {}, publicationData),
 					{
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -964,8 +1030,14 @@ export const useObjectStore = defineStore('object', {
 				if (!this.objects[type]) this.objects[type] = {}
 				this.objects[type][newObject.id] = newObject
 
-				// Refresh the collection to ensure it's up to date
-				await this.fetchCollection(type)
+				// Refresh the collection to ensure it's up to date.
+				// Publications are not loaded via fetchCollection — they use the
+				// catalog-aware /api/{catalogSlug} endpoint via catalogStore.fetchPublications().
+				// Hitting fetchCollection here would overwrite the table with results
+				// from the wrong (default) schema, so callers refresh publications themselves.
+				if (type !== 'publication') {
+					await this.fetchCollection(type)
+				}
 
 				// Set the active object
 				this.setActiveObject(type, newObject)
@@ -1594,6 +1666,9 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
+				// Auto-register object types from settings so useListView/fetchSchema work
+				this._registerTypesFromSettings()
+
 				// Get all available object types from settings
 				const objectTypes = this.objectTypes
 
@@ -1616,6 +1691,43 @@ export const useObjectStore = defineStore('object', {
 				console.error('Error during preload:', error)
 				// Don't throw here to allow the application to continue
 			}
+		},
+
+		/**
+		 * Register object types from settings into objectTypeRegistry.
+		 * Maps each objectType slug to its schema/register IDs by searching
+		 * availableRegisters for a matching schema slug.
+		 * @private
+		 */
+		_registerTypesFromSettings() {
+			if (!this.settings) return
+
+			// Include 'publication' alongside the settings-defined types
+			const objectTypes = [...(this.settings.objectTypes || []), 'publication']
+			const registers = this.settings.availableRegisters || []
+
+			for (const type of objectTypes) {
+				if (this.objectTypeRegistry[type]) continue
+
+				// Find the schema matching this type slug in any register
+				for (const register of registers) {
+					const matchingSchema = (register.schemas || []).find(
+						(s) => s.slug === type || s.title?.toLowerCase() === type,
+					)
+					if (matchingSchema) {
+						this.objectTypeRegistry = {
+							...this.objectTypeRegistry,
+							[type]: {
+								schema: String(matchingSchema.id),
+								register: String(register.id),
+							},
+						}
+						break
+					}
+				}
+			}
+
+			console.info('Registered object types:', Object.keys(this.objectTypeRegistry))
 		},
 
 		/**
@@ -1642,9 +1754,13 @@ export const useObjectStore = defineStore('object', {
 		 * Copy an existing object
 		 * @param {string} type - Object type
 		 * @param {string} id - Object ID to copy
+		 * @param {string|null} nameFieldPath - Optional dot-notation path of the schema's
+		 *   configured objectNameField. When set and the path resolves to a string,
+		 *   the "Kopie van" prefix is applied to that field instead of title/name.
+		 *   Twig templates (e.g. "{{ voornaam }} {{ achternaam }}") are not supported.
 		 * @return {Promise<object>} The newly created copy
 		 */
-		async copyObject(type, id) {
+		async copyObject(type, id, nameFieldPath = null) {
 			this.setLoading(`${type}_${id}_copy`, true)
 			this.setError(`${type}_${id}_copy`, null)
 			this.setState(type, { success: null, error: null })
@@ -1661,18 +1777,61 @@ export const useObjectStore = defineStore('object', {
 					throw new Error(`Object ${id} of type ${type} not found`)
 				}
 
-				// Create a copy of the object without the id
-				const { id: _, ...objectData } = originalObject
-
-				// Add "Copy of" to the title or name
-				if (objectData.title) {
-					objectData.title = `Kopie van ${objectData.title}`
-				} else if (objectData.name) {
-					objectData.name = `Kopie van ${objectData.name}`
+				// Drop id and strip @self down to register/schema so the server
+				// allocates a fresh identity instead of inheriting the source's.
+				const { id: _, '@self': self, ...rest } = originalObject
+				const objectData = { ...rest }
+				if (self && (self.register || self.schema)) {
+					objectData['@self'] = {
+						...(self.register ? { register: self.register } : {}),
+						...(self.schema ? { schema: self.schema } : {}),
+					}
 				}
 
+				// Prefix "Kopie van" to a name-bearing field. Prefer the schema's
+				// configured objectNameField (supports nested dot-notation like
+				// "contact.naam"); fall back to top-level title/name. Twig template
+				// fields (e.g. "{{ voornaam }} {{ achternaam }}") are skipped — they
+				// are server-rendered and not safe to mutate client-side.
+				const useConfiguredField = typeof nameFieldPath === 'string'
+					&& nameFieldPath.length > 0
+					&& !nameFieldPath.includes('{{')
+				let prefixed = false
+				if (useConfiguredField) {
+					const segments = nameFieldPath.split('.')
+					const leaf = segments.pop()
+					let cursor = objectData
+					for (const seg of segments) {
+						if (cursor[seg] === undefined || cursor[seg] === null || typeof cursor[seg] !== 'object') {
+							cursor = null
+							break
+						}
+						cursor = cursor[seg]
+					}
+					if (cursor && typeof cursor[leaf] === 'string' && cursor[leaf].length > 0) {
+						cursor[leaf] = `Kopie van ${cursor[leaf]}`
+						prefixed = true
+					}
+				}
+				if (!prefixed) {
+					if (objectData.title) {
+						objectData.title = `Kopie van ${objectData.title}`
+					} else if (objectData.name) {
+						objectData.name = `Kopie van ${objectData.name}`
+					}
+				}
+
+				// The publication "type" is a generic slug whose registry config
+				// points at the catalog's default schema, not the source object's
+				// schema. Without this override, createObject would POST to the
+				// wrong register/schema endpoint and the server would silently drop
+				// any properties not defined on the default schema.
+				const publicationData = self && (self.register || self.schema)
+					? { source: 'openregister', register: self.register, schema: self.schema }
+					: null
+
 				// Create the new object
-				const newObject = await this.createObject(type, objectData)
+				const newObject = await this.createObject(type, objectData, publicationData)
 
 				// Set success state
 				this.setState(type, { success: true, error: null })
@@ -2276,7 +2435,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mass publish attachments for the active publication
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
-		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
@@ -2313,7 +2472,7 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Mass depublish attachments for the active publication
 		 * @param {Array<string|number>} fileIds - List of attachment IDs
-		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress
+		 * @param {(fileId: string|number, success: boolean, error?: string) => void} onProgress - Callback invoked after each attachment is processed
 		 * @return {Promise<{successful: Array, failed: Array}>}
 		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {

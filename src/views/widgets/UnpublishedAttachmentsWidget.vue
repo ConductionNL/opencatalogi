@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore } from '../../store/store.js'
 </script>
 
@@ -7,7 +8,7 @@ import { objectStore } from '../../store/store.js'
 		:loading="loading"
 		:item-menu="itemMenu">
 		<template #empty-content>
-			<NcEmptyContent :title="t('opencatalogi', 'Geen concept bijlagen gevonden')">
+			<NcEmptyContent :title="t('opencatalogi', 'No concept attachments found')">
 				<template #icon>
 					<FolderIcon />
 				</template>

@@ -5,16 +5,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'catalog'"
 		ref="modalRef"
-		:name="isEdit ? 'Catalog edit' : 'Add Catalog'"
+		:name="isEdit ? t('opencatalogi', 'Catalog edit') : t('opencatalogi', 'Add Catalog')"
 		:label-id="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
 		@close="closeModal">
 		<div class="modal__content">
 			<div v-if="objectStore.getState('catalog').success !== null || objectStore.getState('catalog').error">
 				<NcNoteCard v-if="objectStore.getState('catalog').success" type="success">
-					<p>{{ isEdit ? 'Catalog successfully edited' : 'Catalog successfully added' }}</p>
+					<p>{{ isEdit ? t('opencatalogi', 'Catalog successfully edited') : t('opencatalogi', 'Catalog successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('catalog').success" type="error">
-					<p>{{ isEdit ? 'Something went wrong while editing the catalog' : 'Something went wrong while adding the catalog' }}</p>
+					<p>{{ isEdit ? t('opencatalogi', 'Something went wrong while editing the catalog') : t('opencatalogi', 'Something went wrong while adding the catalog') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('catalog').error" type="error">
 					<p>{{ objectStore.getState('catalog').error }}</p>
@@ -22,72 +22,71 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 			<div v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')" class="form-group">
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Title*"
+					:label="t('opencatalogi', 'Title*')"
 					maxlength="255"
 					:value.sync="catalogi.title"
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Summary"
+					:label="t('opencatalogi', 'Summary')"
 					maxlength="255"
 					:value.sync="catalogi.summary"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Description"
+					:label="t('opencatalogi', 'Description')"
 					maxlength="255"
 					:value.sync="catalogi.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 				<NcTextField :disabled="objectStore.isLoading('catalog')"
-					label="Slug*"
+					:label="t('opencatalogi', 'Slug*')"
 					maxlength="255"
 					:value.sync="catalogi.slug"
 					:error="!!inputValidation.fieldErrors?.['slug']"
-					:helper-text="inputValidation.fieldErrors?.['slug']?.[0] || 'URL-friendly identifier (e.g., publications, datasets)'"
-					placeholder="publications" />
+					:helper-text="inputValidation.fieldErrors?.['slug']?.[0] || t('opencatalogi', 'URL-friendly identifier (e.g., publications, datasets)')"
+					:placeholder="t('opencatalogi', 'publications')" />
 				<NcCheckboxRadioSwitch :disabled="objectStore.isLoading('catalog')"
-					label="Publicly available"
+					:label="t('opencatalogi', 'Publicly available')"
 					:checked.sync="catalogi.listed">
-					Publicly available
+					{{ t('opencatalogi', 'Publicly available') }}
 				</NcCheckboxRadioSwitch>
 				<NcSelect v-model="selectedOrganization"
 					:options="organizationOptions"
-					input-label="Organization"
+					:input-label="t('opencatalogi', 'Organization')"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcSelect v-model="selectedRegisters"
 					:options="registerOptions"
-					input-label="Registers*"
+					:input-label="t('opencatalogi', 'Registers*')"
 					:disabled="objectStore.isLoading('catalog')"
 					multiple />
 				<NcSelect v-model="selectedSchemas"
 					:options="schemaOptions"
-					input-label="Schemas*"
+					:input-label="t('opencatalogi', 'Schemas*')"
 					:disabled="objectStore.isLoading('catalog')"
 					multiple />
 				<NcSelect v-model="catalogi.status"
 					:options="statusOptions"
 					:label-attribute="'label'"
-					input-label="Status*"
+					:input-label="t('opencatalogi', 'Status*')"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcCheckboxRadioSwitch
 					:disabled="objectStore.isLoading('catalog')"
-					label="Has Woo Sitemap"
+					:label="t('opencatalogi', 'Has Woo Sitemap')"
 					:checked.sync="catalogi.hasWooSitemap">
-					Requires Woo sitemap
+					{{ t('opencatalogi', 'Requires Woo sitemap') }}
 				</NcCheckboxRadioSwitch>
-
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
-				<span>{{ isEdit ? 'Catalog is being edited...' : 'Catalog is being added...' }}</span>
+				<span>{{ isEdit ? t('opencatalogi', 'Catalog is being edited...') : t('opencatalogi', 'Catalog is being added...') }}</span>
 			</div>
 			<div class="modalActions">
 				<NcButton class="modalCloseButton" @click="closeModal">
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ isEdit ? 'Close' : 'Cancel' }}
+					{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')"
 					v-tooltip="inputValidation.errorMessages?.[0]"
@@ -97,7 +96,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<ContentSaveOutline :size="20" />
 					</template>
-					{{ isEdit ? 'Save' : 'Add' }}
+					{{ isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add') }}
 				</NcButton>
 			</div>
 		</div>
@@ -225,12 +224,12 @@ export default {
 					status: this.statusOptions.find(opt => opt.id === (activeCatalog.status || '').toLowerCase()) || this.statusOptions[0],
 				}
 
-			// Find and set the selected organization
-			const org = objectStore.getCollection('organization').results.find(
-				org => org.id && activeCatalog.organization && org.id.toString() === activeCatalog.organization.toString(),
-			)
+				// Find and set the selected organization
+				const org = objectStore.getCollection('organization').results.find(
+					org => org.id && activeCatalog.organization && org.id.toString() === activeCatalog.organization.toString(),
+				)
 
-			this.selectedOrganization = org ? { id: org.id, label: org.title } : null
+				this.selectedOrganization = org ? { id: org.id, label: org.title } : null
 
 				// Map existing registers and schemas to the format expected by NcSelect
 				this.selectedRegisters = activeCatalog.registers.map(id => ({

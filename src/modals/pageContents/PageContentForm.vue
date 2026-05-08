@@ -7,17 +7,17 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.name}`"
+		:name="isEdit ? t('opencatalogi', 'Content edit of {type}', { type: _.upperFirst(contentsItem.type) }) : t('opencatalogi', 'Add Content to {title}', { title: pageItem.title })"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
-					<p>Content successfully added</p>
+					<p>{{ t('opencatalogi', 'Content successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('page').success" type="error">
-					<p>Something went wrong while adding content</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while adding content') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('page').error" type="error">
 					<p>{{ objectStore.getState('page').error }}</p>
@@ -27,43 +27,43 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div v-if="objectStore.getState('page').success === null" class="tabContainer">
 				<BTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab title="Configuration" active>
+					<BTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-group">
 							<p>
-								The order in which you add contents makes a difference, so pay attention to the order.
+								{{ t('opencatalogi', 'The order in which you add contents makes a difference, so pay attention to the order.') }}
 							</p>
 
 							<NcSelect
 								v-if="!isEdit"
 								v-bind="typeOptions"
 								v-model="contentsItem.type"
-								input-label="Content type"
+								:input-label="t('opencatalogi', 'Content type')"
 								required />
 
 							<!-- Order -->
 							<NcTextField
 								:disabled="objectStore.isLoading('page')"
-								label="Order"
+								:label="t('opencatalogi', 'Order')"
 								type="number"
 								min="0"
 								:value.sync="contentsItem.order"
 								required />
 
-							<!-- text (legacy format) -->
-							<div v-if="contentsItem.type === 'text'" class="editor-container">
-								<label>Text Content</label>
-								<v-md-editor
-									:initial-value="contentsItem.textData"
-									:options="editorOptions"
-									initial-edit-type="wysiwyg"
-									preview-style="tab"
-									height="300px"
-									@load="(editor) => textEditor = editor" />
+							<!-- text (plain text) -->
+							<div v-if="contentsItem.type === 'text'" class="form-group">
+								<label for="text-content">{{ t('opencatalogi', 'Text Content') }}</label>
+								<textarea
+									id="text-content"
+									v-model="contentsItem.textData"
+									class="text-content-textarea"
+									:disabled="objectStore.isLoading('page')"
+									rows="10"
+									:placeholder="t('opencatalogi', 'Enter your text content here...')" />
 							</div>
 
 							<!-- RichText -->
 							<div v-if="contentsItem.type === 'RichText'" class="editor-container">
-								<label>Rich Text Content</label>
+								<label>{{ t('opencatalogi', 'Rich Text Content') }}</label>
 								<v-md-editor
 									:initial-value="contentsItem.richTextData"
 									:options="editorOptions"
@@ -73,14 +73,67 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									@load="(editor) => richTextEditor = editor" />
 							</div>
 
+							<!-- Image -->
+							<div v-if="contentsItem.type === 'Image'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									:label="t('opencatalogi', 'Image URL')"
+									:value.sync="contentsItem.imageUrl"
+									placeholder="https://example.com/image.jpg" />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									:label="t('opencatalogi', 'Srcset (optional, responsive images)')"
+									:value.sync="contentsItem.imageSrcset"
+									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
+							</div>
+
 							<!-- Faq -->
 							<div v-if="contentsItem.type === 'Faq'">
 								<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
 									<div v-for="item in contentsItem.faqData" :key="item.id" class="draggable-item-container">
 										<div :class="`draggable-form-item ${getTheme()}`">
 											<Drag class="drag-handle" :size="40" />
-											<NcTextField label="Vraag" :value.sync="item.question" />
-											<NcTextField label="Antwoord" :value.sync="item.answer" />
+											<NcTextField :label="t('opencatalogi', 'Question')" :value.sync="item.question" />
+											<NcTextField :label="t('opencatalogi', 'Answer')" :value.sync="item.answer" />
+										</div>
+									</div>
+								</VueDraggable>
+							</div>
+
+							<!-- Quote -->
+							<div v-if="contentsItem.type === 'Quote'" class="form-group">
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									:label="t('opencatalogi', 'Title (bold text)')"
+									:value.sync="contentsItem.quoteTitle"
+									:placeholder="t('opencatalogi', 'Enter the main quote text...')" />
+								<NcTextField
+									:disabled="objectStore.isLoading('page')"
+									:label="t('opencatalogi', 'Subtitle')"
+									:value.sync="contentsItem.quoteSubtitle"
+									:placeholder="t('opencatalogi', 'Enter the subtitle text...')" />
+							</div>
+
+							<!-- ContentBlocks -->
+							<div v-if="contentsItem.type === 'ContentBlocks'">
+								<p class="content-blocks-help">
+									{{ t('opencatalogi', 'Add up to 3 content blocks. Each block has an icon, title, description, and link.') }}
+								</p>
+								<VueDraggable v-model="contentsItem.contentBlocksData" easing="ease-in-out" draggable="div:not(:last-child)">
+									<div v-for="item in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
+										<div :class="`draggable-form-item draggable-form-item--vertical ${getTheme()}`">
+											<div class="draggable-form-item__header">
+												<Drag class="drag-handle" :size="40" />
+												<NcSelect
+													v-bind="iconOptions"
+													v-model="item.icon"
+													:input-label="t('opencatalogi', 'Icon')"
+													style="min-width: 160px;" />
+											</div>
+											<NcTextField :label="t('opencatalogi', 'Title')" :value.sync="item.title" />
+											<NcTextField :label="t('opencatalogi', 'Description')" :value.sync="item.text" />
+											<NcTextField :label="t('opencatalogi', 'Link URL')" :value.sync="item.linkUrl" placeholder="/zoeken" />
+											<NcTextField :label="t('opencatalogi', 'Link text')" :value.sync="item.linkTitle" :placeholder="t('opencatalogi', 'More information')" />
 										</div>
 									</div>
 								</VueDraggable>
@@ -89,39 +142,39 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					</BTab>
 
 					<!-- Security Tab -->
-					<BTab title="Security">
+					<BTab :title="t('opencatalogi', 'Security')">
 						<div class="form-group">
 							<div class="groups-section">
-								<label class="groups-label">Groups Access</label>
+								<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
 								<NcNoteCard type="info">
-									<p>When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.</p>
+									<p>{{ t('opencatalogi', 'When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.') }}</p>
 								</NcNoteCard>
 								<NcSelect
 									v-model="contentsItem.groups"
 									:options="groupsOptions.options"
 									:disabled="objectStore.isLoading('page') || groupsOptions.loading"
-									input-label="Select Groups"
+									:input-label="t('opencatalogi', 'Select Groups')"
 									multiple />
 								<p v-if="groupsOptions.loading" class="groups-loading">
-									Loading groups...
+									{{ t('opencatalogi', 'Loading groups...') }}
 								</p>
 							</div>
 							<div class="hide-after-login">
 								<NcNoteCard type="info">
-									<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
+									<p>{{ t('opencatalogi', 'When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.') }}</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideAfterLogin"
 									:disabled="contentsItem.hideBeforeLogin || objectStore.isLoading('page')">
-									Hide after login
+									{{ t('opencatalogi', 'Hide after login') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideBeforeLogin"
 									:disabled="contentsItem.hideAfterLogin || objectStore.isLoading('page')">
-									Hide before login
+									{{ t('opencatalogi', 'Hide before login') }}
 								</NcCheckboxRadioSwitch>
 								<p v-if="contentsItem.hideAfterLogin && contentsItem.hideBeforeLogin" class="field-error">
-									'Hide before login' and 'Hide after login' cannot both be selected.
+									{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
 								</p>
 							</div>
 						</div>
@@ -132,7 +185,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 		<template #actions>
 			<NcButton @click="closeModal">
-				{{ isEdit ? 'Close' : 'Cancel' }}
+				{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="objectStore.getState('page').success === null"
 				:disabled="!contentsItem.type || objectStore.isLoading('page')"
@@ -140,9 +193,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 				@click="addPageContent">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
-					<Plus v-if="!objectStore.isLoading('page')" :size="20" />
+					<ContentSave v-else-if="isEdit" :size="20" />
+					<Plus v-else :size="20" />
 				</template>
-				{{ isEdit ? 'Edit' : 'Add' }}
+				{{ isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -153,10 +207,12 @@ import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, N
 import { BTabs, BTab } from 'bootstrap-vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import _ from 'lodash'
+import DOMPurify from 'dompurify'
 import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
+import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
 
 import { Page } from '../../entities/index.js'
@@ -177,6 +233,7 @@ export default {
 		vMdEditor,
 		// Icons
 		Plus,
+		ContentSave,
 		Drag,
 	},
 	data() {
@@ -187,6 +244,10 @@ export default {
 				order: 0,
 				richTextData: '',
 				textData: '',
+				imageUrl: '',
+				imageSrcset: '',
+				quoteTitle: '',
+				quoteSubtitle: '',
 				id: Math.random().toString(36).substring(2, 12),
 				faqData: [
 					{
@@ -195,12 +256,25 @@ export default {
 						answer: '',
 					},
 				],
+				contentBlocksData: [
+					{
+						id: Math.random().toString(36).substring(2, 12),
+						icon: '',
+						title: '',
+						text: '',
+						linkUrl: '',
+						linkTitle: '',
+					},
+				],
 				groups: [],
 				hideAfterLogin: false,
 				hideBeforeLogin: false,
 			},
 			typeOptions: {
-				options: ['text', 'RichText', 'Faq'],
+				options: ['text', 'RichText', 'Image', 'Faq', 'Quote', 'ContentBlocks'],
+			},
+			iconOptions: {
+				options: ['search', 'cubes', 'cube', 'users', 'building', 'document', 'gear', 'link', 'world', 'truck', 'scroll', 'themes', 'house'],
 			},
 			success: null,
 			error: false,
@@ -257,6 +331,34 @@ export default {
 			},
 			deep: true,
 		},
+		'contentsItem.contentBlocksData': {
+			handler(newVal) {
+				const len = newVal.length
+				const last = newVal[len - 1]
+
+				// Auto-add a new empty block when the last one has content
+				if (last.title !== '' && last.text !== '') {
+					newVal.push({
+						id: Math.random().toString(36).substring(2, 12),
+						icon: '',
+						title: '',
+						text: '',
+						linkUrl: '',
+						linkTitle: '',
+					})
+				}
+
+				// Remove empty blocks except the last one
+				if (len > 1) {
+					for (let i = len - 2; i >= 0; i--) {
+						if (newVal[i].title === '' && newVal[i].text === '') {
+							newVal.splice(i, 1)
+						}
+					}
+				}
+			},
+			deep: true,
+		},
 	},
 	mounted() {
 		// Fetch groups for the dropdown.
@@ -282,6 +384,23 @@ export default {
 				this.contentsItem.textData = contentItem.data.html || contentItem.data.text || ''
 			} else if (contentItem.type === 'RichText') {
 				this.contentsItem.richTextData = contentItem.data.content || ''
+			} else if (contentItem.type === 'Image') {
+				this.contentsItem.imageUrl = contentItem.data.url || ''
+				this.contentsItem.imageSrcset = contentItem.data.srcset || ''
+			} else if (contentItem.type === 'Quote') {
+				this.contentsItem.quoteTitle = contentItem.data.title || ''
+				this.contentsItem.quoteSubtitle = contentItem.data.subtitle || ''
+			} else if (contentItem.type === 'ContentBlocks') {
+				if (contentItem.data.blocks && contentItem.data.blocks.length > 0) {
+					this.contentsItem.contentBlocksData = contentItem.data.blocks.map((block) => ({
+						id: Math.random().toString(36).substring(2, 12),
+						icon: block.icon || '',
+						title: block.title || '',
+						text: block.text || '',
+						linkUrl: block.linkUrl || '',
+						linkTitle: block.linkTitle || '',
+					})).concat(this.contentsItem.contentBlocksData)
+				}
 			}
 
 			// If faqs are present, prepend them to the contentsItem.
@@ -329,7 +448,7 @@ export default {
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						html: textContent,
-						text: textContent.replace(/<[^>]*>/g, ''), // Strip HTML tags for text field.
+						text: DOMPurify.sanitize(textContent, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
@@ -347,6 +466,19 @@ export default {
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
 					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
 				}
+			} else if (this.contentsItem.type === 'Image') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						url: this.contentsItem.imageUrl,
+						srcset: this.contentsItem.imageSrcset || undefined,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
 			} else if (this.contentsItem.type === 'Faq') {
 				contentItem = {
 					type: this.contentsItem.type,
@@ -357,6 +489,38 @@ export default {
 						faqs: this.contentsItem.faqData.slice(0, -1).map((faq) => ({
 							question: faq.question,
 							answer: faq.answer,
+						})),
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'Quote') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						title: this.contentsItem.quoteTitle,
+						subtitle: this.contentsItem.quoteSubtitle,
+					},
+					groups: this.normalizeGroups(this.contentsItem.groups),
+					hideAfterLogin: this.contentsItem.hideAfterLogin,
+					hideBeforeLogin: this.contentsItem.hideBeforeLogin,
+				}
+			} else if (this.contentsItem.type === 'ContentBlocks') {
+				contentItem = {
+					type: this.contentsItem.type,
+					order: this.contentsItem.order || 0,
+					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
+					data: {
+						// Remove the last item since it's a placeholder.
+						blocks: this.contentsItem.contentBlocksData.slice(0, -1).map((block) => ({
+							icon: block.icon,
+							title: block.title,
+							text: block.text,
+							linkUrl: block.linkUrl,
+							linkTitle: block.linkTitle,
 						})),
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
@@ -476,6 +640,23 @@ export default {
     cursor: not-allowed;
 }
 
+.draggable-form-item--vertical {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.draggable-form-item__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.content-blocks-help {
+    font-size: 13px;
+    color: var(--color-text-maxcontrast);
+    margin-block-end: 8px;
+}
+
 .groups-section {
     margin-block-start: var(--OC-margin-20);
     margin-block-end: var(--OC-margin-20);
@@ -495,6 +676,24 @@ export default {
 
 .hide-after-login {
 	margin-block-start: var(--OC-margin-20);
+}
+
+.text-content-textarea {
+	width: 100%;
+	min-height: 200px;
+	padding: 12px;
+	font-family: var(--font-face);
+	font-size: var(--default-font-size);
+	color: var(--color-main-text);
+	background-color: var(--color-main-background);
+	border: 2px solid var(--color-border-dark);
+	border-radius: var(--border-radius);
+	resize: vertical;
+}
+
+.text-content-textarea:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
 }
 
 /* Toast UI Editor Styles */

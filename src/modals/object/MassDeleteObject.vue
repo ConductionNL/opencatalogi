@@ -1,12 +1,3 @@
-/**
- * @file MassDeleteObject.vue
- * @module Modals/Object
- * @author Your Name
- * @copyright 2024 Your Organization
- * @license AGPL-3.0-or-later
- * @version 1.0.0
- */
-
 <script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
@@ -20,16 +11,16 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="delete-step">
 			<NcNoteCard type="info">
-				Publications will be soft deleted and moved to the <a href="#" class="deleted-link" @click.prevent="navigateToDeleted">deleted publications section</a>. They will be retained according to their schema's configured retention period and automatically permanently deleted after wards.
+				{{ t('opencatalogi', 'Publications will be soft deleted and moved to the') }} <a href="#" class="deleted-link" @click.prevent="navigateToDeleted">{{ t('opencatalogi', 'deleted publications section') }}</a>{{ t('opencatalogi', '. They will be retained according to their schema\'s configured retention period and automatically permanently deleted after wards.') }}
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Delete' : 'Selected Publications'"
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? t('opencatalogi', 'Publication to Delete') : t('opencatalogi', 'Selected Publications')"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Publication{{ originalSelectedCount > 1 ? 's' : '' }} successfully deleted</p>
+			<p>{{ originalSelectedCount > 1 ? t('opencatalogi', '{type}s successfully deleted', { type: t('opencatalogi', 'Publication') }) : t('opencatalogi', '{type} successfully deleted', { type: t('opencatalogi', 'Publication') }) }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -40,7 +31,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
+				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
@@ -50,7 +41,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<TrashCanOutline v-if="!loading" :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 	</NcDialog>

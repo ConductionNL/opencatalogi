@@ -1,6 +1,9 @@
 <?php
 /**
- * FederationController for OpenCatalogi.
+ * OpenCatalogi Federation Controller.
+ *
+ * Controller for handling federation endpoints that provide access to publication data
+ * for internal views like SearchIndex without access control restrictions.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -14,63 +17,50 @@
  * @link https://www.OpenCatalogi.nl
  */
 
-
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
- * Class FederationController
- *
- * Controller for handling federation endpoints that provide access to publication data
- * for internal views like SearchIndex without access control restrictions.
- *
- * These endpoints are essentially copies of publication endpoints but designed
- * for internal federation access patterns.
- *
- * @category  Controller
- * @package   opencatalogi
- * @author    Ruben van der Linde
- * @copyright 2024
- * @license   AGPL-3.0-or-later
- * @version   1.0.0
- * @link      https://github.com/opencatalogi/opencatalogi
+ * Controller for handling federation endpoints.
  */
 class FederationController extends Controller
 {
     /**
      * FederationController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param PublicationService $publicationService The publication service
+     * @param string             $appName            The name of the app.
+     * @param IRequest           $request            The request object.
+     * @param PublicationService $publicationService The publication service.
+     * @param IL10N              $l10n               The localization service.
      */
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly PublicationService $publicationService
+        private readonly PublicationService $publicationService,
+        private readonly IL10N $l10n
     ) {
-        parent::__construct(appName: $appName, request: $request);
+        parent::__construct($appName, $request);
 
     }//end __construct()
 
     /**
      * Retrieve all publications from local and federated sources.
      *
-     * This endpoint is designed for internal use by search interfaces and provides
-     * the same functionality as the publications endpoint but without access restrictions
-     * that might occur when switching between frontend contexts.
-     *
-     * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
+     * @return JSONResponse JSON response containing publications.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @SuppressWarnings(PHPMD.Superglobals)
      */
     public function publications(): JSONResponse
     {
@@ -78,10 +68,9 @@ class FederationController extends Controller
         $queryParams = $this->request->getParams();
 
         // Build base URL for pagination links.
-        if ((empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off')) {
+        $protocol = 'http';
+        if (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off') {
             $protocol = 'https';
-        } else {
-            $protocol = 'http';
         }
 
         $host    = ($_SERVER['HTTP_HOST'] ?? 'localhost');
@@ -91,14 +80,17 @@ class FederationController extends Controller
         try {
             // Use the service method to get aggregated publications.
             $responseData = $this->publicationService->getAggregatedPublications(
-                $queryParams,
-                $this->request->getParams(),
-                $baseUrl
+                queryParams: $queryParams,
+                requestParams: $this->request->getParams(),
+                baseUrl: $baseUrl
             );
 
             return new JSONResponse($responseData);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publications: '.$e->getMessage()], 500);
+            return new JSONResponse(
+                data: ['error' => $this->l10n->t('Failed to retrieve publications').': '.$e->getMessage()],
+                statusCode: 500
+            );
         }
 
     }//end publications()
@@ -106,12 +98,10 @@ class FederationController extends Controller
     /**
      * Retrieve a specific publication by its ID.
      *
-     * This endpoint searches for a publication in local and federated catalogs
-     * and is designed for internal use by search interfaces.
+     * @param string $id The ID of the publication to retrieve.
      *
-     * @param string $id The ID of the publication to retrieve
+     * @return JSONResponse JSON response containing the requested publication.
      *
-     * @return JSONResponse JSON response containing the requested publication
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
@@ -126,21 +116,24 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication: '.$e->getMessage()], 500);
+            return new JSONResponse(
+                data: ['error' => $this->l10n->t('Failed to retrieve publication').': '.$e->getMessage()],
+                statusCode: 500
+            );
         }
 
     }//end publication()
 
     /**
-     * Retrieve objects that this publication references
+     * Retrieve objects that this publication references.
      *
      * This method returns all objects that this publication uses/references.
-     * A -> B means that A (This publication) references B (Another object).
      * When aggregation is enabled, it also searches federated catalogs.
      *
-     * @param string $id The ID of the publication to retrieve relations for
+     * @param string $id The ID of the publication to retrieve relations for.
      *
-     * @return JSONResponse A JSON response containing the related objects
+     * @return JSONResponse A JSON response containing the related objects.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
@@ -155,21 +148,24 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication uses: '.$e->getMessage()], 500);
+            return new JSONResponse(
+                data: ['error' => $this->l10n->t('Failed to retrieve publication uses').': '.$e->getMessage()],
+                statusCode: 500
+            );
         }
 
     }//end publicationUses()
 
     /**
-     * Retrieve objects that use this publication
+     * Retrieve objects that use this publication.
      *
      * This method returns all objects that reference (use) this publication.
-     * B -> A means that B (Another object) references A (This publication).
      * When aggregation is enabled, it also searches federated catalogs.
      *
-     * @param string $id The ID of the publication to retrieve uses for
+     * @param string $id The ID of the publication to retrieve uses for.
      *
-     * @return JSONResponse A JSON response containing the referenced objects
+     * @return JSONResponse A JSON response containing the referenced objects.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
@@ -184,7 +180,10 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve publication used: '.$e->getMessage()], 500);
+            return new JSONResponse(
+                data: ['error' => $this->l10n->t('Failed to retrieve publication used').': '.$e->getMessage()],
+                statusCode: 500
+            );
         }
 
     }//end publicationUsed()
@@ -192,9 +191,10 @@ class FederationController extends Controller
     /**
      * Retrieve attachments/files of a publication.
      *
-     * @param string $id Id of publication
+     * @param string $id Id of publication.
      *
      * @return JSONResponse JSON response containing the requested attachments/files.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
@@ -210,16 +210,17 @@ class FederationController extends Controller
     /**
      * Download all files of a publication as ZIP.
      *
-     * @param string $id Id of publication
+     * @param string $id Id of publication.
      *
-     * @return JSONResponse JSON response for download or error response.
+     * @return DataDownloadResponse|JSONResponse JSON response for download or error response.
+     *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
-    public function publicationDownload(string $id): JSONResponse
+    public function publicationDownload(string $id): DataDownloadResponse|JSONResponse
     {
         return $this->publicationService->download(id: $id);
 

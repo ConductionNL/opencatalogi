@@ -1,6 +1,6 @@
 <?php
 /**
- * OpenCatalogi Tool Registration Listener
+ * OpenCatalogi Tool Registration Listener.
  *
  * Listens to ToolRegistrationEvent and registers OpenCatalogi's tools.
  *
@@ -24,29 +24,29 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
 /**
- * Tool Registration Listener
+ * Tool Registration Listener.
  *
  * Registers OpenCatalogi's tools when the ToolRegistrationEvent is dispatched.
  *
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
  *
- * @template-implements IEventListener<ToolRegistrationEvent>
+ * @template-implements IEventListener<Event>
  */
 class ToolRegistrationListener implements IEventListener
 {
 
     /**
-     * CMS tool
+     * CMS tool.
      *
      * @var CMSTool
      */
     private CMSTool $cmsTool;
 
     /**
-     * Constructor
+     * Constructor.
      *
-     * @param CMSTool $cmsTool CMS tool
+     * @param CMSTool $cmsTool CMS tool.
      */
     public function __construct(CMSTool $cmsTool)
     {
@@ -55,9 +55,9 @@ class ToolRegistrationListener implements IEventListener
     }//end __construct()
 
     /**
-     * Handle the event
+     * Handle the event.
      *
-     * @param Event $event The event
+     * @param Event $event The event.
      *
      * @return void
      */
@@ -68,11 +68,10 @@ class ToolRegistrationListener implements IEventListener
         }
 
         // Register OpenCatalogi CMS tool.
-        // Using tool's getName() and getDescription() to avoid duplication.
         $event->registerTool(
-            'opencatalogi.cms',
-            $this->cmsTool,
-            [
+            id: 'opencatalogi.cms',
+            tool: $this->cmsTool,
+            metadata: [
                 'name'        => $this->cmsTool->getName(),
                 'description' => $this->cmsTool->getDescription(),
                 'icon'        => 'icon-category-office',
