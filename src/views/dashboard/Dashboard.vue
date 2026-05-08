@@ -482,7 +482,7 @@ export default {
 					const data = await response.json()
 					this.activityChartData = {
 						labels: data.labels || [],
-						series: data.series || [],
+						series: (data.series || []).map((s) => ({ ...s, name: t('opencatalogi', s.name) })),
 					}
 				}
 			} catch (err) {
