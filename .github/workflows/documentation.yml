@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [documentation]
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     uses: ConductionNL/.github/.github/workflows/documentation.yml@main
