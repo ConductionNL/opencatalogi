@@ -19,6 +19,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\IRequest;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
@@ -34,6 +35,7 @@ use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Service for handling catalog-related operations.
@@ -142,6 +144,141 @@ class CatalogiService
     }//end getFileService()
 
     /**
+     * Attempts to retrieve the SchemaMapper from the Container
+     *
+     * @return \OCA\OpenRegister\Db\SchemaMapper|null
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            $schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+
+            return $schemaMapper;
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+    }//end getSchemaMapper()
+
+    /**
+     * Attempts to retrieve the RegisterMapper from the Container
+     *
+     * @return \OCA\OpenRegister\Db\RegisterMapper|null
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
+    {
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+
+            return $registerMapper;
+        }
+
+        throw new \RuntimeException('OpenRegister service is not available.');
+    }//end getRegisterMapper()
+
+    /**
+     * Compute rewritten register and schema arrays for a catalog object.
+     *
+     * Resolves slug-or-id values in `registers` and `schemas` to integer ids. Returns
+     * only the keys that actually changed, so callers can pass the result straight
+     * into a pre-save hook's `setModifiedData(...)` without overwriting unrelated fields.
+     *
+     * @param array<string, mixed> $object The decoded catalog object payload.
+     *
+     * @return array<string, array<int|string>> Map containing only the changed keys
+     *                                          (`registers` and/or `schemas`). Empty
+     *                                          when nothing needs rewriting.
+     *
+     * @throws \RuntimeException When a slug cannot be resolved to a register/schema.
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function computeRewrittenRegistersAndSchemas(array $object): array
+    {
+        $modified = [];
+
+        if (isset($object['registers']) === true && is_array($object['registers']) === true) {
+            $rewrittenRegisters = array_map(
+                function ($register) {
+                    if (preg_match("/^\d+$/", (string) $register) === 1) {
+                        return $register;
+                    }
+
+                    try {
+                        return $this->getRegisterMapper()->find($register)->getId();
+                    } catch (NotFoundException $e) {
+                        throw new \RuntimeException('Register '.$register.' not found.');
+                    }
+                },
+                $object['registers']
+            );
+
+            if ($rewrittenRegisters !== $object['registers']) {
+                $modified['registers'] = $rewrittenRegisters;
+            }
+        }
+
+        if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
+            $rewrittenSchemas = array_map(
+                function ($schema) {
+                    if (preg_match("/^\d+$/", (string) $schema) === 1) {
+                        return $schema;
+                    }
+
+                    try {
+                        return $this->getSchemaMapper()->find($schema)->getId();
+                    } catch (NotFoundException $e) {
+                        throw new \RuntimeException('Schema '.$schema.' not found.');
+                    }
+                },
+                $object['schemas']
+            );
+
+            if ($rewrittenSchemas !== $object['schemas']) {
+                $modified['schemas'] = $rewrittenSchemas;
+            }
+        }
+
+        return $modified;
+
+    }//end computeRewrittenRegistersAndSchemas()
+
+    /**
+     * Rewrite slugs and uuids in register and schema fields of a Catalog to actual ids.
+     *
+     * @param ObjectEntity $objectEntity The catalog object to rewrite.
+     *
+     * @return bool Whether the object has been updated.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     *
+     * @deprecated Calling this from a post-save event handler causes an infinite loop
+     *             because the inner `saveObject(...)` re-emits `ObjectUpdatedEvent`. Subscribe
+     *             to the pre-save events (`ObjectCreatingEvent` / `ObjectUpdatingEvent`) and use
+     *             {@see self::computeRewrittenRegistersAndSchemas()} together with
+     *             `$event->setModifiedData(...)` instead.
+     */
+    public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
+    {
+        $object   = $objectEntity->getObject() ?? [];
+        $modified = $this->computeRewrittenRegistersAndSchemas($object);
+
+        if ($modified === []) {
+            return false;
+        }
+
+        $objectEntity->setObject(array_merge($object, $modified));
+        $this->getObjectService()->saveObject($objectEntity);
+
+        return true;
+
+    }//end rewriteSchemasAndRegisters()
+
+    /**
      * Get register and schema combinations from catalogs.
      *
      * This method retrieves all catalogs (or a specific one if ID is provided),
@@ -167,8 +304,14 @@ class CatalogiService
         ];
 
         // If a specific catalog ID is provided, add it as a filter.
+        // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
+        // on the object's own 'slug' field.
         if ($catalogId !== null) {
-            $query['@self']['uuid'] = $catalogId;
+            if (Uuid::isValid((string) $catalogId) === true) {
+                $query['@self']['uuid'] = $catalogId;
+            } else {
+                $query['slug'] = $catalogId;
+            }
         }
 
         // Get catalogs using searchObjects (handles deleted field correctly).
@@ -232,7 +375,9 @@ class CatalogiService
      * @param string|null $schema   Optional schema identifier
      * @param array|null  $ids      Optional array of specific IDs to filter
      *
-     * @return array Configuration array with limit, offset, page, filters, sort, search, extend, fields, unset, queries, ids.
+     * @return array Configuration array with limit, offset, page,
+     *                filters, sort, search, extend, fields, unset,
+     *                queries, ids.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
      */

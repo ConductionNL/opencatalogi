@@ -8,11 +8,10 @@ In de kern bestaat Open Catalogi uit een viertal basis componenten
 - Een _beheer API_ die de beheer interfae faciliteerd
 - Een _zoeken API_ de het publicaite platform faciliteerd
 
-De beide API's maken daarbij gebruik van data opslag, in de meest simpele vorm is dat 
+De beide API's maken daarbij gebruik van data opslag:
 - _Objecten opslag_ voor publicaties, metadata over documenten, thema's, catalogi etc
-- _Zoek Index_ voor het lezen van zoeken functionaliteit 
 
-Vanuit de architectuur doen we geen uitspraken over de dataopslag behalve dat er een harde scheiding moet zijn tussen de opslag van behandelgegevens (Objecten opslag) waar ook niet publieke informatie in kan voorkomen en de zoekgegevens (Zoek index) waarin alleen publieke informatie mag voorkomen.
+De dataopslag wordt verzorgd door Open Register (PostgreSQL), dat zowel objectopslag als zoekfunctionaliteit biedt via geoptimaliseerde database-queries.
 
 ## Invulling van de Componenten
 Bovenstaande abstracte componenten behoeven natuurlijk een concrete invulling, daarvoor heeft Open Catalogi een aantal open source oplossingen geraliseerd of hergebruikt.
@@ -23,17 +22,12 @@ Bovenstaande abstracte componenten behoeven natuurlijk een concrete invulling, d
 | _beheer interface_ | [NextCloud app](https://github.com/ConductionNL/opencatalogi) |
 | _beheer API_ | [NextCloud app](https://github.com/ConductionNL/opencatalogi) |
 | _zoeken API_ | [NextCloud app](https://github.com/ConductionNL/opencatalogi) |
-| _Objecten opslag_ | [mongodb](https://github.com/mongodb/mongo) of [Objects API](https://github.com/maykinmedia/objects-api) |
-| _Zoek Index_ |  [Elastic Search](https://github.com/elastic/elasticsearch) |
+| _Objecten opslag_ | [Open Register](https://github.com/ConductionNL/openregister) (PostgreSQL) |
 
 Daarnaast hebben diverse projecten zo als de software catalogus en open woo hun eigen aanvullende over vervangende componenten gerealiseerd. Kijk daarvoor bij [projecten](../Community/Projecten).
 
 ## Data Opslag
 Hoewel erg geen architecturele eis is, met betrekking tot hoe documenten en objecten worden opgeslagen, kiezen we er zelf bij de uitvoering voor om documenten (bestanden) en gegevens over documenten de scheiden. Voornaamste overweging hierbij is dat de documenten een spel apart zijn dat je graag in een [DMS](https://en.wikipedia.org/wiki/Document_management_system) speelt.
-
-Daarmee word de structuur zo als we die doorgaans zien 
-
-![Basis Componenten](../assets/architecture_elastic_object.svg)
 
 ## Scheiding van architectuur en uitvoering
 Vanuit commonground plaatsen we binnen [het 5 lagen model](https://componentencatalogus.commonground.nl/5-lagen-model) API's als losse laag en teken we ze in als losse [application components ](https://pubs.opengroup.org/architecture/archimate301-doc/chap09.html#_Toc489946066). 
@@ -45,8 +39,8 @@ We zelf Open Catalogi als [application collaboration](https://pubs.opengroup.org
 ## Alternatieve naamgeving van componenten en applicaties
 Vanuit commonground maken we een verschil tussen architecturele componenten (API's databases etc) en installeerbare componenten. Een goed voorbeeld hiervan is [open zaak](https://openzaak.org/) waarbij één applicatie meerdere
 
-- Open Index (Zoeken API + Zoek Index)
-- Open Registers (Beheer API + Objecten Api)
+- Open Index (Zoeken API)
+- Open Registers (Beheer API + Objecten API)
 
 Vanuit Dimpact start archit
 

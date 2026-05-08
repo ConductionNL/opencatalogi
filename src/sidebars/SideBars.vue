@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { computed, ref } from 'vue'
 import { objectStore, navigationStore } from '../store/store.js'
 import SearchSideBar from './search/SearchSideBar.vue'
@@ -23,7 +22,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Edit
+					{{ t('opencatalogi', 'Edit') }}
 				</NcButton>
 			</template>
 		</NcAppSidebar>
@@ -38,7 +37,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					Edit
+					{{ t('opencatalogi', 'Edit') }}
 				</NcButton>
 			</template>
 		</NcAppSidebar>

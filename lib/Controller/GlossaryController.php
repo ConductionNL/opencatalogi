@@ -145,7 +145,7 @@ class GlossaryController extends Controller
     {
         // Determine the origin.
         $origin = $this->request->getHeader('Origin');
-        if ($origin === '' || $origin === false) {
+        if ($origin === '') {
             $origin = '*';
         }
 

@@ -35,9 +35,128 @@ De Azure-cloud bevat het ADFS-component dat fungeert als een identiteitsprovider
 
 Ten slotte omvat het systeem een externe catalogusacteur die communiceert met het Hipp-component, en een beheerdersacteur die communiceert met het F5 intern-component via een browser met JWT-claims. Er is ook een gebruikersacteur die communiceert met het F5 extern-component via een anonieme browser.
 
-![OpenCatalogi User diagram](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/oc_user.svg "OpenCatalogi User diagram")
-![OpenCatalogi Admin diagram](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/oc_admin.svg "OpenCatalogi Admin diagram")
-![OpenCatalogi Extern diagram](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/oc_extern.svg "OpenCatalogi Extern diagram")
+**User perspectief:**
+
+```mermaid
+graph TD
+    user["👤 User"] <-.->|Browser ANONIEM| f5extern["F5 extern (port 443)"]
+    subgraph azure["Azure"]
+        identity["ADFS"]
+    end
+    subgraph internet["Internet"]
+        externalCatalog["External Catalog"]
+    end
+    f5extern <-.->|"/api/search/* en andere"| ingress
+    subgraph kubernetes["Kubernetes"]
+        ingress["ingress"]
+        loki[("loki")]
+        prometheus[("prometheus")]
+        subgraph layer5u["Layer 5 (interaction)"]
+            ui["User Interface"]
+        end
+        subgraph layer4u["Layer 4 (Logic)"]
+            NginxU["Nginx"]
+            GatewayU["Web Gateway"]
+            PluginsU["Open Catalogi plugin"]
+            ORMU["ORM"]
+            RedisU["Redis"]
+            MongoDBU[("MongoDB")]
+        end
+    end
+    subgraph layer1u["Layer 1 (data)"]
+        dbU[("PostgreSQL/MsSQL/MySQL/Oracle")]
+    end
+    ingress <-.-> ui
+    ingress <-.-> NginxU
+    NginxU <-.-> GatewayU
+    GatewayU <-.-> PluginsU
+    GatewayU <-.-> identity
+    GatewayU -.-> loki
+    GatewayU -.-> prometheus
+    PluginsU <-.-> externalCatalog
+    GatewayU -.-> MongoDBU
+    GatewayU -.-> RedisU
+    GatewayU -.-> ORMU
+    ORMU -.-> dbU
+```
+
+**Admin perspectief:**
+
+```mermaid
+graph TD
+    adminUser["👤 Admin"] <-.->|Browser MET JWT Claim| f5intern["F5 Extern (port 443)"]
+    subgraph azure2["Azure"]
+        identity2["ADFS"]
+    end
+    subgraph internet2["Internet"]
+        externalCatalog2["External Catalog"]
+    end
+    f5intern <-.->|"/api/admin/*"| ingress2["ingress"]
+    subgraph kubernetes2["Kubernetes"]
+        ingress2
+        loki2[("loki")]
+        prometheus2[("prometheus")]
+        subgraph layer5a["Layer 5 (interaction)"]
+            admin2["Admin Interface"]
+        end
+        subgraph layer4a["Layer 4 (Logic)"]
+            NginxA["Nginx"]
+            GatewayA["Web Gateway"]
+            PluginsA["Open Catalogi plugin"]
+            ORMA["ORM"]
+            RedisA["Redis"]
+            MongoDBA[("MongoDB")]
+        end
+    end
+    subgraph layer1a["Layer 1 (data)"]
+        dbA[("PostgreSQL/MsSQL/MySQL/Oracle")]
+    end
+    ingress2 <-.-> admin2
+    ingress2 <-.-> NginxA
+    NginxA <-.-> GatewayA
+    GatewayA <-.-> PluginsA
+    GatewayA <-.-> identity2
+    GatewayA -.-> loki2
+    GatewayA -.-> prometheus2
+    PluginsA <-.-> externalCatalog2
+    GatewayA -.-> MongoDBA
+    GatewayA -.-> RedisA
+    GatewayA -.-> ORMA
+    ORMA -.-> dbA
+```
+
+**Externe Catalogus perspectief:**
+
+```mermaid
+graph TD
+    externalCatalouge["👤 Externe Catalogus"] <-.->|PKIo| hipp["Mtls (PKIo)"]
+    hipp <-.->|"/api/catalogi/*"| ingress3["ingress"]
+    subgraph kubernetes3["Kubernetes"]
+        ingress3
+        loki3[("loki")]
+        prometheus3[("prometheus")]
+        subgraph layer4e["Layer 4 (Logic)"]
+            NginxE["Nginx"]
+            GatewayE["Web Gateway"]
+            PluginsE["Open Catalogi plugin"]
+            ORME["ORM"]
+            RedisE["Redis"]
+            MongoDBE[("MongoDB")]
+        end
+    end
+    subgraph layer1e["Layer 1 (data)"]
+        dbE[("PostgreSQL/MsSQL/MySQL/Oracle")]
+    end
+    ingress3 <-.-> NginxE
+    NginxE <-.-> GatewayE
+    GatewayE <-.-> PluginsE
+    GatewayE -.-> loki3
+    GatewayE -.-> prometheus3
+    GatewayE -.-> MongoDBE
+    GatewayE -.-> RedisE
+    GatewayE -.-> ORME
+    ORME -.-> dbE
+```
 
 ## Hoe vormt OpenCatalogi een gefedereerd netwerk?
 
@@ -47,14 +166,81 @@ Vervolgens communiceert de nieuwe installatie met alle andere installaties die v
 
 Dit onderzoekproces wordt regelmatig herhaald. Omdat elke installatie zijn eigen directory bijhoudt, blijft het netwerk robuust en operationeel, zelfs als een individuele installatie niet beschikbaar is.
 
-![Sequence Diagram network creation](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/createnetwork.svg "Sequence Diagram network creation")
+```mermaid
+sequenceDiagram
+    participant A as New Installation
+    participant B as Existing Installation
+    participant C as Other Installations
+
+    A->>B: Request directory
+    Note over A,B: New installation needs to know<br/>at least one existing installation
+    B-->>A: Provide directory
+    Note over B: Existing installation provides its directory
+
+    A->>B: Add itself to B's directory
+    Note over A,B: New installation is added to<br/>existing installation's directory
+
+    A->>C: Announce itself and request other unknown installations
+    Note over A,C: New installation communicates with<br/>all other installations in its directory
+    C-->>A: Provide other unknown installations
+    Note over C: Other installations provide their<br/>known installations to the new one
+
+    Note over A: Repeat the process at regular intervals
+```
 
 ## Hoe maakt OpenCatalogi gebruik van een gefedereerd netwerk?
 
 **Live gegevens**:
 Telkens wanneer een query wordt uitgevoerd naar het `/search` eindpunt van een OpenCatalogi-installatie, zoekt het antwoorden in zijn eigen MongoDB-index op basis van bepaalde filters. Tegelijkertijd controleert het ook zijn directory van bekende catalogi om andere catalogi te vinden die mogelijk de gevraagde gegevens bevatten en waar de oorspronkelijke catalogus toegang toe heeft. De query wordt ook asynchroon naar deze catalogi verzonden, en de reacties worden gecombineerd, tenzij een vooraf gedefinieerde time-outdrempel wordt bereikt.
 
-![Live data Diagram](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/handleidingen/live.svg "Live data Diagram")
+```mermaid
+graph TD
+    user["👤 User"] <-.->|Browser ANONIEM| f5extern["F5 extern (port 443)"]
+    adminUser["👤 Admin"] <-.->|Browser MET JWT Claim| f5intern["F5 intern (port 443)"]
+    externalCatalouge["👤 Externe Catalogus"] <-.->|PKIO| hipp["Hipp (out of scope)"]
+    subgraph azure["Azure"]
+        identity["ADFS"]
+    end
+    subgraph internet["Internet"]
+        externalCatalog["External Catalog"]
+    end
+    subgraph kubernetes["Kubernetes"]
+        ingress["ingress"]
+        loki[("loki")]
+        prometheus[("prometheus")]
+        subgraph layer5["Layer 5 (interaction)"]
+            uiL["User Interface"]
+            adminL["Admin Interface"]
+        end
+        subgraph layer4["Layer 4 (Logic)"]
+            NginxL["Nginx"]
+            GatewayL["Web Gateway"]
+            PluginsL["Open Catalogi plugin"]
+            ORML["ORM"]
+            RedisL["Redis"]
+            MongoDBL[("MongoDB")]
+        end
+    end
+    subgraph layer1["Layer 1 (data)"]
+        dbL[("PostgreSQL/MsSQL/MySQL/Oracle")]
+    end
+    f5extern <-.->|Alleen openbare endpoints| ingress
+    f5intern <-.->|Alle endpoints| ingress
+    hipp <-.->|Catalogus uitwisselingen| ingress
+    ingress <-.-> uiL
+    ingress <-.-> adminL
+    ingress <-.-> NginxL
+    NginxL <-.-> GatewayL
+    GatewayL <-.-> PluginsL
+    GatewayL <-.-> identity
+    GatewayL -.-> loki
+    GatewayL -.-> prometheus
+    PluginsL <-.-> externalCatalog
+    GatewayL -.-> MongoDBL
+    GatewayL -.-> RedisL
+    GatewayL -.-> ORML
+    ORML -.-> dbL
+```
 
 **Geïndexeerde gegevens**:
 OpenCatalogi geeft de voorkeur aan het indexeren van gegevens wanneer de bron dit toestaat. Tijdens elke uitvoer van netwerksynchronisatie (zoals uitgelegd in 'Hoe vormt OpenCatalogi een gefedereerd netwerk?'), worden alle gegevens die kunnen worden geïndexeerd, geïndexeerd als de bron is ingesteld op indexering. Het is belangrijk op te merken dat wanneer een object wordt gedeeld vanuit een andere catalogus, er een cloudgebeurtenisabonnement wordt gemaakt. Dit betekent dat wanneer het object wordt bijgewerkt in die catalogus, de wijzigingen ook vrijwel direct worden bijgewerkt in de lokale installatie.

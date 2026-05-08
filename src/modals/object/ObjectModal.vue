@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
@@ -12,7 +11,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			:can-close="false">
 			<div class="dialog-content">
 				<NcNoteCard v-if="success" type="success" class="note-card">
-					<p>Publication successfully {{ isNewObject ? 'created' : 'modified' }}</p>
+					<p>{{ isNewObject ? t('opencatalogi', 'Publication successfully created') : t('opencatalogi', 'Publication successfully modified') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error" class="note-card">
 					<p>{{ error }}</p>
@@ -22,7 +21,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<!-- Register and Schema Info with card style -->
 					<div class="detail-grid">
 						<div class="detail-item" :class="{ 'empty-value': !selectedCatalogus }">
-							<span class="detail-label">Catalogus:</span>
+							<span class="detail-label">{{ t('opencatalogi', 'Catalogus:') }}</span>
 							<NcButton v-if="selectedCatalogus"
 								class="pencil-button"
 								@click="() => {
@@ -33,7 +32,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<Pencil :size="20" />
 							</NcButton>
 							<div class="detail-value-container">
-								<span v-if="selectedCatalogus" class="detail-value">{{ selectedCatalogus?.label || 'Not selected' }}</span>
+								<span v-if="selectedCatalogus" class="detail-value">{{ selectedCatalogus?.label || t('opencatalogi', 'Not selected') }}</span>
 								<span v-if="selectedCatalogus" class="sub-detail-value">{{ selectedCatalogus?.id }}</span>
 								<NcSelect v-if="!selectedCatalogus"
 									v-model="selectedCatalogus"
@@ -45,7 +44,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							</div>
 						</div>
 						<div class="detail-item" :class="{ 'empty-value': !selectedRegister }">
-							<span class="detail-label">Register:</span>
+							<span class="detail-label">{{ t('opencatalogi', 'Register:') }}</span>
 							<NcButton v-if="selectedRegister"
 								class="pencil-button"
 								@click="() => {
@@ -55,7 +54,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<Pencil :size="20" />
 							</NcButton>
 							<div class="detail-value-container">
-								<span v-if="selectedRegister" class="detail-value">{{ selectedRegister?.label || 'Not selected' }}</span>
+								<span v-if="selectedRegister" class="detail-value">{{ selectedRegister?.label || t('opencatalogi', 'Not selected') }}</span>
 								<span v-if="selectedRegister" class="sub-detail-value">{{ selectedRegister?.id }}</span>
 								<NcSelect v-if="!selectedRegister"
 									v-model="selectedRegister"
@@ -67,7 +66,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							</div>
 						</div>
 						<div class="detail-item" :class="{ 'empty-value': !selectedSchema }">
-							<span class="detail-label">Schema:</span>
+							<span class="detail-label">{{ t('opencatalogi', 'Schema:') }}</span>
 							<NcButton v-if="selectedSchema"
 								class="pencil-button"
 								@click="() => {
@@ -76,7 +75,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<Pencil :size="20" />
 							</NcButton>
 							<div class="detail-value-container">
-								<span v-if="selectedSchema" class="detail-value">{{ selectedSchema?.label || 'Not selected' }}</span>
+								<span v-if="selectedSchema" class="detail-value">{{ selectedSchema?.label || t('opencatalogi', 'Not selected') }}</span>
 								<span v-if="selectedSchema" class="sub-detail-value">{{ selectedSchema?.id }}</span>
 								<NcSelect v-if="!selectedSchema"
 									v-model="selectedSchema"
@@ -103,7 +102,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<!-- Edit Tabs -->
 					<div class="tabContainer">
 						<BTabs v-model="activeTab" content-class="mt-3" justified>
-							<BTab title="Form Editor" active>
+							<BTab :title="t('opencatalogi', 'Form Editor')" active>
 								<div v-if="fullSelectedSchema" class="form-editor">
 									<div v-for="(prop, key) in schemaProperties" :key="key" class="form-field">
 										<template v-if="prop.type === 'string'">
@@ -142,11 +141,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 									</div>
 								</div>
 								<NcEmptyContent v-else>
-									Please select a schema to edit the publication
+									{{ t('opencatalogi', 'Please select a schema to edit the publication') }}
 								</NcEmptyContent>
 							</BTab>
 
-							<BTab title="JSON Editor">
+							<BTab :title="t('opencatalogi', 'JSON Editor')">
 								<div class="json-editor">
 									<div :class="`codeMirrorContainer ${getTheme()}`">
 										<CodeMirror
@@ -166,11 +165,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 											size="small"
 											:disabled="!fullSelectedSchema"
 											@click="formatJSON">
-											Format JSON
+											{{ t('opencatalogi', 'Format JSON') }}
 										</NcButton>
 									</div>
 									<span v-if="!isValidJson(jsonData)" class="error-message">
-										Invalid JSON format
+										{{ t('opencatalogi', 'Invalid JSON format') }}
 									</span>
 								</div>
 							</BTab>
@@ -184,7 +183,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 
 				<NcButton
@@ -196,7 +195,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						<ContentSaveOutline v-else-if="!isNewObject" :size="20" />
 						<Plus v-else :size="20" />
 					</template>
-					{{ isNewObject ? 'Add' : 'Save' }}
+					{{ isNewObject ? t('opencatalogi', 'Add') : t('opencatalogi', 'Save') }}
 				</NcButton>
 			</template>
 		</NcDialog>

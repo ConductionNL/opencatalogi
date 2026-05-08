@@ -3,7 +3,7 @@
 ## Purpose
 Defines how the softwarecatalog app exports an organization-enriched ArchiMate (AMEFF) XML file that includes the base GEMMA model plus the organization's applications plotted on referentiecomponenten, with proper folder structure, naming, and metadata.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Export MUST produce valid ArchiMate XML with organization applications
 The organization export MUST generate a valid AMEFF XML file that includes all base GEMMA objects plus synthesized application elements, specialization relationships, enriched view copies, and organization folder structure.

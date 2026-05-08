@@ -20,6 +20,8 @@ use OCP\AppFramework\Http\Response;
 
 /**
  * A simple response for plain text data.
+ *
+ * @psalm-suppress MissingTemplateParam
  */
 class TextResponse extends Response
 {

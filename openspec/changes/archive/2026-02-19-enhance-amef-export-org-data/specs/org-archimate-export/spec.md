@@ -3,7 +3,7 @@
 ## Purpose
 Enhances the org-specific AMEF export to include deelname (participation) data, organise output into typed folders, and replace the POST endpoint with a GET download endpoint with query parameters.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Export MUST include deelname data when deelnames parameter is enabled
 When the `deelnames` query parameter is `true`, the export MUST query gebruik objects where the current organisation's UUID appears in the `deelnemers` field (with RBAC disabled) and include those applications in the output.

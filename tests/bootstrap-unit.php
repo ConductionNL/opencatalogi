@@ -29,8 +29,12 @@ if (file_exists(__DIR__ . '/../../../lib/base.php')) {
 }
 
 // Load OpenRegister autoloader so its classes are available for mocking.
+// Skip if Psr\Log\LoggerInterface is already loaded (avoids v1/v3 conflict
+// when OpenRegister's vendor ships an older psr/log than the NC server).
 $openRegisterAutoload = __DIR__ . '/../../openregister/vendor/autoload.php';
-if (file_exists($openRegisterAutoload)) {
+if (file_exists($openRegisterAutoload)
+    && !interface_exists('Psr\Log\LoggerInterface')
+) {
     require_once $openRegisterAutoload;
 }
 

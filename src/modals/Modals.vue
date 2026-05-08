@@ -1,6 +1,5 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
-import { navigationStore, objectStore } from './../store/store.js'
+import { navigationStore } from './../store/store.js'
 </script>
 
 <template>
@@ -8,10 +7,7 @@ import { navigationStore, objectStore } from './../store/store.js'
 	<div>
 		<!--Generic-->
 		<CatalogModal />
-		<OrganizationModal v-if="navigationStore.modal === 'organization'" />
-		<ThemeModal v-if="navigationStore.modal === 'theme'" />
 		<AddPublicationThemeModal v-if="navigationStore.modal === 'addPublicationTheme'" />
-		<GlossaryModal />
 		<!--View Modals-->
 		<ViewDirectoryModal />
 		<ViewGlossaryModal />
@@ -19,7 +15,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<ViewPageModal />
 		<ViewThemeModal />
 		<!--Specific-->
-		<AddAttachmentModal :drop-files="objectStore.getActiveObject('attachment')" />
 		<EditAttachmentModal />
 		<AddDirectoryModal />
 		<EditListingModal v-if="navigationStore.modal === 'editListing'" />
@@ -32,7 +27,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 		<!-- Object Modals -->
 		<ViewObject v-if="navigationStore.modal === 'viewObject'" />
 
-		<DeleteObject />
 		<MergeObject v-if="navigationStore.modal === 'mergeObject'" />
 		<UploadObject v-if="navigationStore.modal === 'uploadObject'" />
 		<DownloadObject />
@@ -51,9 +45,6 @@ import { navigationStore, objectStore } from './../store/store.js'
 
 // Generic
 import CatalogModal from './catalog/CatalogModal.vue'
-import OrganizationModal from './organization/OrganizationModal.vue'
-import ThemeModal from './theme/ThemeModal.vue'
-import GlossaryModal from './glossary/GlossaryModal.vue'
 import UploadFilesModal from './generic/UploadFiles.vue'
 // View Modals
 import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
@@ -62,7 +53,6 @@ import ViewMenuModal from './menu/ViewMenuModal.vue'
 import ViewPageModal from './page/ViewPageModal.vue'
 import ViewThemeModal from './theme/ViewThemeModal.vue'
 // Specific
-import AddAttachmentModal from './attachment/AddAttachmentModal.vue'
 import EditAttachmentModal from './attachment/EditAttachmentModal.vue'
 
 import AddDirectoryModal from './directory/AddDirectoryModal.vue'
@@ -75,7 +65,6 @@ import ObjectModal from './object/ObjectModal.vue'
 // Object Modals
 import ViewObject from './object/ViewObject.vue'
 
-import DeleteObject from './object/DeleteObject.vue'
 import MergeObject from './object/MergeObject.vue'
 import UploadObject from './object/UploadObject.vue'
 import DownloadObject from './object/DownloadObject.vue'
@@ -94,14 +83,10 @@ import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
 export default {
 	name: 'Modals',
 	components: {
-		AddAttachmentModal,
 		EditAttachmentModal,
 		CatalogModal,
 		AddDirectoryModal,
 		EditListingModal,
-		OrganizationModal,
-		ThemeModal,
-		GlossaryModal,
 		// View Modals
 		ViewDirectoryModal,
 		ViewGlossaryModal,
@@ -116,7 +101,6 @@ export default {
 		ObjectModal,
 		// Object Modals
 		ViewObject,
-		DeleteObject,
 		MergeObject,
 		UploadObject,
 		DownloadObject,

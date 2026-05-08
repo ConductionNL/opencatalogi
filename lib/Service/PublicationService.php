@@ -130,6 +130,75 @@ class PublicationService
     }//end getObjectService()
 
     /**
+     * Set register/schema context on the ObjectService for a given object UUID.
+     *
+     * Searches all magic tables to find which register/schema an object belongs to,
+     * then sets that context on the ObjectService so subsequent operations can find the object.
+     *
+     * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
+     * @param string                                  $objectId      The UUID of the object to locate
+     *
+     * @return void
+     */
+    private function setObjectServiceContext($objectService, string $objectId): void
+    {
+        try {
+            $db = $this->container->get(\OCP\IDBConnection::class);
+
+            $result = $db->executeQuery(
+                <<<'SQL'
+                SELECT table_name FROM information_schema.tables
+                WHERE table_name LIKE 'oc_openregister_table_%'
+                ORDER BY table_name
+                SQL
+            );
+
+            $unionParts = [];
+            $quotedUuid = $db->quote($objectId);
+            $row        = $result->fetch();
+            while ($row !== false) {
+                $match = preg_match(
+                    pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
+                    subject: $row['table_name'],
+                    matches: $matches
+                );
+                if ($match === 1) {
+                    $register     = (int) $matches[1];
+                    $schema       = (int) $matches[2];
+                    $tableName    = $row['table_name'];
+                    $unionParts[] = sprintf(
+                        '(SELECT %d AS register_id, %d AS schema_id FROM %s WHERE _uuid = %s)',
+                        $register,
+                        $schema,
+                        $tableName,
+                        $quotedUuid
+                    );
+                }
+
+                $row = $result->fetch();
+            }//end while
+
+            $result->closeCursor();
+
+            if (empty($unionParts) === true) {
+                return;
+            }
+
+            $sql    = implode(' UNION ALL ', $unionParts).' LIMIT 1';
+            $result = $db->executeQuery($sql);
+            $row    = $result->fetch();
+            $result->closeCursor();
+
+            if ($row !== false) {
+                $objectService->setRegister(register: (string) $row['register_id']);
+                $objectService->setSchema(schema: (string) $row['schema_id']);
+            }
+        } catch (\Exception $e) {
+            // Silently fail — worst case we fall back to the old behavior.
+        }//end try
+    }//end setObjectServiceContext()
+
+    /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
@@ -163,9 +232,8 @@ class PublicationService
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
         // Create cache key based on catalog ID.
-        if ($catalogId === null) {
-            $cacheKey = 'all';
-        } else {
+        $cacheKey = 'all';
+        if ($catalogId !== null) {
             $cacheKey = (string) $catalogId;
         }
 
@@ -357,28 +425,24 @@ class PublicationService
 
         // Overwrite certain values in the existing search query.
         // Use scalar value when only one register/schema to avoid magic_mapper overhead.
+        $registers = $context['registers'];
         if (empty($requestedRegisters) === false) {
             $registers = $requestedRegisters;
-        } else {
-            $registers = $context['registers'];
         }
 
+        $schemas = $context['schemas'];
         if (empty($requestedSchemas) === false) {
             $schemas = $requestedSchemas;
-        } else {
-            $schemas = $context['schemas'];
         }
 
+        $searchQuery['@self']['register'] = $registers;
         if (count($registers) === 1) {
             $searchQuery['@self']['register'] = $registers[0];
-        } else {
-            $searchQuery['@self']['register'] = $registers;
         }
 
+        $searchQuery['@self']['schema'] = $schemas;
         if (count($schemas) === 1) {
             $searchQuery['@self']['schema'] = $schemas[0];
-        } else {
-            $searchQuery['@self']['schema'] = $schemas;
         }
 
         $searchQuery['_includeDeleted'] = false;
@@ -388,13 +452,24 @@ class PublicationService
             $searchQuery['_ids'] = $ids;
         }
 
-        // Search objects using the new structure.
-        $result = $objectService->searchObjectsPaginated($searchQuery);
+        // Search objects using the new structure with RBAC enforcement.
+        // _rbac: true ensures schema authorization rules are applied.
+        // _multitenancy: false allows cross-org access for public search results
+        // (RBAC rules determine what each user/anonymous can see).
+        $result = array_merge(
+            ['results' => [], 'facets' => []],
+            $objectService->searchObjectsPaginated(
+                query: $searchQuery,
+                _rbac: true,
+                _multitenancy: false,
+                published: false
+            )
+        );
 
         // Filter unwanted properties from results.
         $result['results'] = $this->filterUnwantedProperties($result['results']);
 
-        // Add virtual field facets if they were requested..
+        // Add virtual field facets if they were requested.
         if (($reqDirFacets === true || $reqCatFacets === true) && isset($result['facets']) === true) {
             $result['facets'] = $this->addVirtualFieldFacets(
                 existingFacets: $result['facets'],
@@ -468,8 +543,11 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function addVirtualFieldFacets(array $existingFacets, bool $inclDirFacets=false, bool $inclCatFacets=false): array
-    {
+    private function addVirtualFieldFacets(
+        array $existingFacets,
+        bool $inclDirFacets=false,
+        bool $inclCatFacets=false
+    ): array {
         try {
             // Ensure @self section exists.
             if (isset($existingFacets['@self']) === false) {
@@ -517,20 +595,18 @@ class PublicationService
                 // Get local catalogs.
                 $localCatalogs = $this->getLocalCatalogs();
                 foreach ($localCatalogs as $catalog) {
+                    $catalogKey = 'unknown';
                     if (empty($catalog['id']) === false) {
                         $catalogKey = $catalog['id'];
                     } else if (empty($catalog['title']) === false) {
                         $catalogKey = $catalog['title'];
-                    } else {
-                        $catalogKey = 'unknown';
                     }
 
+                    $catalogLabel = 'unknown';
                     if (empty($catalog['title']) === false) {
                         $catalogLabel = $catalog['title'];
                     } else if (empty($catalog['id']) === false) {
                         $catalogLabel = $catalog['id'];
-                    } else {
-                        $catalogLabel = 'unknown';
                     }
 
                     $catalogBuckets[] = [
@@ -792,7 +868,9 @@ class PublicationService
                     $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
 
                     // Check for 'files' property and filter files without 'published'.
-                    if (isset($objectArray['@self']['files']) === true && is_array($objectArray['@self']['files']) === true) {
+                    if (isset($objectArray['@self']['files']) === true
+                        && is_array($objectArray['@self']['files']) === true
+                    ) {
                         $objectArray['@self']['files'] = array_filter(
                             $objectArray['@self']['files'],
                             function ($file) {
@@ -812,9 +890,12 @@ class PublicationService
     /**
      * Retrieves all objects that this publication references
      *
-     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
+     * This method returns all objects that this publication
+     * uses/references. A -> B means that A (This publication)
+     * references B (Another object).
      *
-     * @param string $id The ID of the publication to retrieve relations for
+     * @param string $id The ID of the publication to retrieve
+     *                   relations for
      *
      * @return JSONResponse A JSON response containing the related objects
      *
@@ -829,6 +910,9 @@ class PublicationService
         try {
             // Get the object service.
             $objectService = $this->getObjectService();
+
+            // Set register/schema context so the object can be found in magic tables.
+            $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
             // Get the relations for the object.
             $relationsArray = $objectService->find(id: $id)->getRelations();
@@ -861,9 +945,12 @@ class PublicationService
     /**
      * Retrieves all objects that use this publication
      *
-     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
+     * This method returns all objects that reference (use) this
+     * publication. B -> A means that B (Another object) references
+     * A (This publication).
      *
-     * @param string $id The ID of the publication to retrieve uses for
+     * @param string $id The ID of the publication to retrieve
+     *                   uses for
      *
      * @return JSONResponse A JSON response containing the referenced objects
      *
@@ -878,6 +965,9 @@ class PublicationService
         try {
             // Get the object service.
             $objectService = $this->getObjectService();
+
+            // Set register/schema context so the object can be found in magic tables.
+            $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
             // Get the relations for the object.
             $relationsArray = $objectService->findByRelations($id);
@@ -1082,10 +1172,9 @@ class PublicationService
 
         // Calculate pagination info.
         $totalResults = ($localData['total'] ?? 0);
+        $totalPages   = 1;
         if ($limit > 0) {
             $totalPages = max(1, ceil($totalResults / $limit));
-        } else {
-            $totalPages = 1;
         }
 
         // Initialize response structure with pagination.
@@ -1121,7 +1210,11 @@ class PublicationService
 
             // Add virtual field facets if they were requested.
             if ($reqDirFacets === true || $reqCatFacets === true) {
-                $facetsData = $this->addVirtualFieldFacets(existingFacets: $facetsData, inclDirFacets: $reqDirFacets, inclCatFacets: $reqCatFacets);
+                $facetsData = $this->addVirtualFieldFacets(
+                    existingFacets: $facetsData,
+                    inclDirFacets: $reqDirFacets,
+                    inclCatFacets: $reqCatFacets
+                );
             }
 
             $responseData['facets'] = $facetsData;
@@ -1216,7 +1309,9 @@ class PublicationService
             }//end if
 
             // Get federated results with modified parameters
-            // Prepare query parameters for federation - exclude pagination and directory filter params since aggregation handles those.
+            // Prepare query parameters for federation - exclude
+            // pagination and directory filter params since
+            // aggregation handles those.
             $fedFilterParams = array_filter(
                 $federatedQueryParams,
                 function ($key) {
@@ -1288,10 +1383,9 @@ class PublicationService
             $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
 
             // Apply pagination to the merged results.
+            $totalPages = 1;
             if ($limit > 0) {
                 $totalPages = max(1, ceil($totalResults / $limit));
-            } else {
-                $totalPages = 1;
             }
 
             // Calculate the correct slice for this page.
@@ -1474,12 +1568,13 @@ class PublicationService
         $localResults = ($localData['results'] ?? []);
 
         // Add catalog and directory information only if requested or needed for faceting.
-        if (($includeCatalogs === true || $reqDirFacets === true || $reqCatFacets === true) && empty($localResults) === false) {
+        if (($includeCatalogs === true || $reqDirFacets === true || $reqCatFacets === true)
+            && empty($localResults) === false
+        ) {
             // Get local catalogs only if needed.
+            $localCatalogs = [];
             if ($includeCatalogs === true) {
                 $localCatalogs = $this->getLocalCatalogs();
-            } else {
-                $localCatalogs = [];
             }
 
             foreach ($localResults as &$publication) {
@@ -1502,10 +1597,9 @@ class PublicationService
 
         // Calculate pagination info.
         $totalResults = ($localData['total'] ?? 0);
+        $totalPages   = 1;
         if ($limit > 0) {
             $totalPages = max(1, ceil($totalResults / $limit));
-        } else {
-            $totalPages = 1;
         }
 
         // Build response structure with pagination.
@@ -1541,7 +1635,11 @@ class PublicationService
 
             // Add virtual field facets only if they were requested.
             if ($reqDirFacets === true || $reqCatFacets === true) {
-                $facetsData = $this->addVirtualFieldFacets(existingFacets: $facetsData, inclDirFacets: $reqDirFacets, inclCatFacets: $reqCatFacets);
+                $facetsData = $this->addVirtualFieldFacets(
+                    existingFacets: $facetsData,
+                    inclDirFacets: $reqDirFacets,
+                    inclCatFacets: $reqCatFacets
+                );
             }
 
             $responseData['facets'] = $facetsData;
@@ -1604,8 +1702,12 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
-    private function getLocalPublicationsUltraFast(array $queryParams, array $requestParams, string $baseUrl, float $startTime): array
-    {
+    private function getLocalPublicationsUltraFast(
+        array $queryParams,
+        array $requestParams,
+        string $baseUrl,
+        float $startTime
+    ): array {
 
         $timings = [
             'setup'         => 0,
@@ -1699,16 +1801,14 @@ class PublicationService
         // Use scalar value when only one register/schema to avoid magic_mapper overhead.
         $registers = $catalogContext['registers'];
         $schemas   = $catalogContext['schemas'];
+        $searchQuery['@self']['register'] = $registers;
         if (count($registers) === 1) {
             $searchQuery['@self']['register'] = $registers[0];
-        } else {
-            $searchQuery['@self']['register'] = $registers;
         }
 
+        $searchQuery['@self']['schema'] = $schemas;
         if (count($schemas) === 1) {
             $searchQuery['@self']['schema'] = $schemas[0];
-        } else {
-            $searchQuery['@self']['schema'] = $schemas;
         }
 
         $searchQuery['_includeDeleted'] = false;
@@ -1760,10 +1860,9 @@ class PublicationService
 
         // Calculate pagination info.
         $totalResults = ($result['total'] ?? 0);
+        $totalPages   = 1;
         if ($limit > 0) {
             $totalPages = max(1, ceil($totalResults / $limit));
-        } else {
-            $totalPages = 1;
         }
 
         // Build minimal response structure.
@@ -1872,10 +1971,9 @@ class PublicationService
             // Convert catalog objects to arrays and filter for public use.
             $catalogArray = [];
             foreach ($catalogs as $catalog) {
+                $catalogData = $catalog;
                 if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
                     $catalogData = $catalog->jsonSerialize();
-                } else {
-                    $catalogData = $catalog;
                 }
 
                 // Extract the relevant catalog information.
@@ -1935,11 +2033,10 @@ class PublicationService
      */
     private function mergeFacetableData(array $localFacetable, array $federatedFacetable): array
     {
-        // Start with local facetable as base.
+        // Start with local facetable as base; fall back to federated.
+        $mergedFacetable = $federatedFacetable;
         if (empty($localFacetable) === false) {
             $mergedFacetable = $localFacetable;
-        } else {
-            $mergedFacetable = $federatedFacetable;
         }
 
         // Ensure @self section exists.
@@ -2032,11 +2129,10 @@ class PublicationService
                     // Handle both associative array format: ['field' => 'direction']
                     // and indexed array format: [0 => ['field' => 'direction']]
                     // Format: ['@self.published' => 'DESC'].
-                    $fieldName = $field;
+                    $fieldName     = $field;
+                    $sortDirection = 'ASC';
                     if (is_string($direction) === true) {
                         $sortDirection = strtoupper($direction);
-                    } else {
-                        $sortDirection = 'ASC';
                     }
 
                     if (is_numeric($field) === true && is_array($direction) === true) {
@@ -2274,8 +2370,11 @@ class PublicationService
     /**
      * Get publications that use this publication with federation support
      *
-     * This method returns all objects that reference (use) this publication. B -> A means that B (Another object) references A (This publication).
-     * When aggregation is enabled, it also searches federated catalogs.
+     * This method returns all objects that reference (use) this
+     * publication. B -> A means that B (Another object) references
+     * A (This publication).
+     * When aggregation is enabled, it also searches federated
+     * catalogs.
      *
      * @param string $id          The ID of the publication to retrieve uses for
      * @param array  $queryParams Query parameters including aggregation settings
@@ -2364,8 +2463,11 @@ class PublicationService
     /**
      * Get publications that this publication uses with federation support
      *
-     * This method returns all objects that this publication uses/references. A -> B means that A (This publication) references B (Another object).
-     * When aggregation is enabled, it also searches federated catalogs.
+     * This method returns all objects that this publication
+     * uses/references. A -> B means that A (This publication)
+     * references B (Another object).
+     * When aggregation is enabled, it also searches federated
+     * catalogs.
      *
      * @param string $id          The ID of the publication to retrieve relations for
      * @param array  $queryParams Query parameters including aggregation settings

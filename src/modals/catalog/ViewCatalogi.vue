@@ -1,11 +1,11 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'viewCatalogi'"
-		:name="`View Catalog: ${activeCatalog?.title || 'Unknown'}`"
+		:name="t('opencatalogi', 'View Catalog: {title}', { title: activeCatalog?.title || t('opencatalogi', 'Unknown') })"
 		size="large"
 		:can-close="false">
 		<div class="formContainer viewCatalogiDialog">
@@ -21,7 +21,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<div class="catalogProperties">
 					<div class="propertyItem">
 						<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-						<span>{{ activeCatalog?.listed ? 'Publiek vindbaar' : 'Niet publiek vindbaar' }}</span>
+						<span>{{ activeCatalog?.listed ? t('opencatalogi', 'Publicly findable') : t('opencatalogi', 'Not publicly findable') }}</span>
 					</div>
 					<div v-if="activeCatalog?.description" class="propertyItem">
 						<strong>{{ t('opencatalogi', 'Description') }}:</strong>
@@ -59,7 +59,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 								:key="registerId"
 								class="itemCard">
 								<div class="itemHeader">
-									<h3>{{ getRegisterById(registerId)?.title || 'Unknown Register' }}</h3>
+									<h3>{{ getRegisterById(registerId)?.title || t('opencatalogi', 'Unknown Register') }}</h3>
 								</div>
 								<p v-if="getRegisterById(registerId)?.description" class="itemDescription">
 									{{ getRegisterById(registerId).description }}
@@ -84,7 +84,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 								:key="schemaId"
 								class="itemCard">
 								<div class="itemHeader">
-									<h3>{{ getSchemaById(schemaId)?.title || 'Unknown Schema' }}</h3>
+									<h3>{{ getSchemaById(schemaId)?.title || t('opencatalogi', 'Unknown Schema') }}</h3>
 								</div>
 								<p v-if="getSchemaById(schemaId)?.description" class="itemDescription">
 									{{ getSchemaById(schemaId).description }}
@@ -115,7 +115,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<template #icon>
 											<OpenInApp :size="20" />
 										</template>
-										View Organization
+										{{ t('opencatalogi', 'View Organization') }}
 									</NcActionButton>
 								</NcActions>
 							</div>
@@ -139,25 +139,25 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
-				Edit Catalog
+				{{ t('opencatalogi', 'Edit Catalog') }}
 			</NcActionButton>
 			<NcActionButton close-after-click @click="viewCatalog">
 				<template #icon>
 					<OpenInApp :size="20" />
 				</template>
-				View Catalog
+				{{ t('opencatalogi', 'View Catalog') }}
 			</NcActionButton>
 			<NcActionButton close-after-click @click="deleteCatalog">
 				<template #icon>
 					<TrashCanOutline :size="20" />
 				</template>
-				Delete Catalog
+				{{ t('opencatalogi', 'Delete Catalog') }}
 			</NcActionButton>
 			<NcButton type="primary" @click="closeModal">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>

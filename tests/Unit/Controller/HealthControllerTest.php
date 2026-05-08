@@ -27,6 +27,7 @@ class HealthControllerTest extends TestCase
     private IDBConnection|MockObject $db;
     private IAppManager|MockObject $appManager;
     private LoggerInterface|MockObject $logger;
+    private \Psr\Container\ContainerInterface|MockObject $container;
     private HealthController $controller;
 
     protected function setUp(): void
@@ -35,13 +36,15 @@ class HealthControllerTest extends TestCase
         $this->db         = $this->createMock(IDBConnection::class);
         $this->appManager = $this->createMock(IAppManager::class);
         $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->container  = $this->createMock(\Psr\Container\ContainerInterface::class);
 
         $this->controller = new HealthController(
             'opencatalogi',
             $this->request,
             $this->db,
             $this->appManager,
-            $this->logger
+            $this->logger,
+            $this->container
         );
     }
 

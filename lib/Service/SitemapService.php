@@ -326,6 +326,8 @@ class SitemapService
      * @param string|null $registerId    Resolved register ID (output reference)
      *
      * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
+     *
+     * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
      */
     private function isValidSitemapRequest(
         string $catalogSlug,
@@ -377,7 +379,7 @@ class SitemapService
         // Get current schema belonging to requested category code.
         $index    = array_search(needle: $needle, haystack: $haystack);
         $schemaId = null;
-        if ($index !== false) {
+        if ($index !== false && isset($schemas[$index]) === true) {
             $schemaId = $schemas[$index]['id'];
         }
 

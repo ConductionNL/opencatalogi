@@ -25,6 +25,7 @@ class MetricsControllerTest extends TestCase
     private IRequest|MockObject $request;
     private IDBConnection|MockObject $db;
     private IAppManager|MockObject $appManager;
+    private \OCP\IConfig|MockObject $config;
     private LoggerInterface|MockObject $logger;
     private MetricsController $controller;
 
@@ -33,6 +34,7 @@ class MetricsControllerTest extends TestCase
         $this->request    = $this->createMock(IRequest::class);
         $this->db         = $this->createMock(IDBConnection::class);
         $this->appManager = $this->createMock(IAppManager::class);
+        $this->config     = $this->createMock(\OCP\IConfig::class);
         $this->logger     = $this->createMock(LoggerInterface::class);
 
         $this->controller = new MetricsController(
@@ -40,6 +42,7 @@ class MetricsControllerTest extends TestCase
             $this->request,
             $this->db,
             $this->appManager,
+            $this->config,
             $this->logger
         );
     }

@@ -259,6 +259,7 @@ class CMSTool implements ToolInterface
                         ],
                         'groups'          => [
                             'type'        => 'array',
+                            // phpcs:ignore Generic.Files.LineLength.TooLong
                             'description' => 'Nextcloud groups that can access this entire menu (RBAC). Ask user if they want to restrict access.',
                             'items'       => ['type' => 'string'],
                         ],

@@ -11,7 +11,7 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../store/store.js'
 </script>
 
@@ -42,8 +42,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 						v-if="massActions && massActions.length > 0"
 						:force-name="true"
 						:disabled="selectedObjects.length === 0"
-						:title="selectedObjects.length === 0 ? `Select one or more ${objectTypePlural} to use mass actions` : `Mass actions (${selectedObjects.length} selected)`"
-						:menu-name="`Mass Actions (${selectedObjects.length})`">
+						:title="selectedObjects.length === 0 ? t('opencatalogi', 'Select one or more {objectType} to use mass actions', { objectType: objectTypePlural }) : t('opencatalogi', 'Mass actions ({count} selected)', { count: selectedObjects.length })"
+						:menu-name="t('opencatalogi', 'Mass Actions ({count})', { count: selectedObjects.length })">
 						<template #icon>
 							<FormatListChecks :size="20" />
 						</template>
@@ -63,7 +63,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- View Mode Switch -->
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
-							v-tooltip="`See ${objectTypePlural} as cards`"
+							v-tooltip="t('opencatalogi', 'See {objectType} as cards', { objectType: objectTypePlural })"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
@@ -72,10 +72,10 @@ import { objectStore, navigationStore } from '../store/store.js'
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => setViewMode('cards')">
-							Cards
+							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							v-tooltip="`See ${objectTypePlural} as a table`"
+							v-tooltip="t('opencatalogi', 'See {objectType} as a table', { objectType: objectTypePlural })"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
@@ -84,7 +84,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => setViewMode('table')">
-							Table
+							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 
@@ -92,7 +92,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<NcActions
 						:force-name="true"
 						:inline="actions && actions.length > 2 ? 3 : actions?.length || 2"
-						menu-name="Actions">
+						:menu-name="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							v-for="action in actions"
 							:key="action.id"
@@ -112,13 +112,13 @@ import { objectStore, navigationStore } from '../store/store.js'
 						v-if="viewMode === 'table' && showColumnSelector"
 						:force-name="true"
 						:inline="1"
-						menu-name="Columns">
+						:menu-name="t('opencatalogi', 'Columns')">
 						<template #icon>
 							<FormatColumns :size="20" />
 						</template>
 
 						<!-- Metadata Section -->
-						<NcActionCaption name="Metadata" />
+						<NcActionCaption :name="t('opencatalogi', 'Metadata')" />
 						<NcActionCheckbox
 							v-for="meta in metadataColumns"
 							:key="`meta_${meta.id}`"
@@ -128,7 +128,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 						</NcActionCheckbox>
 
 						<!-- Properties Section -->
-						<NcActionCaption v-if="propertyColumns && propertyColumns.length > 0" name="Properties" />
+						<NcActionCaption v-if="propertyColumns && propertyColumns.length > 0" :name="t('opencatalogi', 'Properties')" />
 						<NcActionCheckbox
 							v-for="prop in propertyColumns"
 							:key="`prop_${prop.id}`"
@@ -165,7 +165,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 									<component :is="cardIcon" :size="20" />
 									{{ getObjectTitle(item) }}
 								</h2>
-								<NcActions :primary="true" menu-name="Actions">
+								<NcActions :primary="true" :menu-name="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
@@ -551,17 +551,17 @@ export default {
 		},
 		emptyContentName() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', `Loading ${this.objectTypePlural}...`)
+				return t('opencatalogi', 'Loading {objectType}...', { objectType: this.objectTypePlural })
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', `No ${this.objectTypePlural} found`)
+				return t('opencatalogi', 'No {objectType} found', { objectType: this.objectTypePlural })
 			}
 			return ''
 		},
 		emptyContentDescription() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', `Please wait while we fetch your ${this.objectTypePlural}.`)
+				return t('opencatalogi', 'Please wait while we fetch your {objectType}.', { objectType: this.objectTypePlural })
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', `No ${this.objectTypePlural} are available.`)
+				return t('opencatalogi', 'No {objectType} are available.', { objectType: this.objectTypePlural })
 			}
 			return ''
 		},
