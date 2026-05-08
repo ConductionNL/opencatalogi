@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
 </script>
@@ -149,7 +149,7 @@ import { EventBus } from '../../eventBus.js'
 											<FormatListChecks :size="20" />
 										</template>
 										<NcActionButton
-											:disabled="publishLoading.length > 0 || publishableCount === 0"
+											:disabled="publishLoading.length > 0 || publishableCount === 0 || !canUpdateCurrentObject"
 											close-after-click
 											@click="publishSelectedFiles">
 											<template #icon>
@@ -159,7 +159,7 @@ import { EventBus } from '../../eventBus.js'
 											{{ publishableCount === 1 ? t('opencatalogi', 'Publish {count} attachment', { count: publishableCount }) : t('opencatalogi', 'Publish {count} attachments', { count: publishableCount }) }}
 										</NcActionButton>
 										<NcActionButton
-											:disabled="depublishLoading.length > 0 || depublishableCount === 0"
+											:disabled="depublishLoading.length > 0 || depublishableCount === 0 || !canUpdateCurrentObject"
 											close-after-click
 											@click="depublishSelectedFiles">
 											<template #icon>
@@ -169,7 +169,7 @@ import { EventBus } from '../../eventBus.js'
 											{{ depublishableCount === 1 ? t('opencatalogi', 'Depublish {count} attachment', { count: depublishableCount }) : t('opencatalogi', 'Depublish {count} attachments', { count: depublishableCount }) }}
 										</NcActionButton>
 										<NcActionButton
-											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
+											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0 || !canUpdateCurrentObject"
 											close-after-click
 											@click="deleteSelectedFiles">
 											<template #icon>
@@ -299,7 +299,7 @@ import { EventBus } from '../../eventBus.js'
 															{{ t('opencatalogi', 'View') }}
 														</NcActionButton>
 														<NcActionButton
-															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
+															:disabled="editingTags && editingTags !== attachment.id || tagsLoading || !canUpdateCurrentObject"
 															@click="editFileLabels(attachment)">
 															<template #icon>
 																<Tag :size="20" />
@@ -308,7 +308,7 @@ import { EventBus } from '../../eventBus.js'
 														</NcActionButton>
 														<NcActionButton
 															v-if="!attachment.accessUrl && !attachment.downloadUrl"
-															:disabled="publishLoading.includes(attachment.id)"
+															:disabled="publishLoading.includes(attachment.id) || !canUpdateCurrentObject"
 															@click="publishFile(attachment)">
 															<template #icon>
 																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
@@ -318,7 +318,7 @@ import { EventBus } from '../../eventBus.js'
 														</NcActionButton>
 														<NcActionButton
 															v-else
-															:disabled="depublishLoading.includes(attachment.id)"
+															:disabled="depublishLoading.includes(attachment.id) || !canUpdateCurrentObject"
 															@click="depublishFile(attachment)">
 															<template #icon>
 																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
@@ -327,7 +327,7 @@ import { EventBus } from '../../eventBus.js'
 															{{ t('opencatalogi', 'Depublish') }}
 														</NcActionButton>
 														<NcActionButton
-															:disabled="fileIdsLoading.includes(attachment.id)"
+															:disabled="fileIdsLoading.includes(attachment.id) || !canUpdateCurrentObject"
 															@click="deleteFile(attachment)">
 															<template #icon>
 																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
@@ -374,27 +374,27 @@ import { EventBus } from '../../eventBus.js'
 				</template>
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton v-if="!isNewObject" @click="uploadFiles">
+			<NcButton v-if="!isNewObject && canUpdateCurrentObject" @click="uploadFiles">
 				<template #icon>
 					<Upload :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Add File') }}
 			</NcButton>
-			<NcButton v-if="shouldShowPublishAction(currentObject)"
+			<NcButton v-if="shouldShowPublishAction(currentObject) && canUpdateCurrentObject"
 				@click="singlePublishObject">
 				<template #icon>
 					<Publish :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Publish') }}
 			</NcButton>
-			<NcButton v-if="shouldShowDepublishAction(currentObject)"
+			<NcButton v-if="shouldShowDepublishAction(currentObject) && canUpdateCurrentObject"
 				@click="singleDepublishObject">
 				<template #icon>
 					<PublishOff :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Depublish') }}
 			</NcButton>
-			<NcButton v-if="!isNewObject"
+			<NcButton v-if="!isNewObject && canDeleteCurrentObject"
 				type="error"
 				@click="singleDeleteObject">
 				<template #icon>
@@ -402,7 +402,8 @@ import { EventBus } from '../../eventBus.js'
 				</template>
 				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton v-if="isNewObject ? canCreateCurrentObject : canUpdateCurrentObject"
+				type="primary"
 				:title="saveButtonTooltip"
 				:disabled="isSaving || !canSave"
 				@click="saveObject">
@@ -726,7 +727,7 @@ export default {
 
 			return objectStore.availableSchemas
 				.filter(schema => validSchemaIds.includes(schema.id))
-				.filter(schema => this.hasSchemaReadRight(schema))
+				.filter(schema => this.hasSchemaActionRight(schema, 'create'))
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
@@ -861,6 +862,16 @@ export default {
 
 		canSave() {
 			return !this.hasMissingRequired && !this.hasFieldErrors
+		},
+
+		canCreateCurrentObject() {
+			return this.hasSchemaActionRight(this.resolvedSchema, 'create')
+		},
+		canUpdateCurrentObject() {
+			return this.hasSchemaActionRight(this.resolvedSchema, 'update')
+		},
+		canDeleteCurrentObject() {
+			return this.hasSchemaActionRight(this.resolvedSchema, 'delete')
 		},
 
 		saveButtonTooltip() {
@@ -1069,31 +1080,29 @@ export default {
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		hasSchemaReadRight(schema) {
-			// While user groups are still loading, show all schemas
-			if (this.currentUserGroups === null) {
-				return true
-			}
+		hasSchemaActionRight(schema, action) {
+			if (this.currentUserGroups === null) return true
+			if (!schema) return true
 			const auth = schema.authorization
-			// No authorization rules means everyone has access
-			if (!auth || !auth.read || !Array.isArray(auth.read) || auth.read.length === 0) {
+			if (!auth) return true
+			if (!auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) {
+				// For write actions: if the schema has any auth rules, deny by default so that
+				// a user with only 'read' access cannot create/update/delete.
+				if (action !== 'read') {
+					const hasAnyRules = Object.values(auth).some(v => Array.isArray(v) && v.length > 0)
+					if (hasAnyRules) return this.currentUserGroups.includes('admin')
+				}
 				return true
 			}
-			// Admin group always has full access
-			if (this.currentUserGroups.includes('admin')) {
-				return true
-			}
-			// Check if user belongs to any group that has read permission
-			return auth.read.some(entry => {
-				if (typeof entry === 'string') {
-					return this.currentUserGroups.includes(entry)
-				}
-				// Complex entry with match conditions — check group membership only
-				if (entry && typeof entry === 'object' && entry.group) {
-					return this.currentUserGroups.includes(entry.group)
-				}
+			if (this.currentUserGroups.includes('admin')) return true
+			return auth[action].some(entry => {
+				if (typeof entry === 'string') return this.currentUserGroups.includes(entry)
+				if (entry && typeof entry === 'object' && entry.group) return this.currentUserGroups.includes(entry.group)
 				return true
 			})
+		},
+		hasSchemaReadRight(schema) {
+			return this.hasSchemaActionRight(schema, 'read')
 		},
 		applyInitialTabFromTransferData() {
 			const data = navigationStore.getTransferData()
