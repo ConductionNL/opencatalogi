@@ -149,7 +149,7 @@ import { EventBus } from '../../eventBus.js'
 											<FormatListChecks :size="20" />
 										</template>
 										<NcActionButton
-											:disabled="publishLoading.length > 0 || publishableCount === 0"
+											:disabled="publishLoading.length > 0 || publishableCount === 0 || !canUpdateCurrentObject"
 											close-after-click
 											@click="publishSelectedFiles">
 											<template #icon>
@@ -159,7 +159,7 @@ import { EventBus } from '../../eventBus.js'
 											{{ publishableCount === 1 ? t('opencatalogi', 'Publish {count} attachment', { count: publishableCount }) : t('opencatalogi', 'Publish {count} attachments', { count: publishableCount }) }}
 										</NcActionButton>
 										<NcActionButton
-											:disabled="depublishLoading.length > 0 || depublishableCount === 0"
+											:disabled="depublishLoading.length > 0 || depublishableCount === 0 || !canUpdateCurrentObject"
 											close-after-click
 											@click="depublishSelectedFiles">
 											<template #icon>
@@ -169,7 +169,7 @@ import { EventBus } from '../../eventBus.js'
 											{{ depublishableCount === 1 ? t('opencatalogi', 'Depublish {count} attachment', { count: depublishableCount }) : t('opencatalogi', 'Depublish {count} attachments', { count: depublishableCount }) }}
 										</NcActionButton>
 										<NcActionButton
-											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0"
+											:disabled="fileIdsLoading.length > 0 || selectedAttachments.length === 0 || !canUpdateCurrentObject"
 											close-after-click
 											@click="deleteSelectedFiles">
 											<template #icon>
@@ -299,7 +299,7 @@ import { EventBus } from '../../eventBus.js'
 															{{ t('opencatalogi', 'View') }}
 														</NcActionButton>
 														<NcActionButton
-															:disabled="editingTags && editingTags !== attachment.id || tagsLoading"
+															:disabled="editingTags && editingTags !== attachment.id || tagsLoading || !canUpdateCurrentObject"
 															@click="editFileLabels(attachment)">
 															<template #icon>
 																<Tag :size="20" />
@@ -308,7 +308,7 @@ import { EventBus } from '../../eventBus.js'
 														</NcActionButton>
 														<NcActionButton
 															v-if="!attachment.accessUrl && !attachment.downloadUrl"
-															:disabled="publishLoading.includes(attachment.id)"
+															:disabled="publishLoading.includes(attachment.id) || !canUpdateCurrentObject"
 															@click="publishFile(attachment)">
 															<template #icon>
 																<NcLoadingIcon v-if="publishLoading.includes(attachment.id)" :size="20" />
@@ -318,7 +318,7 @@ import { EventBus } from '../../eventBus.js'
 														</NcActionButton>
 														<NcActionButton
 															v-else
-															:disabled="depublishLoading.includes(attachment.id)"
+															:disabled="depublishLoading.includes(attachment.id) || !canUpdateCurrentObject"
 															@click="depublishFile(attachment)">
 															<template #icon>
 																<NcLoadingIcon v-if="depublishLoading.includes(attachment.id)" :size="20" />
@@ -327,7 +327,7 @@ import { EventBus } from '../../eventBus.js'
 															{{ t('opencatalogi', 'Depublish') }}
 														</NcActionButton>
 														<NcActionButton
-															:disabled="fileIdsLoading.includes(attachment.id)"
+															:disabled="fileIdsLoading.includes(attachment.id) || !canUpdateCurrentObject"
 															@click="deleteFile(attachment)">
 															<template #icon>
 																<NcLoadingIcon v-if="fileIdsLoading.includes(attachment.id)" :size="20" />
@@ -374,27 +374,27 @@ import { EventBus } from '../../eventBus.js'
 				</template>
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton v-if="!isNewObject" @click="uploadFiles">
+			<NcButton v-if="!isNewObject && canUpdateCurrentObject" @click="uploadFiles">
 				<template #icon>
 					<Upload :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Add File') }}
 			</NcButton>
-			<NcButton v-if="shouldShowPublishAction(currentObject)"
+			<NcButton v-if="shouldShowPublishAction(currentObject) && canUpdateCurrentObject"
 				@click="singlePublishObject">
 				<template #icon>
 					<Publish :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Publish') }}
 			</NcButton>
-			<NcButton v-if="shouldShowDepublishAction(currentObject)"
+			<NcButton v-if="shouldShowDepublishAction(currentObject) && canUpdateCurrentObject"
 				@click="singleDepublishObject">
 				<template #icon>
 					<PublishOff :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Depublish') }}
 			</NcButton>
-			<NcButton v-if="!isNewObject"
+			<NcButton v-if="!isNewObject && canDeleteCurrentObject"
 				type="error"
 				@click="singleDeleteObject">
 				<template #icon>
@@ -402,7 +402,8 @@ import { EventBus } from '../../eventBus.js'
 				</template>
 				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton v-if="isNewObject ? canCreateCurrentObject : canUpdateCurrentObject"
+				type="primary"
 				:title="saveButtonTooltip"
 				:disabled="isSaving || !canSave"
 				@click="saveObject">
@@ -530,7 +531,7 @@ export default {
 			editingTags: null,
 			editedTags: [],
 			labelOptionsEdit: {
-				inputLabel: 'Labels',
+				inputLabel: t('opencatalogi', 'Labels'),
 				multiple: true,
 				options: [],
 			},
@@ -598,7 +599,7 @@ export default {
 			const obj = this.currentObject
 
 			const register = obj['@self']?.register
-			let registerDisplay = 'Not set'
+			let registerDisplay = t('opencatalogi', 'Not set')
 			if (register) {
 				if (typeof register === 'object') {
 					registerDisplay = register.title || register.name || register.id || register
@@ -609,7 +610,7 @@ export default {
 			}
 
 			const schema = obj['@self']?.schema
-			let schemaDisplay = 'Not set'
+			let schemaDisplay = t('opencatalogi', 'Not set')
 			if (schema) {
 				if (typeof schema === 'object') {
 					schemaDisplay = schema.title || schema.name || schema.id || schema
@@ -620,30 +621,30 @@ export default {
 			}
 
 			const locked = obj['@self']?.locked
-			let lockedDisplay = 'Not locked'
+			let lockedDisplay = t('opencatalogi', 'Not locked')
 			if (locked) {
 				if (typeof locked === 'object') {
-					const lockedBy = locked.lockedBy || 'Unknown user'
-					const lockedAt = locked.lockedAt ? new Date(locked.lockedAt).toLocaleString() : 'Unknown time'
+					const lockedBy = locked.lockedBy || t('opencatalogi', 'Unknown user')
+					const lockedAt = locked.lockedAt ? new Date(locked.lockedAt).toLocaleString() : t('opencatalogi', 'Unknown time')
 					const proc = locked.process ? ` (${locked.process})` : ''
-					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${proc}`
+					lockedDisplay = t('opencatalogi', 'Locked by {lockedBy} at {lockedAt}{proc}', { lockedBy, lockedAt, proc })
 				} else {
-					lockedDisplay = 'Locked'
+					lockedDisplay = t('opencatalogi', 'Locked')
 				}
 			}
 
 			const fmtDate = (v, fallback) => v ? new Date(v).toLocaleString() : fallback
 
 			return [
-				['ID', obj.id || 'Not set'],
-				['Version', obj['@self']?.version || 'Not set'],
-				['Register', registerDisplay],
-				['Schema', schemaDisplay],
-				['Locked', lockedDisplay],
-				['Created', fmtDate(obj['@self']?.created, 'Not set')],
-				['Updated', fmtDate(obj['@self']?.updated, 'Not set')],
-				['Published', fmtDate(obj['@self']?.published, 'Not published')],
-				['Depublished', fmtDate(obj['@self']?.depublished, 'Not depublished')],
+				[t('opencatalogi', 'ID'), obj.id || t('opencatalogi', 'Not set')],
+				[t('opencatalogi', 'Version'), obj['@self']?.version || t('opencatalogi', 'Not set')],
+				[t('opencatalogi', 'Register'), registerDisplay],
+				[t('opencatalogi', 'Schema'), schemaDisplay],
+				[t('opencatalogi', 'Locked'), lockedDisplay],
+				[t('opencatalogi', 'Created'), fmtDate(obj['@self']?.created, t('opencatalogi', 'Not set'))],
+				[t('opencatalogi', 'Updated'), fmtDate(obj['@self']?.updated, t('opencatalogi', 'Not set'))],
+				[t('opencatalogi', 'Published'), fmtDate(obj['@self']?.published, t('opencatalogi', 'Not published'))],
+				[t('opencatalogi', 'Depublished'), fmtDate(obj['@self']?.depublished, t('opencatalogi', 'Not depublished'))],
 			]
 		},
 		// Files tab computed properties
@@ -726,7 +727,7 @@ export default {
 
 			return objectStore.availableSchemas
 				.filter(schema => validSchemaIds.includes(schema.id))
-				.filter(schema => this.hasSchemaReadRight(schema))
+				.filter(schema => this.hasSchemaActionRight(schema, 'create'))
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
@@ -863,12 +864,22 @@ export default {
 			return !this.hasMissingRequired && !this.hasFieldErrors
 		},
 
+		canCreateCurrentObject() {
+			return this.hasSchemaActionRight(this.resolvedSchema, 'create')
+		},
+		canUpdateCurrentObject() {
+			return this.hasSchemaActionRight(this.resolvedSchema, 'update')
+		},
+		canDeleteCurrentObject() {
+			return this.hasSchemaActionRight(this.resolvedSchema, 'delete')
+		},
+
 		saveButtonTooltip() {
 			if (this.hasMissingRequired) {
-				return `Required fields missing: ${this.missingRequiredLabels.join(', ')}`
+				return t('opencatalogi', 'Required fields missing: {fields}', { fields: this.missingRequiredLabels.join(', ') })
 			}
 			if (this.hasFieldErrors) {
-				return `Invalid fields: ${this.fieldErrors.map((e) => e.label).join(', ')}`
+				return t('opencatalogi', 'Invalid fields: {fields}', { fields: this.fieldErrors.map((e) => e.label).join(', ') })
 			}
 			return ''
 		},
@@ -973,7 +984,7 @@ export default {
 					newTags,
 				})
 				if (!this.labelOptionsEdit) {
-					this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+					this.labelOptionsEdit = { inputLabel: t('opencatalogi', 'Labels'), multiple: true, options: [] }
 				}
 				this.labelOptionsEdit.options = [...tags]
 			} catch (e) {
@@ -986,7 +997,7 @@ export default {
 				const tagsFromPayload = Array.isArray(payload && payload.tags) ? payload.tags : null
 				if (tagsFromPayload) {
 					if (!this.labelOptionsEdit) {
-						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+						this.labelOptionsEdit = { inputLabel: t('opencatalogi', 'Labels'), multiple: true, options: [] }
 					}
 					this.labelOptionsEdit.options = [...tagsFromPayload]
 					return
@@ -995,7 +1006,7 @@ export default {
 				const stored = objectStore.getCollection('tags')
 				if (Array.isArray(stored)) {
 					if (!this.labelOptionsEdit) {
-						this.labelOptionsEdit = { inputLabel: 'Labels', multiple: true, options: [] }
+						this.labelOptionsEdit = { inputLabel: t('opencatalogi', 'Labels'), multiple: true, options: [] }
 					}
 					this.labelOptionsEdit.options = [...stored]
 				} else {
@@ -1008,26 +1019,26 @@ export default {
 		getModalTitle() {
 			// For new objects, show "Create Publication"
 			if (this.isNewObject) {
-				return 'Create Publication'
+				return t('opencatalogi', 'Create Publication')
 			}
 
-			if (!this.currentObject) return 'View Object'
+			if (!this.currentObject) return t('opencatalogi', 'View Object')
 
 			const name = this.currentObject['@self']?.name
 				|| this.currentObject.name
 				|| this.currentObject.title
 				|| this.currentObject.id
-				|| 'Untitled'
+				|| t('opencatalogi', 'Untitled')
 
 			// Try to get schema name from the object itself
-			let schemaName = 'Publication'
+			let schemaName = t('opencatalogi', 'Publication')
 			const rawSchema = this.currentObject.schema ?? this.currentObject['@self']?.schema
 
 			if (rawSchema && typeof rawSchema === 'object') {
 				schemaName = rawSchema.title
 					|| rawSchema.name
 					|| rawSchema.id
-					|| 'Publication'
+					|| t('opencatalogi', 'Publication')
 			} else if (rawSchema != null && rawSchema !== '') {
 				const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(rawSchema))
 				schemaName = match?.title || match?.name || String(rawSchema)
@@ -1069,31 +1080,29 @@ export default {
 		proceedToProperties() {
 			this.showProperties = true
 		},
-		hasSchemaReadRight(schema) {
-			// While user groups are still loading, show all schemas
-			if (this.currentUserGroups === null) {
-				return true
-			}
+		hasSchemaActionRight(schema, action) {
+			if (this.currentUserGroups === null) return true
+			if (!schema) return true
 			const auth = schema.authorization
-			// No authorization rules means everyone has access
-			if (!auth || !auth.read || !Array.isArray(auth.read) || auth.read.length === 0) {
+			if (!auth) return true
+			if (!auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) {
+				// For write actions: if the schema has any auth rules, deny by default so that
+				// a user with only 'read' access cannot create/update/delete.
+				if (action !== 'read') {
+					const hasAnyRules = Object.values(auth).some(v => Array.isArray(v) && v.length > 0)
+					if (hasAnyRules) return this.currentUserGroups.includes('admin')
+				}
 				return true
 			}
-			// Admin group always has full access
-			if (this.currentUserGroups.includes('admin')) {
-				return true
-			}
-			// Check if user belongs to any group that has read permission
-			return auth.read.some(entry => {
-				if (typeof entry === 'string') {
-					return this.currentUserGroups.includes(entry)
-				}
-				// Complex entry with match conditions — check group membership only
-				if (entry && typeof entry === 'object' && entry.group) {
-					return this.currentUserGroups.includes(entry.group)
-				}
+			if (this.currentUserGroups.includes('admin')) return true
+			return auth[action].some(entry => {
+				if (typeof entry === 'string') return this.currentUserGroups.includes(entry)
+				if (entry && typeof entry === 'object' && entry.group) return this.currentUserGroups.includes(entry.group)
 				return true
 			})
+		},
+		hasSchemaReadRight(schema) {
+			return this.hasSchemaActionRight(schema, 'read')
 		},
 		applyInitialTabFromTransferData() {
 			const data = navigationStore.getTransferData()
@@ -1264,7 +1273,7 @@ export default {
 			// Ensure we always have a valid key
 			if (!key || typeof key !== 'string') {
 				console.warn('Invalid key passed to getPropertyDisplayName:', key)
-				return 'Unknown Property'
+				return t('opencatalogi', 'Unknown Property')
 			}
 
 			const schemaProperties = this.getSchemaProperties()
@@ -1872,9 +1881,9 @@ export default {
 			const isSchemaProperty = Object.prototype.hasOwnProperty.call(schemaProperties, key)
 
 			if (isSchemaProperty) {
-				return `Reset '${this.getPropertyDisplayName(key)}' to empty value`
+				return t('opencatalogi', "Reset '{property}' to empty value", { property: this.getPropertyDisplayName(key) })
 			} else {
-				return `Remove '${this.getPropertyDisplayName(key)}' property completely`
+				return t('opencatalogi', "Remove '{property}' property completely", { property: this.getPropertyDisplayName(key) })
 			}
 		},
 
