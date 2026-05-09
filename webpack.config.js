@@ -87,6 +87,16 @@ webpackConfig.resolve.alias = {
 	pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
+	// Bypass @nextcloud/axios's `exports` field which only declares the
+	// `import` condition. @nextcloud/vue's CJS bundle still uses
+	// require('@nextcloud/axios') and webpack 5's CommonJS resolver fails
+	// the exports check with:
+	//   "." is not exported under the conditions ["require","module","webpack",...]
+	// Aliasing the bare specifier directly at the dist entry sidesteps
+	// the exports-field gate. Use the $-suffixed exact-match form so
+	// subpath imports (e.g. @nextcloud/axios/dist/foo) keep their normal
+	// resolution.
+	'@nextcloud/axios$': path.resolve(__dirname, 'node_modules/@nextcloud/axios/dist/index.cjs'),
 }
 
 module.exports = webpackConfig
