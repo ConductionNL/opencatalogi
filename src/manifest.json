@@ -1,0 +1,137 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
+	"version": "0.1.0",
+	"dependencies": ["openregister"],
+	"menu": [
+		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
+		{ "id": "Catalogs", "label": "Catalogs", "icon": "icon-folder", "route": "Catalogs", "order": 20 },
+		{ "id": "Search", "label": "Search", "icon": "icon-search", "route": "Search", "order": 30 },
+		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers", "order": 40 },
+		{ "id": "Organizations", "label": "Organizations", "icon": "icon-user", "route": "Organizations", "section": "settings", "order": 50 },
+		{ "id": "CatalogsSettings", "label": "Catalogs", "icon": "icon-folder", "route": "Catalogs", "section": "settings", "order": 60 },
+		{ "id": "Glossary", "label": "Glossary", "icon": "icon-quota", "route": "Glossary", "section": "settings", "order": 70 },
+		{ "id": "Themes", "label": "Themes", "icon": "icon-category-customization", "route": "Themes", "section": "settings", "order": 80 },
+		{ "id": "Pages", "label": "Pages", "icon": "icon-files", "route": "Pages", "section": "settings", "order": 90 },
+		{ "id": "Menus", "label": "Menus", "icon": "icon-toggle-pictures", "route": "Menus", "section": "settings", "order": 100 },
+		{ "id": "Directory", "label": "Directory", "icon": "icon-folder-shared", "route": "Directory", "section": "settings", "order": 110 }
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "custom",
+			"title": "Dashboard",
+			"component": "DashboardView"
+		},
+		{
+			"id": "Catalogs",
+			"route": "/catalogi",
+			"type": "custom",
+			"title": "Catalogs",
+			"component": "CatalogsView"
+		},
+		{
+			"id": "CatalogDetail",
+			"route": "/catalogi/:id",
+			"type": "custom",
+			"title": "Catalog",
+			"component": "CatalogDetailView"
+		},
+		{
+			"id": "Publications",
+			"route": "/publications/:catalogSlug",
+			"type": "custom",
+			"title": "Publications",
+			"component": "PublicationsView"
+		},
+		{
+			"id": "PublicationDetail",
+			"route": "/publications/:catalogSlug/:id",
+			"type": "custom",
+			"title": "Publication",
+			"component": "PublicationDetailView"
+		},
+		{
+			"id": "Search",
+			"route": "/search",
+			"type": "custom",
+			"title": "Search",
+			"component": "SearchView"
+		},
+		{
+			"id": "Organizations",
+			"route": "/organizations",
+			"type": "custom",
+			"title": "Organizations",
+			"component": "OrganizationsView"
+		},
+		{
+			"id": "Themes",
+			"route": "/themes",
+			"type": "custom",
+			"title": "Themes",
+			"component": "ThemesView"
+		},
+		{
+			"id": "ThemeDetail",
+			"route": "/themes/:id",
+			"type": "custom",
+			"title": "Theme",
+			"component": "ThemeDetailView"
+		},
+		{
+			"id": "Glossary",
+			"route": "/glossary",
+			"type": "custom",
+			"title": "Glossary",
+			"component": "GlossaryView"
+		},
+		{
+			"id": "GlossaryDetail",
+			"route": "/glossary/:id",
+			"type": "custom",
+			"title": "Glossary term",
+			"component": "GlossaryDetailView"
+		},
+		{
+			"id": "Pages",
+			"route": "/pages",
+			"type": "custom",
+			"title": "Pages",
+			"component": "PagesView"
+		},
+		{
+			"id": "PageDetail",
+			"route": "/pages/:id",
+			"type": "custom",
+			"title": "Page",
+			"component": "PageDetailView"
+		},
+		{
+			"id": "Menus",
+			"route": "/menus",
+			"type": "custom",
+			"title": "Menus",
+			"component": "MenusView"
+		},
+		{
+			"id": "MenuDetail",
+			"route": "/menus/:id",
+			"type": "custom",
+			"title": "Menu",
+			"component": "MenuDetailView"
+		},
+		{
+			"id": "Directory",
+			"route": "/directory",
+			"type": "index",
+			"title": "Directory",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "@resolve:listing_schema",
+				"columns": ["title", "summary", "organization", "catalog", "directory"],
+				"sidebar": { "enabled": true, "showMetadata": true }
+			}
+		}
+	]
+}
