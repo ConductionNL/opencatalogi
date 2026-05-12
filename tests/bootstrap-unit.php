@@ -46,4 +46,11 @@ if (is_dir($serverTestsLib)) {
     $loader->register(true);
 }
 
+// IMcpToolProvider stub — loaded when the openregister runtime (PR #1466) is absent.
+// OpenCatalogiToolProvider implements this interface in production; the stub keeps the
+// class loadable in bare CI containers until the real interface ships.
+if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
+    require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
+}
+
 error_log('[UNIT TEST BOOTSTRAP] Full Nextcloud bootstrap complete - \OC::$server available');

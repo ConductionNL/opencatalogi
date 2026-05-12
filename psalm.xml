@@ -95,6 +95,7 @@
                 <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>
                 <referencedClass name="OCA\OpenRegister\Db\Agent"/>
                 <referencedClass name="OCA\OpenRegister\Tool\ToolInterface"/>
+                <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
                 <!-- Nextcloud internal classes -->
                 <referencedClass name="OC_App"/>
                 <referencedClass name="OCP\WorkflowEngine\IEntity"/>
