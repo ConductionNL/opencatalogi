@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					:label="t('opencatalogi', 'Automatically share')"
+					:label="t('opencatalogi', 'Automatically publish')"
 					type="switch"
 					:checked.sync="share">
-					{{ t('opencatalogi', 'Automatically share') }}
+					{{ t('opencatalogi', 'Automatically publish') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
