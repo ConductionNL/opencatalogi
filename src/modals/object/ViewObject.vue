@@ -943,6 +943,7 @@ export default {
 		// Listen to tags updates from UploadFiles modal
 		EventBus.$on('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 		EventBus.$on('upload-files:closed', this.onUploadFilesClosed)
+		EventBus.$on('upload-files:uploaded', this.onUploadFilesUploaded)
 		// Fetch current user's groups for schema rights filtering.
 		// Only apply filtering when we receive real group data; keep null on any failure so all schemas remain visible.
 		fetch('/ocs/v1.php/cloud/user?format=json', { headers: { 'OCS-APIREQUEST': 'true' } })
@@ -959,6 +960,7 @@ export default {
 		try {
 			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
+			EventBus.$off('upload-files:uploaded', this.onUploadFilesUploaded)
 		} catch (e) {
 			// ignore
 		}
@@ -979,6 +981,11 @@ export default {
 			} catch (e) {
 				console.error('Failed to apply updated tags from UploadFiles', e)
 			}
+		},
+		onUploadFilesUploaded(payload) {
+			if (!this.currentObject) return
+			if (payload?.publicationId && payload.publicationId !== this.currentObject.id) return
+			this.refreshFiles({ _page: this.filesCurrentPage, _limit: this.filesCurrentPageSize })
 		},
 		onUploadFilesClosed(payload) {
 			try {
