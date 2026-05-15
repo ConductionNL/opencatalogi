@@ -233,6 +233,7 @@ OC.L10N.register(
 		"Do you want to lock {name}? Locking an object prevents other users from modifying it until it is unlocked. You can specify an optional process name to indicate why it's locked and a duration after which it will automatically unlock. Only the user who locked the object or an administrator can unlock it before the duration expires.": "Wilt u {name} vergrendelen? Vergrendelen voorkomt dat andere gebruikers het kunnen wijzigen totdat het wordt ontgrendeld. U kunt optioneel een procesnaam opgeven om aan te geven waarom het vergrendeld is en een duur waarna het automatisch wordt ontgrendeld. Alleen de gebruiker die het object heeft vergrendeld of een beheerder kan het voor het verstrijken van de duur ontgrendelen.",
 		"Do you want to publish the publication {name}?": "Wilt u de publicatie {name} publiceren?",
 		"Documentation": "Documentatie",
+		"Done": "Klaar",
 		"Download": "Downloaden",
 		"Download {name}": "{name} downloaden",
 		"Draft": "Concept",
