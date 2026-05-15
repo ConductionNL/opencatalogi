@@ -90,7 +90,7 @@ OC.L10N.register(
 		"Author": "Author",
 		"Auto publish attachments": "Auto publish attachments",
 		"Auto publish objects": "Auto publish objects",
-		"Automatically share": "Automatically share",
+		"Automatically publish": "Automatically publish",
 		"Available": "Available",
 		"Available facets": "Available facets",
 		"Back": "Back",
