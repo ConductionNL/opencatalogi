@@ -1001,11 +1001,11 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-    color: var(--color-success);
+    color: var(--color-element-success);
 }
 
 .failed {
-    color: var(--color-error);
+    color: var(--color-element-error);
 }
 
 .buttonContainer {

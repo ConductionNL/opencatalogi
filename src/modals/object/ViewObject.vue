@@ -2090,11 +2090,11 @@ export default {
 }
 
 .error-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 
 .warning-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .lock-icon {
@@ -2178,11 +2178,11 @@ export default {
 }
 
 .warningIcon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .publishedIcon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .tab-title {
@@ -2245,15 +2245,15 @@ export default {
 }
 
 .published-icon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .draft-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .depublished-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 
 /* Files info card */
