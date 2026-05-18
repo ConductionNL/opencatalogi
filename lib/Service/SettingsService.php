@@ -359,6 +359,7 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            'gebruik',
         ];
         $data['openRegisters']      = false;
         $data['availableRegisters'] = [];
@@ -712,6 +713,7 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            'gebruik',
         ];
 
         // Build a map of schema slugs to schema IDs.
