@@ -319,10 +319,10 @@
 }
 
 .publishedIcon > svg {
-  fill: var(--color-success);
+  fill: var(--color-element-success);
 }
 .warningIcon > svg {
-  fill: var(--color-warning);
+  fill: var(--color-element-warning);
 }
 
 .tabPagination {
