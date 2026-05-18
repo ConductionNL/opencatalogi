@@ -1,0 +1,37 @@
+{
+  "spec": "openspec/changes/deelnames-gebruik",
+  "verified": [
+    {
+      "task": "2",
+      "file": "lib/Service/ViewService.php",
+      "ok": true
+    },
+    {
+      "task": "3",
+      "file": "lib/Controller/ViewEnrichmentController.php",
+      "ok": true
+    },
+    {
+      "task": "3",
+      "file": "appinfo/routes.php",
+      "ok": true
+    },
+    {
+      "task": "4",
+      "file": "lib/Service/SettingsService.php",
+      "ok": true
+    },
+    {
+      "task": "5",
+      "file": "tests/Unit/Service/ViewServiceTest.php",
+      "ok": true
+    },
+    {
+      "task": "5",
+      "file": "tests/Unit/Controller/ViewEnrichmentControllerTest.php",
+      "ok": true
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}
