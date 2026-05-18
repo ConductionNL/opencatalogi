@@ -270,7 +270,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</template>
 						{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
 					</NcButton>
-					<NcButton type="primary" @click="closeDialog()">
+					<NcButton type="primary"
+						:disabled="loading || retryLoading"
+						@click="closeDialog()">
 						{{ t('opencatalogi', 'Done') }}
 					</NcButton>
 				</div>
