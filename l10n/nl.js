@@ -90,7 +90,7 @@ OC.L10N.register(
 		"Author": "Auteur",
 		"Auto publish attachments": "Bijlagen automatisch publiceren",
 		"Auto publish objects": "Objecten automatisch publiceren",
-		"Automatically share": "Automatisch delen",
+		"Automatically publish": "Automatisch publiceren",
 		"Available": "Beschikbaar",
 		"Available facets": "Beschikbare facetten",
 		"Back": "Terug",
