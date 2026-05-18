@@ -757,6 +757,7 @@ OC.L10N.register(
 		"This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.": "This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.",
 		"This listing has no organization.": "This listing has no organization.",
 		"This organization is not validated with a certificate.": "This organization is not validated with a certificate.",
+		"This page is read-only. Only administrators can create, edit, or delete entries here.": "This page is read-only. Only administrators can create, edit, or delete entries here.",
 		"This publication is NOT publicly accessible": "This publication is NOT publicly accessible",
 		"This publication is publicly accessible": "This publication is publicly accessible",
 		"This schema does not support depublishing. Ask your IT manager for help.": "This schema does not support depublishing. Ask your IT manager for help.",
