@@ -15,7 +15,7 @@ import { navigationStore } from './../store/store.js'
 		<ViewPageModal />
 		<ViewThemeModal />
 		<!--Specific-->
-		<EditAttachmentModal />
+		<EditAttachmentModal v-if="navigationStore.modal === 'editAttachment'" />
 		<AddDirectoryModal />
 		<EditListingModal v-if="navigationStore.modal === 'editListing'" />
 		<PageContentForm v-if="navigationStore.modal === 'pageContentForm'" />

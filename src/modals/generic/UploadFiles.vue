@@ -141,23 +141,6 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</div>
 					</div>
 				</div>
-				<div v-if="!files">
-					{{ t('opencatalogi', 'No files selected') }}
-				</div>
-				<div v-if="files" class="uploadSummaryContainer">
-					<span class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
-					<div class="buttonContainer">
-						<NcButton v-if="failedCount > 0"
-							type="primary"
-							:disabled="loading || retryLoading"
-							@click="retryAllFailed">
-							<template #icon>
-								<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
-							</template>
-							{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
-						</NcButton>
-					</div>
-				</div>
 				<table v-if="files" class="files-table">
 					<thead>
 						<tr class="files-table-tr">
@@ -271,6 +254,28 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</tr>
 					</tbody>
 				</table>
+			</div>
+			<div class="modalFooter">
+				<div class="modalFooterStatus">
+					<span v-if="!files">{{ t('opencatalogi', 'No files selected') }}</span>
+					<span v-if="files" class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
+				</div>
+				<div class="buttonContainer">
+					<NcButton v-if="files && failedCount > 0"
+						type="secondary"
+						:disabled="loading || retryLoading"
+						@click="retryAllFailed">
+						<template #icon>
+							<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
+						</template>
+						{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
+					</NcButton>
+					<NcButton type="primary"
+						:disabled="loading || retryLoading"
+						@click="closeDialog()">
+						{{ t('opencatalogi', 'Done') }}
+					</NcButton>
+				</div>
 			</div>
 		</div>
 	</NcModal>
@@ -876,6 +881,23 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 
 .container {
 	padding-inline: 25px;
+}
+
+.modalFooter {
+	position: relative;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 10px;
+	padding: 0 25px 15px 25px;
+}
+
+.modalFooterStatus {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	color: var(--color-text-maxcontrast);
+	pointer-events: none;
 }
 
 .files-table-name-wrong > span {
