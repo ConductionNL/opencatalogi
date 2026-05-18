@@ -109,7 +109,6 @@ class ViewEnrichmentController extends Controller
      *
      * @return Response The CORS preflight response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      */
@@ -149,7 +148,6 @@ class ViewEnrichmentController extends Controller
      *
      * @return JSONResponse The enriched view data.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

@@ -60,7 +60,7 @@ return [
 		['name' => 'listings#preflightedCors', 'url' => '/api/listings/sync', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'url' => '/api/listings/add', 'verb' => 'OPTIONS'],
 		// View Enrichment CORS
-		['name' => 'view_enrichment#preflightedCors', 'url' => '/api/view-enrichment', 'verb' => 'OPTIONS'],
+		['name' => 'viewEnrichment#preflightedCors', 'url' => '/api/view-enrichment', 'verb' => 'OPTIONS'],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 * 
@@ -95,7 +95,7 @@ return [
 		// Health check endpoint (specific route - must be before wildcard catalog routes).
 		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// View Enrichment (specific route - must be before wildcard catalog routes)
-		['name' => 'view_enrichment#index', 'url' => '/api/view-enrichment', 'verb' => 'GET'],
+		['name' => 'viewEnrichment#index', 'url' => '/api/view-enrichment', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		// Federation (specific route - must be before wildcard catalog routes)
