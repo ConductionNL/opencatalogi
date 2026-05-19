@@ -12,24 +12,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<div v-if="success === null" class="publish-step">
 			<NcNoteCard type="info">
 				<template v-if="operation === 'publish'">
-					Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.
+					{{ t('opencatalogi', 'Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.') }}
 				</template>
 				<template v-else>
-					Selected attachments will be depublished immediately and will no longer be publicly accessible.
+					{{ t('opencatalogi', 'Selected attachments will be depublished immediately and will no longer be publicly accessible.') }}
 				</template>
 			</NcNoteCard>
 
 			<SelectAttachmentsList
-				:title="`Selected Attachments`"
-				:empty-title="`No attachments selected`"
-				:empty-description="`No attachments are currently selected.`"
+				:title="t('opencatalogi', 'Selected Attachments')"
+				:empty-title="t('opencatalogi', 'No attachments selected')"
+				:empty-description="t('opencatalogi', 'No attachments are currently selected.')"
 				:attachments="filteredAttachmentIds"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
 			<p>
-				{{ operation === 'publish' ? 'Attachment' : 'Attachment' }}{{ originalSelectedCount > 1 ? 's' : '' }} successfully {{ operation === 'publish' ? 'published' : 'depublished' }}
+				{{ operation === 'publish' ? t('opencatalogi', 'Attachment successfully published') : t('opencatalogi', 'Attachment successfully depublished') }}
 			</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
@@ -41,7 +41,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
+				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="loading || (attachments?.length || 0) === 0"
@@ -52,7 +52,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<Publish v-if="!loading && operation === 'publish'" :size="20" />
 					<LockOutline v-if="!loading && operation === 'depublish'" :size="20" />
 				</template>
-				{{ operation === 'publish' ? 'Publish' : 'Depublish' }}
+				{{ operation === 'publish' ? t('opencatalogi', 'Publish') : t('opencatalogi', 'Depublish') }}
 			</NcButton>
 		</template>
 	</NcDialog>

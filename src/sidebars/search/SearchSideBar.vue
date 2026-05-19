@@ -59,10 +59,10 @@ const sortOptions = computed(() => [
 	{ value: 'relevance', label: t('opencatalogi', 'Relevance'), field: null, direction: null },
 	{ value: 'title-asc', label: t('opencatalogi', 'Title A-Z'), field: 'title', direction: 'ASC' },
 	{ value: 'title-desc', label: t('opencatalogi', 'Title Z-A'), field: 'title', direction: 'DESC' },
-	{ value: 'modified-desc', label: t('opencatalogi', 'Recently Modified'), field: '@self.updated', direction: 'DESC' },
-	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest First'), field: '@self.updated', direction: 'ASC' },
-	{ value: 'created-desc', label: t('opencatalogi', 'Recently Created'), field: '@self.created', direction: 'DESC' },
-	{ value: 'created-asc', label: t('opencatalogi', 'Oldest Created'), field: '@self.created', direction: 'ASC' },
+	{ value: 'modified-desc', label: t('opencatalogi', 'Recently modified'), field: '@self.updated', direction: 'DESC' },
+	{ value: 'modified-asc', label: t('opencatalogi', 'Oldest first'), field: '@self.updated', direction: 'ASC' },
+	{ value: 'created-desc', label: t('opencatalogi', 'Recently created'), field: '@self.created', direction: 'DESC' },
+	{ value: 'created-asc', label: t('opencatalogi', 'Oldest created'), field: '@self.created', direction: 'ASC' },
 ])
 
 const hasActiveFilters = computed(() => {
@@ -285,26 +285,26 @@ watch([
 <template>
 	<NcAppSidebar
 		ref="sidebar"
-		name="Search Publications"
-		subtitle="Filter and explore publications"
+		:name="t('opencatalogi', 'Search Publications')"
+		:subtitle="t('opencatalogi', 'Filter and explore publications')"
 		subname="Across all federated catalogs"
 		:open="sidebarOpen"
 		@update:open="(e) => updateSidebarOpen(e)">
-		<NcAppSidebarTab id="search-tab" name="Search" :order="1">
+		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
 
 			<!-- Search Section -->
 			<div class="search-section">
-				<h3>{{ t('opencatalogi', 'Search Publications') }}</h3>
+				<h3>{{ t('opencatalogi', 'Search publications') }}</h3>
 
 				<!-- Search input -->
 				<div class="search-group">
 					<input
 						v-model="searchTerm"
 						type="search"
-						placeholder="Type to search publications..."
+						:placeholder="t('opencatalogi', 'Type to search publications...')"
 						class="search-input"
 						:aria-label="t('opencatalogi', 'Search publications')">
 
@@ -322,7 +322,7 @@ watch([
 
 				<!-- Filter Results Section -->
 				<div v-if="searchStore.hasFacetResults && Object.keys(searchStore.getActiveFacets).length > 0" class="filter-results-section">
-					<h4>{{ t('opencatalogi', 'Filter Results') }}</h4>
+					<h4>{{ t('opencatalogi', 'Filter results') }}</h4>
 
 					<div class="filter-results-list">
 						<div v-for="(facetResult, fieldName) in searchStore.currentFacets"
@@ -343,7 +343,7 @@ watch([
 
 				<!-- Quick filters -->
 				<div class="quick-filters">
-					<h4>{{ t('opencatalogi', 'Quick Filters') }}</h4>
+					<h4>{{ t('opencatalogi', 'Quick filters') }}</h4>
 
 					<!-- Sort options -->
 					<div class="filter-group">
@@ -359,7 +359,7 @@ watch([
 
 					<!-- View mode toggle -->
 					<div class="filter-group">
-						<label>{{ t('opencatalogi', 'View Mode') }}</label>
+						<label>{{ t('opencatalogi', 'View mode') }}</label>
 						<div class="view-mode-toggle">
 							<NcButton
 								:type="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
@@ -385,7 +385,7 @@ watch([
 
 				<!-- Active filters display -->
 				<div v-if="hasActiveFilters" class="active-filters">
-					<h4>{{ t('opencatalogi', 'Active Filters') }}</h4>
+					<h4>{{ t('opencatalogi', 'Active filters') }}</h4>
 					<div class="active-filters-list">
 						<div v-for="(value, key) in searchStore.getFilters"
 							:key="`filter-${key}`"
@@ -406,14 +406,14 @@ watch([
 						type="tertiary"
 						:aria-label="t('opencatalogi', 'Clear all filters')"
 						@click="clearAllFilters">
-						{{ t('opencatalogi', 'Clear All Filters') }}
+						{{ t('opencatalogi', 'Clear all filters') }}
 					</NcButton>
 				</div>
 
 				<!-- Faceted Filtering Section -->
 				<div class="facets-section">
 					<div class="facets-header">
-						<h3>{{ t('opencatalogi', 'Faceted Filtering') }}</h3>
+						<h3>{{ t('opencatalogi', 'Faceted filtering') }}</h3>
 						<NcButton
 							type="tertiary"
 							:disabled="searchStore.isFacetsLoading"

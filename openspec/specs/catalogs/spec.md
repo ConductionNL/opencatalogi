@@ -22,7 +22,8 @@ Catalogs are the top-level organizational unit in OpenCatalogi. A catalog groups
 | CAT-008 | CORS preflight OPTIONS responses must be supported on all catalog endpoints | Must | Implemented |
 | CAT-009 | Public catalog endpoints must use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations | Must | Implemented |
 | CAT-010 | Multi-schema and multi-register catalogs must be supported (a single catalog can span multiple schemas/registers) | Should | Implemented |
-| CAT-011 | Automatic cache invalidation/warmup via CatalogCacheEventListener on object create/update/delete | Should | Implemented |
+| CAT-011 | Automatic cache invalidation/warmup via CatalogCacheEventListener on object create/update/delete (post-save). Slug-to-ID normalisation of `registers`/`schemas` happens via CatalogSchemaEventListener on the **pre-save** events (`ObjectCreatingEvent`, `ObjectUpdatingEvent`) using `setModifiedData(...)`, never via a second `saveObject` call. | Should | Implemented |
+| CAT-012 | No catalog event listener may trigger a re-save of the originating object from a post-save event handler. Listeners that need to mutate the entity MUST subscribe to the pre-save events and use `setModifiedData(...)`. | Must | Implemented |
 
 ## Data Model
 
@@ -100,7 +101,7 @@ getCatalogBySlug("publications")
 
 ### Automatic Cache Invalidation via Events
 
-The `CatalogCacheEventListener` (`lib/Listener/CatalogCacheEventListener.php`) is registered in Application.php for three OpenRegister events:
+The `CatalogCacheEventListener` (`lib/Listener/CatalogCacheEventListener.php`) is registered in Application.php for three OpenRegister **post-save** events:
 
 | Event | Action |
 |-------|--------|
@@ -108,7 +109,17 @@ The `CatalogCacheEventListener` (`lib/Listener/CatalogCacheEventListener.php`) i
 | `ObjectUpdatedEvent` | If object is a catalog, warmup cache for its slug (invalidate + re-fetch) |
 | `ObjectDeletedEvent` | If object is a catalog, invalidate cache for its slug |
 
-The listener checks if the affected object matches the `catalog_schema` and `catalog_register` from IAppConfig before performing any cache operations. Non-catalog objects are silently ignored.
+The listener checks if the affected object matches the `catalog_schema` and `catalog_register` from IAppConfig before performing any cache operations. Non-catalog objects are silently ignored. The cache listener is read-only with respect to the catalog object — it MUST NOT call `saveObject(...)` (or any persistence operation) on the entity that triggered the event, otherwise the resulting `ObjectUpdatedEvent` would re-enter the same listener (CAT-012).
+
+### Catalog Object Normalisation via Pre-Save Events
+
+The `CatalogSchemaEventListener` (`lib/Listener/CatalogSchemaEventListener.php`) is registered for the **pre-save** events `ObjectCreatingEvent` and `ObjectUpdatingEvent`. When a catalog object is about to be persisted, the listener resolves any slug-or-uuid values in the `registers` and `schemas` arrays into integer IDs and pushes the rewritten values back to the in-flight save via `$event->setModifiedData([...])`. OpenRegister's `MagicMapper` merges that payload into the single write that triggered the event, so no second save is needed.
+
+This listener:
+- MUST NOT call `saveObject(...)` or any persistence operation on the entity (CAT-012).
+- MUST NOT call `stopPropagation()` — failure to resolve a slug is logged, and the original (un-rewritten) data flows through unchanged so the user's save is never blocked.
+
+A previous implementation subscribed this listener to the post-save events and called `CatalogiService::rewriteSchemasAndRegisters()`, which internally invoked `saveObject(...)` and re-emitted `ObjectUpdatedEvent`. That caused an infinite event loop on every catalog update and soft-delete (soft-delete reaches the loop because `DeleteObject` performs the soft-delete via `MagicMapper::update()`, which dispatches `ObjectUpdatedEvent`). The deprecated wrapper `CatalogiService::rewriteSchemasAndRegisters(ObjectEntity)` is preserved for backwards compatibility but is no longer used by any in-tree caller; new code MUST use `CatalogiService::computeRewrittenRegistersAndSchemas(array)` from a pre-save listener.
 
 ## Scenarios
 
@@ -153,11 +164,35 @@ The listener checks if the affected object matches the `catalog_schema` and `cat
 - THEN CatalogCacheEventListener invalidates the cache for "old-catalog"
 - AND subsequent requests return null until a new catalog with that slug is created
 
+### Scenario: Catalog update with slug-valued registers persists in a single save
+- GIVEN a catalog object whose JSON contains `"registers": ["my-register"]` (slug, not numeric ID)
+- WHEN the catalog is saved via `ObjectService::saveObject(...)`
+- THEN CatalogSchemaEventListener handles the pre-save `ObjectUpdatingEvent` and calls `$event->setModifiedData(['registers' => [<integer-id>]])`
+- AND MagicMapper merges the modified data into the in-flight save
+- AND exactly **one** `ObjectUpdatedEvent` is dispatched as a result of the save
+- AND the request returns within the standard PHP request budget (no hang)
+
+### Scenario: Catalog soft-delete returns promptly
+- GIVEN any catalog object
+- WHEN it is soft-deleted via `ObjectService::deleteObject(...)`
+- THEN the request returns within the standard PHP request budget
+- AND no listener issues an additional `update` or `saveObject` on the same entity during deletion handling
+- AND the slug cache for the catalog is invalidated by the post-save `CatalogCacheEventListener`
+
+### Scenario: Pre-save normalisation failure does not block the save
+- GIVEN a catalog object with a `registers` entry that does not resolve to an existing register
+- WHEN the catalog is saved
+- THEN the pre-save `CatalogSchemaEventListener` logs the resolution failure
+- AND the listener does NOT call `stopPropagation()` on the event
+- AND the save proceeds with the original (un-rewritten) data
+- AND the user receives a successful response
+
 ## Dependencies
 
 - **OpenRegister** - ObjectService for data persistence and searchObjectsPaginated for queries
 - **Nextcloud IAppConfig** - Stores catalog_schema and catalog_register configuration keys
 - **Nextcloud ICacheFactory** - Distributed cache for catalog slug lookups (1-hour TTL)
 - **CatalogiService** - Business logic layer for catalog operations and caching
-- **CatalogCacheEventListener** - Automatic cache management on OpenRegister object events
-- **OpenRegister Events** - ObjectCreatedEvent, ObjectUpdatedEvent, ObjectDeletedEvent for cache triggers
+- **CatalogCacheEventListener** - Automatic cache management on OpenRegister post-save events (read-only with respect to the catalog object)
+- **CatalogSchemaEventListener** - Pre-save normalisation of `registers`/`schemas` slug-or-uuid values into integer IDs via `setModifiedData(...)`
+- **OpenRegister Events** - `ObjectCreatedEvent` / `ObjectUpdatedEvent` / `ObjectDeletedEvent` for cache triggers, `ObjectCreatingEvent` / `ObjectUpdatingEvent` for normalisation

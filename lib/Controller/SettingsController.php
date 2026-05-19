@@ -32,7 +32,6 @@ use RuntimeException;
  */
 class SettingsController extends Controller
 {
-
     /**
      * SettingsController constructor.
      *

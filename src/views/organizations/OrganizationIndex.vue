@@ -1,8 +1,3 @@
-<script setup>
-import { translate as t } from '@nextcloud/l10n'
-import { navigationStore, objectStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -25,7 +20,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:show-mass-delete="false"
 		:view-mode="viewMode"
 		:schema="organizationSchema"
-		:add-label="t('opencatalogi', 'Add Organization')"
+		:add-label="t('opencatalogi', 'Add organization')"
+		:show-add="isAdmin"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No organizations found')"
 		:refreshing="isRefreshing"
@@ -38,6 +34,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<template #below-header>
+			<NcNoteCard v-if="loaded && !isAdmin" type="info">
+				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+			</NcNoteCard>
+		</template>
+
 		<!-- Form fields for create/edit dialog -->
 		<template #form-fields="{ formData, errors, updateField }">
 			<div class="formContainer">
@@ -86,39 +88,55 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</template>
 
 		<!-- Mass actions -->
-		<template #action-items>
+		<template v-if="isAdmin" #action-items>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDelete">
-				<template #icon><Delete :size="20" /></template>
-				{{ t('opencatalogi', 'Delete Selected') }}
+				<template #icon>
+					<Delete :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Delete selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassPublish">
-				<template #icon><PublishIcon :size="20" /></template>
-				{{ t('opencatalogi', 'Publish Selected') }}
+				<template #icon>
+					<PublishIcon :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Publish selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDepublish">
-				<template #icon><PublishOffIcon :size="20" /></template>
-				{{ t('opencatalogi', 'Depublish Selected') }}
+				<template #icon>
+					<PublishOffIcon :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Depublish selected') }}
 			</NcActionButton>
 		</template>
 
 		<!-- Row actions -->
 		<template #row-actions="{ row }">
 			<NcActions>
-				<template #icon><DotsHorizontal :size="20" /></template>
+				<template #icon>
+					<DotsHorizontal :size="20" />
+				</template>
 				<NcActionButton close-after-click @click="viewOrganization(row)">
-					<template #icon><Eye :size="20" /></template>
+					<template #icon>
+						<Eye :size="20" />
+					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
-					<template #icon><Pencil :size="20" /></template>
+				<NcActionButton v-if="isAdmin" close-after-click @click="$refs.indexPage.openFormDialog(row)">
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="copyOrganization(row)">
-					<template #icon><ContentCopy :size="20" /></template>
+				<NcActionButton v-if="isAdmin" close-after-click @click="copyOrganization(row)">
+					<template #icon>
+						<ContentCopy :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="deleteOrganization(row)">
-					<template #icon><TrashCanOutline :size="20" /></template>
+				<NcActionButton v-if="isAdmin" close-after-click @click="deleteOrganization(row)">
+					<template #icon>
+						<TrashCanOutline :size="20" />
+					</template>
 					{{ t('opencatalogi', 'Delete') }}
 				</NcActionButton>
 			</NcActions>
@@ -127,8 +145,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcTextField, NcTextArea } from '@nextcloud/vue'
+import { translate as t } from '@nextcloud/l10n'
+import { NcActions, NcActionButton, NcTextField, NcTextArea, NcNoteCard } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
+import { navigationStore, objectStore } from '../../store/store.js'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -141,8 +162,24 @@ import PublishOffIcon from 'vue-material-design-icons/PublishOff.vue'
 export default {
 	name: 'OrganizationIndex',
 	components: {
-		CnIndexPage, NcActions, NcActionButton, NcTextField, NcTextArea,
-		DotsHorizontal, Eye, Pencil, ContentCopy, TrashCanOutline, Delete, PublishIcon, PublishOffIcon,
+		CnIndexPage,
+		NcActions,
+		NcActionButton,
+		NcTextField,
+		NcTextArea,
+		NcNoteCard,
+		DotsHorizontal,
+		Eye,
+		Pencil,
+		ContentCopy,
+		TrashCanOutline,
+		Delete,
+		PublishIcon,
+		PublishOffIcon,
+	},
+	setup() {
+		const { isAdmin, loaded } = useIsAdmin()
+		return { isAdmin, loaded, objectStore, navigationStore }
 	},
 	data() {
 		return { selectedIds: [], viewMode: 'table', isRefreshing: false }
@@ -185,6 +222,7 @@ export default {
 	},
 	mounted() { objectStore.fetchCollection('organization') },
 	methods: {
+		t,
 		onAdd() { objectStore.clearActiveObject('organization'); this.$refs.indexPage.openFormDialog(null) },
 		async onSaveOrganization(formData) {
 			try {
@@ -194,7 +232,7 @@ export default {
 			} catch (error) { this.$refs.indexPage.setFormResult({ error: error.message || 'Failed to save organization' }) }
 		},
 		async handleRefresh() { this.isRefreshing = true; try { await objectStore.fetchCollection('organization') } finally { this.isRefreshing = false } },
-		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page }) },
+		onPageChange(page) { objectStore.fetchCollection('organization', { _page: page, _limit: this.currentPagination.limit || 20 }) },
 		onPageSizeChange(size) { objectStore.fetchCollection('organization', { _page: 1, _limit: size }) },
 		onSelect(ids) { this.selectedIds = ids; objectStore.setSelectedObjects(ids) },
 		onRowClick(row) { objectStore.setActiveObject('organization', row); navigationStore.setModal('viewOrganization') },

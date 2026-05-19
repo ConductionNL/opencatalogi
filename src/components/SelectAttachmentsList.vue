@@ -33,7 +33,7 @@ import { objectStore } from '../store/store.js'
 					</div>
 					<NcButton v-if="showRemove"
 						type="tertiary"
-						:aria-label="`Remove ${getObjectName(attachment)}`"
+						:aria-label="t('opencatalogi', 'Remove {name}', { name: getObjectName(attachment) })"
 						@click="removeObject(attachment.id)">
 						<template #icon>
 							<Close :size="20" />
@@ -173,7 +173,7 @@ export default {
 
 		/**
 		 * Format file size (bytes to human-readable)
-		 * @param {number} bytes
+		 * @param {number} bytes - File size in bytes to format
 		 * @return {string}
 		 */
 		formatFileSize(bytes) {
