@@ -13,8 +13,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
  *
- * @version   GIT: <git_id>
- * @link      https://www.OpenCatalogi.nl
+ * @version GIT: <git_id>
+ * @link    https://www.OpenCatalogi.nl
  */
 
 namespace OCA\OpenCatalogi\Service;
