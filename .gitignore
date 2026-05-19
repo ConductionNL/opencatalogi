@@ -50,3 +50,8 @@ Thumbs.db
 sbom.cdx.json
 bom-php.cdx.json
 bom-npm.cdx.json
+
+# Playwright e2e artefacts (ADR-030 / journeydoc)
+tests/e2e/.auth/
+tests/e2e/playwright-report/
+tests/e2e/test-results/

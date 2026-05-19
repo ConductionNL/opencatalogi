@@ -1,0 +1,8 @@
+{
+	"label": "Tutorials",
+	"position": 3,
+	"link": {
+		"type": "generated-index",
+		"description": "Hands-on, step-by-step walkthroughs for OpenCatalogi. User track gets you productive with browsing catalogues, finding components, subscribing to federated sources, and publishing items. Admin track covers catalogue configuration, federation, and instance-wide settings."
+	}
+}
