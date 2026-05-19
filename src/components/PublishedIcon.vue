@@ -95,14 +95,14 @@ export default {
 <style scoped>
 /* Publication status icon colors */
 .published-icon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .unpublished-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .depublished-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 </style>
