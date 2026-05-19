@@ -15,7 +15,7 @@ import { navigationStore } from './../store/store.js'
 		<ViewPageModal />
 		<ViewThemeModal />
 		<!--Specific-->
-		<EditAttachmentModal />
+		<EditAttachmentModal v-if="navigationStore.modal === 'editAttachment'" />
 		<AddDirectoryModal />
 		<EditListingModal v-if="navigationStore.modal === 'editListing'" />
 		<PageContentForm v-if="navigationStore.modal === 'pageContentForm'" />
@@ -27,7 +27,6 @@ import { navigationStore } from './../store/store.js'
 		<!-- Object Modals -->
 		<ViewObject v-if="navigationStore.modal === 'viewObject'" />
 
-		<DeleteObject />
 		<MergeObject v-if="navigationStore.modal === 'mergeObject'" />
 		<UploadObject v-if="navigationStore.modal === 'uploadObject'" />
 		<DownloadObject />

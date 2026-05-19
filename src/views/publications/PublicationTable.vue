@@ -26,6 +26,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		:show-mass-delete="false"
 		:view-mode="viewMode"
 		:add-label="t('opencatalogi', 'Add Publication')"
+		:add-disabled="!canAddPublication"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No publications found')"
 		:refreshing="isRefreshing"
@@ -40,7 +41,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Mass actions -->
 		<template #action-items>
 			<NcActionButton close-after-click
-				:disabled="selectedPublicationIds.length === 0"
+				:disabled="selectedPublicationIds.length === 0 || !canBulkDelete"
 				@click="bulkDeletePublications">
 				<template #icon>
 					<Delete :size="20" />
@@ -48,7 +49,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ t('opencatalogi', 'Delete Selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click
-				:disabled="selectedPublicationIds.length === 0"
+				:disabled="selectedPublicationIds.length === 0 || !canBulkUpdate"
 				@click="bulkPublishPublications">
 				<template #icon>
 					<Publish :size="20" />
@@ -56,7 +57,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				{{ t('opencatalogi', 'Publish Selected') }}
 			</NcActionButton>
 			<NcActionButton close-after-click
-				:disabled="selectedPublicationIds.length === 0"
+				:disabled="selectedPublicationIds.length === 0 || !canBulkUpdate"
 				@click="bulkDepublishPublications">
 				<template #icon>
 					<PublishOff :size="20" />
@@ -146,6 +147,7 @@ export default {
 		return {
 			viewMode: 'table',
 			isRefreshing: false,
+			currentUserGroups: null,
 		}
 	},
 	computed: {
@@ -163,6 +165,40 @@ export default {
 		currentPagination() {
 			return catalogStore.publicationPagination || { page: 1, limit: 20, total: 0, pages: 0 }
 		},
+		canBulkDelete() {
+			if (this.currentUserGroups === null) return true
+			const selected = this.filteredPublications.filter(pub =>
+				this.selectedPublicationIds.includes(pub['@self']?.id || pub.id),
+			)
+			return selected.length > 0
+				&& selected.every(pub => this.hasSchemaActionRight(this.getSchemaForRow(pub), 'delete'))
+		},
+		canBulkUpdate() {
+			if (this.currentUserGroups === null) return true
+			const selected = this.filteredPublications.filter(pub =>
+				this.selectedPublicationIds.includes(pub['@self']?.id || pub.id),
+			)
+			return selected.length > 0
+				&& selected.every(pub => this.hasSchemaActionRight(this.getSchemaForRow(pub), 'update'))
+		},
+		canAddPublication() {
+			// While groups are loading keep the button enabled
+			if (this.currentUserGroups === null) return true
+
+			const catalogSlug = this.$route.params.catalogSlug
+			if (!catalogSlug) return true
+
+			const catalog = objectStore.getCollection('catalog').results.find(c => c.slug === catalogSlug)
+			if (!catalog) return true
+
+			const catalogSchemaIds = catalog.schemas || []
+			if (catalogSchemaIds.length === 0) return false
+
+			return catalogSchemaIds.some(schemaId => {
+				const schema = objectStore.availableSchemas.find(s => s.id === schemaId)
+				return schema ? this.hasSchemaReadRight(schema) : false
+			})
+		},
 		selectedPublicationIds() {
 			return (objectStore.selectedObjects || []).map(obj =>
 				obj.id || obj['@self']?.id,
@@ -174,18 +210,20 @@ export default {
 					label: t('opencatalogi', 'Edit'),
 					icon: Pencil,
 					handler: (row) => this.viewPublication(row),
+					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
 				},
 				{
 					label: t('opencatalogi', 'Copy'),
 					icon: ContentCopy,
 					handler: (row) => this.copyPublication(row),
+					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'create'),
 				},
 				{
 					label: t('opencatalogi', 'Publish'),
 					icon: Publish,
 					handler: (row) => this.singlePublishPublication(row),
 					visible: (row) => !isPublished(row),
-					disabled: (row) => !schemaHasPublicationDateFields(row),
+					disabled: (row) => !schemaHasPublicationDateFields(row) || !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
 					title: (row) => schemaHasPublicationDateFields(row)
 						? undefined
 						: t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.'),
@@ -195,7 +233,7 @@ export default {
 					icon: PublishOff,
 					handler: (row) => this.singleDepublishPublication(row),
 					visible: (row) => isPublished(row),
-					disabled: (row) => !schemaHasPublicationDateFields(row),
+					disabled: (row) => !schemaHasPublicationDateFields(row) || !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
 					title: (row) => schemaHasPublicationDateFields(row)
 						? undefined
 						: t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.'),
@@ -204,18 +242,29 @@ export default {
 					label: t('opencatalogi', 'Add Attachment'),
 					icon: FilePlusOutline,
 					handler: (row) => this.addAttachment(row),
+					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'create'),
 				},
 				{
 					label: t('opencatalogi', 'Delete'),
 					icon: TrashCanOutline,
 					handler: (row) => this.singleDeletePublication(row),
 					destructive: true,
+					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'delete'),
 				},
 			]
 		},
 	},
 	mounted() {
 		catalogStore.fetchPublications({}, this.$route.params.catalogSlug)
+		fetch('/ocs/v1.php/cloud/user?format=json', { headers: { 'OCS-APIREQUEST': 'true' } })
+			.then(r => r.json())
+			.then(data => {
+				const groups = data?.ocs?.data?.groups
+				if (Array.isArray(groups)) {
+					this.currentUserGroups = groups
+				}
+			})
+			.catch(() => { /* keep null — button stays enabled on error */ })
 	},
 	methods: {
 		getFilesCount(publication) {
@@ -243,6 +292,27 @@ export default {
 		},
 		onPageSizeChanged(pageSize) {
 			catalogStore.fetchPublications({ page: 1, limit: pageSize }, this.$route.params.catalogSlug)
+		},
+		hasSchemaReadRight(schema) {
+			return this.hasSchemaActionRight(schema, 'read')
+		},
+		hasSchemaActionRight(schema, action) {
+			if (this.currentUserGroups === null) return true
+			if (!schema) return true
+			const auth = schema.authorization
+			if (!auth || !auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) return true
+			if (this.currentUserGroups.includes('admin')) return true
+			return auth[action].some(entry => {
+				if (typeof entry === 'string') return this.currentUserGroups.includes(entry)
+				if (entry && typeof entry === 'object' && entry.group) return this.currentUserGroups.includes(entry.group)
+				return true
+			})
+		},
+		getSchemaForRow(row) {
+			const schemaRef = row?.['@self']?.schema
+			if (!schemaRef) return null
+			const schemaId = typeof schemaRef === 'object' ? schemaRef.id : schemaRef
+			return objectStore.availableSchemas.find(s => String(s.id) === String(schemaId)) || null
 		},
 		addPublication() {
 			objectStore.setActiveObject('publication', null)

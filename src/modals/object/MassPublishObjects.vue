@@ -10,21 +10,26 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		@update:open="handleDialogClose">
 		<div v-if="success === null" class="publish-step">
 			<div class="mode-row">
-				<NcSelect v-model="selectedMode"
-					class="mode-row__mode"
-					:options="modeOptions"
-					:clearable="false"
-					:searchable="false"
-					label-attribute="label"
-					:aria-label-combobox="t('opencatalogi', 'Publishing mode')"
-					:disabled="loading">
-					<template #option="option">
-						<span :title="option.title || ''"
-							:class="{ 'mode-option-disabled': option.disabled }">
-							{{ option.label }}
-						</span>
-					</template>
-				</NcSelect>
+				<div class="mode-row__mode">
+					<span v-for="opt in modeOptions"
+						:key="opt.id"
+						class="mode-row__mode-sizer"
+						aria-hidden="true">{{ opt.label }}</span>
+					<NcSelect v-model="selectedMode"
+						:options="modeOptions"
+						:clearable="false"
+						:searchable="false"
+						label-attribute="label"
+						:aria-label-combobox="t('opencatalogi', 'Publishing mode')"
+						:disabled="loading">
+						<template #option="option">
+							<span :title="option.title || ''"
+								:class="{ 'mode-option-disabled': option.disabled }">
+								{{ option.label }}
+							</span>
+						</template>
+					</NcSelect>
+				</div>
 				<NcDateTimePicker v-if="mode === 'later'"
 					:key="'publish-later-date'"
 					class="mode-row__date"
@@ -271,10 +276,10 @@ export default {
 		},
 
 		/**
-		 * Determine if an object is currently published: the most recent of
-		 * publicatiedatum / depublicatiedatum is the publish date. Tiebreaker on
-		 * equal dates: depublish wins (so equal dates means NOT published).
-		 * A future publicatiedatum still counts as published for this modal's UX.
+		 * Determine if an object is currently published (live): publicatiedatum is in
+		 * the past or today, and is more recent than any depublicatiedatum.
+		 * A future publicatiedatum means the publication is scheduled but not yet live,
+		 * so it is not considered "already published" and can be re-targeted to now.
 		 *
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently published
@@ -282,6 +287,8 @@ export default {
 		isAlreadyPublished(obj) {
 			const pub = this.normalizeDate(obj?.publicatiedatum)
 			if (!pub) return false
+			// Future publication date → scheduled but not yet live; allow re-publishing.
+			if (pub > this.today) return false
 			const depub = this.normalizeDate(obj?.depublicatiedatum)
 			if (!depub) return true
 			return pub > depub
@@ -458,9 +465,24 @@ export default {
 }
 
 .mode-row__mode {
-	min-width: 170px;
-	width: auto;
+	display: inline-grid;
 	flex: 0 0 auto;
+	min-width: 170px;
+}
+
+.mode-row__mode-sizer {
+	grid-area: 1 / 1;
+	visibility: hidden;
+	pointer-events: none;
+	white-space: nowrap;
+	padding: 0 40px 0 8px;
+	height: 0;
+	overflow: hidden;
+}
+
+.mode-row__mode :deep(.v-select) {
+	grid-area: 1 / 1;
+	width: 100%;
 }
 
 .mode-row__date {

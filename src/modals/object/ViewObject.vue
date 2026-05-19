@@ -34,7 +34,7 @@ import { EventBus } from '../../eventBus.js'
 							<FolderOutline :size="64" />
 						</template>
 					</NcEmptyContent>
-					<div v-if="catalogOptions.length > 1" class="selectionStep">
+					<div v-if="catalogOptions.length > 1 && !isLockedCatalog" class="selectionStep">
 						<h3>{{ t('opencatalogi', 'Select Catalog') }}</h3>
 						<p>{{ t('opencatalogi', 'Choose the catalog where this publication will be stored.') }}</p>
 						<NcSelect
@@ -521,6 +521,7 @@ export default {
 			selectedRegister: null,
 			selectedSchema: null,
 			showProperties: false,
+			currentUserGroups: null,
 
 			// Validation: turned on after the user tries to save with missing required fields
 			showRequiredFieldError: false,
@@ -677,6 +678,9 @@ export default {
 		someFilesSelected() {
 			return objectStore.selectedAttachments.length > 0 && !this.allFilesSelected
 		},
+		isLockedCatalog() {
+			return !!(this.$route?.params?.catalogSlug)
+		},
 		catalogOptions() {
 			return objectStore.getCollection('catalog').results.map(catalog => ({
 				id: catalog.id,
@@ -722,6 +726,7 @@ export default {
 
 			return objectStore.availableSchemas
 				.filter(schema => validSchemaIds.includes(schema.id))
+				.filter(schema => this.hasSchemaReadRight(schema))
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
@@ -765,6 +770,7 @@ export default {
 				propertyOverrides: this.propertyOverrides,
 				canDropProperty: this.canDropProperty,
 				getDropPropertyTooltip: this.getDropPropertyTooltip,
+				isNew: this.isNewObject,
 			}
 		},
 
@@ -899,6 +905,14 @@ export default {
 				}
 			},
 		},
+		schemaOptions: {
+			handler(newOptions) {
+				// Auto-select schema when rights filtering reduces the options to exactly one
+				if (this.selectedRegister && newOptions.length === 1 && !this.selectedSchema) {
+					this.selectedSchema = newOptions[0]
+				}
+			},
+		},
 		selectedSchema: {
 			handler(newSchema) {
 				if (!newSchema) {
@@ -929,11 +943,24 @@ export default {
 		// Listen to tags updates from UploadFiles modal
 		EventBus.$on('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 		EventBus.$on('upload-files:closed', this.onUploadFilesClosed)
+		EventBus.$on('upload-files:uploaded', this.onUploadFilesUploaded)
+		// Fetch current user's groups for schema rights filtering.
+		// Only apply filtering when we receive real group data; keep null on any failure so all schemas remain visible.
+		fetch('/ocs/v1.php/cloud/user?format=json', { headers: { 'OCS-APIREQUEST': 'true' } })
+			.then(r => r.json())
+			.then(data => {
+				const groups = data?.ocs?.data?.groups
+				if (Array.isArray(groups)) {
+					this.currentUserGroups = groups
+				}
+			})
+			.catch(() => { /* keep null — no filtering on error */ })
 	},
 	destroyed() {
 		try {
 			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
+			EventBus.$off('upload-files:uploaded', this.onUploadFilesUploaded)
 		} catch (e) {
 			// ignore
 		}
@@ -954,6 +981,11 @@ export default {
 			} catch (e) {
 				console.error('Failed to apply updated tags from UploadFiles', e)
 			}
+		},
+		onUploadFilesUploaded(payload) {
+			if (!this.currentObject) return
+			if (payload?.publicationId && payload.publicationId !== this.currentObject.id) return
+			this.refreshFiles({ _page: this.filesCurrentPage, _limit: this.filesCurrentPageSize })
 		},
 		onUploadFilesClosed(payload) {
 			try {
@@ -1043,6 +1075,32 @@ export default {
 		},
 		proceedToProperties() {
 			this.showProperties = true
+		},
+		hasSchemaReadRight(schema) {
+			// While user groups are still loading, show all schemas
+			if (this.currentUserGroups === null) {
+				return true
+			}
+			const auth = schema.authorization
+			// No authorization rules means everyone has access
+			if (!auth || !auth.read || !Array.isArray(auth.read) || auth.read.length === 0) {
+				return true
+			}
+			// Admin group always has full access
+			if (this.currentUserGroups.includes('admin')) {
+				return true
+			}
+			// Check if user belongs to any group that has read permission
+			return auth.read.some(entry => {
+				if (typeof entry === 'string') {
+					return this.currentUserGroups.includes(entry)
+				}
+				// Complex entry with match conditions — check group membership only
+				if (entry && typeof entry === 'object' && entry.group) {
+					return this.currentUserGroups.includes(entry.group)
+				}
+				return true
+			})
 		},
 		applyInitialTabFromTransferData() {
 			const data = navigationStore.getTransferData()
@@ -1514,12 +1572,24 @@ export default {
 			navigationStore.setDialog('uploadFiles')
 		},
 		shouldShowPublishAction(object) {
-			if (!object || !object['@self']) return false
-			return object['@self'].published === null || object['@self'].published === undefined
+			if (!object) return false
+			const now = new Date()
+			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
+			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+
+			if (depublished && depublished < now) return true // currently depublished
+			if (!published && !depublished) return true // never published
+			if (!depublished && published && published > now) return true // scheduled but not yet live
+			return false
 		},
 		shouldShowDepublishAction(object) {
-			if (!object || !object['@self']) return false
-			return object['@self'].published !== null && object['@self'].published !== undefined
+			if (!object) return false
+			const now = new Date()
+			const published = object.publicatiedatum ? new Date(object.publicatiedatum) : null
+			const depublished = object.depublicatiedatum ? new Date(object.depublicatiedatum) : null
+
+			// Currently live: published in the past and not yet depublished
+			return !!(published && published <= now && (!depublished || depublished > now))
 		},
 		openSingleObjectDialog(dialog) {
 			if (!this.currentObject) return
@@ -2027,11 +2097,11 @@ export default {
 }
 
 .error-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 
 .warning-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .lock-icon {
@@ -2115,11 +2185,11 @@ export default {
 }
 
 .warningIcon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .publishedIcon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .tab-title {
@@ -2182,15 +2252,15 @@ export default {
 }
 
 .published-icon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .draft-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .depublished-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 
 /* Files info card */
