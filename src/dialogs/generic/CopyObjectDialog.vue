@@ -136,14 +136,14 @@ const closeDialog = () => {
 <template>
 	<NcDialog
 		v-if="shouldShowDialog"
-		:name="`${dialogTitle}${isMultiple ? 's' : ''} kopiëren`"
+		:name="isMultiple ? t('opencatalogi', 'Copy {type}s', { type: dialogTitle }) : t('opencatalogi', 'Copy {type}', { type: dialogTitle })"
 		:can-close="false">
 		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
 			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} successfully copied</p>
+				<p>{{ isMultiple ? t('opencatalogi', '{type}s successfully copied', { type: dialogTitle }) : t('opencatalogi', '{type} successfully copied', { type: dialogTitle }) }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState(objectType).success" type="error">
-				<p>Something went wrong while copying {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
+				<p>{{ isMultiple ? t('opencatalogi', 'Something went wrong while copying {type}s', { type: dialogTitle.toLowerCase() }) : t('opencatalogi', 'Something went wrong while copying {type}', { type: dialogTitle.toLowerCase() }) }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -151,14 +151,14 @@ const closeDialog = () => {
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'worden' : 'wordt' }} gekopieerd...</span>
+			<span>{{ isMultiple ? t('opencatalogi', '{type}s are being copied...', { type: dialogTitle }) : t('opencatalogi', '{type} is being copied...', { type: dialogTitle }) }}</span>
 		</div>
 		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
 			<template v-if="isMultiple">
-				Do you want to copy the selected {{ dialogTitle.toLowerCase() }}s?
+				{{ t('opencatalogi', 'Do you want to copy the selected {type}s?', { type: dialogTitle.toLowerCase() }) }}
 			</template>
 			<template v-else>
-				Do you want to copy <b>{{ displayName }}</b>?
+				{{ t('opencatalogi', 'Do you want to copy {name}?', { name: displayName }) }}
 			</template>
 		</p>
 		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
@@ -169,7 +169,7 @@ const closeDialog = () => {
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Cancel
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
@@ -179,7 +179,7 @@ const closeDialog = () => {
 				<template #icon>
 					<ContentCopy :size="20" />
 				</template>
-				Copy
+				{{ t('opencatalogi', 'Copy') }}
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -189,7 +189,7 @@ const closeDialog = () => {
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>

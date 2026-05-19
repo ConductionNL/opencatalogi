@@ -10,4 +10,4 @@ jobs:
   deploy:
     uses: ConductionNL/.github/.github/workflows/documentation.yml@main
     with:
-      cname: documentatie.opencatalogi.nl
+      cname: opencatalogi.conduction.nl

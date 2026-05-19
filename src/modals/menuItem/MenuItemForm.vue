@@ -7,14 +7,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? 'Edit Menu Item' : 'Add Menu Item'"
+		:name="isEdit ? t('opencatalogi', 'Edit Menu Item') : t('opencatalogi', 'Add Menu Item')"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
-					<p>Menu item successfully {{ isEdit ? 'edited' : 'added' }}</p>
+					<p>{{ isEdit ? t('opencatalogi', 'Menu item successfully edited') : t('opencatalogi', 'Menu item successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('menu').error" type="error">
 					<p>{{ objectStore.getState('menu').error }}</p>
@@ -24,11 +24,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div v-if="objectStore.getState('menu').success === null" class="tabContainer">
 				<BTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab title="Configuration" active>
+					<BTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-container">
 							<NcTextField
 								:disabled="loading"
-								label="Order"
+								:label="t('opencatalogi', 'Order')"
 								type="number"
 								min="0"
 								:value.sync="menuItem.order"
@@ -38,21 +38,21 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<NcTextField
 								:disabled="loading"
-								label="Name*"
+								:label="t('opencatalogi', 'Name*')"
 								:value.sync="menuItem.name"
 								:error="!!inputValidation.getError(`items.${index}.name`)"
-								:helper-text="inputValidation.getError(`items.${index}.name`) || 'Name is required.'" />
+								:helper-text="inputValidation.getError(`items.${index}.name`) || t('opencatalogi', 'Name is required.')" />
 
 							<NcTextField
 								:disabled="loading"
-								label="Description"
+								:label="t('opencatalogi', 'Description')"
 								:value.sync="menuItem.description"
 								:error="!!inputValidation.getError(`items.${index}.description`)"
 								:helper-text="inputValidation.getError(`items.${index}.description`)" />
 
 							<div v-if="isFooterPosition" class="viewModeSwitchContainer">
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a standard link'"
+									v-tooltip="t('opencatalogi', 'Use a standard link')"
 									:checked="linkMode === 'link'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': linkMode === 'link' }"
@@ -61,10 +61,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setLinkMode('link')">
-									Link
+									{{ t('opencatalogi', 'Link') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a markdown link'"
+									v-tooltip="t('opencatalogi', 'Use a markdown link')"
 									:checked="linkMode === 'markdown'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': linkMode === 'markdown' }"
@@ -73,20 +73,20 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setLinkMode('markdown')">
-									Markdown Link
+									{{ t('opencatalogi', 'Markdown Link') }}
 								</NcCheckboxRadioSwitch>
 							</div>
 
 							<NcTextField
 								:disabled="loading"
-								:label="linkMode === 'markdown' ? 'Markdown Link*' : 'Link*'"
-								:helper-text="inputValidation.getError(`items.${index}.link`) || (linkMode === 'markdown' ? 'Enter a markdown-formatted link (e.g. [Text](https://example.com)) or internal anchor.' : 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.')"
+								:label="linkMode === 'markdown' ? t('opencatalogi', 'Markdown Link*') : t('opencatalogi', 'Link*')"
+								:helper-text="inputValidation.getError(`items.${index}.link`) || (linkMode === 'markdown' ? t('opencatalogi', 'Enter a markdown-formatted link (e.g. [Text](https://example.com)) or internal anchor.') : t('opencatalogi', 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.'))"
 								:value.sync="menuItem.link"
 								:error="!!inputValidation.getError(`items.${index}.link`)" />
 
 							<div v-if="isFooterPosition" class="viewModeSwitchContainer">
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a single-line value'"
+									v-tooltip="t('opencatalogi', 'Use a single-line value')"
 									:checked="valueMode === 'value'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': valueMode === 'value' }"
@@ -95,10 +95,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('value')">
-									Value
+									{{ t('opencatalogi', 'Value') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a title (no link)'"
+									v-tooltip="t('opencatalogi', 'Use a title (no link)')"
 									:checked="valueMode === 'title'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': valueMode === 'title' }"
@@ -107,10 +107,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('title')">
-									Title
+									{{ t('opencatalogi', 'Title') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a multi-row text'"
+									v-tooltip="t('opencatalogi', 'Use a multi-row text')"
 									:checked="valueMode === 'multiRow'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': valueMode === 'multiRow' }"
@@ -119,35 +119,35 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('multiRow')">
-									MultiRow
+									{{ t('opencatalogi', 'MultiRow') }}
 								</NcCheckboxRadioSwitch>
 							</div>
 
 							<NcTextArea
 								v-if="isFooterPosition && valueMode === 'multiRow'"
 								:disabled="loading"
-								label="Value"
+								:label="t('opencatalogi', 'Value')"
 								:value.sync="menuItem.value"
-								:helper-text="inputValidation.getError(`items.${index}.value`) || 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.'" />
+								:helper-text="inputValidation.getError(`items.${index}.value`) || t('opencatalogi', 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.')" />
 
 							<NcTextField
 								v-if="isFooterPosition && valueMode !== 'multiRow'"
 								:disabled="loading"
-								label="Value"
+								:label="t('opencatalogi', 'Value')"
 								:value.sync="menuItem.value"
-								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.' : 'If no value is set, the name will be used.')"
+								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? t('opencatalogi', 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.') : t('opencatalogi', 'If no value is set, the name will be used.'))"
 								@update:value="onSingleLineValueChange" />
 
 							<NcTextField
 								:disabled="loading"
-								label="Aria Label"
-								:helper-text="inputValidation.getError(`items.${index}.ariaLabel`) || 'This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.'"
+								:label="t('opencatalogi', 'Aria Label')"
+								:helper-text="inputValidation.getError(`items.${index}.ariaLabel`) || t('opencatalogi', 'This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.')"
 								:value.sync="menuItem.ariaLabel"
 								:error="!!inputValidation.getError(`items.${index}.ariaLabel`)" />
 
 							<div class="viewModeSwitchContainer">
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a standard icon'"
+									v-tooltip="t('opencatalogi', 'Use a standard icon')"
 									:checked="iconMode === 'standard'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': iconMode === 'standard' }"
@@ -156,11 +156,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setIconMode('standard')">
-									Icon
+									{{ t('opencatalogi', 'Icon') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									v-model="iconMode"
-									v-tooltip="'Use a custom icon'"
+									v-tooltip="t('opencatalogi', 'Use a custom icon')"
 									:checked="iconMode === 'custom'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': iconMode === 'custom' }"
@@ -169,7 +169,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setIconMode('custom')">
-									Custom
+									{{ t('opencatalogi', 'Custom') }}
 								</NcCheckboxRadioSwitch>
 							</div>
 
@@ -178,7 +178,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-model="iconPrefixOptions.value"
 								:options="iconPrefixOptions.options"
 								label="label"
-								input-label="Icon Prefix"
+								:input-label="t('opencatalogi', 'Icon Prefix')"
 								track-by="value"
 								:disabled="loading" />
 
@@ -186,7 +186,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-model="iconPlacementOptions.value"
 								:options="iconPlacementOptions.options"
 								label="label"
-								input-label="Icon Placement"
+								:input-label="t('opencatalogi', 'Icon Placement')"
 								track-by="value"
 								:disabled="loading" />
 
@@ -195,10 +195,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-model="iconOptions.value"
 								:options="filteredLimitedIconOptions"
 								label="label"
-								input-label="Icon"
+								:input-label="t('opencatalogi', 'Icon')"
 								track-by="value"
 								:disabled="loading"
-								placeholder="Search icons… (more results appear when searching)"
+								:placeholder="t('opencatalogi', 'Search icons… (more results appear when searching)')"
 								@search="iconSearchQuery = $event">
 								<template #option="{ label, value }">
 									<span class="icon-option">
@@ -215,11 +215,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</template>
 							</NcSelect>
 							<p v-if="iconMode === 'standard'" class="help-text">
-								Tip: type to search all icons. More results are shown when searching.
+								{{ t('opencatalogi', 'Tip: type to search all icons. More results are shown when searching.') }}
 							</p>
 
 							<div v-if="iconMode === 'custom'" class="json-editor">
-								<label>Custom Icon (SVG)</label>
+								<label>{{ t('opencatalogi', 'Custom Icon (SVG)') }}</label>
 								<div :class="`codeMirrorContainer ${getTheme()}`">
 									<CodeMirror
 										v-model="customIcon"
@@ -235,7 +235,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 										type="secondary"
 										size="small"
 										@click="formatSVG">
-										Format SVG
+										{{ t('opencatalogi', 'Format SVG') }}
 									</NcButton>
 								</div>
 							</div>
@@ -243,40 +243,40 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					</BTab>
 
 					<!-- Security Tab -->
-					<BTab title="Security">
+					<BTab :title="t('opencatalogi', 'Security')">
 						<div class="form-container">
 							<div class="groups-section">
-								<label class="groups-label">Groups Access</label>
+								<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
 								<NcNoteCard type="info">
-									<p>When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.</p>
+									<p>{{ t('opencatalogi', 'When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.') }}</p>
 								</NcNoteCard>
 								<NcSelect
 									v-model="groupsOptions.value"
 									:options="groupsOptions.options"
 									:disabled="loading || groupsOptions.loading"
-									input-label="Select Groups"
+									:input-label="t('opencatalogi', 'Select Groups')"
 									multiple />
 								<p v-if="groupsOptions.loading" class="groups-loading">
-									Loading groups...
+									{{ t('opencatalogi', 'Loading groups...') }}
 								</p>
 							</div>
 
 							<div class="hide-after-login">
 								<NcNoteCard type="info">
-									<p>When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.</p>
+									<p>{{ t('opencatalogi', 'When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.') }}</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideAfterLogin"
 									:disabled="menuItem.hideBeforeLogin || loading">
-									Verberg na inloggen
+									{{ t('opencatalogi', 'Hide after login') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideBeforeLogin"
 									:disabled="menuItem.hideAfterLogin || loading">
-									Verberg voor inloggen
+									{{ t('opencatalogi', 'Hide before login') }}
 								</NcCheckboxRadioSwitch>
 								<p v-if="menuItem.hideAfterLogin && menuItem.hideBeforeLogin" class="field-error">
-									'Hide before login' and 'Hide after login' cannot both be selected.
+									{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
 								</p>
 							</div>
 						</div>
@@ -287,7 +287,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 		<template #actions>
 			<NcButton @click="() => closeModal('back')">
-				{{ isEdit ? 'Close' : 'Cancel' }}
+				{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="objectStore.getState('menu').success === null"
 				v-tooltip="inputValidation.flatErrorMessages[0]"
@@ -299,7 +299,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<ContentSaveOutline v-if="!loading && isEdit" :size="20" />
 					<Plus v-if="!loading && !isEdit" :size="20" />
 				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
+				{{ isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add') }}
 			</NcButton>
 		</template>
 	</NcDialog>

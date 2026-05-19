@@ -22,26 +22,26 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		label-id="deleteListingDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
-			<h2>Delete Listing</h2>
+			<h2>{{ t('opencatalogi', 'Delete Listing') }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Listing successfully deleted</p>
+					<p>{{ t('opencatalogi', 'Listing successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while deleting the listing</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while deleting the listing') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Do you want to delete the listing '{{ listing.title }}'?</p>
+				<p>{{ t('opencatalogi', 'Do you want to delete the listing {name}?', { name: listing.title }) }}</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="navigationStore.setDialog(false)">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -53,7 +53,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<Delete v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Delete
+					{{ t('opencatalogi', 'Delete') }}
 				</NcButton>
 			</span>
 		</div>

@@ -17,7 +17,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'viewMenu'"
-		:name="isAddMode ? 'Add Menu' : getModalTitle()"
+		:name="isAddMode ? t('opencatalogi', 'Add Menu') : getModalTitle()"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
@@ -26,7 +26,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<!-- Menu Items Tab -->
 				<div class="tabContainer">
 					<BTabs v-model="tabIndex" content-class="mt-3" justified>
-						<BTab v-if="!isAddMode" :title="`Menu Items (${editForm.items?.length || 0})`" active>
+						<BTab v-if="!isAddMode" :title="t('opencatalogi', 'Menu Items ({count})', { count: editForm.items?.length || 0 })" active>
 							<div v-if="editForm.items && editForm.items.length">
 								<div class="menuItemsSection">
 									<div v-if="editForm.items?.length" class="attached-list">
@@ -34,10 +34,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 											:key="item.id || index"
 											class="attached-list-item">
 											<div class="object-info">
-												<strong>{{ item.title || item.name || `Item ${index + 1}` }}</strong>
-												<span v-if="item.order !== undefined" class="object-order">Order: {{ item.order }}</span>
-												<span v-if="item.groups && item.groups.length > 0" class="object-groups">Groups: {{ item.groups.join(', ') }}</span>
-												<span v-if="item.hideAfterLogin !== undefined" class="object-hide-after-login">Hide After Login: {{ item.hideAfterLogin ? 'Yes' : 'No' }}</span>
+												<strong>{{ item.title || item.name || t('opencatalogi', 'Item {n}', { n: index + 1 }) }}</strong>
+												<span v-if="item.order !== undefined" class="object-order">{{ t('opencatalogi', 'Order: {n}', { n: item.order }) }}</span>
+												<span v-if="item.groups && item.groups.length > 0" class="object-groups">{{ t('opencatalogi', 'Groups: {groups}', { groups: item.groups.join(', ') }) }}</span>
+												<span v-if="item.hideAfterLogin !== undefined" class="object-hide-after-login">{{ t('opencatalogi', 'Hide After Login: {value}', { value: item.hideAfterLogin ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') }) }}</span>
 											</div>
 											<div class="object-actions">
 												<NcButton type="secondary" @click="editItem(item, index)">
@@ -69,15 +69,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</BTab>
 
 						<!-- Configuration Tab -->
-						<BTab title="Configuration">
+						<BTab :title="t('opencatalogi', 'Configuration')">
 							<div>
 								<!-- Success/Error Messages -->
 								<div v-if="menuState.success !== null || menuState.error" class="messageContainer">
 									<NcNoteCard v-if="menuState.success" type="success">
-										<p>{{ isEdit ? 'Menu successfully edited' : 'Menu successfully added' }}</p>
+										<p>{{ isEdit ? t('opencatalogi', 'Menu successfully edited') : t('opencatalogi', 'Menu successfully added') }}</p>
 									</NcNoteCard>
 									<NcNoteCard v-if="!menuState.success" type="error">
-										<p>{{ isEdit ? 'Something went wrong while editing the menu' : 'Something went wrong while adding the menu' }}</p>
+										<p>{{ isEdit ? t('opencatalogi', 'Something went wrong while editing the menu') : t('opencatalogi', 'Something went wrong while adding the menu') }}</p>
 									</NcNoteCard>
 									<NcNoteCard v-if="menuState.error" type="error">
 										<p>{{ menuState.error }}</p>
@@ -87,28 +87,28 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<!-- Edit Form -->
 								<div v-if="menuState.success === null && !objectStore.isLoading('menu')" class="form-group">
 									<NcTextField :disabled="objectStore.isLoading('menu')"
-										label="Title*"
+										:label="t('opencatalogi', 'Title*')"
 										maxlength="255"
 										:value.sync="editForm.title"
 										:error="!!inputValidation.fieldErrors?.['title']"
 										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 
 									<NcTextField :disabled="objectStore.isLoading('menu')"
-										label="Description"
+										:label="t('opencatalogi', 'Description')"
 										maxlength="255"
 										:value.sync="editForm.description"
 										:error="!!inputValidation.fieldErrors?.['description']"
 										:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 
 									<NcTextField :disabled="objectStore.isLoading('menu')"
-										label="Icon"
+										:label="t('opencatalogi', 'Icon')"
 										maxlength="255"
 										:value.sync="editForm.icon"
 										:error="!!inputValidation.fieldErrors?.['icon']"
 										:helper-text="inputValidation.fieldErrors?.['icon']?.[0]" />
 
 									<NcTextField :disabled="objectStore.isLoading('menu')"
-										label="Position"
+										:label="t('opencatalogi', 'Position')"
 										type="number"
 										min="0"
 										:value="editForm.position"
@@ -117,58 +117,58 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										@update:value="handlePositionUpdate" />
 
 									<div class="position-info">
-										<p>1 - top right</p>
-										<p>2 - navigation</p>
-										<p>3 - footer left</p>
-										<p>4 - footer center</p>
-										<p>5 - footer right</p>
-										<p>6 - footer bottom</p>
-										<p>7 - admin</p>
+										<p>{{ t('opencatalogi', '1 - top right') }}</p>
+										<p>{{ t('opencatalogi', '2 - navigation') }}</p>
+										<p>{{ t('opencatalogi', '3 - footer left') }}</p>
+										<p>{{ t('opencatalogi', '4 - footer center') }}</p>
+										<p>{{ t('opencatalogi', '5 - footer right') }}</p>
+										<p>{{ t('opencatalogi', '6 - footer bottom') }}</p>
+										<p>{{ t('opencatalogi', '7 - admin') }}</p>
 									</div>
 								</div>
 
 								<div v-if="objectStore.isLoading('menu')" class="loading-status">
 									<NcLoadingIcon :size="20" />
-									<span>{{ isEdit ? 'Menu is being edited...' : 'Menu is being added...' }}</span>
+									<span>{{ isEdit ? t('opencatalogi', 'Menu is being edited...') : t('opencatalogi', 'Menu is being added...') }}</span>
 								</div>
 							</div>
 						</BTab>
 
 						<!-- Security Tab -->
-						<BTab title="Security">
+						<BTab :title="t('opencatalogi', 'Security')">
 							<div>
 								<!-- Groups Access Control -->
 								<div class="groups-section">
-									<label class="groups-label">Groups Access</label>
+									<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
 									<NcNoteCard type="info">
-										<p>When you add groups to a menu, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the menu will be visible to all users.</p>
+										<p>{{ t('opencatalogi', 'When you add groups to a menu, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the menu will be visible to all users.') }}</p>
 									</NcNoteCard>
 									<NcSelect
 										v-model="editForm.groups"
 										:options="groupsOptions?.options || []"
 										:disabled="objectStore.isLoading('menu') || groupsOptions?.loading"
-										input-label="Select Groups"
+										:input-label="t('opencatalogi', 'Select Groups')"
 										multiple />
 									<p v-if="groupsOptions?.loading" class="groups-loading">
-										Loading groups...
+										{{ t('opencatalogi', 'Loading groups...') }}
 									</p>
 								</div>
 								<div class="hide-after-login">
 									<NcNoteCard type="info">
-										<p>When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.</p>
+										<p>{{ t('opencatalogi', 'When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.') }}</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideAfterLogin"
 										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('menu')">
-										Hide after login
+										{{ t('opencatalogi', 'Hide after login') }}
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideBeforeLogin"
 										:disabled="editForm.hideAfterLogin || objectStore.isLoading('menu')">
-										Hide before login
+										{{ t('opencatalogi', 'Hide before login') }}
 									</NcCheckboxRadioSwitch>
 									<p v-if="editForm.hideAfterLogin && editForm.hideBeforeLogin" class="field-error">
-										'Hide before login' and 'Hide after login' cannot both be selected.
+										{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
 									</p>
 								</div>
 							</div>
@@ -212,7 +212,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Plus :size="20" />
 				</template>
-				Create
+				{{ t('opencatalogi', 'Create') }}
 			</NcButton>
 			<NcButton
 				v-else
@@ -223,7 +223,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="objectStore.isLoading('menu')" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				Save
+				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</template>
 	</NcDialog>

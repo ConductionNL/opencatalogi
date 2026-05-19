@@ -18,7 +18,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'viewGlossary'"
 		ref="modalRef"
-		:name="term?.title || 'Glossary Term'"
+		:name="term?.title || t('opencatalogi', 'Glossary Term')"
 		label-id="viewGlossaryModal"
 		@close="closeModal">
 		<div class="modal__content">
@@ -32,7 +32,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</div>
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-							<span>{{ term.published ? 'Published' : 'Draft' }}</span>
+							<span>{{ term.published ? t('opencatalogi', 'Published') : t('opencatalogi', 'Draft') }}</span>
 						</div>
 						<div v-if="term.summary" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Summary') }}:</strong>
