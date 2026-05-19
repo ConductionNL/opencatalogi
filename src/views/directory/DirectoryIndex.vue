@@ -1,8 +1,3 @@
-<script setup>
-import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -25,6 +20,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:show-mass-delete="false"
 		:view-mode="viewMode"
 		:add-label="t('opencatalogi', 'Add Directory')"
+		:show-add="isAdmin"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No directory listings found')"
 		:refreshing="isRefreshing"
@@ -35,6 +31,12 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<template #below-header>
+			<NcNoteCard v-if="loaded && !isAdmin" type="info">
+				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+			</NcNoteCard>
+		</template>
+
 		<!-- Custom column: name with status icon and badges -->
 		<template #column-name="{ row }">
 			<div class="titleContent">
@@ -111,7 +113,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 		<!-- Row actions -->
 		<template #row-actions="{ row }">
-			<NcActions>
+			<NcActions v-if="isAdmin">
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
@@ -139,9 +141,12 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton } from '@nextcloud/vue'
+import { translate as t } from '@nextcloud/l10n'
+import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
+import { objectStore, navigationStore } from '../../store/store.js'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
@@ -157,6 +162,7 @@ export default {
 		CnStatusBadge,
 		NcActions,
 		NcActionButton,
+		NcNoteCard,
 		DotsHorizontal,
 		Refresh,
 		CheckCircle,
@@ -164,6 +170,10 @@ export default {
 		CloseCircle,
 		Star,
 		StarOutline,
+	},
+	setup() {
+		const { isAdmin, loaded } = useIsAdmin()
+		return { isAdmin, loaded, objectStore, navigationStore }
 	},
 	data() {
 		return {
@@ -204,6 +214,7 @@ export default {
 		objectStore.fetchCollection('listing')
 	},
 	methods: {
+		t,
 		onAdd() {
 			navigationStore.setModal('addDirectory')
 		},

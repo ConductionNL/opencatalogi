@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <template>
 	<NcAppSettingsDialog
 		:open="open"
