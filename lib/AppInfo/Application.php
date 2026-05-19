@@ -34,7 +34,9 @@ use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 
@@ -100,9 +102,12 @@ class Application extends App implements IBootstrap
             listener: CatalogCacheEventListener::class
         );
 
-        // Register catalog rewrite event listeners.
-        $context->registerEventListener(ObjectCreatedEvent::class, CatalogSchemaEventListener::class);
-        $context->registerEventListener(ObjectUpdatedEvent::class, CatalogSchemaEventListener::class);
+        // Register catalog rewrite event listeners on the *pre-save* events so the
+        // listener can mutate the in-flight payload via `setModifiedData(...)` instead
+        // of issuing a second save. Subscribing to the post-save events caused an
+        // infinite event loop on every catalog update/soft-delete.
+        $context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
+        $context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
 
         // Register tool registration listener for OpenRegister agents.
         $context->registerEventListener(

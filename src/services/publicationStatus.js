@@ -42,6 +42,8 @@ export function isConcept(obj) {
 
 /**
  * Returns 'published', 'depublished', or 'concept'.
+ *
+ * @param {object} obj Publication object
  */
 export function getPublicationStatus(obj) {
 	if (isDepublished(obj)) return 'depublished'
