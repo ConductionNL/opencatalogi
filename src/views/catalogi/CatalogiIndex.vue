@@ -1,16 +1,3 @@
-<script setup>
-import { inject } from 'vue'
-import { translate as t } from '@nextcloud/l10n'
-import { useListView } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-
-const sidebarState = inject('sidebarState', null)
-const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('catalog', {
-	sidebarState,
-	objectStore,
-})
-</script>
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -37,6 +24,7 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 		:sort-order="sortOrder"
 		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Catalog')"
+		:show-add="isAdmin"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No catalogs found')"
 		:refreshing="isRefreshing"
@@ -48,6 +36,12 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<template #below-header>
+			<NcNoteCard v-if="loaded && !isAdmin" type="info">
+				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+			</NcNoteCard>
+		</template>
+
 		<!-- Custom column: visibility badge -->
 		<template #column-listed="{ row }">
 			<CnStatusBadge
@@ -82,7 +76,7 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="editCatalog(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="editCatalog(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -94,13 +88,13 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 					</template>
 					{{ t('opencatalogi', 'View Catalog') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="copyCatalog(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="copyCatalog(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="deleteCatalog(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="deleteCatalog(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -112,8 +106,12 @@ const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPage
 </template>
 
 <script>
-import { NcActions, NcActionButton } from '@nextcloud/vue'
-import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
+import { inject } from 'vue'
+import { translate as t } from '@nextcloud/l10n'
+import { useListView, CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
+import { objectStore, navigationStore } from '../../store/store.js'
+import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -128,12 +126,22 @@ export default {
 		CnStatusBadge,
 		NcActions,
 		NcActionButton,
+		NcNoteCard,
 		DotsHorizontal,
 		Eye,
 		Pencil,
 		OpenInApp,
 		ContentCopy,
 		TrashCanOutline,
+	},
+	setup() {
+		const sidebarState = inject('sidebarState', null)
+		const { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh } = useListView('catalog', {
+			sidebarState,
+			objectStore,
+		})
+		const { isAdmin, loaded } = useIsAdmin()
+		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, isAdmin, loaded }
 	},
 	data() {
 		return {

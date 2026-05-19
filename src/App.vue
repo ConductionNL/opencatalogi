@@ -63,6 +63,12 @@ export default {
 		Dialogs,
 		UserSettings,
 	},
+	provide() {
+		return {
+			objectSidebarState: this.objectSidebarState,
+			sidebarState: this.sidebarState,
+		}
+	},
 	data() {
 		return {
 			settingsOpen: false,
@@ -89,12 +95,6 @@ export default {
 				onColumnsChange: null,
 				onFilterChange: null,
 			}),
-		}
-	},
-	provide() {
-		return {
-			objectSidebarState: this.objectSidebarState,
-			sidebarState: this.sidebarState,
 		}
 	},
 	async mounted() {

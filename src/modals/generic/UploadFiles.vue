@@ -8,7 +8,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 		label-id="AddAttachmentModal"
 		@close="closeDialog()">
 		<div class="modal__content TestMappingMainModal">
-			<h2>Add attachment</h2>
+			<h2>{{ t('opencatalogi', 'Add attachment') }}</h2>
 
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					label="Automatically share"
+					:label="t('opencatalogi', 'Automatically publish')"
 					type="switch"
 					:checked.sync="share">
-					Automatically share
+					{{ t('opencatalogi', 'Automatically publish') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -30,22 +30,25 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<div v-if="!labelOptions.value?.length || loading || retryLoading" class="filesListDragDropNotice" :class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Select or create labels or select "No label" to add files</p>
+							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
 						</NcNoteCard>
 					</div>
-					<div v-if="success !== null || error">
+					<div v-if="success !== null || error || duplicateWarning">
 						<NcNoteCard v-if="success" type="success">
-							<p>Files added successfully</p>
+							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Something went wrong when adding files</p>
+							<p>{{ t('opencatalogi', 'Something went wrong when adding files') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
+						<NcNoteCard v-if="duplicateWarning" type="warning">
+							<p>{{ duplicateWarning }}</p>
+						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Select files with the correct extension</p>
+								<p>{{ t('opencatalogi', 'Select files with the correct extension') }}</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -53,12 +56,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Drag a file or files here
+								{{ t('opencatalogi', 'Drag a file or files here') }}
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Or
+							{{ t('opencatalogi', 'Or') }}
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -69,7 +72,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Add a file or files
+								{{ t('opencatalogi', 'Add a file or files') }}
 							</NcButton>
 						</div>
 					</div>
@@ -80,39 +83,42 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:class="'tabPanelFileUpload'">
 					<div v-if="!labelOptions.value?.length">
 						<NcNoteCard type="info">
-							<p>Select or create labels or select "No label" to add files</p>
+							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
 						</NcNoteCard>
 					</div>
 					<div v-if="checkForTooBigFiles(files)">
 						<NcNoteCard type="warning">
 							<p class="folderLink">
-								If you want to add files larger than or equal to 512MB, go to the
+								{{ t('opencatalogi', 'If you want to add files larger than or equal to 512MB, go to the') }}
 								<NcButton type="secondary"
 									class="folderLinkButton"
-									aria-label="Open map"
+									:aria-label="t('opencatalogi', 'Open folder')"
 									@click="openFolder(publicationStore.publicationItem?.['@self']?.folder)">
 									<template #icon>
 										<FolderOutline :size="20" />
 									</template>
-									map
+									{{ t('opencatalogi', 'folder') }}
 								</NcButton>
-								and add the files there.
+								{{ t('opencatalogi', 'and add the files there.') }}
 							</p>
 						</NcNoteCard>
 					</div>
-					<div v-if="success !== null || error">
+					<div v-if="success !== null || error || duplicateWarning">
 						<NcNoteCard v-if="success" type="success">
-							<p>Files added successfully</p>
+							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
-							<p>Something went wrong when adding files</p>
+							<p>{{ t('opencatalogi', 'Something went wrong when adding files') }}</p>
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
 						</NcNoteCard>
+						<NcNoteCard v-if="duplicateWarning" type="warning">
+							<p>{{ duplicateWarning }}</p>
+						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
-								<p>Select files with the correct extension</p>
+								<p>{{ t('opencatalogi', 'Select files with the correct extension') }}</p>
 							</NcNoteCard>
 						</div>
 					</div>
@@ -120,12 +126,12 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeWrapperIcon">
 							<TrayArrowDown :size="48" />
 							<h3 class="filesListDragDropNoticeTitle">
-								Drag a file or files here
+								{{ t('opencatalogi', 'Drag a file or files here') }}
 							</h3>
 						</div>
 
 						<h3 class="filesListDragDropNoticeTitle">
-							Or
+							{{ t('opencatalogi', 'Or') }}
 						</h3>
 
 						<div class="filesListDragDropNoticeTitle">
@@ -136,26 +142,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								<template #icon>
 									<Plus :size="20" />
 								</template>
-								Add a file or files
+								{{ t('opencatalogi', 'Add a file or files') }}
 							</NcButton>
 						</div>
-					</div>
-				</div>
-				<div v-if="!files">
-					No files selected
-				</div>
-				<div v-if="files" class="uploadSummaryContainer">
-					<span class="uploadSummary">{{ uploadedCount }} / {{ files.length }} files uploaded</span>
-					<div class="buttonContainer">
-						<NcButton v-if="failedCount > 0"
-							type="primary"
-							:disabled="loading || retryLoading"
-							@click="retryAllFailed">
-							<template #icon>
-								<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
-							</template>
-							{{ retryLoading ? 'In progress...' : 'Retry all (' + failedCount + ')' }}
-						</NcButton>
 					</div>
 				</div>
 				<table v-if="files" class="files-table">
@@ -163,13 +152,13 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<tr class="files-table-tr">
 							<th class="files-table-td-status" />
 							<th>
-								File name
+								{{ t('opencatalogi', 'File name') }}
 							</th>
 							<th>
-								Size
+								{{ t('opencatalogi', 'Size') }}
 							</th>
 							<th>
-								Labels
+								{{ t('opencatalogi', 'Labels') }}
 							</th>
 						</tr>
 					</thead>
@@ -191,7 +180,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							<td class="files-table-td-labels">
 								<span v-if="editingTags !== file.name"
 									class="files-list__row-action--inline files-list__row-action-system-tags">
-									<ul v-if="file.tags && file.tags.length > 0" class="files-list__system-tags" aria-label="Assigned collaborative tags">
+									<ul v-if="file.tags && file.tags.length > 0" class="files-list__system-tags" :aria-label="t('opencatalogi', 'Assigned collaborative tags')">
 										<li v-for="label of file.tags"
 											:key="label"
 											class="files-list__system-tag"
@@ -200,7 +189,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 										</li>
 									</ul>
 									<span v-if="!file.tags || file.tags.length === 0">
-										No labels
+										{{ t('opencatalogi', 'No labels') }}
 									</span>
 								</span>
 								<NcSelect
@@ -217,9 +206,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<!-- Tags Buttons -->
 									<NcButton
 										v-if="editingTags !== file.name"
-										v-tooltip="'Edit labels'"
+										v-tooltip="t('opencatalogi', 'Edit labels')"
 										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
-										:aria-label="`edit tags for ${file.name}`"
+										:aria-label="t('opencatalogi', 'Edit tags for {name}', { name: file.name })"
 										type="secondary"
 										class="editTagsButton"
 										@click="editingTags = file.name, editedTags = file.tags">
@@ -229,9 +218,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="'Save labels'"
+										v-tooltip="t('opencatalogi', 'Save labels')"
 										type="primary"
-										:aria-label="`save tags for ${file.name}`"
+										:aria-label="t('opencatalogi', 'Save tags for {name}', { name: file.name })"
 										class="editTagsButton"
 										@click="saveTags(file, editedTags)">
 										<template #icon>
@@ -240,7 +229,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="'Cancel'"
+										v-tooltip="t('opencatalogi', 'Cancel')"
 										type="secondary"
 										@click="cancelFileLabelEditing">
 										<template #icon>
@@ -250,7 +239,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
-										v-tooltip="'Retry upload'"
+										v-tooltip="t('opencatalogi', 'Retry upload')"
 										type="primary"
 										@click="addAttachments(file)">
 										<template #icon>
@@ -259,7 +248,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
-										v-tooltip="'Remove from list'"
+										v-tooltip="t('opencatalogi', 'Remove from list')"
 										type="primary"
 										@click="removeFile(file.name)">
 										<template #icon>
@@ -271,6 +260,28 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</tr>
 					</tbody>
 				</table>
+			</div>
+			<div class="modalFooter">
+				<div class="modalFooterStatus">
+					<span v-if="!files">{{ t('opencatalogi', 'No files selected') }}</span>
+					<span v-if="files" class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
+				</div>
+				<div class="buttonContainer">
+					<NcButton v-if="files && failedCount > 0"
+						type="secondary"
+						:disabled="loading || retryLoading"
+						@click="retryAllFailed">
+						<template #icon>
+							<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
+						</template>
+						{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
+					</NcButton>
+					<NcButton type="primary"
+						:disabled="loading || retryLoading"
+						@click="closeDialog()">
+						{{ t('opencatalogi', 'Done') }}
+					</NcButton>
+				</div>
 			</div>
 		</div>
 	</NcModal>
@@ -298,7 +309,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 const dropZoneRef = ref()
 
-const { openFileUpload, files, reset, setTags } = useFileSelection({
+const { openFileUpload, files, reset, setTags, rejectedDuplicates } = useFileSelection({
 	allowMultiple: true,
 	dropzone: dropZoneRef,
 })
@@ -326,6 +337,7 @@ export default {
 			retryLoading: false,
 			success: null,
 			error: false,
+			duplicateWarning: null,
 			share: false,
 			editingTags: null,
 			editedTags: [],
@@ -349,6 +361,10 @@ export default {
 		// only used for watching
 		files() {
 			return files
+		},
+		// only used for watching
+		rejectedDuplicatesList() {
+			return rejectedDuplicates
 		},
 		inputValidation() {
 			const catalogiItem = new Attachment({
@@ -384,6 +400,20 @@ export default {
 		},
 		error() {
 			this.updateUploadCounts()
+		},
+		rejectedDuplicatesList: {
+			handler(newRef) {
+				const newRejected = newRef?.value?.names
+				if (!Array.isArray(newRejected) || newRejected.length === 0) return
+				// Clear any prior success/error so this warning isn't masked by
+				// `v-if="error && !success"` and so the auto-clear timeout from
+				// a previous warning doesn't truncate this one.
+				this.success = null
+				this.duplicateWarning = t('opencatalogi', 'These files were skipped because a file with the same name already exists: {names}', { names: newRejected.join(', ') })
+				if (this._duplicateWarningTimer) clearTimeout(this._duplicateWarningTimer)
+				this._duplicateWarningTimer = setTimeout(() => { this.duplicateWarning = null }, 5000)
+			},
+			deep: true,
 		},
 	},
 	mounted() {
@@ -426,6 +456,11 @@ export default {
 			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
+			this.duplicateWarning = null
+			if (this._duplicateWarningTimer) {
+				clearTimeout(this._duplicateWarningTimer)
+				this._duplicateWarningTimer = null
+			}
 			reset()
 			this.initialTags = []
 			this.latestTags = []
@@ -604,7 +639,7 @@ export default {
 
 					const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 					const attachments = await getAttachments.json().catch(() => null)
-					try { objectStore.setCollection('publicationAttachments', attachments) } catch (_) {}
+					try { objectStore.setCollection('publicationAttachments', attachments?.results || []) } catch (_) {}
 					catalogStore.fetchPublications()
 
 					this.success = 'File labels updated successfully'
@@ -702,7 +737,7 @@ export default {
 				const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 				const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
 				const attachments = await getAttachments.json()
-				objectStore.setCollection('publicationAttachments', attachments)
+				objectStore.setCollection('publicationAttachments', attachments?.results || [])
 
 				catalogStore.fetchPublications()
 
@@ -713,6 +748,12 @@ export default {
 				} else {
 					this.success = true
 				}
+
+				EventBus.$emit('upload-files:uploaded', {
+					publicationId: publication.id,
+					uploadedCount: results.filter(r => r.status === 'fulfilled').length,
+					failedCount: rejected.length,
+				})
 
 				this.updateUploadCounts()
 				if (specificFile) return idMap
@@ -803,7 +844,26 @@ export default {
 					})
 			})
 
-			await Promise.allSettled(uploadPromises)
+			const results = await Promise.allSettled(uploadPromises)
+
+			const publication = objectStore.getActiveObject('publication')
+			if (publication?.id) {
+				const fulfilledCount = results.filter(r => r.status === 'fulfilled').length
+				const rejectedCount = results.filter(r => r.status === 'rejected').length
+				if (fulfilledCount > 0) {
+					try {
+						const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+						const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+						const attachments = await getAttachments.json().catch(() => null)
+						objectStore.setCollection('publicationAttachments', attachments?.results || [])
+					} catch (_) { /* ignore */ }
+				}
+				EventBus.$emit('upload-files:uploaded', {
+					publicationId: publication.id,
+					uploadedCount: fulfilledCount,
+					failedCount: rejectedCount,
+				})
+			}
 
 			this.updateUploadCounts()
 			this.retryLoading = false
@@ -876,6 +936,23 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 
 .container {
 	padding-inline: 25px;
+}
+
+.modalFooter {
+	position: relative;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 10px;
+	padding: 0 25px 15px 25px;
+}
+
+.modalFooterStatus {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	color: var(--color-text-maxcontrast);
+	pointer-events: none;
 }
 
 .files-table-name-wrong > span {
@@ -1001,11 +1078,11 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-    color: var(--color-success);
+    color: var(--color-element-success);
 }
 
 .failed {
-    color: var(--color-error);
+    color: var(--color-element-error);
 }
 
 .buttonContainer {

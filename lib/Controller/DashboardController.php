@@ -72,5 +72,4 @@ class DashboardController extends Controller
         }//end try
 
     }//end page()
-
 }//end class

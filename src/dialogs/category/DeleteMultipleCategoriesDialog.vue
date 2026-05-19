@@ -5,14 +5,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteMultipleCategories'"
-		name="Categorieën verwijderen"
+		:name="t('opencatalogi', 'Delete Categories')"
 		:can-close="false">
 		<div v-if="objectStore.getState('category').success !== null || objectStore.getState('category').error">
 			<NcNoteCard v-if="objectStore.getState('category').success" type="success">
-				<p>Categories successfully deleted</p>
+				<p>{{ t('opencatalogi', 'Categories successfully deleted') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('category').success" type="error">
-				<p>Something went wrong while deleting the categories</p>
+				<p>{{ t('opencatalogi', 'Something went wrong while deleting the categories') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('category').error" type="error">
 				<p>{{ objectStore.getState('category').error }}</p>
@@ -20,10 +20,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('category')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Categories are being deleted...</span>
+			<span>{{ t('opencatalogi', 'Categories are being deleted...') }}</span>
 		</div>
 		<p v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')">
-			Do you want to delete the selected categories? This action cannot be undone.
+			{{ t('opencatalogi', 'Do you want to delete the selected categories? This action cannot be undone.') }}
 		</p>
 		<template v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')" #actions>
 			<NcButton
@@ -33,7 +33,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Cancel
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -53,7 +53,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>

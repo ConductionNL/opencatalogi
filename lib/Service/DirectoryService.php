@@ -713,7 +713,7 @@ class DirectoryService
             // different UUIDs for the same logical catalog.
             $existingListings = $objectService->searchObjects(
                 query: [
-                    '@self' => [
+                    '@self'       => [
                         'register' => $listingRegister,
                         'schema'   => $listingSchema,
                     ],
@@ -1812,8 +1812,8 @@ class DirectoryService
                         $listingData = $object;
                     }
 
-                    $objectData  = ($listingData['object'] ?? $listingData);
-                    $listingDir  = ($objectData['directory'] ?? '');
+                    $objectData = ($listingData['object'] ?? $listingData);
+                    $listingDir = ($objectData['directory'] ?? '');
 
                     // Skip listings that were synced from other directories.
                     if (empty($listingDir) === false && $listingDir !== $ourDirectoryUrl) {
@@ -1922,7 +1922,7 @@ class DirectoryService
 
         // Create listing object from catalog - only core API fields.
         $catalogId = ($catalog['id'] ?? $catalogData['id'] ?? '');
-        $listing = [
+        $listing   = [
             // Required fields for listing.
             'id'           => $catalogId,
             'catalog'      => $catalogId,

@@ -18,7 +18,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'viewTheme'"
 		ref="modalRef"
-		:name="theme?.title || 'Theme'"
+		:name="theme?.title || t('opencatalogi', 'Theme')"
 		label-id="viewThemeModal"
 		@close="closeModal">
 		<div class="modal__content">

@@ -1,8 +1,3 @@
-<script setup>
-import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -26,6 +21,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:view-mode="viewMode"
 		:schema="glossarySchema"
 		:add-label="t('opencatalogi', 'Add term')"
+		:show-add="isAdmin"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No glossary terms found')"
 		:refreshing="isRefreshing"
@@ -38,6 +34,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<template #below-header>
+			<NcNoteCard v-if="loaded && !isAdmin" type="info">
+				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+			</NcNoteCard>
+		</template>
 		<template #form-fields="{ formData, errors, updateField }">
 			<div class="formContainer">
 				<NcTextField
@@ -88,19 +89,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="$refs.indexPage.openFormDialog(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="copyTerm(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="copyTerm(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="deleteTerm(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="deleteTerm(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -112,8 +113,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect } from '@nextcloud/vue'
+import { translate as t } from '@nextcloud/l10n'
+import { NcActions, NcActionButton, NcTextField, NcTextArea, NcSelect, NcNoteCard } from '@nextcloud/vue'
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
+import { objectStore, navigationStore } from '../../store/store.js'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -130,11 +134,16 @@ export default {
 		NcTextField,
 		NcTextArea,
 		NcSelect,
+		NcNoteCard,
 		DotsHorizontal,
 		Eye,
 		Pencil,
 		ContentCopy,
 		TrashCanOutline,
+	},
+	setup() {
+		const { isAdmin, loaded } = useIsAdmin()
+		return { isAdmin, loaded, objectStore, navigationStore }
 	},
 	data() {
 		return {
@@ -183,6 +192,7 @@ export default {
 		objectStore.fetchCollection('glossary')
 	},
 	methods: {
+		t,
 		onAdd() {
 			objectStore.clearActiveObject('glossary')
 			this.$refs.indexPage.openFormDialog(null)
@@ -209,7 +219,7 @@ export default {
 			}
 		},
 		onPageChange(page) {
-			objectStore.fetchCollection('glossary', { _page: page })
+			objectStore.fetchCollection('glossary', { _page: page, _limit: this.currentPagination.limit || 20 })
 		},
 		onPageSizeChange(size) {
 			objectStore.fetchCollection('glossary', { _page: 1, _limit: size })

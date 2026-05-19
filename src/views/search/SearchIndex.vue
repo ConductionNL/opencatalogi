@@ -1,6 +1,7 @@
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { useSearchStore } from '../../store/modules/search.ts'
+import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -58,7 +59,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 					<NcActions
 						:force-name="true"
 						:inline="3"
-						menu-name="Actions">
+						:menu-name="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							close-after-click
 							:disabled="searchStore.isLoading"
@@ -122,7 +123,7 @@ import { useSearchStore } from '../../store/modules/search.ts'
 									<FileDocumentOutline :size="20" />
 									{{ publication.title || publication.name }}
 								</h2>
-								<NcActions :primary="true" menu-name="Actions">
+								<NcActions :primary="true" :menu-name="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
@@ -441,8 +442,15 @@ export default {
 			return publication['@self'].catalogs.map(catalog => catalog.title || catalog.name || 'Unknown').join(', ')
 		},
 		formatSchema(publication) {
-			if (!publication['@self'] || !publication['@self'].schema) return '-'
-			return publication['@self'].schema.title || publication['@self'].schema.name || 'Unknown'
+			const schema = publication['@self']?.schema
+			if (!schema) return '-'
+
+			if (typeof schema === 'object') {
+				return schema.title || schema.name || 'Unknown'
+			}
+
+			const match = objectStore.availableSchemas.find(s => Number(s.id) === Number(schema))
+			return match?.title || match?.name || String(schema)
 		},
 	},
 }

@@ -25,6 +25,8 @@ interface ActiveFacetConfig {
 	config: Record<string, string | number | boolean>
 }
 
+/** @typedef {{ type: string, config: object }} ActiveFacetConfig */
+
 interface SearchState {
 	// Search parameters
 	searchTerm: string

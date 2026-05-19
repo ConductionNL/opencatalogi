@@ -315,8 +315,15 @@ class PublicationsController extends Controller
                     // _name, _description, _summary are metadata columns in every magic table.
                     // _relevance is computed dynamically from search terms via pg_trgm similarity().
                     $universalOrderFields = [
-                        '_uuid', '_created', '_updated', '_published', '_depublished',
-                        '_name', '_description', '_summary', '_relevance',
+                        '_uuid',
+                        '_created',
+                        '_updated',
+                        '_published',
+                        '_depublished',
+                        '_name',
+                        '_description',
+                        '_summary',
+                        '_relevance',
                     ];
                     if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
                         foreach (array_keys($searchQuery['_order']) as $orderField) {
@@ -351,11 +358,17 @@ class PublicationsController extends Controller
                 $result['results'] = array_map(
                     callback: function ($item) {
                         // Serialize ObjectEntity instances to arrays before stripping empty values.
-                        if (is_array($item) === false && method_exists(object_or_class: $item, method: 'jsonSerialize') === true) {
+                        if (is_array($item) === false
+                            && method_exists(object_or_class: $item, method: 'jsonSerialize') === true
+                        ) {
                             $item = $item->jsonSerialize();
                         }
 
-                        return is_array($item) === true ? $this->stripEmptyValues(data: $item) : $item;
+                        if (is_array($item) === true) {
+                            return $this->stripEmptyValues(data: $item);
+                        }
+
+                        return $item;
                     },
                     array: $result['results']
                 );
@@ -528,7 +541,7 @@ class PublicationsController extends Controller
 
                         $objects = $objectService->searchObjects(
                             query: $searchQuery,
-                            _rbac: false,
+                            _rbac: true,
                             _multitenancy: false,
                         );
 
@@ -555,7 +568,7 @@ class PublicationsController extends Controller
 
                     $objects = $objectService->searchObjects(
                         query: $searchQuery,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false,
                     );
 
@@ -606,7 +619,7 @@ class PublicationsController extends Controller
                 filter: [],
                 fields: [],
                 unset: [],
-                _rbac: false,
+                _rbac: true,
                 _multitenancy: false,
             );
 
@@ -675,6 +688,7 @@ class PublicationsController extends Controller
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
+
         try {
             // Get the catalog from cache or database.
             $catalogData = $this->catalogiService->getCatalogBySlug($catalogSlug);
@@ -724,7 +738,7 @@ class PublicationsController extends Controller
                         files: false,
                         register: $register,
                         schema: $schemaId,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false
                     );
                     if ($object !== null) {
@@ -841,7 +855,7 @@ class PublicationsController extends Controller
                         files: false,
                         register: $register,
                         schema: $schemaId,
-                        _rbac: false,
+                        _rbac: true,
                         _multitenancy: false
                     );
                     if ($object !== null) {
@@ -1076,6 +1090,4 @@ class PublicationsController extends Controller
 
         return $result;
     }//end stripEmptyValues()
-
-
 }//end class
