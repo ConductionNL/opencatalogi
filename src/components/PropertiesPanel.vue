@@ -6,6 +6,7 @@
 			:form-data="formData"
 			:selected-property="selectedProperty"
 			:property-overrides="propertyOverrides"
+			:is-new="isNew"
 			@update:selected-property="$emit('update:selected-property', $event)"
 			@update:property-value="$emit('update:property-value', $event)">
 			<template #row-actions="{ propertyKey, resolvedValue }">
@@ -46,6 +47,7 @@ export default {
 		propertyOverrides: { type: Object, default: () => ({}) },
 		canDropProperty: { type: Function, required: true },
 		getDropPropertyTooltip: { type: Function, required: true },
+		isNew: { type: Boolean, default: false },
 	},
 	emits: [
 		'update:selected-property',

@@ -10,18 +10,23 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		@update:open="handleDialogClose">
 		<div v-if="success === null" class="depublish-step">
 			<div class="mode-row">
-				<NcSelect v-model="selectedMode"
-					class="mode-row__mode"
-					:options="modeOptions"
-					:clearable="false"
-					:searchable="false"
-					label-attribute="label"
-					:aria-label-combobox="t('opencatalogi', 'Depublishing mode')"
-					:disabled="loading">
-					<template #option="option">
-						<span>{{ option.label }}</span>
-					</template>
-				</NcSelect>
+				<div class="mode-row__mode">
+					<span v-for="opt in modeOptions"
+						:key="opt.id"
+						class="mode-row__mode-sizer"
+						aria-hidden="true">{{ opt.label }}</span>
+					<NcSelect v-model="selectedMode"
+						:options="modeOptions"
+						:clearable="false"
+						:searchable="false"
+						label-attribute="label"
+						:aria-label-combobox="t('opencatalogi', 'Depublishing mode')"
+						:disabled="loading">
+						<template #option="option">
+							<span>{{ option.label }}</span>
+						</template>
+					</NcSelect>
+				</div>
 				<NcDateTimePicker v-if="mode === 'later'"
 					:key="'depublish-later-date'"
 					class="mode-row__date"
@@ -390,9 +395,24 @@ export default {
 }
 
 .mode-row__mode {
-	min-width: 170px;
-	width: auto;
+	display: inline-grid;
 	flex: 0 0 auto;
+	min-width: 170px;
+}
+
+.mode-row__mode-sizer {
+	grid-area: 1 / 1;
+	visibility: hidden;
+	pointer-events: none;
+	white-space: nowrap;
+	padding: 0 40px 0 8px;
+	height: 0;
+	overflow: hidden;
+}
+
+.mode-row__mode :deep(.v-select) {
+	grid-area: 1 / 1;
+	width: 100%;
 }
 
 .mode-row__date {
