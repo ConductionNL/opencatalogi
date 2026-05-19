@@ -208,15 +208,12 @@ export function isUserLoggedIn() {
  */
 export async function getCurrentUserGroups() {
 	try {
-		// Try to get user groups from Nextcloud API
-		const response = await axios.get(generateUrl('/ocs/v1.php/cloud/users/current'))
+		const response = await axios.get('/ocs/v1.php/cloud/user?format=json', {
+			headers: { 'OCS-APIREQUEST': 'true' },
+		})
 
-		if (response.data && response.data.ocs && response.data.ocs.data) {
-			const userData = response.data.ocs.data
-			return userData.groups || []
-		}
-
-		return []
+		const groups = response?.data?.ocs?.data?.groups
+		return Array.isArray(groups) ? groups : []
 	} catch (error) {
 		console.error('Error fetching current user groups:', error)
 		return []
