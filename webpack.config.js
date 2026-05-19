@@ -87,6 +87,7 @@ webpackConfig.resolve.alias = {
 	pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
+	'@nextcloud/axios$': path.resolve(__dirname, 'node_modules/@nextcloud/axios'),
 }
 
 module.exports = webpackConfig
