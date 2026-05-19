@@ -210,7 +210,7 @@ export default function Home() {
   return (
     <Layout
       title="OpenCatalogi, open-source component catalog for Nextcloud"
-      description="Federated data catalogue for apps, datasets, APIs. Public-facing search at your Nextcloud, federation to data.overheid.nl out of the box."
+      description="Public software catalog for Nextcloud. Federated component register with schema validation, REST and GraphQL APIs, and Common Ground alignment."
     >
       <main className="marketing-page">
         <DetailHero
