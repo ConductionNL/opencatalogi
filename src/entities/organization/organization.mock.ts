@@ -12,6 +12,9 @@
 import { Organization } from './organization'
 import { TOrganization } from './organization.types'
 
+/** @typedef {import('./organization.types').TOrganization} TOrganization */
+/** @typedef {import('./organization').Organization} Organization */
+
 /**
  * Mock organization data for testing
  * @return {TOrganization[]} Array of mock organization data

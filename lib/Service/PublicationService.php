@@ -136,7 +136,7 @@ class PublicationService
      * then sets that context on the ObjectService so subsequent operations can find the object.
      *
      * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
-     * @param string                                   $objectId     The UUID of the object to locate
+     * @param string                                  $objectId      The UUID of the object to locate
      *
      * @return void
      */
@@ -146,27 +146,47 @@ class PublicationService
             $db = $this->container->get(\OCP\IDBConnection::class);
 
             $result = $db->executeQuery(
-                "SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'oc_openregister_table_%' ORDER BY table_name"
+                <<<'SQL'
+                SELECT table_name FROM information_schema.tables
+                WHERE table_name LIKE 'oc_openregister_table_%'
+                ORDER BY table_name
+                SQL
             );
 
             $unionParts = [];
             $quotedUuid = $db->quote($objectId);
-            while ($row = $result->fetch()) {
-                if (preg_match('/^oc_openregister_table_(\d+)_(\d+)$/', $row['table_name'], $matches)) {
-                    $register = (int) $matches[1];
-                    $schema   = (int) $matches[2];
-                    $unionParts[] = "(SELECT {$register} AS register_id, {$schema} AS schema_id FROM {$row['table_name']} WHERE _uuid = {$quotedUuid})";
+            $row        = $result->fetch();
+            while ($row !== false) {
+                $match = preg_match(
+                    pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
+                    subject: $row['table_name'],
+                    matches: $matches
+                );
+                if ($match === 1) {
+                    $register     = (int) $matches[1];
+                    $schema       = (int) $matches[2];
+                    $tableName    = $row['table_name'];
+                    $unionParts[] = sprintf(
+                        '(SELECT %d AS register_id, %d AS schema_id FROM %s WHERE _uuid = %s)',
+                        $register,
+                        $schema,
+                        $tableName,
+                        $quotedUuid
+                    );
                 }
-            }
+
+                $row = $result->fetch();
+            }//end while
+
             $result->closeCursor();
 
-            if (empty($unionParts)) {
+            if (empty($unionParts) === true) {
                 return;
             }
 
-            $sql = implode(' UNION ALL ', $unionParts) . ' LIMIT 1';
+            $sql    = implode(' UNION ALL ', $unionParts).' LIMIT 1';
             $result = $db->executeQuery($sql);
-            $row = $result->fetch();
+            $row    = $result->fetch();
             $result->closeCursor();
 
             if ($row !== false) {
@@ -175,9 +195,8 @@ class PublicationService
             }
         } catch (\Exception $e) {
             // Silently fail — worst case we fall back to the old behavior.
-        }
+        }//end try
     }//end setObjectServiceContext()
-
 
     /**
      * Attempts to retrieve the OpenRegister service from the container.

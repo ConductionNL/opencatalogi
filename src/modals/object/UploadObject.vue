@@ -3,11 +3,11 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog name="Upload Object"
+	<NcDialog :name="t('opencatalogi', 'Upload Object')"
 		size="normal"
 		:can-close="false">
 		<NcNoteCard v-if="success" type="success">
-			<p>Object successfully uploaded</p>
+			<p>{{ t('opencatalogi', 'Object successfully uploaded') }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -20,7 +20,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back to Register
+				{{ t('opencatalogi', 'Back to Register') }}
 			</NcButton>
 			<NcButton v-if="registers.value?.id && schemas.value?.id"
 				:disabled="loading"
@@ -28,14 +28,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back to Schema
+				{{ t('opencatalogi', 'Back to Schema') }}
 			</NcButton>
 			<NcButton
 				@click="closeModal">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success ? 'Close' : 'Cancel' }}
+				{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="!registers.value?.id || !schemas.value?.id || loading || !validateJson(object)"
@@ -45,21 +45,21 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Upload v-if="!loading" :size="20" />
 				</template>
-				Upload
+				{{ t('opencatalogi', 'Upload') }}
 			</NcButton>
 		</template>
 
 		<div v-if="!success" class="formContainer">
 			<div v-if="registers?.value?.id && success === null">
-				<b>Register:</b> {{ registers.value.label }}
+				<b>{{ t('opencatalogi', 'Register:') }}</b> {{ registers.value.label }}
 				<NcButton @click="registers.value = null">
-					Edit Register
+					{{ t('opencatalogi', 'Edit Register') }}
 				</NcButton>
 			</div>
 			<div v-if="schemas.value?.id && success === null">
-				<b>Schema:</b> {{ schemas.value.label }}
+				<b>{{ t('opencatalogi', 'Schema:') }}</b> {{ schemas.value.label }}
 				<NcButton @click="schemas.value = null">
-					Edit Schema
+					{{ t('opencatalogi', 'Edit Schema') }}
 				</NcButton>
 			</div>
 
@@ -67,7 +67,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<div v-if="!registers?.value?.id">
 				<NcSelect v-bind="registers"
 					v-model="registers.value"
-					input-label="Register"
+					:input-label="t('opencatalogi', 'Register')"
 					:loading="registersLoading"
 					:disabled="loading" />
 			</div>
@@ -76,7 +76,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<div v-if="registers?.value?.id && !schemas?.value?.id">
 				<NcSelect v-bind="schemas"
 					v-model="schemas.value"
-					input-label="Schemas"
+					:input-label="t('opencatalogi', 'Schemas')"
 					:loading="schemasLoading"
 					:disabled="loading" />
 			</div>
@@ -85,24 +85,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<div v-if="registers.value?.id && schemas.value?.id">
 				<NcSelect v-bind="mappings"
 					v-model="mappings.value"
-					input-label="Mappings"
+					:input-label="t('opencatalogi', 'Mappings')"
 					:loading="mappingsLoading"
 					:disabled="loading || !mappings.options?.length" />
 
 				<div :class="`codeMirrorContainer ${getTheme()}`">
-					<p>Object</p>
+					<p>{{ t('opencatalogi', 'Object') }}</p>
 					<CodeMirror v-model="object"
 						:basic="true"
 						:dark="getTheme() === 'dark'"
 						:lang="json()"
 						:linter="jsonParseLinter()"
-						placeholder="Enter your object here..." />
+						:placeholder="t('opencatalogi', 'Enter your object here...')" />
 
 					<NcButton class="prettifyButton" @click="prettifyJson">
 						<template #icon>
 							<AutoFix :size="20" />
 						</template>
-						Prettify
+						{{ t('opencatalogi', 'Prettify') }}
 					</NcButton>
 				</div>
 			</div>

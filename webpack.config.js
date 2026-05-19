@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs')
+const webpack = require('webpack')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
 const { VueLoaderPlugin } = require('vue-loader')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
@@ -69,6 +70,8 @@ webpackConfig.plugins = [
 	new NodePolyfillPlugin({
 		additionalAliases: ['process'],
 	}),
+	new webpack.DefinePlugin({ appName: JSON.stringify(process.env.npm_package_name) }),
+	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package

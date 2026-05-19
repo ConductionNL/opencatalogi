@@ -306,9 +306,9 @@ We use GitHub Actions workflows to enforce quality standards and prevent low-qua
 
 Our repository includes three main quality workflows:
 
-#### 1. Quality Check Workflow
+#### 1. Code Quality Workflow
 
-**File:** '.github/workflows/quality-check.yml'
+**File:** '.github/workflows/code-quality.yml'
 
 Runs on every push and pull request. Performs:
 - PHPCS (Coding Standards) analysis

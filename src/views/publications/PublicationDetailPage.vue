@@ -23,7 +23,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		:object-id="publicationId"
 		:sidebar-props="{ register: String(publication?.['@self']?.register || ''), schema: String(publication?.['@self']?.schema || '') }">
 		<!-- Header actions -->
-		<template #header-actions>
+		<template #actions>
 			<NcButton @click="goBack">
 				<template #icon>
 					<ArrowLeft :size="20" />
@@ -99,7 +99,6 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					{ label: t('opencatalogi', 'Status'), value: isPublished ? t('opencatalogi', 'Published') : t('opencatalogi', 'Concept') },
 				]" />
 		</template>
-
 	</CnDetailPage>
 </template>
 
