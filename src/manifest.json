@@ -1,26 +1,96 @@
 {
-	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
-	"version": "1.0.0",
-	"dependencies": ["openregister"],
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"version": "2.3.0",
+	"dependencies": [
+		"openregister"
+	],
 	"menu": [
-		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
 		{
-			"id": "CatalogEntries",
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
+		{
+			"id": "Search",
+			"label": "Search",
+			"icon": "icon-search",
+			"route": "Search",
+			"order": 30
+		},
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "OrganizationsMenu",
+			"label": "Organizations",
+			"icon": "icon-group",
+			"route": "Organizations",
+			"section": "settings",
+			"order": 91
+		},
+		{
+			"id": "CatalogsMenu",
 			"label": "Catalogs",
 			"icon": "icon-files",
-			"order": 20,
-			"_note": "Dynamic per-tenant catalog entries (one menu item per OR catalog object via objectStore.getCollection('catalog')) require CnAppNav `dynamicSource` support (planned, not yet landed in beta.58). Kept as a static group; the per-catalog Publication routes are still reachable via navigation."
+			"route": "Catalogs",
+			"section": "settings",
+			"order": 92
 		},
-		{ "id": "Search", "label": "Search", "icon": "icon-search", "route": "Search", "order": 30 },
-		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers", "section": "settings", "order": 90 },
-		{ "id": "OrganizationsMenu", "label": "Organizations", "icon": "icon-group", "route": "Organizations", "section": "settings", "order": 91 },
-		{ "id": "CatalogsMenu", "label": "Catalogs", "icon": "icon-files", "route": "Catalogs", "section": "settings", "order": 92 },
-		{ "id": "GlossaryMenu", "label": "Glossary", "icon": "icon-toggle-filelist", "route": "Glossary", "section": "settings", "order": 93 },
-		{ "id": "ThemesMenu", "label": "Themes", "icon": "icon-category-customization", "route": "Themes", "section": "settings", "order": 94 },
-		{ "id": "PagesMenu", "label": "Pages", "icon": "icon-category-files", "route": "Pages", "section": "settings", "order": 95 },
-		{ "id": "MenusMenu", "label": "Menus", "icon": "icon-category-customization", "route": "Menus", "section": "settings", "order": 96 },
-		{ "id": "DirectoryMenu", "label": "Directory", "icon": "icon-folder", "route": "Directory", "section": "settings", "order": 97 },
-		{ "id": "SettingsMenu", "label": "Settings", "icon": "icon-settings", "action": "user-settings", "section": "settings", "order": 99 }
+		{
+			"id": "GlossaryMenu",
+			"label": "Glossary",
+			"icon": "icon-toggle-filelist",
+			"route": "Glossary",
+			"section": "settings",
+			"order": 93
+		},
+		{
+			"id": "ThemesMenu",
+			"label": "Themes",
+			"icon": "icon-category-customization",
+			"route": "Themes",
+			"section": "settings",
+			"order": 94
+		},
+		{
+			"id": "PagesMenu",
+			"label": "Pages",
+			"icon": "icon-category-files",
+			"route": "Pages",
+			"section": "settings",
+			"order": 95
+		},
+		{
+			"id": "MenusMenu",
+			"label": "Menus",
+			"icon": "icon-category-customization",
+			"route": "Menus",
+			"section": "settings",
+			"order": 96
+		},
+		{
+			"id": "DirectoryMenu",
+			"label": "Directory",
+			"icon": "icon-folder",
+			"route": "Directory",
+			"section": "settings",
+			"order": 97
+		},
+		{
+			"id": "SettingsMenu",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
+		}
 	],
 	"pages": [
 		{
@@ -29,15 +99,29 @@
 			"type": "custom",
 			"title": "Dashboard",
 			"component": "DashboardView",
-			"_note": "Uses CnDashboardPage with custom chart/stats widgets (publications-by-category donut, KPI stats blocks, concept/published/depublished lists). Named-template slot dashboard is a lib gap at beta.58: type:'dashboard' expects a declarative widgets[] config; opencatalogi's dashboard uses deeply custom per-widget templates (slot #widget-*) driven by live OR queries. Keep as type:'custom' until lib gains template-slot pass-through for dashboard widgets."
+			"_note": "Custom analytics dashboard (charts + recent activity + per-catalog stats). Could be type:\"dashboard\" with widget composition once chart widgets land."
 		},
 		{
 			"id": "Catalogs",
 			"route": "/catalogi",
-			"type": "custom",
+			"type": "index",
 			"title": "Catalogs",
-			"component": "CatalogiIndexView",
-			"_note": "Catalog index uses CnIndexPage with fully bespoke event handlers, schema injection, and per-row actions (add, edit, delete, export). The register/schema config would map to the OR listings_register/listings_schema IAppConfig values which are tenant-configured at runtime and not known at build time. Keeping type:'custom' until @resolve: sentinel support lands (ADR-024 future feature)."
+			"config": {
+				"register": "@resolve:catalog_register",
+				"schema": "@resolve:catalog_schema",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "CatalogDetail",
@@ -45,111 +129,315 @@
 			"type": "custom",
 			"title": "Catalog",
 			"component": "CatalogDetailPageView",
-			"_note": "Detail view uses CnDetailPage with bespoke layout/widgets/sidebar driven by live OR queries. The register and schema are resolved at runtime from catalog['@self']. Keeping type:'custom' until @resolve: sentinel support or CnDetailPage prop-passthrough for dynamic register/schema lands."
+			"_note": "CnDetailPage with bespoke header (catalog stats + slug + edit actions) + sidebar tabs. Lib gap: header-component slot resolution from manifest, granular sidebar-tab declaration."
 		},
 		{
 			"id": "Publications",
 			"route": "/publications/:catalogSlug",
-			"type": "custom",
+			"type": "index",
 			"title": "Publications",
-			"component": "PublicationIndexView",
-			"_note": "Publication list is per-catalog (route param :catalogSlug maps to tenant-configured catalog slug). CnIndexPage type:'index' requires a static register+schema at build time; here both are resolved from the active catalog at runtime. Keeping type:'custom'. Also has old/new style toggle (use_old_style_publishing_view). Candidate for type:'index' once @resolve: sentinels land."
+			"config": {
+				"register": "publication",
+				"schema": "publication",
+				"filter": {
+					"catalog": "@route.catalogSlug"
+				},
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": true,
+					"showCopyAction": true,
+					"showDeleteAction": true,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "PublicationDetail",
 			"route": "/publications/:catalogSlug/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Publication",
-			"component": "PublicationDetailPageView",
-			"_note": "Uses CnDetailPage with dynamic register/schema resolved from publication['@self']. Sidebar tabs driven by bespoke layout config. Keeping type:'custom' until @resolve: sentinel or dynamic register/schema prop support on CnDetailPage."
+			"config": {
+				"register": "publication",
+				"schema": "publication",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "file-manager",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 4,
+					"gridWidth": 12,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Search",
 			"route": "/search",
-			"type": "custom",
+			"type": "search",
 			"title": "Search",
-			"component": "SearchIndexView",
-			"_note": "Full-text cross-catalog search with view-mode toggle (cards/table), faceted filtering, pagination, and a named router-view sidebar (SearchSideBar). The named-view sidebar pattern ('sidebar' router-view slot) is not yet supported by CnAppRoot's built-in routing layer. Keeping type:'custom'."
+			"config": {
+				"register": "publication",
+				"schema": "publication"
+			}
 		},
 		{
 			"id": "Organizations",
 			"route": "/organizations",
-			"type": "custom",
+			"type": "index",
 			"title": "Organizations",
-			"component": "OrganizationIndexView",
-			"_note": "Uses CnIndexPage but with deeply custom event/action handlers, admin-only add button, and bespoke schema object injection. The OR register/schema for organizations is tenant-provisioned (resolved at runtime). Keeping type:'custom' until @resolve: sentinels land."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "organization",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "Themes",
 			"route": "/themes",
-			"type": "custom",
+			"type": "index",
 			"title": "Themes",
-			"component": "ThemeIndexView",
-			"_note": "CnIndexPage-based but schema/register are runtime-resolved from IAppConfig (tenant-configured). Keeping type:'custom' until @resolve: sentinel support."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "theme",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "ThemeDetail",
 			"route": "/themes/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Theme",
-			"component": "ThemeDetailPageView",
-			"_note": "Theme detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "theme",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "theme-preview",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Glossary",
 			"route": "/glossary",
-			"type": "custom",
+			"type": "index",
 			"title": "Glossary",
-			"component": "GlossaryIndexView",
-			"_note": "CnIndexPage-based; register/schema runtime-resolved from IAppConfig. Keeping type:'custom' until @resolve: sentinels land."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "glossary",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "GlossaryDetail",
 			"route": "/glossary/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Glossary term",
-			"component": "GlossaryDetailPageView",
-			"_note": "Glossary detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "glossary",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "relationship-graph",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Pages",
 			"route": "/pages",
-			"type": "custom",
+			"type": "index",
 			"title": "Pages",
-			"component": "PageIndexView",
-			"_note": "CnIndexPage-based; register/schema runtime-resolved from IAppConfig (tenant web-page objects). Keeping type:'custom' until @resolve: sentinels land."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "page",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "PageDetail",
 			"route": "/pages/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Page",
-			"component": "PageDetailPageView",
-			"_note": "Page detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "page",
+				"idParam": "@route.id"
+			}
 		},
 		{
 			"id": "Menus",
 			"route": "/menus",
-			"type": "custom",
+			"type": "index",
 			"title": "Menus",
-			"component": "MenuIndexView",
-			"_note": "CnIndexPage-based; register/schema runtime-resolved from IAppConfig (tenant navigation-menu objects). Keeping type:'custom' until @resolve: sentinels land."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "menu",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "MenuDetail",
 			"route": "/menus/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Menu",
-			"component": "MenuDetailPageView",
-			"_note": "Menu detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "menu",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "tree-view",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Directory",
 			"route": "/directory",
 			"type": "custom",
 			"title": "Directory",
-			"component": "DirectoryIndexView",
-			"_note": "CnIndexPage-based with admin-gated add, refresh, and per-row sync actions specific to the directory-federation pattern. Register/schema runtime-resolved. Keeping type:'custom'."
+			"component": "CnFederationStatus",
+			"_note": "Federated-directory list rendered by CnFederationStatus from @conduction/nextcloud-vue (federation discovery + per-node availability)."
 		}
 	]
 }
