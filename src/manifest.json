@@ -1,9 +1,17 @@
 {
-	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
-	"version": "1.0.0",
-	"dependencies": ["openregister"],
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"version": "2.0.0",
+	"dependencies": [
+		"openregister"
+	],
 	"menu": [
-		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
+		{
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
 		{
 			"id": "CatalogEntries",
 			"label": "Catalogs",
@@ -11,16 +19,85 @@
 			"order": 20,
 			"_note": "Dynamic per-tenant catalog entries (one menu item per OR catalog object via objectStore.getCollection('catalog')) require CnAppNav `dynamicSource` support (planned, not yet landed in beta.58). Kept as a static group; the per-catalog Publication routes are still reachable via navigation."
 		},
-		{ "id": "Search", "label": "Search", "icon": "icon-search", "route": "Search", "order": 30 },
-		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers", "section": "settings", "order": 90 },
-		{ "id": "OrganizationsMenu", "label": "Organizations", "icon": "icon-group", "route": "Organizations", "section": "settings", "order": 91 },
-		{ "id": "CatalogsMenu", "label": "Catalogs", "icon": "icon-files", "route": "Catalogs", "section": "settings", "order": 92 },
-		{ "id": "GlossaryMenu", "label": "Glossary", "icon": "icon-toggle-filelist", "route": "Glossary", "section": "settings", "order": 93 },
-		{ "id": "ThemesMenu", "label": "Themes", "icon": "icon-category-customization", "route": "Themes", "section": "settings", "order": 94 },
-		{ "id": "PagesMenu", "label": "Pages", "icon": "icon-category-files", "route": "Pages", "section": "settings", "order": 95 },
-		{ "id": "MenusMenu", "label": "Menus", "icon": "icon-category-customization", "route": "Menus", "section": "settings", "order": 96 },
-		{ "id": "DirectoryMenu", "label": "Directory", "icon": "icon-folder", "route": "Directory", "section": "settings", "order": 97 },
-		{ "id": "SettingsMenu", "label": "Settings", "icon": "icon-settings", "action": "user-settings", "section": "settings", "order": 99 }
+		{
+			"id": "Search",
+			"label": "Search",
+			"icon": "icon-search",
+			"route": "Search",
+			"order": 30
+		},
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "OrganizationsMenu",
+			"label": "Organizations",
+			"icon": "icon-group",
+			"route": "Organizations",
+			"section": "settings",
+			"order": 91
+		},
+		{
+			"id": "CatalogsMenu",
+			"label": "Catalogs",
+			"icon": "icon-files",
+			"route": "Catalogs",
+			"section": "settings",
+			"order": 92
+		},
+		{
+			"id": "GlossaryMenu",
+			"label": "Glossary",
+			"icon": "icon-toggle-filelist",
+			"route": "Glossary",
+			"section": "settings",
+			"order": 93
+		},
+		{
+			"id": "ThemesMenu",
+			"label": "Themes",
+			"icon": "icon-category-customization",
+			"route": "Themes",
+			"section": "settings",
+			"order": 94
+		},
+		{
+			"id": "PagesMenu",
+			"label": "Pages",
+			"icon": "icon-category-files",
+			"route": "Pages",
+			"section": "settings",
+			"order": 95
+		},
+		{
+			"id": "MenusMenu",
+			"label": "Menus",
+			"icon": "icon-category-customization",
+			"route": "Menus",
+			"section": "settings",
+			"order": 96
+		},
+		{
+			"id": "DirectoryMenu",
+			"label": "Directory",
+			"icon": "icon-folder",
+			"route": "Directory",
+			"section": "settings",
+			"order": 97
+		},
+		{
+			"id": "SettingsMenu",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
+		}
 	],
 	"pages": [
 		{
@@ -29,7 +106,7 @@
 			"type": "custom",
 			"title": "Dashboard",
 			"component": "DashboardView",
-			"_note": "Uses CnDashboardPage with custom chart/stats widgets (publications-by-category donut, KPI stats blocks, concept/published/depublished lists). Named-template slot dashboard is a lib gap at beta.58: type:'dashboard' expects a declarative widgets[] config; opencatalogi's dashboard uses deeply custom per-widget templates (slot #widget-*) driven by live OR queries. Keep as type:'custom' until lib gains template-slot pass-through for dashboard widgets."
+			"_note": "Custom analytics dashboard (charts + recent activity + per-catalog stats). Could be type:\"dashboard\" with widget composition once chart widgets land."
 		},
 		{
 			"id": "Catalogs",
@@ -37,7 +114,7 @@
 			"type": "custom",
 			"title": "Catalogs",
 			"component": "CatalogiIndexView",
-			"_note": "Catalog index uses CnIndexPage with fully bespoke event handlers, schema injection, and per-row actions (add, edit, delete, export). The register/schema config would map to the OR listings_register/listings_schema IAppConfig values which are tenant-configured at runtime and not known at build time. Keeping type:'custom' until @resolve: sentinel support lands (ADR-024 future feature)."
+			"_note": "CnIndexPage wrapper with granular show-mass-*/show-edit-action toggles disabled (app uses bespoke action handlers). Lib gap: manifest config does not expose the show-* toggles yet."
 		},
 		{
 			"id": "CatalogDetail",
@@ -45,7 +122,7 @@
 			"type": "custom",
 			"title": "Catalog",
 			"component": "CatalogDetailPageView",
-			"_note": "Detail view uses CnDetailPage with bespoke layout/widgets/sidebar driven by live OR queries. The register and schema are resolved at runtime from catalog['@self']. Keeping type:'custom' until @resolve: sentinel support or CnDetailPage prop-passthrough for dynamic register/schema lands."
+			"_note": "CnDetailPage with bespoke header (catalog stats + slug + edit actions) + sidebar tabs. Lib gap: header-component slot resolution from manifest, granular sidebar-tab declaration."
 		},
 		{
 			"id": "Publications",
@@ -53,7 +130,7 @@
 			"type": "custom",
 			"title": "Publications",
 			"component": "PublicationIndexView",
-			"_note": "Publication list is per-catalog (route param :catalogSlug maps to tenant-configured catalog slug). CnIndexPage type:'index' requires a static register+schema at build time; here both are resolved from the active catalog at runtime. Keeping type:'custom'. Also has old/new style toggle (use_old_style_publishing_view). Candidate for type:'index' once @resolve: sentinels land."
+			"_note": "Per-catalog publications list with catalog-slug filter from route param + bespoke action handlers. Lib gap: route-param-to-config-filter binding (\"@route.catalogSlug\")."
 		},
 		{
 			"id": "PublicationDetail",
@@ -61,7 +138,7 @@
 			"type": "custom",
 			"title": "Publication",
 			"component": "PublicationDetailPageView",
-			"_note": "Uses CnDetailPage with dynamic register/schema resolved from publication['@self']. Sidebar tabs driven by bespoke layout config. Keeping type:'custom' until @resolve: sentinel or dynamic register/schema prop support on CnDetailPage."
+			"_note": "Publication detail with attachment/file management + workflow status. Lib gap: file-management widget."
 		},
 		{
 			"id": "Search",
@@ -69,7 +146,7 @@
 			"type": "custom",
 			"title": "Search",
 			"component": "SearchIndexView",
-			"_note": "Full-text cross-catalog search with view-mode toggle (cards/table), faceted filtering, pagination, and a named router-view sidebar (SearchSideBar). The named-view sidebar pattern ('sidebar' router-view slot) is not yet supported by CnAppRoot's built-in routing layer. Keeping type:'custom'."
+			"_note": "Search-specific results view with facet sidebar + cross-schema match. Lib gap: type:\"search\" page type."
 		},
 		{
 			"id": "Organizations",
@@ -77,7 +154,7 @@
 			"type": "custom",
 			"title": "Organizations",
 			"component": "OrganizationIndexView",
-			"_note": "Uses CnIndexPage but with deeply custom event/action handlers, admin-only add button, and bespoke schema object injection. The OR register/schema for organizations is tenant-provisioned (resolved at runtime). Keeping type:'custom' until @resolve: sentinels land."
+			"_note": "CnIndexPage wrapper with show-* action toggles + custom isAdmin permission. Same lib gap as CatalogiIndex."
 		},
 		{
 			"id": "Themes",
@@ -85,7 +162,7 @@
 			"type": "custom",
 			"title": "Themes",
 			"component": "ThemeIndexView",
-			"_note": "CnIndexPage-based but schema/register are runtime-resolved from IAppConfig (tenant-configured). Keeping type:'custom' until @resolve: sentinel support."
+			"_note": "CnIndexPage wrapper with show-* action toggles + custom add behaviour. Same lib gap as CatalogiIndex."
 		},
 		{
 			"id": "ThemeDetail",
@@ -93,7 +170,7 @@
 			"type": "custom",
 			"title": "Theme",
 			"component": "ThemeDetailPageView",
-			"_note": "Theme detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"_note": "Theme detail with stylesheet preview + colour picker. Lib gap: theme-preview widget."
 		},
 		{
 			"id": "Glossary",
@@ -101,7 +178,7 @@
 			"type": "custom",
 			"title": "Glossary",
 			"component": "GlossaryIndexView",
-			"_note": "CnIndexPage-based; register/schema runtime-resolved from IAppConfig. Keeping type:'custom' until @resolve: sentinels land."
+			"_note": "CnIndexPage wrapper with show-* action toggles + alphabetical grouping. Lib gap: alphabetical-grouping in index config."
 		},
 		{
 			"id": "GlossaryDetail",
@@ -109,7 +186,7 @@
 			"type": "custom",
 			"title": "Glossary term",
 			"component": "GlossaryDetailPageView",
-			"_note": "Glossary detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"_note": "Glossary-term detail with related-terms graph. Lib gap: related-terms widget."
 		},
 		{
 			"id": "Pages",
@@ -117,7 +194,7 @@
 			"type": "custom",
 			"title": "Pages",
 			"component": "PageIndexView",
-			"_note": "CnIndexPage-based; register/schema runtime-resolved from IAppConfig (tenant web-page objects). Keeping type:'custom' until @resolve: sentinels land."
+			"_note": "CnIndexPage wrapper with show-* action toggles + tree-display hint. Lib gap: hierarchical index display."
 		},
 		{
 			"id": "PageDetail",
@@ -125,7 +202,7 @@
 			"type": "custom",
 			"title": "Page",
 			"component": "PageDetailPageView",
-			"_note": "Page detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"_note": "Page detail with markdown editor + slug routing. Lib gap: markdown widget + route-binding."
 		},
 		{
 			"id": "Menus",
@@ -133,7 +210,7 @@
 			"type": "custom",
 			"title": "Menus",
 			"component": "MenuIndexView",
-			"_note": "CnIndexPage-based; register/schema runtime-resolved from IAppConfig (tenant navigation-menu objects). Keeping type:'custom' until @resolve: sentinels land."
+			"_note": "CnIndexPage wrapper with show-* action toggles. Same lib gap as CatalogiIndex."
 		},
 		{
 			"id": "MenuDetail",
@@ -141,7 +218,7 @@
 			"type": "custom",
 			"title": "Menu",
 			"component": "MenuDetailPageView",
-			"_note": "Menu detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"_note": "Menu detail with nested item editor (drag-drop reorder). Lib gap: tree-editor widget."
 		},
 		{
 			"id": "Directory",
@@ -149,7 +226,7 @@
 			"type": "custom",
 			"title": "Directory",
 			"component": "DirectoryIndexView",
-			"_note": "CnIndexPage-based with admin-gated add, refresh, and per-row sync actions specific to the directory-federation pattern. Register/schema runtime-resolved. Keeping type:'custom'."
+			"_note": "Federated-directory list (federation discovery + per-node availability). Lib gap: federation-status widget."
 		}
 	]
 }
