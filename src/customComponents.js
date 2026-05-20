@@ -35,14 +35,17 @@ import PublicationDetailPageView from './views/publications/PublicationDetailPag
 import SearchIndexView from './views/search/SearchIndex.vue'
 import OrganizationIndexView from './views/organizations/OrganizationIndex.vue'
 import ThemeIndexView from './views/themes/ThemeIndex.vue'
-import ThemeDetailPageView from './views/themes/ThemeDetailPage.vue'
 import GlossaryIndexView from './views/glossary/GlossaryIndex.vue'
-import GlossaryDetailPageView from './views/glossary/GlossaryDetailPage.vue'
 import PageIndexView from './views/pages/PageIndex.vue'
-import PageDetailPageView from './views/pages/PageDetailPage.vue'
 import MenuIndexView from './views/menus/MenuIndex.vue'
-import MenuDetailPageView from './views/menus/MenuDetailPage.vue'
 import DirectoryIndexView from './views/directory/DirectoryIndex.vue'
+
+// --- Generic detail wrapper. One component drives every per-entity
+//     detail page via manifest `config` props (entityType, entityLabel,
+//     icon, apiPath, backRoute, editModal, extraMetadataFields). The
+//     four per-entity Vue wrappers (Theme/Glossary/Page/Menu detail)
+//     were removed in this pass — the manifest carries the config now.
+import EntityDetailView from './views/shared/EntityDetailPage.vue'
 
 export default {
 	// --- Dashboard (custom chart/stats widgets, named slot templates). ---
@@ -62,12 +65,11 @@ export default {
 	// --- Settings / admin views (register/schema runtime-resolved from IAppConfig). ---
 	OrganizationIndexView,
 	ThemeIndexView,
-	ThemeDetailPageView,
 	GlossaryIndexView,
-	GlossaryDetailPageView,
 	PageIndexView,
-	PageDetailPageView,
 	MenuIndexView,
-	MenuDetailPageView,
 	DirectoryIndexView,
+
+	// --- Generic entity-detail wrapper (replaces 4 per-entity files). ---
+	EntityDetailView,
 }

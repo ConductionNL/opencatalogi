@@ -1,16 +1,9 @@
 {
-	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
-	"version": "1.0.0",
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"version": "2.0.0",
 	"dependencies": ["openregister"],
 	"menu": [
 		{ "id": "Dashboard", "label": "Dashboard", "icon": "icon-category-dashboard", "route": "Dashboard", "order": 10 },
-		{
-			"id": "CatalogEntries",
-			"label": "Catalogs",
-			"icon": "icon-files",
-			"order": 20,
-			"_note": "Dynamic per-tenant catalog entries (one menu item per OR catalog object via objectStore.getCollection('catalog')) require CnAppNav `dynamicSource` support (planned, not yet landed in beta.58). Kept as a static group; the per-catalog Publication routes are still reachable via navigation."
-		},
 		{ "id": "Search", "label": "Search", "icon": "icon-search", "route": "Search", "order": 30 },
 		{ "id": "Documentation", "label": "Documentation", "icon": "icon-info", "href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers", "section": "settings", "order": 90 },
 		{ "id": "OrganizationsMenu", "label": "Organizations", "icon": "icon-group", "route": "Organizations", "section": "settings", "order": 91 },
@@ -92,8 +85,19 @@
 			"route": "/themes/:id",
 			"type": "custom",
 			"title": "Theme",
-			"component": "ThemeDetailPageView",
-			"_note": "Theme detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"component": "EntityDetailView",
+			"config": {
+				"entityType": "theme",
+				"entityLabel": "Theme",
+				"icon": "ShapeOutline",
+				"apiPath": "themes",
+				"backRoute": "Themes",
+				"editModal": "theme",
+				"extraMetadataFields": [
+					{ "field": "status", "label": "Status" }
+				]
+			},
+			"_note": "Generic EntityDetailView driven by manifest config (replaces former ThemeDetailPage.vue wrapper). Register/schema still runtime-resolved from entity['@self']. Keeping type:'custom' until typed primitive accepts runtime register/schema."
 		},
 		{
 			"id": "Glossary",
@@ -108,8 +112,19 @@
 			"route": "/glossary/:id",
 			"type": "custom",
 			"title": "Glossary term",
-			"component": "GlossaryDetailPageView",
-			"_note": "Glossary detail with bespoke layout. Register/schema runtime-resolved. Keeping type:'custom'."
+			"component": "EntityDetailView",
+			"config": {
+				"entityType": "glossary",
+				"entityLabel": "Glossary Term",
+				"icon": "FormatListBulleted",
+				"apiPath": "glossary",
+				"backRoute": "Glossary",
+				"editModal": "glossary",
+				"extraMetadataFields": [
+					{ "field": "keywords", "label": "Keywords", "format": "join" }
+				]
+			},
+			"_note": "Generic EntityDetailView driven by manifest config (replaces former GlossaryDetailPage.vue wrapper). Register/schema still runtime-resolved from entity['@self']."
 		},
 		{
 			"id": "Pages",

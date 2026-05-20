@@ -139,9 +139,28 @@ export default {
 			type: String,
 			required: true,
 		},
-		/** Extra metadata items to display (beyond title/summary/dates) */
+		/** Extra metadata items to display (beyond title/summary/dates).
+		 *  Either a function `(entity) => [{label,value},...]` (legacy)
+		 *  or null (use declarative `extraMetadataFields`). */
 		extraMetadata: {
 			type: Function,
+			default: null,
+		},
+		/**
+		 * Declarative metadata-field descriptors used when no
+		 * `extraMetadata` function is provided. Each entry resolves a
+		 * value from the entity object and produces a {label,value}
+		 * row. Used by manifest-driven detail pages (config-only, no
+		 * per-entity Vue wrapper file).
+		 *
+		 *   field   - dot-path on the entity (e.g. 'status', 'keywords')
+		 *   label   - i18n key (resolved via t('opencatalogi', label))
+		 *   format  - 'join' (array → comma list) | 'length' (.length) | 'string' (default)
+		 *
+		 * @type {Array<{field:string,label:string,format?:string}>}
+		 */
+		extraMetadataFields: {
+			type: Array,
 			default: () => [],
 		},
 	},
@@ -161,10 +180,31 @@ export default {
 		metadataItems() {
 			if (!this.entity) return []
 			const self = this.entity['@self'] || {}
+			// Resolve extra-metadata rows: prefer function-form (legacy
+			// per-entity wrappers) over declarative form (manifest config).
+			let extra = []
+			if (typeof this.extraMetadata === 'function') {
+				extra = this.extraMetadata(this.entity) || []
+			} else if (this.extraMetadataFields.length) {
+				extra = this.extraMetadataFields
+					.map((descriptor) => {
+						const raw = this.entity[descriptor.field]
+						if (raw === undefined || raw === null || raw === '') return null
+						let value = raw
+						if (descriptor.format === 'join' && Array.isArray(raw)) {
+							value = raw.length ? raw.join(', ') : null
+						} else if (descriptor.format === 'length' && Array.isArray(raw)) {
+							value = raw.length ? String(raw.length) : null
+						}
+						if (value === null) return null
+						return { label: t('opencatalogi', descriptor.label), value }
+					})
+					.filter(Boolean)
+			}
 			const base = [
 				{ label: t('opencatalogi', 'Title'), value: this.entity.title || this.entity.name || '-' },
 				{ label: t('opencatalogi', 'Summary'), value: this.entity.summary || '-' },
-				...this.extraMetadata(this.entity),
+				...extra,
 				{ label: t('opencatalogi', 'Created'), value: self.created ? new Date(self.created).toLocaleString() : '-' },
 				{ label: t('opencatalogi', 'Updated'), value: self.updated ? new Date(self.updated).toLocaleString() : '-' },
 				{ label: t('opencatalogi', 'Owner'), value: self.owner || '-' },

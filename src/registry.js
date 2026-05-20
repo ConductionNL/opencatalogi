@@ -28,19 +28,16 @@ import PublicationDetailPageView from './views/publications/PublicationDetailPag
 import SearchIndexView from './views/search/SearchIndex.vue'
 import OrganizationIndexView from './views/organizations/OrganizationIndex.vue'
 import ThemeIndexView from './views/themes/ThemeIndex.vue'
-import ThemeDetailPageView from './views/themes/ThemeDetailPage.vue'
 import GlossaryIndexView from './views/glossary/GlossaryIndex.vue'
-import GlossaryDetailPageView from './views/glossary/GlossaryDetailPage.vue'
 import PageIndexView from './views/pages/PageIndex.vue'
-import PageDetailPageView from './views/pages/PageDetailPage.vue'
 import MenuIndexView from './views/menus/MenuIndex.vue'
-import MenuDetailPageView from './views/menus/MenuDetailPage.vue'
 import DirectoryIndexView from './views/directory/DirectoryIndex.vue'
+import EntityDetailView from './views/shared/EntityDetailPage.vue'
 
 export default {
-	// All entries are kind:'page' — bespoke per-feature views. Future
-	// cleanup: as lib primitives (named-view sidebar, dashboard slot
-	// pass-through) land, these can shrink toward zero.
+	// All entries are kind:'page'. Future cleanup: as lib primitives
+	// (named-view sidebar, dashboard slot pass-through) land, the
+	// bespoke index/detail pages can shrink further.
 	DashboardView: { kind: 'page', component: DashboardView },
 	CatalogiIndexView: { kind: 'page', component: CatalogiIndexView },
 	CatalogDetailPageView: { kind: 'page', component: CatalogDetailPageView },
@@ -49,12 +46,11 @@ export default {
 	SearchIndexView: { kind: 'page', component: SearchIndexView },
 	OrganizationIndexView: { kind: 'page', component: OrganizationIndexView },
 	ThemeIndexView: { kind: 'page', component: ThemeIndexView },
-	ThemeDetailPageView: { kind: 'page', component: ThemeDetailPageView },
 	GlossaryIndexView: { kind: 'page', component: GlossaryIndexView },
-	GlossaryDetailPageView: { kind: 'page', component: GlossaryDetailPageView },
 	PageIndexView: { kind: 'page', component: PageIndexView },
-	PageDetailPageView: { kind: 'page', component: PageDetailPageView },
 	MenuIndexView: { kind: 'page', component: MenuIndexView },
-	MenuDetailPageView: { kind: 'page', component: MenuDetailPageView },
 	DirectoryIndexView: { kind: 'page', component: DirectoryIndexView },
+	// Generic entity-detail wrapper — same component, 4 manifest pages,
+	// driven by per-page `config` (entityType, apiPath, backRoute, …).
+	EntityDetailView: { kind: 'page', component: EntityDetailView },
 }
