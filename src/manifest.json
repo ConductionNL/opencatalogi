@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "2.0.0",
+	"version": "2.3.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -11,13 +11,6 @@
 			"icon": "icon-category-dashboard",
 			"route": "Dashboard",
 			"order": 10
-		},
-		{
-			"id": "CatalogEntries",
-			"label": "Catalogs",
-			"icon": "icon-files",
-			"order": 20,
-			"_note": "Dynamic per-tenant catalog entries (one menu item per OR catalog object via objectStore.getCollection('catalog')) require CnAppNav `dynamicSource` support (planned, not yet landed in beta.58). Kept as a static group; the per-catalog Publication routes are still reachable via navigation."
 		},
 		{
 			"id": "Search",
@@ -111,10 +104,24 @@
 		{
 			"id": "Catalogs",
 			"route": "/catalogi",
-			"type": "custom",
+			"type": "index",
 			"title": "Catalogs",
-			"component": "CatalogiIndexView",
-			"_note": "CnIndexPage wrapper with granular show-mass-*/show-edit-action toggles disabled (app uses bespoke action handlers). Lib gap: manifest config does not expose the show-* toggles yet."
+			"config": {
+				"register": "@resolve:catalog_register",
+				"schema": "@resolve:catalog_schema",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "CatalogDetail",
@@ -127,106 +134,310 @@
 		{
 			"id": "Publications",
 			"route": "/publications/:catalogSlug",
-			"type": "custom",
+			"type": "index",
 			"title": "Publications",
-			"component": "PublicationIndexView",
-			"_note": "Per-catalog publications list with catalog-slug filter from route param + bespoke action handlers. Lib gap: route-param-to-config-filter binding (\"@route.catalogSlug\")."
+			"config": {
+				"register": "publication",
+				"schema": "publication",
+				"filter": {
+					"catalog": "@route.catalogSlug"
+				},
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": true,
+					"showCopyAction": true,
+					"showDeleteAction": true,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "PublicationDetail",
 			"route": "/publications/:catalogSlug/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Publication",
-			"component": "PublicationDetailPageView",
-			"_note": "Publication detail with attachment/file management + workflow status. Lib gap: file-management widget."
+			"config": {
+				"register": "publication",
+				"schema": "publication",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "file-manager",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 4,
+					"gridWidth": 12,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Search",
 			"route": "/search",
-			"type": "custom",
+			"type": "search",
 			"title": "Search",
-			"component": "SearchIndexView",
-			"_note": "Search-specific results view with facet sidebar + cross-schema match. Lib gap: type:\"search\" page type."
+			"config": {
+				"register": "publication",
+				"schema": "publication"
+			}
 		},
 		{
 			"id": "Organizations",
 			"route": "/organizations",
-			"type": "custom",
+			"type": "index",
 			"title": "Organizations",
-			"component": "OrganizationIndexView",
-			"_note": "CnIndexPage wrapper with show-* action toggles + custom isAdmin permission. Same lib gap as CatalogiIndex."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "organization",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "Themes",
 			"route": "/themes",
-			"type": "custom",
+			"type": "index",
 			"title": "Themes",
-			"component": "ThemeIndexView",
-			"_note": "CnIndexPage wrapper with show-* action toggles + custom add behaviour. Same lib gap as CatalogiIndex."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "theme",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "ThemeDetail",
 			"route": "/themes/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Theme",
-			"component": "ThemeDetailPageView",
-			"_note": "Theme detail with stylesheet preview + colour picker. Lib gap: theme-preview widget."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "theme",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "theme-preview",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Glossary",
 			"route": "/glossary",
-			"type": "custom",
+			"type": "index",
 			"title": "Glossary",
-			"component": "GlossaryIndexView",
-			"_note": "CnIndexPage wrapper with show-* action toggles + alphabetical grouping. Lib gap: alphabetical-grouping in index config."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "glossary",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "GlossaryDetail",
 			"route": "/glossary/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Glossary term",
-			"component": "GlossaryDetailPageView",
-			"_note": "Glossary-term detail with related-terms graph. Lib gap: related-terms widget."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "glossary",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "relationship-graph",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Pages",
 			"route": "/pages",
-			"type": "custom",
+			"type": "index",
 			"title": "Pages",
-			"component": "PageIndexView",
-			"_note": "CnIndexPage wrapper with show-* action toggles + tree-display hint. Lib gap: hierarchical index display."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "page",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "PageDetail",
 			"route": "/pages/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Page",
-			"component": "PageDetailPageView",
-			"_note": "Page detail with markdown editor + slug routing. Lib gap: markdown widget + route-binding."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "page",
+				"idParam": "@route.id"
+			}
 		},
 		{
 			"id": "Menus",
 			"route": "/menus",
-			"type": "custom",
+			"type": "index",
 			"title": "Menus",
-			"component": "MenuIndexView",
-			"_note": "CnIndexPage wrapper with show-* action toggles. Same lib gap as CatalogiIndex."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "menu",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
 		},
 		{
 			"id": "MenuDetail",
 			"route": "/menus/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Menu",
-			"component": "MenuDetailPageView",
-			"_note": "Menu detail with nested item editor (drag-drop reorder). Lib gap: tree-editor widget."
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "menu",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "tree-view",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Directory",
 			"route": "/directory",
 			"type": "custom",
 			"title": "Directory",
-			"component": "DirectoryIndexView",
-			"_note": "Federated-directory list (federation discovery + per-node availability). Lib gap: federation-status widget."
+			"component": "CnFederationStatus",
+			"_note": "Federated-directory list rendered by CnFederationStatus from @conduction/nextcloud-vue (federation discovery + per-node availability)."
 		}
 	]
 }
