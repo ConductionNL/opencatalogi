@@ -1,0 +1,8 @@
+{
+  "spec_slug": "auto-publishing",
+  "title": "Auto-Publishing",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}
