@@ -1,0 +1,8 @@
+{
+  "spec_slug": "admin-settings",
+  "title": "Admin Settings",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}
