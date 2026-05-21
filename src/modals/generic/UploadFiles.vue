@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
 				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
-					:label="t('opencatalogi', 'Automatically share')"
+					:label="t('opencatalogi', 'Automatically publish')"
 					type="switch"
 					:checked.sync="share">
-					{{ t('opencatalogi', 'Automatically share') }}
+					{{ t('opencatalogi', 'Automatically publish') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -33,7 +33,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							<p>{{ t('opencatalogi', 'Select or create labels or select "No label" to add files') }}</p>
 						</NcNoteCard>
 					</div>
-					<div v-if="success !== null || error">
+					<div v-if="success !== null || error || duplicateWarning">
 						<NcNoteCard v-if="success" type="success">
 							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
 						</NcNoteCard>
@@ -42,6 +42,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
+						</NcNoteCard>
+						<NcNoteCard v-if="duplicateWarning" type="warning">
+							<p>{{ duplicateWarning }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
@@ -100,7 +103,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							</p>
 						</NcNoteCard>
 					</div>
-					<div v-if="success !== null || error">
+					<div v-if="success !== null || error || duplicateWarning">
 						<NcNoteCard v-if="success" type="success">
 							<p>{{ t('opencatalogi', 'Files added successfully') }}</p>
 						</NcNoteCard>
@@ -109,6 +112,9 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</NcNoteCard>
 						<NcNoteCard v-if="error && !success" type="error">
 							<p>{{ error }}</p>
+						</NcNoteCard>
+						<NcNoteCard v-if="duplicateWarning" type="warning">
+							<p>{{ duplicateWarning }}</p>
 						</NcNoteCard>
 						<div v-if="false">
 							<NcNoteCard type="error">
@@ -139,23 +145,6 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 								{{ t('opencatalogi', 'Add a file or files') }}
 							</NcButton>
 						</div>
-					</div>
-				</div>
-				<div v-if="!files">
-					{{ t('opencatalogi', 'No files selected') }}
-				</div>
-				<div v-if="files" class="uploadSummaryContainer">
-					<span class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
-					<div class="buttonContainer">
-						<NcButton v-if="failedCount > 0"
-							type="primary"
-							:disabled="loading || retryLoading"
-							@click="retryAllFailed">
-							<template #icon>
-								<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
-							</template>
-							{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
-						</NcButton>
 					</div>
 				</div>
 				<table v-if="files" class="files-table">
@@ -272,6 +261,26 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					</tbody>
 				</table>
 			</div>
+			<div class="modalFooter">
+				<div class="modalFooterStatus">
+					<span v-if="!files">{{ t('opencatalogi', 'No files selected') }}</span>
+					<span v-if="files" class="uploadSummary">{{ t('opencatalogi', '{uploaded} / {total} files uploaded', { uploaded: uploadedCount, total: files.length }) }}</span>
+				</div>
+				<div class="buttonContainer">
+					<NcButton v-if="files && failedCount > 0"
+						type="secondary"
+						:disabled="loading || retryLoading"
+						@click="retryAllFailed">
+						<template #icon>
+							<Refresh :size="20" :class="{ 'loadingIcon': retryLoading }" />
+						</template>
+						{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
+					</NcButton>
+					<NcButton type="primary" @click="closeDialog()">
+						{{ t('opencatalogi', 'Done') }}
+					</NcButton>
+				</div>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -298,7 +307,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 
 const dropZoneRef = ref()
 
-const { openFileUpload, files, reset, setTags } = useFileSelection({
+const { openFileUpload, files, reset, setTags, rejectedDuplicates } = useFileSelection({
 	allowMultiple: true,
 	dropzone: dropZoneRef,
 })
@@ -326,6 +335,7 @@ export default {
 			retryLoading: false,
 			success: null,
 			error: false,
+			duplicateWarning: null,
 			share: false,
 			editingTags: null,
 			editedTags: [],
@@ -349,6 +359,10 @@ export default {
 		// only used for watching
 		files() {
 			return files
+		},
+		// only used for watching
+		rejectedDuplicatesList() {
+			return rejectedDuplicates
 		},
 		inputValidation() {
 			const catalogiItem = new Attachment({
@@ -384,6 +398,20 @@ export default {
 		},
 		error() {
 			this.updateUploadCounts()
+		},
+		rejectedDuplicatesList: {
+			handler(newRef) {
+				const newRejected = newRef?.value?.names
+				if (!Array.isArray(newRejected) || newRejected.length === 0) return
+				// Clear any prior success/error so this warning isn't masked by
+				// `v-if="error && !success"` and so the auto-clear timeout from
+				// a previous warning doesn't truncate this one.
+				this.success = null
+				this.duplicateWarning = t('opencatalogi', 'These files were skipped because a file with the same name already exists: {names}', { names: newRejected.join(', ') })
+				if (this._duplicateWarningTimer) clearTimeout(this._duplicateWarningTimer)
+				this._duplicateWarningTimer = setTimeout(() => { this.duplicateWarning = null }, 5000)
+			},
+			deep: true,
 		},
 	},
 	mounted() {
@@ -426,6 +454,11 @@ export default {
 			catalogStore.fetchPublications()
 			this.success = null
 			this.error = null
+			this.duplicateWarning = null
+			if (this._duplicateWarningTimer) {
+				clearTimeout(this._duplicateWarningTimer)
+				this._duplicateWarningTimer = null
+			}
 			reset()
 			this.initialTags = []
 			this.latestTags = []
@@ -714,6 +747,12 @@ export default {
 					this.success = true
 				}
 
+				EventBus.$emit('upload-files:uploaded', {
+					publicationId: publication.id,
+					uploadedCount: results.filter(r => r.status === 'fulfilled').length,
+					failedCount: rejected.length,
+				})
+
 				this.updateUploadCounts()
 				if (specificFile) return idMap
 			} catch (err) {
@@ -803,7 +842,26 @@ export default {
 					})
 			})
 
-			await Promise.allSettled(uploadPromises)
+			const results = await Promise.allSettled(uploadPromises)
+
+			const publication = objectStore.getActiveObject('publication')
+			if (publication?.id) {
+				const fulfilledCount = results.filter(r => r.status === 'fulfilled').length
+				const rejectedCount = results.filter(r => r.status === 'rejected').length
+				if (fulfilledCount > 0) {
+					try {
+						const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+						const getAttachments = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`)
+						const attachments = await getAttachments.json().catch(() => null)
+						objectStore.setCollection('publicationAttachments', attachments?.results || [])
+					} catch (_) { /* ignore */ }
+				}
+				EventBus.$emit('upload-files:uploaded', {
+					publicationId: publication.id,
+					uploadedCount: fulfilledCount,
+					failedCount: rejectedCount,
+				})
+			}
 
 			this.updateUploadCounts()
 			this.retryLoading = false
@@ -876,6 +934,23 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 
 .container {
 	padding-inline: 25px;
+}
+
+.modalFooter {
+	position: relative;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 10px;
+	padding: 0 25px 15px 25px;
+}
+
+.modalFooterStatus {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	color: var(--color-text-maxcontrast);
+	pointer-events: none;
 }
 
 .files-table-name-wrong > span {
@@ -1001,11 +1076,11 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-    color: var(--color-success);
+    color: var(--color-element-success);
 }
 
 .failed {
-    color: var(--color-error);
+    color: var(--color-element-error);
 }
 
 .buttonContainer {
