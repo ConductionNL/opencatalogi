@@ -1,24 +1,34 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// 5-kind component registry for v2 manifest (per hydra ADR-036).
+// Custom-component registry for opencatalogi's manifest-driven app shell.
 //
-// Post-beta.63 migration: most index/detail/search pages flipped to typed
-// manifest entries; the registry now mostly registers detail-page widgets
-// (theme-preview / tree-view / relationship-graph / file-manager) plus
-// the two remaining stay-custom page components and the lib-provided
-// Directory page component. The pre-migration per-feature page-kind
-// entries (CatalogiIndexView, ThemeIndexView, …) are gone — those views
-// are now CnIndexPage / CnDetailPage / CnSearchPage from the lib.
+// Mirrors the openconnector pattern (post chain-C cutover): a single flat
+// `{ComponentName: Component}` map, passed to CnAppRoot as `customComponents`.
+// CnAppRoot resolves both `type: "custom"` page references and `widgetKey`
+// widget references through this same map.
 //
-// Lib gaps still documented in src/manifest.json _note fields:
-//   - DashboardView: type:'dashboard' #widget-* slot template pass-through
-//   - CatalogDetailPageView: header-component slot resolution from manifest
+// What's in here:
+//   1. DashboardView — custom analytics dashboard (charts + recent activity
+//      + per-catalog stats). Could be type:"dashboard" with widget
+//      composition once chart widgets land.
+//   2. CatalogDetailPageView — bespoke header (catalog stats + slug + edit
+//      actions) + sidebar tabs. Lib gap: header-component slot resolution
+//      from manifest, granular sidebar-tab declaration.
+//   3. CnFederationStatus — federation discovery + per-node availability
+//      page for /directory. Lib-provided.
+//   4. Detail-page widgets (theme-preview, tree-view, relationship-graph,
+//      file-manager) — referenced by widgetKey in manifest pages.
+//
+// Resolution order at runtime (handled by CnAppRoot/CnPageRenderer):
+//   1. Built-in page types          (CnIndexPage, CnDetailPage, …)
+//   2. Built-in widget types        (object-table, form-renderer, …)
+//   3. This map                     ← consumer-injected components
 //
 // References:
-//   - hydra ADR-036
-//   - nextcloud-app-template scaffold-v2 (#44) — canonical layout
-//   - procest #512 / mydash #206 — first reference migrations
+//   - hydra ADR-036 (5-kind registry; collapsed back to bare shape here
+//     because the lookup path reads the bare value)
+//   - openconnector/src/registry.js — same pattern
 
 import DashboardView from './views/dashboard/Dashboard.vue'
 import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
@@ -30,47 +40,15 @@ import {
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
 
-// Widget metadata: CnAppRoot warns if these fields are missing on a
-// kind:'widget' entry. Sizes are advisory hints to the page renderer;
-// the manifest's per-instance gridWidth/gridHeight always wins.
-const FULL_ROW = { defaultSize: { w: 6, h: 4 }, minSize: { w: 3, h: 2 }, maxSize: { w: 12, h: 12 } }
-const SIDEBAR_ALLOWED = ['body', 'sidebar']
-
 export default {
-	// --- Stay-custom page components (see _note in manifest.json). ---
-	DashboardView: { kind: 'page', component: DashboardView },
-	CatalogDetailPageView: { kind: 'page', component: CatalogDetailPageView },
+	// --- Page components (referenced by `component` in manifest pages). ---
+	DashboardView,
+	CatalogDetailPageView,
+	CnFederationStatus,
 
-	// --- Lib-provided page component for Directory (federation status). ---
-	CnFederationStatus: { kind: 'page', component: CnFederationStatus },
-
-	// --- Detail-page widgets (referenced by widgetKey in manifest pages). ---
-	'theme-preview': {
-		kind: 'widget',
-		component: CnThemePreview,
-		...FULL_ROW,
-		allowedSlots: SIDEBAR_ALLOWED,
-		propsSchema: { type: 'object' },
-	},
-	'tree-view': {
-		kind: 'widget',
-		component: CnTreeView,
-		...FULL_ROW,
-		allowedSlots: SIDEBAR_ALLOWED,
-		propsSchema: { type: 'object' },
-	},
-	'relationship-graph': {
-		kind: 'widget',
-		component: CnRelationshipGraph,
-		...FULL_ROW,
-		allowedSlots: SIDEBAR_ALLOWED,
-		propsSchema: { type: 'object' },
-	},
-	'file-manager': {
-		kind: 'widget',
-		component: CnFileManager,
-		...FULL_ROW,
-		allowedSlots: SIDEBAR_ALLOWED,
-		propsSchema: { type: 'object' },
-	},
+	// --- Detail-page widgets (referenced by `widgetKey` in manifest pages). ---
+	'theme-preview': CnThemePreview,
+	'tree-view': CnTreeView,
+	'relationship-graph': CnRelationshipGraph,
+	'file-manager': CnFileManager,
 }
