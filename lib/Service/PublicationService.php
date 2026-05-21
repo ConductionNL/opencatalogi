@@ -157,7 +157,8 @@ class PublicationService
             $quotedUuid = $db->quote($objectId);
             $row        = $result->fetch();
             while ($row !== false) {
-                $match = preg_match(
+                $matches = [];
+                $match   = preg_match(
                     pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
                     subject: $row['table_name'],
                     matches: $matches

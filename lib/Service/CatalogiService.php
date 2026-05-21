@@ -158,7 +158,7 @@ class CatalogiService
             return $schemaMapper;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
     }//end getSchemaMapper()
 
     /**
@@ -176,7 +176,7 @@ class CatalogiService
             return $registerMapper;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
     }//end getRegisterMapper()
 
     /**
@@ -210,7 +210,7 @@ class CatalogiService
                     try {
                         return $this->getRegisterMapper()->find($register)->getId();
                     } catch (NotFoundException $e) {
-                        throw new \RuntimeException('Register '.$register.' not found.');
+                        throw new RuntimeException('Register '.$register.' not found.');
                     }
                 },
                 $object['registers']
@@ -231,7 +231,7 @@ class CatalogiService
                     try {
                         return $this->getSchemaMapper()->find($schema)->getId();
                     } catch (NotFoundException $e) {
-                        throw new \RuntimeException('Schema '.$schema.' not found.');
+                        throw new RuntimeException('Schema '.$schema.' not found.');
                     }
                 },
                 $object['schemas']
