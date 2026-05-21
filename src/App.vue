@@ -27,8 +27,9 @@ export default {
 			// Provide/inject channel for custom components that use the object
 			// sidebar (CnDetailPage). Mirrors the procest pattern.
 			objectSidebarState: this.objectSidebarState,
-			// Legacy alias kept for existing custom components that inject
-			// `sidebarState` (SearchIndex, CatalogiIndex, etc.).
+			// Legacy alias kept for any remaining custom components (the
+			// stay-custom Dashboard / CatalogDetail wrappers) that still
+			// inject `sidebarState` rather than `objectSidebarState`.
 			sidebarState: this.objectSidebarState,
 		}
 	},
@@ -88,7 +89,8 @@ export default {
 
 	async created() {
 		// Pre-load catalog collection so the MainMenu nav items and
-		// PublicationIndex route can resolve the active catalog slug on first render.
+		// the Publications route (publications/:catalogSlug) can resolve
+		// the active catalog slug on first render.
 		await objectStore.preloadCollections()
 	},
 
