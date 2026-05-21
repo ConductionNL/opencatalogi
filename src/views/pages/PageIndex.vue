@@ -24,6 +24,7 @@
 		:sort-order="sortOrder"
 		:include-columns="visibleColumns"
 		:add-label="t('opencatalogi', 'Add Page')"
+		:show-add="isAdmin"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No pages found')"
 		:refreshing="isRefreshing"
@@ -35,6 +36,12 @@
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<template #below-header>
+			<NcNoteCard v-if="loaded && !isAdmin" type="info">
+				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+			</NcNoteCard>
+		</template>
+
 		<!-- Custom column: content items count -->
 		<template #column-contents="{ row }">
 			{{ row.contents?.length || 0 }}
@@ -57,19 +64,19 @@
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="editPage(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="editPage(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="copyPage(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="copyPage(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="deletePage(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="deletePage(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -85,7 +92,8 @@ import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
 import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
-import { NcActions, NcActionButton } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -98,6 +106,7 @@ export default {
 		CnIndexPage,
 		NcActions,
 		NcActionButton,
+		NcNoteCard,
 		DotsHorizontal,
 		Eye,
 		Pencil,
@@ -110,7 +119,8 @@ export default {
 			sidebarState,
 			objectStore,
 		})
-		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, navigationStore }
+		const { isAdmin, loaded } = useIsAdmin()
+		return { schema, sortKey, sortOrder, visibleColumns, onSort, onPageChange, onPageSizeChange, refresh, objectStore, navigationStore, isAdmin, loaded }
 	},
 	data() {
 		return {

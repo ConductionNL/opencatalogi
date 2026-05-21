@@ -1,8 +1,3 @@
-<script setup>
-import { translate as t } from '@nextcloud/l10n'
-import { navigationStore, objectStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -26,6 +21,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:view-mode="viewMode"
 		:schema="organizationSchema"
 		:add-label="t('opencatalogi', 'Add organization')"
+		:show-add="isAdmin"
 		row-key="id"
 		:empty-text="t('opencatalogi', 'No organizations found')"
 		:refreshing="isRefreshing"
@@ -38,6 +34,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
 		@row-click="onRowClick">
+		<template #below-header>
+			<NcNoteCard v-if="loaded && !isAdmin" type="info">
+				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
+			</NcNoteCard>
+		</template>
+
 		<!-- Form fields for create/edit dialog -->
 		<template #form-fields="{ formData, errors, updateField }">
 			<div class="formContainer">
@@ -86,7 +88,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</template>
 
 		<!-- Mass actions -->
-		<template #action-items>
+		<template v-if="isAdmin" #action-items>
 			<NcActionButton close-after-click :disabled="selectedIds.length === 0" @click="onMassDelete">
 				<template #icon>
 					<Delete :size="20" />
@@ -119,19 +121,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'View') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="$refs.indexPage.openFormDialog(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="$refs.indexPage.openFormDialog(row)">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Edit') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="copyOrganization(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="copyOrganization(row)">
 					<template #icon>
 						<ContentCopy :size="20" />
 					</template>
 					{{ t('opencatalogi', 'Copy') }}
 				</NcActionButton>
-				<NcActionButton close-after-click @click="deleteOrganization(row)">
+				<NcActionButton v-if="isAdmin" close-after-click @click="deleteOrganization(row)">
 					<template #icon>
 						<TrashCanOutline :size="20" />
 					</template>
@@ -143,8 +145,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcTextField, NcTextArea } from '@nextcloud/vue'
+import { translate as t } from '@nextcloud/l10n'
+import { NcActions, NcActionButton, NcTextField, NcTextArea, NcNoteCard } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
+import { navigationStore, objectStore } from '../../store/store.js'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -162,6 +167,7 @@ export default {
 		NcActionButton,
 		NcTextField,
 		NcTextArea,
+		NcNoteCard,
 		DotsHorizontal,
 		Eye,
 		Pencil,
@@ -170,6 +176,10 @@ export default {
 		Delete,
 		PublishIcon,
 		PublishOffIcon,
+	},
+	setup() {
+		const { isAdmin, loaded } = useIsAdmin()
+		return { isAdmin, loaded, objectStore, navigationStore }
 	},
 	data() {
 		return { selectedIds: [], viewMode: 'table', isRefreshing: false }
@@ -212,6 +222,7 @@ export default {
 	},
 	mounted() { objectStore.fetchCollection('organization') },
 	methods: {
+		t,
 		onAdd() { objectStore.clearActiveObject('organization'); this.$refs.indexPage.openFormDialog(null) },
 		async onSaveOrganization(formData) {
 			try {
