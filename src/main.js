@@ -19,8 +19,7 @@ import '@conduction/nextcloud-vue/css/index.css'
 import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
-import customComponents from './customComponents.js'
-import registry from './registry.js'
+import customComponents from './registry.js'
 
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
@@ -127,7 +126,6 @@ tryLoadTranslations()
 // the values the lib resolves at render time.
 const pageTypesProp = { ...defaultPageTypes }
 const customComponentsProp = { ...customComponents }
-const registryProp = { ...registry }
 
 new Vue({
 	pinia,
@@ -136,7 +134,6 @@ new Vue({
 		props: {
 			manifest: bundledManifest,
 			customComponents: customComponentsProp,
-			registry: registryProp,
 			pageTypes: pageTypesProp,
 		},
 	}),

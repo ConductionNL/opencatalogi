@@ -3,7 +3,6 @@
 	<CnAppRoot
 		:manifest="manifest"
 		:custom-components="customComponents"
-		:registry="registry"
 		:page-types="pageTypes"
 		app-id="opencatalogi"
 		:translate="translateForApp"
@@ -40,14 +39,6 @@ export default {
 			required: true,
 		},
 		customComponents: {
-			type: Object,
-			default: () => ({}),
-		},
-		/**
-		 * 5-kind component registry (v2 manifest pattern per hydra ADR-036).
-		 * Each entry: { kind, component, ...kindMetadata }.
-		 */
-		registry: {
 			type: Object,
 			default: () => ({}),
 		},
