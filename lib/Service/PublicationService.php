@@ -461,8 +461,7 @@ class PublicationService
             $objectService->searchObjectsPaginated(
                 query: $searchQuery,
                 _rbac: true,
-                _multitenancy: false,
-                published: false
+                _multitenancy: false
             )
         );
 
