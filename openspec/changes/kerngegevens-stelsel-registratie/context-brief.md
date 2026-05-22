@@ -2,6 +2,17 @@ status: draft
 
 # Kerngegevensstelsel Registratie
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Standaarden > Kerngegevensstelsel / Standaarden
+
+**Rationale:** Registratie page  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Het Nederlandse overheidslandschap kent een gelaagde structuur van data-registers: tien basisregistraties (BRP, BAG, BRT, BRK, NHR, BGT, BRO, BRV, WOZ, BRI) met wettelijke status, daarnaast kerngegevens uit het sectorbrede stelsel (zoals NLX-aangesloten registers, gemeentelijke kerntabellen, en de nieuwe Stelselcatalogus 2026), en tenslotte sectorbrede registers per domein (zorg, onderwijs, justitie, mobiliteit). Voor elke dataset die een organisatie publiceert is het cruciaal te markeren welke stelselpositie deze inneemt: is dit een wettelijke basisregistratie waarop terugmelding-plicht rust, een kerngegeven dat ander beleid voedt, of een afgeleid sectoraal product?
