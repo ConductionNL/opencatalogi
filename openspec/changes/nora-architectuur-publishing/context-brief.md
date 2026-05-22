@@ -4,6 +4,17 @@ status: draft
 
 # NORA-architectuur publishing
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Standaarden > NORA-architectuur / Standaarden
+
+**Rationale:** Standards-mapping page  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Publish organization-specific reference architectures (NORA-style) as first-class catalogs in OpenCatalogi. The Dutch government maintains a layered reference-architecture family: NORA (Nederlandse Overheid Referentie Architectuur) at the national level, with derived domain architectures (GEMMA for gemeenten, PETRA for provincies, WILMA for waterschappen, MARIJ for the Rijk, EAR for executive agencies). Each municipality, province, or executive agency additionally maintains its own organization-specific reference architecture that adopts, profiles, or extends one of these. Today these architectures are published as static HTML wiki sites (nora-online.nl, gemmaonline.nl, petra-online.nl, wilma.werkenmetwilma.nl) with hand-maintained crosslinks, embedded ArchiMate exports, and PDF "vastgestelde versies" stamped by a CIO-board. They are hard to query, hard to version, impossible to mechanically compare across organizations, and impossible to use as automated input to project-architecture reviews or tender requirements.
