@@ -3,6 +3,17 @@ status: draft
 ---
 # Forum Standaardisatie "Pas toe of leg uit"-Registratie
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Standaarden > Forum Standaardisatie / Standaarden
+
+**Rationale:** Registratie + evidence  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Het Forum Standaardisatie (BZK, met secretariaat Logius) houdt een lijst bij van 115 open standaarden waarvoor in Nederland het "pas toe of leg uit"-regime geldt. Het regime — vastgelegd in de Instructie Rijksdienst inzake openbare orde en in de aanwijzingen voor de departementen aan agentschappen, zbo's en mede-overheden — verplicht overheidsorganisaties bij ICT-inkoop én bij eigen ontwikkeling om deze standaarden toe te passen óf publiekelijk te verantwoorden waarom dat niet kan. Voorbeelden van standaarden op de lijst: IPv6 + DNSSEC, TLS 1.3, DKIM/SPF/DMARC, ODF, PDF/A-2, WCAG 2.2, NLCIUS (Peppol), Digikoppeling, SAML 2.0 / OpenID Connect, STOP/TPOD, NEN 2082 (recordsmanagement), NEN 7510 (zorginformatie), enzovoorts.
