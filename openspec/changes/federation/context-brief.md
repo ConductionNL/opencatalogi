@@ -4,6 +4,17 @@ status: reviewed
 
 # Federation
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Catalogi > Federatie-zoekresultaat + Beheer/Koppelvlakken > Federatie directory / split
+
+**Rationale:** Federation appears as a result-augmenter on the browse side and as directory admin  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Federation enables OpenCatalogi to aggregate publications from both local catalogs and external (federated) OpenCatalogi instances into a unified search interface. The federation endpoints mirror the publication API but include aggregation logic that queries remote directories, merges results, and provides a single response to the frontend. This is the backbone of the decentralized catalog network where multiple government organizations can share and discover each other's publications.
