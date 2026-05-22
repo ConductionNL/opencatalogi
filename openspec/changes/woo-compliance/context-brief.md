@@ -4,6 +4,17 @@ status: reviewed
 
 # WOO Compliance (Sitemaps, Robots, DIWOO)
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Koppelvlakken > Woo-compliance / Koppelvlakken
+
+**Rationale:** Sitemaps/robots/DIWOO pipeline  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML sitemaps and robots.txt files that conform to the DIWOO metadata standard. This enables government organizations to make their publications discoverable by the Dutch government's central search index (KOOP/DIWOO). Sitemaps are generated per catalog and per WOO information category (informatiecategorie), mapping publications to the DIWOO XML schema with proper metadata including creation dates, publishers, file formats, and document handling information.
