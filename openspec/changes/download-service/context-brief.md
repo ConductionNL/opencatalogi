@@ -4,6 +4,17 @@ status: reviewed
 
 # Download Service
 
+## Placement & Information Architecture
+
+**Placement type:** `ACTION` — Action button or menu item on an existing surface. Implemented as a single button / context-menu entry that opens a modal/wizard or runs a backend operation — NOT a page.
+
+**Lives at:** Catalogi > Publicatie detail > Download tab + global download action / Catalogi
+
+**Rationale:** Per-publication ZIP/PDF generator  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 The Download Service provides functionality for generating downloadable export files from publications. It creates PDF metadata files from publication data using Twig templates and mPDF, and ZIP archives containing the metadata PDF along with all publication attachments (bijlagen). Files can be saved to the user's Nextcloud storage with share links or sent directly as download responses. This service is used by the publication endpoints to support the `/download` sub-resource.
