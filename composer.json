@@ -57,7 +57,7 @@
 		]
 	},
 	"require": {
-		"php": "^8.1",
+		"php": "^8.3",
 		"ext-zip": "*",
 		"adbario/php-dot-notation": "^3.3.0",
 		"bamarni/composer-bin-plugin": "^1.8",
