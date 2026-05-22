@@ -4,6 +4,17 @@ Draft — opencatalogi spec brief, 2026-05-21.
 
 # eIDAS Koppeling — Publicatie Dienstencatalogus
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Koppelvlakken > eIDAS dienstencatalogus / Koppelvlakken
+
+**Rationale:** Dienstencatalogus publication  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 opencatalogi houdt een gestructureerde catalogus van publieke diensten — voor een gemeente bijvoorbeeld "rijbewijs aanvragen", "verhuizing doorgeven", "kapvergunning indienen". Vandaag is die catalogus voornamelijk binnenlands gepubliceerd (op de gemeente-website, op Overheid.nl, in PDC's). De Single Digital Gateway (SDG) regulation en de eIDAS verordening verplichten echter dat veel van die diensten ook EU-breed vindbaar zijn, met machine-leesbare metadata, en dat ze cross-border benaderbaar zijn voor burgers en bedrijven uit andere lidstaten (een Pool die in NL wil verhuizen moet de dienst kunnen vinden en — voor cruciale diensten van het eIDAS-actie-7-mandaat — ook online kunnen afnemen). Deze spec voegt aan opencatalogi een eIDAS-publicatielaag toe: per dienst registreren we het eIDAS-relevante type, de scope (lokaal/regionaal/nationaal/grensoverschrijdend), het minimum-assurance-niveau (laag/substantieel/hoog), de talen-ondersteuning, het Your-Europe-portal-blok, en de SAML-metadata voor het eIDAS-knooppunt (BRP-Identificatie/Logius). Een sync-pipeline pushed de metadata naar het nationaal Your-Europe-aansluitpunt en — voor diensten die federatief identificeren — naar het eIDAS-knooppunt.
