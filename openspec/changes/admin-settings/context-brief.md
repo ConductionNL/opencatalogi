@@ -4,6 +4,17 @@ status: reviewed
 
 # Admin Settings
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Beheer > Admin-instellingen / Beheer
+
+**Rationale:** Tenant config  
+_Source: /tmp/ia-doc-dec-cat-conn.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 The admin settings module provides the configuration interface for OpenCatalogi. It handles the mapping between OpenCatalogi's content types (catalog, listing, organization, theme, page, menu, glossary) and their corresponding OpenRegister schemas and registers. It also manages the initial configuration import from `publication_register.json`, auto-configuration, version tracking, publishing options, and the Nextcloud admin settings page.
