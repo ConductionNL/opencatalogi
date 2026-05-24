@@ -24,7 +24,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -37,12 +36,11 @@ class HealthController extends Controller
     /**
      * Constructor.
      *
-     * @param string             $appName    The application name.
-     * @param IRequest           $request    The HTTP request.
-     * @param IDBConnection      $db         Database connection.
-     * @param IAppManager        $appManager App manager.
-     * @param LoggerInterface    $logger     Logger.
-     * @param ContainerInterface $container  DI container.
+     * @param string          $appName    The application name.
+     * @param IRequest        $request    The HTTP request.
+     * @param IDBConnection   $db         Database connection.
+     * @param IAppManager     $appManager App manager.
+     * @param LoggerInterface $logger     Logger.
      */
     public function __construct(
         $appName,
@@ -50,7 +48,6 @@ class HealthController extends Controller
         private IDBConnection $db,
         private IAppManager $appManager,
         private LoggerInterface $logger,
-        private ContainerInterface $container,
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -79,9 +76,6 @@ class HealthController extends Controller
         if ($checks['filesystem'] !== 'ok' && $status !== 'error') {
             $status = 'degraded';
         }
-
-        // Check search backend.
-        $checks['search_backend'] = $this->checkSearchBackend();
 
         // Only database failure is critical (503). Degraded is still 200.
         $httpStatus = Http::STATUS_OK;
@@ -149,32 +143,6 @@ class HealthController extends Controller
         }
 
     }//end checkFilesystem()
-
-    /**
-     * Check search backend availability.
-     *
-     * @return string Backend type and status.
-     */
-    private function checkSearchBackend(): string
-    {
-        try {
-            // Check if ElasticSearch is configured.
-            $esService = $this->container->get(\OCA\OpenCatalogi\Service\ElasticSearchService::class);
-            if ($esService !== null && method_exists($esService, 'isAvailable') === true) {
-                if ($esService->isAvailable() === true) {
-                    return 'elasticsearch: ok';
-                }
-
-                return 'elasticsearch: unreachable';
-            }
-
-            return 'database';
-        } catch (\Exception $e) {
-            // ElasticSearch not configured — using database backend.
-            return 'database';
-        }
-
-    }//end checkSearchBackend()
 
     /**
      * Get the app version.
