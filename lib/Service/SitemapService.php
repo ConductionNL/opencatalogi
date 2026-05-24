@@ -15,6 +15,14 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-61
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-70
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-71
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-72
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-73
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-74
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-75
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -117,6 +125,10 @@ class SitemapService
      * @return XMLResponse The sitemap index XML response.
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-70
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-71
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-73
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -231,6 +243,11 @@ class SitemapService
      * @param integer $page         The page number to retrieve.
      *
      * @return XMLResponse The publications sitemap XML response.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-72
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-73
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-74
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-75
      */
     public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
@@ -328,6 +345,9 @@ class SitemapService
      * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
      *
      * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-61
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-71
      */
     private function isValidSitemapRequest(
         string $catalogSlug,
@@ -421,6 +441,9 @@ class SitemapService
      * @param array $file        The file metadata belonging to that publication
      *
      * @return array A DIWOO metadata array ready for XMLResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-74
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-75
      */
     private function mapDiwooDocument(array $publication, array $file): array
     {

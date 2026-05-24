@@ -15,6 +15,23 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-13
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-16
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-17
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-18
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-46
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-47
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-51
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-53
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-56
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-57
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-58
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-59
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-105
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-106
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-136
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-137
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -229,6 +246,8 @@ class PublicationService
      * @return array<string, array<string>> Array containing available registers and schemas
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-47
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -344,6 +363,10 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-46
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-47
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-51
      */
     private function searchPublications(null|string|int $catalogId=null, ?array $ids=null, ?array $customParams=null): array
     {
@@ -491,6 +514,9 @@ class PublicationService
      * @return array Array of catalog objects with 'key' and 'label' fields
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-106
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-136
      */
     private function getExternalCatalogsFromListings(): array
     {
@@ -677,6 +703,9 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-46
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-47
      */
     public function index(null|string|int $catalogId=null, ?array $customParams=null): JSONResponse
     {
@@ -702,6 +731,8 @@ class PublicationService
      * @NoAdminRequired
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-53
      */
     public function show(string $id): JSONResponse
     {
@@ -743,6 +774,8 @@ class PublicationService
      * @NoAdminRequired
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-56
      */
     public function attachments(string $id): JSONResponse
     {
@@ -785,6 +818,8 @@ class PublicationService
       *
       * @NoAdminRequired
       * @NoCSRFRequired
+      *
+      * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-57
       */
     public function download(
         string $id
@@ -840,6 +875,8 @@ class PublicationService
      * @param array $objects Array of objects to filter
      *
      * @return array Filtered array of objects
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-46
      */
     private function filterUnwantedProperties(array $objects): array
     {
@@ -904,6 +941,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-58
      */
     public function uses(string $id): JSONResponse
     {
@@ -959,6 +998,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-59
      */
     public function used(string $id): JSONResponse
     {
@@ -1028,6 +1069,10 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-13
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-105
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-137
      */
     public function getAggregatedPublications(array $queryParams=[], array $requestParams=[], string $baseUrl=''): array
     {
@@ -1516,6 +1561,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-13
      */
     private function getLocalPublicationsFast(
         array $queryParams,
@@ -1701,6 +1748,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-13
      */
     private function getLocalPublicationsUltraFast(
         array $queryParams,
@@ -1939,6 +1988,8 @@ class PublicationService
      *
      * @return array Array of catalog objects with id, title, summary, description, etc.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-13
      */
     private function getLocalCatalogs(): array
     {
@@ -2010,6 +2061,8 @@ class PublicationService
      * @param array $federatedFacets Facets from federated sources
      *
      * @return array Merged facets data
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-105
      */
     private function mergeFacetsData(array $localFacets, array $federatedFacets): array
     {
@@ -2030,6 +2083,8 @@ class PublicationService
      * @param array $federatedFacetable Facetable metadata from federated sources
      *
      * @return array Merged facetable metadata
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-105
      */
     private function mergeFacetableData(array $localFacetable, array $federatedFacetable): array
     {
@@ -2106,6 +2161,8 @@ class PublicationService
      * @param array $queryParams The query parameters containing ordering instructions
      *
      * @return array The ordered results
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-137
      */
     private function applyCumulativeOrdering(array $results, array $queryParams): array
     {
@@ -2260,6 +2317,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-16
      */
     public function getFederatedPublication(string $id, array $queryParams=[]): array
     {
@@ -2384,6 +2443,8 @@ class PublicationService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-18
      */
     public function getFederatedUsed(string $id, array $queryParams=[]): array
     {
@@ -2477,6 +2538,8 @@ class PublicationService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-17
      */
     public function getFederatedUses(string $id, array $queryParams=[]): array
     {

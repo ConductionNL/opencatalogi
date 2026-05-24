@@ -14,6 +14,14 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-63
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-64
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-65
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-66
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-67
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-68
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-69
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -61,6 +69,8 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-63
      */
     public function index(): JSONResponse
     {
@@ -79,6 +89,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing the updated settings.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-64
      */
     public function create(): JSONResponse
     {
@@ -98,6 +110,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing the settings.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-65
      */
     public function load(): JSONResponse
     {
@@ -117,6 +131,9 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-67
      */
     public function getPublishingOptions(): JSONResponse
     {
@@ -135,6 +152,9 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing the updated publishing options.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-67
      */
     public function updatePublishingOptions(): JSONResponse
     {
@@ -155,6 +175,8 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-68
      */
     public function getVersionInfo(): JSONResponse
     {
@@ -173,6 +195,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing import results.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-69
      */
     public function manualImport(): JSONResponse
     {

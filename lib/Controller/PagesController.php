@@ -14,6 +14,11 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-42
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-43
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-44
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-45
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -170,6 +175,10 @@ class PagesController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-42
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-43
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-44
      */
     public function index(): JSONResponse
     {
@@ -225,6 +234,9 @@ class PagesController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-44
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-45
      */
     public function show(string $slug): JSONResponse
     {

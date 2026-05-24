@@ -12,6 +12,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-34
  */
 
 namespace OCA\OpenCatalogi\Cron;
@@ -59,6 +61,8 @@ class DirectorySync extends TimedJob
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-34
      */
     protected function run($argument): void
     {

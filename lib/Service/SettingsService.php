@@ -14,6 +14,18 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-63
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-64
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-65
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-66
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-67
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-68
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-69
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-100
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-138
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-139
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-140
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -86,6 +98,8 @@ class SettingsService
      * @param string|null $minVersion Minimum required version (e.g. '1.0.0').
      *
      * @return boolean True if OpenRegister is installed and meets version requirements.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-100
      */
     public function isOpenRegisterInstalled(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
@@ -106,6 +120,8 @@ class SettingsService
      * Checks if OpenRegister is enabled.
      *
      * @return boolean True if OpenRegister is enabled.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-100
      */
     public function isOpenRegisterEnabled(): bool
     {
@@ -127,6 +143,8 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-100
      */
     public function installOrUpdateOpenRegister(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
@@ -177,6 +195,8 @@ class SettingsService
      * @throws \RuntimeException If auto-configuration fails.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-138
      */
     public function autoConfigure(): array
     {
@@ -239,6 +259,9 @@ class SettingsService
      * @param string|null $minORVersion Minimum required OpenRegister version.
      *
      * @return array The initialization results.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-65
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-100
      */
     public function initialize(?string $minORVersion=self::MIN_OPENREGISTER_VERSION): array
     {
@@ -346,6 +369,9 @@ class SettingsService
      *
      * @return array The current settings configuration.
      * @throws \RuntimeException If settings retrieval fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-63
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-139
      */
     public function getSettings(): array
     {
@@ -418,6 +444,8 @@ class SettingsService
      * @return array Array of registers with enriched schema data.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-139
      */
     private function enrichRegistersWithSchemas(array $registers): array
     {
@@ -493,6 +521,8 @@ class SettingsService
      *
      * @return array The updated settings configuration.
      * @throws \RuntimeException If settings update fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-64
      */
     public function updateSettings(array $data): array
     {
@@ -516,6 +546,9 @@ class SettingsService
      *
      * @return array The current publishing options configuration.
      * @throws \RuntimeException If publishing options retrieval fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-67
      */
     public function getPublishingOptions(): array
     {
@@ -556,6 +589,9 @@ class SettingsService
      *
      * @return array The updated publishing options configuration.
      * @throws \RuntimeException If publishing options update fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-67
      */
     public function updatePublishingOptions(array $options): array
     {
@@ -607,6 +643,9 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-65
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-140
      */
     public function loadSettings(bool $force=false): array
     {
@@ -700,6 +739,8 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-65
      */
     private function updateObjectTypeConfiguration(array $importResult): void
     {
@@ -787,6 +828,8 @@ class SettingsService
      *
      * @return boolean True if settings should be loaded, false otherwise.
      * @throws \RuntimeException If version checking fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-140
      */
     private function shouldLoadSettings(): bool
     {
@@ -821,6 +864,8 @@ class SettingsService
      *
      * @return array Version information with app and configuration versions.
      * @throws \RuntimeException If version retrieval fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-68
      */
     public function getVersionInfo(): array
     {
@@ -861,6 +906,8 @@ class SettingsService
      * @return array The import results with success/error information.
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-69
      */
     public function manualImport(bool $forceImport=false): array
     {

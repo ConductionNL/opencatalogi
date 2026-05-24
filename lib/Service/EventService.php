@@ -14,6 +14,15 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-89
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-93
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-95
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-117
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-118
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-119
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-120
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-121
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -117,6 +126,10 @@ class EventService
      * @throws \RuntimeException If event processing fails.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-89
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-117
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-118
      */
     public function handleObjectCreateEvents(array $objects): array
     {
@@ -197,6 +210,10 @@ class EventService
      *
      * @return array Results of the event processing including any auto-publishing actions.
      * @throws \RuntimeException If event processing fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-95
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-117
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-118
      */
     public function handleObjectUpdateEvents(array $objects): array
     {
@@ -259,6 +276,8 @@ class EventService
      * @param array $objectData The object data to evaluate.
      *
      * @return boolean True if the object should be auto-published, false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-119
      */
     private function shouldAutoPublishObject(array $objectData): bool
     {
@@ -330,6 +349,8 @@ class EventService
      * @param array $objectData The object data to check.
      *
      * @return boolean True if the object is published, false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-93
      */
     private function isObjectPublished(array $objectData): bool
     {
@@ -361,6 +382,8 @@ class EventService
      * @param array $objectData The object data to publish.
      *
      * @return array Result of the publish operation.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-89
      */
     private function publishObject(array $objectData): array
     {
@@ -397,6 +420,10 @@ class EventService
      * @return array Result of the attachment publishing operation.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-95
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-120
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-121
      */
     private function publishObjectAttachments(array $objectData): array
     {

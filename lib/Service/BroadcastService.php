@@ -15,6 +15,9 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-81
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-101
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -161,6 +164,8 @@ class BroadcastService
      * which will be sent to other instances during broadcast.
      *
      * @return string The absolute URL of this directory
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-81
      */
     private function getCurrentDirectoryUrl(): string
     {
@@ -183,6 +188,9 @@ class BroadcastService
      * @throws MultipleObjectsReturnedException   When duplicate objects are found
      * @throws ContainerExceptionInterface        When container access fails
      * @throws NotFoundExceptionInterface         When service is not found in container
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-81
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-101
      */
     private function getDirectoryUrls(): array
     {
@@ -219,6 +227,9 @@ class BroadcastService
      * @param string $directoryUrl The URL of this directory to include in broadcast
      *
      * @return boolean True if broadcast was successful, false otherwise
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-81
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-101
      */
     private function sendBroadcastRequest(string $url, string $directoryUrl): bool
     {
@@ -291,6 +302,9 @@ class BroadcastService
      * @throws MultipleObjectsReturnedException   When duplicate objects are found
      * @throws ContainerExceptionInterface        When container access fails
      * @throws NotFoundExceptionInterface         When service is not found in container
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-81
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-opencatalogi/tasks.md#task-101
      */
     public function broadcast(?string $url=null): array
     {
