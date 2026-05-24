@@ -10,45 +10,136 @@ The dashboard provides the main entry point for the OpenCatalogi Nextcloud app, 
 
 ## Requirements
 
-### Dashboard and UI
+<!-- Dashboard and UI -->
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSH-001 | Serve the Vue SPA template for the main app page | Must | Implemented |
-| DSH-002 | Support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations) | Must | Implemented |
-| DSH-003 | Content Security Policy allows connect to all domains (for federation HTTP requests) | Must | Implemented |
-| DSH-004 | Dashboard data endpoint returns basic status info | Should | Dead Code (route exists but controller method removed) |
-| DSH-005 | Application.php bootstrap registers dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget) | Must | Implemented |
-| DSH-006 | Application.php bootstrap registers event listeners for OpenRegister events | Must | Implemented |
-| DSH-007 | Application.php bootstrap registers tool registration listener for AI agents | Must | Implemented |
-| DSH-008 | Application.php bootstrap loads vendor autoload for Composer dependencies | Must | Implemented |
+### Requirement: Serve the Vue SPA template for the main app page
+The system MUST serve the Vue SPA template for the main app page.
 
-### Listings (CRUD)
+**ID:** DSH-001 — Priority: Must — Status: Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| LST-001 | List all listings with pagination | Must | Implemented |
-| LST-002 | Get a single listing by ID (public endpoint) | Must | Implemented |
-| LST-003 | Create a new listing | Must | Implemented |
-| LST-004 | Update an existing listing | Must | Implemented |
-| LST-005 | Delete a listing | Must | Implemented |
-| LST-006 | Listing configuration stored in IAppConfig as `listing_schema` and `listing_register` | Must | Implemented |
+### Requirement: Support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations)
+The system MUST support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations).
 
-### Directory and Synchronization
+**ID:** DSH-002 — Priority: Must — Status: Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DIR-001 | Get combined directory data from all listings | Must | Implemented |
-| DIR-002 | Synchronize with an external directory URL (POST with directory parameter) | Must | Implemented |
-| DIR-003 | Synchronize a specific listing's directory | Must | Implemented |
-| DIR-004 | Synchronize all directories via cron (every hour) | Must | Implemented |
-| DIR-005 | Add a new listing from a URL (public endpoint) | Must | Implemented |
-| DIR-006 | Anti-loop protection during broadcast sync cycles | Should | Implemented |
-| DIR-007 | Broadcast this directory to external instances (cron every 4 hours) | Should | Bug (Not Registered) |
-| DIR-008 | CORS support on directory endpoints | Must | Implemented |
-| DIR-009 | Publication endpoint auto-detection from directory URLs | Should | Implemented |
-| DIR-010 | Listing staleness checking during directory sync | Should | Implemented |
-| DIR-011 | Catalog-to-listing conversion during sync | Should | Implemented |
+### Requirement: Content Security Policy allows connect to all domains (for federation HTTP requests)
+The Content Security Policy MUST allow connect to all domains (for federation HTTP requests).
+
+**ID:** DSH-003 — Priority: Must — Status: Implemented
+
+### Requirement: Dashboard data endpoint returns basic status info
+The dashboard data endpoint SHOULD return basic status info.
+
+**ID:** DSH-004 — Priority: Should — Status: Dead Code (route exists but controller method removed)
+
+### Requirement: Application.php bootstrap registers dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget)
+Application.php bootstrap MUST register dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget).
+
+**ID:** DSH-005 — Priority: Must — Status: Implemented
+
+### Requirement: Application.php bootstrap registers event listeners for OpenRegister events
+Application.php bootstrap MUST register event listeners for OpenRegister events.
+
+**ID:** DSH-006 — Priority: Must — Status: Implemented
+
+### Requirement: Application.php bootstrap registers tool registration listener for AI agents
+Application.php bootstrap MUST register the tool registration listener for AI agents.
+
+**ID:** DSH-007 — Priority: Must — Status: Implemented
+
+### Requirement: Application.php bootstrap loads vendor autoload for Composer dependencies
+Application.php bootstrap MUST load vendor autoload for Composer dependencies.
+
+**ID:** DSH-008 — Priority: Must — Status: Implemented
+
+<!-- Listings (CRUD) -->
+
+### Requirement: List all listings with pagination
+The system MUST list all listings with pagination.
+
+**ID:** LST-001 — Priority: Must — Status: Implemented
+
+### Requirement: Get a single listing by ID (public endpoint)
+The system MUST get a single listing by ID (public endpoint).
+
+**ID:** LST-002 — Priority: Must — Status: Implemented
+
+### Requirement: Create a new listing
+The system MUST allow creating a new listing.
+
+**ID:** LST-003 — Priority: Must — Status: Implemented
+
+### Requirement: Update an existing listing
+The system MUST allow updating an existing listing.
+
+**ID:** LST-004 — Priority: Must — Status: Implemented
+
+### Requirement: Delete a listing
+The system MUST allow deleting a listing.
+
+**ID:** LST-005 — Priority: Must — Status: Implemented
+
+### Requirement: Listing configuration stored in IAppConfig as `listing_schema` and `listing_register`
+Listing configuration MUST be stored in IAppConfig as `listing_schema` and `listing_register`.
+
+**ID:** LST-006 — Priority: Must — Status: Implemented
+
+<!-- Directory and Synchronization -->
+
+### Requirement: Get combined directory data from all listings
+The system MUST get combined directory data from all listings.
+
+**ID:** DIR-001 — Priority: Must — Status: Implemented
+
+### Requirement: Synchronize with an external directory URL (POST with directory parameter)
+The system MUST synchronize with an external directory URL (POST with directory parameter).
+
+**ID:** DIR-002 — Priority: Must — Status: Implemented
+
+### Requirement: Synchronize a specific listing's directory
+The system MUST synchronize a specific listing's directory.
+
+**ID:** DIR-003 — Priority: Must — Status: Implemented
+
+### Requirement: Synchronize all directories via cron (every hour)
+The system MUST synchronize all directories via cron (every hour).
+
+**ID:** DIR-004 — Priority: Must — Status: Implemented
+
+### Requirement: Add a new listing from a URL (public endpoint)
+The system MUST allow adding a new listing from a URL (public endpoint).
+
+**ID:** DIR-005 — Priority: Must — Status: Implemented
+
+### Requirement: Anti-loop protection during broadcast sync cycles
+The system SHOULD provide anti-loop protection during broadcast sync cycles.
+
+**ID:** DIR-006 — Priority: Should — Status: Implemented
+
+### Requirement: Broadcast this directory to external instances (cron every 4 hours)
+The system SHOULD broadcast this directory to external instances (cron every 4 hours).
+
+**ID:** DIR-007 — Priority: Should — Status: Bug (Not Registered)
+
+### Requirement: CORS support on directory endpoints
+The system MUST support CORS on directory endpoints.
+
+**ID:** DIR-008 — Priority: Must — Status: Implemented
+
+### Requirement: Publication endpoint auto-detection from directory URLs
+The system SHOULD support publication endpoint auto-detection from directory URLs.
+
+**ID:** DIR-009 — Priority: Should — Status: Implemented
+
+### Requirement: Listing staleness checking during directory sync
+The system SHOULD perform listing staleness checking during directory sync.
+
+**ID:** DIR-010 — Priority: Should — Status: Implemented
+
+### Requirement: Catalog-to-listing conversion during sync
+The system SHOULD perform catalog-to-listing conversion during sync.
+
+**ID:** DIR-011 — Priority: Should — Status: Implemented
 
 ## DashboardController Dead Code (Gap 17)
 

@@ -10,23 +10,80 @@ The CMS Tool provides AI agents running within OpenRegister with the ability to 
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CMS-T-001 | Implement OpenRegister `ToolInterface` with getName(), getDescription(), setAgent(), getFunctions(), executeFunction() | Must | Implemented |
-| CMS-T-002 | Provide `cms_create_page` function to create pages with title, summary, description, slug | Must | Implemented |
-| CMS-T-003 | Provide `cms_list_pages` function to list pages with optional limit | Must | Implemented |
-| CMS-T-004 | Provide `cms_create_menu` function to create menus with title, position, items, groups, hideBeforeLogin | Must | Implemented |
-| CMS-T-005 | Provide `cms_list_menus` function to list all menus | Must | Implemented |
-| CMS-T-006 | Provide `cms_add_menu_item` function to add items to existing menus | Must | Implemented |
-| CMS-T-007 | Auto-generate URL-friendly slugs from page titles when not provided | Should | Implemented |
-| CMS-T-008 | Respect agent's organization boundaries (set organisation on created objects) | Must | Implemented |
-| CMS-T-009 | Use ObjectService for data operations with RBAC support | Must | Implemented |
-| CMS-T-010 | Support `__call` magic method for snake_case to camelCase method resolution (LLPhant compatibility) | Should | Implemented |
-| CMS-T-011 | Type-cast arguments from LLM (handle string 'null', integer/boolean coercion) | Should | Implemented |
-| CMS-T-012 | Return JSON-encoded results for LLM consumption via `__call` | Should | Implemented |
-| CMS-T-013 | Validate required parameters and return structured error responses | Must | Implemented |
-| CMS-T-014 | Register tool via ToolRegistrationListener on OpenRegister's ToolRegistrationEvent | Must | Implemented |
-| CMS-T-015 | Menu creation requires at least one item with order, name, and link fields | Must | Implemented |
+### Requirement: Implement OpenRegister `ToolInterface` with getName(), getDescription(), setAgent(), getFunctions(), executeFunction()
+The CMS tool MUST implement OpenRegister `ToolInterface` with getName(), getDescription(), setAgent(), getFunctions(), executeFunction().
+
+**ID:** CMS-T-001 — Priority: Must — Status: Implemented
+
+### Requirement: Provide `cms_create_page` function to create pages with title, summary, description, slug
+The CMS tool MUST provide a `cms_create_page` function to create pages with title, summary, description, slug.
+
+**ID:** CMS-T-002 — Priority: Must — Status: Implemented
+
+### Requirement: Provide `cms_list_pages` function to list pages with optional limit
+The CMS tool MUST provide a `cms_list_pages` function to list pages with an optional limit.
+
+**ID:** CMS-T-003 — Priority: Must — Status: Implemented
+
+### Requirement: Provide `cms_create_menu` function to create menus with title, position, items, groups, hideBeforeLogin
+The CMS tool MUST provide a `cms_create_menu` function to create menus with title, position, items, groups, hideBeforeLogin.
+
+**ID:** CMS-T-004 — Priority: Must — Status: Implemented
+
+### Requirement: Provide `cms_list_menus` function to list all menus
+The CMS tool MUST provide a `cms_list_menus` function to list all menus.
+
+**ID:** CMS-T-005 — Priority: Must — Status: Implemented
+
+### Requirement: Provide `cms_add_menu_item` function to add items to existing menus
+The CMS tool MUST provide a `cms_add_menu_item` function to add items to existing menus.
+
+**ID:** CMS-T-006 — Priority: Must — Status: Implemented
+
+### Requirement: Auto-generate URL-friendly slugs from page titles when not provided
+The CMS tool SHOULD auto-generate URL-friendly slugs from page titles when not provided.
+
+**ID:** CMS-T-007 — Priority: Should — Status: Implemented
+
+### Requirement: Respect agent's organization boundaries (set organisation on created objects)
+The CMS tool MUST respect the agent's organization boundaries (set organisation on created objects).
+
+**ID:** CMS-T-008 — Priority: Must — Status: Implemented
+
+### Requirement: Use ObjectService for data operations with RBAC support
+The CMS tool MUST use ObjectService for data operations with RBAC support.
+
+**ID:** CMS-T-009 — Priority: Must — Status: Implemented
+
+### Requirement: Support `__call` magic method for snake_case to camelCase method resolution (LLPhant compatibility)
+The CMS tool SHOULD support the `__call` magic method for snake_case to camelCase method resolution (LLPhant compatibility).
+
+**ID:** CMS-T-010 — Priority: Should — Status: Implemented
+
+### Requirement: Type-cast arguments from LLM (handle string 'null', integer/boolean coercion)
+The CMS tool SHOULD type-cast arguments from the LLM (handle string 'null', integer/boolean coercion).
+
+**ID:** CMS-T-011 — Priority: Should — Status: Implemented
+
+### Requirement: Return JSON-encoded results for LLM consumption via `__call`
+The CMS tool SHOULD return JSON-encoded results for LLM consumption via `__call`.
+
+**ID:** CMS-T-012 — Priority: Should — Status: Implemented
+
+### Requirement: Validate required parameters and return structured error responses
+The CMS tool MUST validate required parameters and return structured error responses.
+
+**ID:** CMS-T-013 — Priority: Must — Status: Implemented
+
+### Requirement: Register tool via ToolRegistrationListener on OpenRegister's ToolRegistrationEvent
+The CMS tool MUST register itself via ToolRegistrationListener on OpenRegister's ToolRegistrationEvent.
+
+**ID:** CMS-T-014 — Priority: Must — Status: Implemented
+
+### Requirement: Menu creation requires at least one item with order, name, and link fields
+Menu creation MUST require at least one item with order, name, and link fields.
+
+**ID:** CMS-T-015 — Priority: Must — Status: Implemented
 
 ## Architecture
 

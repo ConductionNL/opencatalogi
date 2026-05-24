@@ -10,23 +10,80 @@ The search feature provides an internal search API endpoint that queries publica
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| SCH-001 | Provide an internal search endpoint at `/api/search` for authenticated users | Must | Implemented |
-| SCH-002 | Support full-text search via `_search` parameter | Must | Implemented |
-| SCH-003 | Support filtering by catalog ID | Should | Implemented |
-| SCH-004 | Support pagination (_limit, _page, _offset) | Must | Implemented |
-| SCH-005 | Support ordering (_order) | Must | Implemented |
-| SCH-006 | Integrate with ElasticSearch when configured | Should | Not Implemented (no ElasticSearchService in OpenCatalogi) |
-| SCH-007 | Support distributed search across remote directories via async HTTP | Should | Implemented (via PublicationService federation) |
-| SCH-008 | Merge facets/aggregations from multiple sources | Should | Implemented (via PublicationService federation) |
-| SCH-009 | Parse complex query strings with nested parameters | Should | Implemented (via ObjectService.buildSearchQuery) |
-| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | Must | Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly) |
-| SCH-011 | SearchController has show(), attachments(), download(), uses(), used() methods with no routes | Nice | Dead Code |
-| SCH-012 | Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries) | Must | Implemented |
-| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters from request query parameters | Must | Not Applicable (no SearchService exists in OpenCatalogi) |
-| SCH-014 | Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`) | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
-| SCH-015 | Unset all underscore-prefixed special parameters before passing to database filter layer | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
+### Requirement: Provide an internal search endpoint at `/api/search` for authenticated users
+The system MUST provide an internal search endpoint at `/api/search` for authenticated users.
+
+**ID:** SCH-001 — Priority: Must — Status: Implemented
+
+### Requirement: Support full-text search via `_search` parameter
+The system MUST support full-text search via the `_search` parameter.
+
+**ID:** SCH-002 — Priority: Must — Status: Implemented
+
+### Requirement: Support filtering by catalog ID
+The system SHOULD support filtering by catalog ID.
+
+**ID:** SCH-003 — Priority: Should — Status: Implemented
+
+### Requirement: Support pagination (_limit, _page, _offset)
+The system MUST support pagination (_limit, _page, _offset).
+
+**ID:** SCH-004 — Priority: Must — Status: Implemented
+
+### Requirement: Support ordering (_order)
+The system MUST support ordering (_order).
+
+**ID:** SCH-005 — Priority: Must — Status: Implemented
+
+### Requirement: Integrate with ElasticSearch when configured
+The system SHOULD integrate with ElasticSearch when configured.
+
+**ID:** SCH-006 — Priority: Should — Status: Not Implemented (no ElasticSearchService in OpenCatalogi)
+
+### Requirement: Support distributed search across remote directories via async HTTP
+The system SHOULD support distributed search across remote directories via async HTTP.
+
+**ID:** SCH-007 — Priority: Should — Status: Implemented (via PublicationService federation)
+
+### Requirement: Merge facets/aggregations from multiple sources
+The system SHOULD merge facets/aggregations from multiple sources.
+
+**ID:** SCH-008 — Priority: Should — Status: Implemented (via PublicationService federation)
+
+### Requirement: Parse complex query strings with nested parameters
+The system SHOULD parse complex query strings with nested parameters.
+
+**ID:** SCH-009 — Priority: Should — Status: Implemented (via ObjectService.buildSearchQuery)
+
+### Requirement: Create MySQL/MongoDB-compatible search filters and sort parameters
+The system MUST create MySQL/MongoDB-compatible search filters and sort parameters.
+
+**ID:** SCH-010 — Priority: Must — Status: Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly)
+
+### Requirement: SearchController has show(), attachments(), download(), uses(), used() methods with no routes
+SearchController SHOULD have show(), attachments(), download(), uses(), used() methods with no routes.
+
+**ID:** SCH-011 — Priority: Nice — Status: Dead Code
+
+### Requirement: Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries)
+The system MUST support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries).
+
+**ID:** SCH-012 — Priority: Must — Status: Implemented
+
+### Requirement: Generate dual MySQL and MongoDB filter/sort parameters from request query parameters
+The system MUST generate dual MySQL and MongoDB filter/sort parameters from request query parameters.
+
+**ID:** SCH-013 — Priority: Must — Status: Not Applicable (no SearchService exists in OpenCatalogi)
+
+### Requirement: Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`)
+The system MUST parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`).
+
+**ID:** SCH-014 — Priority: Must — Status: Implemented (via ObjectService.buildSearchQuery in OpenRegister)
+
+### Requirement: Unset all underscore-prefixed special parameters before passing to database filter layer
+The system MUST unset all underscore-prefixed special parameters before passing them to the database filter layer.
+
+**ID:** SCH-015 — Priority: Must — Status: Implemented (via ObjectService.buildSearchQuery in OpenRegister)
 
 ## Data Model
 

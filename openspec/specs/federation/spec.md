@@ -10,20 +10,65 @@ Federation enables OpenCatalogi to aggregate publications from both local catalo
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| FED-001 | List all publications from local and federated sources with merged pagination | Must | Implemented |
-| FED-002 | Retrieve a single publication by ID from local or federated sources | Must | Implemented |
-| FED-003 | Retrieve outgoing relations (uses) with federation support | Must | Implemented |
-| FED-004 | Retrieve incoming relations (used-by) with federation support | Must | Implemented |
-| FED-005 | Retrieve publication attachments from local or federated sources | Must | Implemented |
-| FED-006 | Download publication files from local or federated sources | Must | Implemented |
-| FED-007 | All federation endpoints must be public (no auth required) | Must | Implemented |
-| FED-008 | Federation aggregation uses async HTTP requests to remote directories | Should | Implemented |
-| FED-009 | Directory listings provide the directory URLs for remote instances | Must | Implemented |
-| FED-010 | Listings with `integrationLevel: "search"` are included in federated search | Should | Implemented |
-| FED-011 | Sort merged results by relevance score (`_score`) | Should | Implemented |
-| FED-012 | All federation publication endpoints have corresponding routes in routes.php | Must | Implemented |
+### Requirement: List all publications from local and federated sources with merged pagination
+The system MUST list all publications from local and federated sources with merged pagination.
+
+**ID:** FED-001 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve a single publication by ID from local or federated sources
+The system MUST retrieve a single publication by ID from local or federated sources.
+
+**ID:** FED-002 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve outgoing relations (uses) with federation support
+The system MUST retrieve outgoing relations (uses) with federation support.
+
+**ID:** FED-003 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve incoming relations (used-by) with federation support
+The system MUST retrieve incoming relations (used-by) with federation support.
+
+**ID:** FED-004 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve publication attachments from local or federated sources
+The system MUST retrieve publication attachments from local or federated sources.
+
+**ID:** FED-005 — Priority: Must — Status: Implemented
+
+### Requirement: Download publication files from local or federated sources
+The system MUST allow downloading publication files from local or federated sources.
+
+**ID:** FED-006 — Priority: Must — Status: Implemented
+
+### Requirement: All federation endpoints must be public (no auth required)
+All federation endpoints MUST be public (no auth required).
+
+**ID:** FED-007 — Priority: Must — Status: Implemented
+
+### Requirement: Federation aggregation uses async HTTP requests to remote directories
+Federation aggregation SHOULD use async HTTP requests to remote directories.
+
+**ID:** FED-008 — Priority: Should — Status: Implemented
+
+### Requirement: Directory listings provide the directory URLs for remote instances
+Directory listings MUST provide the directory URLs for remote instances.
+
+**ID:** FED-009 — Priority: Must — Status: Implemented
+
+### Requirement: Listings with `integrationLevel: "search"` are included in federated search
+Listings with `integrationLevel: "search"` SHOULD be included in federated search.
+
+**ID:** FED-010 — Priority: Should — Status: Implemented
+
+### Requirement: Sort merged results by relevance score (`_score`)
+The system SHOULD sort merged results by relevance score (`_score`).
+
+**ID:** FED-011 — Priority: Should — Status: Implemented
+
+### Requirement: All federation publication endpoints have corresponding routes in routes.php
+All federation publication endpoints MUST have corresponding routes in routes.php.
+
+**ID:** FED-012 — Priority: Must — Status: Implemented
 
 ## Data Model
 

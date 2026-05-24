@@ -10,22 +10,75 @@ The admin settings module provides the configuration interface for OpenCatalogi.
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| SET-001 | Retrieve current settings including object type configurations and available registers | Must | Implemented |
-| SET-002 | Update settings (schema/register mappings) via POST | Must | Implemented |
-| SET-003 | Load/import configuration from `publication_register.json` via OpenRegister's ConfigurationService | Must | Implemented |
-| SET-004 | Auto-configure registers and schemas by matching slugs | Should | Implemented |
-| SET-005 | Check and install/update OpenRegister dependency (minimum version 0.1.7) | Should | Implemented |
-| SET-006 | Track configuration version and compare with app version for upgrade detection | Must | Implemented |
-| SET-007 | Manual import trigger with optional force parameter | Must | Implemented |
-| SET-008 | Publish options: auto_publish_attachments, auto_publish_objects, use_old_style_publishing_view | Should | Implemented |
-| SET-009 | Get and update publishing options separately | Should | Implemented |
-| SET-010 | Version info endpoint showing app version, configured version, and match status | Must | Implemented |
-| SET-011 | Repair step to initialize settings on app install/upgrade | Must | Implemented |
-| SET-012 | Nextcloud admin settings page with template rendering | Must | Implemented |
-| SET-013 | Enrich register listings with full schema objects (not just IDs) | Should | Implemented |
-| SET-014 | Database migration history tracked across 4 migration files | Must | Implemented |
+### Requirement: Retrieve current settings including object type configurations and available registers
+The system MUST retrieve current settings including object type configurations and available registers.
+
+**ID:** SET-001 — Priority: Must — Status: Implemented
+
+### Requirement: Update settings (schema/register mappings) via POST
+The system MUST allow updating settings (schema/register mappings) via POST.
+
+**ID:** SET-002 — Priority: Must — Status: Implemented
+
+### Requirement: Load/import configuration from `publication_register.json` via OpenRegister's ConfigurationService
+The system MUST load/import configuration from `publication_register.json` via OpenRegister's ConfigurationService.
+
+**ID:** SET-003 — Priority: Must — Status: Implemented
+
+### Requirement: Auto-configure registers and schemas by matching slugs
+The system SHOULD auto-configure registers and schemas by matching slugs.
+
+**ID:** SET-004 — Priority: Should — Status: Implemented
+
+### Requirement: Check and install/update OpenRegister dependency (minimum version 0.1.7)
+The system SHOULD check and install/update the OpenRegister dependency (minimum version 0.1.7).
+
+**ID:** SET-005 — Priority: Should — Status: Implemented
+
+### Requirement: Track configuration version and compare with app version for upgrade detection
+The system MUST track the configuration version and compare it with the app version for upgrade detection.
+
+**ID:** SET-006 — Priority: Must — Status: Implemented
+
+### Requirement: Manual import trigger with optional force parameter
+The system MUST expose a manual import trigger with an optional force parameter.
+
+**ID:** SET-007 — Priority: Must — Status: Implemented
+
+### Requirement: Publish options: auto_publish_attachments, auto_publish_objects, use_old_style_publishing_view
+The system SHOULD expose publish options: auto_publish_attachments, auto_publish_objects, use_old_style_publishing_view.
+
+**ID:** SET-008 — Priority: Should — Status: Implemented
+
+### Requirement: Get and update publishing options separately
+The system SHOULD allow getting and updating publishing options separately.
+
+**ID:** SET-009 — Priority: Should — Status: Implemented
+
+### Requirement: Version info endpoint showing app version, configured version, and match status
+The system MUST expose a version info endpoint showing app version, configured version, and match status.
+
+**ID:** SET-010 — Priority: Must — Status: Implemented
+
+### Requirement: Repair step to initialize settings on app install/upgrade
+The system MUST provide a repair step to initialize settings on app install/upgrade.
+
+**ID:** SET-011 — Priority: Must — Status: Implemented
+
+### Requirement: Nextcloud admin settings page with template rendering
+The system MUST provide a Nextcloud admin settings page with template rendering.
+
+**ID:** SET-012 — Priority: Must — Status: Implemented
+
+### Requirement: Enrich register listings with full schema objects (not just IDs)
+The system SHOULD enrich register listings with full schema objects (not just IDs).
+
+**ID:** SET-013 — Priority: Should — Status: Implemented
+
+### Requirement: Database migration history tracked across 4 migration files
+The system MUST track database migration history across 4 migration files.
+
+**ID:** SET-014 — Priority: Must — Status: Implemented
 
 ## Data Model
 

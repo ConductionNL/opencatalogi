@@ -10,23 +10,80 @@ Publications are the core content objects in OpenCatalogi. They represent indivi
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| PUB-001 | List publications scoped to a catalog slug with pagination and facets | Must | Implemented |
-| PUB-002 | Retrieve a single publication by catalog slug and object UUID | Must | Implemented |
-| PUB-003 | Publication list endpoint must filter by the catalog's configured registers and schemas | Must | Implemented |
-| PUB-004 | Support multi-schema catalogs with UNION-based search across multiple magic tables | Must | Implemented |
-| PUB-005 | Support `_extend` parameter for including related object data | Should | Implemented |
-| PUB-006 | Retrieve publication attachments (files linked to a publication) | Must | Implemented |
-| PUB-007 | Download publication files | Must | Implemented |
-| PUB-008 | Retrieve outgoing relations (objects this publication references) via `/uses` | Must | Implemented |
-| PUB-009 | Retrieve incoming relations (objects that reference this publication) via `/used` | Must | Implemented |
-| PUB-010 | All public endpoints must include CORS headers | Must | Implemented |
-| PUB-011 | Return 404 with descriptive error when catalog slug or publication ID not found | Must | Implemented |
-| PUB-012 | Publication endpoints use wildcard `{catalogSlug}` routes (must be last in route order) | Must | Implemented |
-| PUB-013 | Support filter parameter extraction from various formats (single, array, OR/AND operators) | Should | Implemented |
-| PUB-014 | Fallback object location lookup across all magic tables when catalog register/schema search fails | Should | Implemented |
-| PUB-015 | Schema authorization (RBAC) is enabled on the publication list for conditional access rules | Should | Implemented |
+### Requirement: List publications scoped to a catalog slug with pagination and facets
+The system MUST list publications scoped to a catalog slug with pagination and facets.
+
+**ID:** PUB-001 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve a single publication by catalog slug and object UUID
+The system MUST retrieve a single publication by catalog slug and object UUID.
+
+**ID:** PUB-002 — Priority: Must — Status: Implemented
+
+### Requirement: Publication list endpoint must filter by the catalog's configured registers and schemas
+The publication list endpoint MUST filter by the catalog's configured registers and schemas.
+
+**ID:** PUB-003 — Priority: Must — Status: Implemented
+
+### Requirement: Support multi-schema catalogs with UNION-based search across multiple magic tables
+The system MUST support multi-schema catalogs with UNION-based search across multiple magic tables.
+
+**ID:** PUB-004 — Priority: Must — Status: Implemented
+
+### Requirement: Support `_extend` parameter for including related object data
+The system SHOULD support the `_extend` parameter for including related object data.
+
+**ID:** PUB-005 — Priority: Should — Status: Implemented
+
+### Requirement: Retrieve publication attachments (files linked to a publication)
+The system MUST retrieve publication attachments (files linked to a publication).
+
+**ID:** PUB-006 — Priority: Must — Status: Implemented
+
+### Requirement: Download publication files
+The system MUST allow downloading publication files.
+
+**ID:** PUB-007 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve outgoing relations (objects this publication references) via `/uses`
+The system MUST retrieve outgoing relations (objects this publication references) via `/uses`.
+
+**ID:** PUB-008 — Priority: Must — Status: Implemented
+
+### Requirement: Retrieve incoming relations (objects that reference this publication) via `/used`
+The system MUST retrieve incoming relations (objects that reference this publication) via `/used`.
+
+**ID:** PUB-009 — Priority: Must — Status: Implemented
+
+### Requirement: All public endpoints must include CORS headers
+All public endpoints MUST include CORS headers.
+
+**ID:** PUB-010 — Priority: Must — Status: Implemented
+
+### Requirement: Return 404 with descriptive error when catalog slug or publication ID not found
+The system MUST return 404 with a descriptive error when the catalog slug or publication ID is not found.
+
+**ID:** PUB-011 — Priority: Must — Status: Implemented
+
+### Requirement: Publication endpoints use wildcard `{catalogSlug}` routes (must be last in route order)
+Publication endpoints MUST use wildcard `{catalogSlug}` routes (which MUST be last in route order).
+
+**ID:** PUB-012 — Priority: Must — Status: Implemented
+
+### Requirement: Support filter parameter extraction from various formats (single, array, OR/AND operators)
+The system SHOULD support filter parameter extraction from various formats (single, array, OR/AND operators).
+
+**ID:** PUB-013 — Priority: Should — Status: Implemented
+
+### Requirement: Fallback object location lookup across all magic tables when catalog register/schema search fails
+The system SHOULD perform a fallback object location lookup across all magic tables when the catalog register/schema search fails.
+
+**ID:** PUB-014 — Priority: Should — Status: Implemented
+
+### Requirement: Schema authorization (RBAC) is enabled on the publication list for conditional access rules
+Schema authorization (RBAC) SHOULD be enabled on the publication list for conditional access rules.
+
+**ID:** PUB-015 — Priority: Should — Status: Implemented
 
 ## Data Model
 

@@ -10,23 +10,80 @@ The File Management service provides all file-related operations for OpenCatalog
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| FIL-001 | Create folders in Nextcloud user storage, skip if already exists | Must | Implemented |
-| FIL-002 | Upload new files to Nextcloud user storage (fail if file already exists) | Must | Implemented |
-| FIL-003 | Update/overwrite existing files, optionally create if not exists | Must | Implemented |
-| FIL-004 | Delete files from Nextcloud user storage | Must | Implemented |
-| FIL-005 | Create public share links (IShare type 3) for files with configurable permissions | Must | Implemented |
-| FIL-006 | Find existing share links for a file path | Must | Implemented |
-| FIL-007 | Return full share link URLs including protocol and domain | Must | Implemented |
-| FIL-008 | Handle HTTP file uploads via `_file` key in multipart requests | Must | Implemented |
-| FIL-009 | Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/` | Must | Implemented |
-| FIL-010 | Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays | Must | Implemented |
-| FIL-011 | Generate PDFs using Twig templates and mPDF library | Must | Implemented |
-| FIL-012 | Create ZIP archives from folder contents | Must | Implemented |
-| FIL-013 | Send ZIP archives as download responses with proper headers | Must | Implemented |
-| FIL-014 | Clean up temporary files after ZIP operations | Should | Implemented |
-| FIL-015 | Memory limit set to 2048M for large file operations | Should | Implemented |
+### Requirement: Create folders in Nextcloud user storage, skip if already exists
+The system MUST create folders in Nextcloud user storage and skip if they already exist.
+
+**ID:** FIL-001 — Priority: Must — Status: Implemented
+
+### Requirement: Upload new files to Nextcloud user storage (fail if file already exists)
+The system MUST upload new files to Nextcloud user storage (and MUST fail if the file already exists).
+
+**ID:** FIL-002 — Priority: Must — Status: Implemented
+
+### Requirement: Update/overwrite existing files, optionally create if not exists
+The system MUST update/overwrite existing files, optionally creating them if not exists.
+
+**ID:** FIL-003 — Priority: Must — Status: Implemented
+
+### Requirement: Delete files from Nextcloud user storage
+The system MUST allow deleting files from Nextcloud user storage.
+
+**ID:** FIL-004 — Priority: Must — Status: Implemented
+
+### Requirement: Create public share links (IShare type 3) for files with configurable permissions
+The system MUST create public share links (IShare type 3) for files with configurable permissions.
+
+**ID:** FIL-005 — Priority: Must — Status: Implemented
+
+### Requirement: Find existing share links for a file path
+The system MUST be able to find existing share links for a file path.
+
+**ID:** FIL-006 — Priority: Must — Status: Implemented
+
+### Requirement: Return full share link URLs including protocol and domain
+The system MUST return full share link URLs including protocol and domain.
+
+**ID:** FIL-007 — Priority: Must — Status: Implemented
+
+### Requirement: Handle HTTP file uploads via `_file` key in multipart requests
+The system MUST handle HTTP file uploads via the `_file` key in multipart requests.
+
+**ID:** FIL-008 — Priority: Must — Status: Implemented
+
+### Requirement: Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/`
+The system MUST create a structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/`.
+
+**ID:** FIL-009 — Priority: Must — Status: Implemented
+
+### Requirement: Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays
+The system MUST add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays.
+
+**ID:** FIL-010 — Priority: Must — Status: Implemented
+
+### Requirement: Generate PDFs using Twig templates and mPDF library
+The system MUST generate PDFs using Twig templates and the mPDF library.
+
+**ID:** FIL-011 — Priority: Must — Status: Implemented
+
+### Requirement: Create ZIP archives from folder contents
+The system MUST create ZIP archives from folder contents.
+
+**ID:** FIL-012 — Priority: Must — Status: Implemented
+
+### Requirement: Send ZIP archives as download responses with proper headers
+The system MUST send ZIP archives as download responses with proper headers.
+
+**ID:** FIL-013 — Priority: Must — Status: Implemented
+
+### Requirement: Clean up temporary files after ZIP operations
+The system SHOULD clean up temporary files after ZIP operations.
+
+**ID:** FIL-014 — Priority: Should — Status: Implemented
+
+### Requirement: Memory limit set to 2048M for large file operations
+The system SHOULD set the memory limit to 2048M for large file operations.
+
+**ID:** FIL-015 — Priority: Should — Status: Implemented
 
 ## Architecture
 
