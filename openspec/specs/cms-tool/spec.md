@@ -10,80 +10,80 @@ The CMS Tool provides AI agents running within OpenRegister with the ability to 
 
 ## Requirements
 
-### Requirement: Implement OpenRegister `ToolInterface` with getName(), getDescription(), setAgent(), getFunctions(), executeFunction()
+### Requirement: Implement OpenRegister `ToolInterface` with getName(), getDescription(), setAgent(), getFunctions(), executeFunction() (CMS-T-001)
 The CMS tool MUST implement OpenRegister `ToolInterface` with getName(), getDescription(), setAgent(), getFunctions(), executeFunction().
 
-**ID:** CMS-T-001 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Provide `cms_create_page` function to create pages with title, summary, description, slug
+### Requirement: Provide `cms_create_page` function to create pages with title, summary, description, slug (CMS-T-002)
 The CMS tool MUST provide a `cms_create_page` function to create pages with title, summary, description, slug.
 
-**ID:** CMS-T-002 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Provide `cms_list_pages` function to list pages with optional limit
+### Requirement: Provide `cms_list_pages` function to list pages with optional limit (CMS-T-003)
 The CMS tool MUST provide a `cms_list_pages` function to list pages with an optional limit.
 
-**ID:** CMS-T-003 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Provide `cms_create_menu` function to create menus with title, position, items, groups, hideBeforeLogin
+### Requirement: Provide `cms_create_menu` function to create menus with title, position, items, groups, hideBeforeLogin (CMS-T-004)
 The CMS tool MUST provide a `cms_create_menu` function to create menus with title, position, items, groups, hideBeforeLogin.
 
-**ID:** CMS-T-004 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Provide `cms_list_menus` function to list all menus
+### Requirement: Provide `cms_list_menus` function to list all menus (CMS-T-005)
 The CMS tool MUST provide a `cms_list_menus` function to list all menus.
 
-**ID:** CMS-T-005 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Provide `cms_add_menu_item` function to add items to existing menus
+### Requirement: Provide `cms_add_menu_item` function to add items to existing menus (CMS-T-006)
 The CMS tool MUST provide a `cms_add_menu_item` function to add items to existing menus.
 
-**ID:** CMS-T-006 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Auto-generate URL-friendly slugs from page titles when not provided
+### Requirement: Auto-generate URL-friendly slugs from page titles when not provided (CMS-T-007)
 The CMS tool SHOULD auto-generate URL-friendly slugs from page titles when not provided.
 
-**ID:** CMS-T-007 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Respect agent's organization boundaries (set organisation on created objects)
+### Requirement: Respect agent's organization boundaries (set organisation on created objects) (CMS-T-008)
 The CMS tool MUST respect the agent's organization boundaries (set organisation on created objects).
 
-**ID:** CMS-T-008 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Use ObjectService for data operations with RBAC support
+### Requirement: Use ObjectService for data operations with RBAC support (CMS-T-009)
 The CMS tool MUST use ObjectService for data operations with RBAC support.
 
-**ID:** CMS-T-009 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Support `__call` magic method for snake_case to camelCase method resolution (LLPhant compatibility)
+### Requirement: Support `__call` magic method for snake_case to camelCase method resolution (LLPhant compatibility) (CMS-T-010)
 The CMS tool SHOULD support the `__call` magic method for snake_case to camelCase method resolution (LLPhant compatibility).
 
-**ID:** CMS-T-010 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Type-cast arguments from LLM (handle string 'null', integer/boolean coercion)
+### Requirement: Type-cast arguments from LLM (handle string 'null', integer/boolean coercion) (CMS-T-011)
 The CMS tool SHOULD type-cast arguments from the LLM (handle string 'null', integer/boolean coercion).
 
-**ID:** CMS-T-011 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Return JSON-encoded results for LLM consumption via `__call`
+### Requirement: Return JSON-encoded results for LLM consumption via `__call` (CMS-T-012)
 The CMS tool SHOULD return JSON-encoded results for LLM consumption via `__call`.
 
-**ID:** CMS-T-012 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Validate required parameters and return structured error responses
+### Requirement: Validate required parameters and return structured error responses (CMS-T-013)
 The CMS tool MUST validate required parameters and return structured error responses.
 
-**ID:** CMS-T-013 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Register tool via ToolRegistrationListener on OpenRegister's ToolRegistrationEvent
+### Requirement: Register tool via ToolRegistrationListener on OpenRegister's ToolRegistrationEvent (CMS-T-014)
 The CMS tool MUST register itself via ToolRegistrationListener on OpenRegister's ToolRegistrationEvent.
 
-**ID:** CMS-T-014 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Menu creation requires at least one item with order, name, and link fields
+### Requirement: Menu creation requires at least one item with order, name, and link fields (CMS-T-015)
 Menu creation MUST require at least one item with order, name, and link fields.
 
-**ID:** CMS-T-015 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
 ## Architecture
 

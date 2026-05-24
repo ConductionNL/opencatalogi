@@ -10,80 +10,80 @@ The File Management service provides all file-related operations for OpenCatalog
 
 ## Requirements
 
-### Requirement: Create folders in Nextcloud user storage, skip if already exists
+### Requirement: Create folders in Nextcloud user storage, skip if already exists (FIL-001)
 The system MUST create folders in Nextcloud user storage and skip if they already exist.
 
-**ID:** FIL-001 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Upload new files to Nextcloud user storage (fail if file already exists)
+### Requirement: Upload new files to Nextcloud user storage (fail if file already exists) (FIL-002)
 The system MUST upload new files to Nextcloud user storage (and MUST fail if the file already exists).
 
-**ID:** FIL-002 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Update/overwrite existing files, optionally create if not exists
+### Requirement: Update/overwrite existing files, optionally create if not exists (FIL-003)
 The system MUST update/overwrite existing files, optionally creating them if not exists.
 
-**ID:** FIL-003 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Delete files from Nextcloud user storage
+### Requirement: Delete files from Nextcloud user storage (FIL-004)
 The system MUST allow deleting files from Nextcloud user storage.
 
-**ID:** FIL-004 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Create public share links (IShare type 3) for files with configurable permissions
+### Requirement: Create public share links (IShare type 3) for files with configurable permissions (FIL-005)
 The system MUST create public share links (IShare type 3) for files with configurable permissions.
 
-**ID:** FIL-005 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Find existing share links for a file path
+### Requirement: Find existing share links for a file path (FIL-006)
 The system MUST be able to find existing share links for a file path.
 
-**ID:** FIL-006 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Return full share link URLs including protocol and domain
+### Requirement: Return full share link URLs including protocol and domain (FIL-007)
 The system MUST return full share link URLs including protocol and domain.
 
-**ID:** FIL-007 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Handle HTTP file uploads via `_file` key in multipart requests
+### Requirement: Handle HTTP file uploads via `_file` key in multipart requests (FIL-008)
 The system MUST handle HTTP file uploads via the `_file` key in multipart requests.
 
-**ID:** FIL-008 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/`
+### Requirement: Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/` (FIL-009)
 The system MUST create a structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/`.
 
-**ID:** FIL-009 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays
+### Requirement: Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays (FIL-010)
 The system MUST add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays.
 
-**ID:** FIL-010 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Generate PDFs using Twig templates and mPDF library
+### Requirement: Generate PDFs using Twig templates and mPDF library (FIL-011)
 The system MUST generate PDFs using Twig templates and the mPDF library.
 
-**ID:** FIL-011 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Create ZIP archives from folder contents
+### Requirement: Create ZIP archives from folder contents (FIL-012)
 The system MUST create ZIP archives from folder contents.
 
-**ID:** FIL-012 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Send ZIP archives as download responses with proper headers
+### Requirement: Send ZIP archives as download responses with proper headers (FIL-013)
 The system MUST send ZIP archives as download responses with proper headers.
 
-**ID:** FIL-013 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Clean up temporary files after ZIP operations
+### Requirement: Clean up temporary files after ZIP operations (FIL-014)
 The system SHOULD clean up temporary files after ZIP operations.
 
-**ID:** FIL-014 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Memory limit set to 2048M for large file operations
+### Requirement: Memory limit set to 2048M for large file operations (FIL-015)
 The system SHOULD set the memory limit to 2048M for large file operations.
 
-**ID:** FIL-015 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
 ## Architecture
 

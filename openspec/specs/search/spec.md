@@ -10,80 +10,80 @@ The search feature provides an internal search API endpoint that queries publica
 
 ## Requirements
 
-### Requirement: Provide an internal search endpoint at `/api/search` for authenticated users
+### Requirement: Provide an internal search endpoint at `/api/search` for authenticated users (SCH-001)
 The system MUST provide an internal search endpoint at `/api/search` for authenticated users.
 
-**ID:** SCH-001 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Support full-text search via `_search` parameter
+### Requirement: Support full-text search via `_search` parameter (SCH-002)
 The system MUST support full-text search via the `_search` parameter.
 
-**ID:** SCH-002 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Support filtering by catalog ID
+### Requirement: Support filtering by catalog ID (SCH-003)
 The system SHOULD support filtering by catalog ID.
 
-**ID:** SCH-003 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Support pagination (_limit, _page, _offset)
+### Requirement: Support pagination (_limit, _page, _offset) (SCH-004)
 The system MUST support pagination (_limit, _page, _offset).
 
-**ID:** SCH-004 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Support ordering (_order)
+### Requirement: Support ordering (_order) (SCH-005)
 The system MUST support ordering (_order).
 
-**ID:** SCH-005 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Integrate with ElasticSearch when configured
+### Requirement: Integrate with ElasticSearch when configured (SCH-006)
 The system SHOULD integrate with ElasticSearch when configured.
 
-**ID:** SCH-006 — Priority: Should — Status: Not Implemented (no ElasticSearchService in OpenCatalogi)
+**Priority:** Should **Status:** Not Implemented (no ElasticSearchService in OpenCatalogi)
 
-### Requirement: Support distributed search across remote directories via async HTTP
+### Requirement: Support distributed search across remote directories via async HTTP (SCH-007)
 The system SHOULD support distributed search across remote directories via async HTTP.
 
-**ID:** SCH-007 — Priority: Should — Status: Implemented (via PublicationService federation)
+**Priority:** Should **Status:** Implemented (via PublicationService federation)
 
-### Requirement: Merge facets/aggregations from multiple sources
+### Requirement: Merge facets/aggregations from multiple sources (SCH-008)
 The system SHOULD merge facets/aggregations from multiple sources.
 
-**ID:** SCH-008 — Priority: Should — Status: Implemented (via PublicationService federation)
+**Priority:** Should **Status:** Implemented (via PublicationService federation)
 
-### Requirement: Parse complex query strings with nested parameters
+### Requirement: Parse complex query strings with nested parameters (SCH-009)
 The system SHOULD parse complex query strings with nested parameters.
 
-**ID:** SCH-009 — Priority: Should — Status: Implemented (via ObjectService.buildSearchQuery)
+**Priority:** Should **Status:** Implemented (via ObjectService.buildSearchQuery)
 
-### Requirement: Create MySQL/MongoDB-compatible search filters and sort parameters
+### Requirement: Create MySQL/MongoDB-compatible search filters and sort parameters (SCH-010)
 The system MUST create MySQL/MongoDB-compatible search filters and sort parameters.
 
-**ID:** SCH-010 — Priority: Must — Status: Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly)
+**Priority:** Must **Status:** Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly)
 
-### Requirement: SearchController has show(), attachments(), download(), uses(), used() methods with no routes
+### Requirement: SearchController has show(), attachments(), download(), uses(), used() methods with no routes (SCH-011)
 SearchController SHOULD have show(), attachments(), download(), uses(), used() methods with no routes.
 
-**ID:** SCH-011 — Priority: Nice — Status: Dead Code
+**Priority:** Nice **Status:** Dead Code
 
-### Requirement: Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries)
+### Requirement: Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries) (SCH-012)
 The system MUST support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries).
 
-**ID:** SCH-012 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Generate dual MySQL and MongoDB filter/sort parameters from request query parameters
+### Requirement: Generate dual MySQL and MongoDB filter/sort parameters from request query parameters (SCH-013)
 The system MUST generate dual MySQL and MongoDB filter/sort parameters from request query parameters.
 
-**ID:** SCH-013 — Priority: Must — Status: Not Applicable (no SearchService exists in OpenCatalogi)
+**Priority:** Must **Status:** Not Applicable (no SearchService exists in OpenCatalogi)
 
-### Requirement: Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`)
+### Requirement: Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`) (SCH-014)
 The system MUST parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`).
 
-**ID:** SCH-014 — Priority: Must — Status: Implemented (via ObjectService.buildSearchQuery in OpenRegister)
+**Priority:** Must **Status:** Implemented (via ObjectService.buildSearchQuery in OpenRegister)
 
-### Requirement: Unset all underscore-prefixed special parameters before passing to database filter layer
+### Requirement: Unset all underscore-prefixed special parameters before passing to database filter layer (SCH-015)
 The system MUST unset all underscore-prefixed special parameters before passing them to the database filter layer.
 
-**ID:** SCH-015 — Priority: Must — Status: Implemented (via ObjectService.buildSearchQuery in OpenRegister)
+**Priority:** Must **Status:** Implemented (via ObjectService.buildSearchQuery in OpenRegister)
 
 ## Data Model
 

@@ -10,80 +10,80 @@ The auto-publishing system automatically publishes OpenRegister objects and thei
 
 ## Requirements
 
-### Requirement: Listen to OpenRegister `ObjectCreatedEvent` and trigger auto-publishing logic
+### Requirement: Listen to OpenRegister `ObjectCreatedEvent` and trigger auto-publishing logic (APB-001)
 The system MUST listen to OpenRegister `ObjectCreatedEvent` and trigger auto-publishing logic.
 
-**ID:** APB-001 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Listen to OpenRegister `ObjectUpdatedEvent` and trigger auto-publishing logic
+### Requirement: Listen to OpenRegister `ObjectUpdatedEvent` and trigger auto-publishing logic (APB-002)
 The system MUST listen to OpenRegister `ObjectUpdatedEvent` and trigger auto-publishing logic.
 
-**ID:** APB-002 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Auto-publish newly created objects when `auto_publish_objects` is enabled
+### Requirement: Auto-publish newly created objects when `auto_publish_objects` is enabled (APB-003)
 The system MUST auto-publish newly created objects when `auto_publish_objects` is enabled.
 
-**ID:** APB-003 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Auto-publish file attachments (create share links) when `auto_publish_attachments` is enabled
+### Requirement: Auto-publish file attachments (create share links) when `auto_publish_attachments` is enabled (APB-004)
 The system MUST auto-publish file attachments (create share links) when `auto_publish_attachments` is enabled.
 
-**ID:** APB-004 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Only auto-publish objects whose register/schema match a configured catalog
+### Requirement: Only auto-publish objects whose register/schema match a configured catalog (APB-005)
 The system MUST only auto-publish objects whose register/schema match a configured catalog.
 
-**ID:** APB-005 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Determine publication status from `@self.published` and `@self.depublished` timestamps
+### Requirement: Determine publication status from `@self.published` and `@self.depublished` timestamps (APB-006)
 The system MUST determine publication status from `@self.published` and `@self.depublished` timestamps.
 
-**ID:** APB-006 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Skip event processing entirely when both auto-publish options are disabled (early return)
+### Requirement: Skip event processing entirely when both auto-publish options are disabled (early return) (APB-007)
 The system SHOULD skip event processing entirely when both auto-publish options are disabled (early return).
 
-**ID:** APB-007 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: On update events, only process attachment publishing for already-published objects
+### Requirement: On update events, only process attachment publishing for already-published objects (APB-008)
 The system SHOULD only process attachment publishing for already-published objects on update events.
 
-**ID:** APB-008 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: On update events, detect publication status transitions (unpublished to published)
+### Requirement: On update events, detect publication status transitions (unpublished to published) (APB-009)
 The system SHOULD detect publication status transitions (unpublished to published) on update events.
 
-**ID:** APB-009 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Use FileMapper for direct database file access to avoid infinite loop with ObjectService
+### Requirement: Use FileMapper for direct database file access to avoid infinite loop with ObjectService (APB-010)
 The system MUST use FileMapper for direct database file access to avoid infinite loop with ObjectService.
 
-**ID:** APB-010 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Skip already-published files (those with existing share tokens)
+### Requirement: Skip already-published files (those with existing share tokens) (APB-011)
 The system SHOULD skip already-published files (those with existing share tokens).
 
-**ID:** APB-011 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Return structured results with processed/published/error counts
+### Requirement: Return structured results with processed/published/error counts (APB-012)
 The system SHOULD return structured results with processed/published/error counts.
 
-**ID:** APB-012 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Log all processing results (successes and errors) for monitoring
+### Requirement: Log all processing results (successes and errors) for monitoring (APB-013)
 The system SHOULD log all processing results (successes and errors) for monitoring.
 
-**ID:** APB-013 — Priority: Should — Status: Implemented
+**Priority:** Should **Status:** Implemented
 
-### Requirement: Gracefully handle exceptions without breaking the originating OpenRegister operation
+### Requirement: Gracefully handle exceptions without breaking the originating OpenRegister operation (APB-014)
 The system MUST gracefully handle exceptions without breaking the originating OpenRegister operation.
 
-**ID:** APB-014 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Event listeners registered in Application.php bootstrap via IRegistrationContext
+### Requirement: Event listeners registered in Application.php bootstrap via IRegistrationContext (APB-015)
 Event listeners MUST be registered in Application.php bootstrap via IRegistrationContext.
 
-**ID:** APB-015 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
 ## Architecture
 

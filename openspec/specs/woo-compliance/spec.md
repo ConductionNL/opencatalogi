@@ -10,55 +10,55 @@ OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML
 
 ## Requirements
 
-### Requirement: Generate XML sitemap index per catalog per WOO information category
+### Requirement: Generate XML sitemap index per catalog per WOO information category (WOO-001)
 The system MUST generate an XML sitemap index per catalog per WOO information category.
 
-**ID:** WOO-001 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Generate XML sitemap with DIWOO Document metadata for publications
+### Requirement: Generate XML sitemap with DIWOO Document metadata for publications (WOO-002)
 The system MUST generate an XML sitemap with DIWOO Document metadata for publications.
 
-**ID:** WOO-002 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Support all 17 WOO information categories (informatiecategorieen)
+### Requirement: Support all 17 WOO information categories (informatiecategorieen) (WOO-003)
 The system MUST support all 17 WOO information categories (informatiecategorieen).
 
-**ID:** WOO-003 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Generate robots.txt with sitemap URLs for all WOO-enabled catalogs
+### Requirement: Generate robots.txt with sitemap URLs for all WOO-enabled catalogs (WOO-004)
 The system MUST generate a robots.txt with sitemap URLs for all WOO-enabled catalogs.
 
-**ID:** WOO-004 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Paginate sitemaps (max 1000 entries per page)
+### Requirement: Paginate sitemaps (max 1000 entries per page) (WOO-005)
 The system MUST paginate sitemaps (max 1000 entries per page).
 
-**ID:** WOO-005 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Map publication + file metadata to DIWOO Document XML structure
+### Requirement: Map publication + file metadata to DIWOO Document XML structure (WOO-006)
 The system MUST map publication + file metadata to the DIWOO Document XML structure.
 
-**ID:** WOO-006 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Validate that requested category belongs to the catalog's schemas
+### Requirement: Validate that requested category belongs to the catalog's schemas (WOO-007)
 The system MUST validate that the requested category belongs to the catalog's schemas.
 
-**ID:** WOO-007 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Only catalogs with `hasWooSitemap: true` appear in robots.txt
+### Requirement: Only catalogs with `hasWooSitemap: true` appear in robots.txt (WOO-008)
 Only catalogs with `hasWooSitemap: true` MUST appear in robots.txt.
 
-**ID:** WOO-008 — Priority: Must — Status: Bug (RobotsController does NOT check hasWooSitemap)
+**Priority:** Must **Status:** Bug (RobotsController does NOT check hasWooSitemap)
 
-### Requirement: All sitemap/robots endpoints are public
+### Requirement: All sitemap/robots endpoints are public (WOO-009)
 All sitemap/robots endpoints MUST be public.
 
-**ID:** WOO-009 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
-### Requirement: Include file metadata: download URL, format, creation date, publisher, handling type
+### Requirement: Include file metadata: download URL, format, creation date, publisher, handling type (WOO-010)
 The system MUST include file metadata: download URL, format, creation date, publisher, handling type.
 
-**ID:** WOO-010 — Priority: Must — Status: Implemented
+**Priority:** Must **Status:** Implemented
 
 ## Data Model
 
