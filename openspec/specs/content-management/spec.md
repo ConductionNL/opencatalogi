@@ -10,49 +10,133 @@ OpenCatalogi includes a lightweight CMS layer for managing static content on cat
 
 ## Requirements
 
-### Pages
+<!-- Pages -->
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CMS-001 | List all pages with pagination via public API | Must | Implemented |
-| CMS-002 | Retrieve a single page by slug | Must | Implemented |
-| CMS-003 | Pages support block-based content structure (contents array with type, data, groups) | Must | Implemented |
-| CMS-004 | Pages support group-based access control (groups, hideAfterLogin, hideBeforeLogin) | Should | Implemented |
-| CMS-005 | Page configuration stored in IAppConfig as `page_schema` and `page_register` | Must | Implemented |
-| CMS-006 | CORS headers included on all page endpoints | Must | Implemented |
+### Requirement: List all pages with pagination via public API (CMS-001)
+The system MUST list all pages with pagination via public API.
 
-### Menus
+**Priority:** Must **Status:** Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CMS-010 | List all menus with pagination via public API | Must | Implemented |
-| CMS-011 | Retrieve a single menu by ID | Must | Implemented |
-| CMS-012 | Menus support hierarchical items with sub-items | Must | Implemented |
-| CMS-013 | Menu items support group-based visibility (groups, hideAfterLogin, hideBeforeLogin) | Should | Implemented |
-| CMS-014 | Menu configuration stored in IAppConfig as `menu_schema` and `menu_register` | Must | Implemented |
-| CMS-015 | Default fallback: menu schema ID 7, register ID 1 when not configured | Should | Implemented |
-| CMS-016 | CORS headers included on all menu endpoints | Must | Implemented |
+### Requirement: Retrieve a single page by slug (CMS-002)
+The system MUST retrieve a single page by slug.
 
-### Themes
+**Priority:** Must **Status:** Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CMS-020 | List all themes with pagination and facets via public API | Must | Implemented |
-| CMS-021 | Retrieve a single theme by ID | Must | Implemented |
-| CMS-022 | Theme configuration stored in IAppConfig as `theme_schema` and `theme_register` | Must | Implemented |
-| CMS-023 | Themes include display fields (image, icon, link, url, sort, isExternal) | Must | Implemented |
-| CMS-024 | CORS headers included on all theme endpoints | Must | Implemented |
+### Requirement: Pages support block-based content structure (contents array with type, data, groups) (CMS-003)
+Pages MUST support block-based content structure (contents array with type, data, groups).
 
-### Glossary
+**Priority:** Must **Status:** Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CMS-030 | List all glossary terms with pagination and facets via public API | Must | Implemented |
-| CMS-031 | Retrieve a single glossary term by ID | Must | Implemented |
-| CMS-032 | Glossary configuration stored in IAppConfig as `glossary_schema` and `glossary_register` | Must | Implemented |
-| CMS-033 | Glossary queries force `_source: database` (no Solr dependency) | Must | Implemented |
-| CMS-034 | Glossary terms do not use publishing workflow (published=false in queries) | Must | Implemented |
-| CMS-035 | CORS headers included on all glossary endpoints | Must | Implemented |
+### Requirement: Pages support group-based access control (groups, hideAfterLogin, hideBeforeLogin) (CMS-004)
+Pages SHOULD support group-based access control (groups, hideAfterLogin, hideBeforeLogin).
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Page configuration stored in IAppConfig as `page_schema` and `page_register` (CMS-005)
+Page configuration MUST be stored in IAppConfig as `page_schema` and `page_register`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: CORS headers included on all page endpoints (CMS-006)
+CORS headers MUST be included on all page endpoints.
+
+**Priority:** Must **Status:** Implemented
+
+<!-- Menus -->
+
+### Requirement: List all menus with pagination via public API (CMS-010)
+The system MUST list all menus with pagination via public API.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve a single menu by ID (CMS-011)
+The system MUST retrieve a single menu by ID.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Menus support hierarchical items with sub-items (CMS-012)
+Menus MUST support hierarchical items with sub-items.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Menu items support group-based visibility (groups, hideAfterLogin, hideBeforeLogin) (CMS-013)
+Menu items SHOULD support group-based visibility (groups, hideAfterLogin, hideBeforeLogin).
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Menu configuration stored in IAppConfig as `menu_schema` and `menu_register` (CMS-014)
+Menu configuration MUST be stored in IAppConfig as `menu_schema` and `menu_register`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Default fallback: menu schema ID 7, register ID 1 when not configured (CMS-015)
+The system SHOULD default to menu schema ID 7 and register ID 1 when not configured.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: CORS headers included on all menu endpoints (CMS-016)
+CORS headers MUST be included on all menu endpoints.
+
+**Priority:** Must **Status:** Implemented
+
+<!-- Themes -->
+
+### Requirement: List all themes with pagination and facets via public API (CMS-020)
+The system MUST list all themes with pagination and facets via public API.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve a single theme by ID (CMS-021)
+The system MUST retrieve a single theme by ID.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Theme configuration stored in IAppConfig as `theme_schema` and `theme_register` (CMS-022)
+Theme configuration MUST be stored in IAppConfig as `theme_schema` and `theme_register`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Themes include display fields (image, icon, link, url, sort, isExternal) (CMS-023)
+Themes MUST include display fields (image, icon, link, url, sort, isExternal).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: CORS headers included on all theme endpoints (CMS-024)
+CORS headers MUST be included on all theme endpoints.
+
+**Priority:** Must **Status:** Implemented
+
+<!-- Glossary -->
+
+### Requirement: List all glossary terms with pagination and facets via public API (CMS-030)
+The system MUST list all glossary terms with pagination and facets via public API.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve a single glossary term by ID (CMS-031)
+The system MUST retrieve a single glossary term by ID.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Glossary configuration stored in IAppConfig as `glossary_schema` and `glossary_register` (CMS-032)
+Glossary configuration MUST be stored in IAppConfig as `glossary_schema` and `glossary_register`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Glossary queries force `_source: database` (no Solr dependency) (CMS-033)
+Glossary queries MUST force `_source: database` (no Solr dependency).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Glossary terms do not use publishing workflow (published=false in queries) (CMS-034)
+Glossary terms MUST NOT use the publishing workflow (published=false in queries).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: CORS headers included on all glossary endpoints (CMS-035)
+CORS headers MUST be included on all glossary endpoints.
+
+**Priority:** Must **Status:** Implemented
 
 ## Data Model
 

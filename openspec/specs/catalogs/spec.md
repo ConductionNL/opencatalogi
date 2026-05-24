@@ -10,20 +10,65 @@ Catalogs are the top-level organizational unit in OpenCatalogi. A catalog groups
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CAT-001 | List all catalogs via public API with CORS headers | Must | Implemented |
-| CAT-002 | Retrieve a single catalog by ID, returning all publications scoped to that catalog | Must | Implemented |
-| CAT-003 | Catalogs are stored as OpenRegister objects using the `catalog` schema in the `publication` register | Must | Implemented |
-| CAT-004 | Catalog configuration (schema ID, register ID) is stored in IAppConfig as `catalog_schema` and `catalog_register` | Must | Implemented |
-| CAT-005 | Catalog lookups by slug are cached in a distributed cache (1 hour TTL) for performance | Should | Implemented |
-| CAT-006 | Cache invalidation is supported by slug or by catalog ID | Should | Implemented |
-| CAT-007 | Cache warmup is available to pre-load catalogs into cache | Nice | Implemented |
-| CAT-008 | CORS preflight OPTIONS responses must be supported on all catalog endpoints | Must | Implemented |
-| CAT-009 | Public catalog endpoints must use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations | Must | Implemented |
-| CAT-010 | Multi-schema and multi-register catalogs must be supported (a single catalog can span multiple schemas/registers) | Should | Implemented |
-| CAT-011 | Automatic cache invalidation/warmup via CatalogCacheEventListener on object create/update/delete (post-save). Slug-to-ID normalisation of `registers`/`schemas` happens via CatalogSchemaEventListener on the **pre-save** events (`ObjectCreatingEvent`, `ObjectUpdatingEvent`) using `setModifiedData(...)`, never via a second `saveObject` call. | Should | Implemented |
-| CAT-012 | No catalog event listener may trigger a re-save of the originating object from a post-save event handler. Listeners that need to mutate the entity MUST subscribe to the pre-save events and use `setModifiedData(...)`. | Must | Implemented |
+### Requirement: List all catalogs via public API with CORS headers (CAT-001)
+The system MUST list all catalogs via public API with CORS headers.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve a single catalog by ID, returning all publications scoped to that catalog (CAT-002)
+The system MUST retrieve a single catalog by ID, returning all publications scoped to that catalog.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalogs are stored as OpenRegister objects using the `catalog` schema in the `publication` register (CAT-003)
+Catalogs MUST be stored as OpenRegister objects using the `catalog` schema in the `publication` register.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalog configuration (schema ID, register ID) is stored in IAppConfig as `catalog_schema` and `catalog_register` (CAT-004)
+Catalog configuration (schema ID, register ID) MUST be stored in IAppConfig as `catalog_schema` and `catalog_register`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalog lookups by slug are cached in a distributed cache (1 hour TTL) for performance (CAT-005)
+Catalog lookups by slug SHOULD be cached in a distributed cache (1 hour TTL) for performance.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Cache invalidation is supported by slug or by catalog ID (CAT-006)
+Cache invalidation SHOULD be supported by slug or by catalog ID.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Cache warmup is available to pre-load catalogs into cache (CAT-007)
+Cache warmup SHOULD be available to pre-load catalogs into cache.
+
+**Priority:** Nice **Status:** Implemented
+
+### Requirement: CORS preflight OPTIONS responses must be supported on all catalog endpoints (CAT-008)
+CORS preflight OPTIONS responses MUST be supported on all catalog endpoints.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Public catalog endpoints must use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations (CAT-009)
+Public catalog endpoints MUST use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Multi-schema and multi-register catalogs must be supported (a single catalog can span multiple schemas/registers) (CAT-010)
+Multi-schema and multi-register catalogs SHOULD be supported (a single catalog can span multiple schemas/registers).
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Automatic cache invalidation/warmup via CatalogCacheEventListener on post-save events; slug-to-ID normalisation via CatalogSchemaEventListener on pre-save events (CAT-011)
+Automatic cache invalidation/warmup MUST occur via CatalogCacheEventListener on object create/update/delete (post-save). Slug-to-ID normalisation of `registers`/`schemas` happens via CatalogSchemaEventListener on the **pre-save** events (`ObjectCreatingEvent`, `ObjectUpdatingEvent`) using `setModifiedData(...)`, never via a second `saveObject` call.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: No catalog event listener may trigger a re-save of the originating object from a post-save event handler (CAT-012)
+No catalog event listener MUST trigger a re-save of the originating object from a post-save event handler. Listeners that need to mutate the entity MUST subscribe to the pre-save events and use `setModifiedData(...)`.
+
+**Priority:** Must **Status:** Implemented
 
 ## Data Model
 

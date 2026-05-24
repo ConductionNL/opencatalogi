@@ -10,18 +10,55 @@ The Download Service provides functionality for generating downloadable export f
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DWN-001 | Generate a PDF file containing all metadata of a publication | Must | Implemented |
-| DWN-002 | Save generated PDF to Nextcloud file storage in structured folder hierarchy | Should | Implemented |
-| DWN-003 | Create and return share links for saved files | Should | Implemented |
-| DWN-004 | Support direct download response for generated PDFs | Should | Implemented |
-| DWN-005 | Generate ZIP archive containing metadata PDF and all publication attachments | Must | Implemented |
-| DWN-006 | Organize ZIP contents with attachments in a "Bijlagen" subfolder | Must | Implemented |
-| DWN-007 | Support configurable options: download-only, save-to-Nextcloud, or both | Should | Implemented |
-| DWN-008 | Validate that at least one output option (download or saveToNextCloud) is enabled | Must | Implemented |
-| DWN-009 | Clean up temporary files after ZIP/PDF generation | Should | Implemented |
-| DWN-010 | Handle missing publications with appropriate error responses | Must | Implemented |
+### Requirement: Generate a PDF file containing all metadata of a publication (DWN-001)
+The system MUST generate a PDF file containing all metadata of a publication.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Save generated PDF to Nextcloud file storage in structured folder hierarchy (DWN-002)
+The system SHOULD save generated PDFs to Nextcloud file storage in a structured folder hierarchy.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Create and return share links for saved files (DWN-003)
+The system SHOULD create and return share links for saved files.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Support direct download response for generated PDFs (DWN-004)
+The system SHOULD support direct download response for generated PDFs.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Generate ZIP archive containing metadata PDF and all publication attachments (DWN-005)
+The system MUST generate a ZIP archive containing the metadata PDF and all publication attachments.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Organize ZIP contents with attachments in a "Bijlagen" subfolder (DWN-006)
+The system MUST organize ZIP contents with attachments in a "Bijlagen" subfolder.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Support configurable options: download-only, save-to-Nextcloud, or both (DWN-007)
+The system SHOULD support configurable options: download-only, save-to-Nextcloud, or both.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Validate that at least one output option (download or saveToNextCloud) is enabled (DWN-008)
+The system MUST validate that at least one output option (download or saveToNextCloud) is enabled.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Clean up temporary files after ZIP/PDF generation (DWN-009)
+The system SHOULD clean up temporary files after ZIP/PDF generation.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Handle missing publications with appropriate error responses (DWN-010)
+The system MUST handle missing publications with appropriate error responses.
+
+**Priority:** Must **Status:** Implemented
 
 ## Architecture
 
