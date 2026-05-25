@@ -196,6 +196,11 @@ import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 import { Page } from '../../entities/index.js'
 
+/**
+ * ViewPageModal — read a page and its embedded content blocks.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'ViewPageModal',
 	components: {

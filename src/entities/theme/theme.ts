@@ -1,6 +1,11 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TTheme } from './theme.types'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ */
 export class Theme implements TTheme {
 
 	public id: string

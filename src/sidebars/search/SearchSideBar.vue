@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * SearchSideBar — facet filter controls for the search view.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
+ */
 import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'

@@ -113,6 +113,11 @@ const handleDelete = async () => {
 	}
 }
 
+/**
+ * DeleteListingDialog — remove a listing via objectStore.deleteObject('listing', id).
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-5
+ */
 export default {
 	name: 'DeleteListingDialog',
 	components: {

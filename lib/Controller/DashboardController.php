@@ -14,6 +14,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-4
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -49,6 +51,8 @@ class DashboardController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-4
      */
     public function page(?string $getParameter): TemplateResponse
     {

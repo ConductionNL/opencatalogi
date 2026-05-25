@@ -287,6 +287,7 @@ export const useSearchStore = defineStore('search', {
 		 * Discover facetable fields
 		 *
 		 * @param params Optional parameters for facetable discovery
+		 * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2
 		 */
 		async discoverFacetableFields(params: Record<string, string | number | boolean> = {}) {
 			this.facetsLoading = true
@@ -442,6 +443,7 @@ export const useSearchStore = defineStore('search', {
 		 * Perform a search using the SearchController API
 		 *
 		 * @param params Optional search parameters
+		 * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-1
 		 */
 		async searchPublications(params: Record<string, string | number | boolean> = {}) {
 			this.loading = true

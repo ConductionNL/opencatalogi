@@ -202,6 +202,11 @@ import { Publication } from '../../entities/index.js'
 const dropZoneRef = ref()
 const { files, reset } = useFileSelection({ allowMultiple: false, dropzone: dropZoneRef })
 
+/**
+ * DashboardSideBar — sidebar accompanying the dashboard overview.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ */
 export default {
 	name: 'DashboardSideBar',
 	components: {
