@@ -53,6 +53,11 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import _ from 'lodash'
 import { Page } from '../../entities/index.js'
 
+/**
+ * DeletePageContentDialog — remove a content block by updating the parent page.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'DeletePageContentDialog',
 	components: {

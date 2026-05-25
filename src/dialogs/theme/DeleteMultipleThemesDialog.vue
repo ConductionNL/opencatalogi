@@ -75,6 +75,11 @@ import Delete from 'vue-material-design-icons/Delete.vue'
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
+/**
+ * DeleteMultipleThemesDialog — bulk-delete selected themes via deleteObject.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ */
 export default {
 	name: 'DeleteMultipleThemesDialog',
 	components: {
