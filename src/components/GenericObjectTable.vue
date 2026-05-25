@@ -369,6 +369,9 @@ import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
 
 import PaginationComponent from './PaginationComponent.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'GenericObjectTable',
 	components: {

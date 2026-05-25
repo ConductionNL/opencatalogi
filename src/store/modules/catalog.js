@@ -83,6 +83,8 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Set the active catalog and fetch its publications
 		 * @param {CatalogEntity} catalog The catalog to set as active
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1
 		 */
 		async setActiveCatalog(catalog) {
 			this.activeCatalog = new Catalogi(catalog)
@@ -117,6 +119,8 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @param {number} params.limit - Items per page (default: 20)
 		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
 			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId

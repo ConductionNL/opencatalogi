@@ -80,6 +80,7 @@ import { NcButton, NcSelect } from '@nextcloud/vue'
  * @copyright 2024 Conduction B.V.
  * @license EUPL-1.2
  * @version 1.0.0
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
  */
 export default {
 	name: 'PaginationComponent',
