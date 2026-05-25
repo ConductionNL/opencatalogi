@@ -12,11 +12,11 @@ interface DialogProperties {
 
 interface NavigationStoreState {
     selected: 'dashboard' | 'publication' | 'catalogi' | 'publicationType' | 'organizations' | 'themes' | 'search' | 'directory' | 'pages' | 'menus' | 'glossary' | 'uploadFiles';
-    selectedCatalogus: string;
-    modal: string;
-    dialog: string;
+    selectedCatalogus: string | null;
+    modal: string | null;
+    dialog: string | null;
     dialogProperties: DialogProperties | null;
-    transferData: string;
+    transferData: string | null;
 }
 
 export const useNavigationStore = defineStore('ui', {

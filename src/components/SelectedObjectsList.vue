@@ -54,6 +54,9 @@ import {
 import Close from 'vue-material-design-icons/Close.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'SelectedObjectsList',
 	components: {

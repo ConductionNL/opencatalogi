@@ -27,6 +27,11 @@ import FolderIcon from 'vue-material-design-icons/Folder.vue'
 
 import { getTheme } from '../../services/getTheme.js'
 
+/**
+ * CatalogiWidget — Nextcloud dashboard widget listing catalogs.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-4
+ */
 export default {
 	name: 'CatalogiWidget',
 	components: {

@@ -26,6 +26,11 @@ import FolderIcon from 'vue-material-design-icons/Folder.vue'
 
 import { getTheme } from '../../services/getTheme.js'
 
+/**
+ * UnpublishedAttachmentsWidget — dashboard widget listing unpublished attachments.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-3
+ */
 export default {
 	name: 'UnpublishedAttachmentsWidget',
 	components: {

@@ -8,6 +8,8 @@
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @link https://github.com/opencatalogi/opencatalogi
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
  */
 
 <script setup>
