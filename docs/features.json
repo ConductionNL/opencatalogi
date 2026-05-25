@@ -1,0 +1,92 @@
+[
+  {
+    "slug": "admin-settings",
+    "title": "Admin Settings",
+    "summary": "The admin settings module provides the configuration interface for OpenCatalogi. It handles the mapping between OpenCatalogi's content types (catalog, listing, organization, theme, page, menu, glossary) and their corresponding OpenRegister schemas and registers. It also manages the initial configuration import from `publication_register.json`, auto-configuration, version tracking, publishing options, and the Nextcloud admin settings page.",
+    "docsUrl": "openspec/specs/admin-settings/spec.md"
+  },
+  {
+    "slug": "auto-publishing",
+    "title": "Auto-Publishing",
+    "summary": "The auto-publishing system automatically publishes OpenRegister objects and their file attachments when they are created or updated, based on configurable publishing options. It listens to OpenRegister's `ObjectCreatedEvent` and `ObjectUpdatedEvent` via Nextcloud's event dispatcher, evaluates whether the object belongs to a catalog, and triggers publish and share-link creation operations. This eliminates the need for manual publishing workflows for organizations that want all catalog content to be immediately public.",
+    "docsUrl": "openspec/specs/auto-publishing/spec.md"
+  },
+  {
+    "slug": "catalogs",
+    "title": "Catalogs",
+    "summary": "Catalogs are the top-level organizational unit in OpenCatalogi. A catalog groups publications by associating them with specific OpenRegister registers and schemas, providing a URL-slug-based namespace for the public API. Catalogs enable multi-tenant content organization where different collections of publications can be served through distinct API endpoints.",
+    "docsUrl": "openspec/specs/catalogs/spec.md"
+  },
+  {
+    "slug": "cms-tool",
+    "title": "CMS Tool (AI Agent Integration)",
+    "summary": "The CMS Tool provides AI agents running within OpenRegister with the ability to manage CMS content in OpenCatalogi. It implements the OpenRegister `ToolInterface` and exposes OpenAI-compatible function definitions that allow language models to create and list pages, create and list menus, and add items to menus. The tool is registered automatically via a `ToolRegistrationEvent` listener during application bootstrap.",
+    "docsUrl": "openspec/specs/cms-tool/spec.md"
+  },
+  {
+    "slug": "content-management",
+    "title": "Content Management",
+    "summary": "OpenCatalogi includes a lightweight CMS layer for managing static content on catalog websites. This includes pages (static content with block-based structure), menus (hierarchical navigation), themes (publication categorization/cards), and glossary terms (definitions). All content types are stored as OpenRegister objects and served via public CORS-enabled API endpoints for consumption by external frontends like tilburg-woo-ui.",
+    "docsUrl": "openspec/specs/content-management/spec.md"
+  },
+  {
+    "slug": "dashboard",
+    "title": "Dashboard and Directory",
+    "summary": "The dashboard provides the main entry point for the OpenCatalogi Nextcloud app, serving the Vue SPA for all internal views. The directory system manages the network of interconnected OpenCatalogi instances, enabling federation through listings (external catalog registrations), directory synchronization, and broadcast notifications. Listings represent external catalogs that can be synchronized and searched, forming the backbone of the decentralized catalog network.",
+    "docsUrl": "openspec/specs/dashboard/spec.md"
+  },
+  {
+    "slug": "download-service",
+    "title": "Download Service",
+    "summary": "The Download Service provides functionality for generating downloadable export files from publications. It creates PDF metadata files from publication data using Twig templates and mPDF, and ZIP archives containing the metadata PDF along with all publication attachments (bijlagen). Files can be saved to the user's Nextcloud storage with share links or sent directly as download responses. This service is used by the publication endpoints to support the `/download` sub-resource.",
+    "docsUrl": "openspec/specs/download-service/spec.md"
+  },
+  {
+    "slug": "entity-typescript-models",
+    "title": "Entity TypeScript Models",
+    "summary": "OpenCatalogi's frontend defines a TypeScript model for each domain object it works with — attachment, catalogi, configuration, glossary, listing, menu, organization, page, publication, publicationType and theme. Each model is a self-contained module under `src/entities/<name>/` that pairs a TypeScript type definition with an entity class that hydrates raw API responses into a typed, default-filled instance and exposes Zod-based client-side validation. This spec was reverse-engineered from observed code (retrofit). Schema standards are owned by OpenRegister server-side (ADR-011); these frontend models are a presentation/validation convenience layer over that data.",
+    "docsUrl": "openspec/specs/entity-typescript-models/spec.md"
+  },
+  {
+    "slug": "federation",
+    "title": "Federation",
+    "summary": "Federation enables OpenCatalogi to aggregate publications from both local catalogs and external (federated) OpenCatalogi instances into a unified search interface. The federation endpoints mirror the publication API but include aggregation logic that queries remote directories, merges results, and provides a single response to the frontend. This is the backbone of the decentralized catalog network where multiple government organizations can share and discover each other's publications.",
+    "docsUrl": "openspec/specs/federation/spec.md"
+  },
+  {
+    "slug": "file-management",
+    "title": "File Management",
+    "summary": "The File Management service provides all file-related operations for OpenCatalogi: creating folders in Nextcloud, uploading and updating files, deleting files, managing share links, handling file uploads from HTTP requests, generating PDFs via Twig/mPDF, and creating/downloading ZIP archives. It is the foundational file layer used by the DownloadService, auto-publishing system, and WOO sitemap generation.",
+    "docsUrl": "openspec/specs/file-management/spec.md"
+  },
+  {
+    "slug": "generic-object-modals",
+    "title": "Generic Object Modals",
+    "summary": "OpenCatalogi ships a set of type-agnostic frontend modals, dialogs and presentation components under `src/modals/object/`, `src/dialogs/` and `src/components/` that operate on whatever OpenRegister object the user has selected — independent of which capability (publications, catalogs, pages, themes, etc.) the object belongs to. They are orchestrated through the navigation/object Pinia stores (`navigationStore.modal`, `navigationStore.dialog`, `objectStore.objectItem`, `objectStore.selectedObjects`) and delegate all persistence and authorization to the object store / OpenRegister. This spec was reverse-engineered from observed code (retrofit). Frontend conventions follow ADR-004; authorization delegation follows ADR-022.",
+    "docsUrl": "openspec/specs/generic-object-modals/spec.md"
+  },
+  {
+    "slug": "prometheus-metrics",
+    "title": "Prometheus Metrics Endpoint",
+    "summary": "Expose application metrics in Prometheus text exposition format at `GET /api/metrics` and a health check at `GET /api/health` for monitoring, alerting, and operational dashboards. These endpoints enable integration with standard observability stacks (Prometheus + Grafana) used by Dutch municipalities and hosting providers.",
+    "docsUrl": "openspec/specs/prometheus-metrics/spec.md"
+  },
+  {
+    "slug": "publications",
+    "title": "Publications",
+    "summary": "Publications are the core content objects in OpenCatalogi. They represent individual published documents, records, or data entries within a catalog. The publications API provides public, read-only access to publications scoped by catalog slug, including support for attachments, file downloads, and object relation traversal (uses/used-by). Publications are consumed by external frontends like tilburg-woo-ui.",
+    "docsUrl": "openspec/specs/publications/spec.md"
+  },
+  {
+    "slug": "search",
+    "title": "Search",
+    "summary": "The search feature provides an internal search API endpoint that queries publications across all available catalogs. Unlike the public publication endpoints (scoped by catalog slug), the internal search endpoint is for authenticated Nextcloud users and administrative purposes. The `SearchController` delegates to `PublicationService` for all search operations. Note: There is no separate `SearchService` or `ElasticSearchService` class in the OpenCatalogi codebase -- all search and federation logic is handled by `PublicationService`.",
+    "docsUrl": "openspec/specs/search/spec.md"
+  },
+  {
+    "slug": "woo-compliance",
+    "title": "WOO Compliance (Sitemaps, Robots, DIWOO)",
+    "summary": "OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML sitemaps and robots.txt files that conform to the DIWOO metadata standard. This enables government organizations to make their publications discoverable by the Dutch government's central search index (KOOP/DIWOO). Sitemaps are generated per catalog and per WOO information category (informatiecategorie), mapping publications to the DIWOO XML schema with proper metadata including creation dates, publishers, file formats, and document handling information.",
+    "docsUrl": "openspec/specs/woo-compliance/spec.md"
+  }
+]
