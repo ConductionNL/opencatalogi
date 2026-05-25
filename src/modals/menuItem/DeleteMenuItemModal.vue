@@ -169,6 +169,11 @@ const handleCancel = () => {
 	objectStore.clearActiveObject('menuItem')
 }
 
+/**
+ * DeleteMenuItemModal — remove a menu item by updating the parent menu.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'DeleteMenuItemModal',
 	components: {
