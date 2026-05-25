@@ -26,6 +26,7 @@ export class Glossary implements TGlossary {
 	public externalLink!: string
 	public keywords!: string[]
 
+	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TGlossary) {
 		this.hydrate(data)
 	}

@@ -33,6 +33,7 @@ export class Catalogi implements TCatalogi {
 	public slug!: string
 	public hasWooSitemap!: boolean
 
+	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
 	}

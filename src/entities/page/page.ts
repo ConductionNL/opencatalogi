@@ -26,6 +26,8 @@ export class Page implements TPage {
 	/**
 	 * Creates a new Page instance
 	 * @param data Initial page data conforming to TPage interface
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
 	 */
 	constructor(data: TPage) {
 		this.hydrate(data)

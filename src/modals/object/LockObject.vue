@@ -87,6 +87,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeModalTimeout)
@@ -96,6 +97,7 @@ export default {
 			this.process = ''
 			this.duration = 3600
 		},
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		async lockObject() {
 			this.loading = true
 
