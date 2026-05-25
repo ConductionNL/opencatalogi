@@ -12,6 +12,11 @@
 import { SafeParseReturnType, z } from 'zod'
 import { CatalogStatus, TCatalogi } from './catalogi.types'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ */
 export class Catalogi implements TCatalogi {
 
 	public id: string

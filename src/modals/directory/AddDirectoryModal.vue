@@ -211,6 +211,11 @@ const closeModal = () => {
 	directoryUrl.value = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
 }
 
+/**
+ * AddDirectoryModal — register an external directory by POSTing its URL.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ */
 export default {
 	name: 'AddDirectoryModal',
 	components: {

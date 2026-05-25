@@ -127,6 +127,11 @@ import MenuClose from 'vue-material-design-icons/MenuClose.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 
+/**
+ * MainMenu — in-app navigation menu.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ */
 export default {
 	name: 'MainMenu',
 	components: {

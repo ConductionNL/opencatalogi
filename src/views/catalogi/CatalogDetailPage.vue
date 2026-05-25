@@ -95,6 +95,11 @@ const DETAIL_LAYOUT = [
 	{ id: 4, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
 ]
 
+/**
+ * CatalogDetailPage — route view for a single catalog, resolved by route id.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-3
+ */
 export default {
 	name: 'CatalogDetailPage',
 	components: {
