@@ -15,6 +15,11 @@ import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { objectStore } from './store/store.js'
 
+/**
+ * App — manifest-driven CnAppRoot SPA shell for opencatalogi.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ */
 export default {
 	name: 'App',
 	components: {
