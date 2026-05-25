@@ -14,6 +14,15 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-28
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-29
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-30
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-31
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-32
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-33
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-34
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -132,6 +141,8 @@ class PublicationsController extends Controller
      * @param string $uuid The UUID of the object to find
      *
      * @return array{register: int, schema: int}|null The register/schema IDs, or null if not found.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-34
      */
     private function findObjectLocation(string $uuid): ?array
     {
@@ -239,6 +250,8 @@ class PublicationsController extends Controller
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-28
      */
     public function index(string $catalogSlug): JSONResponse
     {
@@ -469,6 +482,8 @@ class PublicationsController extends Controller
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-29
      */
     public function show(string $catalogSlug, string $id): JSONResponse
     {
@@ -685,6 +700,8 @@ class PublicationsController extends Controller
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-30
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
@@ -803,6 +820,8 @@ class PublicationsController extends Controller
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-31
      */
     public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse
     {
@@ -920,6 +939,8 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-32
      */
     public function uses(string $catalogSlug, string $id): JSONResponse
     {
@@ -987,6 +1008,8 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-33
      */
     public function used(string $catalogSlug, string $id): JSONResponse
     {
@@ -1048,6 +1071,8 @@ class PublicationsController extends Controller
      * @param array $data The data array to strip empty values from.
      *
      * @return array The data with empty values removed.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
      */
     private function stripEmptyValues(array $data): array
     {

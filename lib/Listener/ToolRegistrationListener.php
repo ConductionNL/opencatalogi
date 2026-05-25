@@ -14,6 +14,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-57
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -60,6 +62,8 @@ class ToolRegistrationListener implements IEventListener
      * @param Event $event The event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-57
      */
     public function handle(Event $event): void
     {

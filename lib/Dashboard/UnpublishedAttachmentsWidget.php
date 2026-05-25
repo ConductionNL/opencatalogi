@@ -12,6 +12,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-49
  */
 
 namespace OCA\OpenCatalogi\Dashboard;
@@ -99,6 +101,8 @@ class UnpublishedAttachmentsWidget implements IWidget
      * @return void
      *
      * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-49
      */
     public function load(): void
     {
