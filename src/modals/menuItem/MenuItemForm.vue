@@ -535,13 +535,16 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		menuObject() {
 			return objectStore.getActiveObject('menu')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		isFooterPosition() {
 			const pos = Number(this.menuObject?.position || 0)
 			return pos >= 3 && pos <= 6
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		currentFullIconList() {
 			const prefix = this.iconPrefixOptions.value?.value || 'fas'
 			if (this.iconFullOptions && this.iconFullOptions.length) return this.iconFullOptions
@@ -550,6 +553,7 @@ export default {
 			// default fas: prefer manual list first
 			return this.allSolidIconOptions?.length ? this.allSolidIconOptions : this.iconOptions.options
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		filteredLimitedIconOptions() {
 			const query = (this.iconSearchQuery || '').toLowerCase().trim()
 			let list = this.currentFullIconList
@@ -577,6 +581,7 @@ export default {
 			}
 			return sliced
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		inputValidation() {
 			const updatedMenuItem = {
 				...this.menuItem,
@@ -615,6 +620,7 @@ export default {
 			this.iconSearchQuery = ''
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 	created() {
 		// Build lists from imported FA packs by iterating the pack objects
 		try {
@@ -646,6 +652,7 @@ export default {
 		}
 		this.iconSearchQuery = ''
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 	mounted() {
 		objectStore.setState('menu', { success: null, error: null })
 		this.fetchGroups()
@@ -698,6 +705,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		normalizeMenuItemFields(item = {}) {
 			return {
 				order: Number(item.order || 0),
@@ -719,6 +727,7 @@ export default {
 				valueMode: item.valueMode ?? 'value',
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		buildUniqueOptions(lists = []) {
 			const seen = new Set()
 			const out = []
@@ -738,6 +747,7 @@ export default {
 		 * Fetch Nextcloud groups from the API
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		async fetchGroups() {
 			this.groupsOptions.loading = true
 			try {
@@ -767,11 +777,13 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal('full')
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		closeModal(mode = 'full') {
 			if (mode === 'back') {
 				navigationStore.setModal('viewMenu')
@@ -782,6 +794,7 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 			clearTimeout(this.closeModalTimeout)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		applyIconOptionsForPrefix() {
 			const prefix = this.iconPrefixOptions.value?.value || 'fas'
 			// Preserve current selection if possible
@@ -811,6 +824,7 @@ export default {
 			this.iconOptions.value = match || (this.iconFullOptions || [])[0] || null
 			this.menuItem.icon = this.iconOptions.value?.value || ''
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		formatSVG() {
 			try {
 				const input = String(this.customIcon || '').trim()
@@ -843,6 +857,7 @@ export default {
 				console.error('Error formatting SVG:', error)
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		prettySvg(root) {
 			const indentUnit = '\t'
 			const indent = d => indentUnit.repeat(d)
@@ -880,6 +895,7 @@ export default {
 		 * Save the menu item (either create new or update existing)
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		async saveMenuItem() {
 			this.loading = true
 			objectStore.setState('menu', { success: null, error: null, loading: true })
@@ -970,6 +986,7 @@ export default {
 					objectStore.setState('menu', { loading: false })
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		handleOrderUpdate(value) {
 			const numeric = parseInt(value, 10)
 			this.menuItem.order = Number.isNaN(numeric) ? 0 : numeric
@@ -977,6 +994,7 @@ export default {
 		setIconMode(mode) {
 			this.iconMode = mode
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		handleIconSelect(selectedOption) {
 			this.iconOptions.value = selectedOption
 		},
@@ -984,11 +1002,13 @@ export default {
 			this.linkMode = mode
 		},
 		// Keep the selected FA prefix in sync with menuItem and previews
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		updateIconPrefix(prefix) {
 			const selected = this.iconPrefixOptions.options.find(o => o.value === prefix) || this.iconPrefixOptions.options[0]
 			this.iconPrefixOptions.value = selected
 			this.menuItem.iconPrefix = selected.value
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		setValueMode(mode) {
 			const previousMode = this.valueMode
 			this.valueMode = mode
@@ -1007,11 +1027,13 @@ export default {
 				}
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		onSingleLineValueChange(newValue) {
 			// User is editing the single-line field: apply value and clear cache
 			this.menuItem.value = newValue
 			this.valueMultiRowCache = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		encodeMultilineForStorage(input) {
 			if (typeof input !== 'string') return ''
 			// Store actual newlines: normalize CRLF, convert literal "\\n" to real newlines
@@ -1020,10 +1042,12 @@ export default {
 				.replace(/\r/g, '\n')
 				.replace(/\\n/g, '\n')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		decodeMultilineFromStorage(input) {
 			if (typeof input !== 'string') return ''
 			return input.replace(/\\n/g, '\n')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {

@@ -153,18 +153,21 @@ export default {
 		isEdit() {
 			return !!objectStore.getActiveObject('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		organizationOptions() {
 			return objectStore.getCollection('organization').results.map((organization) => ({
 				id: organization.id,
 				label: organization.name,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		registerOptions() {
 			return objectStore.availableRegisters.map(register => ({
 				id: register.id,
 				label: register.title,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		schemaOptions() {
 			// Get the selected register IDs
 			const selectedRegisterIds = this.selectedRegisters.map(register => register.id)
@@ -185,6 +188,7 @@ export default {
 					label: `${schema.title} (${schema.registerTitle})`,
 				}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		inputValidation() {
 			// Map selected objects to their IDs for validation
 			const registers = this.selectedRegisters.map(register => register.id)
@@ -209,6 +213,7 @@ export default {
 			}
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 	updated() {
 		if (navigationStore.modal === 'catalog' && !this.hasUpdated) {
 			this.hasUpdated = true
@@ -245,6 +250,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.hasUpdated = false

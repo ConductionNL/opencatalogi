@@ -113,6 +113,7 @@ export default {
 		 * Get selected attachment IDs (either from props or from store)
 		 * @return {Array<string|number>} Array of attachment IDs
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		selectedAttachmentIds() {
 			return this.attachments || (Array.isArray(objectStore.selectedAttachments) ? objectStore.selectedAttachments : [])
 		},
@@ -120,6 +121,7 @@ export default {
 		 * Map selected IDs to detailed attachment objects from the active publication files
 		 * @return {Array<object>} attachments with id, name/title, size
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		selectedAttachments() {
 			const currentPublication = objectStore.getActiveObject('publication')
 			if (!currentPublication) return []
@@ -136,6 +138,7 @@ export default {
 		 * Remove attachment ID from selected attachments in the store
 		 * @param {string|number} attachmentId - The attachment ID to remove
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		removeObject(attachmentId) {
 			const currentSelected = Array.isArray(objectStore.selectedAttachments) ? [...objectStore.selectedAttachments] : []
 			const index = currentSelected.findIndex(id => id === attachmentId)
@@ -159,6 +162,7 @@ export default {
 		 * @param {object} attachment - The attachment object
 		 * @return {string}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getAttachmentSize(attachment) {
 			if (!attachment || typeof attachment.size !== 'number') return ''
 			return this.formatFileSize(attachment.size)
@@ -169,6 +173,7 @@ export default {
 		 * @param {object} obj - The object to get error for
 		 * @return {string|null}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectError(obj) {
 			const objectId = obj?.id || obj?.['@self']?.id
 			return objectStore.getObjectError ? objectStore.getObjectError(objectId) : null
@@ -179,6 +184,7 @@ export default {
 		 * @param {number} bytes - File size in bytes to format
 		 * @return {string}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		formatFileSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 			if (!bytes || bytes <= 0) return 'n/a'

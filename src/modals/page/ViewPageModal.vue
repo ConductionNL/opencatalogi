@@ -240,6 +240,7 @@ export default {
 		 * Get the currently active page from the store
 		 * @return {object|null} The active page object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		page() {
 			return objectStore.getActiveObject('page')
 		},
@@ -261,6 +262,7 @@ export default {
 		 * Get the page state from the store
 		 * @return {object} The page state object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		pageState() {
 			return objectStore.getState('page')
 		},
@@ -268,6 +270,7 @@ export default {
 		 * Get contents sorted by order field
 		 * @return {Array} Sorted contents array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		sortedContents() {
 			if (!this.page?.contents?.length) return []
 			return [...this.page.contents].sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -276,6 +279,7 @@ export default {
 		 * Validate the input form
 		 * @return {object} Validation result
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		inputValidation() {
 			const pageItem = new Page({
 				...this.page,
@@ -297,6 +301,7 @@ export default {
 		 * @param {object} newPage - The new page data
 		 */
 		page: {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 			handler(newPage) {
 				if (newPage && !this.isAddMode) {
 					// Initialize editForm with existing page data
@@ -317,6 +322,7 @@ export default {
 			immediate: true,
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 	mounted() {
 		// Fetch groups for the dropdown
 		this.fetchGroups()
@@ -334,6 +340,7 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
@@ -343,6 +350,7 @@ export default {
 		 * Close the modal and clear the active object
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('page')
@@ -351,6 +359,7 @@ export default {
 		 * Open the edit modal for the current page
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		openEditModal() {
 			navigationStore.setModal('viewPage')
 		},
@@ -358,6 +367,7 @@ export default {
 		 * Open the add content modal
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		openAddContentModal() {
 			objectStore.setState('page', { success: null, error: null })
 			navigationStore.setModal('pageContentForm')
@@ -366,6 +376,7 @@ export default {
 		 * Open edit modal for a specific content item
 		 * @param {object} content - The content item to edit
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		editContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setModal('pageContentForm')
@@ -374,6 +385,7 @@ export default {
 		 * Open delete confirmation dialog for a specific content item
 		 * @param {object} content - The content item to delete
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		deleteContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setDialog('deletePageContent')
@@ -382,6 +394,7 @@ export default {
 		 * Fetch groups from Nextcloud
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			getNextcloudGroups()
@@ -399,6 +412,7 @@ export default {
 		 * Save the page configuration
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		savePage() {
 			const pageItem = new Page({
 				...this.page,
@@ -426,6 +440,7 @@ export default {
 		 * Delete the current page
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		deletePage() {
 			if (this.page && this.page.id) {
 				objectStore.deleteObject('page', this.page.id)
@@ -442,6 +457,7 @@ export default {
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {

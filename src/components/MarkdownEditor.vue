@@ -34,6 +34,7 @@ export default {
 	},
 	watch: {
 		value: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 			handler(newVal) {
 				if (newVal !== this.content) {
 					this.content = newVal || ''
@@ -41,10 +42,12 @@ export default {
 			},
 			immediate: true,
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 		content(newVal) {
 			this.$emit('input', newVal)
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 	mounted() {
 		this.$nextTick(() => {
 			if (this.value && this.value !== this.content) {

@@ -306,12 +306,14 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
 	},
 	watch: {
 		'contentsItem.faqData': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 			handler(newVal) {
 				const currentFaqLength = newVal.length
 
@@ -336,6 +338,7 @@ export default {
 			deep: true,
 		},
 		'contentsItem.contentBlocksData': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 			handler(newVal) {
 				const len = newVal.length
 				const last = newVal[len - 1]
@@ -364,6 +367,7 @@ export default {
 			deep: true,
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 	mounted() {
 		// Fetch groups for the dropdown.
 		this.fetchGroups()
@@ -423,16 +427,19 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('pageContent')
 			objectStore.setState('page', { success: null, error: null })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		addPageContent() {
 			objectStore.setState('page', { success: null, error: null, loading: true })
 
@@ -569,6 +576,7 @@ export default {
 					objectStore.setState('page', { loading: false })
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			getNextcloudGroups()
@@ -587,6 +595,7 @@ export default {
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {

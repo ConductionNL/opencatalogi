@@ -78,6 +78,7 @@ export default {
 			closeModalTimeout: null,
 		}
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-5 */
 	mounted() {
 		if (objectStore.objectItem?.id) {
 			this.downloadObject()
@@ -87,6 +88,7 @@ export default {
 		json,
 		jsonParseLinter,
 		getTheme,
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-5 */
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeModalTimeout)
@@ -94,6 +96,7 @@ export default {
 			this.loading = false
 			this.error = false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-5 */
 		async downloadObject() {
 			this.loading = true
 

@@ -284,6 +284,7 @@ export default defineComponent({
 		 *
 		 * @return {Array<object>} Array of register options with label and value
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		registerOptions() {
 			return this.settings.availableRegisters.map(register => ({
 				label: register.title,
@@ -296,6 +297,7 @@ export default defineComponent({
 		 *
 		 * @return {boolean} True if the selected register has schemas, false otherwise
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		hasSchemas() {
 			if (!this.selectedRegister) return false
 
@@ -317,6 +319,7 @@ export default defineComponent({
 		 *
 		 * @return {Array<object>} Array of available schema options
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		computedSchemaOptions() {
 			// Don't filter out used schemas - allow reuse of schemas across object types
 			return this.schemaOptions
@@ -326,6 +329,7 @@ export default defineComponent({
 	/**
 	 * Lifecycle hook that loads settings when component is created
 	 */
+	/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 	async created() {
 		await Promise.all([
 			this.loadSettings(),
@@ -340,6 +344,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadSettings() {
 			try {
 				// Load main settings
@@ -375,6 +380,7 @@ export default defineComponent({
 		/**
 		 * Initializes the configuration object based on existing settings
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		initializeConfiguration() {
 			// Create empty configuration for each object type
 			this.settings.objectTypes.forEach(type => {
@@ -444,6 +450,7 @@ export default defineComponent({
 		/**
 		 * Automatically selects the opencatalogi register if it exists
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		autoSelectOpenCatalogiRegister() {
 			// Look for a register with "opencatalogi" in the name.
 			const opencatalogiRegister = this.settings.availableRegisters.find(
@@ -490,6 +497,7 @@ export default defineComponent({
 		 *
 		 * @param {object} register - The selected register object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		autoSelectMatchingSchemas(register) {
 			// Only proceed if register has schemas array
 			if (!register || !Array.isArray(register.schemas)) {
@@ -523,6 +531,7 @@ export default defineComponent({
 		 *
 		 * @param {string} registerId - The ID of the selected register
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		updateSchemaOptions(registerId) {
 			const register = this.settings.availableRegisters.find(r => r.id.toString() === registerId)
 			if (register && Array.isArray(register.schemas)) {
@@ -555,6 +564,7 @@ export default defineComponent({
 		 * @param {string} objectType - The object type to format
 		 * @return {string} The formatted title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		formatTitle(objectType) {
 			return objectType.charAt(0).toUpperCase() + objectType.slice(1)
 		},
@@ -562,6 +572,7 @@ export default defineComponent({
 		/**
 		 * Handles register change event
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		handleRegisterChange() {
 			if (this.selectedRegister) {
 				// Update schema options for the new register
@@ -598,6 +609,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async saveAll() {
 			if (!this.selectedRegister || !this.hasSchemas) {
 				return
@@ -640,6 +652,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadConfiguration() {
 			this.loadingConfiguration = true
 			this.configurationResults = null
@@ -668,6 +681,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async savePublishingOptions() {
 			this.saving = true
 			try {
@@ -711,6 +725,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadVersionInfo() {
 			try {
 				const response = await fetch('/index.php/apps/opencatalogi/api/settings/version')
@@ -736,6 +751,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async manualImport(force = false) {
 			this.importing = true
 			this.importResult = null

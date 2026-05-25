@@ -172,6 +172,7 @@ export default {
 		 * Get the currently active theme from the store
 		 * @return {object|null} The active theme object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		theme() {
 			return objectStore.getActiveObject('theme')
 		},
@@ -181,6 +182,7 @@ export default {
 		 * Close the modal and clear the active object
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('theme')
@@ -189,6 +191,7 @@ export default {
 		 * Open the edit modal for the current theme
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		openEditModal() {
 			navigationStore.setModal('theme')
 		},

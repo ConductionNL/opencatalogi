@@ -76,19 +76,23 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		contentItem() {
 			return objectStore.getActiveObject('pageContent')
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeDialog() {
 			navigationStore.setDialog(false)
 			objectStore.setState('page', { success: null, error: null })
 			objectStore.clearActiveObject('pageContent')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		async handleDelete() {
 			this.loading = true
 			this.success = null

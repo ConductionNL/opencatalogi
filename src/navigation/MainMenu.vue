@@ -154,9 +154,11 @@ export default {
 		Cog,
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		navigationStore() {
 			return navigationStore
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		catalogs() {
 			const collection = objectStore.getCollection('catalog')
 			const results = Array.isArray(collection) ? collection : collection?.results || []
@@ -165,6 +167,7 @@ export default {
 	},
 	methods: {
 		t,
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		openLink(url, target) {
 			window.open(url, target)
 		},

@@ -120,6 +120,7 @@ export default {
 		 * Get the objects to operate on from selected objects
 		 * @return {Array<object>} Array of objects to lock
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		objectsToLock() {
 			return objectStore.selectedObjects || []
 		},
@@ -128,6 +129,7 @@ export default {
 		 * Get the dialog title based on number of objects
 		 * @return {string} Dialog title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		dialogTitle() {
 			const count = this.objectsToLock.length
 			if (count === 1) {
@@ -140,10 +142,12 @@ export default {
 		this.initializeSelection()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		initializeSelection() {
 			// Store the original count for success message
 			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
@@ -152,11 +156,13 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		async lockObjects() {
 			this.loading = true
 

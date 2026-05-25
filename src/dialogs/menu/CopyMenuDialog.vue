@@ -139,6 +139,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-5 */
 		closeDialog() {
 			this.navigationStore.setDialog(false)
 		},

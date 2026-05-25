@@ -120,12 +120,15 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		catalogId() {
 			return this.$route.params.id
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		catalog() {
 			return objectStore.getActiveObject('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
 			if (!this.catalog) return []
 			const self = this.catalog['@self'] || {}
@@ -140,6 +143,7 @@ export default {
 				{ label: t('opencatalogi', 'ID'), value: self.id || this.catalog.id || '-' },
 			]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		configItems() {
 			if (!this.catalog) return []
 			return [
@@ -148,6 +152,7 @@ export default {
 				{ label: t('opencatalogi', 'WOO Sitemap'), value: this.catalog.hasWooSitemap ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') },
 			]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		widgetDefs() {
 			return [
 				{ id: 'metadata', title: t('opencatalogi', 'Metadata'), type: 'custom' },
@@ -160,6 +165,7 @@ export default {
 	watch: {
 		catalogId: {
 			immediate: true,
+			/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 			handler() {
 				if (this.catalogId) {
 					this.loadCatalog()
@@ -168,6 +174,7 @@ export default {
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		async loadCatalog() {
 			this.loading = true
 			this.error = null
@@ -179,13 +186,16 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		goBack() {
 			this.$router.push({ name: 'Catalogs' })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		editCatalog() {
 			objectStore.setActiveObject('catalog', this.catalog)
 			navigationStore.setModal('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		openPublications() {
 			if (this.catalog?.slug) {
 				this.$router.push({ name: 'Publications', params: { catalogSlug: this.catalog.slug } })

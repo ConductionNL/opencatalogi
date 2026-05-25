@@ -97,6 +97,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		deleteThemes() {
 			const selectedThemes = objectStore.getSelectedObjects('theme')
 			if (!selectedThemes?.length) return

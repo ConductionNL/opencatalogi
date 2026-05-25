@@ -379,6 +379,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceRegister() {
 			// Get register info from the first selected object
 			if (this.selectedObjects.length === 0) return null
@@ -390,6 +391,7 @@ export default {
 			// If it's just an ID, try to find it in available registers
 			return objectStore.availableRegisters.find(r => r.id === register) || { id: register, title: register }
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceSchema() {
 			// Get schema info from the first selected object
 			if (this.selectedObjects.length === 0) return null
@@ -401,6 +403,7 @@ export default {
 			// If it's just an ID, try to find it in available schemas
 			return objectStore.availableSchemas.find(s => s.id === schema) || { id: schema, title: schema }
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		targetPropertyOptions() {
 			const options = this.targetProperties.map(prop => ({
 				label: `${prop.name} (${prop.type})`,
@@ -414,6 +417,7 @@ export default {
 
 			return options
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		canMigrate() {
 			// Check if we have target register/schema and at least one property mapping
 			const hasValidMappings = Object.values(this.uiMappings).some(option => option && option.value)
@@ -424,6 +428,7 @@ export default {
 		this.initializeMigration()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		initializeMigration() {
 			// Get selected objects from the store or navigation context
 			this.selectedObjects = objectStore.selectedObjects || []
@@ -433,6 +438,7 @@ export default {
 			}
 			this.loadAvailableRegisters()
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async loadAvailableRegisters() {
 			this.loading = true
 			try {
@@ -446,6 +452,7 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onRegisterChange() {
 			if (!this.targetRegister) {
 				this.availableSchemas = []
@@ -465,18 +472,21 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onSchemaChange() {
 			if (!this.targetSchema) {
 				return
 			}
 			await this.loadSchemaProperties()
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		removeObject(objectId) {
 			this.selectedObjects = this.selectedObjects.filter(obj => obj.id !== objectId)
 			if (this.selectedObjects.length === 0) {
 				this.closeModal()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		nextStep() {
 			if (this.step === 1 && this.selectedObjects.length > 0) {
 				this.step = 2
@@ -484,11 +494,13 @@ export default {
 				this.step = 3
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		previousStep() {
 			if (this.step > 1) {
 				this.step--
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async loadSchemaProperties() {
 			if (!this.sourceSchema || !this.targetSchema) {
 				return
@@ -512,6 +524,7 @@ export default {
 				console.error('Error loading schema properties:', error)
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		extractSchemaProperties(schema) {
 			// Extract properties from schema definition
 			const properties = []
@@ -526,6 +539,7 @@ export default {
 			}
 			return properties
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		initializePropertyMappings() {
 			this.mapping = {}
 			this.uiMappings = {}
@@ -547,6 +561,7 @@ export default {
 				}
 			})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async performMigration() {
 			if (!this.canMigrate) {
 				return
@@ -593,13 +608,16 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		updateMappingFromUI(sourceProperty) {
 			// Convert UI mappings to our simple mapping format
 			this.convertUIToMapping()
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		convertUIToMapping() {
 			// Convert from UI format (source -> target option) to our format (target -> source)
 			this.mapping = {}
@@ -610,6 +628,7 @@ export default {
 				}
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		convertMappingToUI() {
 			// Convert from our format (target -> source) to UI format (source -> target option)
 			this.uiMappings = {}
