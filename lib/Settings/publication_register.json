@@ -145,6 +145,18 @@
       },
       "catalog": {
         "slug": "catalog",
+        "x-openregister-notifications": {
+          "catalog-stable": {
+            "trigger": { "type": "transition", "action": "stable" },
+            "enabled": true,
+            "channels": ["nc-notification"],
+            "recipients": [ { "kind": "object-acl", "permission": "manage" } ],
+            "subject": {
+              "nl": "Catalogus {{title}} is gepubliceerd (stabiel)",
+              "en": "Catalogue {{title}} is published (stable)"
+            }
+          }
+        },
         "title": "Catalog",
         "version": "0.1.0",
         "published": "2025-01-01T00:00:00+00:00",
@@ -296,6 +308,18 @@
       },
       "listing": {
         "slug": "listing",
+        "x-openregister-notifications": {
+          "listing-sync-failed": {
+            "trigger": { "type": "transition", "action": "obsolete" },
+            "enabled": true,
+            "channels": ["nc-notification"],
+            "recipients": [ { "kind": "groups", "groups": ["publication-officers"] } ],
+            "subject": {
+              "nl": "Synchronisatie van listing {{title}} mislukt: {{statusMessage}}",
+              "en": "Sync of listing {{title}} failed: {{statusMessage}}"
+            }
+          }
+        },
         "title": "Listing",
         "version": "0.1.0",
         "published": "2025-01-01T00:00:00+00:00",
