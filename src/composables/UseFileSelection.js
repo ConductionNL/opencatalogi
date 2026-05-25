@@ -10,6 +10,7 @@ import { objectStore } from './../store/store.js'
  * https://github.com/adamreisnz
  * https://github.com/vueuse/vueuse/issues/4085
  *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-4
  */
 export function useFileSelection(options) {
 
