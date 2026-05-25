@@ -14,6 +14,9 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-43
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-44
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -55,6 +58,8 @@ class SitemapController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-43
      */
     public function index(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -76,6 +81,8 @@ class SitemapController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-44
      */
     public function sitemap(string $catalogSlug, string $categoryCode): XMLResponse
     {

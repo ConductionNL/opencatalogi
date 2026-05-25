@@ -340,6 +340,9 @@ import DatabaseExport from 'vue-material-design-icons/DatabaseExport.vue'
 import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-3
+ */
 export default {
 	name: 'MigrationObject',
 	components: {
