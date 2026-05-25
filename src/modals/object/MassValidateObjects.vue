@@ -73,6 +73,9 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ */
 export default {
 	name: 'MassValidateObjects',
 	components: {

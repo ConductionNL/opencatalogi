@@ -59,6 +59,9 @@ import { getPublicationStatus } from '../services/publicationStatus.js'
 import PublishedIcon from './PublishedIcon.vue'
 import getValidISOstring from '../services/getValidISOstring.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'PublicationCard',
 	components: {

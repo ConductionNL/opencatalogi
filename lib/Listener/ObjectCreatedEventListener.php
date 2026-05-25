@@ -14,6 +14,9 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-53
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -52,6 +55,8 @@ class ObjectCreatedEventListener implements IEventListener
      * @param Event $event The event object containing the created ObjectEntity.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-53
      */
     public function handle(Event $event): void
     {
@@ -137,6 +142,8 @@ class ObjectCreatedEventListener implements IEventListener
      * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to convert.
      *
      * @return array The object data in array format.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
      */
     private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array
     {
