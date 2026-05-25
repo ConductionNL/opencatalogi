@@ -61,6 +61,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-4
      */
     public function index(?string $catalogId=null): JSONResponse
     {
