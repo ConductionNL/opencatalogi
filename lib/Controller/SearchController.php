@@ -86,6 +86,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-5
      */
     public function show(string $id): JSONResponse
     {
@@ -106,6 +108,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-6
      */
     public function attachments(string $id): JSONResponse
     {
@@ -126,6 +130,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-7
      */
     public function download(string $id): DataDownloadResponse|JSONResponse
     {
@@ -147,6 +153,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-8
      */
     public function uses(string $id): JSONResponse
     {
@@ -168,6 +176,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-9
      */
     public function used(string $id): JSONResponse
     {
