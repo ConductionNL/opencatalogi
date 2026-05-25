@@ -35,18 +35,22 @@ export const useNavigationStore = defineStore('ui', {
 		transferData: null,
 	} as NavigationStoreState),
 	actions: {
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		setSelected(selected: NavigationStoreState['selected']) {
 			this.selected = selected
 			console.log('Active menu item set to ' + selected)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		setSelectedCatalogus(selectedCatalogus: string) {
 			this.selectedCatalogus = selectedCatalogus
 			console.log('Active catalogus menu set to ' + selectedCatalogus)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		setModal(modal: NavigationStoreState['modal']) {
 			this.modal = modal
 			console.log('Active modal set to ' + modal)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		setDialog(dialog: NavigationStoreState['dialog'], properties?: DialogProperties) {
 			this.dialog = dialog
 			this.dialogProperties = properties || null
