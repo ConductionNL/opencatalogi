@@ -138,6 +138,11 @@ import InformationSlabSymbol from 'vue-material-design-icons/InformationSlabSymb
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import Check from 'vue-material-design-icons/Check.vue'
 
+/**
+ * DirectorySideBar — sidebar for directory management.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ */
 export default {
 	name: 'DirectorySideBar',
 	components: {
