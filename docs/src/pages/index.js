@@ -216,7 +216,6 @@ export default function Home() {
         <DetailHero
           appId="opencatalogi"
           background="cobalt"
-          {/* status + version dropped — preset 2.10+ auto-derives from appinfo/info.xml */}
           locales="NL · EN"
           title="OpenCatalogi"
           tagline={TAGLINE}
