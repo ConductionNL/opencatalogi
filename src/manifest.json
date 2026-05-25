@@ -23,9 +23,17 @@
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
-			"href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers",
-			"section": "settings",
-			"order": 90
+			"href": "https://opencatalogi.conduction.nl",
+			"section": "footer",
+			"order": 1
+		},
+		{
+			"id": "FeaturesRoadmapMenu",
+			"label": "Features & roadmap",
+			"icon": "icon-toggle",
+			"route": "FeaturesRoadmap",
+			"section": "footer",
+			"order": 2
 		},
 		{
 			"id": "OrganizationsMenu",
@@ -438,6 +446,15 @@
 			"title": "Directory",
 			"component": "CnFederationStatus",
 			"_note": "Federated-directory list rendered by CnFederationStatus from @conduction/nextcloud-vue (federation discovery + per-node availability)."
+		},
+		{
+			"id": "FeaturesRoadmap",
+			"route": "/features-roadmap",
+			"type": "roadmap",
+			"title": "Features & roadmap",
+			"config": {
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
 		}
 	]
 }
