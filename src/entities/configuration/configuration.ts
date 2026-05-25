@@ -1,6 +1,11 @@
 import { TConfiguration } from './configuration.types'
 import { SafeParseReturnType, z } from 'zod'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ */
 export class Configuration implements TConfiguration {
 
 	public useElastic: boolean
