@@ -1,10 +1,14 @@
 # Retrofit — publications (frontend)
 
-Describes observed behavior of the publications frontend cluster as 3 new REQs.
-Code already exists — this change retroactively specifies it. The publications
-backend is already specified by PUB-001..015 (Bucket 1); this retrofit covers the
-publication-specific **frontend** surface (publish/depublish store actions + the
-publish confirmation dialog).
+## Why
+The publications backend is already specified by PUB-001..015 (Bucket 1), but the
+publication-specific **frontend** surface (publish/depublish store actions + the publish
+confirmation dialog) had no spec coverage. This reverse-spec retroactively documents that
+observed behavior so the retrofit cohort dashboards reflect real coverage.
+
+## What Changes
+Adds 3 ADDED requirements (PUB-016..018) to the `publications` capability and annotates the
+3 implementing frontend code units with `@spec` tags. No code behavior changes.
 
 ## Affected code units
 - src/store/modules/object.js::publishObject
