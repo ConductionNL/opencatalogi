@@ -1,5 +1,10 @@
 ---
 status: reviewed
+retrofit_extensions:
+  - FIL-016
+  - FIL-017
+  - FIL-018
+  - FIL-019
 ---
 
 # File Management
@@ -7,26 +12,138 @@ status: reviewed
 ## Purpose
 
 The File Management service provides all file-related operations for OpenCatalogi: creating folders in Nextcloud, uploading and updating files, deleting files, managing share links, handling file uploads from HTTP requests, generating PDFs via Twig/mPDF, and creating/downloading ZIP archives. It is the foundational file layer used by the DownloadService, auto-publishing system, and WOO sitemap generation.
-
 ## Requirements
+### Requirement: Create folders in Nextcloud user storage, skip if already exists (FIL-001)
+The system MUST create folders in Nextcloud user storage and skip if they already exist.
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| FIL-001 | Create folders in Nextcloud user storage, skip if already exists | Must | Implemented |
-| FIL-002 | Upload new files to Nextcloud user storage (fail if file already exists) | Must | Implemented |
-| FIL-003 | Update/overwrite existing files, optionally create if not exists | Must | Implemented |
-| FIL-004 | Delete files from Nextcloud user storage | Must | Implemented |
-| FIL-005 | Create public share links (IShare type 3) for files with configurable permissions | Must | Implemented |
-| FIL-006 | Find existing share links for a file path | Must | Implemented |
-| FIL-007 | Return full share link URLs including protocol and domain | Must | Implemented |
-| FIL-008 | Handle HTTP file uploads via `_file` key in multipart requests | Must | Implemented |
-| FIL-009 | Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/` | Must | Implemented |
-| FIL-010 | Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays | Must | Implemented |
-| FIL-011 | Generate PDFs using Twig templates and mPDF library | Must | Implemented |
-| FIL-012 | Create ZIP archives from folder contents | Must | Implemented |
-| FIL-013 | Send ZIP archives as download responses with proper headers | Must | Implemented |
-| FIL-014 | Clean up temporary files after ZIP operations | Should | Implemented |
-| FIL-015 | Memory limit set to 2048M for large file operations | Should | Implemented |
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Upload new files to Nextcloud user storage (fail if file already exists) (FIL-002)
+The system MUST upload new files to Nextcloud user storage (and MUST fail if the file already exists).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Update/overwrite existing files, optionally create if not exists (FIL-003)
+The system MUST update/overwrite existing files, optionally creating them if not exists.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Delete files from Nextcloud user storage (FIL-004)
+The system MUST allow deleting files from Nextcloud user storage.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Create public share links (IShare type 3) for files with configurable permissions (FIL-005)
+The system MUST create public share links (IShare type 3) for files with configurable permissions.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Find existing share links for a file path (FIL-006)
+The system MUST be able to find existing share links for a file path.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Return full share link URLs including protocol and domain (FIL-007)
+The system MUST return full share link URLs including protocol and domain.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Handle HTTP file uploads via `_file` key in multipart requests (FIL-008)
+The system MUST handle HTTP file uploads via the `_file` key in multipart requests.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/` (FIL-009)
+The system MUST create a structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays (FIL-010)
+The system MUST add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Generate PDFs using Twig templates and mPDF library (FIL-011)
+The system MUST generate PDFs using Twig templates and the mPDF library.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Create ZIP archives from folder contents (FIL-012)
+The system MUST create ZIP archives from folder contents.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Send ZIP archives as download responses with proper headers (FIL-013)
+The system MUST send ZIP archives as download responses with proper headers.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Clean up temporary files after ZIP operations (FIL-014)
+The system SHOULD clean up temporary files after ZIP operations.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Memory limit set to 2048M for large file operations (FIL-015)
+The system SHOULD set the memory limit to 2048M for large file operations.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Upload files to a publication from the frontend (FIL-016)
+The system SHALL provide an `UploadFiles` modal that uploads one or more files to a
+publication's OpenRegister files endpoint
+(`/index.php/apps/openregister/api/objects/{register}/{schema}/{publicationId}/files`,
+PUT for an existing file id, with file content and optional tags), reading the active
+publication's register/schema/id from the object store and supporting tag assignment via
+`/api/tags`.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: Upload a file to the active publication
+- GIVEN the upload modal is open with the active publication selected
+- WHEN the user uploads a file
+- THEN the file MUST be sent to the publication's OpenRegister `.../files` endpoint
+- AND any selected tags MUST be applied
+
+### Requirement: Delete a publication attachment (FIL-017)
+The system SHALL provide a `DeleteAttachmentDialog` that deletes the active
+`publicationAttachment` by issuing `DELETE` to the OpenRegister files endpoint
+`/api/objects/{register}/{schema}/{publicationId}/files/{attachmentId}` (register/schema/id
+read from the active publication's `@self`), then refreshes the publication's attachments
+and closes the dialog after a short delay.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: Delete an attachment
+- GIVEN the active publication and the active attachment
+- WHEN the delete-attachment dialog is confirmed
+- THEN a `DELETE` request MUST be sent to the `.../files/{attachmentId}` endpoint
+- AND the publication's attachments MUST be refreshed afterward
+
+### Requirement: Edit attachment metadata (FIL-018)
+The system SHALL provide an `EditAttachmentModal` that updates an attachment's metadata via
+`objectStore.updateObject('attachment', id, attachment)` and closes the modal through the
+navigation store on completion.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Edit an attachment
+- GIVEN the edit-attachment modal is open
+- WHEN the user saves changes
+- THEN the attachment MUST be persisted via `objectStore.updateObject('attachment', id, attachment)`
+
+### Requirement: File-selection composable and mass-attachment modal (FIL-019)
+The system SHALL provide a `useFileSelection` composable exposing drop-zone state, a file
+list, tag setters, duplicate rejection, and reset/open helpers
+(`openFileUpload`, `files`, `setFiles`, `setTags`, `reset`, `isOverDropZone`,
+`rejectedDuplicates`), and a `MassAttachmentModal` for bulk attachment operations built on
+top of it.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Select files via the composable
+- GIVEN a component using `useFileSelection`
+- WHEN files are dropped or chosen
+- THEN the composable's file list MUST update and duplicates MUST be rejected
 
 ## Architecture
 

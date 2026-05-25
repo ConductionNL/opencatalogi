@@ -7,16 +7,19 @@ import { TMenu, TMenuItem } from './menu.types'
 /**
  * Menu class representing a navigation menu entity with validation
  * Implements the TMenu interface for type safety
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
  */
 export class Menu implements TMenu {
 
-	public id: string
-	public uuid: string
-	public title: string
-	public position: number
-	public items: TMenuItem[] // Array of menu items
-	public createdAt: string
-	public updatedAt: string
+	public id!: string
+	public uuid!: string
+	public title!: string
+	public position!: number
+	public items!: TMenuItem[] // Array of menu items
+	public createdAt!: string
+	public updatedAt!: string
 	public groups?: string[]
 
 	public hideAfterLogin?: boolean

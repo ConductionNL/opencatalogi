@@ -28,6 +28,9 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import { isPublished, isDepublished } from '../services/publicationStatus.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'PublishedIcon',
 	components: {

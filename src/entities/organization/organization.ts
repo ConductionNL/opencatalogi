@@ -17,53 +17,56 @@ import { TOrganization } from './organization.types'
 
 /**
  * Organization class representing an organization in the system
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
  */
 export class Organization implements TOrganization {
 
 	/**
 	 * Unique identifier of the organization
 	 */
-	public id: string
+	public id!: string
 
 	/**
 	 * Name of the organization
 	 */
-	public name: string
+	public name!: string
 
 	/**
 	 * Brief summary of the organization
 	 */
-	public summary: string
+	public summary!: string
 
 	/**
 	 * Detailed description of the organization
 	 */
-	public description: string
+	public description!: string
 
 	/**
 	 * Organization Identification Number (OIN)
 	 */
-	public oin: string
+	public oin!: string
 
 	/**
 	 * TOOI identifier for the organization
 	 */
-	public tooi: string
+	public tooi!: string
 
 	/**
 	 * RSIN number for tax identification
 	 */
-	public rsin: string
+	public rsin!: string
 
 	/**
 	 * PKI certificate information
 	 */
-	public pki: string
+	public pki!: string
 
 	/**
 	 * URL to the organization's logo or image
 	 */
-	public image: string
+	public image!: string
 
 	/**
 	 * Creates a new Organization instance

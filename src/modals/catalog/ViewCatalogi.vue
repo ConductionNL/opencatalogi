@@ -180,6 +180,11 @@ import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 
+/**
+ * ViewCatalogi — read-only tabbed view of a catalog's details.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-3
+ */
 export default {
 	name: 'ViewCatalogi',
 	components: {

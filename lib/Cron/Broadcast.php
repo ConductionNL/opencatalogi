@@ -16,6 +16,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
  */
 
 namespace OCA\OpenCatalogi\Cron;
@@ -74,6 +76,8 @@ class Broadcast extends TimedJob
      * @throws \Exception When broadcasting fails critically.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
      */
     protected function run($argument): void
     {

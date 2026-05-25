@@ -15,6 +15,24 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-102
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-103
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-104
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-105
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-106
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-107
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-109
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-110
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-111
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-114
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-115
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -157,7 +175,8 @@ class PublicationService
             $quotedUuid = $db->quote($objectId);
             $row        = $result->fetch();
             while ($row !== false) {
-                $match = preg_match(
+                $matches = [];
+                $match   = preg_match(
                     pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
                     subject: $row['table_name'],
                     matches: $matches
@@ -228,6 +247,8 @@ class PublicationService
      * @return array<string, array<string>> Array containing available registers and schemas
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-102
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -343,6 +364,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-103
      */
     private function searchPublications(null|string|int $catalogId=null, ?array $ids=null, ?array $customParams=null): array
     {
@@ -461,8 +484,7 @@ class PublicationService
             $objectService->searchObjectsPaginated(
                 query: $searchQuery,
                 _rbac: true,
-                _multitenancy: false,
-                published: false
+                _multitenancy: false
             )
         );
 
@@ -491,6 +513,8 @@ class PublicationService
      * @return array Array of catalog objects with 'key' and 'label' fields
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-104
      */
     private function getExternalCatalogsFromListings(): array
     {
@@ -677,6 +701,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-105
      */
     public function index(null|string|int $catalogId=null, ?array $customParams=null): JSONResponse
     {
@@ -702,6 +728,8 @@ class PublicationService
      * @NoAdminRequired
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-106
      */
     public function show(string $id): JSONResponse
     {
@@ -743,6 +771,8 @@ class PublicationService
      * @NoAdminRequired
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-107
      */
     public function attachments(string $id): JSONResponse
     {
@@ -785,6 +815,8 @@ class PublicationService
       *
       * @NoAdminRequired
       * @NoCSRFRequired
+      *
+      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
       */
     public function download(
         string $id
@@ -840,6 +872,8 @@ class PublicationService
      * @param array $objects Array of objects to filter
      *
      * @return array Filtered array of objects
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
      */
     private function filterUnwantedProperties(array $objects): array
     {
@@ -904,6 +938,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-109
      */
     public function uses(string $id): JSONResponse
     {
@@ -959,6 +995,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-110
      */
     public function used(string $id): JSONResponse
     {
@@ -1012,7 +1050,7 @@ class PublicationService
      * AGGREGATION FEATURES:
      * - Proper pagination: Collects sufficient data from all sources, merges and deduplicates,
      *   then applies pagination to ensure consistent totals and page counts
-     * - Ordering: Supports _order parameters like _order[@self.published]=DESC to sort the
+     * - Ordering: Supports _order parameters like _order[@self.created]=DESC to sort the
      *   combined dataset from all sources according to specified criteria
      * - Deduplication: Removes duplicate entries based on object ID across all sources
      * - Faceting: Merges facet data from multiple sources when _facetable=true
@@ -1028,6 +1066,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-111
      */
     public function getAggregatedPublications(array $queryParams=[], array $requestParams=[], string $baseUrl=''): array
     {
@@ -1379,7 +1419,7 @@ class PublicationService
             // Apply ordering to the merged and deduplicated results
             // This is crucial for aggregation because each source may have different ordering,
             // so we need to re-sort the combined dataset according to the requested criteria
-            // Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
+            // Supports formats like: _order[@self.created]=DESC, _order[title]=ASC, etc.
             $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
 
             // Apply pagination to the merged results.
@@ -1516,6 +1556,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
      */
     private function getLocalPublicationsFast(
         array $queryParams,
@@ -1701,6 +1743,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
      */
     private function getLocalPublicationsUltraFast(
         array $queryParams,
@@ -1939,6 +1983,8 @@ class PublicationService
      *
      * @return array Array of catalog objects with id, title, summary, description, etc.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
      */
     private function getLocalCatalogs(): array
     {
@@ -2010,6 +2056,8 @@ class PublicationService
      * @param array $federatedFacets Facets from federated sources
      *
      * @return array Merged facets data
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
      */
     private function mergeFacetsData(array $localFacets, array $federatedFacets): array
     {
@@ -2030,6 +2078,8 @@ class PublicationService
      * @param array $federatedFacetable Facetable metadata from federated sources
      *
      * @return array Merged facetable metadata
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
      */
     private function mergeFacetableData(array $localFacetable, array $federatedFacetable): array
     {
@@ -2106,6 +2156,8 @@ class PublicationService
      * @param array $queryParams The query parameters containing ordering instructions
      *
      * @return array The ordered results
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
      */
     private function applyCumulativeOrdering(array $results, array $queryParams): array
     {
@@ -2128,7 +2180,7 @@ class PublicationService
                 foreach ($orderParams as $field => $direction) {
                     // Handle both associative array format: ['field' => 'direction']
                     // and indexed array format: [0 => ['field' => 'direction']]
-                    // Format: ['@self.published' => 'DESC'].
+                    // Format: ['@self.created' => 'DESC'].
                     $fieldName     = $field;
                     $sortDirection = 'ASC';
                     if (is_string($direction) === true) {
@@ -2136,7 +2188,7 @@ class PublicationService
                     }
 
                     if (is_numeric($field) === true && is_array($direction) === true) {
-                        // Format: [0 => ['@self.published' => 'DESC']].
+                        // Format: [0 => ['@self.created' => 'DESC']].
                         $fieldName     = array_key_first($direction);
                         $sortDirection = strtoupper(($direction[$fieldName] ?? 'ASC'));
                     }
@@ -2172,7 +2224,7 @@ class PublicationService
     /**
      * Extract field value from a result object using dot notation
      *
-     * Supports nested field access like '@self.published' or 'data.title'
+     * Supports nested field access like '@self.created' or 'data.title'
      *
      * @param array  $result    The result object to extract value from
      * @param string $fieldPath The field path in dot notation
@@ -2260,6 +2312,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
      */
     public function getFederatedPublication(string $id, array $queryParams=[]): array
     {
@@ -2384,6 +2438,8 @@ class PublicationService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-114
      */
     public function getFederatedUsed(string $id, array $queryParams=[]): array
     {
@@ -2477,6 +2533,8 @@ class PublicationService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-115
      */
     public function getFederatedUses(string $id, array $queryParams=[]): array
     {

@@ -223,6 +223,8 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
  *
  * Settings component for the Open Catalogi that allows users to configure
  * data storage options for different object types using Open Registers.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-1
  */
 export default defineComponent({
 	name: 'Settings',

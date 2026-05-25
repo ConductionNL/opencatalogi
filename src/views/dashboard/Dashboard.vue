@@ -293,6 +293,11 @@ const DEFAULT_LAYOUT = [
 	// { id: 7, widgetId: 'concept-attachments', ... },
 ]
 
+/**
+ * Dashboard — overview view: catalogs, publication totals, activity chart.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ */
 export default {
 	name: 'Dashboard',
 	components: {

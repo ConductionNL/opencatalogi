@@ -71,6 +71,11 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import SelectAttachmentsList from '../../components/SelectAttachmentsList.vue'
 
+/**
+ * MassAttachmentModal — bulk attachment operations built on useFileSelection.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-4
+ */
 export default {
 	name: 'MassAttachmentModal',
 	components: {

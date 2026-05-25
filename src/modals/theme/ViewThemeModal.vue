@@ -154,6 +154,11 @@ import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
+/**
+ * ViewThemeModal — read a theme.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ */
 export default {
 	name: 'ViewThemeModal',
 	components: {

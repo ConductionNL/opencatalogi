@@ -21,7 +21,7 @@ export type TAttachment = {
     }
     versionOf: string
     hash: string
-    published: string | Date
+    published: string | Date | null
     modified: string | Date
     license: string
 }

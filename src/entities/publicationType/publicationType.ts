@@ -1,14 +1,19 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TPublicationType } from './publicationType.types'
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ */
 export class PublicationType implements TPublicationType {
 
-	public id: string
-	public title: string
-	public description: string
-	public summary: string
-	public version: string
-	public required: string[]
-	public properties: Record<string, {
+	public id!: string
+	public title!: string
+	public description!: string
+	public summary!: string
+	public version!: string
+	public required!: string[]
+	public properties!: Record<string, {
         title: string
         description: string
         type: 'string' | 'number' | 'integer' | 'object' | 'array' | 'boolean' | 'dictionary'
@@ -30,12 +35,12 @@ export class PublicationType implements TPublicationType {
         maxItems: number
     }>
 
-	public archive: {
+	public archive!: {
         valuation: 'b' | 'v' | 'n'
         class: 1 | 2 | 3 | 4 | 5
     }
 
-	public source: string
+	public source!: string
 
 	constructor(data: TPublicationType) {
 		this.hydrate(data)
@@ -69,7 +74,7 @@ export class PublicationType implements TPublicationType {
 				maxLength: 0,
 			} as Pick<TPublicationType['properties'][0], 'minimum' | 'maximum' | 'multipleOf' | 'minItems' | 'maxItems' | 'minLength' | 'maxLength'>
 
-			Object.keys(defaultPropertiesProps).forEach((key: keyof typeof defaultPropertiesProps) => {
+			(Object.keys(defaultPropertiesProps) as Array<keyof typeof defaultPropertiesProps>).forEach((key) => {
 				if (this.properties[obj][key] === null) {
 					this.properties[obj][key] = defaultPropertiesProps[key]
 				}

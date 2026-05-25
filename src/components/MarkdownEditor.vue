@@ -8,6 +8,9 @@
 </template>
 
 <script>
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'MarkdownEditor',
 	props: {

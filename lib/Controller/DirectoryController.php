@@ -14,6 +14,9 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-5
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-6
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -123,6 +126,8 @@ class DirectoryController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-5
      */
     public function index(): JSONResponse
     {
@@ -176,6 +181,8 @@ class DirectoryController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-6
      */
     public function update(): JSONResponse
     {

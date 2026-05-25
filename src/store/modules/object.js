@@ -1244,6 +1244,8 @@ export const useObjectStore = defineStore('object', {
 		 * Publish object
 		 * @param {object} objectItem - Object to publish
 		 * @return {Promise<object>} The updated object
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1
 		 */
 		async publishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1312,6 +1314,8 @@ export const useObjectStore = defineStore('object', {
 		 * Depublish object
 		 * @param {object} objectItem - Object to depublish
 		 * @return {Promise<object>} The updated object
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-2
 		 */
 		async depublishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1712,11 +1716,30 @@ export const useObjectStore = defineStore('object', {
 			// Include 'publication' alongside the settings-defined types
 			const objectTypes = [...(this.settings.objectTypes || []), 'publication']
 			const registers = this.settings.availableRegisters || []
+			const configuration = this.settings.configuration || {}
 
 			for (const type of objectTypes) {
 				if (this.objectTypeRegistry[type]) continue
 
-				// Find the schema matching this type slug in any register
+				// 1. Prefer the explicit per-type {type}_register / {type}_schema from
+				//    IAppConfig. This is the authoritative mapping the backend uses, and
+				//    it disambiguates correctly when multiple registers happen to contain
+				//    a schema with the same slug (e.g. a stale duplicate register).
+				const configuredRegisterId = configuration[`${type}_register`]
+				const configuredSchemaId = configuration[`${type}_schema`]
+				if (configuredRegisterId && configuredSchemaId) {
+					this.objectTypeRegistry = {
+						...this.objectTypeRegistry,
+						[type]: {
+							schema: String(configuredSchemaId),
+							register: String(configuredRegisterId),
+						},
+					}
+					continue
+				}
+
+				// 2. Fall back to slug-matching across availableRegisters for types that
+				//    have no explicit config entry yet (e.g. dynamically-registered types).
 				for (const register of registers) {
 					const matchingSchema = (register.schemas || []).find(
 						(s) => s.slug === type || s.title?.toLowerCase() === type,
