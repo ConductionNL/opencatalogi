@@ -411,6 +411,9 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-3
+ */
 export default {
 	name: 'MergeObject',
 	components: {

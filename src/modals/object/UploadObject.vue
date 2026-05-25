@@ -127,6 +127,9 @@ import Upload from 'vue-material-design-icons/Upload.vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ */
 export default {
 	name: 'UploadObject',
 	components: {
