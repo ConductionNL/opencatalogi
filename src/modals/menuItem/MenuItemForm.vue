@@ -320,6 +320,11 @@ import { fas } from '@fortawesome/free-solid-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 
+/**
+ * MenuItemForm — add/edit a menu item (persists the parent menu).
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'MenuItemForm',
 	components: {

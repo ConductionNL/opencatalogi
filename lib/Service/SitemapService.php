@@ -15,6 +15,11 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -117,6 +122,8 @@ class SitemapService
      * @return XMLResponse The sitemap index XML response.
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -231,6 +238,8 @@ class SitemapService
      * @param integer $page         The page number to retrieve.
      *
      * @return XMLResponse The publications sitemap XML response.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
      */
     public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
@@ -328,6 +337,8 @@ class SitemapService
      * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
      *
      * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
      */
     private function isValidSitemapRequest(
         string $catalogSlug,
@@ -421,6 +432,8 @@ class SitemapService
      * @param array $file        The file metadata belonging to that publication
      *
      * @return array A DIWOO metadata array ready for XMLResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
      */
     private function mapDiwooDocument(array $publication, array $file): array
     {

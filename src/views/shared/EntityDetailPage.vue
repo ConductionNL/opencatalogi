@@ -94,6 +94,9 @@ const DETAIL_LAYOUT = [
 	{ id: 3, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
 ]
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'EntityDetailPage',
 	components: {
