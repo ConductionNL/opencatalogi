@@ -43,3 +43,10 @@ if (!defined('OC_CONSOLE')) {
     // Clear hooks for testing.
     OC_Hook::clear();
 }
+
+// IMcpToolProvider stub — loaded when the openregister runtime (PR #1466) is absent.
+// OpenCatalogiToolProvider implements this interface in production; the stub keeps the
+// class loadable in bare CI containers until the real interface ships.
+if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
+    require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
+}

@@ -35,6 +35,7 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -117,6 +118,16 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ToolRegistrationEvent::class,
             listener: ToolRegistrationListener::class
+        );
+
+        // Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.
+        // The alias key 'OCA\OpenRegister\Mcp\IMcpToolProvider::opencatalogi' is the format
+        // that OR's McpToolsService enumerates to discover per-app providers (hydra ADR-034/035).
+        // The interface ships in openregister PR #1466 (ai-chat-companion-orchestrator); until
+        // then apps implement the test stub in tests/Stubs/Mcp/IMcpToolProvider.php.
+        $context->registerServiceAlias(
+            'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::opencatalogi',
+            OpenCatalogiToolProvider::class
         );
 
     }//end register()
