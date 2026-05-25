@@ -38,71 +38,95 @@ webpackConfig.entry = {
 	},
 }
 
+// Drop the base config's ts-loader rule (it type-checks the entire project
+// against `tsconfig.json`'s strict mode, surfacing 351 pre-existing TS
+// errors that pre-date this change and gate the build for unrelated reasons)
+// AND breaks webpack's module-id stability across split chunks (ADR-004 →
+// "Build / bundling — known limitation"). Replace with a babel-loader rule
+// that uses @babel/preset-typescript to strip types only — same toolchain
+// as the .js files. Type-checking moves to `npx tsc --noEmit` (run separately
+// or in CI), where it can fail loud without blocking the bundle.
+webpackConfig.module.rules = webpackConfig.module.rules.filter(rule =>
+	!(rule && rule.use && (
+		(typeof rule.use === 'string' && rule.use === 'ts-loader')
+		|| (Array.isArray(rule.use) && rule.use.some(u => (u?.loader || u) === 'ts-loader'))
+		|| (typeof rule.use === 'object' && (rule.use.loader === 'ts-loader'))
+	))
+	&& !(rule && rule.loader === 'ts-loader')
+)
+webpackConfig.module.rules.push({
+	test: /\.ts$/,
+	exclude: /node_modules/,
+	use: { loader: 'babel-loader' },
+})
+webpackConfig.module.rules.push({
+	test: /\.scss$/,
+	use: ['style-loader', 'css-loader', 'sass-loader'],
+})
+
+// `@nextcloud/vue` reads the build-time `appName` / `appVersion` constants
+// to identify the host app in console messages and telemetry. The base config
+// sets these defines but our `webpackConfig.plugins` replacement below drops
+// them, so we re-add explicitly.
+webpackConfig.plugins = [
+	new VueLoaderPlugin(),
+	// TODO: Remove NodePolyfillPlugin when upgrading to Vue 3.
+	new NodePolyfillPlugin({ additionalAliases: ['process'] }),
+	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
+	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
+]
+
 // Use local source when available (monorepo dev), otherwise fall back to npm package
 const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
 const useLocalLib = fs.existsSync(localLib)
 
-webpackConfig.resolve = {
-	extensions: ['.vue', '.js', '.ts'],
-	alias: {
-		'@': path.resolve(__dirname, 'src'),
-		...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
-		// Deduplicate shared packages so the aliased library source uses
-		// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
-		vue$: path.resolve(__dirname, 'node_modules/vue'),
-		pinia$: path.resolve(__dirname, 'node_modules/pinia'),
-		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
-		// Force @nextcloud/dialogs and @nextcloud/axios to resolve from this
-		// app's node_modules, preventing the nextcloud-vue submodule's nested
-		// deps from leaking in.
-		'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
-		'@nextcloud/axios$': path.resolve(__dirname, 'node_modules/@nextcloud/axios'),
-	},
+webpackConfig.resolve = webpackConfig.resolve || {}
+webpackConfig.resolve.extensions = ['.ts', '.js', '.vue', '.json']
+webpackConfig.resolve.alias = {
+	...(webpackConfig.resolve.alias || {}),
+	'@': path.resolve(__dirname, 'src'),
+	...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
+	vue$: path.resolve(__dirname, 'node_modules/vue'),
+	pinia$: path.resolve(__dirname, 'node_modules/pinia'),
+	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
+	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
 }
 
-webpackConfig.module = {
-	rules: [
-		{
-			test: /\.vue$/,
-			loader: 'vue-loader',
-		},
-		{
-			test: /\.ts$/,
-			loader: 'ts-loader',
-			options: { appendTsSuffixTo: [/\.vue$/], transpileOnly: true },
-			exclude: /node_modules/,
-		},
-		{
-			test: /\.css$/,
-			use: ['style-loader', 'css-loader'],
-		},
-		{
-			// SCSS used by aliased @conduction/nextcloud-vue components
-			test: /\.scss$/,
-			use: ['style-loader', 'css-loader', 'sass-loader'],
-		},
-		{
-			// Image and icon assets
-			test: /\.(png|jpe?g|gif|svg)$/,
-			type: 'asset/resource',
-			generator: {
-				filename: 'img/[name][ext]',
+// Share Vue + @nextcloud/vue + pinia + icons + @conduction/nextcloud-vue
+// across every entry-point so each widget bundle no longer inlines its own
+// ~3 MB framework copy. Stable filenames (no contenthash in the JS name)
+// mean each widget's `Util::addScript` PHP call can reference the chunk
+// directly without a manifest. The shared chunks load once on the page and
+// stay cached across navigations between opencatalogi's own pages.
+webpackConfig.optimization = {
+	...(webpackConfig.optimization || {}),
+	splitChunks: {
+		...(webpackConfig.optimization?.splitChunks || {}),
+		chunks: 'all',
+		cacheGroups: {
+			default: false,
+			defaultVendors: false,
+			ncVue: {
+				name: appId + '-shared-nc-vue',
+				// Matches both node_modules entries AND the monorepo-dev alias
+				// `../nextcloud-vue/src/...` which webpack resolves outside
+				// node_modules when @conduction/nextcloud-vue is aliased to it.
+				test: /[\\/]node_modules[\\/](@nextcloud[\\/]vue|@conduction[\\/]nextcloud-vue)[\\/]|[\\/]nextcloud-vue[\\/]src[\\/]/,
+				priority: 30,
+				reuseExistingChunk: true,
+				enforce: true,
+				filename: appId + '-shared-nc-vue.js',
+			},
+			vendor: {
+				name: appId + '-shared-vendor',
+				test: /[\\/]node_modules[\\/](vue|pinia|vue-material-design-icons|@vueuse|core-js)[\\/]/,
+				priority: 20,
+				reuseExistingChunk: true,
+				enforce: true,
+				filename: appId + '-shared-vendor.js',
 			},
 		},
-	],
+	},
 }
-
-webpackConfig.plugins = [
-	new VueLoaderPlugin(),
-	// NodePolyfillPlugin required by @nextcloud/dialogs 5.x (uses Node's
-	// `path` API) and v-md-editor's `safe-buffer` transitive dep. Cannot be
-	// removed until @nextcloud/dialogs drops the `path` import or the editor
-	// switches to a browser-native buffer impl.
-	new NodePolyfillPlugin({
-		additionalAliases: ['process'],
-	}),
-	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
-	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
-]
 
 module.exports = webpackConfig
