@@ -8,8 +8,8 @@ import { SafeParseReturnType, z } from 'zod'
  */
 export class Configuration implements TConfiguration {
 
-	public useElastic: boolean
-	public useMongo: boolean
+	public useElastic!: boolean
+	public useMongo!: boolean
 
 	constructor(data: TConfiguration) {
 		this.hydrate(data)

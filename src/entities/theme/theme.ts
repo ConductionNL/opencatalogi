@@ -8,17 +8,17 @@ import { TTheme } from './theme.types'
  */
 export class Theme implements TTheme {
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public image: string
-	public content: string
-	public link: string
-	public url: string
-	public icon: string
-	public isExternal: boolean
-	public sort: number
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public image!: string
+	public content!: string
+	public link!: string
+	public url!: string
+	public icon!: string
+	public isExternal!: boolean
+	public sort!: number
 
 	constructor(data: TTheme) {
 		this.hydrate(data)

@@ -10,33 +10,33 @@ type TStatus = 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 
  */
 export class Attachment implements TAttachment {
 
-	public id: string
-	public reference: string
-	public title: string
-	public summary: string
-	public description: string
-	public labels: string[]
-	public accessUrl: string
-	public downloadUrl: string
-	public status: TStatus
-	public type: string
-	public extension: string
-	public size: string
-	public anonymization: {
+	public id!: string
+	public reference!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public labels!: string[]
+	public accessUrl!: string
+	public downloadUrl!: string
+	public status!: TStatus
+	public type!: string
+	public extension!: string
+	public size!: string
+	public anonymization!: {
         anonymized: boolean
         results: string
     }
 
-	public language: {
+	public language!: {
         code: string
         level: string
     }
 
-	public versionOf: string
-	public hash: string
-	public published: string | Date | null
-	public modified: string | Date
-	public license: string
+	public versionOf!: string
+	public hash!: string
+	public published!: string | Date | null
+	public modified!: string | Date
+	public license!: string
 
 	constructor(data: TAttachment) {
 		this.hydrate(data)

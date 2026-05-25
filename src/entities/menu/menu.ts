@@ -13,13 +13,13 @@ import { TMenu, TMenuItem } from './menu.types'
  */
 export class Menu implements TMenu {
 
-	public id: string
-	public uuid: string
-	public title: string
-	public position: number
-	public items: TMenuItem[] // Array of menu items
-	public createdAt: string
-	public updatedAt: string
+	public id!: string
+	public uuid!: string
+	public title!: string
+	public position!: number
+	public items!: TMenuItem[] // Array of menu items
+	public createdAt!: string
+	public updatedAt!: string
 	public groups?: string[]
 
 	public hideAfterLogin?: boolean

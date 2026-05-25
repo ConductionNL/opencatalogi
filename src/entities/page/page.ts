@@ -14,10 +14,10 @@ import { TPage, TPageContent } from './page.types'
  */
 export class Page implements TPage {
 
-	public id: string
-	public title: string
-	public slug: string
-	public contents: TPageContent[] | null
+	public id!: string
+	public title!: string
+	public slug!: string
+	public contents!: TPageContent[] | null
 	public groups?: string[]
 
 	public hideAfterLogin?: boolean
