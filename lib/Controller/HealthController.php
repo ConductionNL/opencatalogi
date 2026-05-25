@@ -14,6 +14,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -59,6 +61,8 @@ class HealthController extends Controller
      * @NoCSRFRequired
      *
      * @return JSONResponse Health status.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
      */
     public function index(): JSONResponse
     {
@@ -98,6 +102,8 @@ class HealthController extends Controller
      * Check database connectivity.
      *
      * @return string 'ok' or error message.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
      */
     private function checkDatabase(): string
     {
@@ -122,6 +128,8 @@ class HealthController extends Controller
      * Check filesystem access.
      *
      * @return string 'ok' or error message.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
      */
     private function checkFilesystem(): string
     {
