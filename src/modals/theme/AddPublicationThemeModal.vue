@@ -51,6 +51,11 @@ import {
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 
+/**
+ * AddPublicationThemeModal — attach a theme to a publication via updateObject.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ */
 export default {
 	name: 'AddPublicationThemeModal',
 	components: {

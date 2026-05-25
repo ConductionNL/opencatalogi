@@ -8,6 +8,7 @@
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @see https://github.com/opencatalogi/opencatalogi
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-4
  */
 
 export * from './glossary.ts'

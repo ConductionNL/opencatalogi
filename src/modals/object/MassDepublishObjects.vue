@@ -103,6 +103,9 @@ import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ */
 export default {
 	name: 'MassDepublishObjects',
 	components: {
