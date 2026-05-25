@@ -216,6 +216,11 @@ import Drag from 'vue-material-design-icons/Drag.vue'
 
 import { Page } from '../../entities/index.js'
 
+/**
+ * PageContentForm — add/edit a page content block (persists the parent page).
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'PageContentForm',
 	components: {

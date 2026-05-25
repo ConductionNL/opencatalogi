@@ -1,5 +1,11 @@
 ---
 status: reviewed
+retrofit_extensions:
+  - DSH-009
+  - DSH-010
+  - DSH-011
+  - DIR-012
+  - LST-007
 ---
 
 # Dashboard and Directory
@@ -7,48 +13,227 @@ status: reviewed
 ## Purpose
 
 The dashboard provides the main entry point for the OpenCatalogi Nextcloud app, serving the Vue SPA for all internal views. The directory system manages the network of interconnected OpenCatalogi instances, enabling federation through listings (external catalog registrations), directory synchronization, and broadcast notifications. Listings represent external catalogs that can be synchronized and searched, forming the backbone of the decentralized catalog network.
-
 ## Requirements
 
-### Dashboard and UI
+<!-- Dashboard and UI -->
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSH-001 | Serve the Vue SPA template for the main app page | Must | Implemented |
-| DSH-002 | Support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations) | Must | Implemented |
-| DSH-003 | Content Security Policy allows connect to all domains (for federation HTTP requests) | Must | Implemented |
-| DSH-004 | Dashboard data endpoint returns basic status info | Should | Dead Code (route exists but controller method removed) |
-| DSH-005 | Application.php bootstrap registers dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget) | Must | Implemented |
-| DSH-006 | Application.php bootstrap registers event listeners for OpenRegister events | Must | Implemented |
-| DSH-007 | Application.php bootstrap registers tool registration listener for AI agents | Must | Implemented |
-| DSH-008 | Application.php bootstrap loads vendor autoload for Composer dependencies | Must | Implemented |
+### Requirement: Serve the Vue SPA template for the main app page (DSH-001)
+The system MUST serve the Vue SPA template for the main app page.
 
-### Listings (CRUD)
+**Priority:** Must **Status:** Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| LST-001 | List all listings with pagination | Must | Implemented |
-| LST-002 | Get a single listing by ID (public endpoint) | Must | Implemented |
-| LST-003 | Create a new listing | Must | Implemented |
-| LST-004 | Update an existing listing | Must | Implemented |
-| LST-005 | Delete a listing | Must | Implemented |
-| LST-006 | Listing configuration stored in IAppConfig as `listing_schema` and `listing_register` | Must | Implemented |
+### Requirement: Support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations) (DSH-002)
+The system MUST support deep-link routing for all SPA pages (catalogi, publications, search, themes, glossary, pages, menus, directory, organizations).
 
-### Directory and Synchronization
+**Priority:** Must **Status:** Implemented
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DIR-001 | Get combined directory data from all listings | Must | Implemented |
-| DIR-002 | Synchronize with an external directory URL (POST with directory parameter) | Must | Implemented |
-| DIR-003 | Synchronize a specific listing's directory | Must | Implemented |
-| DIR-004 | Synchronize all directories via cron (every hour) | Must | Implemented |
-| DIR-005 | Add a new listing from a URL (public endpoint) | Must | Implemented |
-| DIR-006 | Anti-loop protection during broadcast sync cycles | Should | Implemented |
-| DIR-007 | Broadcast this directory to external instances (cron every 4 hours) | Should | Bug (Not Registered) |
-| DIR-008 | CORS support on directory endpoints | Must | Implemented |
-| DIR-009 | Publication endpoint auto-detection from directory URLs | Should | Implemented |
-| DIR-010 | Listing staleness checking during directory sync | Should | Implemented |
-| DIR-011 | Catalog-to-listing conversion during sync | Should | Implemented |
+### Requirement: Content Security Policy allows connect to all domains (for federation HTTP requests) (DSH-003)
+The Content Security Policy MUST allow connect to all domains (for federation HTTP requests).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Dashboard data endpoint returns basic status info (DSH-004)
+The dashboard data endpoint SHOULD return basic status info.
+
+**Priority:** Should **Status:** Dead Code (route exists but controller method removed)
+
+### Requirement: Application.php bootstrap registers dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget) (DSH-005)
+Application.php bootstrap MUST register dashboard widgets (CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Application.php bootstrap registers event listeners for OpenRegister events (DSH-006)
+Application.php bootstrap MUST register event listeners for OpenRegister events.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Application.php bootstrap registers tool registration listener for AI agents (DSH-007)
+Application.php bootstrap MUST register the tool registration listener for AI agents.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Application.php bootstrap loads vendor autoload for Composer dependencies (DSH-008)
+Application.php bootstrap MUST load vendor autoload for Composer dependencies.
+
+**Priority:** Must **Status:** Implemented
+
+<!-- Listings (CRUD) -->
+
+### Requirement: List all listings with pagination (LST-001)
+The system MUST list all listings with pagination.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Get a single listing by ID (public endpoint) (LST-002)
+The system MUST get a single listing by ID (public endpoint).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Create a new listing (LST-003)
+The system MUST allow creating a new listing.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Update an existing listing (LST-004)
+The system MUST allow updating an existing listing.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Delete a listing (LST-005)
+The system MUST allow deleting a listing.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Listing configuration stored in IAppConfig as `listing_schema` and `listing_register` (LST-006)
+Listing configuration MUST be stored in IAppConfig as `listing_schema` and `listing_register`.
+
+**Priority:** Must **Status:** Implemented
+
+<!-- Directory and Synchronization -->
+
+### Requirement: Get combined directory data from all listings (DIR-001)
+The system MUST get combined directory data from all listings.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Synchronize with an external directory URL (POST with directory parameter) (DIR-002)
+The system MUST synchronize with an external directory URL (POST with directory parameter).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Synchronize a specific listing's directory (DIR-003)
+The system MUST synchronize a specific listing's directory.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Synchronize all directories via cron (every hour) (DIR-004)
+The system MUST synchronize all directories via cron (every hour).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Add a new listing from a URL (public endpoint) (DIR-005)
+The system MUST allow adding a new listing from a URL (public endpoint).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Anti-loop protection during broadcast sync cycles (DIR-006)
+The system SHOULD provide anti-loop protection during broadcast sync cycles.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Broadcast this directory to external instances (cron every 4 hours) (DIR-007)
+The system SHOULD broadcast this directory to external instances (cron every 4 hours).
+
+**Priority:** Should **Status:** Bug (Not Registered)
+
+### Requirement: CORS support on directory endpoints (DIR-008)
+The system MUST support CORS on directory endpoints.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Publication endpoint auto-detection from directory URLs (DIR-009)
+The system SHOULD support publication endpoint auto-detection from directory URLs.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Listing staleness checking during directory sync (DIR-010)
+The system SHOULD perform listing staleness checking during directory sync.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Catalog-to-listing conversion during sync (DIR-011)
+The system SHOULD perform catalog-to-listing conversion during sync.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Manifest-driven SPA shell and main navigation (DSH-009)
+The frontend SPA SHALL render through a manifest-driven `CnAppRoot` shell (`App.vue`) for
+app id `opencatalogi`, passing the app manifest, custom components, page types, a
+per-app translate closure, and a computed `permissions` array. The permissions computed
+augments `window.OC.currentUser.permissions` with an `'admin'` entry when
+`window.OC.isUserAdmin()` is true (so manifest entries gated on `permission: "admin"`
+resolve). On `created()` it preloads object collections via
+`objectStore.preloadCollections()` so navigation items and catalog-slug routes resolve on
+first render. `MainMenu.vue` provides the in-app navigation.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: Render the SPA shell for an admin user
+- GIVEN `window.OC.isUserAdmin()` returns true
+- WHEN `App.vue` mounts
+- THEN the computed `permissions` MUST include `'admin'`
+- AND object collections MUST be preloaded via `objectStore.preloadCollections()`
+
+### Requirement: Dashboard overview view (DSH-010)
+The system SHALL provide a `Dashboard.vue` overview that, on load, fetches the catalog
+collection (`objectStore.fetchCollection('catalog')`), the total publication count
+(`GET /apps/opencatalogi/api/publications?_page=1&_limit=1000&_extend=@self.schema,@self.register`,
+storing `data.total`), and an activity chart, surfacing a load error message on failure.
+A `DashboardSideBar` accompanies the view.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Load dashboard data
+- GIVEN the dashboard view mounts
+- WHEN data loading runs
+- THEN catalogs, the publication total, and the activity chart MUST be fetched
+- AND a user-facing error message MUST be shown if any fetch rejects
+
+### Requirement: Unpublished-content dashboard widgets (DSH-011)
+The system SHALL provide two Nextcloud dashboard widgets —
+`UnpublishedAttachmentsWidget` (fetches `attachment` collection) and
+`UnpublishedPublicationsWidget` (fetches `publication` collection) — each registered via
+its own bundle entry-point (`unpublishedAttachmentsWidget.js`,
+`unpublishedPublicationsWidget.js`) and rendering the unpublished items.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Load unpublished widgets
+- GIVEN the dashboard renders the unpublished widgets
+- WHEN each widget mounts
+- THEN `UnpublishedAttachmentsWidget` MUST fetch the `attachment` collection
+- AND `UnpublishedPublicationsWidget` MUST fetch the `publication` collection
+
+### Requirement: Directory management UI (DIR-012)
+The system SHALL provide a directory management frontend: a `DirectorySideBar`, an
+`AddDirectoryModal` that registers an external directory by POSTing the directory URL to
+`/apps/opencatalogi/api/directory` (default placeholder
+`https://directory.opencatalogi.nl/apps/opencatalogi/api/directory`), and a
+`ViewDirectoryModal` for inspecting a directory entry. Modals are toggled through the
+navigation store.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Add an external directory
+- GIVEN the add-directory modal is open with a directory URL
+- WHEN the user confirms
+- THEN a POST MUST be sent to `/apps/opencatalogi/api/directory` with the URL
+- AND the modal MUST close on success
+
+### Requirement: Listing management UI (LST-007)
+The system SHALL provide listing management dialogs: an `EditListingModal` (present in two
+locations — `modals/listing` editing the `listing` type and `modals/directory` editing the
+`directory` type — that save via `objectStore.updateObject(...)` then refresh the relevant
+collection) and a `DeleteListingDialog` that removes a listing via
+`objectStore.deleteObject('listing', id)`.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Edit a listing
+- GIVEN the listing edit modal is open
+- WHEN the user saves
+- THEN the listing MUST be persisted via `objectStore.updateObject(...)` and the collection refreshed
+
+#### Scenario: Delete a listing
+- GIVEN a listing is selected for deletion
+- WHEN the delete-listing dialog is confirmed
+- THEN the listing MUST be removed via `objectStore.deleteObject('listing', id)`
+
+> **Notes (observed duplication — not fixed by this retrofit):**
+> `EditListingModal.vue` exists twice — `src/modals/directory/EditListingModal.vue`
+> (targets `directory`) and `src/modals/listing/EditListingModal.vue` (targets `listing`).
+> The coverage report flags this as duplicated. LST-007 specifies the observed behavior of
+> both; de-duplication is a code change tracked separately, not resolved here.
 
 ## DashboardController Dead Code (Gap 17)
 

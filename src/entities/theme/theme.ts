@@ -1,19 +1,24 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TTheme } from './theme.types'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ */
 export class Theme implements TTheme {
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public image: string
-	public content: string
-	public link: string
-	public url: string
-	public icon: string
-	public isExternal: boolean
-	public sort: number
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public image!: string
+	public content!: string
+	public link!: string
+	public url!: string
+	public icon!: string
+	public isExternal!: boolean
+	public sort!: number
 
 	constructor(data: TTheme) {
 		this.hydrate(data)

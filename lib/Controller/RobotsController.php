@@ -17,6 +17,8 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -81,6 +83,8 @@ class RobotsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
      */
     public function index(): TextResponse
     {

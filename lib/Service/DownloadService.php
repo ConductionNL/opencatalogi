@@ -19,6 +19,13 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-77
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-78
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-79
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-80
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-81
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-82
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -71,6 +78,8 @@ class DownloadService
      *
      * @return JSONResponse A download response, download URL, or error response.
      * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-77
      */
     public function createPublicationFile(
         ObjectService $objectService,
@@ -140,6 +149,8 @@ class DownloadService
      * @param ObjectService  $objectService The objectService.
      *
      * @return array|JSONResponse The publication found as array or an error JSONResponse.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-78
      */
     private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse
     {
@@ -178,6 +189,8 @@ class DownloadService
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-79
      */
     public function saveFileToNextCloud(string $filename, array $publication): string|JSONResponse
     {
@@ -224,6 +237,8 @@ class DownloadService
      * @param array  $publicationFile The downloadUrl and filename of the metadata pdf.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-80
      */
     private function prepareZip(string $tempFolder, array $attachments, array $publicationFile): void
     {
@@ -264,6 +279,8 @@ class DownloadService
      *
      * @return JSONResponse A download response or an error response.
      * @throws LoaderError|MpdfException|RuntimeError|SyntaxError
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-81
      */
     public function createPublicationZip(ObjectService $objectService, string|int $id): JSONResponse
     {
@@ -321,6 +338,8 @@ class DownloadService
      * @param ObjectService  $objectService The objectService.
      *
      * @return array|JSONResponse All attachments for the publication or an error JSONResponse.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-82
      */
     public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse
     {

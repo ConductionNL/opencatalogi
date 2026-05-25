@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * EditAttachmentModal — update attachment metadata via updateObject('attachment').
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-3
+ */
 import { translate as t } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'

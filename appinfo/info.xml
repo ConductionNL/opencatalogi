@@ -45,7 +45,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
     <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/2.png</screenshot>
 
    	<dependencies>
-        <php min-version="8.0" min-int-size="64"/>
+        <php min-version="8.3" min-int-size="64"/>
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
@@ -54,7 +54,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
         <lib>zip</lib>
 
         <owncloud max-version="0" min-version="0"/>
-		<nextcloud min-version="28" max-version="33"/>
+		<nextcloud min-version="28" max-version="34"/>
 	</dependencies>
 
 	<repair-steps>

@@ -239,6 +239,11 @@ import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import { Menu } from '../../entities/index.js'
 import _ from 'lodash'
 
+/**
+ * ViewMenuModal — read a menu and its embedded items.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'ViewMenuModal',
 	components: {

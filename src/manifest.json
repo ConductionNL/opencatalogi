@@ -1,0 +1,443 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"version": "2.3.0",
+	"dependencies": [
+		"openregister"
+	],
+	"menu": [
+		{
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
+		{
+			"id": "Search",
+			"label": "Search",
+			"icon": "icon-search",
+			"route": "Search",
+			"order": 30
+		},
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "OrganizationsMenu",
+			"label": "Organizations",
+			"icon": "icon-group",
+			"route": "Organizations",
+			"section": "settings",
+			"order": 91
+		},
+		{
+			"id": "CatalogsMenu",
+			"label": "Catalogs",
+			"icon": "icon-files",
+			"route": "Catalogs",
+			"section": "settings",
+			"order": 92
+		},
+		{
+			"id": "GlossaryMenu",
+			"label": "Glossary",
+			"icon": "icon-toggle-filelist",
+			"route": "Glossary",
+			"section": "settings",
+			"order": 93
+		},
+		{
+			"id": "ThemesMenu",
+			"label": "Themes",
+			"icon": "icon-category-customization",
+			"route": "Themes",
+			"section": "settings",
+			"order": 94
+		},
+		{
+			"id": "PagesMenu",
+			"label": "Pages",
+			"icon": "icon-category-files",
+			"route": "Pages",
+			"section": "settings",
+			"order": 95
+		},
+		{
+			"id": "MenusMenu",
+			"label": "Menus",
+			"icon": "icon-category-customization",
+			"route": "Menus",
+			"section": "settings",
+			"order": 96
+		},
+		{
+			"id": "DirectoryMenu",
+			"label": "Directory",
+			"icon": "icon-folder",
+			"route": "Directory",
+			"section": "settings",
+			"order": 97
+		},
+		{
+			"id": "SettingsMenu",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
+		}
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "custom",
+			"title": "Dashboard",
+			"component": "DashboardView",
+			"_note": "Custom analytics dashboard (charts + recent activity + per-catalog stats). Could be type:\"dashboard\" with widget composition once chart widgets land."
+		},
+		{
+			"id": "Catalogs",
+			"route": "/catalogi",
+			"type": "index",
+			"title": "Catalogs",
+			"config": {
+				"register": "@resolve:catalog_register",
+				"schema": "@resolve:catalog_schema",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "CatalogDetail",
+			"route": "/catalogi/:id",
+			"type": "custom",
+			"title": "Catalog",
+			"component": "CatalogDetailPageView",
+			"_note": "CnDetailPage with bespoke header (catalog stats + slug + edit actions) + sidebar tabs. Lib gap: header-component slot resolution from manifest, granular sidebar-tab declaration."
+		},
+		{
+			"id": "Publications",
+			"route": "/publications/:catalogSlug",
+			"type": "index",
+			"title": "Publications",
+			"config": {
+				"register": "publication",
+				"schema": "publication",
+				"filter": {
+					"catalog": "@route.catalogSlug"
+				},
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": true,
+					"showCopyAction": true,
+					"showDeleteAction": true,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "PublicationDetail",
+			"route": "/publications/:catalogSlug/:id",
+			"type": "detail",
+			"title": "Publication",
+			"config": {
+				"register": "publication",
+				"schema": "publication",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "file-manager",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 4,
+					"gridWidth": 12,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
+		},
+		{
+			"id": "Search",
+			"route": "/search",
+			"type": "search",
+			"title": "Search",
+			"config": {
+				"register": "publication",
+				"schema": "publication"
+			}
+		},
+		{
+			"id": "Organizations",
+			"route": "/organizations",
+			"type": "index",
+			"title": "Organizations",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "organization",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "Themes",
+			"route": "/themes",
+			"type": "index",
+			"title": "Themes",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "theme",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "ThemeDetail",
+			"route": "/themes/:id",
+			"type": "detail",
+			"title": "Theme",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "theme",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "theme-preview",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
+		},
+		{
+			"id": "Glossary",
+			"route": "/glossary",
+			"type": "index",
+			"title": "Glossary",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "glossary",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "GlossaryDetail",
+			"route": "/glossary/:id",
+			"type": "detail",
+			"title": "Glossary term",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "glossary",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "relationship-graph",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
+		},
+		{
+			"id": "Pages",
+			"route": "/pages",
+			"type": "index",
+			"title": "Pages",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "page",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "PageDetail",
+			"route": "/pages/:id",
+			"type": "detail",
+			"title": "Page",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "page",
+				"idParam": "@route.id"
+			}
+		},
+		{
+			"id": "Menus",
+			"route": "/menus",
+			"type": "index",
+			"title": "Menus",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "menu",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": true,
+					"selectable": true
+				}
+			}
+		},
+		{
+			"id": "MenuDetail",
+			"route": "/menus/:id",
+			"type": "detail",
+			"title": "Menu",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "menu",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "tree-view",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
+		},
+		{
+			"id": "Directory",
+			"route": "/directory",
+			"type": "custom",
+			"title": "Directory",
+			"component": "CnFederationStatus",
+			"_note": "Federated-directory list rendered by CnFederationStatus from @conduction/nextcloud-vue (federation discovery + per-node availability)."
+		}
+	]
+}

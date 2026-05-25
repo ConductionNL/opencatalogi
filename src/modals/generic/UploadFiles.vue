@@ -314,6 +314,11 @@ const { openFileUpload, files, reset, setTags, rejectedDuplicates } = useFileSel
 	dropzone: dropZoneRef,
 })
 
+/**
+ * UploadFiles — upload files to a publication's OpenRegister files endpoint.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-1
+ */
 export default {
 	name: 'UploadFiles',
 	components: {
