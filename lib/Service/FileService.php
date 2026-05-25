@@ -15,6 +15,21 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-89
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-90
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-91
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -83,6 +98,8 @@ class FileService
      * @param string $publicationTitle The title of the Publication.
      *
      * @return string The name the folder for this publication should have.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
      */
     public function getPublicationFolderName(string $publicationId, string $publicationTitle): string
     {
@@ -96,6 +113,8 @@ class FileService
      * @param IShare $share An IShare object we are getting the share link for.
      *
      * @return string The share link needed to get the file or folder for the given IShare object.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-89
      */
     public function getShareLink(IShare $share): string
     {
@@ -109,6 +128,8 @@ class FileService
      * @return string The current http/https domain url.
      *
      * @SuppressWarnings(PHPMD.Superglobals) — $_SERVER access needed for domain detection
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-89
      */
     private function getCurrentDomain(): string
     {
@@ -134,6 +155,8 @@ class FileService
      * @param integer|null $shareType The shareType of the share we are trying to find.
      *
      * @return IShare|null An IShare object or null.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-90
      */
     public function findShare(string $path, ?int $shareType=3): ?IShare
     {
@@ -183,6 +206,8 @@ class FileService
      *
      * @return IShare The Created IShare object.
      * @throws Exception
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-91
      */
     private function createShare(array $shareData): IShare
     {
@@ -219,6 +244,8 @@ class FileService
      *
      * @return string The share link.
      * @throws Exception In case creating the share(link) fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-91
      */
     public function createShareLink(string $path, ?int $shareType=3, ?int $permissions=null): string
     {
@@ -285,6 +312,8 @@ class FileService
      * @return JSONResponse|array An error response if creating the file in NextCloud failed
      *                            or the updated data array containing info about the created file.
      * @throws Exception In case creating a folder or new file fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
      */
     public function handleFile(IRequest $request, array $data): JSONResponse|array
     {
@@ -338,6 +367,8 @@ class FileService
      * @param IRequest $request The request object containing the uploaded file.
      *
      * @return JSONResponse|array An error response or an array containing the info about the uploaded file.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
      */
     private function checkUploadedFile(IRequest $request): JSONResponse|array
     {
@@ -370,6 +401,8 @@ class FileService
      *
      * @return boolean True if successfully created a new folder.
      * @throws Exception In case we can't create the folder because it is not permitted.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
      */
     public function createFolder(string $folderPath): bool
     {
@@ -419,6 +452,8 @@ class FileService
      *
      * @return array The updated $data array
      * @throws Exception In case creating the share(link) fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
      */
     public function addFileInfoToData(array $data, array $uploadedFile, string $filePath): array
     {
@@ -465,6 +500,8 @@ class FileService
      * @throws Exception In case we can't write to file because it is not permitted.
      *
      * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
      */
     public function uploadFile(mixed $content, string $filePath): bool
     {
@@ -517,6 +554,8 @@ class FileService
      * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
      */
     public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
     {
@@ -567,6 +606,8 @@ class FileService
      *
      * @return boolean True if successful.
      * @throws Exception In case deleting the file is not permitted.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
      */
     public function deleteFile(string $filePath): bool
     {
@@ -614,6 +655,8 @@ class FileService
      * Destination::X options.
      * Please use the "rmdir(directory: '/tmp/mpdf');" function after this to clean up temporary files.
      * @throws MpdfException|LoaderError|RuntimeError|SyntaxError
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
      */
     public function createPdf(string $twigTemplate, array $context): Mpdf
     {
@@ -655,6 +698,8 @@ class FileService
      *                            '../zipName.zip'.
      *
      * @return string|null Returns null if created successfully and a string in case of an error.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
      */
     public function createZip(string $inputFolder, string $tempZip): ?string
     {
@@ -701,6 +746,8 @@ class FileService
      *                                 the end of this function.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
      */
     public function downloadZip(string $tempZip, ?string $inputFolder=null): void
     {
