@@ -1244,6 +1244,8 @@ export const useObjectStore = defineStore('object', {
 		 * Publish object
 		 * @param {object} objectItem - Object to publish
 		 * @return {Promise<object>} The updated object
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1
 		 */
 		async publishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
@@ -1312,6 +1314,8 @@ export const useObjectStore = defineStore('object', {
 		 * Depublish object
 		 * @param {object} objectItem - Object to depublish
 		 * @return {Promise<object>} The updated object
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-2
 		 */
 		async depublishObject(objectItem) {
 			const objectId = objectItem.id || objectItem['@self']?.id
