@@ -133,28 +133,35 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		mode() {
 			return this.selectedMode?.id || 'now'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		today() {
 			return new Date().toISOString().slice(0, 10)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		minDepublishDate() {
 			const start = new Date()
 			start.setHours(0, 0, 0, 0)
 			return start
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		depublishDateObj() {
 			if (!this.depublishDate) return null
 			const [year, month, day] = this.depublishDate.split('-').map(Number)
 			return new Date(year, month - 1, day)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		selectedObjects() {
 			return objectStore.selectedObjects || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		alreadyDepublishedCount() {
 			return this.selectedObjects.filter(obj => this.isDepublished(obj)).length
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		alreadyDepublishedWarning() {
 			const count = this.alreadyDepublishedCount
 			if (count === 1) {
@@ -162,9 +169,11 @@ export default {
 			}
 			return t('opencatalogi', '{count} of the selected publications are already depublished and will be skipped. Their depublication dates will not be changed.', { count })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedCount() {
 			return this.selectedObjects.filter(obj => !schemaHasPublicationDateFields(obj)).length
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedWarning() {
 			const count = this.unsupportedCount
 			if (count === 1) {
@@ -172,12 +181,14 @@ export default {
 			}
 			return t('opencatalogi', '{count} of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help.', { count })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		modeOptions() {
 			return [
 				{ id: 'now', label: t('opencatalogi', 'Depublish now') },
 				{ id: 'later', label: t('opencatalogi', 'Depublish later') },
 			]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		dialogTitle() {
 			const count = this.selectedObjects.length
 			if (count === 1) {
@@ -185,12 +196,14 @@ export default {
 			}
 			return t('opencatalogi', 'Depublish {count} publications', { count })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		infoText() {
 			if (this.mode === 'later') {
 				return t('opencatalogi', 'The depublication date will be set to the chosen date. The publication date will remain unchanged.')
 			}
 			return t('opencatalogi', 'Publications will be depublished with today\'s date. The publication date will remain unchanged.')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		submitDisabled() {
 			if (this.loading) return true
 			if (this.selectedObjects.length === 0) return true
@@ -200,6 +213,7 @@ export default {
 			if (this.alreadyDepublishedCount === this.selectedObjects.length) return true
 			return false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		successMessage() {
 			const plural = this.originalSelectedCount > 1
 			return plural
@@ -208,6 +222,7 @@ export default {
 		},
 	},
 
+	/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 	mounted() {
 		this.originalSelectedCount = this.selectedObjects.length
 		this.selectedMode = this.modeOptions[0]
@@ -223,6 +238,7 @@ export default {
 		 * @param {unknown} value - The raw date value from the object
 		 * @return {string|null} The normalized YYYY-MM-DD string or null
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		normalizeDate(value) {
 			if (value == null || value === '') return null
 			return String(value).slice(0, 10)
@@ -241,6 +257,7 @@ export default {
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently depublished
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		isDepublished(obj) {
 			const depub = this.normalizeDate(obj?.depublicatiedatum)
 			if (!depub) return false
@@ -267,6 +284,7 @@ export default {
 		 *
 		 * @return {string} The reason.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedReason() {
 			return t('opencatalogi', 'This schema does not support depublishing. Ask your IT manager for help.')
 		},
@@ -278,6 +296,7 @@ export default {
 		 * @param {Date} date - A day passed by the picker
 		 * @return {boolean} true if the date should be unselectable
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		isDateBeforeMin(date) {
 			if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false
 			const d = new Date(date)
@@ -285,6 +304,7 @@ export default {
 			return d.getTime() < this.minDepublishDate.getTime()
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		handleDateInput(value) {
 			if (!value) {
 				this.depublishDate = null
@@ -310,6 +330,7 @@ export default {
 			this.depublishDate = `${year}-${month}-${day}`
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		closeDialog() {
 			if (this.closeModalTimeout) {
 				clearTimeout(this.closeModalTimeout)
@@ -318,12 +339,14 @@ export default {
 			navigationStore.setDialog(false)
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		async depublishObjects() {
 			this.loading = true
 			this.error = false

@@ -26,6 +26,7 @@ export default {
 		CnAppRoot,
 	},
 
+	/** @spec exclude Vue provide()/inject() DI channel wiring, no business logic */
 	provide() {
 		return {
 			// Provide/inject channel for custom components that use the object
@@ -71,6 +72,7 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-2 */
 		permissions() {
 			const base = window.OC?.currentUser?.permissions ?? []
 			// CnAppNav's permission filter is an array-includes check; Nextcloud
@@ -83,6 +85,7 @@ export default {
 		},
 	},
 
+	/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-2 */
 	async created() {
 		// Pre-load catalog collection so the MainMenu nav items and
 		// the Publications route (publications/:catalogSlug) can resolve
@@ -99,6 +102,7 @@ export default {
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
 		 */
+		/** @spec exclude i18n wrapper delegating to Nextcloud translate() */
 		translateForApp(key) {
 			return ncT('opencatalogi', key)
 		},

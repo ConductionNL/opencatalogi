@@ -30,6 +30,8 @@ function resolveSchema(publication) {
  *
  * @param {object} publication - The publication object.
  * @return {boolean} true when both fields are declared on the schema.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1
  */
 export function schemaHasPublicationDateFields(publication) {
 	const schema = resolveSchema(publication)

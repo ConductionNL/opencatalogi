@@ -191,6 +191,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		closeModal() {
 			this.navigationStore.setModal(false)
 		},

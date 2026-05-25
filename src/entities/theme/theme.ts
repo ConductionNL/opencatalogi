@@ -20,6 +20,7 @@ export class Theme implements TTheme {
 	public isExternal!: boolean
 	public sort!: number
 
+	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TTheme) {
 		this.hydrate(data)
 	}

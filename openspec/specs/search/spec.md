@@ -5,6 +5,7 @@ retrofit_extensions:
   - SCH-017
   - SCH-018
   - SCH-019
+  - SCH-020
 ---
 
 # Search
@@ -149,6 +150,27 @@ administrative purposes.
 - GIVEN an authenticated request to `GET /api/search`
 - WHEN `SearchController::index` runs
 - THEN it MUST delegate to `PublicationService::index` and return the JSON publication list
+
+### Requirement: Internal per-publication retrieval, attachment, download and relation actions (SCH-020)
+The internal `SearchController` SHALL expose per-publication actions that delegate to
+`PublicationService`, each documented as internal/administrative and declared
+`@NoAdminRequired` / `@NoCSRFRequired`:
+`show(id)` returns a single publication, `attachments(id)` returns its files,
+`download(id)` returns a `DataDownloadResponse` (or `JSONResponse` on error) for its files,
+`uses(id)` returns the objects this publication references (A → B), and
+`used(id)` returns the objects that reference this publication (B → A).
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Retrieve a single publication and its files
+- GIVEN an authenticated request to `SearchController::show`, `attachments`, or `download` with a publication `id`
+- WHEN the action runs
+- THEN it MUST delegate to the corresponding `PublicationService` method and return its result
+
+#### Scenario: Inspect publication relations
+- GIVEN an authenticated request to `SearchController::uses` or `used` with a publication `id`
+- WHEN the action runs
+- THEN `uses` MUST return objects the publication references and `used` MUST return objects that reference the publication, via `PublicationService`
 
 > **Notes (observed orphan — not fixed by this retrofit):**
 > `src/store/modules/search.js` exists alongside the live `src/store/modules/search.ts`,

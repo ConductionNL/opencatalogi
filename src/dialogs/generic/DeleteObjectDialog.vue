@@ -93,15 +93,18 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogProperties() {
 			return navigationStore.dialogProperties
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogTitle() {
 			return this.dialogProperties?.dialogTitle
 		},
 		isMultiple() {
 			return this.dialogProperties?.isMultiple ?? false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		shouldShowDialog() {
 			return navigationStore.dialog === 'deleteObject'
 		},
@@ -109,12 +112,14 @@ export default {
 	watch: {
 		dialogProperties: {
 			immediate: true,
+			/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 			handler(newProps) {
 				this.objectType = newProps?.objectType
 			},
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		deleteObject() {
 			this.loading = true
 			if (this.isMultiple) {
@@ -195,6 +200,7 @@ export default {
 					})
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		refreshObjectList(objectType) {
 			switch (objectType) {
 			case 'publication':
@@ -204,6 +210,7 @@ export default {
 				objectStore.fetchCollection(objectType)
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		closeDialog() {
 			if (this.closeTimeout) {
 				clearTimeout(this.closeTimeout)

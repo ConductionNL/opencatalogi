@@ -70,6 +70,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		DeleteAttachment() {
 			this.loading = true
 

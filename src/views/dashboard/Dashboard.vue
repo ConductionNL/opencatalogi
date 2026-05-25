@@ -335,18 +335,23 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		catalogs() {
 			return objectStore.getCollection('catalog').results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		allPublications() {
 			return objectStore.getCollection('publication').results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		conceptPublications() {
 			return this.allPublications.filter((p) => isConcept(p))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publishedPublications() {
 			return this.allPublications.filter((p) => isPublished(p))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		depublishedPublications() {
 			return this.allPublications.filter((p) => isDepublished(p))
 		},
@@ -355,6 +360,7 @@ export default {
 		// conceptAttachments() {
 		//   return this.allAttachments.filter((attachment) => attachment.status === 'Concept')
 		// },
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		kpis() {
 			return {
 				catalogCount: this.catalogs.length,
@@ -366,6 +372,7 @@ export default {
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publicationsByCategoryData() {
 			const counts = {}
 			for (const pub of this.allPublications) {
@@ -386,10 +393,12 @@ export default {
 				series: Object.values(counts),
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		hasData() {
 			return this.catalogs.length > 0
 				|| this.allPublications.length > 0
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		widgetDefs() {
 			return [
 				{ id: 'count-publications', title: t('opencatalogi', 'Publications'), type: 'custom' },
@@ -408,12 +417,14 @@ export default {
 			]
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 	async mounted() {
 		await this.loadDashboardData()
 		this.refreshTimer = setInterval(() => {
 			this.loadDashboardData()
 		}, 5 * 60 * 1000)
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 	beforeDestroy() {
 		if (this.refreshTimer) {
 			clearInterval(this.refreshTimer)
@@ -421,6 +432,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async loadDashboardData() {
 			this.globalLoading = true
 			this.error = null
@@ -439,6 +451,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async fetchAllPublications() {
 			try {
 				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
@@ -476,6 +489,7 @@ export default {
 		//   this.attachmentsList = results.filter((r) => r.status === 'fulfilled').flatMap((r) => r.value)
 		// },
 
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async fetchActivityChart() {
 			try {
 				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
@@ -495,6 +509,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		resolveSchemaName(publication) {
 			const schemaRef = publication['@self']?.schema
 			if (!schemaRef) return ''
@@ -505,16 +520,19 @@ export default {
 			return match?.title || match?.name || ''
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		createPublication() {
 			objectStore.clearActiveObject('publication')
 			navigationStore.setModal('viewObject')
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		openPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			navigationStore.setModal('viewObject')
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		onLayoutChange(newLayout) {
 			this.dashboardLayout = newLayout
 		},

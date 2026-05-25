@@ -288,6 +288,7 @@ export default {
 		 * Get the currently active menu from the store
 		 * @return {object|null} The active menu object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menu() {
 			return objectStore.getActiveObject('menu')
 		},
@@ -309,6 +310,7 @@ export default {
 		 * Get the menu state from the store
 		 * @return {object} The menu state object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menuState() {
 			return objectStore.getState('menu')
 		},
@@ -316,6 +318,7 @@ export default {
 		 * Validate the input form
 		 * @return {object} Validation result
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		inputValidation() {
 			const menuItem = new Menu(this.editForm)
 			const result = menuItem.validate()
@@ -340,6 +343,7 @@ export default {
 		 * @param {object} newMenu - The new menu data
 		 */
 		menu: {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 			handler(newMenu) {
 				if (newMenu && !this.isAddMode) {
 					this.editForm = {
@@ -356,6 +360,7 @@ export default {
 
 		// Add watcher for modal state to handle cleanup
 		'navigationStore.modal': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 			handler(newModal, oldModal) {
 				if (oldModal === 'viewMenu' && newModal !== 'viewMenu') {
 					// Modal was closed, ensure cleanup
@@ -367,11 +372,13 @@ export default {
 			},
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	mounted() {
 		// Initialize form when component mounts
 		// Fetch groups for the dropdown
 		this.fetchGroups && this.fetchGroups()
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	beforeUnmount() {
 		// Clean up any pending timeouts or intervals
 		// Reset component state
@@ -395,6 +402,7 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
@@ -404,6 +412,7 @@ export default {
 		 * Open the edit modal for the current menu
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		openEditModal() {
 			navigationStore.setModal('viewMenu')
 		},
@@ -411,6 +420,7 @@ export default {
 		 * Open the add menu item modal
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		openAddItemModal() {
 			objectStore.setState('menu', { success: null, error: null })
 			navigationStore.setModal('menuItemForm')
@@ -420,6 +430,7 @@ export default {
 		 * @param {object} item - The menu item to edit
 		 * @param {number} index - The index of the menu item
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		editItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('menuItemForm')
@@ -429,6 +440,7 @@ export default {
 		 * @param {object} item - The menu item to delete
 		 * @param {number} index - The index of the menu item in the items array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		deleteItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('deleteMenuItem')
@@ -437,6 +449,7 @@ export default {
 		 * Handle position update
 		 * @param {number} value - The new position value
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		handlePositionUpdate(value) {
 			this.editForm.position = parseInt(value, 10) || 0
 		},
@@ -444,6 +457,7 @@ export default {
 		 * Reset all component data to initial state
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		resetComponentState() {
 			this.editForm = {
 				title: '',
@@ -469,6 +483,7 @@ export default {
 		 * Close the modal and clear all state
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		closeModal() {
 			// Clear store state
 			navigationStore.setModal(false)
@@ -482,6 +497,7 @@ export default {
 		/**
 		 * Save the menu with proper state management
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		saveMenu() {
 			const menuItem = new Menu({
 				...this.editForm,
@@ -508,6 +524,7 @@ export default {
 		 * Delete the current menu
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		deleteMenu() {
 			if (this.menu && this.menu.id) {
 				objectStore.deleteObject('menu', this.menu.id)
@@ -519,6 +536,7 @@ export default {
 					})
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			import('../../services/nextcloudGroups.js').then(({ getNextcloudGroups }) => {

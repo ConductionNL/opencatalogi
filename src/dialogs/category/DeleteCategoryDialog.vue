@@ -93,6 +93,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		deleteCategory() {
 			const activeCategory = objectStore.getActiveObject('category')
 			if (!activeCategory?.id) return

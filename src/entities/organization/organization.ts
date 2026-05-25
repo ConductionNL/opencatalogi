@@ -71,6 +71,8 @@ export class Organization implements TOrganization {
 	/**
 	 * Creates a new Organization instance
 	 * @param data - Organization data
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
 	 */
 	constructor(data: TOrganization) {
 		this.hydrate(data)

@@ -254,6 +254,7 @@ export default {
 		/**
 		 * Filters publicationType (Now known as Publication Type) based on the catalogi
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		filteredPublicationTypeOptions() {
 			if (!this.catalogi?.options?.length) return {}
 			if (!this.catalogi?.value?.id) return {}
@@ -278,6 +279,7 @@ export default {
 			}
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 	mounted() {
 		objectStore.fetchCollection('publication')
 		objectStore.fetchCollection('attachment')
@@ -285,6 +287,7 @@ export default {
 		this.fetchPublicationType()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		handleViewPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			const catalogId = publication?.catalog?.id || publication?.catalog
@@ -294,6 +297,7 @@ export default {
 			if (!slug || !publication?.id) return
 			this.$router.push(`/publications/${slug}/${publication.id}`)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		cleanup() {
 			if (this.success === true) {
 				this.publicationItem = {
@@ -309,6 +313,7 @@ export default {
 			}
 			this.error = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchCatalogi() {
 			this.catalogiLoading = true
 
@@ -327,6 +332,7 @@ export default {
 					this.catalogiLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchPublicationType() {
 			this.publicationTypeLoading = true
 
@@ -340,6 +346,7 @@ export default {
 					this.publicationTypeLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		addPublication() {
 			this.loading = true
 			this.error = false
@@ -372,6 +379,7 @@ export default {
 					this.hasUpdated = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		addAttachment(publicationItem) {
 			this.loading = true
 			this.errorMessage = false

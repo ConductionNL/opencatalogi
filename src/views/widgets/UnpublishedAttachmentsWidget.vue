@@ -50,6 +50,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
 			return objectStore.getCollection('attachment').results
 				.filter((attachment) => attachment.status === 'Concept')
@@ -69,6 +70,7 @@ export default {
 		 * Fetch the attachment data
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData() {
 			this.loading = true
 			await objectStore.fetchCollection('attachment')

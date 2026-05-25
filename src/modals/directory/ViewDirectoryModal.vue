@@ -100,6 +100,7 @@ export default {
 		 * Get the currently active listing from the store
 		 * @return {object|null} The active listing object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
 		listing() {
 			return objectStore.getActiveObject('listing')
 		},
@@ -109,6 +110,7 @@ export default {
 		 * Close the modal and clear the active object
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('listing')

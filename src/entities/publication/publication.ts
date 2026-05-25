@@ -55,6 +55,7 @@ export class Publication implements TPublication {
 	public register!: number | null
 	public schema!: number | null
 
+	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TPublication) {
 		this.hydrate(data)
 	}

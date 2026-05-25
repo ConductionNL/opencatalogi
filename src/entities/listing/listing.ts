@@ -45,6 +45,8 @@ export class Listing implements TListing {
 	/**
 	 * Creates a new Listing instance
 	 * @param data - Listing data
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
 	 */
 	constructor(data: TListing) {
 		this.hydrate(data)

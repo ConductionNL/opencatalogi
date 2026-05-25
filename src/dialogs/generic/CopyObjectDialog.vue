@@ -224,6 +224,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		copyObject() {
 			if (this.isMultiple) {
 				const selectedObjects = objectStore.getSelectedObjects(this.objectType)
@@ -250,6 +251,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		closeDialog() {
 			setTimeout(() => {
 				objectStore.setState(this.objectType, { success: null, error: null })

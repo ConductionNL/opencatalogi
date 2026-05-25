@@ -56,6 +56,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
 			return objectStore.getCollection('catalog').results.map((catalog) => ({
 				// expecting that slug exists on the catalog object
@@ -75,6 +76,7 @@ export default {
 		 * @param {object} item - The catalog item to show
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		onShow(item) {
 			window.location.href = `/index.php/apps/opencatalogi/publications/${item.id}`
 		},
@@ -83,6 +85,7 @@ export default {
 		 * @param {string|null} search - Optional search term
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData(search = null) {
 			this.loading = true
 			await objectStore.fetchCollection('catalog', search)

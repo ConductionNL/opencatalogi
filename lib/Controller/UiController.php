@@ -90,6 +90,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function dashboard(): TemplateResponse
     {
@@ -104,6 +106,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function catalogi(): TemplateResponse
     {
@@ -118,6 +122,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function publicationsIndex(): TemplateResponse
     {
@@ -132,6 +138,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function publicationsPage(): TemplateResponse
     {
@@ -146,6 +154,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function search(): TemplateResponse
     {
@@ -160,6 +170,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function organizations(): TemplateResponse
     {
@@ -174,6 +186,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function themes(): TemplateResponse
     {
@@ -188,6 +202,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function glossary(): TemplateResponse
     {
@@ -202,6 +218,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function pages(): TemplateResponse
     {
@@ -216,6 +234,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function menus(): TemplateResponse
     {
@@ -230,6 +250,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function directory(): TemplateResponse
     {

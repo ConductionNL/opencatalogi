@@ -212,20 +212,25 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		activeCatalog() {
 			return objectStore.getActiveObject('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		organization() {
 			return this.activeCatalog?.organization ? objectStore.getObject('organization', this.activeCatalog.organization) : null
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		editCatalog() {
 			navigationStore.setModal('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		viewCatalog() {
 			if (!this.activeCatalog?.slug) {
 				console.error('[ViewCatalogi#viewCatalog] Cannot navigate: catalog or slug is missing')
@@ -234,18 +239,22 @@ export default {
 			navigationStore.setModal(false)
 			this.$router.push(`/publications/${this.activeCatalog.slug}`)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		deleteCatalog() {
 			navigationStore.setModal(false)
 			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		getRegisterById(id) {
 			const availableRegisters = objectStore.availableRegisters
 			return availableRegisters.find(register => register.id === id)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		getSchemaById(id) {
 			const availableSchemas = objectStore.availableSchemas
 			return availableSchemas.find(schema => schema.id === id)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		goToOrganization() {
 			if (this.organization) {
 				objectStore.setActiveObject('organization', this.organization)

@@ -528,30 +528,37 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		filteredObjects() {
 			return objectStore.getCollection(this.objectType)?.results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		currentPagination() {
 			const pagination = objectStore.getPagination(this.objectType)
 			return pagination
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		paginatedObjects() {
 			return this.filteredObjects
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		selectedObjects() {
 			// Use store-managed selected objects if available, otherwise use local state
 			return (objectStore.selectedObjects || []).map(obj =>
 				this.getObjectId(obj),
 			).filter(Boolean)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		allSelected() {
 			return this.filteredObjects.length > 0 && this.filteredObjects.every(obj =>
 				this.selectedObjects.includes(this.getObjectId(obj)),
 			)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		someSelected() {
 			return this.selectedObjects.length > 0 && !this.allSelected
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentName() {
 			if (objectStore.isLoading(this.objectType)) {
 				return t('opencatalogi', 'Loading {objectType}...', { objectType: this.objectTypePlural })
@@ -560,6 +567,7 @@ export default {
 			}
 			return ''
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentDescription() {
 			if (objectStore.isLoading(this.objectType)) {
 				return t('opencatalogi', 'Please wait while we fetch your {objectType}.', { objectType: this.objectTypePlural })
@@ -568,6 +576,7 @@ export default {
 			}
 			return ''
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		metadataColumns() {
 			// Get all available metadata columns from objectStore
 			return Object.entries(objectStore.metadata).map(([key, meta]) => ({
@@ -575,6 +584,7 @@ export default {
 				...meta,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		propertyColumns() {
 			// Get all available property columns from objectStore
 			return Object.entries(objectStore.properties || {}).map(([key, prop]) => ({
@@ -582,6 +592,7 @@ export default {
 				...prop,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		orderedEnabledColumns() {
 			// Get enabled columns from the store or use provided properties
 			const enabledColumns = objectStore.enabledColumns.length > 0
@@ -607,6 +618,7 @@ export default {
 		},
 	},
 
+	/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 	mounted() {
 		console.info(`GenericObjectTable mounted for ${this.objectType}, fetching objects...`)
 		this.refreshObjects()
@@ -615,11 +627,13 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		setViewMode(mode) {
 			console.info('Setting view mode to:', mode)
 			this.viewMode = mode
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		toggleSelectAll(checked) {
 			if (checked) {
 				// Select all - update store with full objects
@@ -634,6 +648,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		handleSelectObject(objectId) {
 			const currentSelected = [...(objectStore.selectedObjects || [])]
 			const existingIndex = currentSelected.findIndex(obj =>
@@ -659,6 +674,7 @@ export default {
 			objectStore.setSelectedObjects(currentSelected)
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		handleRowClick(id, event) {
 			// Don't select if clicking on the checkbox, actions button, or inside actions menu
 			if (event.target.closest('.tableColumnCheckbox')
@@ -683,6 +699,7 @@ export default {
 			return item?.summary || item?.description || ''
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getColumnValue(item, column) {
 			if (column.key) {
 				// Handle nested properties
@@ -697,6 +714,7 @@ export default {
 			return 'N/A'
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getCardProperties(item) {
 			// Convert properties to card display format
 			return this.orderedEnabledColumns.map(column => ({
@@ -707,6 +725,7 @@ export default {
 			})).filter(prop => prop.value !== 'N/A')
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getActionDisabled(action) {
 			if (typeof action.disabled === 'function') {
 				return action.disabled()
@@ -714,6 +733,7 @@ export default {
 			return action.disabled || false
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		executeAction(action) {
 			if (action.handler) {
 				action.handler()
@@ -730,6 +750,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		executeObjectAction(action, item) {
 			if (action.handler) {
 				action.handler(item)
@@ -749,6 +770,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		executeMassAction(action) {
 			if (this.selectedObjects.length === 0) return
 
@@ -761,6 +783,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		onPageChanged(page) {
 			console.info('Page changed to:', page)
 			if (this.paginationFunction) {
@@ -770,6 +793,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		onPageSizeChanged(pageSize) {
 			console.info('Page size changed to:', pageSize)
 			if (this.paginationFunction) {
@@ -779,6 +803,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		refreshObjects() {
 			if (this.refreshFunction) {
 				this.refreshFunction()
@@ -789,6 +814,7 @@ export default {
 			objectStore.setSelectedObjects([])
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		openLink(url, type = '') {
 			window.open(url, type)
 		},

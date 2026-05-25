@@ -42,6 +42,7 @@ export class PublicationType implements TPublicationType {
 
 	public source!: string
 
+	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TPublicationType) {
 		this.hydrate(data)
 	}

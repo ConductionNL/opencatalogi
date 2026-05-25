@@ -75,9 +75,11 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themes() {
 			return objectStore.getCollection('theme').results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themeOptions() {
 			const publication = objectStore.getActiveObject('publication')
 			return this.themes
@@ -89,12 +91,14 @@ export default {
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.successState = null
 			this.errorState = null
 			this.selectedTheme = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		async saveTheme() {
 			if (!this.selectedTheme) return
 			this.isSaving = true

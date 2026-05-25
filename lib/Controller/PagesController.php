@@ -146,6 +146,8 @@ class PagesController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-cross-origin-api-access/tasks.md#task-1
      */
     public function preflightedCors(): Response
     {
