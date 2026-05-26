@@ -7,6 +7,8 @@ retrofit: true
 
 ## Purpose
 
+@e2e exclude HTTP-contract spec — CORS header behaviour is verified by Newman API tests (OPTIONS preflight + Access-Control-Allow-Origin echo checks); not browser-UI observable in Playwright.
+
 OpenCatalogi exposes public read APIs (catalogs, directory, publications, pages, menus,
 glossary, themes) that are consumed by browser-based clients hosted on other origins —
 embedded catalog widgets, federated directory portals, and standalone front-ends. Those

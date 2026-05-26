@@ -34,6 +34,7 @@ The response sets a Content Security Policy permitting outbound API connections
 - AND the front-end router resolves the remaining path client-side
 
 #### Scenario: Template rendering failure
+@e2e exclude error injection scenario — requires deliberately breaking the Nextcloud template engine to return HTTP 500; not safely reproducible in a shared test environment; covered by PHPUnit controller test.
 - GIVEN the `index` template cannot be rendered
 - WHEN the shared `makeSpaResponse()` helper catches the exception
 - THEN it MUST return the `error` template with HTTP status `500` and the exception message
