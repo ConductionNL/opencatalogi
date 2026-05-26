@@ -6,6 +6,7 @@
 			:form-data="formData"
 			:selected-property="selectedProperty"
 			:property-overrides="propertyOverrides"
+			:is-new="isNew"
 			@update:selected-property="$emit('update:selected-property', $event)"
 			@update:property-value="$emit('update:property-value', $event)">
 			<template #row-actions="{ propertyKey, resolvedValue }">
@@ -31,6 +32,9 @@ import { NcButton } from '@nextcloud/vue'
 import { CnPropertiesTab } from '@conduction/nextcloud-vue'
 import Close from 'vue-material-design-icons/Close.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'PropertiesPanel',
 	components: {
@@ -46,6 +50,7 @@ export default {
 		propertyOverrides: { type: Object, default: () => ({}) },
 		canDropProperty: { type: Function, required: true },
 		getDropPropertyTooltip: { type: Function, required: true },
+		isNew: { type: Boolean, default: false },
 	},
 	emits: [
 		'update:selected-property',

@@ -12,9 +12,20 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-61
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-62
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-65
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -112,6 +123,8 @@ class CatalogiService
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister service from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -130,6 +143,8 @@ class CatalogiService
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister FileService from the container; pure framework plumbing, no domain behavior.
      */
     public function getFileService(): ?\OCA\OpenRegister\Service\FileService
     {
@@ -149,6 +164,8 @@ class CatalogiService
      * @return \OCA\OpenRegister\Db\SchemaMapper|null
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister SchemaMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
     {
@@ -158,7 +175,7 @@ class CatalogiService
             return $schemaMapper;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
     }//end getSchemaMapper()
 
     /**
@@ -167,6 +184,8 @@ class CatalogiService
      * @return \OCA\OpenRegister\Db\RegisterMapper|null
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister RegisterMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
     {
@@ -176,7 +195,7 @@ class CatalogiService
             return $registerMapper;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
     }//end getRegisterMapper()
 
     /**
@@ -195,6 +214,8 @@ class CatalogiService
      * @throws \RuntimeException When a slug cannot be resolved to a register/schema.
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
      */
     public function computeRewrittenRegistersAndSchemas(array $object): array
     {
@@ -210,7 +231,7 @@ class CatalogiService
                     try {
                         return $this->getRegisterMapper()->find($register)->getId();
                     } catch (NotFoundException $e) {
-                        throw new \RuntimeException('Register '.$register.' not found.');
+                        throw new RuntimeException('Register '.$register.' not found.');
                     }
                 },
                 $object['registers']
@@ -231,7 +252,7 @@ class CatalogiService
                     try {
                         return $this->getSchemaMapper()->find($schema)->getId();
                     } catch (NotFoundException $e) {
-                        throw new \RuntimeException('Schema '.$schema.' not found.');
+                        throw new RuntimeException('Schema '.$schema.' not found.');
                     }
                 },
                 $object['schemas']
@@ -261,6 +282,8 @@ class CatalogiService
      *             to the pre-save events (`ObjectCreatingEvent` / `ObjectUpdatingEvent`) and use
      *             {@see self::computeRewrittenRegistersAndSchemas()} together with
      *             `$event->setModifiedData(...)` instead.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
      */
     public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
     {
@@ -288,6 +311,8 @@ class CatalogiService
      *
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -380,6 +405,8 @@ class CatalogiService
      *                queries, ids.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-61
      */
     private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
     {
@@ -440,6 +467,8 @@ class CatalogiService
      *
      * @return array|null The catalog data as an array, or null if not found
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-62
      */
     public function getCatalogBySlug(string $slug): ?array
     {
@@ -522,6 +551,8 @@ class CatalogiService
      * @param string $slug The slug of the catalog to invalidate
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
      */
     public function invalidateCatalogCache(string $slug): void
     {
@@ -540,6 +571,8 @@ class CatalogiService
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
      */
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
@@ -580,6 +613,8 @@ class CatalogiService
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
      */
     public function warmupCatalogCache(string $slug): void
     {
@@ -597,6 +632,8 @@ class CatalogiService
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
      */
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
@@ -643,6 +680,8 @@ class CatalogiService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-65
      */
     public function index(null|string|int $catalogId=null): JSONResponse
     {

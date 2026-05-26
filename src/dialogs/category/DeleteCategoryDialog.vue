@@ -5,14 +5,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog
 		v-if="navigationStore.dialog === 'deleteCategory'"
-		name="Delete Category"
+		:name="t('opencatalogi', 'Delete Category')"
 		:can-close="false">
 		<div v-if="objectStore.getState('category').success !== null || objectStore.getState('category').error">
 			<NcNoteCard v-if="objectStore.getState('category').success" type="success">
-				<p>Category successfully deleted</p>
+				<p>{{ t('opencatalogi', 'Category successfully deleted') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('category').success" type="error">
-				<p>Something went wrong while deleting the category</p>
+				<p>{{ t('opencatalogi', 'Something went wrong while deleting the category') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('category').error" type="error">
 				<p>{{ objectStore.getState('category').error }}</p>
@@ -20,10 +20,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('category')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Category is being deleted...</span>
+			<span>{{ t('opencatalogi', 'Category is being deleted...') }}</span>
 		</div>
 		<p v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')">
-			Do you want to delete <b>{{ objectStore.getActiveObject('category')?.name }}</b>? This action cannot be undone.
+			{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject('category')?.name }) }}
 		</p>
 		<template v-if="objectStore.getState('category').success === null && !objectStore.isLoading('category')" #actions>
 			<NcButton
@@ -33,7 +33,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Cancel
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Delete :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -53,7 +53,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -74,6 +74,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-4
  */
 export default {
 	name: 'DeleteCategoryDialog',
@@ -92,6 +93,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		deleteCategory() {
 			const activeCategory = objectStore.getActiveObject('category')
 			if (!activeCategory?.id) return

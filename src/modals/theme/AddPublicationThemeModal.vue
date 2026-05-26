@@ -6,12 +6,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 	<NcModal
 		v-if="navigationStore.modal === 'addPublicationTheme'"
 		ref="modalRef"
-		name="Add publication theme"
+		:name="t('opencatalogi', 'Add publication theme')"
 		label-id="addPublicationThemeModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<NcNoteCard v-if="successState" type="success">
-				<p>Theme successfully saved</p>
+				<p>{{ t('opencatalogi', 'Theme successfully saved') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="errorState" type="error">
 				<p>{{ errorState }}</p>
@@ -35,7 +35,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="isSaving" :size="20" />
 					<ContentSaveOutline v-else :size="20" />
 				</template>
-				Save
+				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>
 	</NcModal>
@@ -51,6 +51,11 @@ import {
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 
+/**
+ * AddPublicationThemeModal — attach a theme to a publication via updateObject.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ */
 export default {
 	name: 'AddPublicationThemeModal',
 	components: {
@@ -70,9 +75,11 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themes() {
 			return objectStore.getCollection('theme').results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themeOptions() {
 			const publication = objectStore.getActiveObject('publication')
 			return this.themes
@@ -84,12 +91,14 @@ export default {
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.successState = null
 			this.errorState = null
 			this.selectedTheme = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		async saveTheme() {
 			if (!this.selectedTheme) return
 			this.isSaving = true

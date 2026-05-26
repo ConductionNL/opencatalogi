@@ -9,8 +9,25 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version   GIT: <git_id>
  * @link      https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-67
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-68
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-69
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-70
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-72
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-74
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -126,6 +143,8 @@ class DirectoryService
      * @throws GuzzleException
      *
      * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
      */
     public function doCronSync(): array
     {
@@ -215,6 +234,8 @@ class DirectoryService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
      */
     public function getUniqueDirectories(bool $availableOnly=false, bool $defaultOnly=false): array
     {
@@ -323,6 +344,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-67
      */
     public function syncDirectory(string $directoryUrl): array
     {
@@ -552,6 +575,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-68
      */
     public function syncListing(array $listingData, string $sourceDirectoryUrl): array
     {
@@ -851,6 +876,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-69
      */
     public function getPublications(array $guzzleConfig=[], bool $includeDefault=false): array
     {
@@ -1048,6 +1075,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-70
      */
     private function detectPublicationEndpoint(array $listingData): ?string
     {
@@ -1184,6 +1213,8 @@ class DirectoryService
      * @param array $existingData The existing listing data from database
      *
      * @return boolean True if incoming data is outdated and should be skipped
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
      */
     private function isListingDataOutdated(array $incomingData, array $existingData): bool
     {
@@ -1231,6 +1262,8 @@ class DirectoryService
      * @return \DateTime|null The extracted timestamp or null if not found
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
      */
     private function extractTimestamp(array $data): ?\DateTime
     {
@@ -1363,6 +1396,8 @@ class DirectoryService
      * sending a broadcast notification, to prevent infinite broadcast loops.
      *
      * @return boolean True if request is from a system broadcast, false otherwise
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
      */
     private function isSystemBroadcast(): bool
     {
@@ -1382,6 +1417,8 @@ class DirectoryService
      * @param string $url The URL to check
      *
      * @return boolean True if the URL is local, false otherwise
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
      */
     private function isLocalUrl(string $url): bool
     {
@@ -1446,6 +1483,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-72
      */
     public function getUsed(string $uuid, array $guzzleConfig=[]): array
     {
@@ -1602,6 +1641,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
      */
     public function getPublication(string $publicationId, array $guzzleConfig=[]): ?array
     {
@@ -1726,6 +1767,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-74
      */
     public function getDirectory(array $requestParams=[]): array
     {
@@ -1895,6 +1938,8 @@ class DirectoryService
      * @param mixed $catalogObject The catalog object to convert
      *
      * @return array The catalog formatted as a listing object
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
      */
     private function convertCatalogToListing($catalogObject): array
     {
@@ -1959,6 +2004,8 @@ class DirectoryService
      * @param array $listing The listing object to filter
      *
      * @return array The filtered listing object with only public properties
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
      */
     private function filterListingProperties(array $listing): array
     {
@@ -2005,6 +2052,8 @@ class DirectoryService
      * @param array $catalogs Array of catalog objects to convert
      *
      * @return array Array of catalogs converted to listing format with expanded schemas
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
      */
     public function convertCatalogiToListings(array $catalogs): array
     {
@@ -2110,6 +2159,8 @@ class DirectoryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
      */
     private function aggregateFacets(array $existingFacets, array $newFacets): array
     {

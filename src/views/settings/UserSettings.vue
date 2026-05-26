@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <template>
 	<NcAppSettingsDialog
 		:open="open"
@@ -16,6 +15,11 @@
 <script>
 import { NcAppSettingsDialog, NcAppSettingsSection } from '@nextcloud/vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
+/**
+ * UserSettings — placeholder user-preferences dialog.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-3
+ */
 export default {
 	name: 'UserSettings',
 	components: { NcAppSettingsDialog, NcAppSettingsSection, CogIcon },

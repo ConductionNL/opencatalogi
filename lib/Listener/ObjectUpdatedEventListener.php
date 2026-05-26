@@ -11,9 +11,16 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-56
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -54,6 +61,8 @@ class ObjectUpdatedEventListener implements IEventListener
      * @return void
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
      */
     public function handle(Event $event): void
     {
@@ -157,6 +166,8 @@ class ObjectUpdatedEventListener implements IEventListener
      * @param array                                  $publishingOptions The publishing configuration.
      *
      * @return boolean True if the update should be processed, false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-56
      */
     private function shouldProcessUpdate(
         array $newObjectData,
@@ -199,6 +210,8 @@ class ObjectUpdatedEventListener implements IEventListener
      * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to check.
      *
      * @return boolean True if the object is published, false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
      */
     private function isObjectEntityPublished(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): bool
     {
@@ -225,6 +238,8 @@ class ObjectUpdatedEventListener implements IEventListener
      * @param array $objectData The object data to check.
      *
      * @return boolean True if the object is published, false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
      */
     private function isObjectPublished(array $objectData): bool
     {
@@ -253,6 +268,8 @@ class ObjectUpdatedEventListener implements IEventListener
      * @param \OCA\OpenRegister\Db\ObjectEntity $objectEntity The object entity to convert.
      *
      * @return array The object data in array format.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
      */
     private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array
     {

@@ -20,16 +20,16 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Object Selection Review -->
 		<div v-if="success === null" class="unlock-step">
 			<NcNoteCard type="warning">
-				Objects will be unlocked and made available for editing by other users. Only objects that are currently locked can be unlocked.
+				{{ t('opencatalogi', 'Objects will be unlocked and made available for editing by other users. Only objects that are currently locked can be unlocked.') }}
 			</NcNoteCard>
 
 			<SelectedObjectsList
-				:title="(objectStore.selectedObjects?.length || 0) === 1 ? 'Publication to Unlock' : 'Selected Publications'"
+				:title="(objectStore.selectedObjects?.length || 0) === 1 ? t('opencatalogi', 'Publication to Unlock') : t('opencatalogi', 'Selected Publications')"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
-			<p>Publication{{ originalSelectedCount > 1 ? 's' : '' }} successfully unlocked</p>
+			<p>{{ originalSelectedCount > 1 ? t('opencatalogi', '{type}s successfully unlocked', { type: t('opencatalogi', 'Publication') }) : t('opencatalogi', '{type} successfully unlocked', { type: t('opencatalogi', 'Publication') }) }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -40,7 +40,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
+				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="loading || (objectStore.selectedObjects?.length || 0) === 0"
@@ -50,7 +50,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<LockOpenOutline v-if="!loading" :size="20" />
 				</template>
-				Unlock
+				{{ t('opencatalogi', 'Unlock') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -68,6 +68,9 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import LockOpenOutline from 'vue-material-design-icons/LockOpenOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ */
 export default {
 	name: 'MassUnlockObjects',
 	components: {
@@ -101,6 +104,7 @@ export default {
 		 * Get the objects to operate on from selected objects
 		 * @return {Array<object>} Array of objects to unlock
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		objectsToUnlock() {
 			return objectStore.selectedObjects || []
 		},
@@ -109,6 +113,7 @@ export default {
 		 * Get the dialog title based on number of objects
 		 * @return {string} Dialog title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		dialogTitle() {
 			const count = this.objectsToUnlock.length
 			if (count === 1) {
@@ -121,10 +126,12 @@ export default {
 		this.initializeSelection()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		initializeSelection() {
 			// Store the original count for success message
 			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
@@ -133,11 +140,13 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		async unlockObjects() {
 			this.loading = true
 

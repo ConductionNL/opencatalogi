@@ -12,22 +12,28 @@
 import { SafeParseReturnType, z } from 'zod'
 import { CatalogStatus, TCatalogi } from './catalogi.types'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ */
 export class Catalogi implements TCatalogi {
 
-	public id: string
-	public title: string
-	public summary: string
-	public description: string
-	public image: string
-	public listed: boolean
-	public status: CatalogStatus
-	public organization: string
-	public registers: string[]
-	public schemas: string[]
-	public filters: Record<string, unknown>
-	public slug: string
-	public hasWooSitemap: boolean
+	public id!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public image!: string
+	public listed!: boolean
+	public status!: CatalogStatus
+	public organization!: string
+	public registers!: string[]
+	public schemas!: string[]
+	public filters!: Record<string, unknown>
+	public slug!: string
+	public hasWooSitemap!: boolean
 
+	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
 	}

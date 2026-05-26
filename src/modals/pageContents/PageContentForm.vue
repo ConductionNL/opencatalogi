@@ -7,17 +7,17 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? `Content edit of ${_.upperFirst(contentsItem.type)}` : `Add Content to ${pageItem.title}`"
+		:name="isEdit ? t('opencatalogi', 'Content edit of {type}', { type: _.upperFirst(contentsItem.type) }) : t('opencatalogi', 'Add Content to {title}', { title: pageItem.title })"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div v-if="objectStore.getState('page').success !== null || objectStore.getState('page').error">
 				<NcNoteCard v-if="objectStore.getState('page').success" type="success">
-					<p>Content successfully added</p>
+					<p>{{ t('opencatalogi', 'Content successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!objectStore.getState('page').success" type="error">
-					<p>Something went wrong while adding content</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while adding content') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('page').error" type="error">
 					<p>{{ objectStore.getState('page').error }}</p>
@@ -27,23 +27,23 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div v-if="objectStore.getState('page').success === null" class="tabContainer">
 				<BTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab title="Configuration" active>
+					<BTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-group">
 							<p>
-								The order in which you add contents makes a difference, so pay attention to the order.
+								{{ t('opencatalogi', 'The order in which you add contents makes a difference, so pay attention to the order.') }}
 							</p>
 
 							<NcSelect
 								v-if="!isEdit"
 								v-bind="typeOptions"
 								v-model="contentsItem.type"
-								input-label="Content type"
+								:input-label="t('opencatalogi', 'Content type')"
 								required />
 
 							<!-- Order -->
 							<NcTextField
 								:disabled="objectStore.isLoading('page')"
-								label="Order"
+								:label="t('opencatalogi', 'Order')"
 								type="number"
 								min="0"
 								:value.sync="contentsItem.order"
@@ -51,19 +51,19 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<!-- text (plain text) -->
 							<div v-if="contentsItem.type === 'text'" class="form-group">
-								<label for="text-content">Text Content</label>
+								<label for="text-content">{{ t('opencatalogi', 'Text Content') }}</label>
 								<textarea
 									id="text-content"
 									v-model="contentsItem.textData"
 									class="text-content-textarea"
 									:disabled="objectStore.isLoading('page')"
 									rows="10"
-									placeholder="Enter your text content here..." />
+									:placeholder="t('opencatalogi', 'Enter your text content here...')" />
 							</div>
 
 							<!-- RichText -->
 							<div v-if="contentsItem.type === 'RichText'" class="editor-container">
-								<label>Rich Text Content</label>
+								<label>{{ t('opencatalogi', 'Rich Text Content') }}</label>
 								<v-md-editor
 									:initial-value="contentsItem.richTextData"
 									:options="editorOptions"
@@ -77,12 +77,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<div v-if="contentsItem.type === 'Image'" class="form-group">
 								<NcTextField
 									:disabled="objectStore.isLoading('page')"
-									label="Image URL"
+									:label="t('opencatalogi', 'Image URL')"
 									:value.sync="contentsItem.imageUrl"
 									placeholder="https://example.com/image.jpg" />
 								<NcTextField
 									:disabled="objectStore.isLoading('page')"
-									label="Srcset (optional, responsive images)"
+									:label="t('opencatalogi', 'Srcset (optional, responsive images)')"
 									:value.sync="contentsItem.imageSrcset"
 									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
 							</div>
@@ -93,8 +93,8 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									<div v-for="item in contentsItem.faqData" :key="item.id" class="draggable-item-container">
 										<div :class="`draggable-form-item ${getTheme()}`">
 											<Drag class="drag-handle" :size="40" />
-											<NcTextField label="Vraag" :value.sync="item.question" />
-											<NcTextField label="Antwoord" :value.sync="item.answer" />
+											<NcTextField :label="t('opencatalogi', 'Question')" :value.sync="item.question" />
+											<NcTextField :label="t('opencatalogi', 'Answer')" :value.sync="item.answer" />
 										</div>
 									</div>
 								</VueDraggable>
@@ -104,20 +104,20 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<div v-if="contentsItem.type === 'Quote'" class="form-group">
 								<NcTextField
 									:disabled="objectStore.isLoading('page')"
-									label="Title (bold text)"
+									:label="t('opencatalogi', 'Title (bold text)')"
 									:value.sync="contentsItem.quoteTitle"
-									placeholder="Enter the main quote text..." />
+									:placeholder="t('opencatalogi', 'Enter the main quote text...')" />
 								<NcTextField
 									:disabled="objectStore.isLoading('page')"
-									label="Subtitle"
+									:label="t('opencatalogi', 'Subtitle')"
 									:value.sync="contentsItem.quoteSubtitle"
-									placeholder="Enter the subtitle text..." />
+									:placeholder="t('opencatalogi', 'Enter the subtitle text...')" />
 							</div>
 
 							<!-- ContentBlocks -->
 							<div v-if="contentsItem.type === 'ContentBlocks'">
 								<p class="content-blocks-help">
-									Add up to 3 content blocks. Each block has an icon, title, description, and link.
+									{{ t('opencatalogi', 'Add up to 3 content blocks. Each block has an icon, title, description, and link.') }}
 								</p>
 								<VueDraggable v-model="contentsItem.contentBlocksData" easing="ease-in-out" draggable="div:not(:last-child)">
 									<div v-for="item in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
@@ -127,13 +127,13 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 												<NcSelect
 													v-bind="iconOptions"
 													v-model="item.icon"
-													input-label="Icon"
+													:input-label="t('opencatalogi', 'Icon')"
 													style="min-width: 160px;" />
 											</div>
-											<NcTextField label="Title" :value.sync="item.title" />
-											<NcTextField label="Description" :value.sync="item.text" />
-											<NcTextField label="Link URL" :value.sync="item.linkUrl" placeholder="/zoeken" />
-											<NcTextField label="Link text" :value.sync="item.linkTitle" placeholder="Meer informatie" />
+											<NcTextField :label="t('opencatalogi', 'Title')" :value.sync="item.title" />
+											<NcTextField :label="t('opencatalogi', 'Description')" :value.sync="item.text" />
+											<NcTextField :label="t('opencatalogi', 'Link URL')" :value.sync="item.linkUrl" placeholder="/zoeken" />
+											<NcTextField :label="t('opencatalogi', 'Link text')" :value.sync="item.linkTitle" :placeholder="t('opencatalogi', 'More information')" />
 										</div>
 									</div>
 								</VueDraggable>
@@ -142,39 +142,39 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					</BTab>
 
 					<!-- Security Tab -->
-					<BTab title="Security">
+					<BTab :title="t('opencatalogi', 'Security')">
 						<div class="form-group">
 							<div class="groups-section">
-								<label class="groups-label">Groups Access</label>
+								<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
 								<NcNoteCard type="info">
-									<p>When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.</p>
+									<p>{{ t('opencatalogi', 'When you add groups to a content block, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the content will be visible to all users.') }}</p>
 								</NcNoteCard>
 								<NcSelect
 									v-model="contentsItem.groups"
 									:options="groupsOptions.options"
 									:disabled="objectStore.isLoading('page') || groupsOptions.loading"
-									input-label="Select Groups"
+									:input-label="t('opencatalogi', 'Select Groups')"
 									multiple />
 								<p v-if="groupsOptions.loading" class="groups-loading">
-									Loading groups...
+									{{ t('opencatalogi', 'Loading groups...') }}
 								</p>
 							</div>
 							<div class="hide-after-login">
 								<NcNoteCard type="info">
-									<p>When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.</p>
+									<p>{{ t('opencatalogi', 'When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.') }}</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideAfterLogin"
 									:disabled="contentsItem.hideBeforeLogin || objectStore.isLoading('page')">
-									Hide after login
+									{{ t('opencatalogi', 'Hide after login') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="contentsItem.hideBeforeLogin"
 									:disabled="contentsItem.hideAfterLogin || objectStore.isLoading('page')">
-									Hide before login
+									{{ t('opencatalogi', 'Hide before login') }}
 								</NcCheckboxRadioSwitch>
 								<p v-if="contentsItem.hideAfterLogin && contentsItem.hideBeforeLogin" class="field-error">
-									'Hide before login' and 'Hide after login' cannot both be selected.
+									{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
 								</p>
 							</div>
 						</div>
@@ -185,7 +185,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 		<template #actions>
 			<NcButton @click="closeModal">
-				{{ isEdit ? 'Close' : 'Cancel' }}
+				{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="objectStore.getState('page').success === null"
 				:disabled="!contentsItem.type || objectStore.isLoading('page')"
@@ -196,7 +196,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<ContentSave v-else-if="isEdit" :size="20" />
 					<Plus v-else :size="20" />
 				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
+				{{ isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -216,6 +216,11 @@ import Drag from 'vue-material-design-icons/Drag.vue'
 
 import { Page } from '../../entities/index.js'
 
+/**
+ * PageContentForm — add/edit a page content block (persists the parent page).
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'PageContentForm',
 	components: {
@@ -301,12 +306,14 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
 	},
 	watch: {
 		'contentsItem.faqData': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 			handler(newVal) {
 				const currentFaqLength = newVal.length
 
@@ -331,6 +338,7 @@ export default {
 			deep: true,
 		},
 		'contentsItem.contentBlocksData': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 			handler(newVal) {
 				const len = newVal.length
 				const last = newVal[len - 1]
@@ -359,6 +367,7 @@ export default {
 			deep: true,
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 	mounted() {
 		// Fetch groups for the dropdown.
 		this.fetchGroups()
@@ -418,16 +427,19 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('pageContent')
 			objectStore.setState('page', { success: null, error: null })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		addPageContent() {
 			objectStore.setState('page', { success: null, error: null, loading: true })
 
@@ -564,6 +576,7 @@ export default {
 					objectStore.setState('page', { loading: false })
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			getNextcloudGroups()
@@ -582,6 +595,7 @@ export default {
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {

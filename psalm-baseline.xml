@@ -1,1 +1,117 @@
-<?xml version="1.0" encoding="UTF-8"?><files psalm-version="5.x.x@"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
+  <file src="lib/AppInfo/Application.php">
+    <UndefinedClass>
+      <code><![CDATA[ToolRegistrationEvent]]></code>
+    </UndefinedClass>
+  </file>
+  <file src="lib/Controller/CatalogiController.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+    </InvalidTemplateParam>
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/DirectoryController.php">
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/GlossaryController.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+    </InvalidTemplateParam>
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/HealthController.php">
+    <UndefinedClass>
+      <code><![CDATA[\OCA\OpenCatalogi\Service\ElasticSearchService]]></code>
+    </UndefinedClass>
+  </file>
+  <file src="lib/Controller/MenusController.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+    </InvalidTemplateParam>
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/PagesController.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+    </InvalidTemplateParam>
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/PublicationsController.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+    </InvalidTemplateParam>
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+      <code><![CDATA[$this->request->server]]></code>
+      <code><![CDATA[$this->request->server]]></code>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/ThemesController.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+    </InvalidTemplateParam>
+    <NoInterfaceProperties>
+      <code><![CDATA[$this->request->server]]></code>
+      <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Listener/ToolRegistrationListener.php">
+    <UndefinedClass>
+      <code><![CDATA[ToolRegistrationEvent]]></code>
+    </UndefinedClass>
+  </file>
+  <file src="lib/Service/EventService.php">
+    <UndefinedClass>
+      <code><![CDATA[$fileMapper]]></code>
+      <code><![CDATA[?\OCA\OpenRegister\Db\FileMapper]]></code>
+    </UndefinedClass>
+  </file>
+  <file src="lib/Service/SettingsService.php">
+    <UndefinedClass>
+      <code><![CDATA[OC_App]]></code>
+    </UndefinedClass>
+  </file>
+  <file src="lib/Tool/CMSTool.php">
+    <UndefinedClass>
+      <code><![CDATA[ToolInterface]]></code>
+    </UndefinedClass>
+  </file>
+</files>

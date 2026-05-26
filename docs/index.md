@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: Open Catalogi Documentation
-description: Comprehensive documentation for Open Catalogi - an open source solution for creating, managing, and sharing catalogs of government software, services, and data
+description: Get started with OpenCatalogi, the open-source component catalog for Nextcloud. Publish, federate, and search software registers across organisations.
 ---
 
 # Open Catalogi

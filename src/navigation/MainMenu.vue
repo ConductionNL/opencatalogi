@@ -1,13 +1,13 @@
 <template>
 	<NcAppNavigation>
 		<template #list>
-			<NcAppNavigationNew
+			<!-- <NcAppNavigationNew
 				:text="t('opencatalogi', 'Create Publication')"
 				@click="navigationStore.setModal('viewObject'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
-			</NcAppNavigationNew>
+			</NcAppNavigationNew> -->
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Dashboard')"
 				:to="{ name: 'Dashboard' }"
@@ -108,12 +108,12 @@ import { translate as t } from '@nextcloud/l10n'
 import {
 	NcAppNavigation,
 	NcAppNavigationItem,
-	NcAppNavigationNew,
+	// NcAppNavigationNew,
 	NcAppNavigationSettings,
 } from '@nextcloud/vue'
 import { objectStore, navigationStore } from '../store/store.js'
 
-import Plus from 'vue-material-design-icons/Plus.vue'
+// import Plus from 'vue-material-design-icons/Plus.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
@@ -127,14 +127,19 @@ import MenuClose from 'vue-material-design-icons/MenuClose.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 
+/**
+ * MainMenu — in-app navigation menu.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ */
 export default {
 	name: 'MainMenu',
 	components: {
 		NcAppNavigation,
 		NcAppNavigationItem,
-		NcAppNavigationNew,
+		// NcAppNavigationNew,
 		NcAppNavigationSettings,
-		Plus,
+		// Plus,
 		Finance,
 		DatabaseEyeOutline,
 		DatabaseCogOutline,
@@ -149,9 +154,11 @@ export default {
 		Cog,
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		navigationStore() {
 			return navigationStore
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		catalogs() {
 			const collection = objectStore.getCollection('catalog')
 			const results = Array.isArray(collection) ? collection : collection?.results || []
@@ -160,6 +167,7 @@ export default {
 	},
 	methods: {
 		t,
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		openLink(url, target) {
 			window.open(url, target)
 		},

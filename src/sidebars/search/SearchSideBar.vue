@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * SearchSideBar — facet filter controls for the search view.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
+ */
 import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
@@ -285,12 +290,12 @@ watch([
 <template>
 	<NcAppSidebar
 		ref="sidebar"
-		name="Search Publications"
-		subtitle="Filter and explore publications"
+		:name="t('opencatalogi', 'Search Publications')"
+		:subtitle="t('opencatalogi', 'Filter and explore publications')"
 		subname="Across all federated catalogs"
 		:open="sidebarOpen"
 		@update:open="(e) => updateSidebarOpen(e)">
-		<NcAppSidebarTab id="search-tab" name="Search" :order="1">
+		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
@@ -304,7 +309,7 @@ watch([
 					<input
 						v-model="searchTerm"
 						type="search"
-						placeholder="Type to search publications..."
+						:placeholder="t('opencatalogi', 'Type to search publications...')"
 						class="search-input"
 						:aria-label="t('opencatalogi', 'Search publications')">
 

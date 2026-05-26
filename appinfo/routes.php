@@ -22,6 +22,9 @@ return [
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
+		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
+		['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+		['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],

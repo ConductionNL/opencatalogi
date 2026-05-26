@@ -17,7 +17,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'viewPage'"
-		:name="isAddMode ? 'Add Page' : getModalTitle()"
+		:name="isAddMode ? t('opencatalogi', 'Add Page') : getModalTitle()"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
@@ -26,21 +26,21 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<!-- Content Items Tab -->
 				<div class="tabContainer">
 					<BTabs v-model="tabIndex" content-class="mt-3" justified>
-						<BTab v-if="!isAddMode" :title="`Content Items (${page.contents?.length || 0})`" active>
+						<BTab v-if="!isAddMode" :title="t('opencatalogi', 'Content Items ({count})', { count: page.contents?.length || 0 })" active>
 							<!-- Content Items tab only in edit mode -->
 							<div v-if="page.contents && page.contents.length">
 								<div class="contentItemsSection">
 									<h4 class="section-title">
-										Content Items ({{ page.contents?.length || 0 }})
+										{{ t('opencatalogi', 'Content Items ({count})', { count: page.contents?.length || 0 }) }}
 									</h4>
 									<div v-if="page.contents?.length" class="attached-list">
 										<div v-for="(content, index) in sortedContents"
 											:key="content.id || index"
 											class="attached-list-item">
 											<div class="object-info">
-												<strong>{{ content.title || content.name || `Content ${index + 1}` }}</strong>
+												<strong>{{ content.title || content.name || t('opencatalogi', 'Content {n}', { n: index + 1 }) }}</strong>
 												<span v-if="content.type" class="object-type">{{ content.type }}</span>
-												<span v-if="content.order !== undefined" class="object-order">Order: {{ content.order }}</span>
+												<span v-if="content.order !== undefined" class="object-order">{{ t('opencatalogi', 'Order: {n}', { n: content.order }) }}</span>
 											</div>
 											<div class="object-actions">
 												<NcButton type="secondary" @click="editContent(content)">
@@ -72,15 +72,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</BTab>
 
 						<!-- Configuration Tab -->
-						<BTab title="Configuration">
+						<BTab :title="t('opencatalogi', 'Configuration')">
 							<div>
 								<!-- Success/Error Messages -->
 								<div v-if="pageState.success !== null || pageState.error" class="messageContainer">
 									<NcNoteCard v-if="pageState.success" type="success">
-										<p>{{ isEdit ? 'Page successfully edited' : 'Page successfully added' }}</p>
+										<p>{{ isEdit ? t('opencatalogi', 'Page successfully edited') : t('opencatalogi', 'Page successfully added') }}</p>
 									</NcNoteCard>
 									<NcNoteCard v-if="!pageState.success" type="error">
-										<p>{{ isEdit ? 'Something went wrong while editing the page' : 'Something went wrong while adding the page' }}</p>
+										<p>{{ isEdit ? t('opencatalogi', 'Something went wrong while editing the page') : t('opencatalogi', 'Something went wrong while adding the page') }}</p>
 									</NcNoteCard>
 									<NcNoteCard v-if="pageState.error" type="error">
 										<p>{{ pageState.error }}</p>
@@ -91,14 +91,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<div v-if="pageState.success === null" class="formContainer">
 									<NcTextField
 										:disabled="objectStore.isLoading('page')"
-										label="Title"
+										:label="t('opencatalogi', 'Title')"
 										:value.sync="editForm.title"
 										:error="!!inputValidation.fieldErrors?.['title']"
 										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 
 									<NcTextField
 										:disabled="objectStore.isLoading('page')"
-										label="Slug"
+										:label="t('opencatalogi', 'Slug')"
 										:value.sync="editForm.slug"
 										:error="!!inputValidation.fieldErrors?.['slug']"
 										:helper-text="inputValidation.fieldErrors?.['slug']?.[0]" />
@@ -107,40 +107,40 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</BTab>
 
 						<!-- Security Tab -->
-						<BTab title="Security">
+						<BTab :title="t('opencatalogi', 'Security')">
 							<div>
 								<!-- Groups Access Control -->
 								<div class="groups-section">
-									<label class="groups-label">Groups Access</label>
+									<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
 									<NcNoteCard type="info">
-										<p>When you add groups to a page, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.</p>
+										<p>{{ t('opencatalogi', 'When you add groups to a page, it will only appear if the user belongs to one of the selected groups. If no groups are selected, the page will be visible to all users.') }}</p>
 									</NcNoteCard>
 									<NcSelect
 										v-model="editForm.groups"
 										:options="groupsOptions.options"
 										:disabled="objectStore.isLoading('page') || groupsOptions.loading"
-										input-label="Select Groups"
+										:input-label="t('opencatalogi', 'Select Groups')"
 										multiple />
 									<p v-if="groupsOptions.loading" class="groups-loading">
-										Loading groups...
+										{{ t('opencatalogi', 'Loading groups...') }}
 									</p>
 								</div>
 								<div class="hide-after-login">
 									<NcNoteCard type="info">
-										<p>When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.</p>
+										<p>{{ t('opencatalogi', 'When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.') }}</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideAfterLogin"
 										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('page')">
-										Hide after login
+										{{ t('opencatalogi', 'Hide after login') }}
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
 										:checked.sync="editForm.hideBeforeLogin"
 										:disabled="editForm.hideAfterLogin || objectStore.isLoading('page')">
-										Hide before login
+										{{ t('opencatalogi', 'Hide before login') }}
 									</NcCheckboxRadioSwitch>
 									<p v-if="editForm.hideAfterLogin && editForm.hideBeforeLogin" class="field-error">
-										'Hide before login' and 'Hide after login' cannot both be selected.
+										{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
 									</p>
 								</div>
 							</div>
@@ -196,6 +196,11 @@ import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 import { Page } from '../../entities/index.js'
 
+/**
+ * ViewPageModal — read a page and its embedded content blocks.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'ViewPageModal',
 	components: {
@@ -235,6 +240,7 @@ export default {
 		 * Get the currently active page from the store
 		 * @return {object|null} The active page object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		page() {
 			return objectStore.getActiveObject('page')
 		},
@@ -256,6 +262,7 @@ export default {
 		 * Get the page state from the store
 		 * @return {object} The page state object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		pageState() {
 			return objectStore.getState('page')
 		},
@@ -263,6 +270,7 @@ export default {
 		 * Get contents sorted by order field
 		 * @return {Array} Sorted contents array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		sortedContents() {
 			if (!this.page?.contents?.length) return []
 			return [...this.page.contents].sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -271,6 +279,7 @@ export default {
 		 * Validate the input form
 		 * @return {object} Validation result
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		inputValidation() {
 			const pageItem = new Page({
 				...this.page,
@@ -292,6 +301,7 @@ export default {
 		 * @param {object} newPage - The new page data
 		 */
 		page: {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 			handler(newPage) {
 				if (newPage && !this.isAddMode) {
 					// Initialize editForm with existing page data
@@ -312,6 +322,7 @@ export default {
 			immediate: true,
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 	mounted() {
 		// Fetch groups for the dropdown
 		this.fetchGroups()
@@ -329,6 +340,7 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
@@ -338,6 +350,7 @@ export default {
 		 * Close the modal and clear the active object
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('page')
@@ -346,6 +359,7 @@ export default {
 		 * Open the edit modal for the current page
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		openEditModal() {
 			navigationStore.setModal('viewPage')
 		},
@@ -353,6 +367,7 @@ export default {
 		 * Open the add content modal
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		openAddContentModal() {
 			objectStore.setState('page', { success: null, error: null })
 			navigationStore.setModal('pageContentForm')
@@ -361,6 +376,7 @@ export default {
 		 * Open edit modal for a specific content item
 		 * @param {object} content - The content item to edit
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		editContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setModal('pageContentForm')
@@ -369,6 +385,7 @@ export default {
 		 * Open delete confirmation dialog for a specific content item
 		 * @param {object} content - The content item to delete
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		deleteContent(content) {
 			objectStore.setActiveObject('pageContent', content)
 			navigationStore.setDialog('deletePageContent')
@@ -377,6 +394,7 @@ export default {
 		 * Fetch groups from Nextcloud
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			getNextcloudGroups()
@@ -394,6 +412,7 @@ export default {
 		 * Save the page configuration
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		savePage() {
 			const pageItem = new Page({
 				...this.page,
@@ -421,6 +440,7 @@ export default {
 		 * Delete the current page
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		deletePage() {
 			if (this.page && this.page.id) {
 				objectStore.deleteObject('page', this.page.id)
@@ -437,6 +457,7 @@ export default {
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-3 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {

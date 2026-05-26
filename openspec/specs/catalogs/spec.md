@@ -1,5 +1,10 @@
 ---
 status: reviewed
+retrofit_extensions:
+  - CAT-013
+  - CAT-014
+  - CAT-015
+  - CAT-016
 ---
 
 # Catalogs
@@ -7,22 +12,148 @@ status: reviewed
 ## Purpose
 
 Catalogs are the top-level organizational unit in OpenCatalogi. A catalog groups publications by associating them with specific OpenRegister registers and schemas, providing a URL-slug-based namespace for the public API. Catalogs enable multi-tenant content organization where different collections of publications can be served through distinct API endpoints.
-
 ## Requirements
+### Requirement: List all catalogs via public API with CORS headers (CAT-001)
+The system MUST list all catalogs via public API with CORS headers.
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| CAT-001 | List all catalogs via public API with CORS headers | Must | Implemented |
-| CAT-002 | Retrieve a single catalog by ID, returning all publications scoped to that catalog | Must | Implemented |
-| CAT-003 | Catalogs are stored as OpenRegister objects using the `catalog` schema in the `publication` register | Must | Implemented |
-| CAT-004 | Catalog configuration (schema ID, register ID) is stored in IAppConfig as `catalog_schema` and `catalog_register` | Must | Implemented |
-| CAT-005 | Catalog lookups by slug are cached in a distributed cache (1 hour TTL) for performance | Should | Implemented |
-| CAT-006 | Cache invalidation is supported by slug or by catalog ID | Should | Implemented |
-| CAT-007 | Cache warmup is available to pre-load catalogs into cache | Nice | Implemented |
-| CAT-008 | CORS preflight OPTIONS responses must be supported on all catalog endpoints | Must | Implemented |
-| CAT-009 | Public catalog endpoints must use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations | Must | Implemented |
-| CAT-010 | Multi-schema and multi-register catalogs must be supported (a single catalog can span multiple schemas/registers) | Should | Implemented |
-| CAT-011 | Automatic cache invalidation/warmup via CatalogCacheEventListener on object create/update/delete | Should | Implemented |
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve a single catalog by ID, returning all publications scoped to that catalog (CAT-002)
+The system MUST retrieve a single catalog by ID, returning all publications scoped to that catalog.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalogs are stored as OpenRegister objects using the `catalog` schema in the `publication` register (CAT-003)
+Catalogs MUST be stored as OpenRegister objects using the `catalog` schema in the `publication` register.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalog configuration (schema ID, register ID) is stored in IAppConfig as `catalog_schema` and `catalog_register` (CAT-004)
+Catalog configuration (schema ID, register ID) MUST be stored in IAppConfig as `catalog_schema` and `catalog_register`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalog lookups by slug are cached in a distributed cache (1 hour TTL) for performance (CAT-005)
+Catalog lookups by slug SHOULD be cached in a distributed cache (1 hour TTL) for performance.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Cache invalidation is supported by slug or by catalog ID (CAT-006)
+Cache invalidation SHOULD be supported by slug or by catalog ID.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Cache warmup is available to pre-load catalogs into cache (CAT-007)
+Cache warmup SHOULD be available to pre-load catalogs into cache.
+
+**Priority:** Nice **Status:** Implemented
+
+### Requirement: CORS preflight OPTIONS responses must be supported on all catalog endpoints (CAT-008)
+CORS preflight OPTIONS responses MUST be supported on all catalog endpoints.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Public catalog endpoints must use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations (CAT-009)
+Public catalog endpoints MUST use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Multi-schema and multi-register catalogs must be supported (a single catalog can span multiple schemas/registers) (CAT-010)
+Multi-schema and multi-register catalogs SHOULD be supported (a single catalog can span multiple schemas/registers).
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Automatic cache invalidation/warmup via CatalogCacheEventListener on post-save events; slug-to-ID normalisation via CatalogSchemaEventListener on pre-save events (CAT-011)
+Automatic cache invalidation/warmup MUST occur via CatalogCacheEventListener on object create/update/delete (post-save). Slug-to-ID normalisation of `registers`/`schemas` happens via CatalogSchemaEventListener on the **pre-save** events (`ObjectCreatingEvent`, `ObjectUpdatingEvent`) using `setModifiedData(...)`, never via a second `saveObject` call.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: No catalog event listener may trigger a re-save of the originating object from a post-save event handler (CAT-012)
+No catalog event listener MUST trigger a re-save of the originating object from a post-save event handler. Listeners that need to mutate the entity MUST subscribe to the pre-save events and use `setModifiedData(...)`.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Catalog store fetches a catalog's publications and registers object types (CAT-013)
+The frontend catalog store SHALL, when a catalog is set active, fetch that catalog's
+publications via the public slug endpoint `GET /index.php/apps/opencatalogi/api/{slug}`
+(falling back to the catalog id, then the last-used catalog id), with `_extend` of
+`@self.schema,@self.register` and pagination. For each returned publication it resolves
+the publication's schema/register references against the response's `@self.schemas` /
+`@self.registers` maps and registers the schema slug as an object type in the shared
+object store (once per slug). On error the publications collection is reset to empty.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: Set active catalog and load its publications
+- GIVEN a catalog with a `slug`
+- WHEN `catalogStore.setActiveCatalog(catalog)` is called
+- THEN the store MUST fetch `GET /api/{slug}` with `_extend=@self.schema,@self.register`
+- AND each publication's schema slug MUST be registered as an object type exactly once
+
+#### Scenario: Fetch with no resolvable catalog id
+- GIVEN no catalogId argument, no active catalog, and no last-used catalog id
+- WHEN `catalogStore.fetchPublications()` is called
+- THEN the store MUST log an error and return without issuing an HTTP request
+
+### Requirement: Create and edit catalogs via the catalog modal (CAT-014)
+The system SHALL provide a `CatalogModal` (shown when the navigation store modal is
+`catalog`) for creating and editing a catalog. The modal validates the catalog against
+the Catalogi entity, maps selected registers/schemas to their IDs and the selected
+organization to its id, normalises the status to its id, and saves via
+`objectStore.updateObject('catalog', id, item)` (edit) or
+`objectStore.createObject('catalog', item)` (create), then closes after a short delay.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: Create a new catalog
+- GIVEN the modal is open without an existing catalog id
+- WHEN the user submits valid title, slug, and registers
+- THEN the catalog item's id MUST be dropped and `objectStore.createObject('catalog', item)` called
+- AND the modal MUST close after the success feedback delay
+
+#### Scenario: Edit an existing catalog
+- GIVEN the modal is open for a catalog with an id
+- WHEN the user submits the form
+- THEN `objectStore.updateObject('catalog', id, item)` MUST be called
+
+### Requirement: View catalog details and detail page (CAT-015)
+The system SHALL provide a `ViewCatalogi` modal and a `CatalogDetailPage` route view that
+display a catalog read from the object store. The detail page resolves the catalog by the
+route `id` param via `objectStore.fetchObject('catalog', id)`, supports navigating back to
+the catalogs list and forward to the catalog's publications (by slug), and the view modal
+presents catalog details across tabbed panels.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Open a catalog detail page by route id
+- GIVEN a route with an `id` param
+- WHEN `CatalogDetailPage` mounts
+- THEN it MUST call `objectStore.fetchObject('catalog', id)` and render the active catalog
+
+#### Scenario: Navigate to a catalog's publications
+- GIVEN a catalog with a `slug` on the detail page
+- WHEN the user opens its publications
+- THEN the router MUST push the `Publications` route with `catalogSlug` set to the slug
+
+### Requirement: Catalogs dashboard widget (CAT-016)
+The system SHALL provide a `CatalogiWidget` Nextcloud dashboard widget (registered as
+`opencatalogi_catalogi_widget`) that on mount fetches the catalog collection via
+`objectStore.fetchCollection('catalog')`, renders catalogs as widget items with a
+theme-aware database icon, shows an empty state when there are none, and navigates to a
+catalog's publications page when an item is clicked.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: Widget loads catalogs on mount
+- GIVEN the dashboard renders the catalogs widget
+- WHEN the widget mounts
+- THEN it MUST call `objectStore.fetchCollection('catalog')`
+- AND render an empty-content state if no catalogs are returned
+
+#### Scenario: Click a catalog widget item
+- GIVEN a catalog item shown in the widget
+- WHEN the item is clicked
+- THEN the browser MUST navigate to that catalog's publications URL
 
 ## Data Model
 
@@ -100,7 +231,7 @@ getCatalogBySlug("publications")
 
 ### Automatic Cache Invalidation via Events
 
-The `CatalogCacheEventListener` (`lib/Listener/CatalogCacheEventListener.php`) is registered in Application.php for three OpenRegister events:
+The `CatalogCacheEventListener` (`lib/Listener/CatalogCacheEventListener.php`) is registered in Application.php for three OpenRegister **post-save** events:
 
 | Event | Action |
 |-------|--------|
@@ -108,7 +239,17 @@ The `CatalogCacheEventListener` (`lib/Listener/CatalogCacheEventListener.php`) i
 | `ObjectUpdatedEvent` | If object is a catalog, warmup cache for its slug (invalidate + re-fetch) |
 | `ObjectDeletedEvent` | If object is a catalog, invalidate cache for its slug |
 
-The listener checks if the affected object matches the `catalog_schema` and `catalog_register` from IAppConfig before performing any cache operations. Non-catalog objects are silently ignored.
+The listener checks if the affected object matches the `catalog_schema` and `catalog_register` from IAppConfig before performing any cache operations. Non-catalog objects are silently ignored. The cache listener is read-only with respect to the catalog object — it MUST NOT call `saveObject(...)` (or any persistence operation) on the entity that triggered the event, otherwise the resulting `ObjectUpdatedEvent` would re-enter the same listener (CAT-012).
+
+### Catalog Object Normalisation via Pre-Save Events
+
+The `CatalogSchemaEventListener` (`lib/Listener/CatalogSchemaEventListener.php`) is registered for the **pre-save** events `ObjectCreatingEvent` and `ObjectUpdatingEvent`. When a catalog object is about to be persisted, the listener resolves any slug-or-uuid values in the `registers` and `schemas` arrays into integer IDs and pushes the rewritten values back to the in-flight save via `$event->setModifiedData([...])`. OpenRegister's `MagicMapper` merges that payload into the single write that triggered the event, so no second save is needed.
+
+This listener:
+- MUST NOT call `saveObject(...)` or any persistence operation on the entity (CAT-012).
+- MUST NOT call `stopPropagation()` — failure to resolve a slug is logged, and the original (un-rewritten) data flows through unchanged so the user's save is never blocked.
+
+A previous implementation subscribed this listener to the post-save events and called `CatalogiService::rewriteSchemasAndRegisters()`, which internally invoked `saveObject(...)` and re-emitted `ObjectUpdatedEvent`. That caused an infinite event loop on every catalog update and soft-delete (soft-delete reaches the loop because `DeleteObject` performs the soft-delete via `MagicMapper::update()`, which dispatches `ObjectUpdatedEvent`). The deprecated wrapper `CatalogiService::rewriteSchemasAndRegisters(ObjectEntity)` is preserved for backwards compatibility but is no longer used by any in-tree caller; new code MUST use `CatalogiService::computeRewrittenRegistersAndSchemas(array)` from a pre-save listener.
 
 ## Scenarios
 
@@ -153,11 +294,35 @@ The listener checks if the affected object matches the `catalog_schema` and `cat
 - THEN CatalogCacheEventListener invalidates the cache for "old-catalog"
 - AND subsequent requests return null until a new catalog with that slug is created
 
+### Scenario: Catalog update with slug-valued registers persists in a single save
+- GIVEN a catalog object whose JSON contains `"registers": ["my-register"]` (slug, not numeric ID)
+- WHEN the catalog is saved via `ObjectService::saveObject(...)`
+- THEN CatalogSchemaEventListener handles the pre-save `ObjectUpdatingEvent` and calls `$event->setModifiedData(['registers' => [<integer-id>]])`
+- AND MagicMapper merges the modified data into the in-flight save
+- AND exactly **one** `ObjectUpdatedEvent` is dispatched as a result of the save
+- AND the request returns within the standard PHP request budget (no hang)
+
+### Scenario: Catalog soft-delete returns promptly
+- GIVEN any catalog object
+- WHEN it is soft-deleted via `ObjectService::deleteObject(...)`
+- THEN the request returns within the standard PHP request budget
+- AND no listener issues an additional `update` or `saveObject` on the same entity during deletion handling
+- AND the slug cache for the catalog is invalidated by the post-save `CatalogCacheEventListener`
+
+### Scenario: Pre-save normalisation failure does not block the save
+- GIVEN a catalog object with a `registers` entry that does not resolve to an existing register
+- WHEN the catalog is saved
+- THEN the pre-save `CatalogSchemaEventListener` logs the resolution failure
+- AND the listener does NOT call `stopPropagation()` on the event
+- AND the save proceeds with the original (un-rewritten) data
+- AND the user receives a successful response
+
 ## Dependencies
 
 - **OpenRegister** - ObjectService for data persistence and searchObjectsPaginated for queries
 - **Nextcloud IAppConfig** - Stores catalog_schema and catalog_register configuration keys
 - **Nextcloud ICacheFactory** - Distributed cache for catalog slug lookups (1-hour TTL)
 - **CatalogiService** - Business logic layer for catalog operations and caching
-- **CatalogCacheEventListener** - Automatic cache management on OpenRegister object events
-- **OpenRegister Events** - ObjectCreatedEvent, ObjectUpdatedEvent, ObjectDeletedEvent for cache triggers
+- **CatalogCacheEventListener** - Automatic cache management on OpenRegister post-save events (read-only with respect to the catalog object)
+- **CatalogSchemaEventListener** - Pre-save normalisation of `registers`/`schemas` slug-or-uuid values into integer IDs via `setModifiedData(...)`
+- **OpenRegister Events** - `ObjectCreatedEvent` / `ObjectUpdatedEvent` / `ObjectDeletedEvent` for cache triggers, `ObjectCreatingEvent` / `ObjectUpdatingEvent` for normalisation

@@ -12,9 +12,14 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -61,6 +66,8 @@ class MetricsController extends Controller
      * @NoCSRFRequired
      *
      * @return TextPlainResponse Prometheus-formatted metrics
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     public function index(): TextPlainResponse
     {
@@ -75,6 +82,8 @@ class MetricsController extends Controller
      * Collect all metrics and format as Prometheus text.
      *
      * @return string Prometheus exposition format text
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function collectMetrics(): string
     {
@@ -162,6 +171,8 @@ class MetricsController extends Controller
      * Get publication counts grouped by status and catalog.
      *
      * @return array<array{status: string, catalog: string, cnt: string}> Grouped counts
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function getPublicationCounts(): array
     {
@@ -194,6 +205,8 @@ class MetricsController extends Controller
      * @param string $pattern SQL LIKE pattern for schema title
      *
      * @return int Object count
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function countObjectsBySchemaPattern(string $pattern): int
     {
@@ -219,6 +232,8 @@ class MetricsController extends Controller
      * Get listing counts grouped by status.
      *
      * @return array<array{status: string, cnt: string}> Grouped counts
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function getListingCounts(): array
     {
@@ -248,6 +263,8 @@ class MetricsController extends Controller
      * Count search requests from the metrics table.
      *
      * @return int Search request count
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function countSearchRequests(): int
     {
@@ -286,6 +303,8 @@ class MetricsController extends Controller
      * Check whether the database is reachable.
      *
      * @return bool True when a simple SELECT succeeds
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function isDatabaseHealthy(): bool
     {
@@ -306,6 +325,8 @@ class MetricsController extends Controller
      * Count directory entries for federation metrics.
      *
      * @return int The number of directory entries
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-25
      */
     private function countDirectoryEntries(): int
     {

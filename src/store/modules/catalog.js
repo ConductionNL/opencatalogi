@@ -64,6 +64,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Set the view mode.
 		 * @param {string} mode - The view mode to set ('cards' or 'table')
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		setViewMode(mode) {
 			this.viewMode = mode
 			console.info('Catalog view mode set to:', mode)
@@ -74,6 +75,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @param {number} page - The current page number for pagination
 		 * @param {number} limit - The number of items to display per page
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		setPagination(page, limit = 20) {
 			this.pagination = { page, limit }
 			console.info('Catalog pagination set to', { page, limit })
@@ -83,12 +85,15 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Set the active catalog and fetch its publications
 		 * @param {CatalogEntity} catalog The catalog to set as active
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1
 		 */
 		async setActiveCatalog(catalog) {
 			this.activeCatalog = new Catalogi(catalog)
 			await this.fetchPublications()
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		async refreshPublications() {
 			await this.fetchPublications()
 		},
@@ -106,6 +111,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Clear the active publication
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		clearActivePublication() {
 			this.activePublication = null
 		},
@@ -117,6 +123,8 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @param {number} params.limit - Items per page (default: 20)
 		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
 			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId
@@ -214,6 +222,7 @@ export const useCatalogStore = defineStore('catalog', {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		async getPublicationAttachments() {
 			const publication = objectStore.getActiveObject('publication')
 			const register = publication['@self'].register
@@ -222,13 +231,14 @@ export const useCatalogStore = defineStore('catalog', {
 
 			const response = await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`)
 			const data = await response.json()
-			objectStore.setCollection('publicationAttachments', data)
+			objectStore.setCollection('publicationAttachments', data.results || [])
 		},
 
 		/**
 		 * Clear the active catalog and its publications
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		clearActiveCatalog() {
 
 			// Unregister all object types
@@ -255,6 +265,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Get the list of available registers from the active catalog
 		 * @return {Array<string>} List of register IDs
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		availableRegisters() {
 			return this.activeCatalog?.registers || []
 		},
@@ -263,6 +274,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Get the list of available schemas from the active catalog
 		 * @return {Array<string>} List of schema IDs
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		availableSchemas() {
 			return this.activeCatalog?.schemas || []
 		},

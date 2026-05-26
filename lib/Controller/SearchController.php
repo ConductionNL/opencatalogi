@@ -12,6 +12,9 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -61,6 +64,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-4
      */
     public function index(?string $catalogId=null): JSONResponse
     {
@@ -81,6 +86,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-5
      */
     public function show(string $id): JSONResponse
     {
@@ -101,6 +108,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-6
      */
     public function attachments(string $id): JSONResponse
     {
@@ -121,6 +130,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-7
      */
     public function download(string $id): DataDownloadResponse|JSONResponse
     {
@@ -142,6 +153,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-8
      */
     public function uses(string $id): JSONResponse
     {
@@ -163,6 +176,8 @@ class SearchController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-9
      */
     public function used(string $id): JSONResponse
     {

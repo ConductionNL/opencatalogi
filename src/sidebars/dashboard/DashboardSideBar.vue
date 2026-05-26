@@ -4,48 +4,48 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcAppSidebar
-		name="Snelle start"
+		:name="t('opencatalogi', 'Quick start')"
 		class="dashboardSidebar"
-		subname="Schakel snel naar waar u nodig bent">
-		<NcAppSidebarTab id="search-tab" name="Zoeken" :order="1">
+		:subname="t('opencatalogi', 'Quickly switch to where you need to be')">
+		<NcAppSidebarTab id="search-tab" :name="t('opencatalogi', 'Search')" :order="1">
 			<template #icon>
 				<Magnify :size="20" />
 			</template>
-			Search in the federative network
+			{{ t('opencatalogi', 'Search in the federative network') }}
 			<NcTextField class="searchField"
 				:value="objectStore.getSearchTerm('search')"
-				label="Zoeken" />
+				:label="t('opencatalogi', 'Search')" />
 			<NcNoteCard v-if="objectStore.getError('search')" type="error">
 				<p>{{ objectStore.getError('search') }}</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="publication-creation-tab" name="Publicatie aanmaken" :order="2">
+		<NcAppSidebarTab id="publication-creation-tab" :name="t('opencatalogi', 'Create Publication')" :order="2">
 			<template #icon>
 				<Plus :size="20" />
 			</template>
 			<h3 style="margin-top: 0;">
-				Create a quick publication
+				{{ t('opencatalogi', 'Create a quick publication') }}
 			</h3>
 
 			<div class="formContainer">
 				<NcSelect v-bind="catalogi"
 					v-model="catalogi.value"
 					style="min-width: unset; width: 100%;"
-					input-label="Catalog*"
+					:input-label="t('opencatalogi', 'Catalog*')"
 					:loading="catalogiLoading"
 					:disabled="catalogiLoading || loading" />
 				<NcSelect v-bind="filteredPublicationTypeOptions"
 					v-model="publicationType.value"
 					style="min-width: unset; width: 100%;"
-					input-label="Publication type*"
+					:input-label="t('opencatalogi', 'Publication type*')"
 					:loading="publicationTypeLoading"
 					:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
 				<NcTextField :disabled="loading"
-					label="Title*"
+					:label="t('opencatalogi', 'Title*')"
 					:value.sync="publicationItem.title" />
 				<NcTextField :disabled="loading"
-					label="Summary*"
+					:label="t('opencatalogi', 'Summary*')"
 					:value.sync="publicationItem.summary" />
 			</div>
 			<NcButton :disabled="!publicationItem.title || !publicationItem.summary || !catalogi.value?.id || !publicationType.value?.id || loading"
@@ -57,15 +57,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Plus v-if="!loading" :size="20" />
 				</template>
-				Add
+				{{ t('opencatalogi', 'Add') }}
 			</NcButton>
 
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Publication successfully added</p>
+					<p>{{ t('opencatalogi', 'Publication successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while adding the publication</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while adding the publication') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -73,11 +73,11 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="settings-tab" name="Publicaties" :order="3">
+		<NcAppSidebarTab id="settings-tab" :name="t('opencatalogi', 'Publications')" :order="3">
 			<template #icon>
 				<ListBoxOutline :size="20" />
 			</template>
-			Which publications require your attention?
+			{{ t('opencatalogi', 'Which publications require your attention?') }}
 			<NcListItem v-for="(publication, i) in objectStore.getCollection('publication').results"
 				:key="`${publication}${i}`"
 				:name="publication.title"
@@ -98,38 +98,38 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<template #icon>
 							<ListBoxOutline :size="20" />
 						</template>
-						View
+						{{ t('opencatalogi', 'View') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setModal('editPublication')">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Edit
+						{{ t('opencatalogi', 'Edit') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('publishPublication')">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
-						Publish
+						{{ t('opencatalogi', 'Publish') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.setActiveObject('publication', publication); navigationStore.setDialog('deletePublication')">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
-						Delete
+						{{ t('opencatalogi', 'Delete') }}
 					</NcActionButton>
 				</template>
 			</NcListItem>
 			<NcNoteCard v-if="!objectStore.getCollection('publication').results?.length > 0" type="success">
-				<p>There are no publications that require your attention at the moment</p>
+				<p>{{ t('opencatalogi', 'There are no publications that require your attention at the moment') }}</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 
-		<NcAppSidebarTab id="share-tab" name="Bijlagen" :order="4">
+		<NcAppSidebarTab id="share-tab" :name="t('opencatalogi', 'Attachments')" :order="4">
 			<template #icon>
 				<FileOutline :size="20" />
 			</template>
-			Which attachments require your attention?
+			{{ t('opencatalogi', 'Which attachments require your attention?') }}
 			<NcListItem v-for="(attachment, i) in objectStore.getCollection('attachment').results"
 				:key="`${attachment}${i}`"
 				:name="attachment.title"
@@ -150,24 +150,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
-						Edit
+						{{ t('opencatalogi', 'Edit') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('publishAttachment')">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
-						Publish
+						{{ t('opencatalogi', 'Publish') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="objectStore.setActiveObject('attachment', attachment); navigationStore.setDialog('deleteAttachment')">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
-						Delete
+						{{ t('opencatalogi', 'Delete') }}
 					</NcActionButton>
 				</template>
 			</NcListItem>
 			<NcNoteCard v-if="!objectStore.getCollection('attachment').results?.length > 0" type="success">
-				<p>There are no attachments that require your attention at the moment</p>
+				<p>{{ t('opencatalogi', 'There are no attachments that require your attention at the moment') }}</p>
 			</NcNoteCard>
 		</NcAppSidebarTab>
 	</NcAppSidebar>
@@ -202,6 +202,11 @@ import { Publication } from '../../entities/index.js'
 const dropZoneRef = ref()
 const { files, reset } = useFileSelection({ allowMultiple: false, dropzone: dropZoneRef })
 
+/**
+ * DashboardSideBar — sidebar accompanying the dashboard overview.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ */
 export default {
 	name: 'DashboardSideBar',
 	components: {
@@ -249,6 +254,7 @@ export default {
 		/**
 		 * Filters publicationType (Now known as Publication Type) based on the catalogi
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		filteredPublicationTypeOptions() {
 			if (!this.catalogi?.options?.length) return {}
 			if (!this.catalogi?.value?.id) return {}
@@ -273,6 +279,7 @@ export default {
 			}
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 	mounted() {
 		objectStore.fetchCollection('publication')
 		objectStore.fetchCollection('attachment')
@@ -280,6 +287,7 @@ export default {
 		this.fetchPublicationType()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		handleViewPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
 			const catalogId = publication?.catalog?.id || publication?.catalog
@@ -289,6 +297,7 @@ export default {
 			if (!slug || !publication?.id) return
 			this.$router.push(`/publications/${slug}/${publication.id}`)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		cleanup() {
 			if (this.success === true) {
 				this.publicationItem = {
@@ -304,6 +313,7 @@ export default {
 			}
 			this.error = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchCatalogi() {
 			this.catalogiLoading = true
 
@@ -322,6 +332,7 @@ export default {
 					this.catalogiLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		fetchPublicationType() {
 			this.publicationTypeLoading = true
 
@@ -335,6 +346,7 @@ export default {
 					this.publicationTypeLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		addPublication() {
 			this.loading = true
 			this.error = false
@@ -367,6 +379,7 @@ export default {
 					this.hasUpdated = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		addAttachment(publicationItem) {
 			this.loading = true
 			this.errorMessage = false

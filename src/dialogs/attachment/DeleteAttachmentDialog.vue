@@ -3,13 +3,13 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </script>
 
 <template>
-	<NcDialog name="Bijlage verwijderen"
+	<NcDialog :name="t('opencatalogi', 'Delete attachment')"
 		:can-close="false">
 		<p v-if="!succes">
-			Do you want to delete <b>{{ objectStore.getActiveObject('publicationAttachment')?.title }}</b>? This action cannot be undone.
+			{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject('publicationAttachment')?.title }) }}
 		</p>
 		<NcNoteCard v-if="succes" type="success">
-			<p>Attachment successfully deleted</p>
+			<p>{{ t('opencatalogi', 'Attachment successfully deleted') }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -22,7 +22,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ succes ? 'Close' : 'Cancel' }}
+				{{ succes ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				v-if="!succes"
@@ -34,7 +34,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Delete v-if="!loading" :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -46,6 +46,11 @@ import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
+/**
+ * DeleteAttachmentDialog — delete an attachment via the OpenRegister files endpoint.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-2
+ */
 export default {
 	name: 'DeleteAttachmentDialog',
 	components: {
@@ -65,6 +70,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		DeleteAttachment() {
 			this.loading = true
 

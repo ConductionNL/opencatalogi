@@ -5,14 +5,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 <template>
 	<NcDialog
 		v-if="navigationStore.dialog === 'viewLog'"
-		name="View Log"
+		:name="t('opencatalogi', 'View Log')"
 		:can-close="false">
 		<div v-if="objectStore.getState('log').success !== null || objectStore.getState('log').error">
 			<NcNoteCard v-if="objectStore.getState('log').success" type="success">
-				<p>Log successfully viewed</p>
+				<p>{{ t('opencatalogi', 'Log successfully viewed') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState('log').success" type="error">
-				<p>Something went wrong while viewing the log</p>
+				<p>{{ t('opencatalogi', 'Something went wrong while viewing the log') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState('log').error" type="error">
 				<p>{{ objectStore.getState('log').error }}</p>
@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 		<div v-if="objectStore.isLoading('log')" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>Log is being loaded...</span>
+			<span>{{ t('opencatalogi', 'Log is being loaded...') }}</span>
 		</div>
 		<div v-if="objectStore.getState('log').success === null && !objectStore.isLoading('log')" class="log-content">
 			<pre>{{ objectStore.getActiveObject('log')?.content }}</pre>
@@ -32,7 +32,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -52,6 +52,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-4
  */
 export default {
 	name: 'ViewLogDialog',

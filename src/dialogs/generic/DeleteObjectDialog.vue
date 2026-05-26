@@ -5,14 +5,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 <template>
 	<NcDialog
 		v-if="shouldShowDialog"
-		:name="`${dialogTitle}${isMultiple ? 's' : ''} verwijderen`"
+		:name="isMultiple ? t('opencatalogi', 'Delete {type}s', { type: dialogTitle }) : t('opencatalogi', 'Delete {type}', { type: dialogTitle })"
 		:can-close="false">
 		<div v-if="objectStore.getState(objectType).success !== null || objectStore.getState(objectType).error">
 			<NcNoteCard v-if="objectStore.getState(objectType).success" type="success">
-				<p>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} successfully deleted</p>
+				<p>{{ isMultiple ? t('opencatalogi', '{type}s successfully deleted', { type: dialogTitle }) : t('opencatalogi', '{type} successfully deleted', { type: dialogTitle }) }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="!objectStore.getState(objectType).success && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
-				<p>Something went wrong while deleting {{ dialogTitle.toLowerCase() }}{{ isMultiple ? 's' : '' }}</p>
+				<p>{{ isMultiple ? t('opencatalogi', 'Something went wrong while deleting {type}s', { type: dialogTitle.toLowerCase() }) : t('opencatalogi', 'Something went wrong while deleting {type}', { type: dialogTitle.toLowerCase() }) }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error && objectStore.getState(objectType).error !== 'Invalid configuration for object type: publication'" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -20,14 +20,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ dialogTitle }}{{ isMultiple ? 's' : '' }} {{ isMultiple ? 'are' : 'is' }} being deleted...</span>
+			<span>{{ isMultiple ? t('opencatalogi', '{type}s are being deleted...', { type: dialogTitle }) : t('opencatalogi', '{type} is being deleted...', { type: dialogTitle }) }}</span>
 		</div>
 		<p v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)">
 			<template v-if="isMultiple">
-				Do you want to delete the selected {{ dialogTitle.toLowerCase() }}s? This action cannot be undone.
+				{{ t('opencatalogi', 'Do you want to delete the selected {type}s? This action cannot be undone.', { type: dialogTitle.toLowerCase() }) }}
 			</template>
 			<template v-else>
-				Do you want to delete <b>{{ objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }}</b>? This action cannot be undone.
+				{{ t('opencatalogi', 'Do you want to delete {name}? This action cannot be undone.', { name: objectStore.getActiveObject(objectType)?.name || objectStore.getActiveObject(objectType)?.title }) }}
 			</template>
 		</p>
 		<template v-if="objectStore.getState(objectType).success === null && !objectStore.isLoading(objectType)" #actions>
@@ -38,7 +38,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Cancel
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				:disabled="loading"
@@ -50,7 +50,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 
 					<Delete v-if="!loading" :size="20" />
 				</template>
-				Delete
+				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 		</template>
 		<template v-else #actions>
@@ -60,7 +60,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Sluiten
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -71,6 +71,9 @@ import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-4
+ */
 export default {
 	name: 'DeleteObjectDialog',
 	components: {
@@ -90,15 +93,18 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogProperties() {
 			return navigationStore.dialogProperties
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		dialogTitle() {
 			return this.dialogProperties?.dialogTitle
 		},
 		isMultiple() {
 			return this.dialogProperties?.isMultiple ?? false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		shouldShowDialog() {
 			return navigationStore.dialog === 'deleteObject'
 		},
@@ -106,12 +112,14 @@ export default {
 	watch: {
 		dialogProperties: {
 			immediate: true,
+			/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 			handler(newProps) {
 				this.objectType = newProps?.objectType
 			},
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		deleteObject() {
 			this.loading = true
 			if (this.isMultiple) {
@@ -192,6 +200,7 @@ export default {
 					})
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		refreshObjectList(objectType) {
 			switch (objectType) {
 			case 'publication':
@@ -201,6 +210,7 @@ export default {
 				objectStore.fetchCollection(objectType)
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1 */
 		closeDialog() {
 			if (this.closeTimeout) {
 				clearTimeout(this.closeTimeout)

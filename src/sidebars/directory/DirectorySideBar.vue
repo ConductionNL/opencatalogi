@@ -4,12 +4,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <template>
 	<NcAppSidebar
-		:name="objectStore.getActiveObject('listing')?.title || 'Geen listing' "
+		:name="objectStore.getActiveObject('listing')?.title || t('opencatalogi', 'No listing')"
 		:subname="objectStore.getActiveObject('listing')?.organization?.title">
 		<NcEmptyContent v-if="!objectStore.getActiveObject('listing')?.id || $route.path !== '/directory'"
 			class="detailContainer"
-			name="Geen listing"
-			description="Nog geen listing geselecteerd, listings kan je ontdekken via (externe) directories.">
+			:name="t('opencatalogi', 'No listing')"
+			:description="t('opencatalogi', 'No listing selected. You can discover listings via (external) directories.')">
 			<template #icon>
 				<LayersOutline />
 			</template>
@@ -18,19 +18,19 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					Read directory
+					{{ t('opencatalogi', 'Read directory') }}
 				</NcButton>
 				<NcButton @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/directory', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
-					More information about the directory
+					{{ t('opencatalogi', 'More information about the directory') }}
 				</NcButton>
 			</template>
 		</NcEmptyContent>
 		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && $route.path === '/directory'"
 			id="detail-tab"
-			name="Details"
+			:name="t('opencatalogi', 'Details')"
 			:order="1">
 			<template #icon>
 				<InformationSlabSymbol :size="20" />
@@ -38,50 +38,50 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="container">
 				<div v-if="objectStore.getActiveObject('listing').organization">
 					<CertificateOutline class="orgCertIcon" :size="20" />
-					<p>This organization is not validated with a certificate.</p>
+					<p>{{ t('opencatalogi', 'This organization is not validated with a certificate.') }}</p>
 				</div>
 				<div v-if="!objectStore.getActiveObject('listing').organization">
 					<CertificateOutline class="orgCertIcon" :size="20" />
-					<p>This listing has no organization.</p>
+					<p>{{ t('opencatalogi', 'This listing has no organization.') }}</p>
 				</div>
 				<div>
-					<b>Summary:</b>
+					<b>{{ t('opencatalogi', 'Summary:') }}</b>
 					<span>{{ objectStore.getActiveObject('listing')?.summary }}</span>
 				</div>
 				<div>
-					<b>Status:</b>
+					<b>{{ t('opencatalogi', 'Status:') }}</b>
 					<span>{{ objectStore.getActiveObject('listing')?.status }}</span>
 				</div>
 				<div>
-					<b>Last synchronysation:</b>
+					<b>{{ t('opencatalogi', 'Last synchronisation:') }}</b>
 					<span>{{ objectStore.getActiveObject('listing')?.lastSync }}</span>
 				</div>
 				<div>
-					<b>Directory:</b>
+					<b>{{ t('opencatalogi', 'Directory:') }}</b>
 					<span>{{ objectStore.getActiveObject('listing')?.directory }}</span>
 				</div>
 				<div>
-					<b>Search:</b>
+					<b>{{ t('opencatalogi', 'Search:') }}</b>
 					<span>{{ objectStore.getActiveObject('listing')?.search }}</span>
 				</div>
 				<div>
-					<b>Description:</b>
+					<b>{{ t('opencatalogi', 'Description:') }}</b>
 					<span>{{ objectStore.getActiveObject('listing')?.description }}</span>
 				</div>
 			</div>
 		</NcAppSidebarTab>
 		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && $route.path === '/directory'"
 			id="settings-tab"
-			name="Configuration"
+			:name="t('opencatalogi', 'Configuration')"
 			:order="2">
 			<template #icon>
 				<CogOutline :size="20" />
 			</template>
 			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').available" type="switch">
-				Make available for my searches
+				{{ t('opencatalogi', 'Make available for my searches') }}
 			</NcCheckboxRadioSwitch>
 			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').default" type="switch">
-				Take part in answering my searches
+				{{ t('opencatalogi', 'Take part in answering my searches') }}
 			</NcCheckboxRadioSwitch>
 
 			<NcButton
@@ -94,17 +94,17 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 					<DatabaseSyncOutline v-if="!syncLoading" :size="20" />
 				</template>
-				Synchronize
+				{{ t('opencatalogi', 'Synchronize') }}
 			</NcButton>
 		</NcAppSidebarTab>
 		<NcAppSidebarTab v-if="objectStore.getActiveObject('listing')?.id && $route.path === '/directory'"
 			id="metdata-tab"
-			name="Publicatietype"
+			:name="t('opencatalogi', 'Publication type')"
 			:order="3">
 			<template #icon>
 				<FileTreeOutline :size="20" />
 			</template>
-			Which publication type would you like to take from this catalog?
+			{{ t('opencatalogi', 'Which publication type would you like to take from this catalog?') }}
 			<div v-if="!loading">
 				<template v-for="(publicationType, i) in objectStore.getActiveObject('listing').publicationTypes">
 					<div v-if="publicationType.owner" :key="`${publicationType}${i}`" class="publication-type-item">
@@ -138,6 +138,11 @@ import InformationSlabSymbol from 'vue-material-design-icons/InformationSlabSymb
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import Check from 'vue-material-design-icons/Check.vue'
 
+/**
+ * DirectorySideBar — sidebar for directory management.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ */
 export default {
 	name: 'DirectorySideBar',
 	components: {
@@ -159,15 +164,18 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		listingItem() {
 			return objectStore.getActiveObject('listing')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		checkedPublicationType() {
 			return Object.assign({}, this.checkedPublicationTypeObject)
 		},
 	},
 	watch: {
 		checkedPublicationType: {
+			/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 			handler(newValue, oldValue) {
 				// Set new and old values to objects
 				const newValueObject = Object.entries(newValue)
@@ -204,6 +212,7 @@ export default {
 			deep: true,
 		},
 		listingItem: {
+			/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 			handler(newValue) {
 				if (newValue !== false && objectStore.getCollection('publication_type').results) {
 					this.loading = true
@@ -215,14 +224,17 @@ export default {
 			immediate: true, // Run the handler immediately on initialization
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 	created() {
 		objectStore.fetchCollection('publication_type')
 		this.checkPublicationTypeSwitches()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		getPublicationTypeId(publicationTypeUrl) {
 			let publicationTypeId
 			objectStore.getCollection('publication_type').results.forEach((publicationTypeItem) => {
@@ -232,6 +244,7 @@ export default {
 			})
 			return publicationTypeId
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		checkPublicationTypeSwitches() {
 			if (Array.isArray(objectStore.getActiveObject('listing')?.publicationType)) {
 				objectStore.getActiveObject('listing').publicationType.forEach((publicationTypeUrl) => {
@@ -243,6 +256,7 @@ export default {
 			}
 			this.loading = false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		copyPublicationType(publicationTypeUrl) {
 			this.loading = true
 
@@ -267,6 +281,7 @@ export default {
 
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		createPublicationType(data) {
 			this.loading = true
 
@@ -291,6 +306,7 @@ export default {
 
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		deletePublicationType(publicationTypeUrl) {
 			this.loading = true
 
@@ -309,6 +325,7 @@ export default {
 
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		synDirectroy() {
 			this.syncLoading = true
 			fetch(
@@ -326,10 +343,12 @@ export default {
 					this.syncLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		togglePublicationType(publicationType) {
 			publicationType.listed = !publicationType.listed
 			this.synchronizePublicationType(publicationType)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		synchronizePublicationType(publicationType) {
 			this.publicationTypeLoading = true
 			fetch(

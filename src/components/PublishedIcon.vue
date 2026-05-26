@@ -28,6 +28,9 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import { isPublished, isDepublished } from '../services/publicationStatus.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'PublishedIcon',
 	components: {
@@ -95,14 +98,14 @@ export default {
 <style scoped>
 /* Publication status icon colors */
 .published-icon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .unpublished-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .depublished-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 </style>

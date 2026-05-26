@@ -4,14 +4,14 @@ import { objectStore, navigationStore } from '../../store/store.js'
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'lockObject'"
-		:name="'Lock ' + (objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id || 'Publication')"
+		:name="t('opencatalogi', 'Lock {name}', { name: objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id || t('opencatalogi', 'Publication') })"
 		size="normal"
 		:can-close="false">
 		<p v-if="success === null">
-			Do you want to lock <b>{{ objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id }}</b>? Locking an object prevents other users from modifying it until it is unlocked. You can specify an optional process name to indicate why it's locked and a duration after which it will automatically unlock. Only the user who locked the object or an administrator can unlock it before the duration expires.
+			{{ t('opencatalogi', 'Do you want to lock {name}? Locking an object prevents other users from modifying it until it is unlocked. You can specify an optional process name to indicate why it\'s locked and a duration after which it will automatically unlock. Only the user who locked the object or an administrator can unlock it before the duration expires.', { name: objectStore.objectItem?.['@self']?.name || objectStore.objectItem?.name || objectStore.objectItem?.['@self']?.title || objectStore.objectItem?.id }) }}
 		</p>
 		<NcNoteCard v-if="success" type="success">
-			<p>Object successfully locked</p>
+			<p>{{ t('opencatalogi', 'Object successfully locked') }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -22,7 +22,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success ? 'Close' : 'Cancel' }}
+				{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				:disabled="loading || success"
@@ -32,19 +32,19 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<LockOutline v-else :size="20" />
 				</template>
-				Lock
+				{{ t('opencatalogi', 'Lock') }}
 			</NcButton>
 		</template>
 
 		<div v-if="!success" class="formContainer">
 			<NcTextField
 				:value.sync="process"
-				label="Process Name (optional)"
+				:label="t('opencatalogi', 'Process Name (optional)')"
 				:disabled="loading" />
 			<NcTextField
 				type="number"
 				:value.sync="duration"
-				label="Duration in seconds (optional)"
+				:label="t('opencatalogi', 'Duration in seconds (optional)')"
 				:disabled="loading" />
 		</div>
 	</NcDialog>
@@ -62,6 +62,9 @@ import {
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ */
 export default {
 	name: 'LockObject',
 	components: {
@@ -84,6 +87,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeModalTimeout)
@@ -93,6 +97,7 @@ export default {
 			this.process = ''
 			this.duration = 3600
 		},
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		async lockObject() {
 			this.loading = true
 

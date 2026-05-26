@@ -11,9 +11,14 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -78,6 +83,8 @@ class RobotsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
      */
     public function index(): TextResponse
     {
@@ -133,6 +140,8 @@ class RobotsController extends Controller
      * @return mixed|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
