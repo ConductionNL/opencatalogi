@@ -1,38 +1,66 @@
-# Default 'Automatically publish' per schema
+---
+kind: code
+depends_on:
+  - ConductionNL/nextcloud-vue#feature/files-tab-auto-share
+---
+
+# Proposal: Default 'Automatically publish' per schema
+
+## Summary
+
+Make the "Automatically publish" / "Automatisch delen" toggle in the
+RegieTool attachment-upload dialog default to a value configured **per
+publication schema**. Schemas opt-in via a new boolean
+`configuration.defaultAutoShare`; absence is treated as `false`
+(existing behaviour).
 
 ## Why
 
-In the RegieTool's "Add attachment" dialog (`UploadFiles.vue`), the
-"Automatically publish" toggle (Dutch: "Automatisch delen") always
-defaults to **off**, regardless of which publication / publication
-type the user is uploading to. For publication types where direct
-publication is the norm, this means the user must flip the toggle on
-every single upload — extra clicks and easy to forget.
+Editors uploading attachments today must flip the toggle on every
+single upload when the publication type they work on is conventionally
+"publish immediately". For publication types where the default is
+"keep as concept" the current behaviour is correct, but there is no
+way to express the preferred default per type — every upload starts
+identical regardless of context.
 
-The OpenRegister `Schema` entity already stores arbitrary JSON
-configuration via its `configuration` column, so a per-schema default
-fits naturally without a backend migration.
+Closing this gap removes per-upload friction (extra clicks, easy to
+forget) for publication workflows where direct publication is the
+norm, and keeps the conservative default for workflows where concept-
+first is the standard.
 
 Tracking issue: ConductionNL/opencatalogi#577
 
-## What Changes
+## What changes
 
-- `UploadFiles.vue` reads `configuration.defaultAutoShare` (boolean)
-  from the active publication's schema when the modal opens and uses
-  it as the initial value of the `share` toggle.
-- Schemas without `configuration.defaultAutoShare` keep the current
-  behaviour (`share` defaults to `false`).
-- The user can still override the toggle per upload — the schema
-  value only seeds the initial state.
+- **Read path (this app):** `src/modals/generic/UploadFiles.vue` reads
+  the active publication's schema configuration on dialog open and
+  seeds the `share` toggle from `configuration.defaultAutoShare`.
+  Schemas without the key keep the current default (off). Users can
+  still override per upload.
+- **Write path (sibling repo):** the active user-facing surface is
+  `CnFilesTab` in `@conduction/nextcloud-vue` (see depends_on); a
+  parallel PR there exposes `defaultShare` / `showShareToggle` /
+  `shareLabel` props and seeds from the same schema key when
+  `defaultShare` is `null`.
+
+## Capabilities
+
+### Modified Capabilities
+- `publication-attachment-defaults` — new spec defining how schema
+  configuration drives the upload-dialog default for the share/publish
+  toggle.
 
 ## Out of scope
 
 - A dedicated UI control on the schema editor's Configuration tab.
-  The schema editor lives in `@conduction/nextcloud-vue`
-  (`CnSchemaConfigurationTab.vue`) and preserves arbitrary
-  `configuration` keys via spread (`{...defaults, ...item}`), so the
-  field can already be set via the existing JSON pipeline or API.
-  A follow-up issue should add an explicit checkbox there.
-- Renaming or migrating the existing deprecated `configuration.autoPublish`
-  key (it has different semantics: post-hoc share on object publish,
-  not "default state of the upload toggle").
+  `@conduction/nextcloud-vue`'s `CnSchemaFormDialog` already preserves
+  arbitrary `configuration` keys through `{...defaults, ...item}`
+  spread, so the field can be set today via the existing JSON
+  pipeline or API. A follow-up issue should add an explicit checkbox.
+- Renaming or migrating the existing deprecated
+  `configuration.autoPublish` key. Its semantics ("share all
+  attachments when the object is published", per
+  `OpenRegister/lib/Service/Object/SaveObject/MetadataHydrationHandler.php`)
+  differ from this proposal ("default state of the per-upload
+  toggle"). The two keys coexist; only `defaultAutoShare` affects the
+  upload dialog default.

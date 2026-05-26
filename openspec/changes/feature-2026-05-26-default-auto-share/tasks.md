@@ -1,20 +1,50 @@
 # Tasks: Default 'Automatically publish' per schema
 
-## Phase 1 — Frontend
+## Phase 1 — Frontend (this app)
 
-- [ ] 1. In `src/modals/generic/UploadFiles.vue`, when the modal
-      opens (`onOpenModal`), resolve the active publication's schema
-      and read `configuration.defaultAutoShare`. Seed the `share`
-      data property with that value (defaulting to `false` if the
-      schema reference, the schema, or the key is missing). The
-      lookup must succeed both when the publication carries an
-      inflated schema object on `@self.schema` and when it only
-      carries the schema id.
+- [x] 1. In `src/modals/generic/UploadFiles.vue`, add an
+      `applySchemaDefaults()` method called from `onOpenModal()`
+      that resolves the active publication's schema, reads
+      `configuration.defaultAutoShare`, and seeds `this.share`.
+      Handles both the inflated-schema and bare-id reference shapes;
+      falls back to `false` on any error.
 
-## Phase 2 — Verification
+## Phase 2 — Library (sibling repo, depends_on)
 
-- [ ] 2. Manual: open the "Add attachment" dialog on a publication
-      whose schema has `configuration.defaultAutoShare: true` —
-      verify the toggle is on by default and can still be flipped
-      off per upload. Then verify a schema without the key keeps
-      the toggle off (current behaviour).
+- [x] 2. In `@conduction/nextcloud-vue` `CnFilesTab`, add
+      `showShareToggle` / `defaultShare` / `shareLabel` props,
+      render an `NcCheckboxRadioSwitch` above the dropzone, send
+      `share` on multipart upload (omitted when toggle hidden), and
+      auto-detect from `configuration.defaultAutoShare` when
+      `defaultShare === null`. Push as a separate PR on
+      `ConductionNL/nextcloud-vue`.
+
+## Phase 3 — Verification
+
+- [ ] 3. Manual: on a publication whose schema has
+      `configuration.defaultAutoShare: true`, open the attachment
+      dialog → toggle is on. Flip off, upload → backend receives
+      `share=false`. On a schema without the key, toggle is off
+      (current behaviour). Re-test with an explicit
+      `defaultAutoShare: false`.
+
+- [ ] 4. Library: run `npm test` (all 2619 suites pass) and
+      `npm run check:jsdoc` / `npm run check:docs` (baselines hold)
+      in the `nextcloud-vue` repo before opening that PR.
+
+## Acceptance criteria
+
+- Schema with `configuration.defaultAutoShare: true` opens the
+  upload toggle on by default.
+- Schema without the key (or with `false`) keeps the toggle off.
+- User can override the toggle per upload — schema value never
+  coerces the submitted `share` field.
+- Network failure, missing schema, missing publication, or
+  non-boolean key value all fall back to off (fail closed).
+- No interaction with the deprecated
+  `configuration.autoPublish` key.
+- `CnFilesTab` `defaultShare` prop overrides the schema lookup
+  when non-null.
+- `CnFilesTab` `showShareToggle: false` hides the control and
+  omits `share` from the upload form data.
+- No backend / schema-column / DB migration required.
