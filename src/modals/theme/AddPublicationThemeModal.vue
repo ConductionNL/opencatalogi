@@ -22,6 +22,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:items="themeOptions"
 					:value.sync="selectedTheme"
 					label="Choose a theme"
+					:input-label="t('opencatalogi', 'Theme')"
 					:disabled="isSaving || !themeOptions.length" />
 			</div>
 

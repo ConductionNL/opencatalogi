@@ -44,6 +44,7 @@
 								:value="getActiveFacetType(`@self.${fieldName}`)"
 								:options="getFacetTypeOptions(fieldInfo.facet_types)"
 								label="label"
+								:input-label="t('opencatalogi', 'Facet type')"
 								:placeholder="t('opencatalogi', 'Select facet type')"
 								@update:value="(option) => updateFacetType(`@self.${fieldName}`, option.value, fieldInfo)" />
 						</div>
@@ -55,6 +56,7 @@
 								:value="getActiveFacetInterval(`@self.${fieldName}`)"
 								:options="getIntervalOptions(fieldInfo.intervals)"
 								label="label"
+								:input-label="t('opencatalogi', 'Date histogram interval')"
 								:placeholder="t('opencatalogi', 'Select interval')"
 								@update:value="(option) => updateFacetInterval(`@self.${fieldName}`, option.value)" />
 						</div>
@@ -89,6 +91,7 @@
 								:value="getActiveFacetType(fieldName)"
 								:options="getFacetTypeOptions(fieldInfo.facet_types)"
 								label="label"
+								:input-label="t('opencatalogi', 'Facet type')"
 								:placeholder="t('opencatalogi', 'Select facet type')"
 								@update:value="(option) => updateFacetType(fieldName, option.value, fieldInfo)" />
 						</div>

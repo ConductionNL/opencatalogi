@@ -13,6 +13,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
 					v-model="labelOptions.value"
+					:input-label="t('opencatalogi', 'Labels')"
 					:disabled="loading || retryLoading || tagsLoading"
 					:loading="tagsLoading"
 					:taggable="true"

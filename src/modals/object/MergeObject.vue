@@ -107,6 +107,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										:options="getMergeOptions(property)"
 										label="label"
 										track-by="value"
+										:input-label="t('opencatalogi', 'Merge value')"
 										:placeholder="t('opencatalogi', 'Choose value for {property}', { property })"
 										@input="onPropertySelectionChange(property, $event)" />
 									<NcTextField
