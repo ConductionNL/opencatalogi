@@ -87,7 +87,7 @@ import { NcButton, NcModal } from '@nextcloud/vue'
 /**
  * ViewDirectoryModal — inspect a directory entry.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2
  */
 export default {
 	name: 'ViewDirectoryModal',

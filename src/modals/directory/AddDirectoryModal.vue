@@ -177,7 +177,8 @@ const directoryUrl = ref('https://directory.opencatalogi.nl/apps/opencatalogi/ap
 const syncResults = ref(null)
 
 /**
- * Handle directory synchronization
+ * Handle directory synchronization.
+ * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2
  * @return {Promise<void>}
  */
 const handleSync = async () => {
@@ -200,7 +201,8 @@ const handleSync = async () => {
 }
 
 /**
- * Close the modal and reset state
+ * Close the modal and reset state.
+ * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2
  */
 const closeModal = () => {
 	navigationStore.setModal(false)
@@ -214,7 +216,7 @@ const closeModal = () => {
 /**
  * AddDirectoryModal — register an external directory by POSTing its URL.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2
  */
 export default {
 	name: 'AddDirectoryModal',

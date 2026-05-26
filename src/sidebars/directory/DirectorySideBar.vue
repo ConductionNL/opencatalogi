@@ -141,7 +141,7 @@ import Check from 'vue-material-design-icons/Check.vue'
 /**
  * DirectorySideBar — sidebar for directory management.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ * @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1
  */
 export default {
 	name: 'DirectorySideBar',
