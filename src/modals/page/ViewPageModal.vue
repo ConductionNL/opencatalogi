@@ -521,16 +521,19 @@ export default {
 .contentItemsSection {
 	margin-bottom: var(--OC-margin-20);
 }
+
 .section-title {
 	margin: 0 0 8px 0;
 	color: var(--color-primary);
 	font-weight: bold;
 }
+
 .attached-list {
 	border: 1px solid var(--color-border);
 	border-radius: 4px;
 	overflow: hidden;
 }
+
 .attached-list-item {
 	display: flex;
 	justify-content: space-between;
@@ -539,20 +542,24 @@ export default {
 	border-bottom: 1px solid var(--color-border);
 	background-color: var(--color-background-hover);
 }
+
 .attached-list-item:last-child {
 	border-bottom: none;
 }
+
 .object-info strong {
 	display: block;
 	margin-bottom: 4px;
 	color: var(--color-main-text);
 }
+
 .object-type, .object-order {
 	display: inline-block;
 	margin-right: 12px;
 	color: var(--color-text-lighter);
 	font-size: 0.9em;
 }
+
 .object-actions {
 	display: flex;
 	gap: var(--OC-margin-10);

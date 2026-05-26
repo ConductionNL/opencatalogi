@@ -141,7 +141,8 @@ class RobotsController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister ObjectService from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {

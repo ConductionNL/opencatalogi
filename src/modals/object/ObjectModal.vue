@@ -644,7 +644,7 @@ export default {
 
 <style scoped>
 :deep(.modal-container) {
-    width: 937px !important;
+	width: 937px !important;
 }
 
 /* Add consistent dialog content spacing */
@@ -667,45 +667,46 @@ export default {
 }
 
 .detail-item {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-        "label button"
-        "value value";
-    gap: 8px;
-    padding: 12px;
-    background-color: var(--color-background-hover);
-    border-radius: 4px;
-    border-left: 3px solid var(--color-primary);
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-areas:
+		'label button'
+		'value value';
+	gap: 8px;
+	padding: 12px;
+	background-color: var(--color-background-hover);
+	border-radius: 4px;
+	border-left: 3px solid var(--color-primary);
 }
 
 .detail-label {
-    grid-area: label;
-    font-weight: bold;
-    color: var(--color-text-maxcontrast);
+	grid-area: label;
+	font-weight: bold;
+	color: var(--color-text-maxcontrast);
 }
 
 .pencil-button {
-    grid-area: button;
+	grid-area: button;
 }
 
 .detail-value-container {
-    grid-area: value;
-    display: flex;
-    flex-direction: column;
+	grid-area: value;
+	display: flex;
+	flex-direction: column;
 }
 
 .detail-value {
-    word-break: break-word;
+	word-break: break-word;
 }
+
 .sub-detail-value {
-    word-break: break-word;
-    font-size: 0.8rem;
-    color: var(--color-text-maxcontrast);
+	word-break: break-word;
+	font-size: 0.8rem;
+	color: var(--color-text-maxcontrast);
 }
 
 .detail-item.empty-value {
-    border-left-color: var(--color-warning);
+	border-left-color: var(--color-warning);
 }
 
 .edit-tabs {
@@ -816,12 +817,15 @@ export default {
 	border-radius: 0 !important;
 	border: none !important;
 }
+
 .codeMirrorContainer :deep(.cm-editor) {
 	outline: none !important;
 }
+
 .codeMirrorContainer.light > .vue-codemirror {
 	border: 1px dotted silver;
 }
+
 .codeMirrorContainer.dark > .vue-codemirror {
 	border: 1px dotted grey;
 }
@@ -831,6 +835,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼe) {
 	color: #448c27;
 }
+
 .codeMirrorContainer.dark :deep(.ͼe) {
 	color: #88c379;
 }
@@ -839,6 +844,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼc) {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.ͼc) {
 	color: #8d64f7;
 }
@@ -847,6 +853,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼb) {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.ͼb) {
 	color: #be55cd;
 }
@@ -855,6 +862,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -868,26 +876,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -896,6 +907,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -904,6 +916,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

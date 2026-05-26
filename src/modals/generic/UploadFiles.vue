@@ -918,31 +918,35 @@ export default {
 
 <style>
 div[class='modal-container']:has(.TestMappingMainModal) {
-    width: clamp(1000px, 100%, 1200px) !important;
-    z-index: 13000 !important;
+	width: clamp(1000px, 100%, 1200px) !important;
+	z-index: 13000 !important;
 }
+
 div[class='modal-container']:has(.TestMappingMainModal) .modal-mask {
-    z-index: 12999 !important;
+	z-index: 12999 !important;
 }
+
 div[class='modal-container']:has(.TestMappingMainModal) .modal,
 div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
-    z-index: 13000 !important;
+	z-index: 13000 !important;
 }
+
 .modal-mask[aria-labelledby='AddAttachmentModal'] {
-    z-index: 13020 !important;
+	z-index: 13020 !important;
 }
+
 .modal-mask[aria-labelledby='AddAttachmentModal'] .modal-container,
 .modal-mask[aria-labelledby='AddAttachmentModal'] .modal,
 .modal-mask[aria-labelledby='AddAttachmentModal'] .modal__content {
-    z-index: 13021 !important;
+	z-index: 13021 !important;
 }
 </style>
 
 <style scoped>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .filesListDragDropNoticeWrapper--disabled{
@@ -950,7 +954,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-    color: green;
+	color: green;
 }
 
 .folderLink {
@@ -1006,59 +1010,60 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .files-table-td-name span {
-  float: left;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  max-width: calc(100% - 15%);
+	float: left;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: calc(100% - 15%);
 }
 
 .files-table-td-status {
-    width: 40px;
+	width: 40px;
 }
 
 .files-table-name {
-  color: var(--color-main-text);
+	color: var(--color-main-text);
 }
+
 .files-table-extension {
-  color: var(--color-text-maxcontrast);
+	color: var(--color-text-maxcontrast);
 }
 
 .files-table-tr {
-  color: var(--color-text-maxcontrast);
-  border-bottom: 1px solid var(--color-border);
+	color: var(--color-text-maxcontrast);
+	border-bottom: 1px solid var(--color-border);
 }
 
 .files-table-tr:hover {
-    background-color: var(--color-background-hover);
-    --color-text-maxcontrast: var(--color-main-text);
+	background-color: var(--color-background-hover);
+	--color-text-maxcontrast: var(--color-main-text);
 	--color-border: var(--color-border-dark);
 }
 
 .files-table-tr > td {
-  height: 55px;
+	height: 55px;
 }
 
 .files-table-remove-button {
-  text-align: -webkit-right;
+	text-align: -webkit-right;
 }
 
 .files-list__row-icon {
-  position: relative;
-  display: flex;
-  overflow: visible;
-  align-items: center;
-  flex: 0 0 32px;
-  justify-content: center;
-  width: 32px;
-  height: 100%;
-  margin-right: var(--checkbox-padding);
-  color: var(--color-primary-element);
+	position: relative;
+	display: flex;
+	overflow: visible;
+	align-items: center;
+	flex: 0 0 32px;
+	justify-content: center;
+	width: 32px;
+	height: 100%;
+	margin-right: var(--checkbox-padding);
+	color: var(--color-primary-element);
 }
 
 .files-list__row-action-system-tags {
-  margin-right: 7px;
-  display: flex;
+	margin-right: 7px;
+	display: flex;
 }
 
 .files-list__system-tags {
@@ -1112,16 +1117,16 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-    color: var(--color-element-success);
+	color: var(--color-element-success);
 }
 
 .failed {
-    color: var(--color-element-error);
+	color: var(--color-element-error);
 }
 
 .buttonContainer {
-    display: flex;
-    gap: 10px;
+	display: flex;
+	gap: 10px;
 }
 
 .uploadSummaryContainer{

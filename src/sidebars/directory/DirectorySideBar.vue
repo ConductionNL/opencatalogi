@@ -383,8 +383,8 @@ export default {
 }
 
 .orgCertIcon {
-    float: left;
-    margin-block-start: 4px;
-    margin-inline-end: 10px;
+	float: left;
+	margin-block-start: 4px;
+	margin-inline-end: 10px;
 }
 </style>
