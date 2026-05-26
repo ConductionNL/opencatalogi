@@ -1,0 +1,43 @@
+{
+  "spec": "openspec/changes/migrate-share-links-to-shares-leaf",
+  "verified": [
+    {
+      "task": "1",
+      "file": "openspec/changes/migrate-share-links-to-shares-leaf/design.md",
+      "ok": true,
+      "note": "Implementation planning complete; all tasks decomposed and implemented."
+    },
+    {
+      "task": "2",
+      "file": "lib/Service/FileService.php",
+      "ok": true,
+      "note": "createPublicShareLink() thin adapter delegates to OR FileService; bespoke createShareLink/createShare removed."
+    },
+    {
+      "task": "3",
+      "file": "lib/Service/FileService.php",
+      "ok": true,
+      "note": "findShare() removed; OR leaf discovers existing shares via createShareLink (idempotent: finds-or-creates)."
+    },
+    {
+      "task": "4",
+      "file": "lib/Service/FileService.php",
+      "ok": true,
+      "note": "getShareLink()/getCurrentDomain() removed; URL assembly delegated to OR leaf."
+    },
+    {
+      "task": "5",
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "shares widget added to PublicationDetail page in sidebar slot at gridY=2."
+    },
+    {
+      "task": "6",
+      "file": "lib/Service/DownloadService.php",
+      "ok": true,
+      "note": "saveFileToNextCloud uses createPublicShareLink; OR leaf produces type-3 shares compatible with legacy WOO links."
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}
