@@ -180,11 +180,38 @@
 					"gridHeight": 4
 				},
 				{
+					"widgetKey": "maps",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 4,
+					"props": {
+						"field": "geo"
+					}
+				},
+				{
 					"widgetKey": "file-manager",
 					"slot": "body",
 					"gridX": 0,
 					"gridY": 4,
 					"gridWidth": 12,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "photos",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 8,
+					"gridWidth": 6,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "bookmarks",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 8,
+					"gridWidth": 6,
 					"gridHeight": 4
 				},
 				{
@@ -228,6 +255,43 @@
 					"selectable": true
 				}
 			}
+		},
+		{
+			"id": "OrganizationDetail",
+			"route": "/organizations/:id",
+			"type": "detail",
+			"title": "Organization",
+			"config": {
+				"register": "@resolve:listing_register",
+				"schema": "organization",
+				"idParam": "@route.id"
+			},
+			"widgets": [
+				{
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "contacts",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 4
+				},
+				{
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				}
+			]
 		},
 		{
 			"id": "Themes",
