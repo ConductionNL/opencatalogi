@@ -51,6 +51,8 @@ use Exception;
  * Provides functionality to create and manage publication files and archives, including
  * generating PDFs and ZIP files containing metadata and attachments, and storing files
  * in NextCloud.
+ *
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  */
 class DownloadService
 {
@@ -218,12 +220,8 @@ class DownloadService
             );
         }
 
-        // Create or find ShareLink.
-        $share     = $this->fileService->findShare(path: $filePath);
-        $shareLink = $this->fileService->createShareLink(path: $filePath);
-        if ($share !== null) {
-            $shareLink = $this->fileService->getShareLink($share);
-        }
+        // Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
+        $shareLink = $this->fileService->createPublicShareLink(relativePath: $filePath);
 
         return $shareLink;
 
