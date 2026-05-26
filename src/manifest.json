@@ -194,6 +194,14 @@
 					"gridY": 0,
 					"gridWidth": 1,
 					"gridHeight": 2
+				},
+				{
+					"widgetKey": "activity",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4
 				}
 			]
 		},

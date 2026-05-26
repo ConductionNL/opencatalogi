@@ -2,7 +2,12 @@
 /**
  * OpenCatalogi Object Updated Event Listener.
  *
- * This file contains the listener class for handling object update events from OpenRegister.
+ * Handles OR ObjectUpdatedEvent and triggers the OpenCatalogi-specific
+ * auto-publishing side effect only (catalogue-membership + WOO publishing
+ * policy). The per-publication activity feed is consumed from the OR activity
+ * leaf (ADR-022 / APB-ACT-001), not reimplemented here. See
+ * openspec/changes/migrate-activity-to-activity-leaf/design.md for the
+ * keep/migrate split rationale.
  *
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
@@ -11,16 +16,12 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
- * @version GIT: <git_id>
- *
  * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-56
+ * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -35,10 +36,15 @@ use Psr\Log\LoggerInterface;
 /**
  * Event listener for object update events from OpenRegister.
  *
- * Listens to ObjectUpdatedEvent and applies auto-publishing logic
- * based on OpenCatalogi configuration settings.
+ * Listens to ObjectUpdatedEvent and applies the auto-publishing side effect
+ * based on OpenCatalogi configuration settings. Scope is limited to the
+ * auto-publishing side effect only (catalogue-membership + WOO publishing
+ * policy); the activity feed is consumed from the OR activity leaf per
+ * ADR-022 / APB-ACT-001 and NOT reimplemented here.
  *
  * @template-implements IEventListener<Event>
+ *
+ * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
  */
 class ObjectUpdatedEventListener implements IEventListener
 {
@@ -63,26 +69,18 @@ class ObjectUpdatedEventListener implements IEventListener
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
+     * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
      */
     public function handle(Event $event): void
     {
+        // Verify this is the correct event type.
+        if ($event instanceof ObjectUpdatedEvent === false) {
+            return;
+        }
+
         try {
-            // Get logger first for all logging.
-            $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
-
-            // Test logging to verify listener works.
-            $logger->debug("OPENCATALOGI_EVENT_LISTENER_CALLED_AT_".date('Y-m-d_H:i:s'));
-            $logger->debug("OPENCATALOGI_EVENT_CLASS: ".get_class($event));
-
-            // Verify this is the correct event type.
-            if ($event instanceof ObjectUpdatedEvent === false) {
-                $logger->debug("OPENCATALOGI_NOT_OBJECTUPDATEDEVENT_SKIPPING");
-                return;
-            }
-
-            $logger->debug("OPENCATALOGI_CONFIRMED_OBJECTUPDATEDEVENT_PROCESSING");
-
             // Get services from the server container.
+            $logger          = \OC::$server->get(\Psr\Log\LoggerInterface::class);
             $settingsService = \OC::$server->get(
                 \OCA\OpenCatalogi\Service\SettingsService::class
             );

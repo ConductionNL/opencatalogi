@@ -10,13 +10,47 @@ The auto-publishing system automatically publishes OpenRegister objects and thei
 
 ## Requirements
 
+### Requirement: Per-publication activity feed consumes the OpenRegister activity leaf (APB-ACT-001)
+The system MUST provide the per-publication activity feed (create / update /
+publish / depublish / file-change history) by consuming the OpenRegister
+activity leaf sourced from OR's event stream and audit trail — NOT by building
+a bespoke in-app activity log on top of `ObjectCreatedEventListener` /
+`ObjectUpdatedEventListener` (hydra ADR-022). The feed is surfaced as the
+activity widget on the publication detail page via the app manifest entry for
+`PublicationDetail` (`src/manifest.json`, widgetKey: `activity`, ADR-024 /
+ADR-036).
+
+#### Scenario: View a publication's activity history
+- GIVEN a publication that has been created, updated, and published
+- WHEN a user opens the publication detail page and views the activity widget
+- THEN the create / update / publish events are listed from the OpenRegister activity leaf
+- AND OpenCatalogi does NOT maintain a separate in-app activity table for these events
+
+#### Scenario: Activity leaf absent
+- GIVEN the OpenRegister activity leaf / integration is not available
+- WHEN the publication detail page renders
+- THEN the activity widget degrades gracefully ("activity integration required")
+  rather than falling back to a bespoke feed
+
+**Priority:** Must **Status:** Implemented
+
 ### Requirement: Listen to OpenRegister `ObjectCreatedEvent` and trigger auto-publishing logic (APB-001)
-The system MUST listen to OpenRegister `ObjectCreatedEvent` and trigger auto-publishing logic.
+The system MUST listen to OpenRegister `ObjectCreatedEvent` and trigger
+auto-publishing logic. This listener's responsibility is limited to the
+OpenCatalogi-specific auto-publishing side effect (catalogue-membership + WOO
+publishing policy), which has NO OpenRegister leaf equivalent and is explicitly
+kept in-app per hydra ADR-022. The listener MUST NOT serve as a bespoke
+activity feed — object-change activity is consumed from the OR activity leaf
+(APB-ACT-001). Debug `OPENCATALOGI_EVENT_*` logging is removed.
 
 **Priority:** Must **Status:** Implemented
 
 ### Requirement: Listen to OpenRegister `ObjectUpdatedEvent` and trigger auto-publishing logic (APB-002)
-The system MUST listen to OpenRegister `ObjectUpdatedEvent` and trigger auto-publishing logic.
+The system MUST listen to OpenRegister `ObjectUpdatedEvent` and trigger
+auto-publishing logic. As with APB-001, the listener's scope is the
+OpenCatalogi-specific auto-publishing side effect only; the per-object activity
+feed is consumed from the OR activity leaf (APB-ACT-001), NOT reimplemented
+here. Debug `OPENCATALOGI_EVENT_*` logging is removed.
 
 **Priority:** Must **Status:** Implemented
 
@@ -216,7 +250,7 @@ Auto-publishing does not have its own data model. It operates on OpenRegister ob
 
 ## Notes
 
-- **Debug logging**: The ObjectUpdatedEventListener contains temporary debug logging (`OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*`) that should be removed before production release.
+- **Activity feed**: Per APB-ACT-001, the per-publication activity feed is provided by the OpenRegister activity leaf widget declared in `src/manifest.json` (`PublicationDetail` page, widgetKey: `activity`). No bespoke in-app activity table is maintained.
 - **File path conversion**: When creating share links, the OpenRegister path format requires a `/OpenRegister/` prefix to be added to the FileMapper path.
 - **ObjectEntity conversion**: Both listeners manually construct the `@self` metadata array from the ObjectEntity, as the jsonSerialize() output may not include all required fields.
 - **TODO in code**: The ObjectUpdatedEventListener sets `@self.files = []` with a TODO comment about implementing a safer way to get file information for attachment publishing.
