@@ -45,7 +45,6 @@ use RuntimeException;
  * @package   opencatalogi
  * @author    Ruben van der Linde
  * @copyright 2024
- * @license   AGPL-3.0-or-later
  * @version   1.0.0
  * @link      https://github.com/opencatalogi/opencatalogi
  */

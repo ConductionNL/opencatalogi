@@ -954,7 +954,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-	color: green;
+	color: var(--color-element-success);
 }
 
 .folderLink {
@@ -1071,7 +1071,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	min-width: calc(var(--min-size)* 2);
+	min-width: calc(var(--min-size) * 2);
 	max-width: 300px;
 }
 
@@ -1114,10 +1114,6 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	align-items: end;
 	margin-block-end: 15px;
 	gap: 10px;
-}
-
-.success {
-	color: var(--color-element-success);
 }
 
 .failed {

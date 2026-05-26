@@ -70,17 +70,10 @@ class ObjectUpdatedEventListener implements IEventListener
             // Get logger first for all logging.
             $logger = \OC::$server->get(\Psr\Log\LoggerInterface::class);
 
-            // Test logging to verify listener works.
-            $logger->debug("OPENCATALOGI_EVENT_LISTENER_CALLED_AT_".date('Y-m-d_H:i:s'));
-            $logger->debug("OPENCATALOGI_EVENT_CLASS: ".get_class($event));
-
             // Verify this is the correct event type.
             if ($event instanceof ObjectUpdatedEvent === false) {
-                $logger->debug("OPENCATALOGI_NOT_OBJECTUPDATEDEVENT_SKIPPING");
                 return;
             }
-
-            $logger->debug("OPENCATALOGI_CONFIRMED_OBJECTUPDATEDEVENT_PROCESSING");
 
             // Get services from the server container.
             $settingsService = \OC::$server->get(
