@@ -6,6 +6,8 @@ status: reviewed
 
 ## Purpose
 
+@e2e exclude pure AI-agent tool spec — all scenarios test the ToolInterface PHP implementation (getFunctions, executeFunction, snake_case __call mapping) with no browser-observable surface; covered by PHPUnit instead.
+
 The CMS Tool provides AI agents running within OpenRegister with the ability to manage CMS content in OpenCatalogi. It implements the OpenRegister `ToolInterface` and exposes OpenAI-compatible function definitions that allow language models to create and list pages, create and list menus, and add items to menus. The tool is registered automatically via a `ToolRegistrationEvent` listener during application bootstrap.
 
 ## Requirements
