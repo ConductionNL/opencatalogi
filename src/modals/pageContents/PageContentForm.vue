@@ -610,13 +610,13 @@ export default {
 
 <style>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 </style>
 
@@ -626,59 +626,63 @@ export default {
 }
 
 .draggable-form-item {
-    display: flex;
-    align-items: center;
-    gap: 3px;
+	display: flex;
+	align-items: center;
+	gap: 3px;
 
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 4px;
-    border-radius: 12px;
+	background-color: rgba(255, 255, 255, 0.05);
+	padding: 4px;
+	border-radius: 12px;
 
-    margin-block: 8px;
+	margin-block: 8px;
 }
+
 .draggable-form-item.light {
-    background-color: rgba(0, 0, 0, 0.05);
+	background-color: rgba(0, 0, 0, 0.05);
 }
+
 .draggable-form-item :deep(.v-select) {
-    min-width: 150px;
+	min-width: 150px;
 }
+
 .draggable-form-item :deep(.input-field__label) {
-    margin-block-start: 0 !important;
+	margin-block-start: 0 !important;
 }
+
 .draggable-form-item .input-field {
-    margin-block-start: 0 !important;
+	margin-block-start: 0 !important;
 }
 
 .draggable-item-container:last-child .drag-handle {
-    cursor: not-allowed;
+	cursor: not-allowed;
 }
 
 .draggable-form-item--vertical {
-    flex-direction: column;
-    align-items: stretch;
+	flex-direction: column;
+	align-items: stretch;
 }
 
 .draggable-form-item__header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .content-blocks-help {
-    font-size: 13px;
-    color: var(--color-text-maxcontrast);
-    margin-block-end: 8px;
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	margin-block-end: 8px;
 }
 
 .groups-section {
-    margin-block-start: var(--OC-margin-20);
-    margin-block-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-block-end: var(--OC-margin-20);
 }
 
 .groups-label {
-    display: block;
-    margin-block-end: var(--OC-margin-10);
-    font-weight: bold;
+	display: block;
+	margin-block-end: var(--OC-margin-10);
+	font-weight: bold;
 }
 
 .groups-loading {

@@ -131,7 +131,7 @@ export default {
 
 <style>
 .selectWrapper {
-  display: flex;
-  justify-content: center;
+	display: flex;
+	justify-content: center;
 }
 </style>

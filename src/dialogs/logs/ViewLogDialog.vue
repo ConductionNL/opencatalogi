@@ -70,37 +70,37 @@ export default {
 <style>
 
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 
 .loading-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    color: var(--color-text-lighter);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	color: var(--color-text-lighter);
 }
 
 .log-content {
-    text-align: left;
-    margin: 1rem 0;
-    padding: 1rem;
-    background-color: var(--color-background-dark);
-    border-radius: var(--border-radius);
-    max-height: 60vh;
-    overflow: auto;
+	text-align: left;
+	margin: 1rem 0;
+	padding: 1rem;
+	background-color: var(--color-background-dark);
+	border-radius: var(--border-radius);
+	max-height: 60vh;
+	overflow: auto;
 }
 
 .log-content pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+	margin: 0;
+	white-space: pre-wrap;
+	word-wrap: break-word;
 }
 </style>

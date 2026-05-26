@@ -445,6 +445,7 @@ export default {
 .dashboardSidebar .addFileContainer{
 	margin-block: var(--OC-margin-20);
 }
+
 .dashboardSidebar .filesListDragDropNoticeWrapper{
 	padding-block: 2rem;
 }
@@ -456,6 +457,7 @@ export default {
 	justify-content: flex-end;
 	gap: 10px;
 }
+
 .formContainer {
 	display: flex;
 	flex-direction: column;

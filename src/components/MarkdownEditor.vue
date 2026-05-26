@@ -60,6 +60,6 @@ export default {
 
 <style scoped>
 .markdown-editor-wrapper {
-  text-align: left;
+	text-align: left;
 }
 </style>

@@ -824,9 +824,9 @@ export default {
 
 <style>
 .actionsButton > div > button {
-    margin-top: 0px !important;
-    margin-right: 0px !important;
-    padding-right: 0px !important;
+	margin-top: 0px !important;
+	margin-right: 0px !important;
+	padding-right: 0px !important;
 }
 </style>
 
