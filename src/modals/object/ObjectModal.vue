@@ -37,6 +37,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedCatalogus"
 									v-model="selectedCatalogus"
 									:options="catalogOptions"
+									:aria-label-combobox="t('opencatalogi', 'Catalogus')"
 									label-outside
 									:disabled="objectStore.isLoading('object')"
 									required
@@ -59,6 +60,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedRegister"
 									v-model="selectedRegister"
 									:options="registerOptions"
+									:aria-label-combobox="t('opencatalogi', 'Register')"
 									label-outside
 									:disabled="objectStore.isLoading('object') || !selectedCatalogus"
 									required
@@ -80,6 +82,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedSchema"
 									v-model="selectedSchema"
 									:options="schemaOptions"
+									:aria-label-combobox="t('opencatalogi', 'Schema')"
 									label-outside
 									:disabled="objectStore.isLoading('object') || !selectedRegister"
 									required

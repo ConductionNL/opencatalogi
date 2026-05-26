@@ -94,6 +94,7 @@ const handleCancel = () => {
 				<NcSelectTags
 					v-model="attachment.tags"
 					label="Tags"
+					:aria-label-combobox="t('opencatalogi', 'Tags')"
 					:disabled="loading" />
 				<NcCheckboxRadioSwitch
 					:checked.sync="attachment.published"

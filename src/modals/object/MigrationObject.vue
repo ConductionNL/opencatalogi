@@ -107,6 +107,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					:options="availableRegisters"
 					label="title"
 					track-by="id"
+					:aria-label-combobox="t('opencatalogi', 'Target Register')"
 					:placeholder="t('opencatalogi', 'Select a register...')"
 					@update:model-value="onRegisterChange" />
 			</div>
@@ -119,6 +120,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 					:options="availableSchemas"
 					label="title"
 					track-by="id"
+					:aria-label-combobox="t('opencatalogi', 'Target Schema')"
 					:placeholder="t('opencatalogi', 'Select a schema...')"
 					@update:model-value="onSchemaChange" />
 			</div>
@@ -165,6 +167,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 								:options="targetPropertyOptions"
 								label="label"
 								track-by="value"
+								:input-label="t('opencatalogi', 'Target property')"
 								:placeholder="t('opencatalogi', 'Map to target property...')"
 								:clearable="true"
 								@update:model-value="updateMappingFromUI(sourceProperty.name)" />

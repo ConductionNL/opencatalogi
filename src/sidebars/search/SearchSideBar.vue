@@ -338,6 +338,7 @@ watch([
 								:value="getSelectedFilterValue(fieldName)"
 								:options="getFacetOptions(facetResult)"
 								label="label"
+								:aria-label-combobox="t('opencatalogi', 'Filter results')"
 								:placeholder="t('opencatalogi', 'Select a filter...')"
 								:clearable="true"
 								@option:selected="(option) => handleFilterSelect(fieldName, option)"
@@ -357,6 +358,7 @@ watch([
 							:value="currentSortOption"
 							:options="sortOptions"
 							label="label"
+							:aria-label-combobox="t('opencatalogi', 'Sort by')"
 							:label-outside="true"
 							:placeholder="t('opencatalogi', 'Choose sorting')"
 							@update:value="handleSortChange" />
