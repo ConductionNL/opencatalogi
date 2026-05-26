@@ -48,13 +48,30 @@ initial one.
 | Status | Deprecated (see `MetadataHydrationHandler::$deprecatedKeys`) | New, supported going forward |
 | Risk of reuse | Silently changes behaviour for opted-in schemas | None — additive, default-off |
 
-### Why no backend / schema-column change
+### Backend requirement: whitelist `defaultAutoShare`
 
-`Schema::getConfiguration()` already deserialises arbitrary JSON, and
-`CnSchemaFormDialog` already preserves unknown keys on save. Persistence
-works today without a migration, an entity field, or a typed accessor.
-The cost of a dedicated getter (`getDefaultAutoShare()`) is not paid
-for by any caller in this change.
+OpenRegister's `Schema::validateConfigurationArray()` (in
+`openregister/lib/Db/Schema.php`) does **not** round-trip arbitrary
+keys — keys absent from its allow-list (`$stringFields` /
+`$boolFields` / `$passThrough` / explicit cases) are silently
+dropped on save. The `configuration` column is JSON, but the
+validator is gate-keepered.
+
+Therefore the new key needs a one-line addition to the `$boolFields`
+whitelist in OpenRegister:
+
+```php
+$boolFields = ['allowFiles', 'autoPublish', 'defaultAutoShare'];
+```
+
+No migration, no entity field, no typed accessor. Once whitelisted,
+the existing JSON column persists the value as-is and
+`Schema::getConfiguration()` deserialises it. `CnSchemaFormDialog`
+already preserves unknown keys on its end via `{...defaults, ...item}`
+spread, so the form round-trips the value without further changes.
+
+Sibling PR carrying the OpenRegister whitelist edit:
+**ConductionNL/openregister#feature/577-schema-default-auto-share**.
 
 ## Read path
 

@@ -1,6 +1,7 @@
 ---
 kind: code
 depends_on:
+  - ConductionNL/openregister#feature/577-schema-default-auto-share
   - ConductionNL/nextcloud-vue#feature/files-tab-auto-share
 ---
 

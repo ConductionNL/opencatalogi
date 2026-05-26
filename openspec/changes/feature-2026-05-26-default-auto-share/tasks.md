@@ -1,5 +1,13 @@
 # Tasks: Default 'Automatically publish' per schema
 
+## Phase 0 — Backend (sibling repo, depends_on)
+
+- [x] 0. In `openregister/lib/Db/Schema.php`, add `defaultAutoShare`
+      to `validateConfigurationArray()`'s `$boolFields` whitelist.
+      Without this the key is silently dropped on schema save (the
+      column is JSON but the validator is gate-keepered). Push as a
+      separate PR on `ConductionNL/openregister`.
+
 ## Phase 1 — Frontend (this app)
 
 - [x] 1. In `src/modals/generic/UploadFiles.vue`, add an
