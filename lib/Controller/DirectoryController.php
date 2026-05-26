@@ -128,7 +128,6 @@ class DirectoryController extends Controller
      *
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -183,7 +182,6 @@ class DirectoryController extends Controller
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      * @throws GuzzleException
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
