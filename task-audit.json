@@ -1,0 +1,36 @@
+{
+  "spec": "openspec/changes/migrate-activity-to-activity-leaf",
+  "verified": [
+    {
+      "task": "1",
+      "description": "Implementation planning — keep/migrate split confirmed: feed→leaf, auto-publish stays",
+      "ok": true
+    },
+    {
+      "task": "2",
+      "file": "src/manifest.json",
+      "description": "activity widget (widgetKey: activity, slot: sidebar) added to PublicationDetail page entry",
+      "ok": true
+    },
+    {
+      "task": "3",
+      "file": "lib/Listener/ObjectCreatedEventListener.php",
+      "description": "Listener scoped to auto-publish only; docblock updated with ADR-022/APB-ACT-001 rationale; @spec tag added",
+      "ok": true
+    },
+    {
+      "task": "4",
+      "file": "lib/Listener/ObjectUpdatedEventListener.php",
+      "description": "Debug OPENCATALOGI_EVENT_* logging removed; type check moved before try block; @spec tag added",
+      "ok": true
+    },
+    {
+      "task": "5",
+      "file": "tests/Unit/Listener/ObjectUpdatedEventListenerTest.php",
+      "description": "testHandleIgnoresNonObjectUpdatedEvent updated to not expect debug calls; 659 unit tests pass",
+      "ok": true
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}
