@@ -309,7 +309,8 @@ class SettingsService
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister ObjectService from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -327,7 +328,8 @@ class SettingsService
      * @return \OCA\OpenRegister\Db\RegisterMapper|null The RegisterMapper if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister RegisterMapper from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
     {
@@ -345,7 +347,8 @@ class SettingsService
      * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
      * @throws \RuntimeException If the mapper is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister SchemaMapper from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
     {
@@ -363,7 +366,8 @@ class SettingsService
      * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister ConfigurationService from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ConfigurationService from the container; pure framework plumbing, no domain behavior.
      */
     public function getConfigurationService(): ?\OCA\OpenRegister\Service\ConfigurationService
     {

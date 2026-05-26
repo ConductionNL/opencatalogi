@@ -13,8 +13,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
  *
- * @version   GIT: <git_id>
- * @link      https://www.OpenCatalogi.nl
+ * @version GIT: <git_id>
+ * @link    https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66

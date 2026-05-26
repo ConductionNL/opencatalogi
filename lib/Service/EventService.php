@@ -70,7 +70,8 @@ class EventService
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister ObjectService from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -88,7 +89,8 @@ class EventService
      * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister file service if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister FileService from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       FileService from the container; pure framework plumbing, no domain behavior.
      */
     public function getFileService(): ?\OCA\OpenRegister\Service\FileService
     {
@@ -109,7 +111,8 @@ class EventService
      * @return \OCA\OpenRegister\Db\FileMapper The FileMapper instance.
      * @throws \RuntimeException If the FileMapper is not available.
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister FileMapper from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       FileMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getFileMapper(): ?\OCA\OpenRegister\Db\FileMapper
     {

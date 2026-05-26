@@ -124,7 +124,8 @@ class CatalogiService
      * @return mixed|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister service from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       service from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -144,7 +145,8 @@ class CatalogiService
      * @return mixed|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister FileService from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       FileService from the container; pure framework plumbing, no domain behavior.
      */
     public function getFileService(): ?\OCA\OpenRegister\Service\FileService
     {
@@ -165,7 +167,8 @@ class CatalogiService
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister SchemaMapper from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
     {
@@ -185,7 +188,8 @@ class CatalogiService
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister RegisterMapper from the container; pure framework plumbing, no domain behavior.
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
     {
