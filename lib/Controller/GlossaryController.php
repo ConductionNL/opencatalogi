@@ -174,7 +174,6 @@ class GlossaryController extends Controller
      * @return JSONResponse The JSON response containing the list of glossary terms
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -268,7 +267,6 @@ class GlossaryController extends Controller
      * @return JSONResponse The JSON response containing the glossary term details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

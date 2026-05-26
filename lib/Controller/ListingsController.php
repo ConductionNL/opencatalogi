@@ -33,10 +33,13 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IL10N;
 use OCP\IAppConfig;
 use OCP\IRequest;
+use OCP\IUserSession;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -60,6 +63,7 @@ class ListingsController extends Controller
      * @param IAppManager        $appManager       App manager for checking installed apps
      * @param DirectoryService   $directoryService The directory service
      * @param IL10N              $l10n             Localization service
+     * @param IUserSession       $userSession      The user session
      */
     public function __construct(
         $appName,
@@ -68,7 +72,8 @@ class ListingsController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
-        private readonly IL10N $l10n
+        private readonly IL10N $l10n,
+        private readonly IUserSession $userSession
     ) {
         parent::__construct($appName, $request);
 
@@ -91,6 +96,35 @@ class ListingsController extends Controller
     }//end getObjectService()
 
     /**
+     * Implements a preflighted CORS response for OPTIONS requests.
+     *
+     * @return Response The CORS response.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     *
+     * @spec openspec/specs/cross-origin-api-access/spec.md
+     */
+    public function preflightedCors(): Response
+    {
+        $origin = $this->request->getHeader('Origin');
+        if ($origin === '') {
+            $origin = '*';
+        }
+
+        $response = new Response();
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, PATCH');
+        $response->addHeader('Access-Control-Max-Age', '1728000');
+        $response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+        return $response;
+
+    }//end preflightedCors()
+
+    /**
      * Retrieve a list of listings based on provided filters and parameters.
      *
      * @return JSONResponse JSON response containing the list of listings and total count
@@ -105,6 +139,10 @@ class ListingsController extends Controller
      */
     public function index(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Retrieve all request parameters.
         $requestParams = $this->request->getParams();
 
@@ -162,7 +200,6 @@ class ListingsController extends Controller
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @PublicPage
-     * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-17
@@ -200,6 +237,10 @@ class ListingsController extends Controller
      */
     public function create(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
@@ -238,6 +279,10 @@ class ListingsController extends Controller
      */
     public function update(string | int $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
@@ -277,6 +322,10 @@ class ListingsController extends Controller
      */
     public function destroy(string | int $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Delete the listing object by its UUID.
         $result = $this->getObjectService()->deleteObject((string) $id);
 
@@ -308,6 +357,10 @@ class ListingsController extends Controller
      */
     public function synchronise(?string $id=null): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             if ($id !== null) {
                 // Look up the listing to get its directory URL.
@@ -353,7 +406,6 @@ class ListingsController extends Controller
      * @return JSONResponse The response indicating the result of adding the listing.
      *
      * @PublicPage
-     * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-22

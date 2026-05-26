@@ -164,7 +164,6 @@ class ThemesController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -259,7 +258,6 @@ class ThemesController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

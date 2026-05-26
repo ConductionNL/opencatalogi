@@ -167,7 +167,6 @@ class CatalogiController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -223,7 +222,6 @@ class CatalogiController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
