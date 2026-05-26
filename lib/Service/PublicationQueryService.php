@@ -155,6 +155,9 @@ class PublicationQueryService
      *
      * @return array The merged and sanitised search query ready for searchObjectsPaginated().
      *
+     * @spec exclude Query-assembly plumbing extracted from PublicationsController; translates
+     *       request params into an ObjectService search query, no domain behavior of its own.
+     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -235,6 +238,9 @@ class PublicationQueryService
      * @param array $catalog Catalog data array (keys: schemas, registers).
      *
      * @return array{schemas: array<int|string, array>, registers: array<int|string, array>}
+     *
+     * @spec exclude Metadata-resolution plumbing extracted from PublicationsController; looks up
+     *       schema/register labels via OR mappers for response enrichment, no domain behavior.
      */
     public function resolveSchemaAndRegisterObjects(array $catalog): array
     {
@@ -302,6 +308,9 @@ class PublicationQueryService
      * @param object $objectService ObjectService instance (already resolved from container).
      *
      * @return object|null The found object entity, or null.
+     *
+     * @spec exclude Lookup plumbing extracted from PublicationsController; iterates a catalog's
+     *       (register, schema) pairs and delegates the actual read to ObjectService::find().
      */
     public function findObjectInCatalog(array $catalog, string $id, object $objectService): ?object
     {
@@ -357,6 +366,9 @@ class PublicationQueryService
      * @param array $data The data array to strip empty values from.
      *
      * @return array The data with empty values removed.
+     *
+     * @spec exclude Response-shaping plumbing extracted from PublicationsController; recursively
+     *       prunes empty values to slim the payload, no domain behavior.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
