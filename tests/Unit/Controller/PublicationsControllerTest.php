@@ -6,6 +6,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -28,6 +29,7 @@ class PublicationsControllerTest extends TestCase
     private IRequest|MockObject $request;
     private PublicationService|MockObject $publicationService;
     private CatalogiService|MockObject $catalogiService;
+    private PublicationQueryService|MockObject $queryService;
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
     private LoggerInterface|MockObject $logger;
@@ -40,6 +42,7 @@ class PublicationsControllerTest extends TestCase
         $this->request            = $this->createMock(IRequest::class);
         $this->publicationService = $this->createMock(PublicationService::class);
         $this->catalogiService    = $this->createMock(CatalogiService::class);
+        $this->queryService       = $this->createMock(PublicationQueryService::class);
         $this->container          = $this->createMock(ContainerInterface::class);
         $this->appManager         = $this->createMock(IAppManager::class);
         $this->logger             = $this->createMock(LoggerInterface::class);
@@ -49,15 +52,86 @@ class PublicationsControllerTest extends TestCase
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text, array $params = []) => $text);
 
+        // Default query-service behaviour: the search query and result shaping are
+        // pass-throughs, schema/register resolution is empty, and the published
+        // predicate enforcement leaves results untouched. The published-enforcement
+        // collaborators (isAnonymous/isObjectPublic) default to the authenticated,
+        // permitted path so existing happy-path tests keep passing; tests that
+        // exercise the fail-closed anonymous behaviour override them explicitly.
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('enforcePublishedForAnonymous')
+            ->willReturnCallback(fn(array $result) => $result);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(false);
+        $this->queryService->method('isObjectPublic')->willReturn(true);
+        // findObjectInCatalog defaults to "found" so the attachments/download happy
+        // paths proceed; the not-found/exception tests rebuild the controller with a
+        // query service that returns null (or whose collaborators throw).
+        $this->queryService->method('findObjectInCatalog')
+            ->willReturn($this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class));
+
         $this->controller = new PublicationsController(
             'opencatalogi',
             $this->request,
             $this->publicationService,
             $this->catalogiService,
+            $this->queryService,
             $this->container,
             $this->appManager,
             $this->logger,
-            $this->db,
+            $this->l10n
+        );
+    }
+
+    /**
+     * Rebuilds $this->queryService and the controller so findObjectInCatalog either
+     * returns null (object not in catalog) or throws the supplied exception. Used by
+     * the attachments/download not-found and error-path tests, whose object lookup
+     * now lives in PublicationQueryService rather than the controller.
+     *
+     * @param \Throwable|null $throw When set, findObjectInCatalog throws it; otherwise it returns null.
+     */
+    private function stubFindObjectInCatalog(?\Throwable $throw = null): void
+    {
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('enforcePublishedForAnonymous')
+            ->willReturnCallback(fn(array $result) => $result);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(false);
+        $this->queryService->method('isObjectPublic')->willReturn(true);
+        if ($throw !== null) {
+            $this->queryService->method('findObjectInCatalog')->willThrowException($throw);
+        } else {
+            $this->queryService->method('findObjectInCatalog')->willReturn(null);
+        }
+
+        $this->controller = $this->newControllerWithQueryService();
+    }
+
+    /**
+     * Rebuilds the controller using the current $this->queryService mock. Used by
+     * tests that need to re-stub query-service behaviour after setUp().
+     */
+    private function newControllerWithQueryService(): PublicationsController
+    {
+        return new PublicationsController(
+            'opencatalogi',
+            $this->request,
+            $this->publicationService,
+            $this->catalogiService,
+            $this->queryService,
+            $this->container,
+            $this->appManager,
+            $this->logger,
             $this->l10n
         );
     }
@@ -668,25 +742,21 @@ class PublicationsControllerTest extends TestCase
         $mockObjService->method('renderEntity')
             ->willReturn(['id' => 'pub-fallback']);
 
-        // Mock findObjectLocation: mock DB to return a table with matching UUID
-        $tableResult = $this->createMock(\OCP\DB\IResult::class);
-        $tableResult->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['table_name' => 'oc_openregister_table_2_3'],
-                false
-            );
-        $tableResult->method('closeCursor');
-
-        $locationResult = $this->createMock(\OCP\DB\IResult::class);
-        $locationResult->method('fetch')
-            ->willReturn(['register_id' => 2, 'schema_id' => 3]);
-        $locationResult->method('closeCursor');
-
-        $this->db->method('executeQuery')
-            ->willReturnOnConsecutiveCalls($tableResult, $locationResult);
-
-        $this->db->method('quote')
-            ->willReturn("'pub-fallback'");
+        // The query service resolves the object's register/schema across the magic
+        // tables; the controller then re-queries ObjectService with that location.
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('enforcePublishedForAnonymous')
+            ->willReturnCallback(fn(array $result) => $result);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('isAnonymous')->willReturn(false);
+        $this->queryService->method('isObjectPublic')->willReturn(true);
+        $this->queryService->method('findObjectLocation')
+            ->willReturn(['register' => 2, 'schema' => 3]);
+        $this->controller = $this->newControllerWithQueryService();
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -754,6 +824,52 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(404, $response->getStatus());
     }
 
+    /**
+     * Security (#737): an anonymous caller must not be able to retrieve an
+     * unpublished object via show(). Even when the object is found in the
+     * catalog, the published-for-anonymous predicate must fail closed and the
+     * controller must report it as not found (404) rather than disclosing it.
+     */
+    public function testShowDeniesAnonymousAccessToUnpublishedObject(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Test',
+                'schemas'   => [1],
+                'registers' => [1],
+            ]);
+
+        $mockObj = $this->createObjectEntityMock();
+
+        $mockObjService->method('searchObjects')
+            ->willReturn([$mockObj]);
+
+        // The object exists but the caller is anonymous and the object is not
+        // public — the controller must fail closed.
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('enforcePublishedForAnonymous')
+            ->willReturnCallback(fn(array $result) => $result);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(true);
+        $this->queryService->method('isObjectPublic')->willReturn(false);
+        $this->controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+        $this->request->server = [];
+
+        $response = $this->controller->show('test-catalog', 'pub-secret');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
     // =======================================================================
     // attachments() — success path
     // =======================================================================
@@ -794,8 +910,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -814,8 +929,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \Exception('Unexpected error'));
+        $this->stubFindObjectInCatalog(new \Exception('Unexpected error'));
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -859,9 +973,8 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        // find throws DoesNotExist for all schemas
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        // findObjectInCatalog throws DoesNotExist (object absent from every schema).
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -881,8 +994,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [],
             ]);
 
-        $mockObjService->method('find')
-            ->willReturn(null);
+        $this->stubFindObjectInCatalog();
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -933,8 +1045,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->download('test-catalog', 'pub-123');
 
@@ -953,8 +1064,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \Exception('Unexpected'));
+        $this->stubFindObjectInCatalog(new \Exception('Unexpected'));
 
         $response = $this->controller->download('test-catalog', 'pub-123');
 
@@ -997,8 +1107,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->download('test-catalog', 'pub-123');
 
@@ -1233,10 +1342,10 @@ class PublicationsControllerTest extends TestCase
             $this->request,
             $this->publicationService,
             $this->catalogiService,
+            $this->queryService,
             $this->container,
             $this->appManager,
             $this->logger,
-            $this->db,
             $this->l10n,
             'GET, POST',
             'Authorization',

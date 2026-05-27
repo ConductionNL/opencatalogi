@@ -63,9 +63,39 @@ class PublicationServiceTest extends TestCase
     {
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
+
+        // The index/search/aggregate paths now also resolve PublicationQueryService
+        // from the container to enforce the published-for-anonymous predicate. Return
+        // the correct collaborator per requested id: the ObjectService for OpenRegister
+        // and a pass-through PublicationQueryService for its class id.
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('enforcePublishedForAnonymous')
+            ->willReturnCallback(fn(array $result) => $result);
+
+        // setObjectServiceContext() resolves IDBConnection to discover the object's
+        // register/schema across the magic tables. Return a DB mock that reports no
+        // matching tables so the context-resolution is a no-op for these tests.
+        $emptyResult = $this->createMock(\OCP\DB\IResult::class);
+        $emptyResult->method('fetch')->willReturn(false);
+        $emptyResult->method('closeCursor')->willReturn(true);
+        $db = $this->createMock(\OCP\IDBConnection::class);
+        $db->method('executeQuery')->willReturn($emptyResult);
+        $db->method('quote')->willReturn("''");
+
         $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($objectService);
+            ->willReturnCallback(
+                function (string $id) use ($objectService, $queryService, $db) {
+                    if ($id === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                        return $queryService;
+                    }
+
+                    if ($id === \OCP\IDBConnection::class) {
+                        return $db;
+                    }
+
+                    return $objectService;
+                }
+            );
     }
 
     /**
