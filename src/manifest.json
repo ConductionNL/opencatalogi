@@ -202,6 +202,14 @@
 					"gridY": 2,
 					"gridWidth": 1,
 					"gridHeight": 4
+				},
+				{
+					"widgetKey": "shares",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 6,
+					"gridWidth": 1,
+					"gridHeight": 2
 				}
 			]
 		},

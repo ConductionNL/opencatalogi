@@ -69,3 +69,7 @@ These are stated here so reviewers do not flag them as un-migrated:
 - **Existing live shares.** Links already minted by the bespoke path must remain
   resolvable; the leaf's `findShare`-equivalent must discover them (they are
   ordinary NC type-3 shares, so this should hold — verify at apply).
+
+## Status
+
+status: pr-created

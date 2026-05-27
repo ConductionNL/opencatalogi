@@ -1,34 +1,41 @@
 {
-  "spec": "openspec/changes/migrate-activity-to-activity-leaf",
+  "spec": "openspec/changes/migrate-share-links-to-shares-leaf",
   "verified": [
     {
       "task": "1",
-      "description": "Implementation planning — keep/migrate split confirmed: feed→leaf, auto-publish stays",
-      "ok": true
+      "file": "openspec/changes/migrate-share-links-to-shares-leaf/design.md",
+      "ok": true,
+      "note": "Implementation planning complete; all tasks decomposed and implemented."
     },
     {
       "task": "2",
-      "file": "src/manifest.json",
-      "description": "activity widget (widgetKey: activity, slot: sidebar) added to PublicationDetail page entry",
-      "ok": true
+      "file": "lib/Service/FileService.php",
+      "ok": true,
+      "note": "createPublicShareLink() thin adapter delegates to OR FileService; bespoke createShareLink/createShare removed."
     },
     {
       "task": "3",
-      "file": "lib/Listener/ObjectCreatedEventListener.php",
-      "description": "Listener scoped to auto-publish only; docblock updated with ADR-022/APB-ACT-001 rationale; @spec tag added",
-      "ok": true
+      "file": "lib/Service/FileService.php",
+      "ok": true,
+      "note": "findShare() removed; OR leaf discovers existing shares via createShareLink (idempotent: finds-or-creates)."
     },
     {
       "task": "4",
-      "file": "lib/Listener/ObjectUpdatedEventListener.php",
-      "description": "Debug OPENCATALOGI_EVENT_* logging removed; type check moved before try block; @spec tag added",
-      "ok": true
+      "file": "lib/Service/FileService.php",
+      "ok": true,
+      "note": "getShareLink()/getCurrentDomain() removed; URL assembly delegated to OR leaf."
     },
     {
       "task": "5",
-      "file": "tests/Unit/Listener/ObjectUpdatedEventListenerTest.php",
-      "description": "testHandleIgnoresNonObjectUpdatedEvent updated to not expect debug calls; 659 unit tests pass",
-      "ok": true
+      "file": "src/manifest.json",
+      "ok": true,
+      "note": "shares widget added to PublicationDetail page in sidebar slot at gridY=6 (after activity widget from development)."
+    },
+    {
+      "task": "6",
+      "file": "lib/Service/DownloadService.php",
+      "ok": true,
+      "note": "saveFileToNextCloud uses createPublicShareLink; OR leaf produces type-3 shares compatible with legacy WOO links."
     }
   ],
   "stubs": [],
