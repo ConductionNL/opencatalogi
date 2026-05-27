@@ -22,6 +22,9 @@
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-56
  * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 namespace OCA\OpenCatalogi\Listener;

@@ -106,6 +106,7 @@ error state are tracked under the keys `publish_{id}`.
 - AND the object MUST be removed from the selected-objects list if currently selected
 
 #### Scenario: Publish with missing register/schema metadata
+@e2e exclude internal store guard — this is a pre-request validation throw inside objectStore with no browser-rendered UI feedback; covered by Jest store unit test.
 - GIVEN a publication object lacking `id`, `register`, or `schema`
 - WHEN `objectStore.publishObject(object)` is called
 - THEN the store MUST throw an error before issuing any HTTP request
@@ -126,6 +127,7 @@ selection, and loading/error state tracked under `depublish_{id}` keys.
 - AND the returned object MUST replace the active `publication` if it matches the object's id
 
 #### Scenario: Depublish failure surfaces an error
+@e2e exclude store error-state tracking — the error is recorded in Pinia store state under a key; no reliably-automatable error-state UI is rendered without a failing API endpoint in the test environment; covered by Jest store unit test.
 - GIVEN the depublish endpoint returns a non-OK HTTP status
 - WHEN `objectStore.depublishObject(object)` is called
 - THEN the store MUST record the error under `depublish_{id}` and re-throw it

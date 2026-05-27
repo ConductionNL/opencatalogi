@@ -6,6 +6,8 @@ status: reviewed
 
 ## Purpose
 
+@e2e exclude pure backend service spec — all scenarios test PHP service methods (PDF generation via Twig/mPDF, ZIP archive creation, Nextcloud file storage, share-link creation) with no browser-observable surface; covered by PHPUnit instead.
+
 The Download Service provides functionality for generating downloadable export files from publications. It creates PDF metadata files from publication data using Twig templates and mPDF, and ZIP archives containing the metadata PDF along with all publication attachments (bijlagen). Files can be saved to the user's Nextcloud storage with share links or sent directly as download responses. This service is used by the publication endpoints to support the `/download` sub-resource.
 
 ## Requirements

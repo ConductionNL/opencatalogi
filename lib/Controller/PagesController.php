@@ -175,7 +175,6 @@ class PagesController extends Controller
      * @return JSONResponse The JSON response containing the list of pages
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -232,7 +231,6 @@ class PagesController extends Controller
      * @return JSONResponse The JSON response containing the page details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

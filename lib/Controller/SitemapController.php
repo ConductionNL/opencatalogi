@@ -58,7 +58,6 @@ class SitemapController extends Controller
      *
      * @return XMLResponse
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -81,7 +80,6 @@ class SitemapController extends Controller
      *
      * @return XMLResponse
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
