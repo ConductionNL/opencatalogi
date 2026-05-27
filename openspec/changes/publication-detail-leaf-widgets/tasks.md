@@ -8,14 +8,14 @@ leaf's availability upstream.
 
 ## Task 1: Implementation planning
 - **Spec ref**: specs/publications/spec.md
-- **Status**: todo
+- **Status**: done
 - **Acceptance criteria**: Requirements decomposed into per-widget manifest
   placements; per-leaf availability confirmed as the apply gate; required (maps,
   contacts) vs optional (photos, bookmarks) split respected.
 
 ## Task 2: Place the maps leaf widget on geo publications (PUB-MAP-001)
 - **Spec ref**: specs/publications/spec.md — PUB-MAP-001; ADR-024 / ADR-036
-- **Status**: todo
+- **Status**: done
 - **Acceptance criteria**:
   - Maps widget declared on the `PublicationDetail` manifest entry
     (`src/manifest.json`), bound to `publication.geo`.
@@ -26,7 +26,7 @@ leaf's availability upstream.
 
 ## Task 3: Place the contacts leaf widget on the Organisation detail (PUB-CON-001)
 - **Spec ref**: specs/publications/spec.md — PUB-CON-001; ADR-024 / ADR-036
-- **Status**: todo
+- **Status**: done
 - **Acceptance criteria**:
   - Contacts widget declared on the Organisation object-detail manifest surface.
   - Lists linked contact persons / addresses; graceful "contacts integration
@@ -35,7 +35,7 @@ leaf's availability upstream.
 
 ## Task 4: Optionally place photos + bookmarks leaf widgets on publications (PUB-MEDIA-001)
 - **Spec ref**: specs/publications/spec.md — PUB-MEDIA-001; ADR-024 / ADR-036
-- **Status**: todo
+- **Status**: done
 - **Acceptance criteria**:
   - Photos widget (image gallery) and bookmarks widget (curated links) declared
     on the `PublicationDetail` manifest entry where their leaves are available.
@@ -44,7 +44,7 @@ leaf's availability upstream.
 
 ## Task 5: Verify public/anonymous rendering and geo-shape variance
 - **Spec ref**: specs/publications/spec.md — PUB-MAP-001
-- **Status**: todo
+- **Status**: done
 - **Acceptance criteria**:
   - Maps widget renders or cleanly hides for anonymous WOO consumers (no auth
     session), consistent with the public publication view.
