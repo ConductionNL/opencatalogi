@@ -2,7 +2,12 @@
 /**
  * OpenCatalogi Object Created Event Listener.
  *
- * This file contains the listener class for handling object creation events from OpenRegister.
+ * Handles OR ObjectCreatedEvent and triggers the OpenCatalogi-specific
+ * auto-publishing side effect only (catalogue-membership + WOO publishing
+ * policy). The per-publication activity feed is consumed from the OR activity
+ * leaf (ADR-022 / APB-ACT-001), not reimplemented here. See
+ * openspec/changes/migrate-activity-to-activity-leaf/design.md for the
+ * keep/migrate split rationale.
  *
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
@@ -11,15 +16,14 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
- * @version GIT: <git_id>
- *
  * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-53
  * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+ * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-3
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -34,10 +38,15 @@ use Psr\Log\LoggerInterface;
 /**
  * Event listener for object creation events from OpenRegister.
  *
- * Listens to ObjectCreatedEvent and applies auto-publishing logic
- * based on OpenCatalogi configuration settings.
+ * Listens to ObjectCreatedEvent and applies the auto-publishing side effect
+ * based on OpenCatalogi configuration settings. Scope is limited to the
+ * auto-publishing side effect only (catalogue-membership + WOO publishing
+ * policy); the activity feed is consumed from the OR activity leaf per
+ * ADR-022 / APB-ACT-001 and NOT reimplemented here.
  *
  * @template-implements IEventListener<Event>
+ *
+ * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-3
  */
 class ObjectCreatedEventListener implements IEventListener
 {
@@ -60,6 +69,7 @@ class ObjectCreatedEventListener implements IEventListener
      * @return void
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-53
+     * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-3
      */
     public function handle(Event $event): void
     {
