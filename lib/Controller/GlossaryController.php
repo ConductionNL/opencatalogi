@@ -45,7 +45,6 @@ use RuntimeException;
  * @package   opencatalogi
  * @author    Ruben van der Linde
  * @copyright 2024
- * @license   AGPL-3.0-or-later
  * @version   1.0.0
  * @link      https://github.com/opencatalogi/opencatalogi
  */
@@ -139,6 +138,40 @@ class GlossaryController extends Controller
     }//end getGlossaryConfiguration()
 
     /**
+     * Resolve the Access-Control-Allow-Origin header value for the current request.
+     *
+     * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
+     * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
+     * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+     *
+     * @return string The header value to use for Access-Control-Allow-Origin.
+     */
+    private function resolveAllowedOrigin(): string
+    {
+        $configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
+        if ($configured === '' || $configured === '*') {
+            return '*';
+        }
+
+        $allowlist = array_filter(
+            array_map('trim', explode(',', $configured)),
+            static fn(string $entry): bool => $entry !== ''
+        );
+
+        $callerOrigin = $this->request->getHeader('Origin');
+        if ($callerOrigin === '') {
+            $callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
+        }
+
+        if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
+            return $callerOrigin;
+        }
+
+        return ($allowlist[0] ?? '*');
+
+    }//end resolveAllowedOrigin()
+
+    /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
      * @return Response The CORS response
@@ -151,15 +184,9 @@ class GlossaryController extends Controller
      */
     public function preflightedCors(): Response
     {
-        // Determine the origin.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
-
         // Create and configure the response.
         $response = new Response();
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -175,7 +202,6 @@ class GlossaryController extends Controller
      * @return JSONResponse The JSON response containing the list of glossary terms
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -249,11 +275,10 @@ class GlossaryController extends Controller
             $responseData['facetable'] = $result['facetable'];
         }
 
-        // Add CORS headers for public API access.
+        // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($responseData);
-        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
@@ -269,7 +294,6 @@ class GlossaryController extends Controller
      * @return JSONResponse The JSON response containing the glossary term details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -296,11 +320,10 @@ class GlossaryController extends Controller
             $data = $glossaryTerm->jsonSerialize();
         }
 
-        // Add CORS headers for public API access.
+        // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($data);
-        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 

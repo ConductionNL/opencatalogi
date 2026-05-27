@@ -29,7 +29,7 @@
       "task": "5",
       "file": "src/manifest.json",
       "ok": true,
-      "note": "shares widget added to PublicationDetail page in sidebar slot at gridY=2."
+      "note": "shares widget added to PublicationDetail page in sidebar slot at gridY=6 (after activity widget from development)."
     },
     {
       "task": "6",

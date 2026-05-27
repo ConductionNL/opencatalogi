@@ -6,6 +6,8 @@ status: reviewed
 
 ## Purpose
 
+@e2e exclude pure API/backend spec — all scenarios test server-side federation aggregation logic (async Guzzle HTTP, facet merging, result sorting) with no browser-observable UI surface; covered by Newman API tests instead.
+
 Federation enables OpenCatalogi to aggregate publications from both local catalogs and external (federated) OpenCatalogi instances into a unified search interface. The federation endpoints mirror the publication API but include aggregation logic that queries remote directories, merges results, and provides a single response to the frontend. This is the backbone of the decentralized catalog network where multiple government organizations can share and discover each other's publications.
 
 ## Requirements

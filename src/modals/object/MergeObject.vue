@@ -841,6 +841,7 @@ export default {
 .object-id {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
+	font-family: monospace;
 	margin: 0;
 }
 
@@ -1022,12 +1023,6 @@ export default {
 	flex-direction: column;
 	gap: 4px;
 	margin-top: 8px;
-}
-
-.object-id {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-	font-family: monospace;
 }
 
 .object-title {

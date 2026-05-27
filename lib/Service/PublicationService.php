@@ -154,6 +154,21 @@ class PublicationService
     }//end getObjectService()
 
     /**
+     * Resolve the PublicationQueryService for shared visibility enforcement.
+     *
+     * @return PublicationQueryService The query/visibility helper service.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the shared
+     *       PublicationQueryService from the container; pure framework plumbing.
+     */
+    private function getQueryService(): PublicationQueryService
+    {
+        return $this->container->get(PublicationQueryService::class);
+
+    }//end getQueryService()
+
+    /**
      * Set register/schema context on the ObjectService for a given object UUID.
      *
      * Searches all magic tables to find which register/schema an object belongs to,
@@ -497,6 +512,11 @@ class PublicationService
             )
         );
 
+        // Enforce server-side published predicate for anonymous callers. Authenticated
+        // callers keep RBAC-scoped behavior; anonymous callers only see published
+        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
+
         // Filter unwanted properties from results.
         $result['results'] = $this->filterUnwantedProperties($result['results']);
 
@@ -746,15 +766,26 @@ class PublicationService
         // Get request parameters for filtering and searching.
         $requestParams = $this->request->getParams();
 
-        // @todo validate if it in the calaogue etc etc (this is a bit dangerues now).
-        $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? null);
+        // Catalog membership is enforced by the catalog-scoped show() in
+        // PublicationsController; this generic /api/objects/{id} entry point trusts OR
+        // RBAC + the '@self.'-prefix extend allowlist below. The previous "@todo this
+        // is a bit dangerous now" comment referred to the missing catalog check, which
+        // is now applied at the controller layer (#733).
+        $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
         // Normalize to array.
         if (is_array($extend) === false) {
             $extend = [$extend];
         }
 
-        // Filter only values that start with '@self.'.
-        $extend = array_filter($extend, fn($val) => is_string($val) === true && str_starts_with($val, '@self.') === true);
+        // Filter only values that start with '@self.' and cap breadth (#732).
+        $filtered = array_filter(
+            $extend,
+            static fn($val) => is_string($val) === true && str_starts_with($val, '@self.') === true
+        );
+        $extend   = array_values($filtered);
+        if (count($extend) > 5) {
+            $extend = array_slice($extend, 0, 5);
+        }
 
         try {
             // Render the object with requested extensions and filters.
@@ -903,8 +934,16 @@ class PublicationService
         // Filter each object.
         return array_map(
             function ($object) use ($unwantedProperties) {
-                // Use jsonSerialize to get an array representation of the object.
-                $objectArray = $object->jsonSerialize();
+                // The OR SOLR backend returns array shapes (not ObjectEntity instances)
+                // from searchObjectsPaginated; the magic-mapper backend returns entities.
+                // Guard so we do not fatal with "Call to a member function jsonSerialize()
+                // on array" under SOLR (#736), mirroring the dual-shape handling that
+                // already exists in PublicationsController::index.
+                if (is_array($object) === true) {
+                    $objectArray = $object;
+                } else {
+                    $objectArray = $object->jsonSerialize();
+                }
 
                 // Remove unwanted properties from the '@self' array.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {

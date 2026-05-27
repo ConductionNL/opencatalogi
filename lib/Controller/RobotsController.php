@@ -80,7 +80,6 @@ class RobotsController extends Controller
      *
      * @return TextResponse The robots.txt response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

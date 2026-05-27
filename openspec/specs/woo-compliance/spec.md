@@ -6,6 +6,8 @@ status: reviewed
 
 ## Purpose
 
+@e2e exclude pure backend/API spec — all scenarios test server-side PHP XML sitemap generation, DIWOO metadata mapping, robots.txt rendering, and catalog schema queries; no browser-observable UI surface; covered by Newman API tests instead.
+
 OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML sitemaps and robots.txt files that conform to the DIWOO metadata standard. This enables government organizations to make their publications discoverable by the Dutch government's central search index (KOOP/DIWOO). Sitemaps are generated per catalog and per WOO information category (informatiecategorie), mapping publications to the DIWOO XML schema with proper metadata including creation dates, publishers, file formats, and document handling information.
 
 ## Requirements

@@ -29,9 +29,11 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use OCP\App\IAppManager;
 use OCA\OpenCatalogi\Service\SettingsService;
@@ -51,6 +53,7 @@ class SettingsController extends Controller
      * @param IAppManager        $appManager      The app manager.
      * @param SettingsService    $settingsService The settings service.
      * @param IL10N              $l10n            The localization service.
+     * @param IUserSession       $userSession     The user session.
      */
     public function __construct(
         $appName,
@@ -59,6 +62,7 @@ class SettingsController extends Controller
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly IL10N $l10n,
+        private readonly IUserSession $userSession,
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -76,6 +80,10 @@ class SettingsController extends Controller
      */
     public function index(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $data = $this->settingsService->getSettings();
             return new JSONResponse($data);
@@ -138,6 +146,10 @@ class SettingsController extends Controller
      */
     public function getPublishingOptions(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $data = $this->settingsService->getPublishingOptions();
             return new JSONResponse($data);
@@ -180,6 +192,10 @@ class SettingsController extends Controller
      */
     public function getVersionInfo(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $data = $this->settingsService->getVersionInfo();
             return new JSONResponse($data);

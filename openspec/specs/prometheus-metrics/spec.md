@@ -7,6 +7,8 @@ status: implemented
 ## Purpose
 Expose application metrics in Prometheus text exposition format at `GET /api/metrics` and a health check at `GET /api/health` for monitoring, alerting, and operational dashboards. These endpoints enable integration with standard observability stacks (Prometheus + Grafana) used by Dutch municipalities and hosting providers.
 
+@e2e exclude API/monitoring spec — all scenarios test Prometheus text-format output, label naming conventions, SQL aggregation queries, and health-check JSON structure; no browser-observable UI surface; covered by Newman API tests instead.
+
 ## Context
 OpenCatalogi serves as the public-facing publication platform for government transparency (WOO). Uptime, publication throughput, search performance, and federation health are critical operational metrics. This spec defines the metrics and health endpoints that enable proactive monitoring and alerting.
 

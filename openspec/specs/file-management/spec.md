@@ -141,6 +141,7 @@ top of it.
 **Priority:** Should **Status:** Implemented
 
 #### Scenario: Select files via the composable
+@e2e exclude headless drag-and-drop limitation — useFileSelection composable state (isOverDropZone, rejectedDuplicates) is internal reactive state not observable via DOM snapshot in headless Playwright; covered by Jest composable unit test.
 - GIVEN a component using `useFileSelection`
 - WHEN files are dropped or chosen
 - THEN the composable's file list MUST update and duplicates MUST be rejected
