@@ -774,7 +774,16 @@ class CatalogiService
         // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(
             function ($object) {
-                $objectArray = $object->jsonSerialize();
+                // The OR SOLR backend returns array shapes (not ObjectEntity instances)
+                // from searchObjectsPaginated; the magic-mapper backend returns entities.
+                // Guard so we do not fatal with "Call to a member function jsonSerialize()
+                // on array" under SOLR (#736), mirroring the dual-shape handling already
+                // present in CatalogiController/PublicationsController::index.
+                if (is_array($object) === true) {
+                    $objectArray = $object;
+                } else {
+                    $objectArray = $object->jsonSerialize();
+                }
 
                 // @todo: a logged-in user should be able to see the full object.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {

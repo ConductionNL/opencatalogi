@@ -58,6 +58,17 @@ class PublicationQueryService
     ];
 
     /**
+     * Per-instance existence cache for magic-mapper tables.
+     *
+     * Avoids repeated information_schema lookups when a request touches the same
+     * (register × schema) pair multiple times. Cleared whenever the service is
+     * reconstructed (no long-lived state across requests).
+     *
+     * @var array<string, bool>
+     */
+    private array $magicTableCache = [];
+
+    /**
      * Constructor.
      *
      * @param IDBConnection      $db          Database connection
@@ -193,58 +204,66 @@ class PublicationQueryService
     }//end enforcePublishedForAnonymous()
 
     /**
-     * Find the register and schema IDs for an object UUID by searching all magic tables.
+     * Find the register and schema IDs for an object UUID within a constrained scope.
      *
      * OpenRegister stores objects in per-register-per-schema "magic tables" named
-     * oc_openregister_table_{register}_{schema}. Without knowing the register/schema,
-     * we need to search across all these tables to find where an object lives.
+     * oc_openregister_table_{register}_{schema}. This helper locates which table a
+     * UUID lives in, but it is ALWAYS scoped to the caller-supplied register/schema
+     * lists. The legacy platform-wide UNION-ALL across every magic table (with a
+     * per-request information_schema reflection) is gone (#734) — it was an
+     * anonymous-reachable DoS vector and also leaked cross-catalog objects (#733).
      *
-     * @param string $uuid The UUID of the object to find
+     * Callers MUST pass non-empty $allowedRegisters and $allowedSchemas; otherwise
+     * the method returns null without touching the database.
      *
-     * @return array{register: int, schema: int}|null The register/schema IDs, or null if not found.
+     * @param string                 $uuid             The UUID of the object to find.
+     * @param array<int|string>|null $allowedRegisters Register IDs the search may touch.
+     * @param array<int|string>|null $allowedSchemas   Schema IDs the search may touch.
      *
-     * @spec exclude DB-scan helper that searches magic mapper tables to locate an object's
-     *       register/schema IDs; pure framework plumbing, no domain behavior.
+     * @return array{register: int, schema: int}|null The register/schema IDs, or null.
+     *
+     * @spec exclude DB-scan helper that searches a constrained subset of magic mapper
+     *       tables to locate an object's register/schema IDs; pure framework plumbing.
      */
-    public function findObjectLocation(string $uuid): ?array
-    {
-        // Get all magic table names from the database schema.
-        $sql    = "SELECT table_name FROM information_schema.tables";
-        $sql   .= " WHERE table_name LIKE 'oc_openregister_table_%'";
-        $sql   .= " ORDER BY table_name";
-        $result = $this->db->executeQuery($sql);
-
-        $tables = [];
-        while (($row = $result->fetch()) !== false) {
-            $tables[] = $row['table_name'];
-        }
-
-        $result->closeCursor();
-
-        if (empty($tables) === true) {
+    public function findObjectLocation(
+        string $uuid,
+        ?array $allowedRegisters=null,
+        ?array $allowedSchemas=null
+    ): ?array {
+        if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+            // Fail closed — without an explicit constraint we will NOT do a
+            // platform-wide scan. This is the post-#734 behaviour.
             return null;
         }
 
-        // Build a UNION ALL query to search all magic tables for the UUID.
+        // Build a UNION ALL query across the catalog's (register × schema) magic
+        // tables. The table name pattern is deterministic so there is no need to
+        // reflect against information_schema on the hot path.
         $unionParts = [];
         $quotedUuid = $this->db->quote($uuid);
-        $matches    = [];
-        foreach ($tables as $table) {
-            // Extract register and schema from table name pattern.
-            if (preg_match(
-                pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
-                subject: $table,
-                matches: $matches
-            ) === 1
-            ) {
-                $register     = (int) $matches[1];
-                $schema       = (int) $matches[2];
-                $part         = "(SELECT {$register} AS register_id,";
-                $part        .= " {$schema} AS schema_id";
+        foreach ($allowedRegisters as $register) {
+            if (is_numeric($register) === false) {
+                continue;
+            }
+
+            $registerId = (int) $register;
+            foreach ($allowedSchemas as $schema) {
+                if (is_numeric($schema) === false) {
+                    continue;
+                }
+
+                $schemaId = (int) $schema;
+                $table    = "oc_openregister_table_{$registerId}_{$schemaId}";
+                if ($this->magicTableExists($table) === false) {
+                    continue;
+                }
+
+                $part         = "(SELECT {$registerId} AS register_id,";
+                $part        .= " {$schemaId} AS schema_id";
                 $part        .= " FROM {$table} WHERE _uuid = {$quotedUuid})";
                 $unionParts[] = $part;
             }
-        }
+        }//end foreach
 
         if (empty($unionParts) === true) {
             return null;
@@ -265,6 +284,48 @@ class PublicationQueryService
         ];
 
     }//end findObjectLocation()
+
+    /**
+     * Lightweight existence probe for a magic-mapper table.
+     *
+     * Cached for the lifetime of the service instance. Lets callers safely UNION
+     * across a catalog's (register × schema) combinations even when some pairs
+     * have no backing table — without falling back to a platform-wide
+     * information_schema scan (#734).
+     *
+     * @param string $table The magic-mapper table name.
+     *
+     * @return bool True when the table exists.
+     *
+     * @spec exclude DB-existence-probe plumbing for the constrained findObjectLocation;
+     *       pure framework helper.
+     */
+    private function magicTableExists(string $table): bool
+    {
+        if (isset($this->magicTableCache[$table]) === true) {
+            return $this->magicTableCache[$table];
+        }
+
+        // Use a parameterised information_schema lookup constrained to this single
+        // table name. Cheap (index lookup, single row), not a full table-pattern scan.
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from('information_schema.tables')
+            ->where($qb->expr()->eq('table_name', $qb->createNamedParameter($table)));
+
+        try {
+            $result = $qb->executeQuery();
+            $row    = $result->fetch();
+            $result->closeCursor();
+            $exists = ($row !== false && (int) ($row['cnt'] ?? 0) > 0);
+        } catch (\Exception $e) {
+            $exists = false;
+        }
+
+        $this->magicTableCache[$table] = $exists;
+        return $exists;
+
+    }//end magicTableExists()
 
     /**
      * Build the ObjectService search query for a catalog index request.
@@ -552,5 +613,4 @@ class PublicationQueryService
         }
 
     }//end processArrayValue()
-
 }//end class
