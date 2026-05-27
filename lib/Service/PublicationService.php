@@ -154,6 +154,21 @@ class PublicationService
     }//end getObjectService()
 
     /**
+     * Resolve the PublicationQueryService for shared visibility enforcement.
+     *
+     * @return PublicationQueryService The query/visibility helper service.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the shared
+     *       PublicationQueryService from the container; pure framework plumbing.
+     */
+    private function getQueryService(): PublicationQueryService
+    {
+        return $this->container->get(PublicationQueryService::class);
+
+    }//end getQueryService()
+
+    /**
      * Set register/schema context on the ObjectService for a given object UUID.
      *
      * Searches all magic tables to find which register/schema an object belongs to,
@@ -496,6 +511,11 @@ class PublicationService
                 _multitenancy: false
             )
         );
+
+        // Enforce server-side published predicate for anonymous callers. Authenticated
+        // callers keep RBAC-scoped behavior; anonymous callers only see published
+        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
 
         // Filter unwanted properties from results.
         $result['results'] = $this->filterUnwantedProperties($result['results']);

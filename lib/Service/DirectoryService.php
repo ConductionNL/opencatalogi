@@ -388,10 +388,18 @@ class DirectoryService
             'listing_details'    => [],
         ];
 
+        // SSRF guard: validate the attacker-controllable directory URL BEFORE fetching.
+        // Restricts the scheme to http/https and rejects any host that resolves to a
+        // private, loopback, link-local, or cloud-metadata address. Throws
+        // InvalidArgumentException (mapped to HTTP 400) when the target is not safe.
+        $this->assertSafeOutboundUrl($directoryUrl);
+
         try {
             // Fetch directory data with limit to get all listings.
+            // Redirects are validated per-hop and bounded by safeGet() so a redirect
+            // cannot be used to pivot to an internal address.
             $dirUrlWithLimit = $directoryUrl.'?_limit=10000';
-            $response        = $this->client->get($dirUrlWithLimit);
+            $response        = $this->safeGet($dirUrlWithLimit);
             $directoryData   = json_decode($response->getBody()->getContents(), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -1407,6 +1415,216 @@ class DirectoryService
         return empty($userAgent) === false && str_contains($userAgent, 'OpenCatalogi-Broadcast') === true;
 
     }//end isSystemBroadcast()
+
+    /**
+     * Assert that an outbound URL is safe to fetch (SSRF guard).
+     *
+     * Restricts the scheme to http/https and rejects any URL whose host resolves
+     * to a private, loopback, link-local, unique-local, or cloud-metadata address.
+     * The host is resolved via DNS so a public hostname that maps to an internal IP
+     * (DNS-rebinding-style payload) is also rejected.
+     *
+     * @param string $url The URL to validate.
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     *
+     * @spec exclude SSRF input-validation guard for outbound directory fetches; security
+     *       plumbing that hardens an existing fetch, no new domain behavior.
+     */
+    private function assertSafeOutboundUrl(string $url): void
+    {
+        $parsed = parse_url($url);
+        if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
+            throw new InvalidArgumentException('Invalid directory URL provided');
+        }
+
+        $scheme = strtolower($parsed['scheme']);
+        if (in_array($scheme, ['http', 'https'], true) === false) {
+            throw new InvalidArgumentException('Directory URL scheme must be http or https');
+        }
+
+        $host = strtolower($parsed['host']);
+
+        // Reject obvious local hostnames outright.
+        if ($host === 'localhost' || str_ends_with($host, '.local') === true
+            || str_ends_with($host, '.localhost') === true
+        ) {
+            throw new InvalidArgumentException('Directory URL host is not allowed');
+        }
+
+        // Collect the IPs to check: the literal host if it is already an IP,
+        // otherwise every address the host resolves to via DNS.
+        $ipsToCheck = [];
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            $ipsToCheck[] = $host;
+        } else {
+            // Strip IPv6 brackets if present.
+            $lookupHost = trim($host, '[]');
+            if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
+                $ipsToCheck[] = $lookupHost;
+            } else {
+                $records = @dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+                if ($records !== false) {
+                    foreach ($records as $record) {
+                        if (isset($record['ip']) === true) {
+                            $ipsToCheck[] = $record['ip'];
+                        }
+
+                        if (isset($record['ipv6']) === true) {
+                            $ipsToCheck[] = $record['ipv6'];
+                        }
+                    }
+                }
+
+                // Fallback to gethostbyname for A records when dns_get_record is empty.
+                if (empty($ipsToCheck) === true) {
+                    $resolved = gethostbyname($lookupHost);
+                    if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+                        $ipsToCheck[] = $resolved;
+                    }
+                }
+            }//end if
+        }//end if
+
+        if (empty($ipsToCheck) === true) {
+            throw new InvalidArgumentException('Directory URL host could not be resolved');
+        }
+
+        foreach ($ipsToCheck as $ip) {
+            if ($this->isBlockedIp($ip) === true) {
+                throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
+            }
+        }
+
+    }//end assertSafeOutboundUrl()
+
+    /**
+     * Determine whether an IP address falls in a blocked range.
+     *
+     * Blocks loopback (127.0.0.0/8, ::1), private RFC1918 ranges, link-local
+     * (169.254.0.0/16 incl. the 169.254.169.254 metadata endpoint, fe80::/10),
+     * unique-local IPv6 (fc00::/7), and other reserved ranges via PHP's range flags.
+     *
+     * @param string $ip The IP address to evaluate.
+     *
+     * @return boolean True when the IP must not be contacted.
+     *
+     * @spec exclude SSRF range check supporting assertSafeOutboundUrl(); security plumbing.
+     */
+    private function isBlockedIp(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            // Unparseable address — treat as blocked to fail safe.
+            return true;
+        }
+
+        // FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
+        // private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
+        $isPublic = filter_var(
+            value: $ip,
+            filter: FILTER_VALIDATE_IP,
+            options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
+        );
+
+        if ($isPublic === false) {
+            return true;
+        }
+
+        // Explicit belt-and-braces checks for the cloud-metadata endpoint and
+        // IPv6 forms that some PHP builds do not flag via the range flags above.
+        $blockedExact = [
+            '169.254.169.254',
+            '::1',
+            '0.0.0.0',
+            '::',
+        ];
+        if (in_array($ip, $blockedExact, true) === true) {
+            return true;
+        }
+
+        $lower = strtolower($ip);
+        // Match fc00::/7 (unique-local) and fe80::/10 (link-local) IPv6 prefixes.
+        if (str_starts_with($lower, 'fc') === true || str_starts_with($lower, 'fd') === true
+            || str_starts_with($lower, 'fe8') === true || str_starts_with($lower, 'fe9') === true
+            || str_starts_with($lower, 'fea') === true || str_starts_with($lower, 'feb') === true
+        ) {
+            return true;
+        }
+
+        return false;
+
+    }//end isBlockedIp()
+
+    /**
+     * Perform a GET request with SSRF-safe, per-hop-validated bounded redirects.
+     *
+     * Guzzle's automatic redirect following is disabled so that each redirect target
+     * can be re-validated by {@see self::assertSafeOutboundUrl()} before it is fetched,
+     * preventing a public URL from redirecting into an internal address.
+     *
+     * @param string $url The (already validated) initial URL to fetch.
+     *
+     * @return \Psr\Http\Message\ResponseInterface The final HTTP response.
+     *
+     * @throws InvalidArgumentException When a redirect points to a disallowed address
+     *                                  or the redirect limit is exceeded.
+     * @throws GuzzleException          On transport errors.
+     *
+     * @spec exclude SSRF-safe fetch helper with bounded, per-hop-validated redirects;
+     *       security plumbing wrapping the existing Guzzle client.
+     */
+    private function safeGet(string $url): \Psr\Http\Message\ResponseInterface
+    {
+        $maxRedirects = 5;
+        $current      = $url;
+
+        for ($hop = 0; $hop <= $maxRedirects; $hop++) {
+            $response = $this->client->get(
+                $current,
+                [
+                    RequestOptions::ALLOW_REDIRECTS => false,
+                    RequestOptions::TIMEOUT         => 10,
+                    RequestOptions::CONNECT_TIMEOUT => 5,
+                ]
+            );
+
+            $status = $response->getStatusCode();
+            if ($status < 300 || $status >= 400) {
+                return $response;
+            }
+
+            // Redirect: resolve, validate, and follow manually.
+            $location = $response->getHeaderLine('Location');
+            if ($location === '') {
+                return $response;
+            }
+
+            // Resolve relative redirects against the current URL.
+            if (parse_url($location, PHP_URL_HOST) === null) {
+                $base     = parse_url($current);
+                $scheme   = ($base['scheme'] ?? 'https');
+                $hostPart = ($base['host'] ?? '');
+                if (isset($base['port']) === true) {
+                    $hostPart .= ':'.$base['port'];
+                }
+
+                $path = $location;
+                if (str_starts_with($location, '/') === false) {
+                    $path = '/'.$location;
+                }
+
+                $location = $scheme.'://'.$hostPart.$path;
+            }
+
+            $this->assertSafeOutboundUrl($location);
+            $current = $location;
+        }//end for
+
+        throw new InvalidArgumentException('Too many redirects while fetching directory');
+
+    }//end safeGet()
 
     /**
      * Check if a URL is considered local

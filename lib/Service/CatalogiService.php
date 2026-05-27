@@ -140,6 +140,21 @@ class CatalogiService
     }//end getObjectService()
 
     /**
+     * Resolve the PublicationQueryService for shared visibility enforcement.
+     *
+     * @return PublicationQueryService The query/visibility helper service.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the shared
+     *       PublicationQueryService from the container; pure framework plumbing.
+     */
+    private function getQueryService(): PublicationQueryService
+    {
+        return $this->container->get(PublicationQueryService::class);
+
+    }//end getQueryService()
+
+    /**
      * Attempts to retrieve the OpenRegister FileService from the container.
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
@@ -750,6 +765,11 @@ class CatalogiService
 
         // Use searchObjectsPaginated which handles pagination internally.
         $result = $objectService->searchObjectsPaginated($query);
+
+        // Enforce server-side published predicate for anonymous callers. Authenticated
+        // callers keep RBAC-scoped behavior; anonymous callers only see published
+        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
 
         // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(

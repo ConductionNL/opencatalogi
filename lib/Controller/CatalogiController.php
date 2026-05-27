@@ -183,21 +183,26 @@ class CatalogiController extends Controller
         // Build search query for searchObjectsPaginated.
         $searchQuery = $this->getObjectService()->buildSearchQuery($requestParams);
 
-        // Add schema filter if configured.
+        // Constrain the query to the configured catalog register/schema.
+        // Set the top-level _register/_schema keys directly: the @self keys produced
+        // by buildSearchQuery are overwritten/normalized downstream, so the configured
+        // scope must be pinned via the magic-mapper routing keys to actually take effect.
         if (empty($catalogConfig['schema']) === false) {
+            $searchQuery['_schema']         = $catalogConfig['schema'];
             $searchQuery['@self']['schema'] = $catalogConfig['schema'];
         }
 
-        // Add register filter if configured.
         if (empty($catalogConfig['register']) === false) {
+            $searchQuery['_register']         = $catalogConfig['register'];
             $searchQuery['@self']['register'] = $catalogConfig['register'];
         }
 
         // Fetch catalog objects using searchObjectsPaginated.
+        // _rbac: true enforces schema authorization rules (anonymous callers only see
+        // what RBAC permits); multitenancy is left enabled so org scoping is not bypassed.
         $result = $this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
-            _multitenancy: false,
+            _rbac: true,
             deleted: false
         );
 
