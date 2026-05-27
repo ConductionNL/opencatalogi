@@ -1510,6 +1510,37 @@ class PublicationServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    /**
+     * Robustness (#736): under the SOLR backend, searchObjectsPaginated returns
+     * array shapes (not ObjectEntity instances). filterUnwantedProperties MUST
+     * accept arrays without fataling with "Call to a member function jsonSerialize()
+     * on array".
+     */
+    public function testFilterUnwantedPropertiesAcceptsArrayShape(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+        $method->setAccessible(true);
+
+        // SOLR-shape: plain associative array, no jsonSerialize().
+        $solrShape = [
+            '@self' => [
+                'id'            => 'pub-solr-1',
+                'title'         => 'Keep',
+                'schemaVersion' => 'remove',
+            ],
+            'extra' => 'kept',
+        ];
+
+        $result = $method->invoke($this->service, [$solrShape]);
+
+        $this->assertCount(1, $result);
+        $self = $result[0]['@self'];
+        $this->assertSame('pub-solr-1', $self['id']);
+        $this->assertSame('Keep', $self['title']);
+        $this->assertArrayNotHasKey('schemaVersion', $self);
+        $this->assertSame('kept', $result[0]['extra']);
+    }
+
     // =======================================================================
     // Private method: extractFieldValue (via reflection)
     // =======================================================================
