@@ -25,8 +25,10 @@ namespace OCA\OpenCatalogi\Controller;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -41,11 +43,13 @@ class SearchController extends Controller
      * @param string             $appName            The name of the app.
      * @param IRequest           $request            The request object.
      * @param PublicationService $publicationService The publication service.
+     * @param IUserSession       $userSession        The user session.
      */
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly PublicationService $publicationService
+        private readonly PublicationService $publicationService,
+        private readonly IUserSession $userSession
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -69,6 +73,10 @@ class SearchController extends Controller
      */
     public function index(?string $catalogId=null): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->publicationService->index($catalogId);
 
     }//end index()
@@ -91,6 +99,10 @@ class SearchController extends Controller
      */
     public function show(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->publicationService->show(id: $id);
 
     }//end show()
@@ -113,6 +125,10 @@ class SearchController extends Controller
      */
     public function attachments(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->publicationService->attachments(id: $id);
 
     }//end attachments()
@@ -135,6 +151,10 @@ class SearchController extends Controller
      */
     public function download(string $id): DataDownloadResponse|JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->publicationService->download(id: $id);
 
     }//end download()
@@ -158,6 +178,10 @@ class SearchController extends Controller
      */
     public function uses(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->publicationService->uses(id: $id);
 
     }//end uses()
@@ -181,6 +205,10 @@ class SearchController extends Controller
      */
     public function used(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return $this->publicationService->used(id: $id);
 
     }//end used()

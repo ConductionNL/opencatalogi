@@ -163,11 +163,13 @@ The internal `SearchController` SHALL expose per-publication actions that delega
 **Priority:** Should **Status:** Implemented
 
 #### Scenario: Retrieve a single publication and its files
+@e2e exclude dead-code routes — SearchController::show/attachments/download have no registered routes in routes.php (Gap 10); the endpoints are unreachable via HTTP and cannot be tested in a browser; covered by PHPUnit controller test.
 - GIVEN an authenticated request to `SearchController::show`, `attachments`, or `download` with a publication `id`
 - WHEN the action runs
 - THEN it MUST delegate to the corresponding `PublicationService` method and return its result
 
 #### Scenario: Inspect publication relations
+@e2e exclude dead-code routes — SearchController::uses/used have no registered routes in routes.php (Gap 10); the endpoints are unreachable via HTTP and cannot be tested in a browser; covered by PHPUnit controller test.
 - GIVEN an authenticated request to `SearchController::uses` or `used` with a publication `id`
 - WHEN the action runs
 - THEN `uses` MUST return objects the publication references and `used` MUST return objects that reference the publication, via `PublicationService`

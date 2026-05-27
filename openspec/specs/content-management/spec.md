@@ -226,16 +226,19 @@ of a publication-type URL as its id.
 **Priority:** Should **Status:** Implemented
 
 #### Scenario: Resolve the active Nextcloud theme
+@e2e exclude pure JS helper — getTheme() reads a DOM attribute and returns a string; no browser-rendered UI surface; covered by Jest unit test.
 - GIVEN the body carries `data-theme-light`
 - WHEN `getTheme()` is called
 - THEN it MUST return `'light'`
 
 #### Scenario: Default theme follows the OS color scheme
+@e2e exclude pure JS helper — getTheme() with data-theme-default uses matchMedia which cannot be reliably driven in Playwright headless; covered by Jest unit test.
 - GIVEN the body carries `data-theme-default`
 - WHEN `getTheme()` is called
 - THEN it MUST return `'light'` if `prefers-color-scheme: light` matches, otherwise `'dark'`
 
 #### Scenario: Extract a publication type id from a URL
+@e2e exclude pure JS utility — getPublicationTypeId() extracts a string fragment from a URL with no browser-rendered UI surface; covered by Jest unit test.
 - GIVEN a publication-type URL ending in `/42`
 - WHEN `getPublicationTypeId(url)` is called
 - THEN it MUST return `42`

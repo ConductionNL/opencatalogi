@@ -1186,8 +1186,24 @@ class CatalogiServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        // index() now also resolves PublicationQueryService from the container to
+        // enforce the published-for-anonymous predicate. Return the correct type
+        // per requested service id: the ObjectService for OpenRegister's id, and a
+        // pass-through PublicationQueryService for its class id.
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('enforcePublishedForAnonymous')
+            ->willReturnCallback(fn(array $result) => $result);
+
         $this->container->method('get')
-            ->willReturn($objectService);
+            ->willReturnCallback(
+                function (string $id) use ($objectService, $queryService) {
+                    if ($id === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                        return $queryService;
+                    }
+
+                    return $objectService;
+                }
+            );
     }//end injectObjectService()
 
     /**
@@ -1201,4 +1217,58 @@ class CatalogiServiceTest extends TestCase
 
         return $method;
     }//end getPrivateMethod()
+
+    /**
+     * Robustness (#736): under the SOLR backend, searchObjectsPaginated returns
+     * array shapes (not ObjectEntity instances). CatalogiService::index MUST
+     * accept both array AND entity shapes without fataling with
+     * "Call to a member function jsonSerialize() on array".
+     */
+    public function testIndexAcceptsArrayShapedResultsFromSolrBackend(): void
+    {
+        $this->request->method('getParams')->willReturn([]);
+        $this->config->method('getValueString')
+            ->willReturnMap([
+                ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                ['opencatalogi', 'catalog_register', '', 'register-1'],
+            ]);
+
+        $catalogObject = $this->createMockCatalogObject([
+            'registers' => ['reg-1'],
+            'schemas'   => ['sch-1'],
+        ]);
+
+        // SOLR-shape result: plain associative array, NOT an ObjectEntity.
+        $solrShapedResult = [
+            '@self' => [
+                'id'            => 'pub-solr-1',
+                'register'      => 'reg-1',
+                'schema'        => 'sch-1',
+                'owner'         => 'admin',
+                'schemaVersion' => '1.0',
+            ],
+        ];
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->method('searchObjects')->willReturn([$catalogObject]);
+        $objectService->method('searchObjectsPaginated')
+            ->willReturn([
+                'results' => [$solrShapedResult],
+                'total'   => 1,
+                'page'    => 1,
+                'pages'   => 1,
+            ]);
+
+        $this->injectObjectService($objectService);
+
+        $response = $this->service->index();
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $data = $response->getData();
+        $this->assertCount(1, $data['results']);
+        $first = $data['results'][0];
+        $this->assertArrayNotHasKey('owner', $first['@self']);
+        $this->assertArrayNotHasKey('schemaVersion', $first['@self']);
+        $this->assertSame('reg-1', $first['@self']['register']);
+    }
 }//end class

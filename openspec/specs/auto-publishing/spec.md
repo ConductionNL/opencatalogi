@@ -6,6 +6,8 @@ status: reviewed
 
 ## Purpose
 
+@e2e exclude pure backend event-listener spec — all scenarios test server-side APB logic (ObjectCreatedEvent/ObjectUpdatedEvent handlers, catalog matching, FileMapper, share-link creation) with no browser-observable surface; covered by PHPUnit instead.
+
 The auto-publishing system automatically publishes OpenRegister objects and their file attachments when they are created or updated, based on configurable publishing options. It listens to OpenRegister's `ObjectCreatedEvent` and `ObjectUpdatedEvent` via Nextcloud's event dispatcher, evaluates whether the object belongs to a catalog, and triggers publish and share-link creation operations. This eliminates the need for manual publishing workflows for organizations that want all catalog content to be immediately public.
 
 ## Requirements

@@ -45,7 +45,6 @@ use RuntimeException;
  * @package   opencatalogi
  * @author    Ruben van der Linde
  * @copyright 2024
- * @license   AGPL-3.0-or-later
  * @version   1.0.0
  * @link      https://github.com/opencatalogi/opencatalogi
  */
@@ -175,7 +174,6 @@ class GlossaryController extends Controller
      * @return JSONResponse The JSON response containing the list of glossary terms
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -269,7 +267,6 @@ class GlossaryController extends Controller
      * @return JSONResponse The JSON response containing the glossary term details
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
