@@ -158,9 +158,13 @@ class FileService
 
         try {
             $userFolder   = $this->rootFolder->getUserFolder(userId: $userId);
-            $absolutePath = $userFolder->getPath().'/'.$relativePath;
+            $node         = $userFolder->get($relativePath);
+            $absolutePath = $node->getPath();
 
             return $this->getOrFileService()->createShareLink(path: $absolutePath);
+        } catch (NotFoundException $e) {
+            $this->logger->warning("File not found for sharing at $relativePath: ".$e->getMessage());
+            return '';
         } catch (RuntimeException $e) {
             $this->logger->warning('Sharing integration required: '.$e->getMessage());
             return '';
