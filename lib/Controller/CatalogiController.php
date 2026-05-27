@@ -130,6 +130,42 @@ class CatalogiController extends Controller
     }//end getCatalogConfiguration()
 
     /**
+     * Resolve the Access-Control-Allow-Origin header value for the current request.
+     *
+     * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
+     * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
+     * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+     *
+     * @return string The header value to use for Access-Control-Allow-Origin.
+     *
+     * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
+     */
+    private function resolveAllowedOrigin(): string
+    {
+        $configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
+        if ($configured === '' || $configured === '*') {
+            return '*';
+        }
+
+        $allowlist = array_filter(
+            array_map('trim', explode(',', $configured)),
+            static fn(string $entry): bool => $entry !== ''
+        );
+
+        $callerOrigin = $this->request->getHeader('Origin');
+        if ($callerOrigin === '') {
+            $callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
+        }
+
+        if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
+            return $callerOrigin;
+        }
+
+        return ($allowlist[0] ?? '*');
+
+    }//end resolveAllowedOrigin()
+
+    /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
      * @return Response The CORS response.
@@ -142,15 +178,8 @@ class CatalogiController extends Controller
      */
     public function preflightedCors(): Response
     {
-        // Determine the origin.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
-
-        // Create and configure the response.
         $response = new Response();
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -206,11 +235,9 @@ class CatalogiController extends Controller
             deleted: false
         );
 
-        // Add CORS headers for public API access.
+        // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($result);
-        $origin   = $this->request->server['HTTP_ORIGIN'] ?? '*';
-
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
@@ -237,13 +264,8 @@ class CatalogiController extends Controller
         // Get all objects using the catalog's registers and schemas as filters.
         $response = $this->catalogiService->index($id);
 
-        // Add CORS headers for public API access.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
-
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
