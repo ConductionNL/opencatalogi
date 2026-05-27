@@ -22,8 +22,10 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -58,15 +60,137 @@ class PublicationQueryService
     /**
      * Constructor.
      *
-     * @param IDBConnection      $db        Database connection
-     * @param ContainerInterface $container DI container
+     * @param IDBConnection      $db          Database connection
+     * @param ContainerInterface $container   DI container
+     * @param IUserSession       $userSession Current user session (for anon detection)
      */
     public function __construct(
         private readonly IDBConnection $db,
         private readonly ContainerInterface $container,
+        private readonly IUserSession $userSession,
     ) {
 
     }//end __construct()
+
+    /**
+     * Determine whether the current request is from an anonymous (not logged-in) caller.
+     *
+     * Derived strictly server-side from the user session — never from a client parameter.
+     *
+     * @return bool True when no user is logged in.
+     *
+     * @spec exclude Server-side auth-state probe used to gate the anonymous published predicate;
+     *       wraps IUserSession::isLoggedIn(), no domain behavior.
+     */
+    public function isAnonymous(): bool
+    {
+        return $this->userSession->isLoggedIn() === false;
+
+    }//end isAnonymous()
+
+    /**
+     * Determine whether a single object is publicly visible right now.
+     *
+     * An object is public only when its @self.published timestamp is set and not in
+     * the future, AND it is not depublished (depublished unset/null, or in the future).
+     *
+     * @param array|object $object The object (array with '@self', or an object exposing jsonSerialize()).
+     *
+     * @return bool True when the object may be served to an anonymous caller.
+     */
+    public function isObjectPublic(array | object $object): bool
+    {
+        if (is_array($object) === false) {
+            if (method_exists($object, 'jsonSerialize') === true) {
+                $object = $object->jsonSerialize();
+            } else {
+                return false;
+            }
+        }
+
+        $self = ($object['@self'] ?? []);
+        if (is_array($self) === false) {
+            return false;
+        }
+
+        $now         = new DateTime();
+        $published   = ($self['published'] ?? null);
+        $depublished = ($self['depublished'] ?? null);
+
+        // Must have a published timestamp that is not in the future.
+        if (empty($published) === true) {
+            return false;
+        }
+
+        try {
+            if (new DateTime((string) $published) > $now) {
+                return false;
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        // If depublished is set, it must be in the future to still be public.
+        if (empty($depublished) === false) {
+            try {
+                if (new DateTime((string) $depublished) <= $now) {
+                    return false;
+                }
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end isObjectPublic()
+
+    /**
+     * Filter a result set down to publicly-visible objects for anonymous callers.
+     *
+     * For authenticated callers the list is returned unchanged (OR RBAC already scoped it).
+     * For anonymous callers only published/non-depublished objects survive. The result
+     * array's 'total'/'count' bookkeeping is adjusted so it cannot over-report.
+     *
+     * @param array $result The paginated result array (expects a 'results' list).
+     *
+     * @return array The result array with anonymous-visibility enforced.
+     *
+     * @spec exclude Server-side published-predicate enforcement for anonymous public reads
+     *       (mirrors openregister #1951 "logged-in unless published"); security plumbing.
+     */
+    public function enforcePublishedForAnonymous(array $result): array
+    {
+        if ($this->isAnonymous() === false) {
+            return $result;
+        }
+
+        if (isset($result['results']) === false || is_array($result['results']) === false) {
+            return $result;
+        }
+
+        $removed  = 0;
+        $filtered = [];
+        foreach ($result['results'] as $item) {
+            if ($this->isObjectPublic($item) === true) {
+                $filtered[] = $item;
+            } else {
+                $removed++;
+            }
+        }
+
+        $result['results'] = array_values($filtered);
+
+        // Adjust pagination bookkeeping so totals never over-report visible objects.
+        foreach (['total', 'count'] as $key) {
+            if (isset($result[$key]) === true && is_int($result[$key]) === true) {
+                $result[$key] = max(0, ($result[$key] - $removed));
+            }
+        }
+
+        return $result;
+
+    }//end enforcePublishedForAnonymous()
 
     /**
      * Find the register and schema IDs for an object UUID by searching all magic tables.
@@ -149,8 +273,8 @@ class PublicationQueryService
      * handles multi-schema and multi-register cases, and strips non-universal _order fields
      * when searching across multiple registers.
      *
-     * @param array  $catalog      Catalog data array (keys: schemas, registers).
-     * @param array  $queryParams  Raw request query parameters from IRequest::getParams().
+     * @param array  $catalog       Catalog data array (keys: schemas, registers).
+     * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
      * @param object $objectService ObjectService instance (already resolved from container).
      *
      * @return array The merged and sanitised search query ready for searchObjectsPaginated().
@@ -397,9 +521,9 @@ class PublicationQueryService
      *
      * Handles both sequential (list) and associative arrays, recursing into nested arrays.
      *
-     * @param array           $result Reference to the result array being built.
-     * @param int|string      $key    The key for this value.
-     * @param array           $value  The array value to process.
+     * @param array      $result Reference to the result array being built.
+     * @param int|string $key    The key for this value.
+     * @param array      $value  The array value to process.
      *
      * @return void
      */
@@ -408,7 +532,11 @@ class PublicationQueryService
         if (array_is_list($value) === true) {
             $stripped = [];
             foreach ($value as $item) {
-                $stripped[] = is_array($item) === true ? $this->stripEmptyValues(data: $item) : $item;
+                if (is_array($item) === true) {
+                    $stripped[] = $this->stripEmptyValues(data: $item);
+                } else {
+                    $stripped[] = $item;
+                }
             }
 
             if (empty($stripped) === false) {

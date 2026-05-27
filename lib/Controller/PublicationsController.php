@@ -229,6 +229,12 @@ class PublicationsController extends Controller
                 _multitenancy: false
             );
 
+            // Enforce server-side published predicate for anonymous callers.
+            // Authenticated callers keep RBAC-scoped behavior; anonymous callers only
+            // see objects that are published (and not depublished). Anon-vs-auth is
+            // derived from the server-side user session, never from a client param.
+            $result = $this->queryService->enforcePublishedForAnonymous($result);
+
             // Strip empty values from results unless _empty=true is set.
             $includeEmpty = filter_var(
                 value: $this->request->getParam(key: '_empty', default: false),
@@ -436,6 +442,34 @@ class PublicationsController extends Controller
                     'register' => $object->getRegister(),
                 ]
             );
+
+            // Enforce server-side published predicate for anonymous callers.
+            // Anonymous callers may only retrieve published (and non-depublished)
+            // objects; an unpublished object is reported as not found. Authenticated
+            // callers keep RBAC-scoped behavior. Anon-vs-auth is derived server-side.
+            if ($this->queryService->isAnonymous() === true
+                && $this->queryService->isObjectPublic($object) === false
+            ) {
+                $this->logger->warning(
+                    '[PublicationsController::show] Anonymous request for non-published object denied',
+                    [
+                        'id'          => $id,
+                        'catalogSlug' => $catalogSlug,
+                    ]
+                );
+                return new JSONResponse(
+                    [
+                        'error'       => $this->l10n->t('Publication not found'),
+                        'message'     => $this->l10n->t(
+                            'The publication with ID "%s" does not exist or is not accessible.',
+                            [$id]
+                        ),
+                        'id'          => $id,
+                        'catalogSlug' => $catalogSlug,
+                    ],
+                    404
+                );
+            }//end if
 
             // @todo: Catalog validation disabled for now.
             // Render the object with extensions.

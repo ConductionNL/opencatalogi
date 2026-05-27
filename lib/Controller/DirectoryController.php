@@ -35,6 +35,7 @@ use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling directory-related operations.
@@ -70,6 +71,7 @@ class DirectoryController extends Controller
      * @param IRequest         $request            The request object.
      * @param DirectoryService $directoryService   The directory service.
      * @param IL10N            $l10n               The localization service.
+     * @param LoggerInterface  $logger             PSR-3 logger.
      * @param string           $corsMethods        Allowed CORS methods.
      * @param string           $corsAllowedHeaders Allowed CORS headers.
      * @param integer          $corsMaxAge         CORS max age.
@@ -79,6 +81,7 @@ class DirectoryController extends Controller
         IRequest $request,
         private readonly DirectoryService $directoryService,
         private readonly IL10N $l10n,
+        private readonly LoggerInterface $logger,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
@@ -236,11 +239,17 @@ class DirectoryController extends Controller
                 statusCode: 400
             );
         } catch (GuzzleException $e) {
-            // Handle HTTP/network errors.
+            // Handle HTTP/network errors. Do NOT reflect the upstream response body
+            // (it may contain internal content from an SSRF-style probe). Log details
+            // server-side instead and return a generic message to the caller.
+            $this->logger->warning(
+                '[DirectoryController::update] Upstream fetch failed',
+                ['error' => $e->getMessage()]
+            );
             $response = new JSONResponse(
                 data: [
                     'message' => $this->l10n->t('Failed to fetch directory data'),
-                    'error'   => $e->getMessage(),
+                    'error'   => $this->l10n->t('Unable to reach the requested directory'),
                 ],
                 statusCode: 502
             );
