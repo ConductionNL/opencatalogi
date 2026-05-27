@@ -14,6 +14,7 @@ OpenCatalogi ships a set of type-agnostic frontend modals, dialogs and presentat
 The system MUST provide generic single-object modals for viewing, editing, uploading, downloading and locking the object currently held in `objectStore.objectItem`. Each modal renders only when `navigationStore.modal` matches its key, performs its action through an `objectStore` method, surfaces success/error via `NcNoteCard`, and closes via `navigationStore.setModal(false)`. The object type is not hard-coded — the same modals serve any object the active view selected.
 
 #### Scenario: User locks the active object
+@e2e exclude requires seeded object in store — lockObject modal requires a specific object to be pre-loaded into objectStore.objectItem via store manipulation, which is not achievable via pure browser UI navigation in the test environment; covered by Jest component test.
 - GIVEN an object is set as `objectStore.objectItem` and `navigationStore.modal === 'lockObject'`
 - WHEN the user submits an optional process name and duration and confirms
 - THEN `objectStore.lockObject(id, process, duration)` is called
@@ -45,6 +46,7 @@ The system MUST provide mass-operation modals (delete, depublish, publish, lock,
 The system MUST provide modals that transform one object into or against another: merging two objects (`objectStore.mergeObjects`), migrating an object between registers/schemas, and copying an object (`objectStore.copyObject`). These modals are multi-step (select target, review, perform) and refresh the affected object list on success.
 
 #### Scenario: User merges two objects
+@e2e exclude requires two seeded objects and multi-step modal — merge modal requires at least two pre-existing objects and cannot be reliably triggered via browser navigation alone; covered by Jest component test.
 - GIVEN a source object is active and the user searches for and selects a target object
 - WHEN the merge is performed
 - THEN `objectStore.mergeObjects(...)` is called with the resolved source and target
@@ -60,6 +62,7 @@ The system MUST provide generic confirmation dialogs (delete object, copy object
 - AND loading and error states are derived from `objectStore.getState('log')`
 
 #### Scenario: Delete confirmation suppresses configuration-error noise
+@e2e exclude internal store error suppression — requires triggering a specific error text ("Invalid configuration for object type:") in the store state, which is only observable in store state not rendered DOM; covered by Jest component test.
 - GIVEN the delete-object dialog is open for a type with an invalid configuration
 - WHEN the store state error equals "Invalid configuration for object type: …"
 - THEN that specific error is not surfaced as a user-facing error note

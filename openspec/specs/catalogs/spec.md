@@ -85,12 +85,14 @@ object store (once per slug). On error the publications collection is reset to e
 **Priority:** Must **Status:** Implemented
 
 #### Scenario: Set active catalog and load its publications
+@e2e exclude internal Pinia store method — catalogStore.setActiveCatalog() is a JavaScript store call with no directly browser-observable DOM surface; covered by Jest store unit test.
 - GIVEN a catalog with a `slug`
 - WHEN `catalogStore.setActiveCatalog(catalog)` is called
 - THEN the store MUST fetch `GET /api/{slug}` with `_extend=@self.schema,@self.register`
 - AND each publication's schema slug MUST be registered as an object type exactly once
 
 #### Scenario: Fetch with no resolvable catalog id
+@e2e exclude internal Pinia store error path — catalogStore.fetchPublications() error guard has no browser-observable UI rendering; covered by Jest store unit test.
 - GIVEN no catalogId argument, no active catalog, and no last-used catalog id
 - WHEN `catalogStore.fetchPublications()` is called
 - THEN the store MUST log an error and return without issuing an HTTP request
@@ -145,12 +147,14 @@ catalog's publications page when an item is clicked.
 **Priority:** Should **Status:** Implemented
 
 #### Scenario: Widget loads catalogs on mount
+@e2e exclude NC dashboard widget — widget must be manually added to the Nextcloud dashboard by each user; not reliably present in a default test environment; covered by Jest component test instead.
 - GIVEN the dashboard renders the catalogs widget
 - WHEN the widget mounts
 - THEN it MUST call `objectStore.fetchCollection('catalog')`
 - AND render an empty-content state if no catalogs are returned
 
 #### Scenario: Click a catalog widget item
+@e2e exclude NC dashboard widget navigation — requires seeded catalogs in the widget plus the widget added to dashboard; not reliably automatable in the test environment; covered by Jest component test.
 - GIVEN a catalog item shown in the widget
 - WHEN the item is clicked
 - THEN the browser MUST navigate to that catalog's publications URL

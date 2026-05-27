@@ -116,6 +116,7 @@ library + global `FontAwesomeIcon` component for use on the settings page.
 **Priority:** Should **Status:** Implemented
 
 #### Scenario: Mount the admin settings bundle
+@e2e exclude JS bundle bootstrap — Vue component mounting and library registration happen before DOM interaction; not browser-UI observable in Playwright; covered by Jest unit test.
 - GIVEN the Nextcloud admin settings section renders the opencatalogi panel
 - WHEN `settings.js` runs
 - THEN the `Settings.vue` component MUST be mounted on `#settings`

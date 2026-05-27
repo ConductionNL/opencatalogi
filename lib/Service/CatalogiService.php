@@ -140,6 +140,21 @@ class CatalogiService
     }//end getObjectService()
 
     /**
+     * Resolve the PublicationQueryService for shared visibility enforcement.
+     *
+     * @return PublicationQueryService The query/visibility helper service.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the shared
+     *       PublicationQueryService from the container; pure framework plumbing.
+     */
+    private function getQueryService(): PublicationQueryService
+    {
+        return $this->container->get(PublicationQueryService::class);
+
+    }//end getQueryService()
+
+    /**
      * Attempts to retrieve the OpenRegister FileService from the container.
      *
      * @return mixed|null The OpenRegister service if available, null otherwise.
@@ -751,10 +766,24 @@ class CatalogiService
         // Use searchObjectsPaginated which handles pagination internally.
         $result = $objectService->searchObjectsPaginated($query);
 
+        // Enforce server-side published predicate for anonymous callers. Authenticated
+        // callers keep RBAC-scoped behavior; anonymous callers only see published
+        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
+
         // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(
             function ($object) {
-                $objectArray = $object->jsonSerialize();
+                // The OR SOLR backend returns array shapes (not ObjectEntity instances)
+                // from searchObjectsPaginated; the magic-mapper backend returns entities.
+                // Guard so we do not fatal with "Call to a member function jsonSerialize()
+                // on array" under SOLR (#736), mirroring the dual-shape handling already
+                // present in CatalogiController/PublicationsController::index.
+                if (is_array($object) === true) {
+                    $objectArray = $object;
+                } else {
+                    $objectArray = $object->jsonSerialize();
+                }
 
                 // @todo: a logged-in user should be able to see the full object.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {

@@ -66,7 +66,6 @@ class FederationController extends Controller
      *
      * @return JSONResponse JSON response containing publications.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -100,7 +99,7 @@ class FederationController extends Controller
             return new JSONResponse($responseData);
         } catch (\Exception $e) {
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publications').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publications')],
                 statusCode: 500
             );
         }
@@ -116,7 +115,6 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -131,7 +129,7 @@ class FederationController extends Controller
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publication').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publication')],
                 statusCode: 500
             );
         }
@@ -150,7 +148,6 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -165,7 +162,7 @@ class FederationController extends Controller
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publication uses').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publication uses')],
                 statusCode: 500
             );
         }
@@ -184,7 +181,6 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -199,7 +195,7 @@ class FederationController extends Controller
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publication used').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publication used')],
                 statusCode: 500
             );
         }
@@ -215,7 +211,6 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -236,7 +231,6 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

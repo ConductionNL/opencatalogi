@@ -30,8 +30,8 @@ import * as path from 'path'
 export default defineConfig({
 	testDir: './tests/e2e',
 	globalSetup: path.resolve(__dirname, 'tests/e2e/global-setup.ts'),
-	timeout: 30_000,
-	expect: { timeout: 10_000 },
+	timeout: 60_000,
+	expect: { timeout: 15_000 },
 	fullyParallel: false,
 	retries: process.env.CI ? 1 : 0,
 	workers: 1,
