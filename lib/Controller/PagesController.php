@@ -139,6 +139,40 @@ class PagesController extends Controller
     }//end getPageConfiguration()
 
     /**
+     * Resolve the Access-Control-Allow-Origin header value for the current request.
+     *
+     * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
+     * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
+     * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+     *
+     * @return string The header value to use for Access-Control-Allow-Origin.
+     */
+    private function resolveAllowedOrigin(): string
+    {
+        $configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
+        if ($configured === '' || $configured === '*') {
+            return '*';
+        }
+
+        $allowlist = array_filter(
+            array_map('trim', explode(',', $configured)),
+            static fn(string $entry): bool => $entry !== ''
+        );
+
+        $callerOrigin = $this->request->getHeader('Origin');
+        if ($callerOrigin === '') {
+            $callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
+        }
+
+        if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
+            return $callerOrigin;
+        }
+
+        return ($allowlist[0] ?? '*');
+
+    }//end resolveAllowedOrigin()
+
+    /**
      * Implements a preflighted CORS response for OPTIONS requests.
      *
      * @return Response The CORS response
@@ -151,15 +185,9 @@ class PagesController extends Controller
      */
     public function preflightedCors(): Response
     {
-        // Determine the origin.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
-
         // Create and configure the response.
         $response = new Response();
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
@@ -208,14 +236,10 @@ class PagesController extends Controller
         // Set rbac=false and multi=false for public page access.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
 
-        // Add CORS headers for public API access.
+        // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($result);
-        $origin   = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = ($this->request->server['HTTP_ORIGIN'] ?? '*');
-        }
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
@@ -272,13 +296,8 @@ class PagesController extends Controller
             $response = new JSONResponse($page);
         }
 
-        // Add CORS headers for public API access.
-        $origin = $this->request->getHeader('Origin');
-        if ($origin === '') {
-            $origin = '*';
-        }
-
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
         $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
         $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
 
