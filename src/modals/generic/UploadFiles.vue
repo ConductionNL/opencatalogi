@@ -600,6 +600,46 @@ export default {
 			this.newTags = []
 			EventBus.$emit('upload-files:opened')
 			this.getAllTags()
+			this.applySchemaDefaults()
+		},
+		/**
+		 * Seed the `share` toggle from the active publication's schema
+		 * (`configuration.defaultAutoShare`). Falls back to `false`
+		 * when the schema, the key or the lookup itself is missing —
+		 * existing behaviour for schemas that don't opt in.
+		 *
+		 * @spec openspec/changes/feature-2026-05-26-default-auto-share/tasks.md#task-1
+		 * @return {Promise<void>}
+		 */
+		async applySchemaDefaults() {
+			this.share = false
+			try {
+				const publication = objectStore.getActiveObject('publication')
+				const schemaRef = publication?.['@self']?.schema
+				if (!schemaRef) return
+
+				let configuration = (typeof schemaRef === 'object' && schemaRef !== null)
+					? schemaRef.configuration
+					: null
+
+				if (!configuration) {
+					const schemaId = typeof schemaRef === 'object'
+						? (schemaRef.id || schemaRef.uuid || schemaRef.slug)
+						: schemaRef
+					if (!schemaId) return
+					const response = await fetch(`/index.php/apps/openregister/api/schemas/${schemaId}`)
+					if (!response.ok) return
+					const schema = await response.json().catch(() => null)
+					configuration = schema?.configuration || null
+				}
+
+				if (configuration?.defaultAutoShare === true) {
+					this.share = true
+				}
+			} catch (e) {
+				// Non-fatal — keep the safe default (off) so a network
+				// hiccup never silently flips publications to "share on upload".
+			}
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		onExternalClose() {
