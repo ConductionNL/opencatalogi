@@ -932,14 +932,15 @@ class DirectoryService
 
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
-            // Skip our own directory and local URLs.
+            // Skip our own directory.
             if ($directoryUrl === $ourDirectoryUrl) {
-                // Removed redundant logging.
                 continue;
             }
 
-            if ($this->isLocalUrl($directoryUrl) === true) {
-                // Removed redundant logging.
+            // Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+            try {
+                $this->assertSafeOutboundUrl($directoryUrl);
+            } catch (InvalidArgumentException $e) {
                 continue;
             }
 
@@ -1747,8 +1748,15 @@ class DirectoryService
 
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
-            // Skip our own directory and local URLs.
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl) === true) {
+            // Skip our own directory.
+            if ($directoryUrl === $ourDirectoryUrl) {
+                continue;
+            }
+
+            // Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+            try {
+                $this->assertSafeOutboundUrl($directoryUrl);
+            } catch (InvalidArgumentException $e) {
                 continue;
             }
 
@@ -1902,8 +1910,15 @@ class DirectoryService
 
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
-            // Skip our own directory and local URLs.
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl) === true) {
+            // Skip our own directory.
+            if ($directoryUrl === $ourDirectoryUrl) {
+                continue;
+            }
+
+            // Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+            try {
+                $this->assertSafeOutboundUrl($directoryUrl);
+            } catch (InvalidArgumentException $e) {
                 continue;
             }
 

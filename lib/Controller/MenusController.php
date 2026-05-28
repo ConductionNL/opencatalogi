@@ -24,6 +24,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -66,15 +67,16 @@ class MenusController extends Controller
     /**
      * MenusController constructor.
      *
-     * @param string             $appName            The name of the app.
-     * @param IRequest           $request            The request object.
-     * @param IAppConfig         $config             App configuration interface.
-     * @param ContainerInterface $container          Server container for DI.
-     * @param IAppManager        $appManager         App manager.
-     * @param IL10N              $l10n               The localization service.
-     * @param string             $corsMethods        Allowed CORS methods.
-     * @param string             $corsAllowedHeaders Allowed CORS headers.
-     * @param integer            $corsMaxAge         CORS max age.
+     * @param string                  $appName            The name of the app.
+     * @param IRequest                $request            The request object.
+     * @param IAppConfig              $config             App configuration interface.
+     * @param ContainerInterface      $container          Server container for DI.
+     * @param IAppManager             $appManager         App manager.
+     * @param IL10N                   $l10n               The localization service.
+     * @param PublicationQueryService $queryService       Publication query/visibility helper.
+     * @param string                  $corsMethods        Allowed CORS methods.
+     * @param string                  $corsAllowedHeaders Allowed CORS headers.
+     * @param integer                 $corsMaxAge         CORS max age.
      */
     public function __construct(
         $appName,
@@ -83,6 +85,7 @@ class MenusController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly IL10N $l10n,
+        private readonly PublicationQueryService $queryService,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
@@ -227,11 +230,15 @@ class MenusController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support.
+        // Rbac=true enforces schema authorization; multi=false for public menu access.
         $result = $this->getObjectService()->searchObjectsPaginated(
             $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false
         );
+
+        // Enforce server-side published predicate for anonymous callers.
+        $result = $this->queryService->enforcePublishedForAnonymous($result);
 
         // Add CORS headers for public API access.
         $response = new JSONResponse($result);
@@ -266,9 +273,10 @@ class MenusController extends Controller
             '_limit'  => 1,
             '_source' => 'database',
         ];
-        $result      = $this->getObjectService()->searchObjectsPaginated(
+        // Rbac=true enforces schema authorization; multi=false for public menu access.
+        $result = $this->getObjectService()->searchObjectsPaginated(
             $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false
         );
 
@@ -277,6 +285,19 @@ class MenusController extends Controller
         }
 
         $menu = $result['results'][0];
+
+        // Enforce published predicate for anonymous callers on single-item lookup.
+        if (is_array($menu) === true) {
+            $menuArray = $menu;
+        } else {
+            $menuArray = $menu->jsonSerialize();
+        }
+
+        if ($this->queryService->isAnonymous() === true
+            && $this->queryService->isObjectPublic($menuArray) === false
+        ) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Menu not found')], statusCode: 404);
+        }
 
         $data = $menu;
         if ($menu instanceof \OCP\AppFramework\Db\Entity) {

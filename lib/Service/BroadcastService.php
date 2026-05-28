@@ -342,6 +342,15 @@ class BroadcastService
                 continue;
             }
 
+            // Validate outbound URL before broadcasting — rejects private/internal addresses.
+            try {
+                $this->assertSafeOutboundUrl($targetUrl);
+            } catch (InvalidArgumentException $e) {
+                $this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
+                $results[$targetUrl] = false;
+                continue;
+            }
+
             // Attempt to send broadcast request.
             $success = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
             $results[$targetUrl] = $success;
@@ -355,4 +364,155 @@ class BroadcastService
         return $results;
 
     }//end broadcast()
+
+    /**
+     * Assert that a URL is safe for outbound HTTP requests.
+     *
+     * Performs DNS resolution and rejects URLs that resolve to private/loopback
+     * address ranges to prevent SSRF attacks.
+     *
+     * @param string $url The URL to validate.
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     */
+    private function assertSafeOutboundUrl(string $url): void
+    {
+        $parsed = parse_url($url);
+        if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
+            throw new InvalidArgumentException('Invalid broadcast URL provided');
+        }
+
+        $scheme = strtolower($parsed['scheme']);
+        if (in_array($scheme, ['http', 'https'], true) === false) {
+            throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
+        }
+
+        $host = strtolower($parsed['host']);
+
+        // Reject obvious local hostnames outright.
+        if ($host === 'localhost' || str_ends_with($host, '.local') === true
+            || str_ends_with($host, '.localhost') === true
+        ) {
+            throw new InvalidArgumentException('Broadcast URL host is not allowed');
+        }
+
+        // Collect IPs to check: literal IP or DNS-resolved addresses.
+        $ipsToCheck = [];
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            $ipsToCheck[] = $host;
+        } else {
+            $lookupHost = trim($host, '[]');
+            if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
+                $ipsToCheck[] = $lookupHost;
+            } else {
+                $records = @dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+                if ($records !== false) {
+                    foreach ($records as $record) {
+                        if (isset($record['ip']) === true) {
+                            $ipsToCheck[] = $record['ip'];
+                        }
+
+                        if (isset($record['ipv6']) === true) {
+                            $ipsToCheck[] = $record['ipv6'];
+                        }
+                    }
+                }
+
+                if (empty($ipsToCheck) === true) {
+                    $resolved = gethostbyname($lookupHost);
+                    if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+                        $ipsToCheck[] = $resolved;
+                    }
+                }
+            }//end if
+        }//end if
+
+        if (empty($ipsToCheck) === true) {
+            throw new InvalidArgumentException('Broadcast URL host could not be resolved');
+        }
+
+        foreach ($ipsToCheck as $ip) {
+            if ($this->isBlockedIp($ip) === true) {
+                throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
+            }
+        }
+
+    }//end assertSafeOutboundUrl()
+
+    /**
+     * Determine whether an IP address falls in a blocked range.
+     *
+     * Checks private, loopback, link-local, and reserved ranges.
+     *
+     * @param string $ip The IP address to check.
+     *
+     * @return boolean True if the IP is blocked, false if it is safe.
+     */
+    private function isBlockedIp(string $ip): bool
+    {
+        $blockedRanges = [
+            '10.0.0.0/8',
+            '172.16.0.0/12',
+            '192.168.0.0/16',
+            '127.0.0.0/8',
+            '169.254.0.0/16',
+            '::1/128',
+            'fc00::/7',
+            'fe80::/10',
+        ];
+
+        foreach ($blockedRanges as $range) {
+            if ($this->ipInRange($ip, $range) === true) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end isBlockedIp()
+
+    /**
+     * Check if an IP address falls within a CIDR range.
+     *
+     * @param string $ip    The IP address to check.
+     * @param string $range The CIDR range (e.g. 10.0.0.0/8).
+     *
+     * @return boolean True if the IP is in the range, false otherwise.
+     */
+    private function ipInRange(string $ip, string $range): bool
+    {
+        [$subnet, $bits] = explode('/', $range);
+
+        if (filter_var(value: $ip, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+            && filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+        ) {
+            $ipBin     = inet_pton($ip);
+            $subnetBin = inet_pton($subnet);
+            if ($ipBin === false || $subnetBin === false) {
+                return false;
+            }
+
+            $mask = str_repeat("\xff", (int) ($bits / 8));
+            if (((int) $bits % 8) !== 0) {
+                $mask .= chr(0xff & (0xff << (8 - ((int) $bits % 8))));
+            }
+
+            $mask = str_pad($mask, 16, "\x00");
+            return (($ipBin & $mask) === ($subnetBin & $mask));
+        }//end if
+
+        if (filter_var(value: $ip, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+            && filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+        ) {
+            $ipLong     = ip2long($ip);
+            $subnetLong = ip2long($subnet);
+            $maskLong   = (~0 << (32 - (int) $bits));
+            return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
+        }
+
+        return false;
+
+    }//end ipInRange()
 }//end class

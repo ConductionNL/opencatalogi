@@ -24,6 +24,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -76,15 +77,16 @@ class PagesController extends Controller
     /**
      * PagesController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param IAppConfig         $config             App configuration interface
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param IL10N              $l10n               Localization service
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param integer            $corsMaxAge         CORS max age
+     * @param string                  $appName            The name of the app
+     * @param IRequest                $request            The request object
+     * @param IAppConfig              $config             App configuration interface
+     * @param ContainerInterface      $container          Server container for dependency injection
+     * @param IAppManager             $appManager         App manager for checking installed apps
+     * @param IL10N                   $l10n               Localization service
+     * @param PublicationQueryService $queryService       Publication query/visibility helper
+     * @param string                  $corsMethods        Allowed CORS methods
+     * @param string                  $corsAllowedHeaders Allowed CORS headers
+     * @param integer                 $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -93,6 +95,7 @@ class PagesController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly IL10N $l10n,
+        private readonly PublicationQueryService $queryService,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
@@ -233,8 +236,11 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support.
-        // Set rbac=false and multi=false for public page access.
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
+        // Rbac=true enforces schema authorization; multi=false for public page access.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
+
+        // Enforce server-side published predicate for anonymous callers.
+        $result = $this->queryService->enforcePublishedForAnonymous($result);
 
         // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($result);
@@ -283,17 +289,27 @@ class PagesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance.
-        // Set rbac=false and multi=false as schema authorization handles access.
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
+        // Rbac=true enforces schema authorization; multi=false for public page access.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
 
         if (empty($result['results']) === true) {
             $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
-        }
+        } else {
+            // Return the first matching page; enforce published predicate for anonymous callers.
+            $page = $result['results'][0];
+            if (is_array($page) === true) {
+                $pageArray = $page;
+            } else {
+                $pageArray = $page->jsonSerialize();
+            }
 
-        if (empty($result['results']) === false) {
-            // Return the first matching page.
-            $page     = $result['results'][0];
-            $response = new JSONResponse($page);
+            if ($this->queryService->isAnonymous() === true
+                && $this->queryService->isObjectPublic($pageArray) === false
+            ) {
+                $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
+            } else {
+                $response = new JSONResponse($page);
+            }
         }
 
         // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).

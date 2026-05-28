@@ -527,7 +527,7 @@ class CatalogiService
                 '_limit'    => 1,
             ];
 
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: true, _multitenancy: false);
 
             if (empty($catalogs) === true) {
                 $this->logger->error(
@@ -542,6 +542,13 @@ class CatalogiService
             }
 
             $catalog = $catalogs[0]->jsonSerialize();
+
+            // Enforce published predicate: anonymous callers may not see unpublished catalogs.
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($catalog) === false
+            ) {
+                return null;
+            }
 
             // Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
             $this->cache->set($cacheKey, $catalog, 3600);
