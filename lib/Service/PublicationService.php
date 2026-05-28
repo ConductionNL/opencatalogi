@@ -790,9 +790,22 @@ class PublicationService
         try {
             // Render the object with requested extensions and filters.
             // Use positional parameters for compatibility with different ObjectService versions.
-            return new JSONResponse(
-                $this->getObjectService()->find($id, $extend)
-            );
+            $object = $this->getObjectService()->find($id, $extend);
+
+            // Enforce published predicate: anonymous callers must not see unpublished objects.
+            if (is_array($object) === true) {
+                $objectArray = $object;
+            } else {
+                $objectArray = $object->jsonSerialize();
+            }
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($objectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
+            return new JSONResponse($object);
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Not Found'], 404);
         }//end try
@@ -816,8 +829,20 @@ class PublicationService
      */
     public function attachments(string $id): JSONResponse
     {
-        // Validate that the object exists (throws if not found).
-        $this->getObjectService()->find(id: $id, _extend: []);
+        // Validate that the object exists (throws if not found) and enforce
+        // published predicate for anonymous callers.
+        $object = $this->getObjectService()->find(id: $id, _extend: []);
+        if (is_array($object) === true) {
+            $objectArray = $object;
+        } else {
+            $objectArray = $object->jsonSerialize();
+        }
+
+        if ($this->getQueryService()->isAnonymous() === true
+            && $this->getQueryService()->isObjectPublic($objectArray) === false
+        ) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
 
         $fileService = $this->getFileService();
 
@@ -862,6 +887,21 @@ class PublicationService
         string $id
     ): DataDownloadResponse | JSONResponse {
         try {
+            // Validate that the object exists and enforce published predicate for
+            // anonymous callers before serving any file content.
+            $object = $this->getObjectService()->find(id: $id, _extend: []);
+            if (is_array($object) === true) {
+                $objectArray = $object;
+            } else {
+                $objectArray = $object->jsonSerialize();
+            }
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($objectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
             // Create the ZIP archive.
             $fileService = $this->getFileService();
             $zipInfo     = $fileService->createObjectFilesZip($id);
@@ -891,10 +931,10 @@ class PublicationService
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Object not found'], 404);
         } catch (\Exception $exception) {
+            // Log the exception server-side but return a generic body to the caller
+            // so that internal stack traces and file paths are never exposed (#735, H3).
             return new JSONResponse(
-                [
-                    'error' => 'Failed to create ZIP file: '.$exception->getMessage(),
-                ],
+                ['error' => 'Failed to create download archive'],
                 500
             );
         }//end try
@@ -1916,6 +1956,11 @@ class PublicationService
         // Call ObjectService directly - bypass all middleware.
         $objectService = $this->getObjectService();
         $result        = $objectService->searchObjectsPaginated($searchQuery);
+
+        // Enforce server-side published predicate for anonymous callers. The ultra-fast
+        // path bypasses searchPublications() which already applies this guard, so it must
+        // be applied here as well to close the gap (C1).
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
 
         $timings['objectservice'] = ((microtime(true) - $objectServiceStart) * 1000);
 

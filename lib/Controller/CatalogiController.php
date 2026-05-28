@@ -25,6 +25,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -66,20 +67,22 @@ class CatalogiController extends Controller
     /**
      * CatalogiController constructor.
      *
-     * @param string             $appName            The name of the app.
-     * @param IRequest           $request            The request object.
-     * @param CatalogiService    $catalogiService    The catalogi service.
-     * @param IAppConfig         $config             App configuration interface.
-     * @param ContainerInterface $container          Server container for DI.
-     * @param IAppManager        $appManager         App manager.
-     * @param string             $corsMethods        Allowed CORS methods.
-     * @param string             $corsAllowedHeaders Allowed CORS headers.
-     * @param integer            $corsMaxAge         CORS max age.
+     * @param string                  $appName            The name of the app.
+     * @param IRequest                $request            The request object.
+     * @param CatalogiService         $catalogiService    The catalogi service.
+     * @param PublicationQueryService $queryService       Publication query/visibility helper.
+     * @param IAppConfig              $config             App configuration interface.
+     * @param ContainerInterface      $container          Server container for DI.
+     * @param IAppManager             $appManager         App manager.
+     * @param string                  $corsMethods        Allowed CORS methods.
+     * @param string                  $corsAllowedHeaders Allowed CORS headers.
+     * @param integer                 $corsMaxAge         CORS max age.
      */
     public function __construct(
         $appName,
         IRequest $request,
         private readonly CatalogiService $catalogiService,
+        private readonly PublicationQueryService $queryService,
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
@@ -234,6 +237,12 @@ class CatalogiController extends Controller
             _rbac: true,
             deleted: false
         );
+
+        // Enforce server-side published predicate for anonymous callers.
+        // Authenticated callers keep RBAC-scoped behavior; anonymous callers only
+        // see objects that are published (and not depublished). Anon-vs-auth is
+        // derived from the server-side user session, never from a client param.
+        $result = $this->queryService->enforcePublishedForAnonymous($result);
 
         // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($result);
