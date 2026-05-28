@@ -513,7 +513,7 @@ class BroadcastService
                 return false;
             }
 
-            $mask = str_repeat("\xff", (int) ($bits / 8));
+            $mask = str_repeat("\xff", (int) $bits / 8);
             if (((int) $bits % 8) !== 0) {
                 $mask .= chr(0xff & (0xff << (8 - ((int) $bits % 8))));
             }
