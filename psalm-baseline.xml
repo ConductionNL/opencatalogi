@@ -6,11 +6,6 @@
     </UndefinedClass>
   </file>
   <file src="lib/Controller/CatalogiController.php">
-    <InvalidTemplateParam>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
-    </InvalidTemplateParam>
     <NoInterfaceProperties>
       <code><![CDATA[$this->request->server]]></code>
     </NoInterfaceProperties>
@@ -24,24 +19,24 @@
     <InvalidTemplateParam>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin())]]></code>
     </InvalidTemplateParam>
     <NoInterfaceProperties>
       <code><![CDATA[$this->request->server]]></code>
+    </NoInterfaceProperties>
+  </file>
+  <file src="lib/Controller/ListingsController.php">
+    <NoInterfaceProperties>
       <code><![CDATA[$this->request->server]]></code>
     </NoInterfaceProperties>
   </file>
   <file src="lib/Controller/MenusController.php">
     <InvalidTemplateParam>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin())]]></code>
     </InvalidTemplateParam>
     <NoInterfaceProperties>
-      <code><![CDATA[$this->request->server]]></code>
       <code><![CDATA[$this->request->server]]></code>
     </NoInterfaceProperties>
   </file>
@@ -49,7 +44,7 @@
     <InvalidTemplateParam>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin())]]></code>
     </InvalidTemplateParam>
     <NoInterfaceProperties>
       <code><![CDATA[$this->request->server]]></code>
@@ -64,10 +59,9 @@
     <InvalidTemplateParam>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders)]]></code>
       <code><![CDATA[$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods)]]></code>
-      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $origin)]]></code>
+      <code><![CDATA[$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin())]]></code>
     </InvalidTemplateParam>
     <NoInterfaceProperties>
-      <code><![CDATA[$this->request->server]]></code>
       <code><![CDATA[$this->request->server]]></code>
     </NoInterfaceProperties>
   </file>
