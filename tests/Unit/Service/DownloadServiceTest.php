@@ -341,118 +341,21 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
     }//end testSaveFileToNextCloudFileCreationFails()
 
     /**
-     * Returns 500 when the publication is not found.
+     * Asserts that createPublicationZip no longer exists (removed in wave-3 fix C5).
+     *
+     * The ZIP-creation path was eliminated; callers should use createPublicationFile
+     * directly. These tests document the removal so regressions are caught.
      *
      * @return void
      */
-    public function testCreatePublicationZipPublicationNotFound(): void
+    public function testCreatePublicationZipMethodDoesNotExist(): void
     {
-        $objectService = $this->createObjectServiceMock();
-        $objectService->method('find')
-            ->willThrowException(new DoesNotExistException('Not found'));
-
-        $result = $this->downloadService->createPublicationZip($objectService, '999');
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
-
-    }//end testCreatePublicationZipPublicationNotFound()
-
-    /**
-     * Propagates MpdfException when PDF creation fails.
-     *
-     * @return void
-     */
-    public function testCreatePublicationZipPdfCreationFails(): void
-    {
-        $objectService = $this->createObjectServiceMock();
-        $entity        = $this->createObjectEntityFromData(
-            ['id' => '1', 'title' => 'ZipTest', 'attachments' => []]
-        );
-        $objectService->method('find')
-            ->willReturn($entity);
-
-        $this->fileService->method('createPdf')
-            ->willThrowException(new \Mpdf\MpdfException('PDF generation failed'));
-
-        $this->expectException(\Mpdf\MpdfException::class);
-
-        $this->downloadService->createPublicationZip($objectService, '1');
-
-    }//end testCreatePublicationZipPdfCreationFails()
-
-    /**
-     * Returns 200 on successful ZIP creation.
-     *
-     * @return void
-     */
-    public function testCreatePublicationZipSuccess(): void
-    {
-        $objectService = $this->createObjectServiceMock();
-        $entity        = $this->createObjectEntityFromData(
-            ['id' => '1', 'title' => 'ZipPub', 'attachments' => []]
-        );
-        $objectService->method('find')
-            ->willReturn($entity);
-
-        $downloadService = $this->getMockBuilder(DownloadService::class)
-            ->setConstructorArgs([$this->fileService])
-            ->onlyMethods(['createPublicationFile'])
-            ->getMock();
-
-        $pdfResponse = new JSONResponse(
-            ['downloadUrl' => 'https://example.com/dl', 'filename' => 'ZipPub.pdf'],
-            200
+        $this->assertFalse(
+            method_exists($this->downloadService, 'createPublicationZip'),
+            'createPublicationZip was removed in wave-3 (C5) and must not be re-introduced.'
         );
 
-        $downloadService->method('createPublicationFile')
-            ->willReturn($pdfResponse);
-
-        $this->fileService->method('createZip')->willReturn(null);
-        $this->fileService->method('downloadZip');
-
-        $result = $downloadService->createPublicationZip($objectService, '1');
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(200, $result->getStatus());
-
-    }//end testCreatePublicationZipSuccess()
-
-    /**
-     * Returns 500 when ZIP archive creation fails.
-     *
-     * @return void
-     */
-    public function testCreatePublicationZipCreateZipFails(): void
-    {
-        $objectService = $this->createObjectServiceMock();
-        $entity        = $this->createObjectEntityFromData(
-            ['id' => '2', 'title' => 'FailZip', 'attachments' => []]
-        );
-        $objectService->method('find')
-            ->willReturn($entity);
-
-        $downloadService = $this->getMockBuilder(DownloadService::class)
-            ->setConstructorArgs([$this->fileService])
-            ->onlyMethods(['createPublicationFile'])
-            ->getMock();
-
-        $pdfResponse = new JSONResponse(
-            ['downloadUrl' => 'https://example.com/dl', 'filename' => 'FailZip.pdf'],
-            200
-        );
-        $downloadService->method('createPublicationFile')
-            ->willReturn($pdfResponse);
-
-        $this->fileService->method('createZip')
-            ->willReturn('failed to create ZIP archive');
-
-        $result = $downloadService->createPublicationZip($objectService, '2');
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
-
-    }//end testCreatePublicationZipCreateZipFails()
+    }//end testCreatePublicationZipMethodDoesNotExist()
 
     /**
      * Returns all resolved attachment entities.

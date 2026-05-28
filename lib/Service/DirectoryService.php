@@ -2071,8 +2071,8 @@ class DirectoryService
 
             try {
                 // RBAC handles public visibility via conditional published date rule.
-                // Disable multitenancy so listings from all orgs are visible.
-                $listingResult = $objectService->searchObjects($query, _multitenancy: false);
+                // ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
+                $listingResult = $objectService->searchObjects($query);
 
                 // Get our directory URL to identify locally-created listings.
                 $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
@@ -2136,8 +2136,8 @@ class DirectoryService
 
             try {
                 // RBAC handles public visibility via conditional published date rule.
-                // Disable multitenancy so catalogs from all orgs are visible.
-                $catalogResult = $objectService->searchObjects($query, _multitenancy: false);
+                // ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
+                $catalogResult = $objectService->searchObjects($query);
 
                 // Convert catalog objects to listing format and expand schemas.
                 $catalogsAsListings = array_map(
