@@ -379,10 +379,26 @@ class PublicationsController extends Controller
             // Get ObjectService directly bypassing PublicationService overhead.
             $objectService = $this->getObjectService();
 
+            // Sanitise extend before passing to the query builder so that anonymous
+            // callers cannot traverse to unrelated objects via arbitrary extend targets.
+            $requestParams = $this->request->getParams();
+            if (empty($requestParams['extend']) === false || empty($requestParams['_extend']) === false) {
+                $rawExtend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
+                if (is_string($rawExtend) === true) {
+                    $rawExtend = array_map('trim', explode(',', $rawExtend));
+                } else if (is_array($rawExtend) === false) {
+                    $rawExtend = [$rawExtend];
+                }
+
+                $safeExtend = $this->sanitizePublicExtend($rawExtend);
+                unset($requestParams['extend'], $requestParams['_extend']);
+                $requestParams['_extend'] = $safeExtend;
+            }
+
             // Build the catalog-scoped search query via the query service.
             $searchQuery = $this->queryService->buildCatalogSearchQuery(
                 catalog: $catalog,
-                queryParams: $this->request->getParams(),
+                queryParams: $requestParams,
                 objectService: $objectService
             );
 

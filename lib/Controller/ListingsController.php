@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -44,6 +45,7 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -64,6 +66,7 @@ class ListingsController extends Controller
      * @param DirectoryService   $directoryService The directory service
      * @param IL10N              $l10n             Localization service
      * @param IUserSession       $userSession      The user session
+     * @param LoggerInterface    $logger           PSR-3 logger
      */
     public function __construct(
         $appName,
@@ -73,7 +76,8 @@ class ListingsController extends Controller
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
         private readonly IL10N $l10n,
-        private readonly IUserSession $userSession
+        private readonly IUserSession $userSession,
+        private readonly ?LoggerInterface $logger=null
     ) {
         parent::__construct($appName, $request);
 
@@ -452,10 +456,39 @@ class ListingsController extends Controller
         try {
             $result = $this->directoryService->syncDirectory($url);
         } catch (\InvalidArgumentException $exception) {
-            return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
+            // Validation errors: echo the caller's own input back as a safe message.
+            return new JSONResponse(
+                data: [
+                    'message' => $this->l10n->t('Invalid directory URL'),
+                    'error'   => $exception->getMessage(),
+                ],
+                statusCode: 400
+            );
+        } catch (GuzzleException $exception) {
+            // Network/HTTP error: log server-side, return generic 502 — do not reflect
+            // upstream response body (SSRF oracle risk).
+            $this->logger?->warning(
+                '[ListingsController::add] Upstream directory fetch failed',
+                ['error' => $exception->getMessage()]
+            );
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Failed to fetch directory data')],
+                statusCode: 502
+            );
         } catch (\Exception $exception) {
-            return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 500);
-        }
+            // Unexpected error: log server-side with trace, return generic 500.
+            $this->logger?->error(
+                '[ListingsController::add] Directory sync failed',
+                [
+                    'error' => $exception->getMessage(),
+                    'trace' => $exception->getTraceAsString(),
+                ]
+            );
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Internal server error')],
+                statusCode: 500
+            );
+        }//end try
 
         // Return the result as a JSON response.
         return new JSONResponse($result);

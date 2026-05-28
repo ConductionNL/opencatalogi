@@ -1,33 +1,82 @@
 <?php
+/**
+ * Unit tests for PublicationQueryService.
+ *
+ * Covers: isAnonymous, isObjectPublic, enforcePublishedForAnonymous, findObjectLocation.
+ *
+ * @category Test
+ * @package  Unit\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
 
 declare(strict_types=1);
 
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCP\DB\IResult;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
+use OCP\DB\QueryBuilder\IFunctionBuilder;
+use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IQueryFunction;
 use OCP\IDBConnection;
 use OCP\IUserSession;
-use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\DB\QueryBuilder\IFunctionBuilder;
-use OCP\DB\QueryBuilder\IExpressionBuilder;
-use OCP\DB\QueryBuilder\IQueryFunction;
-use OCP\DB\IResult;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 /**
- * Unit tests for PublicationQueryService — focused on the findObjectLocation
- * constraint behaviour added for #734 (no platform-wide table scan).
+ * Unit tests for PublicationQueryService.
+ *
+ * Focuses on security-relevant predicates: anonymous detection, object visibility,
+ * published-predicate enforcement, and the constrained findObjectLocation query.
  */
 class PublicationQueryServiceTest extends TestCase
 {
 
+    /**
+     * Database connection mock.
+     *
+     * @var IDBConnection|MockObject
+     */
     private IDBConnection|MockObject $db;
+
+    /**
+     * DI container mock.
+     *
+     * @var ContainerInterface|MockObject
+     */
     private ContainerInterface|MockObject $container;
+
+    /**
+     * User session mock.
+     *
+     * @var IUserSession|MockObject
+     */
     private IUserSession|MockObject $userSession;
+
+    /**
+     * Service under test.
+     *
+     * @var PublicationQueryService
+     */
     private PublicationQueryService $service;
 
+    /**
+     * Set up test fixtures.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->db          = $this->createMock(IDBConnection::class);
@@ -35,16 +84,200 @@ class PublicationQueryServiceTest extends TestCase
         $this->userSession = $this->createMock(IUserSession::class);
 
         $this->service = new PublicationQueryService(
-            $this->db,
-            $this->container,
-            $this->userSession
+            db: $this->db,
+            container: $this->container,
+            userSession: $this->userSession
         );
-    }
+
+    }//end setUp()
+
+    // -------------------------------------------------------------------------
+    // isAnonymous() tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * IsAnonymous returns true when no user is logged in.
+     *
+     * @return void
+     */
+    public function testIsAnonymousReturnsTrueWhenNotLoggedIn(): void
+    {
+        $this->userSession->method('isLoggedIn')->willReturn(false);
+        $this->assertTrue($this->service->isAnonymous());
+
+    }//end testIsAnonymousReturnsTrueWhenNotLoggedIn()
+
+    /**
+     * IsAnonymous returns false when a user is logged in.
+     *
+     * @return void
+     */
+    public function testIsAnonymousReturnsFalseWhenLoggedIn(): void
+    {
+        $this->userSession->method('isLoggedIn')->willReturn(true);
+        $this->assertFalse($this->service->isAnonymous());
+
+    }//end testIsAnonymousReturnsFalseWhenLoggedIn()
+
+    // -------------------------------------------------------------------------
+    // isObjectPublic() tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * IsObjectPublic returns false when @self.published is absent.
+     *
+     * @return void
+     */
+    public function testIsObjectPublicReturnsFalseWithNoPublished(): void
+    {
+        $object = ['@self' => []];
+        $this->assertFalse($this->service->isObjectPublic($object));
+
+    }//end testIsObjectPublicReturnsFalseWithNoPublished()
+
+    /**
+     * IsObjectPublic returns false when @self.published is in the future.
+     *
+     * @return void
+     */
+    public function testIsObjectPublicReturnsFalseWithFuturePublished(): void
+    {
+        $object = ['@self' => ['published' => '2099-01-01T00:00:00Z']];
+        $this->assertFalse($this->service->isObjectPublic($object));
+
+    }//end testIsObjectPublicReturnsFalseWithFuturePublished()
+
+    /**
+     * IsObjectPublic returns true when published in the past and no depublished set.
+     *
+     * @return void
+     */
+    public function testIsObjectPublicReturnsTrueWhenPublishedInPast(): void
+    {
+        $object = ['@self' => ['published' => '2000-01-01T00:00:00Z']];
+        $this->assertTrue($this->service->isObjectPublic($object));
+
+    }//end testIsObjectPublicReturnsTrueWhenPublishedInPast()
+
+    /**
+     * IsObjectPublic returns false when depublished is in the past (already depublished).
+     *
+     * @return void
+     */
+    public function testIsObjectPublicReturnsFalseWhenAlreadyDepublished(): void
+    {
+        $object = [
+            '@self' => [
+                'published'   => '2000-01-01T00:00:00Z',
+                'depublished' => '2001-01-01T00:00:00Z',
+            ],
+        ];
+        $this->assertFalse($this->service->isObjectPublic($object));
+
+    }//end testIsObjectPublicReturnsFalseWhenAlreadyDepublished()
+
+    /**
+     * IsObjectPublic returns true when depublished is in the future.
+     *
+     * @return void
+     */
+    public function testIsObjectPublicReturnsTrueWhenDepublishedInFuture(): void
+    {
+        $object = [
+            '@self' => [
+                'published'   => '2000-01-01T00:00:00Z',
+                'depublished' => '2099-01-01T00:00:00Z',
+            ],
+        ];
+        $this->assertTrue($this->service->isObjectPublic($object));
+
+    }//end testIsObjectPublicReturnsTrueWhenDepublishedInFuture()
+
+    // -------------------------------------------------------------------------
+    // enforcePublishedForAnonymous() tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * EnforcePublishedForAnonymous is a no-op for authenticated callers.
+     *
+     * @return void
+     */
+    public function testEnforcePublishedForAnonymousSkipsWhenAuthenticated(): void
+    {
+        $this->userSession->method('isLoggedIn')->willReturn(true);
+
+        $result = [
+            'results' => [
+                ['@self' => []],
+            ],
+            'total'   => 1,
+        ];
+
+        $filtered = $this->service->enforcePublishedForAnonymous($result);
+        $this->assertCount(1, $filtered['results']);
+
+    }//end testEnforcePublishedForAnonymousSkipsWhenAuthenticated()
+
+    /**
+     * EnforcePublishedForAnonymous removes unpublished items for anonymous callers.
+     *
+     * @return void
+     */
+    public function testEnforcePublishedForAnonymousFiltersUnpublishedItems(): void
+    {
+        $this->userSession->method('isLoggedIn')->willReturn(false);
+
+        $result = [
+            'results' => [
+                ['@self' => ['published' => '2000-01-01T00:00:00Z']],
+                ['@self' => []],
+                ['@self' => ['published' => '2099-01-01T00:00:00Z']],
+            ],
+            'total'   => 3,
+            'count'   => 3,
+        ];
+
+        $filtered = $this->service->enforcePublishedForAnonymous($result);
+        $this->assertCount(1, $filtered['results']);
+        $this->assertSame(1, $filtered['total']);
+
+    }//end testEnforcePublishedForAnonymousFiltersUnpublishedItems()
+
+    /**
+     * EnforcePublishedForAnonymous adjusts total downward by removed item count.
+     *
+     * @return void
+     */
+    public function testEnforcePublishedForAnonymousAdjustsTotalCount(): void
+    {
+        $this->userSession->method('isLoggedIn')->willReturn(false);
+
+        $result = [
+            'results' => [
+                ['@self' => ['published' => '2000-01-01T00:00:00Z']],
+                ['@self' => ['published' => '2000-06-01T00:00:00Z']],
+                ['@self' => []],
+            ],
+            'total'   => 10,
+            'count'   => 3,
+        ];
+
+        $filtered = $this->service->enforcePublishedForAnonymous($result);
+        $this->assertCount(2, $filtered['results']);
+        // Total reduced by 1 (one item removed).
+        $this->assertSame(9, $filtered['total']);
+
+    }//end testEnforcePublishedForAnonymousAdjustsTotalCount()
+
+    // -------------------------------------------------------------------------
+    // findObjectLocation() tests
+    // -------------------------------------------------------------------------
 
     /**
      * Security (#734): findObjectLocation MUST return null without touching the
-     * database when no constraint is supplied. The legacy platform-wide table
-     * scan is gone.
+     * database when no constraint is supplied.
+     *
+     * @return void
      */
     public function testFindObjectLocationFailsClosedWithoutConstraint(): void
     {
@@ -54,28 +287,28 @@ class PublicationQueryServiceTest extends TestCase
 
         $this->assertNull($this->service->findObjectLocation('any-uuid'));
         $this->assertNull(
-            $this->service->findObjectLocation('any-uuid', allowedRegisters: [], allowedSchemas: [])
+            $this->service->findObjectLocation(uuid: 'any-uuid', allowedRegisters: [], allowedSchemas: [])
         );
         $this->assertNull(
-            $this->service->findObjectLocation('any-uuid', allowedRegisters: [1], allowedSchemas: [])
+            $this->service->findObjectLocation(uuid: 'any-uuid', allowedRegisters: [1], allowedSchemas: [])
         );
         $this->assertNull(
-            $this->service->findObjectLocation('any-uuid', allowedRegisters: [], allowedSchemas: [1])
+            $this->service->findObjectLocation(uuid: 'any-uuid', allowedRegisters: [], allowedSchemas: [1])
         );
-    }
+
+    }//end testFindObjectLocationFailsClosedWithoutConstraint()
 
     /**
-     * Security (#734): when a constraint IS supplied, the lookup is bounded to
-     * the catalog's (register × schema) magic tables — no information_schema
-     * pattern scan. The deterministic table name is the only thing queried.
+     * Security (#734): constrained lookup queries only the expected magic table.
+     *
+     * @return void
      */
     public function testFindObjectLocationLooksUpOnlyConstrainedTables(): void
     {
-        // Stub magicTableExists to claim only one table exists, then assert the
-        // UNION-ALL query runs once and returns its result.
+        // Stub magicTableExists to claim only one table exists.
         $this->stubMagicTableExists(['oc_openregister_table_21_11' => true]);
 
-        $resultRow = ['register_id' => 21, 'schema_id' => 11];
+        $resultRow   = ['register_id' => 21, 'schema_id' => 11];
         $unionResult = $this->createMock(IResult::class);
         $unionResult->method('fetch')->willReturn($resultRow);
         $unionResult->method('closeCursor');
@@ -92,13 +325,14 @@ class PublicationQueryServiceTest extends TestCase
             allowedSchemas: [11]
         );
 
-        $this->assertSame(['register' => 21, 'schema' => 11], $location);
-    }
+        $this->assertSame(expected: ['register' => 21, 'schema' => 11], actual: $location);
+
+    }//end testFindObjectLocationLooksUpOnlyConstrainedTables()
 
     /**
-     * Security (#734): non-existent tables are skipped — they never appear in
-     * the UNION query. When every (register × schema) pair has no backing table,
-     * findObjectLocation returns null without running any UNION query.
+     * Security (#734): returns null when no magic tables exist for the constraints.
+     *
+     * @return void
      */
     public function testFindObjectLocationReturnsNullWhenNoTablesExist(): void
     {
@@ -114,49 +348,59 @@ class PublicationQueryServiceTest extends TestCase
         );
 
         $this->assertNull($location);
-    }
+
+    }//end testFindObjectLocationReturnsNullWhenNoTablesExist()
+
+    // -------------------------------------------------------------------------
+    // Helper
+    // -------------------------------------------------------------------------
 
     /**
-     * Helper: stub the IQueryBuilder chain used by magicTableExists().
+     * Stub the IQueryBuilder chain used by magicTableExists().
      *
      * @param array<string, bool> $tableExistence Map of table_name => exists?
+     *
+     * @return void
      */
     private function stubMagicTableExists(array $tableExistence): void
     {
-        $this->db->method('getQueryBuilder')->willReturnCallback(function () use ($tableExistence) {
-            $qb = $this->createMock(IQueryBuilder::class);
-            $funcBuilder = $this->createMock(IFunctionBuilder::class);
-            $funcBuilder->method('count')->willReturn($this->createMock(IQueryFunction::class));
-            $expr = $this->createMock(IExpressionBuilder::class);
-            $expr->method('eq')->willReturn('eq');
+        $this->db->method('getQueryBuilder')->willReturnCallback(
+            function () use ($tableExistence) {
+                $qb          = $this->createMock(IQueryBuilder::class);
+                $funcBuilder = $this->createMock(IFunctionBuilder::class);
+                $funcBuilder->method('count')->willReturn($this->createMock(IQueryFunction::class));
+                $expr = $this->createMock(IExpressionBuilder::class);
+                $expr->method('eq')->willReturn('eq');
+                $expr->method('andWhere')->willReturn('andWhere');
 
-            $qb->method('select')->willReturnSelf();
-            $qb->method('from')->willReturnSelf();
-            $qb->method('func')->willReturn($funcBuilder);
-            $qb->method('expr')->willReturn($expr);
-            $qb->method('createNamedParameter')->willReturnCallback(fn($v) => $v);
+                $qb->method('select')->willReturnSelf();
+                $qb->method('from')->willReturnSelf();
+                $qb->method('func')->willReturn($funcBuilder);
+                $qb->method('expr')->willReturn($expr);
+                $qb->method('createNamedParameter')->willReturnCallback(fn($v) => $v);
+                $qb->method('createFunction')->willReturn('DATABASE()');
+                $qb->method('where')->willReturnSelf();
+                $qb->method('andWhere')->willReturnSelf();
 
-            // Use the *most recently bound* table name (createNamedParameter)
-            // to decide the exists value via where().
-            $boundTable = null;
-            $qb->method('where')->willReturnCallback(function () use (&$boundTable, $qb) {
+                $qb->method('executeQuery')->willReturnCallback(
+                    function () use ($tableExistence) {
+                        $result = $this->createMock(IResult::class);
+                        // If any tableExistence entry is true return 1, else 0.
+                        $anyExists = (array_filter($tableExistence) !== []);
+                        $cntValue  = 0;
+                        if ($anyExists === true) {
+                            $cntValue = 1;
+                        }
+
+                        $result->method('fetch')->willReturn(['cnt' => $cntValue]);
+                        $result->method('closeCursor');
+                        return $result;
+                    }
+                );
+
                 return $qb;
-            });
+            }
+        );
 
-            // We can't easily intercept createNamedParameter to pull the table name
-            // back out — but we don't need to. executeQuery returns the configured
-            // existence for ALL tables in this stub.
-            $qb->method('executeQuery')->willReturnCallback(function () use ($tableExistence) {
-                $result = $this->createMock(IResult::class);
-                // Map total count: true => 1, false/absent => 0.
-                // If any tableExistence entry is true, return 1; else 0.
-                $anyExists = !empty(array_filter($tableExistence));
-                $result->method('fetch')->willReturn(['cnt' => $anyExists ? 1 : 0]);
-                $result->method('closeCursor');
-                return $result;
-            });
-
-            return $qb;
-        });
-    }
-}
+    }//end stubMagicTableExists()
+}//end class
