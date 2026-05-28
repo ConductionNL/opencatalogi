@@ -68,7 +68,8 @@
 		"react/promise": "^3.0",
 		"symfony/process": "^6.4.33",
 		"symfony/twig-bundle": "^6.4",
-		"symfony/uid": "^6.4"
+		"symfony/uid": "^6.4",
+		"twig/twig": "^3.27.0"
 	},
 	"require-dev": {
 		"cyclonedx/cyclonedx-php-composer": "^6.2",
