@@ -24,6 +24,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -65,14 +66,15 @@ class ThemesController extends Controller
     /**
      * ThemesController constructor.
      *
-     * @param string             $appName            The name of the app.
-     * @param IRequest           $request            The request object.
-     * @param IAppConfig         $config             App configuration interface.
-     * @param ContainerInterface $container          Server container for DI.
-     * @param IAppManager        $appManager         App manager.
-     * @param string             $corsMethods        Allowed CORS methods.
-     * @param string             $corsAllowedHeaders Allowed CORS headers.
-     * @param integer            $corsMaxAge         CORS max age.
+     * @param string                  $appName            The name of the app.
+     * @param IRequest                $request            The request object.
+     * @param IAppConfig              $config             App configuration interface.
+     * @param ContainerInterface      $container          Server container for DI.
+     * @param IAppManager             $appManager         App manager.
+     * @param PublicationQueryService $queryService       Publication query/visibility helper.
+     * @param string                  $corsMethods        Allowed CORS methods.
+     * @param string                  $corsAllowedHeaders Allowed CORS headers.
+     * @param integer                 $corsMaxAge         CORS max age.
      */
     public function __construct(
         $appName,
@@ -80,6 +82,7 @@ class ThemesController extends Controller
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
+        private readonly PublicationQueryService $queryService,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
@@ -225,11 +228,15 @@ class ThemesController extends Controller
         }
 
         // Use searchObjectsPaginated for better performance and pagination support.
+        // rbac=true enforces schema authorization; multi=false for public theme access.
         $result = $this->getObjectService()->searchObjectsPaginated(
             $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false
         );
+
+        // Enforce server-side published predicate for anonymous callers.
+        $result = $this->queryService->enforcePublishedForAnonymous($result);
 
         // Build paginated response structure.
         $responseData = [
@@ -292,8 +299,21 @@ class ThemesController extends Controller
      */
     public function show(string|int $id): JSONResponse
     {
-        // Set _rbac=false, _multitenancy=false for public theme access.
-        $theme = $this->getObjectService()->find($id, _rbac: false, _multitenancy: false);
+        // Rbac=true enforces schema authorization; multi=false for public theme access.
+        $theme = $this->getObjectService()->find($id, _rbac: true, _multitenancy: false);
+
+        // Enforce published predicate for anonymous callers on single-item lookup.
+        if (is_array($theme) === true) {
+            $themeArray = $theme;
+        } else {
+            $themeArray = $theme->jsonSerialize();
+        }
+
+        if ($this->queryService->isAnonymous() === true
+            && $this->queryService->isObjectPublic($themeArray) === false
+        ) {
+            return new JSONResponse(['error' => 'Not found'], 404);
+        }
 
         $data = $theme;
         if ($theme instanceof \OCP\AppFramework\Db\Entity) {

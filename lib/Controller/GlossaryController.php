@@ -24,6 +24,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -75,15 +76,16 @@ class GlossaryController extends Controller
     /**
      * GlossaryController constructor.
      *
-     * @param string             $appName            The name of the app
-     * @param IRequest           $request            The request object
-     * @param IAppConfig         $config             App configuration interface
-     * @param ContainerInterface $container          Server container for dependency injection
-     * @param IAppManager        $appManager         App manager for checking installed apps
-     * @param IL10N              $l10n               Localization service
-     * @param string             $corsMethods        Allowed CORS methods
-     * @param string             $corsAllowedHeaders Allowed CORS headers
-     * @param integer            $corsMaxAge         CORS max age
+     * @param string                  $appName            The name of the app
+     * @param IRequest                $request            The request object
+     * @param IAppConfig              $config             App configuration interface
+     * @param ContainerInterface      $container          Server container for dependency injection
+     * @param IAppManager             $appManager         App manager for checking installed apps
+     * @param IL10N                   $l10n               Localization service
+     * @param PublicationQueryService $queryService       Publication query/visibility helper
+     * @param string                  $corsMethods        Allowed CORS methods
+     * @param string                  $corsAllowedHeaders Allowed CORS headers
+     * @param integer                 $corsMaxAge         CORS max age
      */
     public function __construct(
         $appName,
@@ -92,6 +94,7 @@ class GlossaryController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly IL10N $l10n,
+        private readonly PublicationQueryService $queryService,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
@@ -238,8 +241,11 @@ class GlossaryController extends Controller
         $searchQuery['_source'] = 'database';
 
         // Use searchObjectsPaginated for better performance and pagination support.
-        // Set rbac=false, multi=false for public glossary access.
-        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
+        // rbac=true enforces schema authorization; multi=false for public glossary access.
+        $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
+
+        // Enforce server-side published predicate for anonymous callers.
+        $result = $this->queryService->enforcePublishedForAnonymous($result);
 
         // Build paginated response structure.
         $responseData = [
@@ -307,13 +313,26 @@ class GlossaryController extends Controller
             '_limit'  => 1,
             '_source' => 'database',
         ];
-        $result      = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: false, _multitenancy: false);
+        $result      = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
 
         if (empty($result['results']) === true) {
             return new JSONResponse(['error' => $this->l10n->t('Glossary term not found')], 404);
         }
 
         $glossaryTerm = $result['results'][0];
+
+        // Enforce published predicate for anonymous callers on single-item lookup.
+        if (is_array($glossaryTerm) === true) {
+            $termArray = $glossaryTerm;
+        } else {
+            $termArray = $glossaryTerm->jsonSerialize();
+        }
+
+        if ($this->queryService->isAnonymous() === true
+            && $this->queryService->isObjectPublic($termArray) === false
+        ) {
+            return new JSONResponse(['error' => $this->l10n->t('Glossary term not found')], 404);
+        }
 
         $data = $glossaryTerm;
         if ($glossaryTerm instanceof \OCP\AppFramework\Db\Entity) {
