@@ -171,8 +171,17 @@ class PublicationService
     /**
      * Set register/schema context on the ObjectService for a given object UUID.
      *
-     * Searches all magic tables to find which register/schema an object belongs to,
-     * then sets that context on the ObjectService so subsequent operations can find the object.
+     * Searches magic tables scoped to the catalogs configured on this instance to find
+     * which register/schema an object belongs to, then sets that context on the
+     * ObjectService so subsequent operations can find the object.
+     *
+     * The previous implementation issued a platform-wide SELECT against
+     * information_schema.tables (no scope restriction) and was reachable from
+     * anonymous @PublicPage endpoints — a DoS vector and a cross-catalog
+     * information-disclosure risk (C-2 / wave-7). The new implementation derives the
+     * allowed (register × schema) pairs from the catalogs configured on this instance
+     * and delegates to PublicationQueryService::findObjectLocation(), which is already
+     * scoped and cached.
      *
      * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
      * @param string                                  $objectId      The UUID of the object to locate
@@ -182,56 +191,29 @@ class PublicationService
     private function setObjectServiceContext($objectService, string $objectId): void
     {
         try {
-            $db = $this->container->get(\OCP\IDBConnection::class);
+            // Derive allowed registers/schemas from the catalogs configured on this
+            // instance. getCatalogFilters() returns the union of all catalog scopes,
+            // which is the safe upper-bound for any request that reaches this path.
+            $context          = $this->getCatalogFilters();
+            $allowedRegisters = array_map('intval', $context['registers']);
+            $allowedSchemas   = array_map('intval', $context['schemas']);
 
-            $result = $db->executeQuery(
-                <<<'SQL'
-                SELECT table_name FROM information_schema.tables
-                WHERE table_name LIKE 'oc_openregister_table_%'
-                ORDER BY table_name
-                SQL
-            );
-
-            $unionParts = [];
-            $quotedUuid = $db->quote($objectId);
-            $row        = $result->fetch();
-            while ($row !== false) {
-                $matches = [];
-                $match   = preg_match(
-                    pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
-                    subject: $row['table_name'],
-                    matches: $matches
-                );
-                if ($match === 1) {
-                    $register     = (int) $matches[1];
-                    $schema       = (int) $matches[2];
-                    $tableName    = $row['table_name'];
-                    $unionParts[] = sprintf(
-                        '(SELECT %d AS register_id, %d AS schema_id FROM %s WHERE _uuid = %s)',
-                        $register,
-                        $schema,
-                        $tableName,
-                        $quotedUuid
-                    );
-                }
-
-                $row = $result->fetch();
-            }//end while
-
-            $result->closeCursor();
-
-            if (empty($unionParts) === true) {
+            if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+                // No catalog scope configured — refuse to do a platform-wide scan.
                 return;
             }
 
-            $sql    = implode(' UNION ALL ', $unionParts).' LIMIT 1';
-            $result = $db->executeQuery($sql);
-            $row    = $result->fetch();
-            $result->closeCursor();
+            // Delegate to the scoped, cached helper that never touches information_schema
+            // without a constrained (register × schema) set.
+            $location = $this->getQueryService()->findObjectLocation(
+                uuid: $objectId,
+                allowedRegisters: $allowedRegisters,
+                allowedSchemas: $allowedSchemas
+            );
 
-            if ($row !== false) {
-                $objectService->setRegister(register: (string) $row['register_id']);
-                $objectService->setSchema(schema: (string) $row['schema_id']);
+            if ($location !== null) {
+                $objectService->setRegister(register: (string) $location['register']);
+                $objectService->setSchema(schema: (string) $location['schema']);
             }
         } catch (\Exception $e) {
             // Silently fail — worst case we fall back to the old behavior.
@@ -814,6 +796,44 @@ class PublicationService
     }//end show()
 
     /**
+     * Determine whether an object (by ID) belongs to any catalog scope configured on
+     * this instance.
+     *
+     * Objects that are not in the register/schema of any configured catalog must not be
+     * served via the public-facing publication endpoints (C-1 / wave-7). When no catalog
+     * scope is configured (empty registers/schemas), the method returns false — an
+     * unconfigured instance may not serve arbitrary objects.
+     *
+     * @param string $objectId UUID of the object to check.
+     *
+     * @return bool True when the object's register/schema is covered by a local catalog.
+     */
+    private function isObjectInCatalogScope(string $objectId): bool
+    {
+        try {
+            $context          = $this->getCatalogFilters();
+            $allowedRegisters = array_map('intval', $context['registers']);
+            $allowedSchemas   = array_map('intval', $context['schemas']);
+
+            if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+                return false;
+            }
+
+            $location = $this->getQueryService()->findObjectLocation(
+                uuid: $objectId,
+                allowedRegisters: $allowedRegisters,
+                allowedSchemas: $allowedSchemas
+            );
+
+            return $location !== null;
+        } catch (\Exception $e) {
+            // Fail closed — if we cannot verify scope, deny.
+            return false;
+        }//end try
+
+    }//end isObjectInCatalogScope()
+
+    /**
      * Shows attachments of a publication
      *
      * Retrieves and returns attachments of a publication using code from OpenRegister.
@@ -830,14 +850,22 @@ class PublicationService
      */
     public function attachments(string $id): JSONResponse
     {
+        // Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
+        // of the catalogs configured on this instance before serving any file list.
+        // This prevents anonymous callers from retrieving attachments of objects that are
+        // outside this OpenCatalogi installation's configured namespace.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
+        // Set register/schema context so find() can locate the object in its magic table.
+        $objectService = $this->getObjectService();
+        $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
         // Validate that the object exists (throws if not found) and enforce
         // published predicate for anonymous callers.
-        $object = $this->getObjectService()->find(id: $id, _extend: []);
-        if (is_array($object) === true) {
-            $objectArray = $object;
-        } else {
-            $objectArray = $object->jsonSerialize();
-        }
+        $object      = $objectService->find(id: $id, _extend: []);
+        $objectArray = is_array($object) === true ? $object : $object->jsonSerialize();
 
         if ($this->getQueryService()->isAnonymous() === true
             && $this->getQueryService()->isObjectPublic($objectArray) === false
@@ -887,15 +915,23 @@ class PublicationService
     public function download(
         string $id
     ): DataDownloadResponse | JSONResponse {
+        // Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
+        // of the catalogs configured on this instance before serving any file content.
+        // This prevents anonymous callers from downloading files for objects outside
+        // this OpenCatalogi installation's configured namespace.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
         try {
+            // Set register/schema context so find() can locate the object in its magic table.
+            $objectService = $this->getObjectService();
+            $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
             // Validate that the object exists and enforce published predicate for
             // anonymous callers before serving any file content.
-            $object = $this->getObjectService()->find(id: $id, _extend: []);
-            if (is_array($object) === true) {
-                $objectArray = $object;
-            } else {
-                $objectArray = $object->jsonSerialize();
-            }
+            $object      = $objectService->find(id: $id, _extend: []);
+            $objectArray = is_array($object) === true ? $object : $object->jsonSerialize();
 
             if ($this->getQueryService()->isAnonymous() === true
                 && $this->getQueryService()->isObjectPublic($objectArray) === false
@@ -1039,8 +1075,32 @@ class PublicationService
             // Set register/schema context so the object can be found in magic tables.
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
+            // Enforce published predicate on the root object for anonymous callers (C-3 /
+            // wave-7). Without this guard an anonymous caller can probe the relation graph
+            // of any object — including unpublished ones — simply by knowing its UUID.
+            // Mirror the guard that show() (line 803) and attachments() (line 842) use.
+            $rootObject = $objectService->find(id: $id, _extend: []);
+
+            // Object not found — return 404 before any relation traversal.
+            if ($rootObject === null) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
+            $rootObjectArray = is_array($rootObject) === true ? $rootObject : $rootObject->jsonSerialize();
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
             // Get the relations for the object.
-            $relationsArray = $objectService->find(id: $id)->getRelations();
+            // $rootObject may be an array (SOLR backend) or an entity (magic-mapper).
+            // getRelations() is only available on entity objects.
+            $relationsArray = is_array($rootObject) === true
+                ? ($rootObject['@self']['relations'] ?? $rootObject['relations'] ?? [])
+                : $rootObject->getRelations();
+
             $relations      = array_values($relationsArray);
 
             // Check if relations array is empty.
@@ -1095,6 +1155,25 @@ class PublicationService
 
             // Set register/schema context so the object can be found in magic tables.
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
+            // Enforce published predicate on the root object for anonymous callers (C-3 /
+            // wave-7). Without this guard an anonymous caller can probe the relation graph
+            // of any object — including unpublished ones — simply by knowing its UUID.
+            // Mirror the guard that show() (line 803) and attachments() (line 842) use.
+            $rootObject = $objectService->find(id: $id, _extend: []);
+
+            // Object not found — return 404 before any relation traversal.
+            if ($rootObject === null) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
+            $rootObjectArray = is_array($rootObject) === true ? $rootObject : $rootObject->jsonSerialize();
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
 
             // Get the relations for the object.
             $relationsArray = $objectService->findByRelations($id);
