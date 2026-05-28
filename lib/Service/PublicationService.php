@@ -782,7 +782,8 @@ class PublicationService
             $extend,
             static fn($val) => is_string($val) === true && str_starts_with($val, '@self.') === true
         );
-        $extend   = array_values($filtered);
+        // Deduplicate before capping so duplicate entries cannot inflate the cap.
+        $extend = array_values(array_unique($filtered));
         if (count($extend) > 5) {
             $extend = array_slice($extend, 0, 5);
         }

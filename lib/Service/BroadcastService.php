@@ -81,6 +81,16 @@ class BroadcastService
     private const REQUEST_TIMEOUT = 30;
 
     /**
+     * Maximum wall-clock seconds allowed for all retries to a single URL.
+     *
+     * Caps total blocking time per target so that a slow/hung upstream cannot
+     * stall the entire broadcast loop indefinitely.
+     *
+     * @var int Maximum wall-clock seconds for all retries to a single broadcast target
+     */
+    private const MAX_RETRY_WALL_SECONDS = 90;
+
+    /**
      * Constructor for BroadcastService.
      *
      * @param IURLGenerator      $urlGenerator URL generator interface
@@ -234,10 +244,19 @@ class BroadcastService
      */
     private function sendBroadcastRequest(string $url, string $directoryUrl): bool
     {
-        $attempt = 0;
+        $attempt   = 0;
+        $startTime = time();
 
-        // Retry logic for handling temporary failures.
+        // Retry loop with wall-clock cap to prevent indefinite blocking.
         while ($attempt < self::MAX_RETRIES) {
+            // Abort if we have exceeded the per-target wall-time budget.
+            if ((time() - $startTime) >= self::MAX_RETRY_WALL_SECONDS) {
+                $this->logger->warning(
+                    "[BroadcastService] Wall-time cap reached for {$url}; aborting retries after {$attempt} attempt(s)"
+                );
+                return false;
+            }
+
             $attempt++;
 
             try {
@@ -271,12 +290,12 @@ class BroadcastService
                 // Log the attempt failure.
                 $this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: ".$e->getMessage());
 
-                // If this was the last attempt, log as error.
+                // If this was the last attempt, log as error and stop.
                 if ($attempt === self::MAX_RETRIES) {
                     $this->logger->error(
                         "All {$attempt} broadcast attempts to {$url} failed. Final error: ".$e->getMessage()
                     );
-                    continue;
+                    return false;
                 }
 
                 // Wait before retrying (exponential backoff).

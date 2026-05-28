@@ -307,11 +307,12 @@ class PublicationQueryService
         }
 
         // Use a parameterised information_schema lookup constrained to this single
-        // table name. Cheap (index lookup, single row), not a full table-pattern scan.
+        // table name and the current database (prevents cross-schema false-positives).
         $qb = $this->db->getQueryBuilder();
         $qb->select($qb->func()->count('*', 'cnt'))
             ->from('information_schema.tables')
-            ->where($qb->expr()->eq('table_name', $qb->createNamedParameter($table)));
+            ->where($qb->expr()->eq('table_name', $qb->createNamedParameter($table)))
+            ->andWhere($qb->expr()->eq('table_schema', $qb->createFunction('DATABASE()')));
 
         try {
             $result = $qb->executeQuery();
