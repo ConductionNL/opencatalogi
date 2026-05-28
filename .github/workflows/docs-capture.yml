@@ -1,0 +1,57 @@
+name: Docs capture
+
+# Nightly Playwright run that drives the OpenCatalogi UI through the
+# journeydoc tutorial flows and commits any refreshed screenshots back
+# to docs/static/screenshots/tutorials/{user,admin}/. Per ADR-030 and
+# hydra#279 stap 14.
+#
+# Uses the centralized journeydoc-capture job from
+# ConductionNL/.github/.github/workflows/quality.yml. All other quality
+# gates are disabled — this run is dedicated to screenshot refresh,
+# not regression testing.
+#
+# Manual trigger: Actions → "Docs capture" → Run workflow.
+
+on:
+  schedule:
+    # 03:27 UTC nightly (04:27 CET / 05:27 CEST — quiet hours).
+    # Off-the-hour minute to avoid GitHub's :00 scheduling cluster.
+    - cron: "27 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  capture:
+    uses: ConductionNL/.github/.github/workflows/quality.yml@main
+    with:
+      app-name: opencatalogi
+      php-version: "8.3"
+      nextcloud-test-refs: '["stable32"]'
+      # OpenCatalogi reads from OpenRegister at runtime — without it,
+      # the tutorial flows can't render the lists/details that the
+      # capture spec navigates to.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+
+      # Activate the journeydoc capture + point its deploy at the
+      # existing documentation workflow (which deploys the docs to
+      # opencatalogi.conduction.nl).
+      enable-journeydoc-capture: true
+      journeydoc-deploy-workflow: documentation.yml
+
+      # Disable every other quality gate that has a toggle. The php-quality
+      # and security jobs always run (no toggle), but they're cheap (~2 min
+      # each) — acceptable overhead for the docs-capture cadence.
+      enable-frontend: false
+      enable-eslint: false
+      enable-license-check: false
+      enable-sbom: false
+      enable-features-extract: false
+      enable-coverage-guard: false
+      enable-phpunit: false
+      enable-newman: false
+      enable-playwright: false
+      enable-psalm: false
+      enable-phpstan: false
+      enable-phpmd: false
+      enable-phpcs: false
+      enable-phpmetrics: false
+    secrets: inherit
