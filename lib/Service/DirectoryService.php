@@ -271,8 +271,10 @@ class DirectoryService
                 ];
 
                 // Directory data is public by design — listings/catalogs have authorization.read=["public"].
-                // Disable RBAC and multitenancy so public directory discovery works without user context.
-                $listings = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
+                // RBAC is disabled so public directory discovery works without user context (see ADR-002).
+                // Multitenancy is NOT bypassed: each tenant sees only its own listing objects.
+                // Cross-instance federation uses the explicit URL-based remote-fetch path instead.
+                $listings = $objectService->searchObjects($query, _rbac: false);
 
                 // Build unique directory URLs using URL as key to automatically handle duplicates.
                 foreach ($listings as $listing) {

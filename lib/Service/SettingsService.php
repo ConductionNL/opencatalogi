@@ -531,6 +531,10 @@ class SettingsService
     /**
      * Update the settings configuration.
      *
+     * Only keys that belong to the canonical settings allowlist (the same set
+     * enumerated in getSettings()) are accepted.  Any unrecognised key in $data
+     * is silently ignored, preventing arbitrary app-config key injection.
+     *
      * @param array $data The settings data to update.
      *
      * @return array The updated settings configuration.
@@ -541,14 +545,42 @@ class SettingsService
     public function updateSettings(array $data): array
     {
         try {
-            // Update each setting in the configuration.
-            foreach ($data as $key => $value) {
-                $this->config->setValueString($this->appName, $key, $value);
-                // Retrieve the updated value to confirm the change.
-                $data[$key] = $this->config->getValueString($this->appName, $key);
+            // Build the canonical allowlist from the same object-type enumeration
+            // used by getSettings() so the two methods stay in sync automatically.
+            $allowedTypes = [
+                'catalog',
+                'listing',
+                'organization',
+                'theme',
+                'page',
+                'menu',
+                'glossary',
+            ];
+
+            $allowedKeys = [];
+            foreach ($allowedTypes as $type) {
+                $allowedKeys[] = "{$type}_source";
+                $allowedKeys[] = "{$type}_schema";
+                $allowedKeys[] = "{$type}_register";
             }
 
-            return $data;
+            // Publishing-option keys are also settable via this endpoint.
+            $allowedKeys[] = 'auto_publish_attachments';
+            $allowedKeys[] = 'auto_publish_objects';
+            $allowedKeys[] = 'use_old_style_publishing_view';
+
+            $updated = [];
+
+            // Only persist keys that are explicitly allowed.
+            foreach ($allowedKeys as $key) {
+                if (array_key_exists($key, $data) === true) {
+                    $this->config->setValueString($this->appName, $key, (string) $data[$key]);
+                    // Retrieve the persisted value to confirm the change.
+                    $updated[$key] = $this->config->getValueString($this->appName, $key);
+                }
+            }
+
+            return $updated;
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to update settings: '.$e->getMessage());
         }//end try

@@ -98,8 +98,6 @@ class SettingsController extends Controller
      *
      * @return JSONResponse JSON response containing the updated settings.
      *
-     * @NoCSRFRequired
-     *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
      */
     public function create(): JSONResponse
