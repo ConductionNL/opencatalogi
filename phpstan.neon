@@ -13,7 +13,7 @@ parameters:
     excludePaths:
         - vendor
         - vendor-bin
-        # Apps that ship a verbatim template snapshot under lib/Resources/template/ (e.g. openbuilt).
+        # Apps that ship a verbatim template snapshot under lib/Resources/template/ (e.g. openbuild).
         - lib/Resources/template
         # CMSTool implements OCA\OpenRegister\Tool\ToolInterface, which is unavailable during
         # static analysis. PHPStan cannot ignore "implements unknown interface" via ignoreErrors
