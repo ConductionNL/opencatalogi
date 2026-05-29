@@ -8,7 +8,7 @@ OpenCatalogi exposes publications and their attachments through the public, cata
 - `GET /api/{catalogSlug}/{id}` — show a single publication
 - `GET /api/{catalogSlug}/{id}/attachments` — full attachment metadata for one publication
 
-Publications are stored as OpenRegister objects, and the `@self.files` field on every publication response is sourced from OpenRegister. As of the [opt-in-files-extend change in OpenRegister](https://github.com/ConductionNL/openregister/tree/main/openspec/changes/opt-in-files-extend), the shape of `@self.files` is **opt-in** rather than always-full — and OpenCatalogi inherits that contract automatically without any code change in this repo.
+Publications are stored as OpenRegister objects, and the `@self.files` field on every publication response is sourced from OpenRegister. As of the [opt-in-files-extend change in OpenRegister](https://codeberg.org/Conduction/openregister/src/branch/main/openspec/changes/opt-in-files-extend), the shape of `@self.files` is **opt-in** rather than always-full — and OpenCatalogi inherits that contract automatically without any code change in this repo.
 
 This document describes the new contract for OpenCatalogi public-API consumers (frontends, federated mirrors, scrapers).
 
@@ -128,6 +128,6 @@ If your consumer only needed the existence of attachments (e.g. "show a papercli
 
 ## Related references
 
-- OpenRegister change spec: [`openspec/changes/opt-in-files-extend`](https://github.com/ConductionNL/openregister/tree/main/openspec/changes/opt-in-files-extend) — the underlying contract this document inherits.
+- OpenRegister change spec: [`openspec/changes/opt-in-files-extend`](https://codeberg.org/Conduction/openregister/src/branch/main/openspec/changes/opt-in-files-extend) — the underlying contract this document inherits.
 - OpenRegister API docs: `docs/api/objects.md` in the OpenRegister repo — describes the `_extend` mechanism in full.
 - OpenCatalogi `PublicationsController::attachments()` — the recommended path for full single-publication attachment metadata.

@@ -19,10 +19,10 @@ Bovenstaande abstracte componenten behoeven natuurlijk een concrete invulling, d
 | Component | Invulling |
 | ----------- | ----------- |
 | _publicatie platform_ | [NlDesign app](https://github.com/OpenCatalogi/web-app) |
-| _beheer interface_ | [NextCloud app](https://github.com/ConductionNL/opencatalogi) |
-| _beheer API_ | [NextCloud app](https://github.com/ConductionNL/opencatalogi) |
-| _zoeken API_ | [NextCloud app](https://github.com/ConductionNL/opencatalogi) |
-| _Objecten opslag_ | [Open Register](https://github.com/ConductionNL/openregister) (PostgreSQL) |
+| _beheer interface_ | [NextCloud app](https://codeberg.org/Conduction/opencatalogi) |
+| _beheer API_ | [NextCloud app](https://codeberg.org/Conduction/opencatalogi) |
+| _zoeken API_ | [NextCloud app](https://codeberg.org/Conduction/opencatalogi) |
+| _Objecten opslag_ | [Open Register](https://codeberg.org/Conduction/openregister) (PostgreSQL) |
 
 Daarnaast hebben diverse projecten zo als de software catalogus en open woo hun eigen aanvullende over vervangende componenten gerealiseerd. Kijk daarvoor bij [projecten](../Community/Projecten).
 

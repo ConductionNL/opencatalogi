@@ -118,7 +118,7 @@ De APIs van OpenCatalogi zijn voor nu nog terug te vinden op [https://conduction
 | Codebase | Rol | Organisatie | Licentie |
 |----------|------------------------------|             |          |  
 | [Github](https://github.com/OpenCatalogi/web-app)| Publicatie Platform    |  Open Catalogi            |          |  
-| [Github](https://github.com/ConductionNL/opencatalogi)| Beheer API, Zoeken API, Beheerinterface    | OpenCatalogi            |  EUPL        |  
+| [Github](https://codeberg.org/Conduction/opencatalogi)| Beheer API, Zoeken API, Beheerinterface    | OpenCatalogi            |  EUPL        |  
 | [Github](https://github.com/maykinmedia/objects-api)| ORC (objectenopslag)    | Maykin Media            |  EUPL        |  
 | [Github](https://github.com/open-zaak/open-zaak)        | DRC (documentenopslag)      | Maykin Media            |  EUPL        |  
 | [Github](https://github.com/OpenCatalogi/OpenCatalogiBundle)         | Synchronisatie Service      | Conduction            |  EUPL        |  

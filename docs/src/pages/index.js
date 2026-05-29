@@ -227,7 +227,7 @@ export default function Home() {
           secondaryCta={{ label: 'Read the docs', href: '/docs/intro' }}
           tertiaryCta={{
             label: 'View on GitHub',
-            href: 'https://github.com/ConductionNL/opencatalogi',
+            href: 'https://codeberg.org/Conduction/opencatalogi',
           }}
           iconColor="var(--c-orange-knvb)"
           icon={OPENCATALOGI_ICON}

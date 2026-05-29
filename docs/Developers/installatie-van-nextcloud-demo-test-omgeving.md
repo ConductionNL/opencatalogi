@@ -20,7 +20,7 @@ Volg deze eenvoudige stappen om de applicatie te starten:
 
 1. **Docker Desktop**: [Download](https://www.docker.com/products/docker-desktop/) en installeer Docker Desktop.
 2. **WSL2**: [Download](https://learn.microsoft.com/en-us/windows/wsl/install) en installeer via de Microsoft Store.
-3. **Code**: [Download](https://github.com/ConductionNL/opencatalogi/archive/refs/heads/master.zip) de code als zip bestand en pak deze uit.
+3. **Code**: [Download](https://codeberg.org/Conduction/opencatalogi/archive/refs/heads/master.zip) de code als zip bestand en pak deze uit.
 4. **(Optie 1, Start Docker via installer)**
    * [Download](https://raw.githubusercontent.com/OpenCatalogi/.github/main/docs/assets/Start-docker.bat) het `.bat`-bestand. Dit doe je door de link op te slaan (rechtermuisknop opslaan als, let op dat je het bestand opslaat als `.bat`)
    * Plaats het bestand als `.bat` in dezelfde folder als de code.

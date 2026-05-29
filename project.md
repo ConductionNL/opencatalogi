@@ -4,7 +4,7 @@
 OpenCatalogi is a Nextcloud app for publishing government information in compliance with WOO (Wet Open Overheid). It provides a publication system with catalogi, publications, listings, and themes.
 
 ## Repository
-- **GitHub**: https://github.com/ConductionNL/opencatalogi
+- **GitHub**: https://codeberg.org/Conduction/opencatalogi
 - **Organization**: ConductionNL
 - **Container mount**: `/var/www/html/custom_apps/opencatalogi`
 

@@ -7,7 +7,7 @@
 
 Het toevoegen van een Nextcloud app is niet moeilijk, maar het helpt wel als je basiskennis hebt van `git` en hoe applicatiestructuren ingedeeld zijn. Deze handleiding gaat uit van een succesvolle installatie van Nextcloud. Er is [hiervoor](https://cloud.nextcloud.com/s/iyNGp8ryWxc7Efa?path=%2F1%20Setting%20up%20a%20development%20environment) een goede tutorial te vinden van Nextcloud zelf.
 
-De makkelijkste manier is om naar de repository te gaan van de [OpenCatalogi-Nextcloud app](https://github.com/ConductionNL/opencatalogi) en de code te kopieren naar de juiste Nextcloud-directory.
+De makkelijkste manier is om naar de repository te gaan van de [OpenCatalogi-Nextcloud app](https://codeberg.org/Conduction/opencatalogi) en de code te kopieren naar de juiste Nextcloud-directory.
 
 Dat kan op 2 manieren.
 
@@ -18,7 +18,7 @@ Ga in jouw terminal naar de "apps-extra"-directory. Die is te vinden in `nextclo
 en daar het volgende commando's uit te voeren.
 
 ```cli
-git clone https://github.com/ConductionNL/opencatalogi.git
+git clone https://codeberg.org/Conduction/opencatalogi.git
 cd opencatalogi
 npm install
 npm run dev
