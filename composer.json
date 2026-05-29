@@ -49,7 +49,7 @@
 		"phpqa": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa",
 		"phpqa:full": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs:0,phpmd:0,phploc:0,phpmetrics,phpcpd:0,parallel-lint:0",
 		"phpqa:ci": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs,phpmd,phploc,phpmetrics,phpcpd,parallel-lint",
-		"check:strict": "E=0; for CMD in lint phpcs phpmd psalm phpstan test:all; do echo; echo \"=== $CMD ===\"; composer $CMD || E=1; done; echo; if [ $E -eq 0 ]; then echo \"ALL CHECKS PASSED\"; else echo \"SOME CHECKS FAILED (see above)\"; fi; exit $E",
+		"check:strict": "@lint && @cs:check && @phpmd && @psalm && @phpstan",
 		"qa:check": [
 			"@phpqa"
 		],
