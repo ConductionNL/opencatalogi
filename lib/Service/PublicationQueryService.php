@@ -512,31 +512,35 @@ class PublicationQueryService
             $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
         }
 
-        $register = null;
-        if (empty($catalogRegisters) === false) {
-            $register = (int) $catalogRegisters[0];
-        }
+        // WF4 / wave-12: iterate ALL (register × schema) pairs, not just $catalogRegisters[0].
+        // Previously the code only tried the first register in the list, so objects in
+        // register #2+ were unreachable via this path and returned spurious 404s.
+        $registersToTry = empty($catalogRegisters) === false
+            ? array_map('intval', $catalogRegisters)
+            : [null];
 
-        // For multi-schema catalogs, loop through all schemas to find the object.
         $schemasToTry = array_map('intval', $catalogSchemas);
-        foreach ($schemasToTry as $schemaId) {
-            try {
-                $object = $objectService->find(
-                    id: $id,
-                    _extend: [],
-                    files: false,
-                    register: $register,
-                    schema: $schemaId,
-                    _rbac: true,
-                    _multitenancy: false
-                );
-                if ($object !== null) {
-                    return $object;
+
+        foreach ($registersToTry as $register) {
+            foreach ($schemasToTry as $schemaId) {
+                try {
+                    $object = $objectService->find(
+                        id: $id,
+                        _extend: [],
+                        files: false,
+                        register: $register,
+                        schema: $schemaId,
+                        _rbac: true,
+                        _multitenancy: false
+                    );
+                    if ($object !== null) {
+                        return $object;
+                    }
+                } catch (DoesNotExistException $e) {
+                    // Object not found in this (register, schema) pair — try next.
+                    continue;
                 }
-            } catch (DoesNotExistException $e) {
-                // Object not found in this schema, try next one.
-                continue;
-            }
+            }//end foreach
         }//end foreach
 
         return null;

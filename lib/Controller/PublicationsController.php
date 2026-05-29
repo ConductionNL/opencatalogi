@@ -982,6 +982,28 @@ class PublicationsController extends Controller
                 }
             }
 
+            // Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
+            // federation path (PublicationService::uses, wave-9 C-3) that was missing from
+            // this older per-catalog route. An anonymous caller must not be able to enumerate
+            // the relation graph of an unpublished object by guessing its UUID.
+            // Return 404 (not 401) to avoid leaking object existence.
+            $rootObject = $objectService->find(id: $id, _extend: []);
+            if ($rootObject === null) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+            }
+
+            if (is_array($rootObject) === true) {
+                $rootObjectArray = $rootObject;
+            } else {
+                $rootObjectArray = $rootObject->jsonSerialize();
+            }
+
+            if ($this->queryService->isAnonymous() === true
+                && $this->queryService->isObjectPublic($rootObjectArray) === false
+            ) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+            }
+
             $queryParams = $this->request->getParams();
             unset($queryParams['id'], $queryParams['_route'], $queryParams['catalogSlug']);
 
@@ -1054,6 +1076,28 @@ class PublicationsController extends Controller
                     $objectService->setRegister(register: (string) $location['register']);
                     $objectService->setSchema(schema: (string) $location['schema']);
                 }
+            }
+
+            // Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
+            // federation path (PublicationService::used, wave-9 C-3) that was missing from
+            // this older per-catalog route. An anonymous caller must not be able to enumerate
+            // the incoming-relation graph of an unpublished object by guessing its UUID.
+            // Return 404 (not 401) to avoid leaking object existence.
+            $rootObject = $objectService->find(id: $id, _extend: []);
+            if ($rootObject === null) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+            }
+
+            if (is_array($rootObject) === true) {
+                $rootObjectArray = $rootObject;
+            } else {
+                $rootObjectArray = $rootObject->jsonSerialize();
+            }
+
+            if ($this->queryService->isAnonymous() === true
+                && $this->queryService->isObjectPublic($rootObjectArray) === false
+            ) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
             }
 
             $queryParams = $this->request->getParams();

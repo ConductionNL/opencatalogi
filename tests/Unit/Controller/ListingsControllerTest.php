@@ -10,6 +10,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,7 @@ class ListingsControllerTest extends TestCase
     private IAppManager|MockObject $appManager;
     private DirectoryService|MockObject $directoryService;
     private IL10N|MockObject $l10n;
+    private IUserSession|MockObject $userSession;
     private ListingsController $controller;
 
     protected function setUp(): void
@@ -38,9 +40,14 @@ class ListingsControllerTest extends TestCase
         $this->appManager       = $this->createMock(IAppManager::class);
         $this->directoryService = $this->createMock(DirectoryService::class);
         $this->l10n             = $this->createMock(IL10N::class);
+        $this->userSession      = $this->createMock(IUserSession::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text) => $text);
+
+        // Default: user is logged in. Tests that verify the 401 path override this.
+        $mockUser = $this->createMock(\OCP\IUser::class);
+        $this->userSession->method('getUser')->willReturn($mockUser);
 
         $this->controller = new ListingsController(
             'opencatalogi',
@@ -49,7 +56,8 @@ class ListingsControllerTest extends TestCase
             $this->container,
             $this->appManager,
             $this->directoryService,
-            $this->l10n
+            $this->l10n,
+            $this->userSession
         );
     }
 

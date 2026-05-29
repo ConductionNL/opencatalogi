@@ -315,6 +315,12 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // WF2 guard (wave-12): find() must return a non-null, public object so the
+        // published-predicate check passes and control reaches getObjectUses().
+        $rootObject = ['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']];
+        $mockObjService->method('find')
+            ->willReturn($rootObject);
+
         $mockObjService->method('getObjectUses')
             ->willReturn(['results' => [], 'total' => 0]);
 
@@ -329,9 +335,50 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
+    public function testUsesReturnsNotFoundWhenObjectIsNull(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns null → guard returns 404 before reaching getObjectUses().
+        $mockObjService->method('find')->willReturn(null);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->controller->uses('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    public function testUsesReturnsNotFoundWhenAnonymousAndUnpublished(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns an unpublished object; caller is anonymous.
+        $rootObject = ['id' => 'pub-123', '@self' => []];
+        $mockObjService->method('find')->willReturn($rootObject);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(true);
+        $this->queryService->method('isObjectPublic')->willReturn(false);
+        $controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $controller->uses('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
     public function testUsesReturns500OnException(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // find() returns a valid object so the guard passes; getObjectUses throws.
+        $rootObject = ['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']];
+        $mockObjService->method('find')->willReturn($rootObject);
 
         $mockObjService->method('getObjectUses')
             ->willThrowException(new \Exception('Error'));
@@ -349,6 +396,12 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // WF2 guard (wave-12): find() must return a non-null, public object so the
+        // published-predicate check passes and control reaches getObjectUsedBy().
+        $rootObject = ['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']];
+        $mockObjService->method('find')
+            ->willReturn($rootObject);
+
         $mockObjService->method('getObjectUsedBy')
             ->willReturn(['results' => [], 'total' => 0]);
 
@@ -363,9 +416,50 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
+    public function testUsedReturnsNotFoundWhenObjectIsNull(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns null → guard returns 404 before reaching getObjectUsedBy().
+        $mockObjService->method('find')->willReturn(null);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->controller->used('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    public function testUsedReturnsNotFoundWhenAnonymousAndUnpublished(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns an unpublished object; caller is anonymous.
+        $rootObject = ['id' => 'pub-123', '@self' => []];
+        $mockObjService->method('find')->willReturn($rootObject);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(true);
+        $this->queryService->method('isObjectPublic')->willReturn(false);
+        $controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $controller->used('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
     public function testUsedReturns500OnException(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // find() returns a valid object so the guard passes; getObjectUsedBy throws.
+        $rootObject = ['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']];
+        $mockObjService->method('find')->willReturn($rootObject);
 
         $mockObjService->method('getObjectUsedBy')
             ->willThrowException(new \Exception('Error'));

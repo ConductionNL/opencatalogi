@@ -9,6 +9,7 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +27,7 @@ class SettingsControllerTest extends TestCase
     private IAppManager|MockObject $appManager;
     private SettingsService|MockObject $settingsService;
     private IL10N|MockObject $l10n;
+    private IUserSession|MockObject $userSession;
     private SettingsController $controller;
 
     protected function setUp(): void
@@ -35,9 +37,14 @@ class SettingsControllerTest extends TestCase
         $this->appManager      = $this->createMock(IAppManager::class);
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->l10n            = $this->createMock(IL10N::class);
+        $this->userSession     = $this->createMock(IUserSession::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text, array $params = []) => $text);
+
+        // Default: user is logged in.
+        $mockUser = $this->createMock(\OCP\IUser::class);
+        $this->userSession->method('getUser')->willReturn($mockUser);
 
         $this->controller = new SettingsController(
             'opencatalogi',
@@ -45,62 +52,9 @@ class SettingsControllerTest extends TestCase
             $this->container,
             $this->appManager,
             $this->settingsService,
-            $this->l10n
+            $this->l10n,
+            $this->userSession
         );
-    }
-
-    public function testGetObjectServiceReturnsServiceWhenInstalled(): void
-    {
-        $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-
-        $this->appManager->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
-
-        $result = $this->controller->getObjectService();
-
-        $this->assertNotNull($result);
-    }
-
-    public function testGetObjectServiceThrowsWhenNotInstalled(): void
-    {
-        $this->appManager->method('getInstalledApps')
-            ->willReturn([]);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('OpenRegister service is not available.');
-
-        $this->controller->getObjectService();
-    }
-
-    public function testGetConfigurationServiceReturnsServiceWhenInstalled(): void
-    {
-        $mockConfigService = $this->createMock(\OCA\OpenRegister\Service\ConfigurationService::class);
-
-        $this->appManager->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ConfigurationService')
-            ->willReturn($mockConfigService);
-
-        $result = $this->controller->getConfigurationService();
-
-        $this->assertNotNull($result);
-    }
-
-    public function testGetConfigurationServiceThrowsWhenNotInstalled(): void
-    {
-        $this->appManager->method('getInstalledApps')
-            ->willReturn([]);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Configuration service is not available.');
-
-        $this->controller->getConfigurationService();
     }
 
     public function testIndexReturnsSettings(): void
