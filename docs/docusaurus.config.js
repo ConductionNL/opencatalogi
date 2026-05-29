@@ -54,7 +54,7 @@ const config = createConfig({
              plus the standard node_modules bucket. */
           exclude: ['**/node_modules/**', 'src/**'],
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/ConductionNL/opencatalogi/tree/main/docs/',
+          editUrl: 'https://codeberg.org/Conduction/opencatalogi/src/branch/main/docs/',
         },
         blog: false,
         theme: {
@@ -102,8 +102,8 @@ const config = createConfig({
         position: 'right',
       },
       {
-        href: 'https://github.com/ConductionNL/opencatalogi',
-        label: 'GitHub',
+        href: 'https://codeberg.org/Conduction/opencatalogi',
+        label: 'Codeberg',
         position: 'right',
       },
       { type: 'localeDropdown', position: 'right' },
