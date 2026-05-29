@@ -6,7 +6,7 @@ name: Docs capture
 # hydra#279 stap 14.
 #
 # Uses the centralized journeydoc-capture job from
-# ConductionNL/.github/.github/workflows/quality.yml. All other quality
+# Conduction/.github/.github/workflows/quality.yml. All other quality
 # gates are disabled — this run is dedicated to screenshot refresh,
 # not regression testing.
 #
@@ -21,7 +21,7 @@ on:
 
 jobs:
   capture:
-    uses: ConductionNL/.github/.github/workflows/quality.yml@main
+    uses: Conduction/.github/.github/workflows/quality.yml@main
     with:
       app-name: opencatalogi
       php-version: "8.3"
