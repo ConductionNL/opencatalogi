@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ConductionNL/opencatalogi/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/opencatalogi" alt="Latest release"></a>
-  <a href="https://github.com/ConductionNL/opencatalogi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
-  <a href="https://github.com/ConductionNL/opencatalogi/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/opencatalogi/code-quality.yml?label=quality" alt="Code quality"></a>
+  <a href="https://codeberg.org/Conduction/opencatalogi/releases"><img src="https://img.shields.io/gitea/v/release/Conduction/opencatalogi?gitea_url=https%3A%2F%2Fcodeberg.org" alt="Latest release"></a>
+  <a href="https://codeberg.org/Conduction/opencatalogi/src/branch/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
+  <a href="https://ci.codeberg.org/repos/Conduction/opencatalogi"><img src="https://ci.codeberg.org/api/badges/Conduction/opencatalogi/status.svg" alt="Code quality"></a>
   <a href="https://documentatie.opencatalogi.nl"><img src="https://img.shields.io/badge/docs-opencatalogi.nl-green" alt="Documentation"></a>
 </p>
 
@@ -21,7 +21,7 @@ OpenCatalogi turns Nextcloud into a publication platform for open data and gover
 
 It connects to a federated directory of other OpenCatalogi instances, enabling cross-organization search and discovery without centralized infrastructure. A public-facing frontend can be deployed separately for citizen access, while administrators manage everything from within Nextcloud.
 
-> **Requires:** [OpenRegister](https://github.com/ConductionNL/openregister) — all data is stored as OpenRegister objects (no own database tables).
+> **Requires:** [OpenRegister](https://codeberg.org/Conduction/openregister) — all data is stored as OpenRegister objects (no own database tables).
 
 ## Screenshots
 
@@ -136,7 +136,7 @@ opencatalogi/
 | Nextcloud | 28 -- 33 |
 | PHP | 8.1+ |
 | PostgreSQL / MySQL 8+ / SQLite | — |
-| [OpenRegister](https://github.com/ConductionNL/openregister) | latest |
+| [OpenRegister](https://codeberg.org/Conduction/openregister) | latest |
 | System Cron | required for federation sync |
 
 ## Installation
@@ -153,7 +153,7 @@ opencatalogi/
 
 ```bash
 cd /var/www/html/custom_apps
-git clone https://github.com/ConductionNL/opencatalogi.git
+git clone https://codeberg.org/Conduction/opencatalogi.git
 cd opencatalogi
 composer install --no-dev
 npm install
@@ -240,11 +240,11 @@ Full documentation is available at **[documentatie.opencatalogi.nl](https://docu
 
 ## Related Apps
 
-- **[OpenRegister](https://github.com/ConductionNL/openregister)** -- Object storage layer (required dependency)
-- **[OpenConnector](https://github.com/ConductionNL/openconnector)** -- API gateway for importing data from external sources
-- **[NL Design](https://github.com/ConductionNL/nldesign)** -- Design token theming for Dutch government styling
-- **[DocuDesk](https://github.com/ConductionNL/docudesk)** -- Document generation from publication data
-- **[Softwarecatalog](https://github.com/ConductionNL/softwarecatalog)** -- GEMMA software catalog built on OpenCatalogi
+- **[OpenRegister](https://codeberg.org/Conduction/openregister)** -- Object storage layer (required dependency)
+- **[OpenConnector](https://codeberg.org/Conduction/openconnector)** -- API gateway for importing data from external sources
+- **[NL Design](https://codeberg.org/Conduction/nldesign)** -- Design token theming for Dutch government styling
+- **[DocuDesk](https://codeberg.org/Conduction/docudesk)** -- Document generation from publication data
+- **[Softwarecatalog](https://codeberg.org/Conduction/softwarecatalog)** -- GEMMA software catalog built on OpenCatalogi
 
 ## License
 
