@@ -8,14 +8,9 @@
   "x-openregister": {
     "type": "application",
     "app": "opencatalogi",
-    "sourceType": "github",
-    "sourceUrl": "https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/apps-extra/opencatalogi/lib/Settings/publication_register_magic.json",
+    "sourceType": "url",
+    "sourceUrl": "https://codeberg.org/Conduction/opencatalogi/raw/branch/main/lib/Settings/publication_register.json",
     "openregister": "^v0.2.10",
-    "github": {
-      "repo": "ConductionNL/opencatalogi",
-      "branch": "master",
-      "path": "apps-extra/opencatalogi/lib/Settings/publication_register_magic.json"
-    },
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage"
   },
   "components": {
