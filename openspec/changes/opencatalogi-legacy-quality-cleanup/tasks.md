@@ -55,7 +55,7 @@ cluster.
       all baselines are empty, delete `phpmd.baseline.xml` +
       `phpstan-baseline.neon` (if they were created) and drop the
       legacy-debt section from `phpcs.xml`.
-- [ ] 12. Add a smoke-test cron that runs `composer check:strict`
+- [x] 12. Add a smoke-test cron that runs `composer check:strict`
       weekly on `development`.
 
 ## Phase 6 — Documentation
