@@ -34,7 +34,7 @@
 			</NcAppNavigationItem>
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Documentation')"
-				@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers', '_blank')">
+				@click="openLink('https://opencatalogi.conduction.nl/', '_blank')">
 				<template #icon>
 					<BookOpenVariantOutline :size="20" />
 				</template>
