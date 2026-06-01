@@ -8,7 +8,7 @@
 
 ## Phase 1 — Adopt `RegisterResolverService` across all controllers
 
-- [ ] 1. Spec the five canonical contexts (`publications`, `listings`,
+- [x] 1. Spec the five canonical contexts (`publications`, `listings`,
       `catalogi`, `themes`, `pages`) + the three legacy `getValueString`
       contexts (`glossary`, `menus`, `organisations`); require every
       controller call site (per `.claude/audit-2026-05-03/04-hardcoded.md`)
@@ -21,7 +21,7 @@
 
 ## Phase 2 — Migrate object store to `createObjectStore()`
 
-- [ ] 2. Spec deletion of `src/store/modules/object.js` (≈2 449 lines)
+- [x] 2. Spec deletion of `src/store/modules/object.js` (≈2 449 lines)
       and replacement with `createObjectStore('object', { plugins: [
       filesPlugin, auditTrailsPlugin, relationsPlugin, searchPlugin ] })`
       from `@conduction/nextcloud-vue`; forbid bespoke Pinia modules per
@@ -34,7 +34,7 @@
 
 ## Phase 3 — Rewrite `file-management`; consume OR file APIs
 
-- [ ] 3. Rewrite `openspec/specs/file-management/spec.md`: mark legacy
+- [x] 3. Rewrite `openspec/specs/file-management/spec.md`: mark legacy
       requirements REMOVED; require consumption of OR File Attachments via
       `x-openregister-file` schema annotations + `IFileService` (or its
       post-resolver-service equivalent); sharing goes through
@@ -46,7 +46,7 @@
 
 ## Phase 4 — i18n editing UI for translatable content
 
-- [ ] 4. List the five controllers consuming `TranslationHandler`
+- [x] 4. List the five controllers consuming `TranslationHandler`
       (`Pages`, `Menus`, `Publications`, `Themes`, `Glossary`); spec
       `Accept-Language` + `?_lang=` negotiation order (query > header >
       user pref > app default) per `i18n-api-language-negotiation`;
@@ -61,7 +61,7 @@
 
 ## Phase 5 — Adopt nextcloud-vue multi-tenancy primitives
 
-- [ ] 5. Spec `App.vue::setup()` calling `useTenantContext()` once
+- [x] 5. Spec `App.vue::setup()` calling `useTenantContext()` once
       `multi-tenancy-context` archives; every `createObjectStore()` MUST
       receive `organisationUuidGetter`; `<CnTenantBadge>` lives top-bar
       left of the user menu on every route; switching tenant MUST reset
@@ -74,7 +74,7 @@
 
 ## Phase 6 — Adopt the app manifest convention (Tier 2-3)
 
-- [ ] 6. Spec `src/manifest.json` per ADR-024 + `adopt-app-manifest`;
+- [x] 6. Spec `src/manifest.json` per ADR-024 + `adopt-app-manifest`;
       tier opencatalogi as Tier 2-3 (custom catalog/publication/CMS views
       = `type: "custom"`, all admin CRUD = `type: "list" | "detail"`);
       catalogue every `src/router/index.js` route in a table tagged
@@ -88,7 +88,7 @@
 
 ## Phase 7 — Spec rewrites: `search`, `admin-settings`, `dashboard`, `download-service`
 
-- [ ] 7. Rewrite the four specs per `.claude/audit-2026-05-03/02-spec-rewrite.md`:
+- [x] 7. Rewrite the four specs per `.claude/audit-2026-05-03/02-spec-rewrite.md`:
       `search` cites OR `zoeken-filteren` (federated = thin
       orchestrator, no local query parsing/faceting/ranking);
       `admin-settings` cites OR `IAppConfig` conventions (key naming,
@@ -101,7 +101,7 @@
 
 ## Phase 8 — Hardcoded magic-number cleanup
 
-- [ ] 8. Promote `BroadcastService::MAX_RETRIES = 3` +
+- [x] 8. Promote `BroadcastService::MAX_RETRIES = 3` +
       `REQUEST_TIMEOUT = 30` to `broadcast_max_retries` /
       `broadcast_request_timeout` (defaults unchanged); promote
       `SitemapService::MAX_PER_PAGE = 1000` to `sitemap_max_per_page`;
@@ -115,17 +115,17 @@
 
 ## Cross-cutting acceptance criteria
 
-- [ ] X.1 Every requirement in
+- [x] X.1 Every requirement in
       `specs/opencatalogi-adopt-or-abstractions/spec.md` traces back to an
       audit file or an upstream openspec change slug — no floating
       requirements. Dependency graph captured in `design.md`; no phase
       ships before its upstream change is archived.
-- [ ] X.2 The `breaking-changes` section of each affected spec lists the
+- [x] X.2 The `breaking-changes` section of each affected spec lists the
       API surface that becomes a hard error (e.g., empty-string
       `getValueString` fallback for a misconfigured register now throws
       503). Line-count reduction targets (≈2 250 lines for Phase 2) live
       as KPIs in the implementation change, not in this spec change.
-- [ ] X.3 Each affected spec under `openspec/specs/` updates in lockstep
+- [x] X.3 Each affected spec under `openspec/specs/` updates in lockstep
       with its phase landing — partial updates (e.g., `admin-settings`
       rewritten but `download-service` still bespoke) are explicitly
       forbidden by cross-cutting validation.
