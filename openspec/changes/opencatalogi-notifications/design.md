@@ -1,36 +1,82 @@
-# Design — opencatalogi-notifications
-
+---
 status: pr-created
+kind: config
+---
 
-## Context
+# Design: OpenCatalogi schema-declared notifications
 
-OpenCatalogi publishes catalogues and federates listings from remote sources.
-Publication officers need timely feedback when a catalogue reaches stable status
-(publication milestone) and when a federated listing sync fails (operational health).
+## Summary
 
-The OpenRegister notification engine consumes `x-openregister-notifications` schema
-extensions and dispatches `nc-notification` on the configured trigger. This change
-adds those declarations to the `catalog` and `listing` schemas.
+Adds `x-openregister-notifications` to the `catalog` and `listing` domain schemas in
+`lib/Settings/publication_register.json`. No PHP, Vue, route, or migration changes.
+
+Also fixed a pre-existing duplicate `configuration` key on both schemas: the previous
+`x-openregister-lifecycle` block was erroneously nested inside a first `configuration`
+object (shadowed by the second `configuration: {autoPublish: false}` block). Moved
+lifecycle to the schema root level, consistent with `x-openregister-notifications`.
+
+## Implementation
+
+All changes land in a single file: `lib/Settings/publication_register.json`.
+
+### `catalog` schema — `catalog-stable` rule
+
+Fires when a `catalog` object transitions through the `stable` lifecycle action.
+Recipients: manage-ACL holders of the specific catalog object (`object-acl` kind).
+
+```jsonc
+"x-openregister-notifications": {
+  "catalog-stable": {
+    "trigger": { "type": "transition", "action": "stable" },
+    "enabled": true,
+    "channels": ["nc-notification"],
+    "recipients": [ { "kind": "object-acl", "permission": "manage" } ],
+    "subject": {
+      "nl": "Catalogus {{title}} is gepubliceerd (stabiel)",
+      "en": "Catalogue {{title}} is published (stable)"
+    }
+  }
+}
+```
+
+### `listing` schema — `listing-sync-failed` rule
+
+Fires when a `listing` object transitions through the `obsolete` lifecycle action
+(the state a failed federation sync drives a listing into).
+Recipients: the `publication-officers` Nextcloud group.
+
+```jsonc
+"x-openregister-notifications": {
+  "listing-sync-failed": {
+    "trigger": { "type": "transition", "action": "obsolete" },
+    "enabled": true,
+    "channels": ["nc-notification"],
+    "recipients": [ { "kind": "groups", "groups": ["publication-officers"] } ],
+    "subject": {
+      "nl": "Synchronisatie van listing {{title}} mislukt: {{statusMessage}}",
+      "en": "Sync of listing {{title}} failed: {{statusMessage}}"
+    }
+  }
+}
+```
 
 ## Declarative-vs-imperative decision
 
-This is a pure `kind: config` change per ADR-031. Both requirements are expressible
-as `x-openregister-notifications` schema metadata — no PHP service code is needed.
+This change is purely declarative: the OpenRegister notification engine
+(`notification-schema-rules-and-userconfig-prefs`, archived 2026-05-26) reads
+`x-openregister-notifications` at runtime and dispatches `nc-notification` on matching
+lifecycle transitions. No per-app notification service code is required.
 
-## Changes
+## Caveats
 
-- `lib/Settings/publication_register.json` — added `x-openregister-notifications`
-  to `catalog` (catalog-stable rule) and `listing` (listing-sync-failed rule)
-- Also fixed a pre-existing duplicate `configuration` key on both schemas:
-  `x-openregister-lifecycle` was inside a redundant first `configuration` block
-  (shadowed by the second `configuration: {autoPublish: false}` block). Moved
-  lifecycle to the schema root level, consistent with `x-openregister-notifications`.
+- **Transition wiring (declared-but-dormant):** `DirectoryService.php` currently writes
+  `listing.status` directly (not through named OR transitions). The notification rules
+  are declared and structurally correct; they will fire once the sync/publish flows invoke
+  named lifecycle transitions (`stable`, `obsolete`) rather than setting the field directly.
+  The `x-openregister-lifecycle` block is already present on both schemas and names the
+  required transition actions.
 
-## Caveats carried from spec
-
-- The `publication-officers` group name must exist in the target deployment.
-  Adjust in `lib/Settings/publication_register.json` if the operator uses a
-  different group name.
-- The `transition` trigger fires only when the sync/publish flow drives status
-  through named OpenRegister transition actions (`stable`, `obsolete`). If the
-  code writes `status` directly, these rules are declared-but-dormant.
+- **Group name:** `publication-officers` is the assumed group name. Operators must ensure
+  this group exists in the deployment, or adjust the name in the register config before
+  going live. CMS-config schemas (`page`, `menu`, `theme`, `glossary`, `organization`) and
+  `publication` are intentionally excluded — no lifecycle or owner-uid field to target.
