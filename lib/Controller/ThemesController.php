@@ -168,7 +168,6 @@ class ThemesController extends Controller
      *
      * @return Response The CORS response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

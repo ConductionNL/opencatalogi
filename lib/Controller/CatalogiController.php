@@ -175,7 +175,6 @@ class CatalogiController extends Controller
      *
      * @return Response The CORS response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
