@@ -22,7 +22,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				</template>
 				<NcActionButton close-after-click
 					:title="t('opencatalogi', 'View the documentation about publications')"
-					@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/publicaties', '_blank')">
+					@click="openLink('https://opencatalogi.conduction.nl/docs/Users/publicaties/', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
