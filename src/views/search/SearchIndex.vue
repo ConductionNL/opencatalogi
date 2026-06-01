@@ -71,7 +71,7 @@ import { objectStore } from '../../store/store.js'
 						</NcActionButton>
 						<NcActionButton
 							:title="t('opencatalogi', 'View documentation about search')"
-							@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers/zoeken', '_blank')">
+							@click="openLink('https://opencatalogi.conduction.nl/docs/Users/zoeken/', '_blank')">
 							<template #icon>
 								<HelpCircleOutline :size="20" />
 							</template>
