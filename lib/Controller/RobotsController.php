@@ -40,7 +40,8 @@ use RuntimeException;
 /**
  * Controller for generating robots.txt content.
  *
- * @psalm-suppress UnusedClass
+ * @psalm-suppress                                 UnusedClass
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class RobotsController extends Controller
 {
@@ -144,7 +145,7 @@ class RobotsController extends Controller
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *

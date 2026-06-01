@@ -62,3 +62,5 @@ parameters:
         - '#Call to an undefined method OCP\\IRequest::setParameter\(\)#'
         - '#Call to an undefined method OCP\\Mail\\IMessage::attachFile\(\)#'
         - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
+        # OCP\Files\Node::putContent() exists on File but not on the Node interface stub
+        - '#Call to an undefined method OCP\\Files\\Node::putContent\(\)#'

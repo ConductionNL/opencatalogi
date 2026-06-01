@@ -353,6 +353,9 @@ class SitemapService
      *
      * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
      *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
      */
     private function isValidSitemapRequest(

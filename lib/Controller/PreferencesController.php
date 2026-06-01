@@ -118,21 +118,20 @@ class PreferencesController extends Controller
             return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
         }
 
-        $stored = null;
+        $stored = $value;
+        $this->config->setUserValue(
+            userId: $user->getUID(),
+            appName: Application::APP_ID,
+            key: 'pref_'.$safeKey,
+            value: $value
+        );
         if ($value === '') {
             $this->config->deleteUserValue(
                 userId: $user->getUID(),
                 appName: Application::APP_ID,
                 key: 'pref_'.$safeKey
             );
-        } else {
-            $this->config->setUserValue(
-                userId: $user->getUID(),
-                appName: Application::APP_ID,
-                key: 'pref_'.$safeKey,
-                value: $value
-            );
-            $stored = $value;
+            $stored = null;
         }
 
         return new JSONResponse(data: ['value' => $stored]);

@@ -86,6 +86,8 @@ class GlossaryController extends Controller
      * @param string                  $corsMethods        Allowed CORS methods
      * @param string                  $corsAllowedHeaders Allowed CORS headers
      * @param integer                 $corsMaxAge         CORS max age
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         $appName,
@@ -322,10 +324,9 @@ class GlossaryController extends Controller
         $glossaryTerm = $result['results'][0];
 
         // Enforce published predicate for anonymous callers on single-item lookup.
+        $termArray = $glossaryTerm->jsonSerialize();
         if (is_array($glossaryTerm) === true) {
             $termArray = $glossaryTerm;
-        } else {
-            $termArray = $glossaryTerm->jsonSerialize();
         }
 
         if ($this->queryService->isAnonymous() === true

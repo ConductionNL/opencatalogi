@@ -36,6 +36,7 @@ use Psr\Container\ContainerInterface;
  * the size of PublicationsController.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class PublicationQueryService
 {
@@ -112,11 +113,11 @@ class PublicationQueryService
     public function isObjectPublic(array | object $object): bool
     {
         if (is_array($object) === false) {
-            if (method_exists($object, 'jsonSerialize') === true) {
-                $object = $object->jsonSerialize();
-            } else {
+            if (method_exists($object, 'jsonSerialize') === false) {
                 return false;
             }
+
+            $object = $object->jsonSerialize();
         }
 
         $self = ($object['@self'] ?? []);
@@ -142,19 +143,39 @@ class PublicationQueryService
         }
 
         // If depublished is set, it must be in the future to still be public.
-        if (empty($depublished) === false) {
-            try {
-                if (new DateTime((string) $depublished) <= $now) {
-                    return false;
-                }
-            } catch (\Exception $e) {
-                return false;
-            }
+        if ($this->isDepublished($depublished, $now) === true) {
+            return false;
         }
 
         return true;
 
     }//end isObjectPublic()
+
+    /**
+     * Determine whether a depublished timestamp indicates the object is no longer public.
+     *
+     * Returns true (i.e. the object IS depublished) when $depublished is set and the
+     * depublication date is not in the future. Returns false when unset or in the future.
+     * Extracted from isObjectPublic() to reduce cyclomatic complexity.
+     *
+     * @param mixed    $depublished The depublished value from @self (string, null, or empty).
+     * @param DateTime $now         The current date/time for comparison.
+     *
+     * @return bool True when the object has been depublished (i.e. should be hidden).
+     */
+    private function isDepublished($depublished, DateTime $now): bool
+    {
+        if (empty($depublished) === true) {
+            return false;
+        }
+
+        try {
+            return new DateTime((string) $depublished) <= $now;
+        } catch (\Exception $e) {
+            return false;
+        }
+
+    }//end isDepublished()
 
     /**
      * Filter a result set down to publicly-visible objects for anonymous callers.
@@ -183,11 +204,12 @@ class PublicationQueryService
         $removed  = 0;
         $filtered = [];
         foreach ($result['results'] as $item) {
-            if ($this->isObjectPublic($item) === true) {
-                $filtered[] = $item;
-            } else {
+            if ($this->isObjectPublic($item) === false) {
                 $removed++;
+                continue;
             }
+
+            $filtered[] = $item;
         }
 
         $result['results'] = array_values($filtered);
@@ -221,6 +243,8 @@ class PublicationQueryService
      * @param array<int|string>|null $allowedSchemas   Schema IDs the search may touch.
      *
      * @return array{register: int, schema: int}|null The register/schema IDs, or null.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
      * @spec exclude DB-scan helper that searches a constrained subset of magic mapper
      *       tables to locate an object's register/schema IDs; pure framework plumbing.
@@ -594,11 +618,12 @@ class PublicationQueryService
         if (array_is_list($value) === true) {
             $stripped = [];
             foreach ($value as $item) {
-                if (is_array($item) === true) {
-                    $stripped[] = $this->stripEmptyValues(data: $item);
-                } else {
+                if (is_array($item) === false) {
                     $stripped[] = $item;
+                    continue;
                 }
+
+                $stripped[] = $this->stripEmptyValues(data: $item);
             }
 
             if (empty($stripped) === false) {

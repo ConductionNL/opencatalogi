@@ -87,6 +87,8 @@ class PagesController extends Controller
      * @param string                  $corsMethods        Allowed CORS methods
      * @param string                  $corsAllowedHeaders Allowed CORS headers
      * @param integer                 $corsMaxAge         CORS max age
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         $appName,
@@ -292,23 +294,20 @@ class PagesController extends Controller
         // Rbac=true enforces schema authorization; multi=false for public page access.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
 
-        if (empty($result['results']) === true) {
-            $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
-        } else {
+        $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
+        if (empty($result['results']) === false) {
             // Return the first matching page; enforce published predicate for anonymous callers.
-            $page = $result['results'][0];
+            $page      = $result['results'][0];
+            $pageArray = $page->jsonSerialize();
             if (is_array($page) === true) {
                 $pageArray = $page;
-            } else {
-                $pageArray = $page->jsonSerialize();
             }
 
+            $response = new JSONResponse($page);
             if ($this->queryService->isAnonymous() === true
                 && $this->queryService->isObjectPublic($pageArray) === false
             ) {
                 $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
-            } else {
-                $response = new JSONResponse($page);
             }
         }
 

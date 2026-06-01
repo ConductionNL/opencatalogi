@@ -119,8 +119,8 @@ class MetricsController extends Controller
         $lines[]   = '# TYPE opencatalogi_publications_total gauge';
         $pubCounts = $this->getPublicationCounts();
         foreach ($pubCounts as $row) {
-            $status  = $this->sanitizeLabel($row['status'] ?? 'unknown');
-            $catalog = $this->sanitizeLabel($row['catalog'] ?? 'unknown');
+            $status  = $this->sanitizeLabel($row['status']);
+            $catalog = $this->sanitizeLabel($row['catalog']);
             $count   = (int) $row['cnt'];
             $lines[] = 'opencatalogi_publications_total{status="'.$status.'",catalog="'.$catalog.'"} '.$count;
         }
@@ -139,7 +139,7 @@ class MetricsController extends Controller
         $lines[]       = '# TYPE opencatalogi_listings_total gauge';
         $listingCounts = $this->getListingCounts();
         foreach ($listingCounts as $row) {
-            $status  = $this->sanitizeLabel($row['status'] ?? 'unknown');
+            $status  = $this->sanitizeLabel($row['status']);
             $count   = (int) $row['cnt'];
             $lines[] = 'opencatalogi_listings_total{status="'.$status.'"} '.$count;
         }

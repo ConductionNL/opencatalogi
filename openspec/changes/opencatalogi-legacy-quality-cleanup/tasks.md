@@ -2,13 +2,13 @@
 
 ## Phase 1 — Inventory + planning
 
-- [ ] 1. Capture baselines for all three gates: run `composer phpcs`
+- [x] 1. Capture baselines for all three gates: run `composer phpcs`
       (start: 8 exclude-patterns in `phpcs.xml`), `composer phpmd`
       (first-time unified-gate run — capture violation count +
       categories), and `composer phpstan` (first-time unified-gate run —
       capture error count + categories). Per-gate decision rule:
       fix-outright if <50 violations, otherwise capture a fresh baseline.
-- [ ] 2. Confirm CI runs `composer check:strict` on every PR before any
+- [x] 2. Confirm CI runs `composer check:strict` on every PR before any
       burn-down work begins.
 
 ## Phase 2 — PHPCS burn-down (per excluded file)
@@ -16,9 +16,9 @@
 Recipe: fix sniffs, remove the `phpcs.xml` `<exclude-pattern>`, verify
 gate stays green.
 
-- [ ] 3. Excluded files 1–4 — fix sniffs + drop excludes.
-- [ ] 4. Excluded files 5–8 — fix sniffs + drop excludes.
-- [ ] 5. Once all excludes are gone, drop the legacy-debt block from
+- [x] 3. Excluded files 1–4 — fix sniffs + drop excludes.
+- [x] 4. Excluded files 5–8 — fix sniffs + drop excludes.
+- [x] 5. Once all excludes are gone, drop the legacy-debt block from
       `phpcs.xml` entirely.
 
 ## Phase 3 — PHPMD burn-down
@@ -26,15 +26,15 @@ gate stays green.
 Contingent on Phase 1 output. If a baseline was captured, work categories
 in roughly volume-descending order.
 
-- [ ] 6. Flatten branching: `ElseExpression` → early-return;
+- [x] 6. Flatten branching: `ElseExpression` → early-return;
       `CyclomaticComplexity` + `NPathComplexity` → extract named
       helpers; `ExcessiveMethodLength` → extract helpers.
-- [ ] 7. Style + DI fixes: `MissingImport` → add `use` statements (drop
+- [x] 7. Style + DI fixes: `MissingImport` → add `use` statements (drop
       inline FQCNs); `StaticAccess` → replace with DI services;
       `LongVariable` / `ShortVariable` → rename to 4-20 chars;
       `UndefinedVariable` / `UnusedFormalParameter` → fix or annotate
       with `@SuppressWarnings`.
-- [ ] 8. Once the baseline reaches 0 lines, delete `phpmd.baseline.xml`
+- [x] 8. Once the baseline reaches 0 lines, delete `phpmd.baseline.xml`
       and drop `--baseline-file` from composer.json's phpmd script.
 
 ## Phase 4 — PHPStan burn-down
@@ -42,7 +42,7 @@ in roughly volume-descending order.
 Contingent on Phase 1 output. If a baseline was captured, work per
 cluster.
 
-- [ ] 9. Inventory `phpstan-baseline.neon` by error type + file; fix
+- [x] 9. Inventory `phpstan-baseline.neon` by error type + file; fix
       the common-pattern clusters: missing return-type / param-type
       declarations, mixed types (specify generic / union),
       possibly-null dereferences (add null guards).
@@ -51,7 +51,7 @@ cluster.
 
 ## Phase 5 — CI integration
 
-- [ ] 11. Verify `composer check:strict` runs in CI on every PR; once
+- [x] 11. Verify `composer check:strict` runs in CI on every PR; once
       all baselines are empty, delete `phpmd.baseline.xml` +
       `phpstan-baseline.neon` (if they were created) and drop the
       legacy-debt section from `phpcs.xml`.
@@ -60,7 +60,7 @@ cluster.
 
 ## Phase 6 — Documentation
 
-- [ ] 13. Update the README quality-gates section and note in
+- [x] 13. Update the README quality-gates section and note in
       `app-config.json` that legacy quality cleanup is done.
 - [ ] 14. Close the burn-down tracking issue once the last baseline
       line is removed.

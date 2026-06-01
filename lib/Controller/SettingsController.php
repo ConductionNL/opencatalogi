@@ -34,10 +34,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
-use OCP\App\IAppManager;
 use OCA\OpenCatalogi\Service\SettingsService;
-use RuntimeException;
 
 /**
  * Controller for handling settings-related operations in the OpenCatalogi.
@@ -47,19 +44,15 @@ class SettingsController extends Controller
     /**
      * SettingsController constructor.
      *
-     * @param string             $appName         The name of the app
-     * @param IRequest           $request         The request object
-     * @param ContainerInterface $container       The container.
-     * @param IAppManager        $appManager      The app manager.
-     * @param SettingsService    $settingsService The settings service.
-     * @param IL10N              $l10n            The localization service.
-     * @param IUserSession       $userSession     The user session.
+     * @param string          $appName         The name of the app
+     * @param IRequest        $request         The request object
+     * @param SettingsService $settingsService The settings service.
+     * @param IL10N           $l10n            The localization service.
+     * @param IUserSession    $userSession     The user session.
      */
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly IL10N $l10n,
         private readonly IUserSession $userSession,

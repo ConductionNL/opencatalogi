@@ -720,11 +720,11 @@ class DirectoryService
 
             // Set published from source if available, otherwise default to now for backwards compatibility.
             // Normalize to ISO 8601 format (date-time validation requires 'T' separator and timezone).
-            if (empty($listingData['published']) === true) {
-                $listingData['published'] = (new DateTime())->format('c');
-            } else {
+            $originalPublished        = ($listingData['published'] ?? null);
+            $listingData['published'] = (new DateTime())->format('c');
+            if (empty($originalPublished) === false) {
                 try {
-                    $listingData['published'] = (new DateTime($listingData['published']))->format('c');
+                    $listingData['published'] = (new DateTime((string) $originalPublished))->format('c');
                 } catch (\Exception $e) {
                     $listingData['published'] = (new DateTime())->format('c');
                 }
@@ -1433,6 +1433,9 @@ class DirectoryService
      *
      * @throws InvalidArgumentException When the URL or its resolved host is not safe.
      *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
      * @spec exclude SSRF input-validation guard for outbound directory fetches; security
      *       plumbing that hardens an existing fetch, no new domain behavior.
      */
@@ -1462,13 +1465,17 @@ class DirectoryService
         $ipsToCheck = [];
         if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
             $ipsToCheck[] = $host;
-        } else {
+        }
+
+        if (empty($ipsToCheck) === true) {
             // Strip IPv6 brackets if present.
             $lookupHost = trim($host, '[]');
             if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
                 $ipsToCheck[] = $lookupHost;
-            } else {
-                $records = @dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+            }
+
+            if (empty($ipsToCheck) === true) {
+                $records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
                 if ($records !== false) {
                     foreach ($records as $record) {
                         if (isset($record['ip']) === true) {
@@ -1495,8 +1502,8 @@ class DirectoryService
             throw new InvalidArgumentException('Directory URL host could not be resolved');
         }
 
-        foreach ($ipsToCheck as $ip) {
-            if ($this->isBlockedIp($ip) === true) {
+        foreach ($ipsToCheck as $ipAddress) {
+            if ($this->isBlockedIp($ipAddress) === true) {
                 throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
             }
         }
@@ -1510,15 +1517,15 @@ class DirectoryService
      * (169.254.0.0/16 incl. the 169.254.169.254 metadata endpoint, fe80::/10),
      * unique-local IPv6 (fc00::/7), and other reserved ranges via PHP's range flags.
      *
-     * @param string $ip The IP address to evaluate.
+     * @param string $ipAddress The IP address to evaluate.
      *
      * @return boolean True when the IP must not be contacted.
      *
      * @spec exclude SSRF range check supporting assertSafeOutboundUrl(); security plumbing.
      */
-    private function isBlockedIp(string $ip): bool
+    private function isBlockedIp(string $ipAddress): bool
     {
-        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
             // Unparseable address — treat as blocked to fail safe.
             return true;
         }
@@ -1526,7 +1533,7 @@ class DirectoryService
         // FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
         // private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
         $isPublic = filter_var(
-            value: $ip,
+            value: $ipAddress,
             filter: FILTER_VALIDATE_IP,
             options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
         );
@@ -1543,11 +1550,34 @@ class DirectoryService
             '0.0.0.0',
             '::',
         ];
-        if (in_array($ip, $blockedExact, true) === true) {
+        if (in_array($ipAddress, $blockedExact, true) === true) {
             return true;
         }
 
-        $lower = strtolower($ip);
+        if ($this->isBlockedIpv6Prefix($ipAddress) === true) {
+            return true;
+        }
+
+        return false;
+
+    }//end isBlockedIp()
+
+    /**
+     * Determine whether an IPv6 address matches a blocked prefix range.
+     *
+     * Checks fc00::/7 (unique-local) and fe80::/10 (link-local) by inspecting
+     * the lower-cased string prefix. Extracted from isBlockedIp() to reduce
+     * cyclomatic complexity.
+     *
+     * @param string $ipAddress The IP address string to check.
+     *
+     * @return boolean True when the address has a blocked IPv6 prefix.
+     *
+     * @spec exclude SSRF range-check helper extracted from isBlockedIp(); security plumbing.
+     */
+    private function isBlockedIpv6Prefix(string $ipAddress): bool
+    {
+        $lower = strtolower($ipAddress);
         // Match fc00::/7 (unique-local) and fe80::/10 (link-local) IPv6 prefixes.
         if (str_starts_with($lower, 'fc') === true || str_starts_with($lower, 'fd') === true
             || str_starts_with($lower, 'fe8') === true || str_starts_with($lower, 'fe9') === true
@@ -1558,7 +1588,7 @@ class DirectoryService
 
         return false;
 
-    }//end isBlockedIp()
+    }//end isBlockedIpv6Prefix()
 
     /**
      * Perform a GET request with SSRF-safe, per-hop-validated bounded redirects.
@@ -2084,10 +2114,9 @@ class DirectoryService
                 // NOT be re-broadcast — that would create infinite sync loops between instances.
                 $listings = [];
                 foreach ($listingResult as $object) {
+                    $listingData = $object;
                     if ($object instanceof \OCP\AppFramework\Db\Entity) {
                         $listingData = $object->jsonSerialize();
-                    } else {
-                        $listingData = $object;
                     }
 
                     $objectData = ($listingData['object'] ?? $listingData);

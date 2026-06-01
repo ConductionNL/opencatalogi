@@ -77,6 +77,8 @@ class CatalogiController extends Controller
      * @param string                  $corsMethods        Allowed CORS methods.
      * @param string                  $corsAllowedHeaders Allowed CORS headers.
      * @param integer                 $corsMaxAge         CORS max age.
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         $appName,

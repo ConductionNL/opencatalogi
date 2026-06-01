@@ -121,7 +121,7 @@ class CatalogiService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
@@ -157,7 +157,7 @@ class CatalogiService
     /**
      * Attempts to retrieve the OpenRegister FileService from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
@@ -235,6 +235,8 @@ class CatalogiService
      * @throws NotFoundExceptionInterface
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function computeRewrittenRegistersAndSchemas(array $object): array
     {
@@ -243,7 +245,7 @@ class CatalogiService
         if (isset($object['registers']) === true && is_array($object['registers']) === true) {
             $rewrittenRegisters = array_map(
                 function ($register) {
-                    if (preg_match("/^\d+$/", (string) $register) === 1) {
+                    if ($this->isNumericId($register) === true) {
                         return $register;
                     }
 
@@ -264,7 +266,7 @@ class CatalogiService
         if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
             $rewrittenSchemas = array_map(
                 function ($schema) {
-                    if (preg_match("/^\d+$/", (string) $schema) === 1) {
+                    if ($this->isNumericId($schema) === true) {
                         return $schema;
                     }
 
@@ -285,6 +287,24 @@ class CatalogiService
         return $modified;
 
     }//end computeRewrittenRegistersAndSchemas()
+
+    /**
+     * Determine whether a value is already a numeric integer ID (not a slug).
+     *
+     * Used inside computeRewrittenRegistersAndSchemas() to short-circuit
+     * mapper lookups when the value is already a resolved integer ID.
+     *
+     * @param mixed $value The register or schema value to test.
+     *
+     * @return bool True when the value consists entirely of digits.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     */
+    private function isNumericId($value): bool
+    {
+        return preg_match("/^\d+$/", (string) $value) === 1;
+
+    }//end isNumericId()
 
     /**
      * Rewrite slugs and uuids in register and schema fields of a Catalog to actual ids.
@@ -331,6 +351,8 @@ class CatalogiService
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
+     * @SuppressWarnings(PHPMD.StaticAccess)
+     *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
@@ -351,10 +373,10 @@ class CatalogiService
         // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
         // on the object's own 'slug' field.
         if ($catalogId !== null) {
+            $query['slug'] = (string) $catalogId;
             if (Uuid::isValid((string) $catalogId) === true) {
+                unset($query['slug']);
                 $query['@self']['uuid'] = $catalogId;
-            } else {
-                $query['slug'] = $catalogId;
             }
         }
 
@@ -786,10 +808,9 @@ class CatalogiService
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
                 // on array" under SOLR (#736), mirroring the dual-shape handling already
                 // present in CatalogiController/PublicationsController::index.
+                $objectArray = $object->jsonSerialize();
                 if (is_array($object) === true) {
                     $objectArray = $object;
-                } else {
-                    $objectArray = $object->jsonSerialize();
                 }
 
                 // @todo: a logged-in user should be able to see the full object.
