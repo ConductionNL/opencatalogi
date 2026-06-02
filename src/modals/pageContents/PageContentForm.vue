@@ -207,6 +207,7 @@ import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, N
 import { BTabs, BTab } from 'bootstrap-vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import _ from 'lodash'
+import DOMPurify from 'dompurify'
 import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -459,7 +460,7 @@ export default {
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						html: textContent,
-						text: textContent.replace(/<[^>]*>/g, ''), // Strip HTML tags for text field.
+						text: DOMPurify.sanitize(textContent, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
