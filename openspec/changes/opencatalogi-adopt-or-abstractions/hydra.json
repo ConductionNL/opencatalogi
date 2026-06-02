@@ -41,9 +41,9 @@
       "cycle": 2,
       "trigger": "build:queued",
       "started_at": "2026-06-01T20:54:27Z",
-      "ended_at": "2026-06-01T20:54:55Z",
-      "outcome": "needs-input",
-      "outcome_reason": "builder container exited non-zero",
+      "ended_at": "2026-06-02T14:56:40Z",
+      "outcome": "done",
+      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
       "pattern_tags": [],
       "stages": [
         {
