@@ -65,7 +65,7 @@
 					:count="kpis.conceptPublicationCount"
 					:count-label="t('opencatalogi', 'concept')"
 					:icon="FileDocumentEditOutline"
-					:variant="kpis.conceptPublicationCount > 0 ? 'warning' : 'default'"
+					variant="warning"
 					horizontal
 					:route="{ name: 'Catalogs' }" />
 			</template>
@@ -89,7 +89,7 @@
 					:count="kpis.depublishedPublicationCount"
 					:count-label="t('opencatalogi', 'depublished')"
 					:icon="AlertOutline"
-					:variant="kpis.depublishedPublicationCount > 0 ? 'error' : 'default'"
+					variant="error"
 					horizontal
 					:route="{ name: 'Catalogs' }" />
 			</template>
@@ -501,7 +501,7 @@ export default {
 					const data = await response.json()
 					this.activityChartData = {
 						labels: data.labels || [],
-						series: data.series || [],
+						series: (data.series || []).map((s) => ({ ...s, name: t('opencatalogi', s.name) })),
 					}
 				}
 			} catch (err) {

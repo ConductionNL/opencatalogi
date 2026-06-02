@@ -1,208 +1,207 @@
 ---
-status: reviewed
-retrofit_extensions:
-  - SET-015
-  - SET-016
-  - SET-017
+status: needs-rewrite
+or_dep: IAppConfig
+audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
 
 # Admin Settings
 
+> **NEEDS-REWRITE notice:** This spec was rewritten as part of
+> `opencatalogi-adopt-or-abstractions` (Phase 7 + Phase 8). The
+> duplicated IAppConfig patterns, the hardcoded version constant, and
+> the bespoke configuration validation described in the previous version
+> are replaced by citations of OR's `IAppConfig` conventions. The Phase
+> 8 magic-number keys are added to the inventory table. See the REMOVED
+> section and Breaking Changes.
+>
+> Upstream dependency: OR `IAppConfig` conventions.
+
 ## Purpose
 
-The admin settings module provides the configuration interface for OpenCatalogi. It handles the mapping between OpenCatalogi's content types (catalog, listing, organization, theme, page, menu, glossary) and their corresponding OpenRegister schemas and registers. It also manages the initial configuration import from `publication_register.json`, auto-configuration, version tracking, publishing options, and the Nextcloud admin settings page.
-## Requirements
-### Requirement: Retrieve current settings including object type configurations and available registers (SET-001)
-The system MUST retrieve current settings including object type configurations and available registers.
+The admin settings module provides the configuration interface for
+opencatalogi. After the Phase 7 rewrite, this spec cites OR's `IAppConfig`
+conventions as the authoritative source for key naming, validation,
+secret handling, and default values. opencatalogi MUST NOT redefine these
+conventions locally — the convention is owned upstream and consumed here.
 
-**Priority:** Must **Status:** Implemented
+Phase 8 promotes three hardcoded class constants to admin-config keys;
+those keys are added to the inventory table below.
 
-### Requirement: Update settings (schema/register mappings) via POST (SET-002)
-The system MUST allow updating settings (schema/register mappings) via POST.
+## ADDED Requirements
 
-**Priority:** Must **Status:** Implemented
+### Requirement: every admin-config key follows the OR `IAppConfig` naming convention (SET-OR-001)
 
-### Requirement: Load/import configuration from `publication_register.json` via OpenRegister's ConfigurationService (SET-003)
-The system MUST load/import configuration from `publication_register.json` via OpenRegister's ConfigurationService.
+Every configuration key opencatalogi reads or writes via `IAppConfig` MUST
+follow OR's snake_case naming convention with a namespace prefix where
+required. The inventory table in this spec is the single canonical list
+operators read.
 
-**Priority:** Must **Status:** Implemented
+When a key is added, renamed, or removed, the inventory table MUST be
+updated in the same spec change. A PR that adds a config key without an
+inventory update MUST be rejected.
 
-### Requirement: Auto-configure registers and schemas by matching slugs (SET-004)
-The system SHOULD auto-configure registers and schemas by matching slugs.
+#### Scenario: reviewer audits the admin-settings spec
 
-**Priority:** Should **Status:** Implemented
+- **WHEN** a reviewer audits this spec,
+- **THEN** they find every key opencatalogi reads or writes via
+  `IAppConfig`, with default value, type, validation rule, and a sentence
+  describing effect,
+- **AND** there are no keys in code that are absent from this table.
 
-### Requirement: Check and install/update OpenRegister dependency (minimum version 0.1.7) (SET-005)
-The system SHOULD check and install/update the OpenRegister dependency (minimum version 0.1.7).
+### Requirement: secrets are stored per OR conventions (SET-OR-002)
 
-**Priority:** Should **Status:** Implemented
+Any configuration key that carries a secret (token, credential, password)
+MUST be marked sensitive per OR's `IAppConfig` convention so that it does
+not leak through generic settings dumps.
 
-### Requirement: Track configuration version and compare with app version for upgrade detection (SET-006)
-The system MUST track the configuration version and compare it with the app version for upgrade detection.
+#### Scenario: a secret key is stored
 
-**Priority:** Must **Status:** Implemented
+- **GIVEN** a setting carries a secret value,
+- **WHEN** stored via `IAppConfig`,
+- **THEN** the secret is marked sensitive per OR convention,
+- **AND** it does NOT appear in plain-text generic dumps.
 
-### Requirement: Manual import trigger with optional force parameter (SET-007)
-The system MUST expose a manual import trigger with an optional force parameter.
+### Requirement: configuration defaults are declared in the inventory table (SET-OR-003)
 
-**Priority:** Must **Status:** Implemented
+Every key's default value MUST be declared in the inventory table below.
+Hardcoded class constants that serve as defaults MUST be promoted to
+admin-config keys with the same default values (see Phase 8 keys in the
+inventory).
 
-### Requirement: Publish options: auto_publish_attachments, auto_publish_objects, use_old_style_publishing_view (SET-008)
-The system SHOULD expose publish options: auto_publish_attachments, auto_publish_objects, use_old_style_publishing_view.
+#### Scenario: reading a key that was never set
 
-**Priority:** Should **Status:** Implemented
+- **GIVEN** an admin has not configured a given key,
+- **WHEN** the application reads that key via `IAppConfig`,
+- **THEN** the default value from the inventory table is returned,
+- **AND** no class constant is consulted at runtime.
 
-### Requirement: Get and update publishing options separately (SET-009)
-The system SHOULD allow getting and updating publishing options separately.
+### Requirement: `MIN_OPENREGISTER_VERSION` constant deleted (SET-OR-004)
 
-**Priority:** Should **Status:** Implemented
+`lib/Service/SettingsService.php` MUST NOT define a `MIN_OPENREGISTER_VERSION`
+constant. The minimum OR version is enforced by Nextcloud's dependency check
+driven by `appinfo/info.xml` `<dependencies>`. The constant is deleted in
+Phase 8.
 
-### Requirement: Version info endpoint showing app version, configured version, and match status (SET-010)
-The system MUST expose a version info endpoint showing app version, configured version, and match status.
+#### Scenario: minimum-version constant no longer exists
 
-**Priority:** Must **Status:** Implemented
+- **WHEN** a developer greps `lib/Service/SettingsService.php` for
+  `MIN_OPENREGISTER_VERSION`,
+- **THEN** the constant is not found,
+- **AND** the install-time dependency check in `appinfo/info.xml` enforces
+  the minimum OR version instead.
 
-### Requirement: Repair step to initialize settings on app install/upgrade (SET-011)
-The system MUST provide a repair step to initialize settings on app install/upgrade.
+### Requirement: auto-configuration cites OR configuration service (SET-OR-005)
 
-**Priority:** Must **Status:** Implemented
+The auto-configuration path (`autoConfigure()`) MUST use OR's
+`ConfigurationService` for register/schema discovery. It MUST NOT
+implement its own register-slug-matching logic if OR's service provides
+equivalent discovery.
 
-### Requirement: Nextcloud admin settings page with template rendering (SET-012)
-The system MUST provide a Nextcloud admin settings page with template rendering.
+### Requirement: admin settings page loads and saves configuration (SET-OR-006)
 
-**Priority:** Must **Status:** Implemented
+The `Settings.vue` admin page MUST, on load, fetch the current settings
+(`GET /api/settings`) and publishing options (`GET /api/settings/publishing`).
+It MUST persist configuration changes via `POST /api/settings` and
+publishing options via `POST /api/settings/publishing`.
 
-### Requirement: Enrich register listings with full schema objects (not just IDs) (SET-013)
-The system SHOULD enrich register listings with full schema objects (not just IDs).
+Configuration values MUST be sourced from `IAppConfig`; display values
+MUST follow OR's data types.
 
-**Priority:** Should **Status:** Implemented
+#### Scenario: load admin settings
 
-### Requirement: Database migration history tracked across 4 migration files (SET-014)
-The system MUST track database migration history across 4 migration files.
+- **GIVEN** the admin opens the settings page,
+- **WHEN** `Settings.vue` loads,
+- **THEN** it MUST fetch `GET /api/settings` and
+  `GET /api/settings/publishing`.
 
-**Priority:** Must **Status:** Implemented
+#### Scenario: save admin settings
 
-### Requirement: Admin settings page loads and saves configuration (SET-015)
-The system SHALL provide a `Settings.vue` admin page that, on load, fetches the current
-settings (`GET /api/settings`) and publishing options (`GET /api/settings/publishing`). It
-SHALL persist configuration changes via `POST /api/settings`, publishing options via
-`POST /api/settings/publishing`, trigger a server reload via `GET /api/settings/load`,
-report the version via `GET /api/settings/version`, and run a manual import via
-`POST /api/settings/import` — refreshing the loaded settings afterward.
+- **GIVEN** the admin edits configuration,
+- **WHEN** the settings are saved,
+- **THEN** a `POST /api/settings` request MUST be sent.
 
-**Priority:** Must **Status:** Implemented
+## REMOVED Requirements
 
-#### Scenario: Load admin settings
-- GIVEN the admin opens the settings page
-- WHEN `Settings.vue` loads
-- THEN it MUST fetch `GET /api/settings` and `GET /api/settings/publishing`
+The following requirements described patterns that duplicated OR's `IAppConfig`
+conventions. They are retained for traceability; implementation MUST NOT
+re-introduce them.
 
-#### Scenario: Save admin settings
-- GIVEN the admin edits configuration
-- WHEN the settings are saved
-- THEN a `POST /api/settings` request MUST be sent
+| ID | Title | Reason removed |
+|----|-------|----------------|
+| SET-005 | Check and install/update OpenRegister dependency (minimum version 0.1.7) | REMOVED — re-implements Nextcloud's native dependency check; `appinfo/info.xml` `<dependencies>` is the only enforcement mechanism. The PHP `MIN_OPENREGISTER_VERSION` constant and any runtime version check in `SettingsService` are deleted. Superseded by SET-OR-004. |
 
-#### Scenario: Run a manual import
-- GIVEN the admin triggers a manual import
-- WHEN the import runs
-- THEN `POST /api/settings/import` MUST be called and the settings reloaded afterward
+SET-001 through SET-004, SET-006 through SET-017 are superseded by SET-OR-001
+through SET-OR-006. Observable behaviours are preserved; the convention
+ownership is now explicitly cited to OR's `IAppConfig`.
 
-### Requirement: Admin settings bundle entry-point (SET-016)
-The system SHALL provide a `settings.js` bundle entry-point that mounts the `Settings.vue`
-admin component on the `#settings` element, registering the markdown editor
-(`@kangc/v-md-editor` with the GitHub theme and English locale) and the FontAwesome icon
-library + global `FontAwesomeIcon` component for use on the settings page.
+## Admin-Config Key Inventory
 
-**Priority:** Should **Status:** Implemented
+This table is the **single canonical list** of all keys opencatalogi reads or
+writes via `IAppConfig`. All keys use snake_case. Operators MUST set the
+required keys before first use.
 
-#### Scenario: Mount the admin settings bundle
-@e2e exclude JS bundle bootstrap — Vue component mounting and library registration happen before DOM interaction; not browser-UI observable in Playwright; covered by Jest unit test.
-- GIVEN the Nextcloud admin settings section renders the opencatalogi panel
-- WHEN `settings.js` runs
-- THEN the `Settings.vue` component MUST be mounted on `#settings`
-- AND the markdown editor and FontAwesome library MUST be registered
+### Register / Schema Mappings (required)
 
-### Requirement: User settings dialog placeholder (SET-017)
-The system SHALL provide a `UserSettings.vue` dialog (an `NcAppSettingsDialog` with a
-single "General" section) that currently shows a "User preferences will appear here."
-placeholder. The dialog's open state is controlled by an `open` prop and an
-`update:open` event.
-
-**Priority:** Could **Status:** Implemented
-
-#### Scenario: Open the user settings dialog
-- GIVEN the `open` prop is true
-- WHEN `UserSettings.vue` renders
-- THEN it MUST show the OpenCatalogi settings dialog with the General placeholder section
-
-> **Notes:**
-> The admin-settings spec previously referenced only the Admin settings surface. SET-017
-> documents the observed `UserSettings.vue` placeholder dialog; it currently holds no real
-> user preferences (literal placeholder text). Recorded as observed behavior.
-
-## Data Model
-
-### Configuration Keys (stored in IAppConfig)
-
-For each object type (catalog, listing, organization, theme, page, menu, glossary):
-
-| Key Pattern | Type | Description |
-|-------------|------|-------------|
-| `{type}_source` | string | Always "openregister" |
-| `{type}_schema` | string | OpenRegister schema ID for this object type |
-| `{type}_register` | string | OpenRegister register ID for this object type |
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `catalog_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `catalog_register` | string | `""` | Yes | OpenRegister register ID for catalog objects |
+| `catalog_schema` | string | `""` | Yes | OpenRegister schema ID for catalog objects |
+| `listing_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `listing_register` | string | `""` | Yes | OpenRegister register ID for listing objects |
+| `listing_schema` | string | `""` | Yes | OpenRegister schema ID for listing objects |
+| `organization_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `organization_register` | string | `""` | Yes | OpenRegister register ID for organization objects |
+| `organization_schema` | string | `""` | Yes | OpenRegister schema ID for organization objects |
+| `theme_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `theme_register` | string | `""` | Yes | OpenRegister register ID for theme objects |
+| `theme_schema` | string | `""` | Yes | OpenRegister schema ID for theme objects |
+| `page_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `page_register` | string | `""` | Yes | OpenRegister register ID for page objects |
+| `page_schema` | string | `""` | Yes | OpenRegister schema ID for page objects |
+| `menu_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `menu_register` | string | `""` | Yes | OpenRegister register ID for menu objects |
+| `menu_schema` | string | `""` | Yes | OpenRegister schema ID for menu objects |
+| `glossary_source` | string | `"openregister"` | Yes | Always "openregister" |
+| `glossary_register` | string | `""` | Yes | OpenRegister register ID for glossary objects |
+| `glossary_schema` | string | `""` | Yes | OpenRegister schema ID for glossary objects |
+| `publications_register` | string | `""` | Yes | OpenRegister register ID for publication objects |
+| `publications_schema` | string | `""` | Yes | OpenRegister schema ID for publication objects |
 
 ### Publishing Options
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| auto_publish_attachments | string (bool) | "false" | Auto-publish file attachments (see [auto-publishing spec](../auto-publishing/spec.md)) |
-| auto_publish_objects | string (bool) | "false" | Auto-publish new objects (see [auto-publishing spec](../auto-publishing/spec.md)) |
-| use_old_style_publishing_view | string (bool) | "false" | Use legacy publishing view |
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `auto_publish_attachments` | string (bool) | `"false"` | No | When `"true"`, auto-create public share links for attachments on published objects. See [auto-publishing spec](../auto-publishing/spec.md). |
+| `auto_publish_objects` | string (bool) | `"false"` | No | When `"true"`, auto-publish objects matching a catalog on creation. See [auto-publishing spec](../auto-publishing/spec.md). |
+| `use_old_style_publishing_view` | string (bool) | `"false"` | No | Use legacy publishing view layout. |
 
-### Object Types
+### Broadcast Configuration (Phase 8 — promoted from class constants)
 
-The app manages 7 object types:
-- catalog
-- listing
-- organization
-- theme
-- page
-- menu
-- glossary
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `broadcast_max_retries` | int | `3` | No | Maximum retry attempts for outbound broadcast HTTP calls. Previously `BroadcastService::MAX_RETRIES = 3`. |
+| `broadcast_request_timeout` | int | `30` | No | Timeout in seconds for outbound broadcast HTTP calls. Previously `BroadcastService::REQUEST_TIMEOUT = 30`. |
 
-## Database Migration History (Gap 13)
+### Sitemap Configuration (Phase 8 — promoted from class constants)
 
-OpenCatalogi has 4 database migration files that track schema evolution:
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `sitemap_max_per_page` | int | `1000` | No | Maximum entries per sitemap page. Previously `SitemapService::MAX_PER_PAGE = 1000`. |
 
-| Migration | Date | Description |
-|-----------|------|-------------|
-| `Version6Date20241011085015` | 2024-10-11 | Initial migration |
-| `Version6Date20241129151236` | 2024-11-29 | Second migration |
-| `Version6Date20241208222530` | 2024-12-08 | Third migration |
-| `Version6Date20250419123213` | 2025-04-19 | Fourth migration |
+### Version Tracking
 
-All migrations follow Nextcloud's versioned migration pattern (`Version{majorVersion}Date{YYYYMMDDHHMMSS}`). They are located in `lib/Migration/` and are executed automatically by Nextcloud's migration system during app install/upgrade.
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `installed_version` | string | `""` | No | Last-configured app version. Used to detect upgrades and trigger settings reload. |
 
-Note: OpenCatalogi primarily stores data as OpenRegister objects (not in its own database tables), so these migrations may handle ancillary data structures, caching tables, or configuration storage rather than core content tables.
+## Breaking Changes
 
-## Application Bootstrap Event Registrations (Gap 21)
-
-The `Application` class (`lib/AppInfo/Application.php`) registers all event listeners and widgets during the `register()` phase. For full details, see the [dashboard spec](../dashboard/spec.md) section on "Application.php Bootstrap (Gap 21)".
-
-Summary of registrations:
-- **Vendor autoload**: Loads Composer dependencies
-- **Dashboard widgets**: CatalogWidget, UnpublishedPublicationsWidget, UnpublishedAttachmentsWidget
-- **Event listeners**: ObjectCreatedEvent, ObjectUpdatedEvent, ObjectDeletedEvent handlers for auto-publishing and cache management
-- **Tool registration**: ToolRegistrationEvent listener for AI agent CMS tool
-
-The `boot()` method is intentionally empty -- initialization is handled by the `InitializeSettings` repair step.
-
-## User Interface
-
-- **Settings.vue** (`/views/settings/`) - Admin settings page within the Nextcloud app
-- **OpenCatalogiAdmin.php** - Nextcloud admin settings panel (renders `settings/admin` template)
-- **OpenCatalogiAdmin section** - Registered in `info.xml` as admin settings section
+| Breaking change | Old behaviour | New behaviour |
+|---|---|---|
+| `SettingsService::MIN_OPENREGISTER_VERSION = '0.1.7'` removed | PHP runtime version check called in SettingsService | Constant deleted; Nextcloud's `appinfo/info.xml` `<dependencies>` enforces the minimum OR version at install time. Code that reads the constant will throw a `ClassConstant not found` error. |
+| `BroadcastService::MAX_RETRIES` / `REQUEST_TIMEOUT` promoted | Class constants 3 / 30 hardcoded | Read from `IAppConfig` keys `broadcast_max_retries` / `broadcast_request_timeout` (defaults unchanged). Code that reads the constants directly will throw. |
+| `SitemapService::MAX_PER_PAGE` promoted | Class constant 1000 hardcoded | Read from `IAppConfig` key `sitemap_max_per_page` (default unchanged). |
 
 ## API Endpoints
 
@@ -216,58 +215,10 @@ The `boot()` method is intentionally empty -- initialization is handled by the `
 | GET | `/api/settings/version` | Get version info (authenticated) |
 | POST | `/api/settings/import` | Manually trigger configuration import (admin only) |
 
-## Scenarios
+## References
 
-### Scenario: Get current settings
-- GIVEN OpenRegister is installed and the app is configured
-- WHEN a GET request is made to `/api/settings`
-- THEN the response includes:
-  - `objectTypes`: ["catalog", "listing", "organization", "theme", "page", "menu", "glossary"]
-  - `openRegisters`: true (if OpenRegister is available)
-  - `availableRegisters`: Array of registers with enriched schema data (full schema objects, not just IDs)
-  - `configuration`: Object with `{type}_source`, `{type}_schema`, `{type}_register` for each type, plus publishing options
-
-### Scenario: Load settings from JSON
-- GIVEN `publication_register.json` exists at `lib/Settings/publication_register.json`
-- WHEN the load endpoint is called
-- THEN the JSON is read and parsed
-- AND `x-openregister.sourceUrl` and `sourceType` are injected if not present
-- AND ConfigurationService.importFromApp() is called with the data
-- AND updateObjectTypeConfiguration() maps imported schema slugs to IDs in IAppConfig
-- AND the publication register's schemas are matched to config keys by slug
-
-### Scenario: Auto-configuration
-- GIVEN OpenRegister has registers installed
-- WHEN autoConfigure() is called
-- THEN registers are searched for one with slug containing "publication"
-- AND for each object type, a matching schema is found by title
-- AND configuration keys are populated with matching register/schema IDs
-
-### Scenario: Version-based import decision
-- GIVEN app version is "0.7.9" and stored config version is "0.7.8"
-- WHEN shouldLoadSettings() is called
-- THEN version_compare determines "0.7.9" > "0.7.8"
-- AND returns true (import needed)
-
-### Scenario: Repair step on install
-- GIVEN the app is being installed or upgraded
-- WHEN the InitializeSettings repair step runs
-- THEN it checks if OpenRegister is installed
-- AND if available, calls SettingsService.loadSettings(force: false)
-- AND reports the number of registers, schemas, and objects imported
-- AND if OpenRegister is not installed, logs a warning and skips
-
-### Scenario: Manual import with force
-- GIVEN configuration is up to date (versions match)
-- WHEN POST `/api/settings/import` is called with `{force: true}`
-- THEN the import proceeds regardless of version match
-- AND returns success with import results and updated version info
-
-## Dependencies
-
-- **OpenRegister ConfigurationService** - importFromApp(), getConfiguredAppVersion()
-- **OpenRegister RegisterMapper** - findAll() for discovering available registers
-- **OpenRegister SchemaMapper** - find() for enriching registers with full schema objects
-- **Nextcloud IAppConfig** - All configuration key storage
-- **Nextcloud IAppManager** - App version checking, install/enable operations
-- **publication_register.json** - Source of truth for schema definitions and seed data
+- OR `IAppConfig` conventions (upstream dependency)
+- `.claude/audit-2026-05-03/02-spec-rewrite.md` (Stream 2 NEEDS-REWRITE rationale)
+- `.claude/audit-2026-05-03/04-hardcoded.md` (Stream 4 — Phase 8 magic-number cleanup)
+- `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 7 + Phase 8 implementation change)
+- ADR-022 — Apps consume OR abstractions

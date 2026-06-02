@@ -269,9 +269,8 @@ class MenusController extends Controller
     {
         // Use searchObjectsPaginated to find single menu.
         $searchQuery = [
-            '_ids'    => [$id],
-            '_limit'  => 1,
-            '_source' => 'database',
+            '_ids'   => [$id],
+            '_limit' => 1,
         ];
         // Rbac=true enforces schema authorization; multi=false for public menu access.
         $result = $this->getObjectService()->searchObjectsPaginated(

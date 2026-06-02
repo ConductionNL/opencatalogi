@@ -1,295 +1,185 @@
 ---
-status: reviewed
-retrofit_extensions:
-  - FIL-016
-  - FIL-017
-  - FIL-018
-  - FIL-019
+status: needs-rewrite
+or_dep: register-resolver-service
+audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
 
 # File Management
 
+> **NEEDS-REWRITE notice:** This spec was rewritten as part of
+> `opencatalogi-adopt-or-abstractions` (Phase 3). The bespoke
+> `FileService` implementations for file CRUD, share creation/discovery,
+> URL assembly, and ZIP generation are replaced by OR's File Attachments
+> capability (`x-openregister-file` schema annotation + `IFileService`)
+> and `OCP\Share\IShareManager`. See the Breaking Changes section and the
+> per-requirement REMOVED annotations below.
+>
+> Upstream dependencies:
+> - `openregister/openspec/changes/register-resolver-service/`
+> - OR File Attachments capability (`x-openregister-file`)
+
 ## Purpose
 
-The File Management service provides all file-related operations for OpenCatalogi: creating folders in Nextcloud, uploading and updating files, deleting files, managing share links, handling file uploads from HTTP requests, generating PDFs via Twig/mPDF, and creating/downloading ZIP archives. It is the foundational file layer used by the DownloadService, auto-publishing system, and WOO sitemap generation.
-## Requirements
-### Requirement: Create folders in Nextcloud user storage, skip if already exists (FIL-001)
-The system MUST create folders in Nextcloud user storage and skip if they already exist.
+File management in opencatalogi is the set of operations by which publications
+acquire, store, share, and bundle file attachments. After Phase 3 lands,
+opencatalogi is a **thin consumer** of OR's File Attachments capability and
+Nextcloud's native share management — it does not own file storage, share
+creation, share discovery, URL assembly, ZIP generation, or bespoke PDF
+rendering of publication metadata. Those operations are either delegated to OR
+or to the `download-service` spec (which is itself a streaming wrapper;
+see [download-service/spec.md](../download-service/spec.md)).
 
-**Priority:** Must **Status:** Implemented
+## ADDED Requirements
 
-### Requirement: Upload new files to Nextcloud user storage (fail if file already exists) (FIL-002)
-The system MUST upload new files to Nextcloud user storage (and MUST fail if the file already exists).
+### Requirement: file attachment goes through the OR file service (FIL-OR-001)
 
-**Priority:** Must **Status:** Implemented
+Every upload, update, and delete of a file attachment on a publication MUST be
+handled by the OR file service resolved via dependency injection. The schema
+MUST declare the relevant attachment property with `x-openregister-file`.
+`lib/Controller/FilesController.php` becomes a thin delegate that:
 
-### Requirement: Update/overwrite existing files, optionally create if not exists (FIL-003)
-The system MUST update/overwrite existing files, optionally creating them if not exists.
+1. Resolves the register/schema for the target publication via
+   `RegisterResolverService::resolvePair('publications')`.
+2. Delegates the operation to the OR file service.
+3. Returns the OR response unchanged.
 
-**Priority:** Must **Status:** Implemented
+`lib/Service/FileService.php` MAY remain as a wrapper for OR file service
+invocations not otherwise covered by the controller delegate; it MUST NOT
+contain bespoke Nextcloud file storage, share creation, or URL assembly logic.
 
-### Requirement: Delete files from Nextcloud user storage (FIL-004)
-The system MUST allow deleting files from Nextcloud user storage.
+#### Scenario: upload delegates to OR
 
-**Priority:** Must **Status:** Implemented
+- **GIVEN** a request to upload a file against a publication,
+- **WHEN** `FilesController` handles the request,
+- **THEN** it resolves the `publications` register/schema via
+  `RegisterResolverService`,
+- **AND** calls the OR file service to persist the file,
+- **AND** returns the OR-issued attachment metadata to the caller.
 
-### Requirement: Create public share links (IShare type 3) for files with configurable permissions (FIL-005)
-The system MUST create public share links for files attached to Attachment /
-Publication objects by **consuming the OpenRegister shares leaf** (integration
-registry, ADR-019) — NOT by calling `OCP\Share\IManager` directly from a bespoke
-`FileService::createShareLink()` method (hydra ADR-022). The leaf owns share-type
-and permission semantics; OpenCatalogi requests a public (type-3, read-only by
-default) share through the leaf and the bespoke `createShareLink()` /
-`createShare()` methods are removed.
+#### Scenario: OR file service absent
 
-#### Scenario: Auto-publish requests a public share via the leaf
-- GIVEN `auto_publish_attachments` is enabled
-- AND an attachment file is published for a catalogue object
-- WHEN the auto-publishing path needs a public download link
-- THEN the share is created by calling the OpenRegister shares leaf service
-- AND NO call is made to a bespoke `FileService::createShareLink()` /
-  `createShare()` against `OCP\Share\IManager`
-- AND the file remains anonymously downloadable (WOO public-access requirement)
+- **GIVEN** OR is not installed or does not expose the file service,
+- **WHEN** an upload is attempted,
+- **THEN** `FilesController` returns a 503 with operator-actionable detail,
+- **AND** opencatalogi does NOT fall back to a bespoke Nextcloud file write.
 
-#### Scenario: Shares leaf absent
-- GIVEN the OpenRegister shares leaf / integration is not available
-- WHEN a share is requested
-- THEN OpenCatalogi degrades gracefully with a "sharing integration required"
-  signal rather than minting a parallel bespoke share
+### Requirement: share creation goes through `OCP\Share\IShareManager` (FIL-OR-002)
 
-### Requirement: Find existing share links for a file path (FIL-006)
-The system MUST discover existing share links for a file attached to an
-Attachment / Publication object by **consuming the OpenRegister shares leaf's
-lookup capability** — NOT via a bespoke `FileService::findShare()` that queries
-`OCP\Share\IManager` directly (hydra ADR-022). Shares previously minted as
-ordinary Nextcloud type-3 shares MUST remain discoverable through the leaf.
+When opencatalogi needs to create a public share link on an attachment,
+it MUST call `OCP\Share\IShareManager::createShare()`. The legacy
+bespoke `FileService::createShareLink()` and `FileService::createShare()`
+methods are removed (see REMOVED section). opencatalogi MUST NOT hold a
+parallel share-creation implementation.
 
-#### Scenario: Resolve an already-shared attachment
-- GIVEN an attachment file already has a public share (whether minted by the
-  leaf or by the legacy bespoke path)
-- WHEN OpenCatalogi resolves the share for that file
-- THEN the existing share is returned via the shares leaf
-- AND no duplicate share is created
+The OpenRegister shares leaf (integration registry, ADR-019) is the
+preferred route when available; `IShareManager` is the fallback when the
+leaf is absent.
 
-### Requirement: Return full share link URLs including protocol and domain (FIL-007)
-The system MUST obtain the full public share URL for an attachment from the
-**OpenRegister shares leaf** rather than hand-assembling
-`{protocol}://{host}/index.php/s/{token}` in a bespoke `FileService::getShareLink()`
-(hydra ADR-022). The leaf is the single source of truth for canonical share-link
-resolution.
+#### Scenario: share created via OR shares leaf (preferred path)
 
-#### Scenario: Surface share URL on the publication detail page
-- GIVEN a publication with attachments that have public shares
-- WHEN the publication detail page renders the shares widget
-- THEN the share URLs are resolved by the shares leaf and shown in the
-  shares widget placed via the app manifest (ADR-024 / ADR-036)
-- AND OpenCatalogi does NOT hand-assemble the share URL in PHP
+- **GIVEN** the OR shares leaf integration is available,
+- **WHEN** a public share is requested for an attachment,
+- **THEN** the share is created through the OR shares leaf,
+- **AND** no call is made to a bespoke `FileService::createShareLink()`.
 
-### Requirement: Handle HTTP file uploads via `_file` key in multipart requests (FIL-008)
-The system MUST handle HTTP file uploads via the `_file` key in multipart requests.
+#### Scenario: share created via IShareManager (fallback)
 
-**Priority:** Must **Status:** Implemented
+- **GIVEN** the OR shares leaf is absent,
+- **WHEN** a public share is requested,
+- **THEN** `IShareManager::createShare()` is called directly (type 3,
+  read-only by default),
+- **AND** the share URL is obtained from `IShare` — NOT hand-assembled
+  from `$_SERVER['HTTPS']` and `$_SERVER['HTTP_HOST']`.
 
-### Requirement: Create structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/` (FIL-009)
-The system MUST create a structured folder hierarchy for publications: `Publicaties/{id} {title}/Bijlagen/`.
+### Requirement: file uploads from the frontend use the OR files endpoint (FIL-OR-003)
 
-**Priority:** Must **Status:** Implemented
+Frontend upload modals (`UploadFiles`, `MassAttachmentModal`) MUST target the
+OR files endpoint:
+`/index.php/apps/openregister/api/objects/{register}/{schema}/{publicationId}/files`.
 
-### Requirement: Add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays (FIL-010)
-The system MUST add file metadata (reference, type, size, title, extension, accessUrl, downloadUrl) to data arrays.
+The register and schema identifiers MUST be read from the object store's
+`@self.register` and `@self.schema` envelope, not hard-coded.
 
-**Priority:** Must **Status:** Implemented
+#### Scenario: upload modal sends file to OR endpoint
 
-### Requirement: Generate PDFs using Twig templates and mPDF library (FIL-011)
-The system MUST generate PDFs using Twig templates and the mPDF library.
+- **GIVEN** the upload modal is open with the active publication selected,
+- **WHEN** the user uploads a file,
+- **THEN** the file is sent to the publication's OR `.../files` endpoint,
+- **AND** any selected tags are applied via the OR tags API.
 
-**Priority:** Must **Status:** Implemented
+### Requirement: attachment deletion goes through OR (FIL-OR-004)
 
-### Requirement: Create ZIP archives from folder contents (FIL-012)
-The system MUST create ZIP archives from folder contents.
+`DeleteAttachmentDialog` MUST issue `DELETE` to the OR files endpoint:
+`/api/objects/{register}/{schema}/{publicationId}/files/{attachmentId}`.
+After deletion it MUST refresh the publication's attachments and close the
+dialog.
 
-**Priority:** Must **Status:** Implemented
+### Requirement: attachment metadata editing goes through the object store (FIL-OR-005)
 
-### Requirement: Send ZIP archives as download responses with proper headers (FIL-013)
-The system MUST send ZIP archives as download responses with proper headers.
+`EditAttachmentModal` MUST persist updates via
+`objectStore.updateObject('attachment', id, attachment)`. It MUST NOT call
+a bespoke `FileService` update method.
 
-**Priority:** Must **Status:** Implemented
+### Requirement: file-selection composable is preserved (FIL-OR-006)
 
-### Requirement: Clean up temporary files after ZIP operations (FIL-014)
-The system SHOULD clean up temporary files after ZIP operations.
+The `useFileSelection` composable (drop-zone state, file list, tag setters,
+duplicate rejection, reset/open helpers) is a UI-only abstraction that does
+NOT conflict with OR's file service. It remains as-is.
 
-**Priority:** Should **Status:** Implemented
+## REMOVED Requirements
 
-### Requirement: Memory limit set to 2048M for large file operations (FIL-015)
-The system SHOULD set the memory limit to 2048M for large file operations.
+The following requirements described bespoke implementations that OR's file
+capability now owns. They are retained here for traceability; implementation
+MUST NOT re-introduce them.
 
-**Priority:** Should **Status:** Implemented
+| ID | Title | Reason removed |
+|----|-------|----------------|
+| FIL-001 | Create folders in Nextcloud user storage | REMOVED — OR file service owns folder management; opencatalogi MUST NOT call `IRootFolder` for folder creation. |
+| FIL-002 | Upload new files to Nextcloud user storage | REMOVED — OR file service owns file creation; `FileService::uploadFile()` is deleted. |
+| FIL-003 | Update/overwrite existing files | REMOVED — OR file service owns file updates; `FileService::updateFile()` is deleted. |
+| FIL-004 | Delete files from Nextcloud user storage | REMOVED — OR file service owns file deletion; `FileService::deleteFile()` is deleted. |
+| FIL-005 (legacy) | Create public share links (IShare type 3) via bespoke FileService::createShareLink() | REMOVED — share creation goes through OR shares leaf or IShareManager directly; `FileService::createShareLink()` is deleted. The requirement is superseded by FIL-OR-002. |
+| FIL-006 (legacy) | Find existing share links via bespoke FileService::findShare() | REMOVED — share discovery goes through the OR shares leaf; `FileService::findShare()` is deleted. |
+| FIL-007 (legacy) | Return full share link URLs via bespoke FileService::getShareLink() | REMOVED — URL is obtained from `IShare` via `IShareManager`; hand-assembled `{protocol}://{host}/index.php/s/{token}` strings are deleted. |
+| FIL-008 | Handle HTTP file uploads via `_file` key in multipart requests | REMOVED — upload routing is the OR file controller's responsibility; `FileService::handleFile()` is deleted. |
+| FIL-009 | Create structured folder hierarchy `Publicaties/{id} {title}/Bijlagen/` | REMOVED — OR file service owns the storage layout; opencatalogi MUST NOT prescribe a folder name pattern in its own code. |
+| FIL-010 | Add file metadata to data arrays | REMOVED — OR file service returns standardised attachment metadata; `FileService::AddFileInfoToData()` is deleted. |
+| FIL-011 | Generate PDFs using Twig/mPDF | REMOVED — PDF generation is the responsibility of the `download-service` spec (streaming wrapper over OR file attachments); `FileService::createPdf()` is deleted from opencatalogi's file management layer. |
+| FIL-012 | Create ZIP archives from folder contents | REMOVED — ZIP generation is the responsibility of the `download-service` spec. |
+| FIL-013 | Send ZIP archives as download responses | REMOVED — see FIL-012. |
+| FIL-014 | Clean up temporary files after ZIP operations | REMOVED — see FIL-012. |
+| FIL-015 | Memory limit set to 2048M for large file operations | REMOVED — `ini_set('memory_limit', '2048M')` in the file management layer is deleted; memory budget for large operations is managed by the download-service or the OR file service, not here. |
 
-### Requirement: Upload files to a publication from the frontend (FIL-016)
-The system SHALL provide an `UploadFiles` modal that uploads one or more files to a
-publication's OpenRegister files endpoint
-(`/index.php/apps/openregister/api/objects/{register}/{schema}/{publicationId}/files`,
-PUT for an existing file id, with file content and optional tags), reading the active
-publication's register/schema/id from the object store and supporting tag assignment via
-`/api/tags`.
+FIL-016, FIL-017, FIL-018, FIL-019 (frontend upload/delete/edit/composable) are superseded by
+FIL-OR-003, FIL-OR-004, FIL-OR-005, FIL-OR-006 respectively, which redirect the same
+operations through the OR endpoint or the object store.
 
-**Priority:** Must **Status:** Implemented
+## Breaking Changes
 
-#### Scenario: Upload a file to the active publication
-- GIVEN the upload modal is open with the active publication selected
-- WHEN the user uploads a file
-- THEN the file MUST be sent to the publication's OpenRegister `.../files` endpoint
-- AND any selected tags MUST be applied
-
-### Requirement: Delete a publication attachment (FIL-017)
-The system SHALL provide a `DeleteAttachmentDialog` that deletes the active
-`publicationAttachment` by issuing `DELETE` to the OpenRegister files endpoint
-`/api/objects/{register}/{schema}/{publicationId}/files/{attachmentId}` (register/schema/id
-read from the active publication's `@self`), then refreshes the publication's attachments
-and closes the dialog after a short delay.
-
-**Priority:** Must **Status:** Implemented
-
-#### Scenario: Delete an attachment
-- GIVEN the active publication and the active attachment
-- WHEN the delete-attachment dialog is confirmed
-- THEN a `DELETE` request MUST be sent to the `.../files/{attachmentId}` endpoint
-- AND the publication's attachments MUST be refreshed afterward
-
-### Requirement: Edit attachment metadata (FIL-018)
-The system SHALL provide an `EditAttachmentModal` that updates an attachment's metadata via
-`objectStore.updateObject('attachment', id, attachment)` and closes the modal through the
-navigation store on completion.
-
-**Priority:** Should **Status:** Implemented
-
-#### Scenario: Edit an attachment
-- GIVEN the edit-attachment modal is open
-- WHEN the user saves changes
-- THEN the attachment MUST be persisted via `objectStore.updateObject('attachment', id, attachment)`
-
-### Requirement: File-selection composable and mass-attachment modal (FIL-019)
-The system SHALL provide a `useFileSelection` composable exposing drop-zone state, a file
-list, tag setters, duplicate rejection, and reset/open helpers
-(`openFileUpload`, `files`, `setFiles`, `setTags`, `reset`, `isOverDropZone`,
-`rejectedDuplicates`), and a `MassAttachmentModal` for bulk attachment operations built on
-top of it.
-
-**Priority:** Should **Status:** Implemented
-
-#### Scenario: Select files via the composable
-@e2e exclude headless drag-and-drop limitation — useFileSelection composable state (isOverDropZone, rejectedDuplicates) is internal reactive state not observable via DOM snapshot in headless Playwright; covered by Jest composable unit test.
-- GIVEN a component using `useFileSelection`
-- WHEN files are dropped or chosen
-- THEN the composable's file list MUST update and duplicates MUST be rejected
+| Breaking change | Old behaviour | New behaviour |
+|---|---|---|
+| `FileService::createShareLink()` removed | Bespoke share creation; silently fails or produces stale share if OR is misconfigured | Calls OR shares leaf or `IShareManager::createShare()`; throws on misconfiguration |
+| `FileService::handleFile()` removed | Multipart upload handled locally; folder created under Nextcloud user storage | Upload routed to OR files endpoint; OR owns storage |
+| `FileService::createPdf()` / `createZip()` moved | Called from FilesController directly | Lives only in download-service's streaming wrapper; FilesController no longer calls them |
+| `ini_set('memory_limit', '2048M')` removed | Set for every request touching FileService | No longer set; OR file service and download-service own their own memory budgets |
 
 ## Architecture
 
-### Key Components
+After Phase 3:
 
-| Component | Location | Responsibility |
-|-----------|----------|----------------|
-| FileService | `lib/Service/FileService.php` | All file operations for OpenCatalogi |
+| Component | Responsibility |
+|---|---|
+| `lib/Controller/FilesController.php` | Thin delegate: resolve register/schema via `RegisterResolverService`, forward to OR file service |
+| OR file service (injected) | File storage, attachment metadata, versioning |
+| `OCP\Share\IShareManager` | Share creation/discovery/URL resolution (fallback when OR shares leaf absent) |
+| OR shares leaf (ADR-019) | Preferred route for share creation; delegates to IShareManager internally |
+| `useFileSelection` composable | Frontend UI state only; file content goes to OR endpoint |
 
-### Constructor Dependencies
+## References
 
-| Dependency | Type | Purpose |
-|------------|------|---------|
-| IUserSession | `OCP\IUserSession` | Get current user for file operations |
-| LoggerInterface | `Psr\Log\LoggerInterface` | Error and info logging |
-| IRootFolder | `OCP\Files\IRootFolder` | Access Nextcloud file storage |
-| IManager | `OCP\Share\IManager` | Create and manage share links |
-
-## API Methods
-
-### Folder Operations
-
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `createFolder()` | `string $folderPath` | `bool` | Creates folder, returns false if exists |
-| `getPublicationFolderName()` | `string $publicationId, string $publicationTitle` | `string` | Returns `({id}) {title}` format |
-
-### File Operations
-
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `uploadFile()` | `mixed $content, string $filePath` | `bool` | Creates new file, false if exists |
-| `updateFile()` | `mixed $content, string $filePath, bool $createNew` | `bool` | Overwrites file, optionally creates |
-| `deleteFile()` | `string $filePath` | `bool` | Deletes file, false if not found |
-
-### Share Operations
-
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `findShare()` | `string $path, ?int $shareType = 3` | `?IShare` | Find existing share for a file |
-| `createShareLink()` | `string $path, ?int $shareType = 3, ?int $permissions = null` | `string` | Create share link URL |
-| `getShareLink()` | `IShare $share` | `string` | Get full URL from IShare object |
-
-### Upload Handling
-
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `handleFile()` | `IRequest $request, array $data` | `JSONResponse\|array` | Full upload flow with folder creation |
-| `AddFileInfoToData()` | `array $data, array $uploadedFile, string $filePath` | `array` | Enriches data with file metadata |
-
-### PDF and ZIP
-
-| Method | Parameters | Returns | Description |
-|--------|-----------|---------|-------------|
-| `createPdf()` | `string $twigTemplate, array $context` | `Mpdf` | Renders HTML template to PDF |
-| `createZip()` | `string $inputFolder, string $tempZip` | `?string` | Creates ZIP archive, null on success |
-| `downloadZip()` | `string $tempZip, ?string $inputFolder` | `void` | Sends ZIP as download response |
-
-## Scenarios
-
-### Scenario: Create share link for a file
-- GIVEN a file exists at `Publicaties/(abc-123) Report/Report.pdf`
-- WHEN createShareLink() is called with that path
-- THEN the user folder is accessed via IRootFolder
-- AND the file is retrieved by path
-- AND a new IShare is created with shareType=3 (public), permissions=1 (read-only)
-- AND the share link URL is returned: `{protocol}://{host}/index.php/s/{token}`
-
-### Scenario: Handle file upload from request
-- GIVEN an HTTP request with a file in the `_file` field
-- AND headers `Publication-Id: abc-123` and `Publication-Title: Report`
-- WHEN handleFile() is called
-- THEN checkUploadedFile() validates the upload (exists, no errors)
-- AND folders are created: `Publicaties/`, `Publicaties/(abc-123) Report/`, `Publicaties/(abc-123) Report/Bijlagen/`
-- AND the file is uploaded to `Publicaties/(abc-123) Report/Bijlagen/{filename}`
-- AND AddFileInfoToData() adds reference, type, size, title, extension, accessUrl, downloadUrl to the data array
-
-### Scenario: Generate PDF from Twig template
-- GIVEN a Twig template `publication.html.twig` exists in `lib/Templates/`
-- WHEN createPdf() is called with template name and context data
-- THEN Twig renders the HTML
-- AND mPDF converts it to PDF using `/tmp/mpdf/` as temp directory
-- AND the Mpdf object is returned for output (caller chooses FILE, DOWNLOAD, etc.)
-
-### Scenario: File already exists on upload
-- GIVEN a file already exists at the target path
-- WHEN uploadFile() is called with the same path
-- THEN the method returns false (file not overwritten)
-- AND a warning is logged
-
-### Scenario: Share link permissions
-- GIVEN createShareLink() is called with shareType=3 (public link)
-- AND permissions=null
-- THEN permissions default to 1 (read-only) for public share types
-- AND for non-public share types, permissions default to 31 (all)
-
-## Dependencies
-
-- **Nextcloud IRootFolder** - File system access via user folders
-- **Nextcloud IManager** (Share) - Create, find, and manage file shares
-- **Nextcloud IUserSession** - Current user context for file operations
-- **mPDF** - PDF generation library (requires `/tmp/mpdf/` directory with write permissions)
-- **Twig** - Template engine for PDF HTML rendering (`lib/Templates/` directory)
-- **ZipArchive** - PHP extension for ZIP archive creation
-
-## Notes
-
-- The file has `ini_set('memory_limit', '2048M')` at the top of the namespace declaration, which increases PHP memory limit to 2GB for large file operations.
-- The `getCurrentDomain()` method uses `$_SERVER['HTTPS']` and `$_SERVER['HTTP_HOST']` directly rather than Nextcloud's IURLGenerator, which may not work correctly in CLI/cron contexts.
-- Share permissions use Nextcloud constants: 1=read, 2=update, 4=create, 8=delete, 16=share, 31=all.
-- There is a typo in the use statement: `use Mpdf\MpMpdfdf;` (should be `use Mpdf\Mpdf;`), but the actual `Mpdf` class usage in createPdf() works because it references the class directly.
+- `openregister/openspec/changes/register-resolver-service/` (upstream dependency)
+- OR File Attachments capability (`x-openregister-file` schema annotation)
+- `.claude/audit-2026-05-03/02-spec-rewrite.md` (Stream 2 NEEDS-REWRITE rationale)
+- `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 3 implementation change)
+- `openspec/specs/download-service/spec.md` (PDF/ZIP streaming wrapper, dependent on Phase 3)
+- ADR-022 — Apps consume OR abstractions

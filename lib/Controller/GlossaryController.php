@@ -237,9 +237,6 @@ class GlossaryController extends Controller
             $searchQuery['@self']['register'] = $glossaryConfig['register'];
         }
 
-        // Use database source (SOLR index may not be available in all environments).
-        $searchQuery['_source'] = 'database';
-
         // Use searchObjectsPaginated for better performance and pagination support.
         // rbac=true enforces schema authorization; multi=false for public glossary access.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
@@ -309,9 +306,8 @@ class GlossaryController extends Controller
     {
         // Use searchObjectsPaginated to find single glossary term.
         $searchQuery = [
-            '_ids'    => [$id],
-            '_limit'  => 1,
-            '_source' => 'database',
+            '_ids'   => [$id],
+            '_limit' => 1,
         ];
         $result      = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
 

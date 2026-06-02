@@ -1,5 +1,9 @@
 # Design — opencatalogi-adopt-or-abstractions
 
+## Status
+
+status: pr-created
+
 ## Context
 
 opencatalogi is the highest-traffic frontend in the Conduction fleet — it

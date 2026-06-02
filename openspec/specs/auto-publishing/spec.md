@@ -1,258 +1,220 @@
 ---
 status: reviewed
+or_dep: x-openregister-lifecycle
+audit_ref: .claude/audit-2026-05-03/04-hardcoded.md
 ---
 
 # Auto-Publishing
 
+> **x-openregister-lifecycle citation (Phase 8):** This spec is updated
+> as part of `opencatalogi-adopt-or-abstractions` (Phase 8). The PHP
+> state machine for publication state transitions is replaced by a
+> citation of OR's `x-openregister-lifecycle` schema extension.
+> opencatalogi MUST NOT encode allowed transitions, guards, or state
+> sequences in PHP. See the REMOVED section and Breaking Changes.
+>
+> Upstream dependency: OR `x-openregister-lifecycle` schema extension
+> (ADR-031).
+
 ## Purpose
 
-@e2e exclude pure backend event-listener spec — all scenarios test server-side APB logic (ObjectCreatedEvent/ObjectUpdatedEvent handlers, catalog matching, FileMapper, share-link creation) with no browser-observable surface; covered by PHPUnit instead.
+The auto-publishing system automatically publishes OpenRegister objects and
+their file attachments when they are created or updated, based on configurable
+admin options. It listens to OR's `ObjectCreatedEvent` and
+`ObjectUpdatedEvent` events, evaluates whether the object belongs to a
+configured catalog, and triggers publish and share-link creation.
 
-The auto-publishing system automatically publishes OpenRegister objects and their file attachments when they are created or updated, based on configurable publishing options. It listens to OpenRegister's `ObjectCreatedEvent` and `ObjectUpdatedEvent` via Nextcloud's event dispatcher, evaluates whether the object belongs to a catalog, and triggers publish and share-link creation operations. This eliminates the need for manual publishing workflows for organizations that want all catalog content to be immediately public.
+**Scope limitation:** This system's responsibility is limited to the
+opencatalogi-specific side effect — catalog-membership evaluation and WOO
+publishing policy. This has NO OR leaf equivalent (APB-001 rationale).
+The system MUST NOT serve as a bespoke activity feed (APB-ACT-001) and
+MUST NOT encode state machine transitions in PHP (APB-SM-001 below).
+
+After Phase 8:
+- **Publication state transitions** (draft → review → published → archived)
+  are declared in the publication schema via `x-openregister-lifecycle`
+  and executed by OR. opencatalogi is NOT responsible for computing allowed
+  transitions or enforcing guards.
+- **Auto-publish side effect** (setting `@self.published` when an object
+  matches a catalog) remains in-app because it is opencatalogi-specific
+  policy with no OR leaf equivalent.
+
+## ADDED Requirements
+
+### Requirement: publication state transitions consumed from `x-openregister-lifecycle` (APB-SM-001)
+
+The publication schema MUST declare its state machine via the
+`x-openregister-lifecycle` extension:
+
+```json
+{
+  "x-openregister-lifecycle": {
+    "states": ["draft", "review", "published", "archived"],
+    "transitions": [
+      { "from": "draft",     "to": "review",    "trigger": "submitForReview" },
+      { "from": "review",    "to": "published", "trigger": "publish" },
+      { "from": "review",    "to": "draft",     "trigger": "reject" },
+      { "from": "published", "to": "archived",  "trigger": "archive" },
+      { "from": "published", "to": "draft",     "trigger": "depublish" }
+    ]
+  }
+}
+```
+
+opencatalogi MUST NOT encode this state machine in a PHP class. Any PHP code
+that hard-codes state names, validates allowed transitions, or acts as a
+transition guard MUST be removed in the Phase 8 implementation.
+
+#### Scenario: publishing transitions read from the schema
+
+- **GIVEN** the publication schema declares `x-openregister-lifecycle`,
+- **WHEN** opencatalogi processes a state change,
+- **THEN** the allowed transitions and guards come from the schema declaration,
+- **AND** PHP code in opencatalogi does NOT hold a duplicate state machine.
+
+#### Scenario: invalid transition rejected by OR
+
+- **GIVEN** a publication is in state `draft`,
+- **WHEN** a user attempts to apply the `archive` transition (not declared
+  from `draft`),
+- **THEN** OR rejects the transition per the schema lifecycle declaration,
+- **AND** opencatalogi does NOT perform its own duplicate transition-validity
+  check.
+
+### Requirement: per-publication activity feed consumes the OR activity leaf (APB-ACT-001)
+
+The per-publication activity feed (create / update / publish / depublish /
+file-change history) MUST be provided by the OR activity leaf sourced from
+OR's event stream and audit trail. It is surfaced as the activity widget on
+the publication detail page via the app manifest entry for `PublicationDetail`
+(`src/manifest.json`, widgetKey: `activity`, ADR-024).
+
+opencatalogi MUST NOT maintain a separate in-app activity table or compute
+activity events from `ObjectCreatedEventListener` / `ObjectUpdatedEventListener`.
+
+#### Scenario: view a publication's activity history
+
+- **GIVEN** a publication that has been created, updated, and published,
+- **WHEN** a user views the activity widget on the detail page,
+- **THEN** the events are listed from the OR activity leaf,
+- **AND** opencatalogi does NOT maintain a separate in-app activity table.
+
+#### Scenario: activity leaf absent
+
+- **GIVEN** the OR activity leaf is not available,
+- **WHEN** the publication detail page renders,
+- **THEN** the activity widget degrades gracefully ("activity integration required"),
+  rather than falling back to a bespoke feed.
 
 ## Requirements
 
-### Requirement: Per-publication activity feed consumes the OpenRegister activity leaf (APB-ACT-001)
-The system MUST provide the per-publication activity feed (create / update /
-publish / depublish / file-change history) by consuming the OpenRegister
-activity leaf sourced from OR's event stream and audit trail — NOT by building
-a bespoke in-app activity log on top of `ObjectCreatedEventListener` /
-`ObjectUpdatedEventListener` (hydra ADR-022). The feed is surfaced as the
-activity widget on the publication detail page via the app manifest entry for
-`PublicationDetail` (`src/manifest.json`, widgetKey: `activity`, ADR-024 /
-ADR-036).
+### Requirement: Listen to `ObjectCreatedEvent` and trigger auto-publishing logic (APB-001)
 
-#### Scenario: View a publication's activity history
-- GIVEN a publication that has been created, updated, and published
-- WHEN a user opens the publication detail page and views the activity widget
-- THEN the create / update / publish events are listed from the OpenRegister activity leaf
-- AND OpenCatalogi does NOT maintain a separate in-app activity table for these events
-
-#### Scenario: Activity leaf absent
-- GIVEN the OpenRegister activity leaf / integration is not available
-- WHEN the publication detail page renders
-- THEN the activity widget degrades gracefully ("activity integration required")
-  rather than falling back to a bespoke feed
+The system MUST listen to OR's `ObjectCreatedEvent` and trigger auto-publishing
+logic. This listener's responsibility is limited to the opencatalogi-specific
+catalog-membership + WOO publishing policy side effect, which has NO OR leaf
+equivalent (explicit exception per ADR-022). The listener MUST NOT serve as a
+bespoke activity feed — object-change activity is consumed from the OR activity
+leaf (APB-ACT-001). Debug `OPENCATALOGI_EVENT_*` logging is removed.
 
 **Priority:** Must **Status:** Implemented
 
-### Requirement: Listen to OpenRegister `ObjectCreatedEvent` and trigger auto-publishing logic (APB-001)
-The system MUST listen to OpenRegister `ObjectCreatedEvent` and trigger
-auto-publishing logic. This listener's responsibility is limited to the
-OpenCatalogi-specific auto-publishing side effect (catalogue-membership + WOO
-publishing policy), which has NO OpenRegister leaf equivalent and is explicitly
-kept in-app per hydra ADR-022. The listener MUST NOT serve as a bespoke
-activity feed — object-change activity is consumed from the OR activity leaf
-(APB-ACT-001). Debug `OPENCATALOGI_EVENT_*` logging is removed.
+### Requirement: Listen to `ObjectUpdatedEvent` and trigger auto-publishing logic (APB-002)
 
-**Priority:** Must **Status:** Implemented
-
-### Requirement: Listen to OpenRegister `ObjectUpdatedEvent` and trigger auto-publishing logic (APB-002)
-The system MUST listen to OpenRegister `ObjectUpdatedEvent` and trigger
-auto-publishing logic. As with APB-001, the listener's scope is the
-OpenCatalogi-specific auto-publishing side effect only; the per-object activity
-feed is consumed from the OR activity leaf (APB-ACT-001), NOT reimplemented
-here. Debug `OPENCATALOGI_EVENT_*` logging is removed.
+The system MUST listen to OR's `ObjectUpdatedEvent` and trigger auto-publishing
+logic. Scope is identical to APB-001. Debug logging removed.
 
 **Priority:** Must **Status:** Implemented
 
 ### Requirement: Auto-publish newly created objects when `auto_publish_objects` is enabled (APB-003)
-The system MUST auto-publish newly created objects when `auto_publish_objects` is enabled.
 
 **Priority:** Must **Status:** Implemented
 
-### Requirement: Auto-publish file attachments (create share links) when `auto_publish_attachments` is enabled (APB-004)
-The system MUST auto-publish file attachments (create share links) when `auto_publish_attachments` is enabled.
+### Requirement: Auto-publish file attachments when `auto_publish_attachments` is enabled (APB-004)
 
-**Priority:** Must **Status:** Implemented
+Share links are created via the OR shares leaf or `OCP\Share\IShareManager`
+per `file-management/spec.md` FIL-OR-002. The auto-publishing system MUST NOT
+call a bespoke `FileService::createShareLink()`.
+
+**Priority:** Must **Status:** Implemented (share path updated in Phase 3)
 
 ### Requirement: Only auto-publish objects whose register/schema match a configured catalog (APB-005)
-The system MUST only auto-publish objects whose register/schema match a configured catalog.
 
 **Priority:** Must **Status:** Implemented
 
 ### Requirement: Determine publication status from `@self.published` and `@self.depublished` timestamps (APB-006)
-The system MUST determine publication status from `@self.published` and `@self.depublished` timestamps.
+
+`@self.published` and `@self.depublished` are set by OR's lifecycle
+declarations (APB-SM-001); opencatalogi reads them to determine whether an
+object is currently published.
 
 **Priority:** Must **Status:** Implemented
 
-### Requirement: Skip event processing entirely when both auto-publish options are disabled (early return) (APB-007)
-The system SHOULD skip event processing entirely when both auto-publish options are disabled (early return).
+### Requirement: Skip event processing when both auto-publish options are disabled (APB-007)
 
 **Priority:** Should **Status:** Implemented
 
 ### Requirement: On update events, only process attachment publishing for already-published objects (APB-008)
-The system SHOULD only process attachment publishing for already-published objects on update events.
 
 **Priority:** Should **Status:** Implemented
 
-### Requirement: On update events, detect publication status transitions (unpublished to published) (APB-009)
-The system SHOULD detect publication status transitions (unpublished to published) on update events.
+### Requirement: On update events, detect publication status transitions (APB-009)
+
+Status transitions are executed by OR per the `x-openregister-lifecycle`
+declaration (APB-SM-001). This listener detects the resulting state change
+in the event payload but does NOT compute or validate the transition.
 
 **Priority:** Should **Status:** Implemented
 
-### Requirement: Use FileMapper for direct database file access to avoid infinite loop with ObjectService (APB-010)
-The system MUST use FileMapper for direct database file access to avoid infinite loop with ObjectService.
+### Requirement: Use FileMapper for direct database file access to avoid infinite loop (APB-010)
 
 **Priority:** Must **Status:** Implemented
 
 ### Requirement: Skip already-published files (those with existing share tokens) (APB-011)
-The system SHOULD skip already-published files (those with existing share tokens).
 
 **Priority:** Should **Status:** Implemented
 
 ### Requirement: Return structured results with processed/published/error counts (APB-012)
-The system SHOULD return structured results with processed/published/error counts.
 
 **Priority:** Should **Status:** Implemented
 
-### Requirement: Log all processing results (successes and errors) for monitoring (APB-013)
-The system SHOULD log all processing results (successes and errors) for monitoring.
+### Requirement: Log all processing results for monitoring (APB-013)
 
 **Priority:** Should **Status:** Implemented
 
-### Requirement: Gracefully handle exceptions without breaking the originating OpenRegister operation (APB-014)
-The system MUST gracefully handle exceptions without breaking the originating OpenRegister operation.
+### Requirement: Gracefully handle exceptions without breaking the originating OR operation (APB-014)
 
 **Priority:** Must **Status:** Implemented
 
-### Requirement: Event listeners registered in Application.php bootstrap via IRegistrationContext (APB-015)
-Event listeners MUST be registered in Application.php bootstrap via IRegistrationContext.
+### Requirement: Event listeners registered in Application.php bootstrap (APB-015)
 
 **Priority:** Must **Status:** Implemented
 
-## Architecture
+## REMOVED Requirements
 
-### Event Flow
+| ID | Title | Reason removed |
+|----|-------|----------------|
+| (PHP state machine) | Any PHP constant, class, or method that encodes publication state names, validates allowed transitions, or acts as a transition guard | REMOVED — re-implements OR's `x-openregister-lifecycle`; consume OR per ADR-022 and ADR-031. The state machine is declared in the publication schema; PHP code in opencatalogi does NOT hold a parallel version. |
 
-```
-OpenRegister ObjectCreatedEvent/ObjectUpdatedEvent
-  --> Nextcloud IEventDispatcher
-    --> ObjectCreatedEventListener / ObjectUpdatedEventListener
-      --> Check publishing options (SettingsService)
-      --> Convert ObjectEntity to array format
-      --> EventService.handleObjectCreateEvents() / handleObjectUpdateEvents()
-        --> shouldAutoPublishObject() (catalog matching)
-        --> publishObject() (ObjectService.publish())
-        --> publishObjectAttachments() (FileMapper + FileService.createShareLink())
-```
+## Breaking Changes
 
-### Key Components
+| Breaking change | Old behaviour | New behaviour |
+|---|---|---|
+| PHP state machine for publication transitions removed | Transition logic in PHP (state names, allowed-transition arrays, guard checks) | State machine declared in publication schema via `x-openregister-lifecycle`; OR executes transitions. Any PHP code checking allowed transitions directly will be deleted. |
+| Share-link creation in auto-publishing | Called bespoke `FileService::createShareLink()` | Calls OR shares leaf or `IShareManager::createShare()` per FIL-OR-002; bespoke `FileService::createShareLink()` is deleted. |
 
-| Component | Location | Responsibility |
-|-----------|----------|----------------|
-| ObjectCreatedEventListener | `lib/Listener/ObjectCreatedEventListener.php` | Handles ObjectCreatedEvent, checks settings, delegates to EventService |
-| ObjectUpdatedEventListener | `lib/Listener/ObjectUpdatedEventListener.php` | Handles ObjectUpdatedEvent, checks settings, detects status changes, delegates to EventService |
-| EventService | `lib/Service/EventService.php` | Core auto-publishing logic: catalog matching, object publishing, attachment publishing |
-| SettingsService | `lib/Service/SettingsService.php` | Provides `getPublishingOptions()` for auto_publish_objects and auto_publish_attachments |
-| Application | `lib/AppInfo/Application.php` | Registers event listeners via `registerEventListener()` |
-
-### Configuration Keys
+## Configuration Keys
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `auto_publish_objects` | string (bool) | "false" | When true, newly created objects matching a catalog are auto-published |
-| `auto_publish_attachments` | string (bool) | "false" | When true, files on published objects get share links created automatically |
+| `auto_publish_objects` | string (bool) | `"false"` | When `"true"`, auto-set `@self.published` on objects matching a catalog |
+| `auto_publish_attachments` | string (bool) | `"false"` | When `"true"`, auto-create public share links for attachments on published objects |
 
-## Data Model
+## References
 
-Auto-publishing does not have its own data model. It operates on OpenRegister objects and uses:
-
-- **Object metadata**: `@self.register`, `@self.schema`, `@self.uuid`, `@self.published`, `@self.depublished`
-- **Catalog objects**: `registers[]`, `schemas[]` arrays to determine if an object belongs to a catalog
-- **File data**: `share_token` (from FileMapper) to determine if a file is already published
-
-### Processing Result Structure
-
-```php
-[
-    'processed'            => int,   // Number of objects processed
-    'published'            => int,   // Number of objects published
-    'attachmentsPublished' => int,   // Number of attachments published
-    'errors'               => [],    // Array of error messages
-    'details'              => [      // Per-object results
-        [
-            'objectId' => string,
-            'actions'  => [],        // e.g., 'object_published', 'attachments_processed'
-            'errors'   => [],
-        ]
-    ]
-]
-```
-
-## Scenarios
-
-### Scenario: Auto-publish a newly created object
-- GIVEN `auto_publish_objects` is enabled
-- AND a catalog exists with registers `[1]` and schemas `[2]`
-- WHEN an OpenRegister object is created with register=1 and schema=2
-- THEN the ObjectCreatedEventListener receives the ObjectCreatedEvent
-- AND EventService.shouldAutoPublishObject() checks all catalogs
-- AND finds that the object's register/schema match the catalog
-- AND EventService.publishObject() calls ObjectService.publish()
-- AND the object's published timestamp is set
-
-### Scenario: Auto-publish attachments on a published object
-- GIVEN `auto_publish_attachments` is enabled
-- AND an object is published (has published timestamp, no depublished)
-- WHEN the object is created or updated
-- THEN EventService.publishObjectAttachments() is called
-- AND FileMapper.getFilesForObject() retrieves files directly from database
-- AND for each file without a share_token, FileService.createShareLink() is called
-- AND the share link is created with read-only permissions (type 3, permissions 1)
-
-### Scenario: Skip processing when auto-publish is disabled
-- GIVEN both `auto_publish_objects` and `auto_publish_attachments` are false
-- WHEN an OpenRegister object is created or updated
-- THEN the listener returns early without processing
-- AND no calls are made to EventService
-
-### Scenario: Object update triggers attachment publishing only
-- GIVEN `auto_publish_objects` is false
-- AND `auto_publish_attachments` is true
-- AND an existing published object is updated
-- WHEN the ObjectUpdatedEventListener receives the event
-- THEN shouldProcessUpdate() returns true (object is published, attachments enabled)
-- AND only handleObjectUpdateEvents() is called (not handleObjectCreateEvents())
-- AND only attachment publishing logic runs (no object publish)
-
-### Scenario: Avoid infinite loop with FileMapper
-- GIVEN `auto_publish_attachments` is enabled
-- AND a published object has 3 files
-- WHEN attachments are being published
-- THEN FileMapper.getFilesForObject() reads files directly from database
-- AND FileService.createShareLink() creates shares without triggering object updates
-- AND no ObjectUpdatedEvent is re-dispatched (avoiding infinite recursion)
-
-### Scenario: Object does not belong to any catalog
-- GIVEN `auto_publish_objects` is enabled
-- AND the object has register=5, schema=10
-- AND no catalog includes register 5 and schema 10
-- WHEN the object is created
-- THEN shouldAutoPublishObject() returns false
-- AND the object is NOT auto-published
-
-### Scenario: Publication status determination
-- GIVEN an object with `@self.published = "2024-01-15T10:00:00+00:00"` and `@self.depublished = null`
-- THEN isObjectPublished() returns true
-- GIVEN an object with `@self.published = "2024-01-15T10:00:00+00:00"` and `@self.depublished = "2024-01-16T10:00:00+00:00"`
-- THEN isObjectPublished() returns false (depublished is after published)
-- GIVEN an object with `@self.published = "2024-01-16T10:00:00+00:00"` and `@self.depublished = "2024-01-15T10:00:00+00:00"`
-- THEN isObjectPublished() returns true (published is after depublished = re-published)
-
-## Dependencies
-
-- **OpenRegister ObjectService** - `publish()` for setting published timestamp, `find()` for object lookup, `searchObjects()` for catalog queries
-- **OpenRegister FileService** - `createShareLink()` for creating public share links on files
-- **OpenRegister FileMapper** - `getFilesForObject()` for direct database file access (avoids infinite loops)
-- **OpenRegister Events** - `ObjectCreatedEvent`, `ObjectUpdatedEvent` dispatched by OpenRegister when objects change
-- **SettingsService** - `getPublishingOptions()` for auto_publish_objects and auto_publish_attachments configuration
-- **Nextcloud IEventDispatcher** - Event dispatching and listener registration
-- **CatalogiService** (indirect) - Catalog schema/register configuration used to determine catalog membership
-
-## Notes
-
-- **Activity feed**: Per APB-ACT-001, the per-publication activity feed is provided by the OpenRegister activity leaf widget declared in `src/manifest.json` (`PublicationDetail` page, widgetKey: `activity`). No bespoke in-app activity table is maintained.
-- **File path conversion**: When creating share links, the OpenRegister path format requires a `/OpenRegister/` prefix to be added to the FileMapper path.
-- **ObjectEntity conversion**: Both listeners manually construct the `@self` metadata array from the ObjectEntity, as the jsonSerialize() output may not include all required fields.
-- **TODO in code**: The ObjectUpdatedEventListener sets `@self.files = []` with a TODO comment about implementing a safer way to get file information for attachment publishing.
+- OR `x-openregister-lifecycle` schema extension (upstream dependency)
+- `.claude/audit-2026-05-03/04-hardcoded.md` (Stream 4 rationale for Phase 8)
+- `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 8 implementation change)
+- `openspec/specs/file-management/spec.md` (FIL-OR-002 — share creation)
+- ADR-022 — Apps consume OR abstractions
+- ADR-031 — Schema-declarative business logic

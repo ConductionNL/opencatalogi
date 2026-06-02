@@ -4,6 +4,8 @@ on:
   push:
     branches: [development]
 
+permissions: {}
+
 jobs:
   sync-to-beta:
     uses: Conduction/.github/.github/workflows/sync-to-beta.yml@main
