@@ -716,6 +716,33 @@ class SettingsService
                 throw new RuntimeException("Invalid JSON in configuration file: ".json_last_error_msg());
             }
 
+            // ADR-037: merge modular register fragments from Settings/register.d/*.json.
+            // Each OpenSpec change drops its own fragment file instead of editing this
+            // monolith, so concurrent builds touch disjoint files (no merge conflicts).
+            // OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
+            // fragments union cleanly by key.
+            $fragmentDir = $appPath.'/lib/Settings/register.d';
+            $fragmentSig = '';
+            if (is_dir($fragmentDir) === true) {
+                $fragmentFiles = glob($fragmentDir.'/*.json');
+                sort($fragmentFiles);
+                foreach ($fragmentFiles as $fragmentFile) {
+                    $fragmentContent = file_get_contents($fragmentFile);
+                    if ($fragmentContent === false) {
+                        continue;
+                    }
+
+                    $fragmentData = json_decode($fragmentContent, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        // Skip malformed fragment; the monolith import still succeeds.
+                        continue;
+                    }
+
+                    $data         = self::deepMergeConfig($data, $fragmentData);
+                    $fragmentSig .= basename($fragmentFile).':'.md5($fragmentContent).';';
+                }
+            }//end if
+
             // Calculate relative path from Nextcloud root for sourceUrl tracking.
             // appPath is something like /var/www/html/apps-extra/opencatalogi
             // We need to get the part after the Nextcloud root.
@@ -750,6 +777,12 @@ class SettingsService
             // Get the current app version. dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
+            // ADR-037: fold the fragment signature into the version so OpenRegister's
+            // version-gated importFromApp re-imports whenever register.d fragments change.
+            if ($fragmentSig !== '') {
+                $currentAppVersion .= '+frag.'.substr(md5($fragmentSig), 0, 8);
+            }
+
             // Use importFromApp to import the configuration data directly.
             // This avoids the file path resolution issue in importFromFilePath.
             $result = $configurationService->importFromApp(
@@ -768,6 +801,41 @@ class SettingsService
         }//end try
 
     }//end loadSettings()
+
+    /**
+     * Deep-merge a register fragment onto the base config (ADR-037).
+     *
+     * Associative arrays (OpenAPI objects like `components.schemas`, `paths`) are
+     * merged by key union (recursing on shared keys); list arrays are concatenated;
+     * scalars in the fragment overwrite the base. Disjoint fragments never collide.
+     *
+     * @param array<mixed> $base    The accumulated config.
+     * @param array<mixed> $overlay The fragment to merge in.
+     *
+     * @return array<mixed> The merged config.
+     */
+    private static function deepMergeConfig(array $base, array $overlay): array
+    {
+        foreach ($overlay as $key => $value) {
+            if (is_array($value) === true
+                && isset($base[$key]) === true
+                && is_array($base[$key]) === true
+            ) {
+                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+                if ($baseIsList === true && $overlayIsList === true) {
+                    $base[$key] = array_merge($base[$key], $value);
+                } else {
+                    $base[$key] = self::deepMergeConfig($base[$key], $value);
+                }
+            } else {
+                $base[$key] = $value;
+            }
+        }
+
+        return $base;
+
+    }//end deepMergeConfig()
 
     /**
      * Update the app configuration with imported schema and register IDs.
