@@ -20,7 +20,6 @@ function load() {
 	return pending
 }
 
-/** @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-1 */
 export function useIsAdmin() {
 	if (!loaded.value) load()
 	return { isAdmin, loaded }

@@ -64,6 +64,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:options="schemaOptions"
 					:input-label="t('opencatalogi', 'Schemas*')"
 					:disabled="objectStore.isLoading('catalog')"
+					:keep-open="true"
 					multiple />
 				<NcSelect v-model="catalogi.status"
 					:options="statusOptions"
@@ -180,9 +181,20 @@ export default {
 			// Get all unique schema IDs from the selected registers
 			const availableSchemaIds = [...new Set(selectedAvailableRegisters.flatMap(register => register.schemas.map(schema => schema.id)))]
 
-			// Filter and map the schemas
+			// Exclude schemas that are already selected
+			const selectedSchemaIds = this.selectedSchemas.map(schema => schema.id)
+
+			// Dedupe by schema id — availableSchemas contains one entry per (register, schema) pair,
+			// so a schema exposed by multiple selected registers would otherwise appear multiple times
+			// and trigger Vue duplicate-key warnings in NcSelect.
+			const seen = new Set()
 			return objectStore.availableSchemas
-				.filter(schema => availableSchemaIds.includes(schema.id))
+				.filter(schema => availableSchemaIds.includes(schema.id) && !selectedSchemaIds.includes(schema.id))
+				.filter(schema => {
+					if (seen.has(schema.id)) return false
+					seen.add(schema.id)
+					return true
+				})
 				.map(schema => ({
 					id: schema.id,
 					label: `${schema.title} (${schema.registerTitle})`,

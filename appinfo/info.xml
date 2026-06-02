@@ -15,7 +15,7 @@ The OpenCatalogi Nextcloud app provides a framework for federated catalogi to wo
 
 **System Cron is currently required for this app to work**
 
-Requirements can be found [here](https://conduction.gitbook.io/opencatalogi-nextcloud/installatie)
+Requirements can be found [here](https://opencatalogi.conduction.nl/docs/Installation/)
 
 The Roadmap is available [here](https://github.com/orgs/OpenCatalogi/projects/1/views/2)
 
@@ -25,18 +25,18 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 
 **Support:** For support, contact support@conduction.nl. For a Service Level Agreement (SLA), contact sales@conduction.nl.
     ]]></description>
-	<version>0.7.34</version>
+	<version>0.7.33</version>
 	<licence>agpl</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
 	<namespace>OpenCatalogi</namespace>
     <documentation>
-        <user>https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers</user>
-        <admin>https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders</admin>
-        <developer>https://conduction.gitbook.io/opencatalogi-nextcloud/developers</developer>
+        <user>https://opencatalogi.conduction.nl/docs/Users/</user>
+        <admin>https://opencatalogi.conduction.nl/docs/Administrator/</admin>
+        <developer>https://opencatalogi.conduction.nl/docs/Developers/</developer>
     </documentation>
     <category>integration</category>
-    <website>https://documentatie.opencatalogi.nl/</website>
+    <website>https://opencatalogi.conduction.nl/</website>
 	<bugs>https://github.com/OpenCatalogi/.github/issues</bugs>
     <repository type="git">https://github.com/ConductionNL/opencatalogi.git</repository>
 
@@ -45,7 +45,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
     <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/2.png</screenshot>
 
    	<dependencies>
-        <php min-version="8.3" min-int-size="64"/>
+        <php min-version="8.0" min-int-size="64"/>
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
@@ -54,7 +54,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
         <lib>zip</lib>
 
         <owncloud max-version="0" min-version="0"/>
-		<nextcloud min-version="28" max-version="34"/>
+		<nextcloud min-version="28" max-version="33"/>
 	</dependencies>
 
 	<repair-steps>
@@ -65,7 +65,6 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 
 	<background-jobs>
 		<job>OCA\OpenCatalogi\Cron\DirectorySync</job>
-		<job>OCA\OpenCatalogi\Cron\Broadcast</job>
 	</background-jobs>
 
 	<navigations>

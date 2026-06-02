@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, beta]
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   branch-protection:
     uses: Conduction/.github/.github/workflows/branch-protection.yml@main

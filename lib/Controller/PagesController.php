@@ -273,9 +273,8 @@ class PagesController extends Controller
 
         // Build search query to find page by slug.
         $searchQuery = [
-            'slug'    => $slug,
-            '_limit'  => 1,
-            '_source' => 'database',
+            'slug'   => $slug,
+            '_limit' => 1,
         ];
 
         // Add schema filter if configured using _schema for magic mapper routing.
