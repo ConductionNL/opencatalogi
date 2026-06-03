@@ -134,7 +134,7 @@ class PublicationService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -223,7 +223,7 @@ class PublicationService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
@@ -776,10 +776,9 @@ class PublicationService
             $object = $this->getObjectService()->find($id, $extend);
 
             // Enforce published predicate: anonymous callers must not see unpublished objects.
+            $objectArray = $object->jsonSerialize();
             if (is_array($object) === true) {
                 $objectArray = $object;
-            } else {
-                $objectArray = $object->jsonSerialize();
             }
 
             if ($this->getQueryService()->isAnonymous() === true
@@ -865,7 +864,10 @@ class PublicationService
         // Validate that the object exists (throws if not found) and enforce
         // published predicate for anonymous callers.
         $object      = $objectService->find(id: $id, _extend: []);
-        $objectArray = is_array($object) === true ? $object : $object->jsonSerialize();
+        $objectArray = $object->jsonSerialize();
+        if (is_array($object) === true) {
+            $objectArray = $object;
+        }
 
         if ($this->getQueryService()->isAnonymous() === true
             && $this->getQueryService()->isObjectPublic($objectArray) === false
@@ -910,6 +912,8 @@ class PublicationService
       * @NoAdminRequired
       * @NoCSRFRequired
       *
+      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+      *
       * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
       */
     public function download(
@@ -931,7 +935,10 @@ class PublicationService
             // Validate that the object exists and enforce published predicate for
             // anonymous callers before serving any file content.
             $object      = $objectService->find(id: $id, _extend: []);
-            $objectArray = is_array($object) === true ? $object : $object->jsonSerialize();
+            $objectArray = $object->jsonSerialize();
+            if (is_array($object) === true) {
+                $objectArray = $object;
+            }
 
             if ($this->getQueryService()->isAnonymous() === true
                 && $this->getQueryService()->isObjectPublic($objectArray) === false
@@ -1016,10 +1023,9 @@ class PublicationService
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
                 // on array" under SOLR (#736), mirroring the dual-shape handling that
                 // already exists in PublicationsController::index.
+                $objectArray = $object->jsonSerialize();
                 if (is_array($object) === true) {
                     $objectArray = $object;
-                } else {
-                    $objectArray = $object->jsonSerialize();
                 }
 
                 // Remove unwanted properties from the '@self' array.
@@ -1086,7 +1092,10 @@ class PublicationService
                 return new JSONResponse(['error' => 'Not Found'], 404);
             }
 
-            $rootObjectArray = is_array($rootObject) === true ? $rootObject : $rootObject->jsonSerialize();
+            $rootObjectArray = $rootObject->jsonSerialize();
+            if (is_array($rootObject) === true) {
+                $rootObjectArray = $rootObject;
+            }
 
             if ($this->getQueryService()->isAnonymous() === true
                 && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
@@ -1097,11 +1106,12 @@ class PublicationService
             // Get the relations for the object.
             // $rootObject may be an array (SOLR backend) or an entity (magic-mapper).
             // getRelations() is only available on entity objects.
-            $relationsArray = is_array($rootObject) === true
-                ? ($rootObject['@self']['relations'] ?? $rootObject['relations'] ?? [])
-                : $rootObject->getRelations();
+            $relationsArray = $rootObject->getRelations();
+            if (is_array($rootObject) === true) {
+                $relationsArray = $rootObject['@self']['relations'] ?? $rootObject['relations'] ?? [];
+            }
 
-            $relations      = array_values($relationsArray);
+            $relations = array_values($relationsArray);
 
             // Check if relations array is empty.
             if (empty($relations) === true) {
@@ -1167,7 +1177,10 @@ class PublicationService
                 return new JSONResponse(['error' => 'Not Found'], 404);
             }
 
-            $rootObjectArray = is_array($rootObject) === true ? $rootObject : $rootObject->jsonSerialize();
+            $rootObjectArray = $rootObject->jsonSerialize();
+            if (is_array($rootObject) === true) {
+                $rootObjectArray = $rootObject;
+            }
 
             if ($this->getQueryService()->isAnonymous() === true
                 && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
@@ -2329,6 +2342,8 @@ class PublicationService
      * @param array $queryParams The query parameters containing ordering instructions
      *
      * @return array The ordered results
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
      */

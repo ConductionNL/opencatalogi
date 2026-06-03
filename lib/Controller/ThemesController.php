@@ -168,7 +168,6 @@ class ThemesController extends Controller
      *
      * @return Response The CORS response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -303,10 +302,9 @@ class ThemesController extends Controller
         $theme = $this->getObjectService()->find($id, _rbac: true, _multitenancy: false);
 
         // Enforce published predicate for anonymous callers on single-item lookup.
+        $themeArray = $theme->jsonSerialize();
         if (is_array($theme) === true) {
             $themeArray = $theme;
-        } else {
-            $themeArray = $theme->jsonSerialize();
         }
 
         if ($this->queryService->isAnonymous() === true

@@ -77,6 +77,8 @@ class MenusController extends Controller
      * @param string                  $corsMethods        Allowed CORS methods.
      * @param string                  $corsAllowedHeaders Allowed CORS headers.
      * @param integer                 $corsMaxAge         CORS max age.
+     *
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         $appName,
@@ -171,7 +173,6 @@ class MenusController extends Controller
      *
      * @return Response The CORS response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
@@ -286,10 +287,9 @@ class MenusController extends Controller
         $menu = $result['results'][0];
 
         // Enforce published predicate for anonymous callers on single-item lookup.
+        $menuArray = $menu->jsonSerialize();
         if (is_array($menu) === true) {
             $menuArray = $menu;
-        } else {
-            $menuArray = $menu->jsonSerialize();
         }
 
         if ($this->queryService->isAnonymous() === true

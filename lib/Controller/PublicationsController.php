@@ -55,6 +55,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  */
 class PublicationsController extends Controller
 {
@@ -274,10 +275,9 @@ class PublicationsController extends Controller
 
         if (is_string($raw) === true) {
             $decoded = json_decode($raw, true);
+            $raw     = [];
             if (is_array($decoded) === true) {
                 $raw = $decoded;
-            } else {
-                $raw = [];
             }
         }
 
@@ -326,7 +326,6 @@ class PublicationsController extends Controller
      *
      * @return Response The CORS response
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *

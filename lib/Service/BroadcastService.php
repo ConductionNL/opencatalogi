@@ -48,6 +48,7 @@ use InvalidArgumentException;
  * The service uses dynamic versioning in User-Agent headers for proper identification.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class BroadcastService
 {
@@ -395,6 +396,9 @@ class BroadcastService
      * @return void
      *
      * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     private function assertSafeOutboundUrl(string $url): void
     {
@@ -421,12 +425,16 @@ class BroadcastService
         $ipsToCheck = [];
         if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
             $ipsToCheck[] = $host;
-        } else {
+        }
+
+        if (empty($ipsToCheck) === true) {
             $lookupHost = trim($host, '[]');
             if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
                 $ipsToCheck[] = $lookupHost;
-            } else {
-                $records = @dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+            }
+
+            if (empty($ipsToCheck) === true) {
+                $records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
                 if ($records !== false) {
                     foreach ($records as $record) {
                         if (isset($record['ip']) === true) {
@@ -452,8 +460,8 @@ class BroadcastService
             throw new InvalidArgumentException('Broadcast URL host could not be resolved');
         }
 
-        foreach ($ipsToCheck as $ip) {
-            if ($this->isBlockedIp($ip) === true) {
+        foreach ($ipsToCheck as $ipAddress) {
+            if ($this->isBlockedIp($ipAddress) === true) {
                 throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
             }
         }
@@ -465,11 +473,11 @@ class BroadcastService
      *
      * Checks private, loopback, link-local, and reserved ranges.
      *
-     * @param string $ip The IP address to check.
+     * @param string $ipAddress The IP address to check.
      *
      * @return boolean True if the IP is blocked, false if it is safe.
      */
-    private function isBlockedIp(string $ip): bool
+    private function isBlockedIp(string $ipAddress): bool
     {
         $blockedRanges = [
             '10.0.0.0/8',
@@ -483,7 +491,7 @@ class BroadcastService
         ];
 
         foreach ($blockedRanges as $range) {
-            if ($this->ipInRange($ip, $range) === true) {
+            if ($this->ipInRange($ipAddress, $range) === true) {
                 return true;
             }
         }
@@ -495,19 +503,19 @@ class BroadcastService
     /**
      * Check if an IP address falls within a CIDR range.
      *
-     * @param string $ip    The IP address to check.
-     * @param string $range The CIDR range (e.g. 10.0.0.0/8).
+     * @param string $ipAddress The IP address to check.
+     * @param string $range     The CIDR range (e.g. 10.0.0.0/8).
      *
      * @return boolean True if the IP is in the range, false otherwise.
      */
-    private function ipInRange(string $ip, string $range): bool
+    private function ipInRange(string $ipAddress, string $range): bool
     {
         [$subnet, $bits] = explode('/', $range);
 
-        if (filter_var(value: $ip, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+        if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
             && filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
         ) {
-            $ipBin     = inet_pton($ip);
+            $ipBin     = inet_pton($ipAddress);
             $subnetBin = inet_pton($subnet);
             if ($ipBin === false || $subnetBin === false) {
                 return false;
@@ -522,10 +530,10 @@ class BroadcastService
             return (($ipBin & $mask) === ($subnetBin & $mask));
         }//end if
 
-        if (filter_var(value: $ip, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+        if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
             && filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
         ) {
-            $ipLong     = ip2long($ip);
+            $ipLong     = ip2long($ipAddress);
             $subnetLong = ip2long($subnet);
             $maskLong   = (~0 << (32 - (int) $bits));
             return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
