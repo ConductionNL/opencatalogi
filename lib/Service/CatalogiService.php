@@ -808,9 +808,10 @@ class CatalogiService
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
                 // on array" under SOLR (#736), mirroring the dual-shape handling already
                 // present in CatalogiController/PublicationsController::index.
-                $objectArray = $object->jsonSerialize();
                 if (is_array($object) === true) {
                     $objectArray = $object;
+                } else {
+                    $objectArray = $object->jsonSerialize();
                 }
 
                 // @todo: a logged-in user should be able to see the full object.
