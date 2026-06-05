@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'Read directory') }}
 				</NcButton>
-				<NcButton @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/directory', '_blank')">
+				<NcButton @click="openLink('https://opencatalogi.conduction.nl/docs/Administrator/directory/', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>

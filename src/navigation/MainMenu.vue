@@ -1,13 +1,13 @@
 <template>
 	<NcAppNavigation>
 		<template #list>
-			<NcAppNavigationNew
+			<!-- <NcAppNavigationNew
 				:text="t('opencatalogi', 'Create Publication')"
 				@click="navigationStore.setModal('viewObject'); navigationStore.setTransferData('ignore selectedCatalogus'); objectStore.setActiveObject('publication', null)">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
-			</NcAppNavigationNew>
+			</NcAppNavigationNew> -->
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Dashboard')"
 				:to="{ name: 'Dashboard' }"
@@ -34,7 +34,7 @@
 			</NcAppNavigationItem>
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Documentation')"
-				@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers', '_blank')">
+				@click="openLink('https://opencatalogi.conduction.nl/', '_blank')">
 				<template #icon>
 					<BookOpenVariantOutline :size="20" />
 				</template>
@@ -108,12 +108,12 @@ import { translate as t } from '@nextcloud/l10n'
 import {
 	NcAppNavigation,
 	NcAppNavigationItem,
-	NcAppNavigationNew,
+	// NcAppNavigationNew,
 	NcAppNavigationSettings,
 } from '@nextcloud/vue'
 import { objectStore, navigationStore } from '../store/store.js'
 
-import Plus from 'vue-material-design-icons/Plus.vue'
+// import Plus from 'vue-material-design-icons/Plus.vue'
 import Finance from 'vue-material-design-icons/Finance.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
@@ -132,9 +132,9 @@ export default {
 	components: {
 		NcAppNavigation,
 		NcAppNavigationItem,
-		NcAppNavigationNew,
+		// NcAppNavigationNew,
 		NcAppNavigationSettings,
-		Plus,
+		// Plus,
 		Finance,
 		DatabaseEyeOutline,
 		DatabaseCogOutline,

@@ -954,6 +954,7 @@ export default {
 		// Listen to tags updates from UploadFiles modal
 		EventBus.$on('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 		EventBus.$on('upload-files:closed', this.onUploadFilesClosed)
+		EventBus.$on('upload-files:uploaded', this.onUploadFilesUploaded)
 		// Fetch current user's groups for schema rights filtering.
 		// Only apply filtering when we receive real group data; keep null on any failure so all schemas remain visible.
 		fetch('/ocs/v1.php/cloud/user?format=json', { headers: { 'OCS-APIREQUEST': 'true' } })
@@ -970,6 +971,7 @@ export default {
 		try {
 			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
+			EventBus.$off('upload-files:uploaded', this.onUploadFilesUploaded)
 		} catch (e) {
 			// ignore
 		}
@@ -990,6 +992,11 @@ export default {
 			} catch (e) {
 				console.error('Failed to apply updated tags from UploadFiles', e)
 			}
+		},
+		onUploadFilesUploaded(payload) {
+			if (!this.currentObject) return
+			if (payload?.publicationId && payload.publicationId !== this.currentObject.id) return
+			this.refreshFiles({ _page: this.filesCurrentPage, _limit: this.filesCurrentPageSize })
 		},
 		onUploadFilesClosed(payload) {
 			try {
@@ -2099,11 +2106,11 @@ export default {
 }
 
 .error-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 
 .warning-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .lock-icon {
@@ -2187,11 +2194,11 @@ export default {
 }
 
 .warningIcon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .publishedIcon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .tab-title {
@@ -2254,15 +2261,15 @@ export default {
 }
 
 .published-icon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .draft-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .depublished-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 
 /* Files info card */

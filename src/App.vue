@@ -121,3 +121,12 @@ export default {
 	},
 }
 </script>
+
+<style>
+/* CnContextMenu renders an NcActions trigger button that is only meant to be
+   opened programmatically via right-click. Hide it without relying on the
+   dist CSS file being imported. */
+.cn-context-menu-root .cn-context-menu {
+	display: none !important;
+}
+</style>

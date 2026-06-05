@@ -41,6 +41,7 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 ## Features
 
 ### Publication Management
+
 - **Create & Edit Publications** — Rich metadata editor for publications including title, summary, category, portal URL, and custom fields
 - **Attachments** — Upload documents, images, and other files to publications with automatic metadata extraction
 - **Publication Status** — Track publications through draft, published, and archived states
@@ -48,6 +49,7 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 - **Download & Export** — Generate downloadable packages of publications and their attachments
 
 ### Catalog Federation
+
 - **Multiple Catalogs** — Create and manage separate catalogs for different domains or departments (e.g., WOO documents, software, datasets)
 - **Federated Directory** — Register your catalogs in a shared directory so other organizations can discover and subscribe to them
 - **Listings** — Subscribe to external catalogs and synchronize their publications into your local search index
@@ -55,24 +57,28 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 - **Directory Sync** — Background cron job keeps federated listings up to date automatically
 
 ### Search & Discovery
+
 - **Faceted Search** — Filter publications by category, organization, catalog, date range, and custom metadata fields
 - **Full-Text Search** — Search across publication content and attached documents
 - **ElasticSearch Support** — Optional ElasticSearch backend for high-performance search at scale
 - **Public Search API** — RESTful endpoints for external frontends and third-party integrations
 
 ### Content Management
+
 - **Pages** — Create static content pages (about, contact, FAQ) served through the public API
 - **Menus** — Define navigation menus for the public-facing frontend
 - **Glossary** — Maintain a glossary of terms with definitions, shown alongside publications
 - **Themes** — Configure visual themes for the public frontend with colors, logos, and styling
 
 ### WOO Compliance
+
 - **Publication Categories** — Predefined categories aligned with WOO information categories (decisions, reports, advice, etc.)
 - **Metadata Standards** — Structured metadata following Dutch government open data standards
 - **Sitemap Generation** — Automatic sitemaps per catalog and category for search engine indexing
 - **Robots.txt** — Configurable robots.txt for controlling crawler access
 
 ### Administration
+
 - **Organization Management** — Configure the publishing organization with contact details and branding
 - **Settings Panel** — Centralized admin settings for storage, publishing rules, and federation behavior
 - **Manual Import** — Bulk import publications from external sources via the admin interface
@@ -94,13 +100,13 @@ graph TD
 
 ### Data Model
 
-| Object | Description | Standard |
-|--------|-------------|----------|
-| Publication | Core metadata wrapper for published information — title, summary, category, status | DCAT-AP |
-| Attachment | File or document linked to a publication with its own metadata | DCAT Distribution |
-| Catalogue | A named collection of publications with its own slug, organization, and settings | DCAT Catalog |
-| Organisation | The publishing organization with contact info, logo, and branding | Schema.org Organization |
-| Listing | A subscription to an external catalog from the federated directory | — |
+| Object       | Description                                                                        | Standard                |
+| ------------ | ---------------------------------------------------------------------------------- | ----------------------- |
+| Publication  | Core metadata wrapper for published information — title, summary, category, status | DCAT-AP                 |
+| Attachment   | File or document linked to a publication with its own metadata                     | DCAT Distribution       |
+| Catalogue    | A named collection of publications with its own slug, organization, and settings   | DCAT Catalog            |
+| Organisation | The publishing organization with contact info, logo, and branding                  | Schema.org Organization |
+| Listing      | A subscription to an external catalog from the federated directory                 | —                       |
 
 **Data standards:** DCAT-AP (EU metadata), Schema.org, WOO information categories.
 
@@ -131,13 +137,13 @@ opencatalogi/
 
 ## Requirements
 
-| Dependency | Version |
-|-----------|---------|
-| Nextcloud | 28 -- 33 |
-| PHP | 8.1+ |
-| PostgreSQL / MySQL 8+ / SQLite | — |
-| [OpenRegister](https://github.com/ConductionNL/openregister) | latest |
-| System Cron | required for federation sync |
+| Dependency                                                   | Version                      |
+| ------------------------------------------------------------ | ---------------------------- |
+| Nextcloud                                                    | 28 -- 33                     |
+| PHP                                                          | 8.1+                         |
+| PostgreSQL / MySQL 8+ / SQLite                               | —                            |
+| [OpenRegister](https://github.com/ConductionNL/openregister) | latest                       |
+| System Cron                                                  | required for federation sync |
 
 ## Installation
 
@@ -205,28 +211,28 @@ composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan, tests
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Vue 2.7, Pinia, @nextcloud/vue |
-| Build | Webpack 5, @nextcloud/webpack-vue-config |
-| Backend | PHP 8.1+, Nextcloud App Framework |
-| Data | OpenRegister (PostgreSQL JSON objects) |
-| Search | ElasticSearch 8 (optional), SQL full-text (default) |
-| PDF | mPDF for document generation |
-| Templates | Twig for content rendering |
-| Quality | PHPCS, PHPMD, Psalm, PHPStan, phpmetrics, ESLint, Stylelint |
+| Layer     | Technology                                                  |
+| --------- | ----------------------------------------------------------- |
+| Frontend  | Vue 2.7, Pinia, @nextcloud/vue                              |
+| Build     | Webpack 5, @nextcloud/webpack-vue-config                    |
+| Backend   | PHP 8.1+, Nextcloud App Framework                           |
+| Data      | OpenRegister (PostgreSQL JSON objects)                      |
+| Search    | ElasticSearch 8 (optional), SQL full-text (default)         |
+| PDF       | mPDF for document generation                                |
+| Templates | Twig for content rendering                                  |
+| Quality   | PHPCS, PHPMD, Psalm, PHPStan, phpmetrics, ESLint, Stylelint |
 
 ## Documentation
 
 Full documentation is available at **[documentatie.opencatalogi.nl](https://documentatie.opencatalogi.nl)**
 
-| Section | Description |
-|---------|-------------|
-| [User Guide](docs/Users/index.md) | Publishing, searching, and managing publications |
-| [Administrator Guide](docs/Administrator/README.md) | Catalog setup, directory configuration, themes, and metadata |
-| [Developer Guide](docs/Developers/index.md) | Local development setup, architecture, and API reference |
-| [Installation](docs/Installation/README.md) | On-premise, SaaS, and upgrade instructions |
-| [Schemas](docs/schema/) | JSON Schema definitions for publications, catalogs, and attachments |
+| Section                                             | Description                                                         |
+| --------------------------------------------------- | ------------------------------------------------------------------- |
+| [User Guide](docs/Users/index.md)                   | Publishing, searching, and managing publications                    |
+| [Administrator Guide](docs/Administrator/README.md) | Catalog setup, directory configuration, themes, and metadata        |
+| [Developer Guide](docs/Developers/index.md)         | Local development setup, architecture, and API reference            |
+| [Installation](docs/Installation/README.md)         | On-premise, SaaS, and upgrade instructions                          |
+| [Schemas](docs/schema/)                             | JSON Schema definitions for publications, catalogs, and attachments |
 
 ## Standards & Compliance
 
@@ -259,6 +265,7 @@ All dependencies (PHP and JavaScript) are automatically checked against an appro
 - **Font licenses:** OFL-1.0, OFL-1.1
 
 Dependencies with licenses not on this list will fail CI unless explicitly approved in `.license-overrides.json` with a documented justification.
+
 ## Authors
 
 Built by [Conduction](https://conduction.nl) and [Acato](https://acato.nl) -- open-source software for Dutch government and public sector organizations.
