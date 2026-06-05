@@ -15,6 +15,8 @@ Each public controller therefore implements a `preflightedCors()` action that an
 preflight with the appropriate `Access-Control-*` headers, allowing the browser to proceed
 with the real request.
 
+<!-- @e2e exclude CORS preflight is an HTTP-protocol concern (OPTIONS requests, Access-Control-* response headers) with no rendered UI — verified by Newman API contract tests asserting preflight headers per origin, not by a browser-driven Playwright test. -->
+
 ## Requirements
 
 ### Requirement: Answer CORS preflight requests on public API controllers (COR-001)
