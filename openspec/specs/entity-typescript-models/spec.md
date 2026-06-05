@@ -9,7 +9,7 @@ retrofit: true
 
 OpenCatalogi's frontend defines a TypeScript model for each domain object it works with — attachment, catalogi, configuration, glossary, listing, menu, organization, page, publication, publicationType and theme. Each model is a self-contained module under `src/entities/<name>/` that pairs a TypeScript type definition with an entity class that hydrates raw API responses into a typed, default-filled instance and exposes Zod-based client-side validation. This spec was reverse-engineered from observed code (retrofit). Schema standards are owned by OpenRegister server-side (ADR-011); these frontend models are a presentation/validation convenience layer over that data.
 
-<!-- @e2e exclude Pure TypeScript model layer (entity classes hydrate/coerce API JSON and run Zod validation in isolation) — exercised by Vitest unit tests over src/entities/**, no browser/UI surface to drive. -->
+> @e2e exclude Pure TypeScript model layer (entity classes hydrate/coerce API JSON and run Zod validation in isolation) — exercised by Vitest unit tests over src/entities/**, no browser/UI surface to drive.
 
 ## Requirements
 ### Requirement: Each domain object has a typed entity class hydrated from API data (ETM-001)

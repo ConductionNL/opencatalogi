@@ -20,7 +20,7 @@ OpenCatalogi serves as the public-facing publication platform for government tra
 - OpenRegister has a reference MetricsService and HeartbeatController that can serve as a shared pattern
 - All Conduction apps should expose the same standard metrics set for unified monitoring
 
-<!-- @e2e exclude Backend HTTP endpoints (GET /api/metrics, GET /api/health) with no UI surface — Prometheus text-format output and health JSON are verified by PHPUnit (MetricsController/HealthController tests) and Newman API contract checks, not by a browser. -->
+> @e2e exclude Backend HTTP endpoints (GET /api/metrics, GET /api/health) with no UI surface — Prometheus text-format output and health JSON are verified by PHPUnit (MetricsController/HealthController tests) and Newman API contract checks, not by a browser.
 
 ## Requirements
 
