@@ -65,6 +65,8 @@ opencatalogi MUST NOT encode this state machine in a PHP class. Any PHP code
 that hard-codes state names, validates allowed transitions, or acts as a
 transition guard MUST be removed in the Phase 8 implementation.
 
+> @e2e exclude Backend state-machine contract (allowed transitions/guards come from the schema's `x-openregister-lifecycle`; OR rejects undeclared transitions; opencatalogi holds no duplicate PHP state machine) — no UI surface; verified by PHPUnit (state-change processing reads the schema, invalid transition rejected by OR) plus a grep assertion that no PHP transition guard remains.
+
 #### Scenario: publishing transitions read from the schema
 
 - **GIVEN** the publication schema declares `x-openregister-lifecycle`,
@@ -91,6 +93,8 @@ the publication detail page via the app manifest entry for `PublicationDetail`
 
 opencatalogi MUST NOT maintain a separate in-app activity table or compute
 activity events from `ObjectCreatedEventListener` / `ObjectUpdatedEventListener`.
+
+> @e2e exclude Backend data-source contract for the activity feed (events sourced from the OR activity leaf, opencatalogi maintains no separate in-app activity table, graceful "activity integration required" degradation when the leaf is absent) — the assertion is about the data source and the absence of a bespoke feed, not a browsable surface; verified by PHPUnit (no in-app activity table / listener compute) and vitest (graceful degradation when the leaf is absent). The detail page that hosts the widget is reachable via spa-deep-link-routing::open-a-deep-link-directly.
 
 #### Scenario: view a publication's activity history
 

@@ -42,6 +42,8 @@ schema aggregation declared on the relevant schema via
 `x-openregister-aggregations`. opencatalogi MUST NOT compute aggregation
 results in PHP.
 
+> @e2e exclude Backend data-source contract (widgets read OR `x-openregister-aggregations` rather than computing histograms in opencatalogi PHP, and degrade gracefully when the aggregation is absent) — the assertion is about the data-source mechanism and the absence of a bespoke PHP count query, not a UI surface; verified by PHPUnit (no aggregation query in PHP) and vitest (graceful N/A fallback). The widgets' visual rendering is already real-UI covered under dashboard::load-dashboard-data and ::load-unpublished-widgets.
+
 #### Scenario: a dashboard widget is backed by an OR aggregation
 
 - **GIVEN** a widget shows "publications by status",
