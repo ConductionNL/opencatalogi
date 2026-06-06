@@ -18,6 +18,8 @@ Architectural decisions: **ADR-022** (pluggable integration registry),
 **ADR-024** (app manifest convention), **ADR-025** (i18n source of
 truth), all in `hydra/openspec/architecture/`.
 
+> @e2e exclude Whole-spec architectural/migration adoption capability — every scenario verifies code-contract structure (controllers calling RegisterResolverService, createObjectStore wrapper, OR file/share APIs, manifest interpretation, schema translatable annotations, admin-config naming conventions, phase dependency ordering) rather than a user-facing UI surface. Proven by PHPUnit (controller resolver wiring, 503 on missing config, dependency check), vitest (store wrapper + plugin mounting, manifest view interpretation, translation picker components), and grep-based code-structure assertions. The user-visible flows it migrates (list/detail/create/edit/search/publish, content blocks, file upload) are themselves covered as real-UI tests under the dashboard/catalogs/publications/search/content-management/file-management specs.
+
 ## ADDED Requirements
 
 ### Requirement: opencatalogi controllers MUST resolve registers and schemas via `RegisterResolverService`
