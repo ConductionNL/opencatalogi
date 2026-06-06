@@ -104,11 +104,13 @@ error state are tracked under the keys `publish_{id}`.
 - THEN a POST request MUST be sent to the OpenRegister `.../{id}/publish` endpoint
 - AND the returned object MUST replace the active `publication` if it matches the object's id
 - AND the object MUST be removed from the selected-objects list if currently selected
+- @e2e exclude Store/HTTP mutation requiring a seeded publication — asserts `objectStore.publishObject` POSTs to the OpenRegister `.../{id}/publish` endpoint and reconciles store state (side-effects against another app's data API); verified by Vitest store test (mocked axios) and the OpenRegister publish-endpoint Newman contract. The publish dialog render is covered by the live `publications::open-the-publish-dialog-for-an-unpublished-publication` Playwright test.
 
 #### Scenario: Publish with missing register/schema metadata
 - GIVEN a publication object lacking `id`, `register`, or `schema`
 - WHEN `objectStore.publishObject(object)` is called
 - THEN the store MUST throw an error before issuing any HTTP request
+- @e2e exclude Store guard-path logic (throws before any HTTP when register/schema metadata is missing) — a pure store branch with no UI surface; verified by Vitest store unit test.
 
 ### Requirement: Depublish a publication object from the frontend store (PUB-017)
 The frontend object store SHALL depublish a publication by POSTing to the OpenRegister
@@ -124,11 +126,13 @@ selection, and loading/error state tracked under `depublish_{id}` keys.
 - WHEN `objectStore.depublishObject(object)` is called
 - THEN a POST request MUST be sent to the OpenRegister `.../{id}/depublish` endpoint
 - AND the returned object MUST replace the active `publication` if it matches the object's id
+- @e2e exclude Store/HTTP mutation requiring a seeded published publication — asserts `objectStore.depublishObject` POSTs to the OpenRegister `.../{id}/depublish` endpoint and reconciles store state (side-effects against another app's data API); verified by Vitest store test (mocked axios) and the OpenRegister depublish-endpoint Newman contract. The depublish dialog render is covered by the live `publications::open-the-dialog-for-a-published-publication` Playwright test.
 
 #### Scenario: Depublish failure surfaces an error
 - GIVEN the depublish endpoint returns a non-OK HTTP status
 - WHEN `objectStore.depublishObject(object)` is called
 - THEN the store MUST record the error under `depublish_{id}` and re-throw it
+- @e2e exclude Store error-handling logic (records error under `depublish_{id}` and re-throws on non-OK HTTP) — a pure store branch driven by a mocked HTTP failure, no UI surface; verified by Vitest store unit test.
 
 ### Requirement: Provide a publish/depublish confirmation dialog (PUB-018)
 The system SHALL provide a `PublishPublicationDialog` shown when the navigation store's
