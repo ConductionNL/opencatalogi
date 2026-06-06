@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-object-table-listing. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered generic-table/card component-logic capability — every scenario asserts component internals (columns derived from schema properties in configured order, select-all toggling every row, disabled action not executed, page-change event emitted, long-summary truncation, markdown-editor content-change handling). These are deterministic prop/emit assertions verified by vitest over the table/card/pagination/markdown wrapper components; the rendered list surface itself is already real-UI covered under generic-object-modals::generic-table-lists-objects-of-any-type and the catalogs/publications list views.
+
 ## Requirements
 ### Requirement: Schema-driven object table columns (REQ-TBL-001)
 The generic object table MUST derive its displayed columns from the active schema's properties and the object metadata, MUST honour the enabled/ordered column configuration, and MUST render each cell value from the matching object property.

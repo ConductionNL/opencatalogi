@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-directory-federation. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered directory side-bar component-logic capability — every scenario asserts component/state internals (publication-type enablement toggle updates state, directory synchronization triggered, listing displayed in a modal). The synchronization itself is a backend federation call (covered by federation Newman/PHPUnit), and the toggle/listing rendering are deterministic component-unit assertions verified by vitest; the directory surface is additionally exercised by the dashboard real-UI tests (dashboard::add-an-external-directory / ::edit-a-listing / ::delete-a-listing).
+
 ## Requirements
 ### Requirement: Publication-type management (REQ-DIR-001)
 The directory side bar MUST allow creating, copying, and deleting publication types, MUST toggle a publication type's enablement, MUST resolve a publication type's id, and MUST reflect the set of checked/switched publication types.
