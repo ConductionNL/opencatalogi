@@ -119,11 +119,13 @@ next search.
 - GIVEN the search view loads
 - WHEN `discoverFacetableFields()` runs
 - THEN the store's facetable-fields map MUST be populated and `facetsLoading` toggled
+- @e2e exclude Pinia `searchStore` HTTP behaviour — asserts `discoverFacetableFields()` populates the facetable-fields map and toggles `facetsLoading` (a store-internal data-fetch side-effect); verified by Vitest store test (mocked axios). The search route + facet UI shell are covered by the live `search::run-a-publication-search` / `search::toggle-a-facet-from-the-ui` Playwright tests.
 
 #### Scenario: Build a facet query from active facets
 - GIVEN one or more active facets
 - WHEN a search runs
 - THEN `buildFacetQuery()` MUST encode them (including `@self` facets) into the request
+- @e2e exclude Pure `searchStore.buildFacetQuery()` request-encoding logic (active facets + `@self` facets → request params) — deterministic input→output with no UI surface; verified by Vitest store unit test.
 
 ### Requirement: Search UI components (SCH-018)
 The system SHALL provide a search frontend comprising a `SearchSideBar` (facet filter
@@ -146,6 +148,8 @@ administrative purposes.
 
 **Priority:** Should **Status:** Implemented
 
+@e2e exclude Internal backend HTTP endpoint (`GET /api/search`, `SearchController::index` delegating to `PublicationService::index`) — a JSON API with no rendered UI surface; verified by PHPUnit (SearchController/PublicationService) and Newman `GET /api/search` API contract.
+
 #### Scenario: List publications via the internal search endpoint
 - GIVEN an authenticated request to `GET /api/search`
 - WHEN `SearchController::index` runs
@@ -161,6 +165,8 @@ The internal `SearchController` SHALL expose per-publication actions that delega
 `used(id)` returns the objects that reference this publication (B → A).
 
 **Priority:** Should **Status:** Implemented
+
+@e2e exclude Internal backend controller actions (`SearchController::show`/`attachments`/`download`/`uses`/`used` delegating to `PublicationService`) — JSON/data-download HTTP responses with no rendered UI surface, and per the spec notes these are routeless/unreachable orphan actions; verified by PHPUnit (SearchController/PublicationService) and, where routed, Newman API contract.
 
 #### Scenario: Retrieve a single publication and its files
 - GIVEN an authenticated request to `SearchController::show`, `attachments`, or `download` with a publication `id`

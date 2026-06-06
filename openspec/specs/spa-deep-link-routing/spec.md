@@ -37,6 +37,7 @@ The response sets a Content Security Policy permitting outbound API connections
 - GIVEN the `index` template cannot be rendered
 - WHEN the shared `makeSpaResponse()` helper catches the exception
 - THEN it MUST return the `error` template with HTTP status `500` and the exception message
+- @e2e exclude Server-side error path in `UiController::makeSpaResponse()` (returns the `error` template + HTTP 500 when the `index` template throws) — a backend exception-handling branch with no normally-reachable UI surface (the success path is covered by the live `spa-deep-link-routing::open-a-deep-link-directly` Playwright test); verified by PHPUnit (UiController) with a forced template-render failure.
 
 > **Notes:** All eleven actions delegate to a single private `makeSpaResponse()` helper, so
 > they share identical CSP and error-handling behaviour. The actions carry no per-route
