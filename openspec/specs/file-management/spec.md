@@ -103,6 +103,7 @@ publication's register/schema/id from the object store and supporting tag assign
 - WHEN the user uploads a file
 - THEN the file MUST be sent to the publication's OpenRegister `.../files` endpoint
 - AND any selected tags MUST be applied
+- @e2e exclude Store/HTTP file upload requiring a seeded active publication — asserts a multipart POST to the OpenRegister `.../files` endpoint with tag application (a store side-effect against another app's data API); verified by Vitest modal test (mocked axios) and the OpenRegister files-endpoint Newman contract.
 
 ### Requirement: Delete a publication attachment (FIL-017)
 The system SHALL provide a `DeleteAttachmentDialog` that deletes the active
@@ -118,6 +119,7 @@ and closes the dialog after a short delay.
 - WHEN the delete-attachment dialog is confirmed
 - THEN a `DELETE` request MUST be sent to the `.../files/{attachmentId}` endpoint
 - AND the publication's attachments MUST be refreshed afterward
+- @e2e exclude Store/HTTP attachment delete requiring a seeded publication + attachment — asserts a `DELETE` to the OpenRegister `.../files/{attachmentId}` endpoint plus a refresh (store side-effects against another app's data API); verified by Vitest dialog test (mocked axios) and the OpenRegister files-endpoint Newman contract.
 
 ### Requirement: Edit attachment metadata (FIL-018)
 The system SHALL provide an `EditAttachmentModal` that updates an attachment's metadata via
@@ -130,6 +132,7 @@ navigation store on completion.
 - GIVEN the edit-attachment modal is open
 - WHEN the user saves changes
 - THEN the attachment MUST be persisted via `objectStore.updateObject('attachment', id, attachment)`
+- @e2e exclude Store mutation requiring a seeded active attachment — asserts `objectStore.updateObject('attachment', ...)` (a store side-effect, not a render); verified by Vitest modal/store tests (mocked store).
 
 ### Requirement: File-selection composable and mass-attachment modal (FIL-019)
 The system SHALL provide a `useFileSelection` composable exposing drop-zone state, a file
@@ -144,6 +147,7 @@ top of it.
 - GIVEN a component using `useFileSelection`
 - WHEN files are dropped or chosen
 - THEN the composable's file list MUST update and duplicates MUST be rejected
+- @e2e exclude Pure Vue composable (`useFileSelection`) reactive-state logic (file list update, duplicate rejection) with no standalone rendered surface — verified by Vitest unit tests over the composable.
 
 ## Architecture
 
