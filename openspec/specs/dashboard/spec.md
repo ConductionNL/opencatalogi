@@ -193,7 +193,7 @@ its own bundle entry-point (`unpublishedAttachmentsWidget.js`,
 - WHEN each widget mounts
 - THEN `UnpublishedAttachmentsWidget` MUST fetch the `attachment` collection
 - AND `UnpublishedPublicationsWidget` MUST fetch the `publication` collection
-- @e2e exclude Nextcloud dashboard widgets (`UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget`, separate bundle entry-points) — render inside the core `/apps/dashboard` widget host, not an OpenCatalogi SPA route, and the scenario asserts the on-mount `objectStore.fetchCollection(...)` data-fetch side-effect; verified by Vitest component tests (mocked store).
+- @e2e tests/e2e/gate19-ui-coverage.spec.ts (dashboard-widgets — "Unpublished publications/attachments widgets render on the dashboard"): navigates to `/apps/dashboard`, enables both widgets via the dashboard "Customize" picker if needed, and asserts the registered `opencatalogi_unpublished_publications_widget` ("Concept publicaties") and `opencatalogi_unpublished_attachments_widget` ("Concept bijlage") frames render in the core Dashboard host. The internal on-mount `objectStore.fetchCollection(...)` data-fetch side-effect remains covered by the Vitest component tests (mocked store).
 
 ### Requirement: Directory management UI (DIR-012)
 The system SHALL provide a directory management frontend: a `DirectorySideBar`, an

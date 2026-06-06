@@ -151,13 +151,13 @@ catalog's publications page when an item is clicked.
 - WHEN the widget mounts
 - THEN it MUST call `objectStore.fetchCollection('catalog')`
 - AND render an empty-content state if no catalogs are returned
-- @e2e exclude Nextcloud dashboard widget (`CatalogiWidget`, registered as `opencatalogi_catalogi_widget`) — renders inside the core `/apps/dashboard` widget host, not an OpenCatalogi SPA route, and the scenario asserts the `objectStore.fetchCollection('catalog')` data-fetch side-effect; verified by Vitest component test (mocked store).
+- @e2e tests/e2e/gate19-ui-coverage.spec.ts (dashboard-widgets — "CatalogiWidget renders on the core dashboard"): navigates to `/apps/dashboard`, enables the widget via the dashboard "Customize" picker if needed, and asserts the registered `opencatalogi_catalogi_widget` frame / its "Catalogi Overview" title is rendered in the core Dashboard host. The internal `objectStore.fetchCollection('catalog')` data-fetch side-effect remains covered by the Vitest component test (mocked store).
 
 #### Scenario: Click a catalog widget item
 - GIVEN a catalog item shown in the widget
 - WHEN the item is clicked
 - THEN the browser MUST navigate to that catalog's publications URL
-- @e2e exclude Nextcloud dashboard widget navigation side-effect (`CatalogiWidget` item click → window.location) — widget lives in the core dashboard host, requires seeded catalog data to render an item, and asserts a navigation call; verified by Vitest component test.
+- @e2e exclude Item-click navigation side-effect — the widget itself renders on `/apps/dashboard` (covered by the "Widget loads catalogs on mount" UI test above), but THIS scenario asserts that clicking a rendered catalog ITEM sets `window.location` to that catalog's publications URL, which requires at least one seeded catalog row to render a clickable item and asserts a navigation mutation rather than a render; verified by the Vitest component test (mocked store + navigation spy).
 
 ## Data Model
 

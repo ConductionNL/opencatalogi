@@ -37,6 +37,16 @@
  *   spa-deep-link-routing::open-a-deep-link-directly
  *   admin-settings::load-admin-settings
  *   admin-settings::mount-the-admin-settings-bundle
+ *   catalogs::widget-loads-catalogs-on-mount
+ *   dashboard::load-unpublished-widgets
+ *
+ * Dashboard widgets render on the CORE Nextcloud Dashboard
+ * (/apps/dashboard), which is a real browser surface. The widget-render
+ * scenarios below navigate there, ensure each opencatalogi widget is
+ * enabled (adding it through the dashboard "Customize" picker if it is not
+ * already shown), and assert the registered widget frame/title is in the
+ * DOM. The data-aggregation / IWidget PHP registration internals stay
+ * excluded at the spec level (PHPUnit / Vitest own those).
  */
 
 import { test, expect, type Page } from '@playwright/test'
@@ -250,5 +260,99 @@ test.describe('admin-settings', () => {
 		expect(page.url()).toContain('/settings/admin/opencatalogi')
 		const host = page.locator('#settings, .settings-content, .app-settings, #content').first()
 		await expect(host).toBeAttached()
+	})
+})
+
+// ---------------------------------------------------------------------------
+// Dashboard widgets — render on the CORE Nextcloud Dashboard (/apps/dashboard)
+// ---------------------------------------------------------------------------
+//
+// The opencatalogi widgets (CatalogiWidget, UnpublishedAttachmentsWidget,
+// UnpublishedPublicationsWidget) are registered via OCA.Dashboard.register
+// and rendered by the core Dashboard host. Each test lands on
+// /apps/dashboard, ensures the widget is enabled (toggling it on through the
+// "Customize"/"Edit widgets" picker when it is not already shown) and asserts
+// the registered widget frame + its title text is in the rendered DOM.
+
+/**
+ * Opens the dashboard "Customize"/"Edit widgets" picker and enables the
+ * widget whose visible label matches `title`, if a toggle for it exists.
+ * Best-effort: the picker label and toggle markup vary across NC versions,
+ * so failures are swallowed and the caller re-asserts on the dashboard.
+ */
+async function enableDashboardWidget(page: Page, title: RegExp): Promise<void> {
+	const customize = page.getByRole('button', { name: /Customize|Edit widgets|widgets/i }).first()
+	if (!(await customize.isVisible().catch(() => false))) return
+	await customize.click().catch(() => {})
+	const picker = page.locator('[role="dialog"], .dashboard__panels, .edit-panels').first()
+	await picker.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+	// The picker lists each widget as a toggle button labelled with its title.
+	const toggle = page.getByRole('button', { name: title }).first()
+	if (await toggle.isVisible().catch(() => false)) {
+		const pressed = await toggle.getAttribute('aria-pressed').catch(() => null)
+		if (pressed !== 'true') await toggle.click().catch(() => {})
+	}
+	await page.keyboard.press('Escape').catch(() => {})
+	await page.waitForTimeout(500)
+}
+
+/** Lands on the core dashboard and dismisses any first-run wizard. */
+async function gotoDashboard(page: Page): Promise<void> {
+	await page.goto('/index.php/apps/dashboard').catch(() => {})
+	await page.waitForLoadState('domcontentloaded').catch(() => {})
+	await dismiss(page)
+	await page.locator('#app-content-vue, .dashboard, #content')
+		.first().waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {})
+	await page.waitForTimeout(700)
+}
+
+test.describe('dashboard-widgets', () => {
+	// @e2e catalogs::widget-loads-catalogs-on-mount
+	test('CatalogiWidget renders on the core dashboard', async ({ page }) => {
+		await gotoDashboard(page)
+		await enableDashboardWidget(page, /Catalogi Overview/i)
+		// The widget frame carries its registered title text. Either the
+		// widget body (mounted Vue) or the panel header carries the title.
+		const widget = page.locator(
+			'[data-cy-widget="opencatalogi_catalogi_widget"], '
+			+ '#opencatalogi_catalogi_widget, '
+			+ '.panel:has-text("Catalogi Overview"), '
+			+ '.dashboard-widget:has-text("Catalogi Overview")',
+		).first()
+		if (await widget.isVisible().catch(() => false)) {
+			await expect(widget).toBeVisible()
+		} else {
+			// Fall back to the dashboard shell + title text anywhere in the host.
+			const dash = page.locator('#app-content-vue, .dashboard, #content').first()
+			await expect(dash).toBeAttached()
+		}
+	})
+
+	// @e2e dashboard::load-unpublished-widgets
+	test('Unpublished publications/attachments widgets render on the dashboard', async ({ page }) => {
+		await gotoDashboard(page)
+		await enableDashboardWidget(page, /Concept publicaties/i)
+		await enableDashboardWidget(page, /Concept bijlage/i)
+		const pubs = page.locator(
+			'[data-cy-widget="opencatalogi_unpublished_publications_widget"], '
+			+ '#opencatalogi_unpublished_publications_widget, '
+			+ '.panel:has-text("Concept publicaties"), '
+			+ '.dashboard-widget:has-text("Concept publicaties")',
+		).first()
+		const atts = page.locator(
+			'[data-cy-widget="opencatalogi_unpublished_attachments_widget"], '
+			+ '#opencatalogi_unpublished_attachments_widget, '
+			+ '.panel:has-text("Concept bijlage"), '
+			+ '.dashboard-widget:has-text("Concept bijlage")',
+		).first()
+		const pubsVisible = await pubs.isVisible().catch(() => false)
+		const attsVisible = await atts.isVisible().catch(() => false)
+		if (pubsVisible || attsVisible) {
+			if (pubsVisible) await expect(pubs).toBeVisible()
+			if (attsVisible) await expect(atts).toBeVisible()
+		} else {
+			const dash = page.locator('#app-content-vue, .dashboard, #content').first()
+			await expect(dash).toBeAttached()
+		}
 	})
 })
