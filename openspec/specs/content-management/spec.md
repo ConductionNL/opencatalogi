@@ -163,6 +163,7 @@ removed. Modals/dialogs are toggled through the navigation store (`page` modal,
 - GIVEN a content block on a page
 - WHEN the delete-page-content dialog confirms removal
 - THEN the page MUST be updated with the block removed via `updateObject('page', ...)`
+- @e2e exclude Store mutation requiring a seeded page with an existing content block — asserts `objectStore.updateObject('page', ...)` is called with the block removed (a store side-effect, not a render); verified by Vitest store/dialog tests (mocked store). The pages route shell + add-block modal are covered by the live `content-management::add-or-edit-a-page-content-block` Playwright test.
 
 ### Requirement: Menu management UI with embedded menu items (CMS-037)
 The system SHALL provide a menu management frontend comprising a `ViewMenuModal` (read a
@@ -184,6 +185,7 @@ through the navigation store.
 - GIVEN an active menu
 - WHEN the copy-menu dialog is confirmed
 - THEN a new menu MUST be created via `objectStore.createObject('menu', clone)` with a `(kopie)` title
+- @e2e exclude Store clone mutation requiring a seeded active menu — asserts `objectStore.createObject('menu', clone)` builds a `(kopie)` title (a store side-effect, not a render); verified by Vitest dialog/store tests (mocked store). The menus route shell + add-item modal are covered by the live `content-management::add-or-edit-a-menu-item` Playwright test.
 
 ### Requirement: Theme management UI (CMS-038)
 The system SHALL provide a theme management frontend comprising a `ViewThemeModal` (read a
@@ -204,6 +206,7 @@ store.
 - GIVEN multiple themes are selected
 - WHEN the delete-multiple-themes dialog is confirmed
 - THEN each selected theme MUST be removed via `objectStore.deleteObject('theme', id)`
+- @e2e exclude Bulk store mutation requiring multiple seeded selected themes — asserts repeated `objectStore.deleteObject('theme', id)` calls (a store side-effect, not a render); verified by Vitest dialog/store tests (mocked store). The themes route shell is covered by the live `content-management::attach-a-theme-to-a-publication` Playwright test.
 
 ### Requirement: Glossary view UI (CMS-039)
 The system SHALL provide a `ViewGlossaryModal` that reads and displays a glossary term
@@ -224,6 +227,8 @@ defaulting to `'dark'`), and `getPublicationTypeId(url)` extracts the trailing p
 of a publication-type URL as its id.
 
 **Priority:** Should **Status:** Implemented
+
+@e2e exclude Pure frontend helper functions (`getTheme()` reads `data-theme-*` body attributes / `prefers-color-scheme`; `getPublicationTypeId(url)` parses a URL's trailing segment) — deterministic input→output logic with no rendered UI surface to drive; verified by Vitest unit tests over the helper module.
 
 #### Scenario: Resolve the active Nextcloud theme
 - GIVEN the body carries `data-theme-light`
