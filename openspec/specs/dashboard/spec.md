@@ -193,6 +193,7 @@ its own bundle entry-point (`unpublishedAttachmentsWidget.js`,
 - WHEN each widget mounts
 - THEN `UnpublishedAttachmentsWidget` MUST fetch the `attachment` collection
 - AND `UnpublishedPublicationsWidget` MUST fetch the `publication` collection
+- @e2e exclude Nextcloud dashboard widgets (`UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget`, separate bundle entry-points) — render inside the core `/apps/dashboard` widget host, not an OpenCatalogi SPA route, and the scenario asserts the on-mount `objectStore.fetchCollection(...)` data-fetch side-effect; verified by Vitest component tests (mocked store).
 
 ### Requirement: Directory management UI (DIR-012)
 The system SHALL provide a directory management frontend: a `DirectorySideBar`, an
@@ -209,6 +210,7 @@ navigation store.
 - WHEN the user confirms
 - THEN a POST MUST be sent to `/apps/opencatalogi/api/directory` with the URL
 - AND the modal MUST close on success
+- @e2e exclude Store/HTTP mutation — asserts the `AddDirectoryModal` issues `POST /api/directory` with the URL (federation registration side-effect); verified by Vitest modal test (mocked axios) and the Newman `POST /api/directory` API contract. The directory route shell is covered by the live `generic-object-modals::generic-table-lists-objects-of-any-type` Playwright test (directory surface).
 
 ### Requirement: Listing management UI (LST-007)
 The system SHALL provide listing management dialogs: an `EditListingModal` (present in two
@@ -223,11 +225,13 @@ collection) and a `DeleteListingDialog` that removes a listing via
 - GIVEN the listing edit modal is open
 - WHEN the user saves
 - THEN the listing MUST be persisted via `objectStore.updateObject(...)` and the collection refreshed
+- @e2e exclude Store mutation requiring a seeded listing — asserts `objectStore.updateObject(...)` + collection refresh (a store side-effect, not a render); verified by Vitest modal/store tests (mocked store).
 
 #### Scenario: Delete a listing
 - GIVEN a listing is selected for deletion
 - WHEN the delete-listing dialog is confirmed
 - THEN the listing MUST be removed via `objectStore.deleteObject('listing', id)`
+- @e2e exclude Store mutation requiring a seeded selected listing — asserts `objectStore.deleteObject('listing', id)` (a store side-effect, not a render); verified by Vitest dialog/store tests (mocked store).
 
 > **Notes (observed duplication — not fixed by this retrofit):**
 > `EditListingModal.vue` exists twice — `src/modals/directory/EditListingModal.vue`
