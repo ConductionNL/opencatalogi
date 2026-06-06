@@ -49,6 +49,8 @@ service MUST:
 opencatalogi MUST NOT maintain a local copy of attached files for download
 purposes.
 
+> @e2e exclude Server-side ZIP-streaming contract (file streams obtained from OR's file service via DI, piped without buffering, no local copy in NC user storage, Bijlagen/ structure + metadata PDF included) — a streaming download response, not a browsable UI surface; verified by PHPUnit/Newman asserting the ZIP contents and that no file content is written to user storage.
+
 #### Scenario: ZIP generation streams from OR
 
 - **GIVEN** a user requests a ZIP of all attachments on a publication,
@@ -75,6 +77,8 @@ or timestamp), the download service MUST pass the selector through to OR's
 file service. It MUST NOT maintain a separate version history, snapshot
 table, or local versioning logic.
 
+> @e2e exclude Server-side version-passthrough contract (version selector forwarded to OR's file service; no local version table consulted) — a download response, not a UI surface; verified by PHPUnit/Newman asserting the selector is passed through and no local version table exists.
+
 #### Scenario: versioned file download
 
 - **GIVEN** a request for a specific version of an attached file,
@@ -94,6 +98,8 @@ the download service. This is a legitimate in-app rendering step because:
 The download service MUST NOT save the generated PDF to Nextcloud user
 storage via `IRootFolder` or `FileService`. If a persistent copy is needed
 (e.g. for a share link), it MUST be saved through OR's file service.
+
+> @e2e exclude Server-side PDF-rendering contract (metadata PDF rendered via Twig + mPDF to a temp location, piped into the ZIP, temp file deleted after the response, never saved to NC user storage) — a server rendering/streaming step, not a UI surface; verified by PHPUnit/Newman asserting the PDF is present in the ZIP and the temp file is cleaned up.
 
 #### Scenario: metadata PDF is rendered and piped into ZIP
 

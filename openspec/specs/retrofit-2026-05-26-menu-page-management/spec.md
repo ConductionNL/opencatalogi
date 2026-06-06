@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-menu-page-management. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered CMS menu/page modal component-logic capability — every scenario asserts modal internals (item-reorder persistence on save, multiline value round-trip, page contents shown in configured order, content-block deletion, copy-menu dialog closing after copy). These are deterministic component-unit assertions verified by vitest over the menu/page modals; the user-facing CMS surfaces are already real-UI covered under content-management::add-or-edit-a-menu-item, ::add-or-edit-a-page-content-block, ::delete-a-page-content-block and ::copy-a-menu.
+
 ## Requirements
 ### Requirement: Menu view/edit modal (REQ-MENU-001)
 The menu modal MUST present a menu's state and items, MUST allow adding, editing, deleting, and reordering items, MUST fetch available groups for scoping, MUST validate input, and MUST save the menu; the delete-menu-item modal MUST confirm and remove a single item.

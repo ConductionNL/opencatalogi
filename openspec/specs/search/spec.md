@@ -42,6 +42,8 @@ MUST delegate the full query — including `_search`, `_order`, `_limit`,
 — to OR's `zoeken-filteren` API unmodified. opencatalogi MUST NOT alter
 the query, re-parse bracket notation, or inject custom filter parameters.
 
+> @e2e exclude Backend query-passthrough contract (full query delegated to OR `zoeken-filteren` unmodified; no local filter transformation or score adjustment) — a server-side delegation with no UI surface; verified by PHPUnit/Newman asserting the constructed call and unchanged response. The search UI itself is already real-UI covered under search::run-a-publication-search.
+
 #### Scenario: single-catalog search passes through
 
 - **WHEN** a user issues a search query within a single catalog,
@@ -67,6 +69,8 @@ opencatalogi MUST NOT alter individual ranking scores, re-rank within
 a source's result set, or apply cross-source deduplication beyond
 merging on `_id` equality.
 
+> @e2e exclude Backend federation-orchestration contract (N parallel `zoeken-filteren` calls; stable descending-_score merge; facet buckets summed by _id; total = sum of source totals; no re-ranking) — server-side merge math with no UI surface; verified by PHPUnit/Newman over the orchestrator with seeded multi-source responses. The federated search UI is already real-UI covered under search::run-a-publication-search and ::toggle-a-facet-from-the-ui.
+
 #### Scenario: cross-catalog search merges OR results
 
 - **WHEN** a user issues a federated search across N catalogs,
@@ -88,6 +92,8 @@ The `SearchController::index` (`GET /api/search`) MUST delegate to OR's
 bespoke `buildSearchQuery()` or `searchObjectsPaginated()` method in
 opencatalogi itself.
 
+> @e2e exclude Backend controller-delegation contract (`SearchController::index` delegates to `zoeken-filteren` with the publications context, no bespoke buildSearchQuery/searchObjectsPaginated) — a server endpoint with no UI surface; verified by PHPUnit/Newman over `GET /api/search`.
+
 #### Scenario: internal endpoint delegates
 
 - **GIVEN** an authenticated request to `GET /api/search`,
@@ -104,6 +110,8 @@ from the current search term, pagination, active filters, ordering, and
 the federation flags `_facetable=true`, `_aggregate=true`. The federation
 endpoint in turn calls `zoeken-filteren` per catalog context. The frontend
 store MUST NOT call OR's `zoeken-filteren` endpoint directly.
+
+> @e2e exclude Frontend network-target contract (search store queries `/api/federation/publications` with the term/pagination/filters/order + `_facetable`/`_aggregate` flags, never calling `zoeken-filteren` directly) — the assertion is the request target/params, not a distinct browsable surface; verified by vitest mocking the federation endpoint and asserting the URL + params. The search UI is already real-UI covered under search::run-a-publication-search.
 
 #### Scenario: frontend search runs through the federation endpoint
 

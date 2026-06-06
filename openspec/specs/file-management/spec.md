@@ -47,6 +47,8 @@ MUST declare the relevant attachment property with `x-openregister-file`.
 invocations not otherwise covered by the controller delegate; it MUST NOT
 contain bespoke Nextcloud file storage, share creation, or URL assembly logic.
 
+> @e2e exclude Backend file-service delegation contract (FilesController resolves register/schema via RegisterResolverService and delegates upload/update/delete to the DI-resolved OR file service, returns the OR response unchanged, and emits a 503 with no bespoke NC fallback when OR is absent) — a controller/network contract, not a UI surface; verified by PHPUnit (delegation + 503) and Newman. The upload UI flow itself is already real-UI covered under file-management::upload-a-file-to-the-active-publication.
+
 #### Scenario: upload delegates to OR
 
 - **GIVEN** a request to upload a file against a publication,
@@ -75,6 +77,8 @@ The OpenRegister shares leaf (integration registry, ADR-019) is the
 preferred route when available; `IShareManager` is the fallback when the
 leaf is absent.
 
+> @e2e exclude Backend share-creation contract (public shares created through the OR shares leaf when available, falling back to `IShareManager::createShare()` type-3 read-only, with the share URL taken from `IShare` rather than hand-assembled from $_SERVER, and no bespoke FileService::createShareLink) — a server-side integration path with no UI surface; verified by PHPUnit asserting the leaf/IShareManager call and URL source.
+
 #### Scenario: share created via OR shares leaf (preferred path)
 
 - **GIVEN** the OR shares leaf integration is available,
@@ -99,6 +103,8 @@ OR files endpoint:
 
 The register and schema identifiers MUST be read from the object store's
 `@self.register` and `@self.schema` envelope, not hard-coded.
+
+> @e2e exclude Frontend network-target contract (upload modals POST to the OR `/objects/{register}/{schema}/{publicationId}/files` endpoint with register/schema read from the `@self` envelope, not hard-coded, and apply selected tags via the OR tags API) — the assertion is the request target/payload, not a distinct browsable surface; verified by vitest mocking the OR endpoint and asserting the URL + envelope-derived ids. The upload UI flow is already real-UI covered under file-management::upload-a-file-to-the-active-publication.
 
 #### Scenario: upload modal sends file to OR endpoint
 

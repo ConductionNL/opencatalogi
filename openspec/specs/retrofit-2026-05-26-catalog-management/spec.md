@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-catalog-management. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered catalog modal/detail component-logic capability — every scenario asserts component internals (save blocked until required input is valid, register resolved by id in the view modal, catalog/entity loaded from the route id). These are deterministic prop/route-param assertions verified by vitest over the catalog modal and detail-page components; the user-facing catalog create/edit/detail surfaces are already real-UI covered under catalogs::create-a-new-catalog, ::edit-an-existing-catalog and ::open-a-catalog-detail-page-by-route-id.
+
 ## Requirements
 ### Requirement: Catalog create/edit modal (REQ-CATM-001)
 The catalog modal MUST let a user create or edit a catalog, offering organization, register, and schema options, validating required input before save, and closing on completion.

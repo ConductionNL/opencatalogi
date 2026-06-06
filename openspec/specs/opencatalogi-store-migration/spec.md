@@ -6,6 +6,8 @@ Migrate the opencatalogi `useObjectStore` onto the canonical `createObjectStore`
 factory from `@conduction/nextcloud-vue` while preserving the existing public API
 so that no Vue file requires modification.
 
+> @e2e exclude Whole-spec Pinia store-migration capability — every scenario asserts store internals (inner Pinia id, CRUD delegation forwarding, getCollection/pagination response shape, all-6-plugins-mounted, public-method preservation, identical apiCatalogSlug endpoint, no .vue file diff, publishObject/copyObject behaviour) with NO user-facing surface of its own. The explicit success criterion is "no Vue file requires modification", so behaviour is unchanged from the user's perspective. Verified by vitest unit tests over src/store/modules/object.js (delegation, shape, plugin array) and a git-diff guard; the user-visible flows it preserves (list/create/publish/copy) remain covered as real-UI tests under dashboard/catalogs/publications.
+
 ## Requirements
 
 ### Requirement: Outer store wraps the canonical lib store (REQ-OSM-1)

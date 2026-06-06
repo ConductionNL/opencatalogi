@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-app-shell-settings. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered settings/app-shell component-logic capability — every scenario asserts component/config wiring (schema options follow the selected register, save-all persists the configuration, admin flag injected into navigation permissions, main-menu nav items follow the configured catalogs). These are deterministic computed-property / IAppConfig-round-trip assertions verified by vitest over the settings component plus PHPUnit for the config persistence; the settings surface is already real-UI covered under admin-settings::load-admin-settings and ::save-admin-settings.
+
 ## Requirements
 ### Requirement: Settings configuration (REQ-SHELL-001)
 The settings view MUST load the current configuration, settings, and version info, MUST resolve register and schema options, MUST auto-select the OpenCatalogi register and matching schemas, and MUST react to register changes by updating the schema options.

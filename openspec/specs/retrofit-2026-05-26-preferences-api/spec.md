@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-preferences-api. Update Purpose after archive.
+
+> @e2e exclude Whole-spec server-side per-user preferences REST endpoint — every scenario asserts backend controller behaviour (401 on unauthenticated read, key sanitised to the safe `pref_` charset, empty value clears the preference). No UI surface; verified by PHPUnit controller tests and the Newman integration collection (auth + key-sanitization + clear-on-empty).
+
 ## Requirements
 ### Requirement: Read per-user preference (REQ-PREF-001)
 The get-preference endpoint MUST require an authenticated user, MUST sanitize the requested key to a safe charset within the `pref_` namespace, and MUST return the stored value (or null when unset). An unauthenticated request MUST be rejected and an invalid key MUST yield a bad-request response.

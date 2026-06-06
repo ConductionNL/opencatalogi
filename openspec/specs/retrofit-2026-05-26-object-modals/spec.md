@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-object-modals. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered Vue object-modal component-logic capability — every scenario asserts component-internal behaviour (modal title/schema/property derivation from the active object, required-field validation blocking save, form↔JSON two-way sync, oversized-file rejection, per-file publish gating by state, tag add, invalid-JSON upload block, merge-needs-target, migration-needs-valid-mapping). These are deterministic component-unit assertions verified by vitest over src/modals/object/*.vue with mounted props/emit assertions — they have no distinct browsable page beyond the object view/edit modal, whose open/view flow is already real-UI covered under generic-object-modals::user-views-an-object and publications::open-the-publish-dialog.
+
 ## Requirements
 ### Requirement: Object view/edit modal (REQ-OBJM-001)
 The object view/edit modal MUST present an existing object's data for inspection and editing, deriving the modal title, the resolved schema, and the editable property set from the active object and its register/schema context.

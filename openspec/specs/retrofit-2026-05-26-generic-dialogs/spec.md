@@ -2,6 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change retrofit-2026-05-26-generic-dialogs. Update Purpose after archive.
+
+> @e2e exclude Whole-spec reverse-engineered confirmation/copy/publish dialog component-logic capability — every scenario asserts dialog internals (delete requires explicit confirm then refreshes the list, copy-object produces a copy, publish-publication transitions state). These are deterministic component-unit assertions verified by vitest over the shared dialogs with a seeded target; the user-facing equivalents are already real-UI covered under publications::publish-an-unpublished-publication / ::depublish-a-published-publication, file-management::delete-an-attachment and content-management::bulk-delete-themes.
+
 ## Requirements
 ### Requirement: Destructive confirmation dialogs (REQ-DLG-001)
 Each delete dialog (object, attachment, category, multiple categories, listing, multiple themes) MUST require explicit confirmation, MUST perform the deletion of the targeted entity or selection, and MUST refresh the affected list and close on completion.
