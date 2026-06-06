@@ -89,11 +89,13 @@ object store (once per slug). On error the publications collection is reset to e
 - WHEN `catalogStore.setActiveCatalog(catalog)` is called
 - THEN the store MUST fetch `GET /api/{slug}` with `_extend=@self.schema,@self.register`
 - AND each publication's schema slug MUST be registered as an object type exactly once
+- @e2e exclude Pinia `catalogStore` HTTP behaviour — asserts the slug-fetch request shape and object-type registration side-effect inside the store, not a rendered UI surface; verified by Vitest store tests (mocked axios) and the public `GET /api/{slug}` Newman contract. The catalog detail/publications routes that consume this store are covered by live Playwright tests.
 
 #### Scenario: Fetch with no resolvable catalog id
 - GIVEN no catalogId argument, no active catalog, and no last-used catalog id
 - WHEN `catalogStore.fetchPublications()` is called
 - THEN the store MUST log an error and return without issuing an HTTP request
+- @e2e exclude Pinia `catalogStore` guard-path logic (no HTTP issued, error logged) — a pure store branch with no UI surface; verified by Vitest store unit tests.
 
 ### Requirement: Create and edit catalogs via the catalog modal (CAT-014)
 The system SHALL provide a `CatalogModal` (shown when the navigation store modal is
@@ -149,11 +151,13 @@ catalog's publications page when an item is clicked.
 - WHEN the widget mounts
 - THEN it MUST call `objectStore.fetchCollection('catalog')`
 - AND render an empty-content state if no catalogs are returned
+- @e2e exclude Nextcloud dashboard widget (`CatalogiWidget`, registered as `opencatalogi_catalogi_widget`) — renders inside the core `/apps/dashboard` widget host, not an OpenCatalogi SPA route, and the scenario asserts the `objectStore.fetchCollection('catalog')` data-fetch side-effect; verified by Vitest component test (mocked store).
 
 #### Scenario: Click a catalog widget item
 - GIVEN a catalog item shown in the widget
 - WHEN the item is clicked
 - THEN the browser MUST navigate to that catalog's publications URL
+- @e2e exclude Nextcloud dashboard widget navigation side-effect (`CatalogiWidget` item click → window.location) — widget lives in the core dashboard host, requires seeded catalog data to render an item, and asserts a navigation call; verified by Vitest component test.
 
 ## Data Model
 
