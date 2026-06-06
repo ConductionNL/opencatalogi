@@ -101,11 +101,13 @@ report the version via `GET /api/settings/version`, and run a manual import via
 - GIVEN the admin edits configuration
 - WHEN the settings are saved
 - THEN a `POST /api/settings` request MUST be sent
+- @e2e exclude Store/HTTP mutation behaviour — asserts that `Settings.vue` issues a `POST /api/settings` request body, not a rendered UI surface; verified by Vitest component tests (mocked axios) and Newman `POST /api/settings` API contract. The settings panel render is covered by the live `admin-settings::load-admin-settings` Playwright test.
 
 #### Scenario: Run a manual import
 - GIVEN the admin triggers a manual import
 - WHEN the import runs
 - THEN `POST /api/settings/import` MUST be called and the settings reloaded afterward
+- @e2e exclude Backend import trigger — `POST /api/settings/import` runs OpenRegister's ConfigurationService import server-side; verified by PHPUnit (SettingsService/SettingsController) and Newman API contract, no distinct rendered UI surface beyond the already-covered settings panel.
 
 ### Requirement: Admin settings bundle entry-point (SET-016)
 The system SHALL provide a `settings.js` bundle entry-point that mounts the `Settings.vue`
@@ -133,6 +135,7 @@ placeholder. The dialog's open state is controlled by an `open` prop and an
 - GIVEN the `open` prop is true
 - WHEN `UserSettings.vue` renders
 - THEN it MUST show the OpenCatalogi settings dialog with the General placeholder section
+- @e2e exclude Placeholder `NcAppSettingsDialog` with no real content (literal "User preferences will appear here." text, no fields/behaviour) and no in-app route to mount it — prop-driven render verified by Vitest component test; nothing user-meaningful to drive in a browser.
 
 > **Notes:**
 > The admin-settings spec previously referenced only the Admin settings surface. SET-017
