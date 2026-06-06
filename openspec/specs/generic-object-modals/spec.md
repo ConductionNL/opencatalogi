@@ -19,6 +19,7 @@ The system MUST provide generic single-object modals for viewing, editing, uploa
 - THEN `objectStore.lockObject(id, process, duration)` is called
 - AND on success a confirmation note is shown and the modal auto-closes after a short delay
 - AND on failure the error message is shown and the modal stays open
+- @e2e exclude Store mutation requiring a seeded `objectStore.objectItem` — asserts `objectStore.lockObject(...)` plus success/error note handling (store side-effects, not a distinct route surface; modal only mounts when an object is selected); verified by Vitest modal/store tests (mocked store).
 
 #### Scenario: User views an object
 - GIVEN an object is set as `objectStore.objectItem`
@@ -35,11 +36,13 @@ The system MUST provide mass-operation modals (delete, depublish, publish, lock,
 - AND the result is partitioned into `successful` and `failed`
 - AND if `failed` is empty the dialog auto-closes and the list is refreshed
 - AND if `failed` is non-empty the dialog stays open and shows "Failed to delete N object(s)"
+- @e2e exclude Bulk store mutation requiring a seeded `objectStore.selectedObjects` collection — asserts `objectStore.massDeleteObjects(...)` and success/failure partitioning (store side-effects); verified by Vitest dialog/store tests (mocked store).
 
 #### Scenario: Bulk action with empty selection
 - GIVEN `objectStore.selectedObjects` is empty
 - WHEN a mass-operation dialog is shown
 - THEN the confirm action is disabled
+- @e2e exclude Store-state-driven UI guard (confirm button disabled when `objectStore.selectedObjects` is empty) — a prop/computed branch with no route to drive directly; verified by Vitest dialog test (mocked store).
 
 ### Requirement: Provide cross-object transformation modals (GOM-003)
 The system MUST provide modals that transform one object into or against another: merging two objects (`objectStore.mergeObjects`), migrating an object between registers/schemas, and copying an object (`objectStore.copyObject`). These modals are multi-step (select target, review, perform) and refresh the affected object list on success.
@@ -49,6 +52,7 @@ The system MUST provide modals that transform one object into or against another
 - WHEN the merge is performed
 - THEN `objectStore.mergeObjects(...)` is called with the resolved source and target
 - AND on success the user can navigate to the merged object and the list is refreshed
+- @e2e exclude Cross-object store transformation requiring two seeded objects (source active + searched target) — asserts `objectStore.mergeObjects(...)` (a store side-effect); verified by Vitest modal/store tests (mocked store).
 
 ### Requirement: Provide type-agnostic confirmation dialogs keyed by object type (GOM-004)
 The system MUST provide generic confirmation dialogs (delete object, copy object, delete category, view audit log) that take the object type as a prop and resolve the active object, loading state and result through `objectStore.getActiveObject(type)`, `objectStore.isLoading(type)` and `objectStore.getState(type)`. The dialog renders a loading state, a confirmation prompt, and a terminal success/error note from store state, so the same dialog component serves any registered object type.
@@ -58,11 +62,13 @@ The system MUST provide generic confirmation dialogs (delete object, copy object
 - WHEN the view-log dialog opens
 - THEN the log content is rendered from `objectStore.getActiveObject('log').content`
 - AND loading and error states are derived from `objectStore.getState('log')`
+- @e2e exclude Store-driven dialog requiring a seeded active `'log'` object — asserts content/loading/error are read from `objectStore.getActiveObject('log')`/`getState('log')` (store-state binding, not a route surface); verified by Vitest dialog/store tests (mocked store).
 
 #### Scenario: Delete confirmation suppresses configuration-error noise
 - GIVEN the delete-object dialog is open for a type with an invalid configuration
 - WHEN the store state error equals "Invalid configuration for object type: …"
 - THEN that specific error is not surfaced as a user-facing error note
+- @e2e exclude Store-error-message filtering logic (specific "Invalid configuration for object type" string suppressed from the note) — a pure conditional over store state with no route to drive; verified by Vitest dialog test (mocked store state).
 
 ### Requirement: Provide shared object-presentation components (GOM-005)
 The system MUST provide reusable presentation components used across capabilities — a generic object table, a properties panel, a markdown editor, a pagination control, a publication card, a published-status icon, an attachment picker and a multi-selection list. These components accept generic object/collection data and emit selection/navigation events, leaving data fetching and persistence to the calling view and the object store.
