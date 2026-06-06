@@ -40,6 +40,8 @@ When a key is added, renamed, or removed, the inventory table MUST be
 updated in the same spec change. A PR that adds a config key without an
 inventory update MUST be rejected.
 
+> @e2e exclude Code-contract / documentation-audit requirement (config keys follow OR snake_case naming + the inventory table is the canonical list) — no UI surface; verified by code review against the inventory table and a grep-based key audit, not a browser flow.
+
 #### Scenario: reviewer audits the admin-settings spec
 
 - **WHEN** a reviewer audits this spec,
@@ -53,6 +55,8 @@ inventory update MUST be rejected.
 Any configuration key that carries a secret (token, credential, password)
 MUST be marked sensitive per OR's `IAppConfig` convention so that it does
 not leak through generic settings dumps.
+
+> @e2e exclude Backend secret-storage contract (sensitive flag on IAppConfig keys so secrets do not appear in generic dumps) — no UI surface; verified by PHPUnit asserting the sensitive marking and absence from a generic config dump.
 
 #### Scenario: a secret key is stored
 
@@ -68,6 +72,8 @@ Hardcoded class constants that serve as defaults MUST be promoted to
 admin-config keys with the same default values (see Phase 8 keys in the
 inventory).
 
+> @e2e exclude Backend default-resolution contract (unset IAppConfig key returns the inventory default, no class constant consulted at runtime) — no UI surface; verified by PHPUnit reading a never-set key and asserting the inventory default.
+
 #### Scenario: reading a key that was never set
 
 - **GIVEN** an admin has not configured a given key,
@@ -81,6 +87,8 @@ inventory).
 constant. The minimum OR version is enforced by Nextcloud's dependency check
 driven by `appinfo/info.xml` `<dependencies>`. The constant is deleted in
 Phase 8.
+
+> @e2e exclude Source-code-structure contract (MIN_OPENREGISTER_VERSION constant removed; minimum version enforced by appinfo/info.xml dependency check) — no UI surface; verified by a grep assertion over SettingsService.php plus the NC install-time dependency check.
 
 #### Scenario: minimum-version constant no longer exists
 
