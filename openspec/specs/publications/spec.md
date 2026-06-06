@@ -169,6 +169,8 @@ the app manifest (`detail.config` widgets, ADR-024 / ADR-036) — NOT by buildin
 bespoke Leaflet/map component in OpenCatalogi (hydra ADR-022). The widget binds to
 `publication.geo` and renders points / areas / routes on a map.
 
+> @e2e exclude OR maps-leaf manifest-placement + graceful-degradation contract — the rendered map is produced by the external OpenRegister maps leaf (integration registry, ADR-022/036), not by opencatalogi, which only declares the widget placement in the manifest and MUST NOT ship a bespoke Leaflet component. The assertion is the manifest placement + the "maps integration required" / clean-empty degradation when the leaf or geo data is absent (the default state in any instance without the leaf installed). Verified by vitest over the manifest placement and the degradation branch; the detail page is reachable via spa-deep-link-routing::open-a-deep-link-directly.
+
 #### Scenario: Publication with geo data shows a map
 - GIVEN a publication whose `geo` property contains valid GeoJSON
 - WHEN a user opens the publication detail page
@@ -192,6 +194,8 @@ object-detail surface via the app manifest (ADR-024 / ADR-036) — NOT via ad-ho
 free-text contact fields or a bespoke contact component (hydra ADR-022). The
 Organisation is the contactable bestuursorgaan behind publications.
 
+> @e2e exclude OR contacts-leaf manifest-placement + graceful-degradation contract — the contact list is produced by the external OpenRegister contacts leaf (integration registry, ADR-022/036), not by opencatalogi, which only declares the widget placement and MUST NOT keep a parallel contact model. The assertion is the manifest placement + the "contacts integration required" degradation when the leaf is absent (the default state without the leaf installed). Verified by vitest over the manifest placement and the degradation branch; the Organisation detail page is reachable via spa-deep-link-routing::open-a-deep-link-directly.
+
 #### Scenario: View an Organisation's linked contacts
 - GIVEN an Organisation with linked OR contacts
 - WHEN a user opens the Organisation detail page
@@ -211,6 +215,8 @@ NOT by building bespoke gallery / link components (hydra ADR-022). These
 placements are optional and each MUST be gated independently on its leaf's
 availability; neither placement MUST block the maps (PUB-MAP-001) or contacts
 (PUB-CON-001) placements.
+
+> @e2e exclude OR photos/bookmarks-leaf optional manifest-placement + graceful-degradation contract — the gallery / link list is produced by the external OpenRegister photos and bookmarks leaves (integration registry, ADR-022/036), not by opencatalogi, which only declares optional, independently-gated placements and MUST NOT ship bespoke gallery/link components. The assertion is the manifest placement + each widget being omitted when its leaf is absent without affecting the required widgets (the default state without the leaves installed). Verified by vitest over the manifest placement and the per-leaf gating branch.
 
 #### Scenario: Photos widget shows an image gallery
 - GIVEN a publication with image attachments
