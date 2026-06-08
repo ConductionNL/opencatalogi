@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: draft
 ---
 
 # woo-transparency Specification
@@ -7,8 +7,13 @@ status: implemented
 ## Purpose
 WOO (Wet open overheid) / FOIA compliance features in OpenCatalogi: publication decision tracking, document redaction workflow, publication to a public reading room, and redaction audit trail. Builds on OpenCatalogi's existing Publication, Catalog, and Listing entities to add WOO-specific workflow and publication capabilities. Document-level operations (PDF generation, anonymization, entity detection) are delegated to Docudesk.
 
+Per **hydra ADR-022** (apps consume OpenRegister abstractions over local duplication), this spec consumes existing OpenRegister integration leaves for the parts that overlap them rather than building bespoke equivalents:
+- The **document queue / board** consumes the OpenRegister **deck leaf** (`nextcloud-entity-relations` `DeckCardService`, `openregister_deck_links`, `nl.openregister.object.deck.*` events): a disclosure batch is a Deck board, each document a Deck card linked to its assessment object.
+- The **disclosure workflow / state engine** consumes OpenRegister **approval-workflow** (role-gated sign-off chains) for human review gates and **workflow-integration** (flow / n8n) for automation rules (notifications, deadline reminders).
+- WOO-specific logic — weigeringsgronden, redaction metadata + audit, inventarislijst, and the public reading-room rendering — stays in OpenCatalogi.
+
 ## Context
-OpenCatalogi already serves as the "regieomgeving" (orchestration environment) for WOO publications: it manages catalogs, publications, listings, and public-facing catalog websites. This spec adds the WOO-specific workflow layer on top of those existing entities: managing a queue of documents that need assessment and redaction, tracking which redaction grounds (weigeringsgronden) apply, and publishing the final set of redacted documents through the existing publication infrastructure.
+OpenCatalogi already serves as the "regieomgeving" (orchestration environment) for WOO publications: it manages catalogs, publications, listings, and public-facing catalog websites. This spec adds the WOO-specific workflow layer on top of those existing entities: orchestrating a queue of documents that need assessment and redaction (via the **deck leaf**), tracking which redaction grounds (weigeringsgronden) apply, gating the disclosure workflow (via **approval-workflow** + **workflow-integration**), and publishing the final set of redacted documents through the existing publication infrastructure.
 
 The document processing pipeline (entity detection, anonymization, PDF conversion) remains in Docudesk via the `anonymization` spec. OpenCatalogi orchestrates the WOO workflow and calls Docudesk for document-level operations. The case management side lives in Procest's `woo-case-type` spec.
 
@@ -16,51 +21,61 @@ The document processing pipeline (entity detection, anonymization, PDF conversio
 - Docudesk `anonymization` spec: provides the entity detection and redaction engine (ANON-001 through ANON-056). OpenCatalogi delegates document processing to Docudesk but manages the WOO assessment and publication workflow.
 - Procest `woo-case-type` spec: manages the WOO case lifecycle. This spec handles the publication workflow that Procest delegates to OpenCatalogi.
 
+**Relation to consumed OpenRegister leaves (ADR-022):**
+- OpenRegister `nextcloud-entity-relations` (deck leaf): the WOO document queue/board is a Deck board + cards consumed from this leaf — NOT a bespoke queue table or kanban UI.
+- OpenRegister `approval-workflow`: human review/sign-off gates in the disclosure workflow are role-gated approval chains consumed from this abstraction — NOT a bespoke state machine.
+- OpenRegister `workflow-integration` (flow / n8n): notifications, deadline reminders, and status-driven side effects are workflow triggers consumed from this leaf — NOT bespoke in-app listeners.
+
 **Relation to existing OpenCatalogi entities:**
 - **Publication**: WOO document packages are published as Publication objects with WOO-specific metadata (besluit, inventarislijst, weigeringsgronden).
 - **Catalog**: WOO reading rooms are implemented as dedicated Catalogs, enabling public access through the existing catalog website infrastructure.
 - **Listing**: Individual WOO documents (openbaar and redacted deels-openbaar) become Listings within the WOO publication Catalog.
 - **Organization**: Links WOO publications to the responsible bestuursorgaan.
 
-## Requirements
+## ADDED Requirements
 
-### Requirement: WOO document queue
-The system MUST provide a document processing queue for WOO requests, enabling users to track and manage the assessment status of all documents in a WOO request.
+### Requirement: WOO document queue (consumes the OpenRegister deck leaf)
+The system MUST provide the WOO document processing queue by **consuming the OpenRegister deck leaf** (`nextcloud-entity-relations` `DeckCardService`, `openregister_deck_links`, `nl.openregister.object.deck.*` events) — NOT by building a bespoke queue table or kanban UI (hydra ADR-022). A disclosure batch is represented as a Deck board whose stacks are the assessment stages; each document is a Deck card linked to its OpenRegister assessment object. WOO contributes only the assessment status vocabulary and the per-document assessment metadata stored on the linked object; board/card mechanics (drag, bulk move, progress, sort/filter/search) are delivered by the leaf and surfaced as the deck widget on the batch object detail page (ADR-019 / ADR-024).
 
 #### Scenario: Receive documents from Procest
 - GIVEN a WOO case in Procest with 20 collected documents
 - WHEN Procest sends the documents to OpenCatalogi for WOO processing
-- THEN a WOO processing batch MUST be created in OpenCatalogi
-- AND all 20 documents MUST appear in the processing queue
-- AND each document MUST have initial status "Te beoordelen"
+- THEN a WOO processing batch MUST be created in OpenCatalogi as a Deck board (via the deck leaf)
+- AND a Deck card MUST be created for each of the 20 documents, linked to its assessment object via `POST /api/objects/{register}/{schema}/{id}/deck`
+- AND each card MUST start in the "Te beoordelen" stack (initial status "Te beoordelen")
 
-#### Scenario: Document assessment statuses
-- GIVEN a document in the WOO queue
-- THEN the following assessment statuses MUST be supported:
+#### Scenario: Document assessment statuses map to deck stacks
+- GIVEN a document card on the WOO Deck board
+- THEN the assessment status MUST be represented as the Deck stack the card is in, supporting:
   - **Te beoordelen** -- not yet assessed
   - **Openbaar** -- fully disclosable, no redaction needed
   - **Deels openbaar** -- needs redaction before disclosure
   - **Niet openbaar** -- withheld entirely
-- AND transitioning to "Niet openbaar" MUST require selecting weigeringsgrond(en)
+- AND moving a card to the "Niet openbaar" stack MUST require selecting weigeringsgrond(en) on the linked assessment object before the move is accepted
+- AND the assessment status on the linked OpenRegister object MUST stay in sync with the card's stack (the deck leaf supports stack-move-driven status changes)
 
-#### Scenario: Bulk assessment
-- GIVEN 20 documents in the queue
-- WHEN the user selects 5 documents and sets status "Openbaar"
-- THEN all 5 MUST be updated in one action
+#### Scenario: Bulk assessment via the deck board
+- GIVEN 20 document cards in the "Te beoordelen" stack
+- WHEN the user multi-selects 5 cards and moves them to the "Openbaar" stack
+- THEN all 5 linked assessment objects MUST be updated to "Openbaar" in one action (via the deck leaf bulk-move)
 - AND the remaining 15 MUST retain their current status
 
-#### Scenario: Queue displays progress summary
-- GIVEN a WOO batch with 20 documents where 8 are assessed and 12 are "Te beoordelen"
-- WHEN the user views the batch overview
-- THEN the UI MUST show a progress bar or counter indicating 8/20 assessed
-- AND the breakdown by status MUST be visible (e.g., 5 openbaar, 2 deels openbaar, 1 niet openbaar)
+#### Scenario: Queue progress summary (deck widget)
+- GIVEN a WOO Deck board with 20 cards where 8 are assessed and 12 are in "Te beoordelen"
+- WHEN the user views the batch object detail page
+- THEN the deck widget MUST show the per-stack counts (e.g., 5 openbaar, 2 deels openbaar, 1 niet openbaar, 12 te beoordelen)
+- AND a progress indicator of 8/20 assessed MUST be derivable from those stack counts
 
-#### Scenario: Queue supports sorting and filtering
-- GIVEN a WOO batch with 50 documents
-- WHEN the user interacts with the queue table
-- THEN they MUST be able to sort by document name, date, status, and file type
-- AND they MUST be able to filter by assessment status
-- AND they MUST be able to search by document name
+#### Scenario: Queue sorting, filtering, and search (deck widget)
+- GIVEN a WOO Deck board with 50 cards
+- WHEN the user interacts with the deck widget
+- THEN sorting, filtering by stack/status, and searching by card title MUST be provided by the deck leaf widget
+- AND OpenCatalogi MUST NOT reimplement these as a bespoke table
+
+#### Scenario: Deck app unavailable
+- GIVEN the Nextcloud Deck app is not installed or disabled
+- WHEN the WOO queue is requested
+- THEN the deck leaf's graceful-degradation behaviour applies (HTTP 501 `APP_NOT_AVAILABLE`) and OpenCatalogi surfaces a clear "Deck integration required for the WOO queue" message — OpenCatalogi MUST NOT fall back to a bespoke queue implementation
 
 ### Requirement: Weigeringsgronden (refusal grounds)
 The system MUST support tagging documents with legal grounds for withholding, covering all grounds specified in WOO Articles 5.1 and 5.2.
@@ -125,11 +140,12 @@ Document redaction MUST be coordinated through Docudesk's anonymization pipeline
 - AND redacted areas MUST show black bars (standard WOO convention)
 - AND the original document MUST be preserved unchanged
 
-#### Scenario: Redaction audit trail
+#### Scenario: Redaction audit trail (via OpenRegister audit-trail abstraction)
 - GIVEN a document with 5 redacted entities
 - WHEN the redaction is finalized
 - THEN an audit record MUST be created listing each redacted entity, its page/position, the weigeringsgrond applied, and the user who approved the redaction
-- AND the audit record MUST be immutable after creation
+- AND immutability MUST be provided by the OpenRegister immutable audit-trail abstraction on the assessment object (ADR-022) — NOT a bespoke immutable events table in OpenCatalogi
+- AND the WOO-specific entity→ground→position payload is the in-app contribution recorded against that audit event
 
 #### Scenario: Redaction of multi-page document
 - GIVEN a 50-page PDF document with entities detected on 12 pages
@@ -168,11 +184,13 @@ The system MUST store WOO batch and document assessment data in OpenRegister usi
   - `assessedBy`: user who performed the assessment
   - `assessedAt`: ISO 8601 assessment timestamp
 
-#### Scenario: Batch status transitions
+#### Scenario: Batch status transitions (gated by approval-workflow)
 - GIVEN a WOO batch in "in_progress" status
 - WHEN all documents have been assessed (no "Te beoordelen" remaining)
 - THEN the batch status MAY transition to "ready_for_review"
-- AND transitioning to "published" MUST require explicit user action
+- AND the transition from "ready_for_review" to "published" MUST be gated by an OpenRegister **approval-workflow** role-gated approval chain (consumed, not a bespoke state machine — ADR-022)
+- AND the approval decision MUST be persisted to the approval-workflow execution history (providing the legally required decision trail)
+- AND OpenCatalogi MUST NOT implement its own transition-authorization or approval-step machinery
 
 ### Requirement: Inventarislijst generation
 The system MUST generate a document inventory (inventarislijst) for the WOO decision, conforming to the standard municipal format.
@@ -265,19 +283,21 @@ The system MUST support publishing WOO documents to a public reading room using 
   - `publishedCount`: number of published documents (openbaar + deels openbaar)
 
 ### Requirement: WOO API endpoints
-The system MUST expose API endpoints for WOO batch management, document assessment, and publication.
+The system MUST expose API endpoints for WOO batch management, document assessment, and publication. Queue/board mechanics MUST be delegated to the deck leaf and workflow gating to approval-workflow / workflow-integration (ADR-022); the WOO endpoints orchestrate those leaves and own only the WOO-specific metadata.
 
-#### Scenario: Create WOO batch endpoint
+#### Scenario: Create WOO batch endpoint (provisions a deck board)
 - GIVEN authenticated admin user
 - WHEN `POST /api/woo/batches` is called with case reference and documents
-- THEN a new WOO batch MUST be created
-- AND the response MUST include the batch ID and initial document assessments
+- THEN a new WOO batch MUST be created and a corresponding Deck board provisioned via the deck leaf
+- AND a Deck card MUST be created and linked for each document
+- AND the response MUST include the batch ID, the deck board reference, and initial document assessments
 
-#### Scenario: Update document assessment endpoint
+#### Scenario: Update document assessment endpoint (moves the deck card)
 - GIVEN a WOO batch with document ID "doc-123"
 - WHEN `PUT /api/woo/batches/{batchId}/documents/{docId}` is called with assessment data
-- THEN the document assessment MUST be updated
+- THEN the document assessment MUST be updated and the linked Deck card moved to the matching stack via the deck leaf
 - AND if the assessment is "niet_openbaar", weigeringsgronden MUST be required in the request body
+- AND OpenCatalogi MUST NOT maintain a parallel queue-state store separate from the deck links + assessment object
 
 #### Scenario: Get batch status endpoint
 - GIVEN a WOO batch ID
@@ -300,7 +320,7 @@ The system MUST expose API endpoints for WOO batch management, document assessme
 - AND the response MUST include the public reading room URL
 
 ### Requirement: WOO frontend components
-The system MUST provide Vue components for the WOO workflow in the OpenCatalogi admin interface.
+The system MUST provide Vue components for the WOO-specific parts of the workflow in the OpenCatalogi admin interface. The queue/board view itself MUST be the deck leaf widget surfaced on the batch object detail page (ADR-019 / ADR-024), not a bespoke queue table; OpenCatalogi builds only the WOO-specific surfaces (weigeringsgronden, redaction review, inventarislijst).
 
 #### Scenario: WOO batch list view
 - GIVEN an admin user navigates to the WOO section
@@ -309,12 +329,13 @@ The system MUST provide Vue components for the WOO workflow in the OpenCatalogi 
 - AND each row MUST show: case reference, status, document count, progress, creation date
 - AND the user MUST be able to click a batch to view its details
 
-#### Scenario: WOO document assessment view
+#### Scenario: WOO document queue view (deck widget)
 - GIVEN an admin user opens a WOO batch
-- WHEN the document queue loads
-- THEN all documents MUST be listed with their current assessment status
-- AND the user MUST be able to select documents and change their assessment
-- AND a document preview MUST be available by clicking on a document
+- WHEN the batch object detail page loads
+- THEN the document queue MUST be rendered by the OpenRegister deck leaf widget (board + stacks + cards) surfaced via the app manifest
+- AND the user MUST be able to move cards between stacks (changing assessment) and multi-select for bulk moves through that widget
+- AND a document preview MUST be available from a card
+- AND OpenCatalogi MUST NOT build a bespoke assessment table to duplicate the deck widget
 
 #### Scenario: WOO redaction view
 - GIVEN a document assessed as "Deels openbaar"
@@ -346,40 +367,50 @@ WOO reading rooms MUST be implemented as a special catalog type within OpenCatal
 - THEN the WOO reading room URL MUST be included in the sitemap
 - AND individual published documents MUST have their own sitemap entries
 
-### Requirement: Notification and communication
-The system MUST support notifications for WOO workflow events.
+### Requirement: Notification and communication (consumes workflow-integration / flow)
+The system MUST support notifications for WOO workflow events by **consuming the OpenRegister `workflow-integration` (flow / n8n) leaf** — configuring workflow triggers on OpenRegister register events / schema hooks — NOT by coding bespoke notification listeners in OpenCatalogi (hydra ADR-022). OpenCatalogi provides the WOO-specific trigger configuration and message templates; dispatch, scheduling, and delivery are owned by the workflow leaf.
 
 #### Scenario: Notification when batch is ready for review
 - GIVEN a WOO batch where all documents have been assessed
 - WHEN the batch transitions to "ready_for_review"
-- THEN the responsible reviewer MUST receive a Nextcloud notification
+- THEN a `workflow-integration` trigger on that status-change event MUST notify the responsible reviewer
 - AND the notification MUST link to the batch review page
+- AND OpenCatalogi MUST NOT register a bespoke event listener for this
 
 #### Scenario: Notification when batch is published
 - GIVEN a WOO batch that has been published
 - WHEN publication completes
-- THEN the batch creator and reviewer MUST receive notifications
+- THEN a `workflow-integration` trigger MUST notify the batch creator and reviewer
 - AND the notification MUST include the public reading room URL
 
 #### Scenario: Notification on assessment deadline approaching
 - GIVEN a WOO batch with a configured besluit deadline (typically 4+2 weeks per WOO)
 - WHEN the deadline is 5 days away and assessment is incomplete
-- THEN a warning notification MUST be sent to assigned users
+- THEN a scheduled `workflow-integration` (flow / n8n) workflow MUST send a warning to assigned users
 - AND the notification MUST indicate how many documents remain unassessed
+- AND the deadline-timer logic MUST live in the workflow leaf, not as bespoke in-app cron code
 
 ## Non-Requirements
 - This spec does NOT cover the WOO case lifecycle (managed by Procest woo-case-type spec)
 - This spec does NOT cover WOO decision registration (managed by Procest besluiten-management spec)
 - This spec does NOT cover proactive WOO publication (actieve openbaarmaking) -- future spec
 - This spec does NOT cover document-level PDF generation, anonymization, or entity detection (managed by Docudesk anonymization spec)
+- This spec does NOT build a bespoke document queue/board — that is **consumed** from the OpenRegister deck leaf (ADR-022)
+- This spec does NOT build a bespoke workflow/state engine or approval-step machinery — that is **consumed** from OpenRegister approval-workflow + workflow-integration (ADR-022)
 
 ## Dependencies
 - Docudesk anonymization pipeline (entity detection, redaction engine) -- called via API for document processing
 - Procest woo-case-type spec (case management, document collection)
 - OpenRegister for batch and assessment data storage
+- **OpenRegister deck leaf** (`nextcloud-entity-relations`: `DeckCardService`, `openregister_deck_links`, `nl.openregister.object.deck.*` events) -- consumed for the WOO document queue/board (ADR-022)
+- **OpenRegister approval-workflow** abstraction -- consumed for the human review/sign-off gate on batch publication (ADR-022)
+- **OpenRegister workflow-integration** (flow / n8n) leaf -- consumed for notifications, deadline reminders, and status-driven automation (ADR-022)
+- **OpenRegister immutable audit-trail** abstraction -- consumed for the redaction audit record's immutability (ADR-022)
+- Nextcloud Deck app (required by the deck leaf at runtime; queue degrades to a clear "integration required" message if absent)
 - OpenCatalogi Publication, Catalog, Listing, and Organization entities (existing infrastructure)
 - OpenCatalogi SitemapService (for WOO reading room sitemap inclusion)
 - OpenCatalogi SearchService (for reading room document search)
+- OpenCatalogi app manifest (ADR-024) -- to surface the deck widget + approval state on the batch object detail page
 
 ### Current Implementation Status
 - **Not yet implemented**: This is an entirely planned spec. Zero WOO-specific implementation exists in the codebase.
@@ -404,19 +435,27 @@ The system MUST support notifications for WOO workflow events.
   - `AnonymizationService.php` -- entity detection and document anonymization pipeline
   - `AnonymizationController.php` -- upload, extract, anonymize endpoints
   - Anonymization UI components -- drag-and-drop upload and processing
-- **Key gaps**:
-  - No WOO document processing queue or batch management
+- **Building blocks consumed from OpenRegister leaves (ADR-022 — NOT built in OpenCatalogi)**:
+  - Deck leaf (`nextcloud-entity-relations` `DeckCardService`, `openregister_deck_links`) -- the WOO document queue/board
+  - `approval-workflow` abstraction -- the publication review/sign-off gate
+  - `workflow-integration` (flow / n8n) leaf -- WOO notifications, deadline reminders, status automation
+  - Immutable audit-trail abstraction -- redaction audit immutability
+- **Key gaps (WOO-specific, in-app work)**:
   - No weigeringsgronden (refusal grounds) data model or selection UI
   - No selective entity redaction coordination (current Docudesk anonymization is all-or-nothing per entity list)
   - No manual redaction region support
   - No redaction preview functionality
   - No inventarislijst generation
   - No WOO-specific reading room catalog type
-  - No WOO-specific API endpoints
-  - No WOO frontend components
+  - No WOO-specific API endpoints (orchestrating the leaves + WOO metadata)
+  - No WOO-specific frontend surfaces (weigeringsgronden / redaction / inventarislijst)
   - No integration with Procest woo-case-type
   - No integration with Docudesk anonymization API from OpenCatalogi
-  - No WOO notification workflow
+- **Integration gaps (wiring the consumed leaves)**:
+  - WOO batch is not yet wired to provision/consume a deck board + cards
+  - Batch publication gate not yet wired to an approval-workflow chain
+  - WOO notifications/deadlines not yet configured as workflow-integration triggers
+  - Deck widget + approval state not yet surfaced on the batch object detail page via the app manifest (ADR-024)
 
 ### Standards & References
 - **WOO (Wet open overheid)**: Primary law governing government transparency in the Netherlands (effective May 1, 2022, replacing WOB)

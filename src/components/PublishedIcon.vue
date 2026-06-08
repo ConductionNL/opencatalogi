@@ -26,7 +26,11 @@
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import { isPublished, isDepublished } from '../services/publicationStatus.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'PublishedIcon',
 	components: {
@@ -85,56 +89,8 @@ export default {
 		},
 	},
 	computed: {
-		icon() {
-			const published = this.object?.['@self']?.published
-			const depublished = this.object?.['@self']?.depublished
-
-			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
-				return 'ListBoxOutline'
-			}
-			if (depublished !== null && depublished !== undefined) {
-				return 'AlertOutline'
-			}
-			return 'Pencil'
-		},
-		iconColor() {
-			const published = this.object?.['@self']?.published
-			const depublished = this.object?.['@self']?.depublished
-
-			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
-				return 'published-icon'
-			}
-			if (depublished !== null && depublished !== undefined) {
-				return 'depublished-icon'
-			}
-			return 'draft-icon'
-		},
-		tooltip() {
-			const published = this.object?.['@self']?.published
-			const depublished = this.object?.['@self']?.depublished
-
-			if (published !== null && published !== undefined && (depublished === null || depublished === undefined)) {
-				return this.publishedTooltip
-			}
-			if (depublished !== null && depublished !== undefined) {
-				return this.depublishedTooltip
-			}
-			return this.draftTooltip
-		},
-		/**
-		 * Check if the object is published
-		 * @return {boolean} True if the object is published
-		 */
-		isPublished() {
-			return !!(this.object?.['@self']?.published && !this.object?.['@self']?.depublished)
-		},
-		/**
-		 * Check if the object is depublished
-		 * @return {boolean} True if the object is depublished
-		 */
-		isDepublished() {
-			return !!(this.object?.['@self']?.depublished)
-		},
+		isPublished() { return isPublished(this.object) },
+		isDepublished() { return isDepublished(this.object) },
 	},
 }
 </script>
@@ -142,14 +98,14 @@ export default {
 <style scoped>
 /* Publication status icon colors */
 .published-icon {
-	color: var(--color-success);
+	color: var(--color-element-success);
 }
 
 .unpublished-icon {
-	color: var(--color-warning);
+	color: var(--color-element-warning);
 }
 
 .depublished-icon {
-	color: var(--color-error);
+	color: var(--color-element-error);
 }
 </style>

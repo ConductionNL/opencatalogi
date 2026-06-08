@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { Catalogi } from '../../entities/catalogi/catalogi.ts'
 import { objectStore } from '../../store/store.js'
+import { buildHeaders } from '@conduction/nextcloud-vue'
 
 /** @typedef {import('../../entities/catalogi/catalogi.ts').Catalogi} CatalogEntity */
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
@@ -47,6 +48,15 @@ export const useCatalogStore = defineStore('catalog', {
 			page: 1,
 			limit: 20,
 		},
+
+		/** @type {string|null} */
+		lastCatalogId: null,
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		schemas: {},
+
+		/** @type {{[key: string]: {id: number, slug: string, title: string}}} */
+		registers: {},
 	}),
 
 	actions: {
@@ -54,6 +64,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Set the view mode.
 		 * @param {string} mode - The view mode to set ('cards' or 'table')
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		setViewMode(mode) {
 			this.viewMode = mode
 			console.info('Catalog view mode set to:', mode)
@@ -64,6 +75,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @param {number} page - The current page number for pagination
 		 * @param {number} limit - The number of items to display per page
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		setPagination(page, limit = 20) {
 			this.pagination = { page, limit }
 			console.info('Catalog pagination set to', { page, limit })
@@ -73,12 +85,15 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Set the active catalog and fetch its publications
 		 * @param {CatalogEntity} catalog The catalog to set as active
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1
 		 */
 		async setActiveCatalog(catalog) {
 			this.activeCatalog = new Catalogi(catalog)
 			await this.fetchPublications()
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		async refreshPublications() {
 			await this.fetchPublications()
 		},
@@ -96,23 +111,29 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Clear the active publication
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		clearActivePublication() {
 			this.activePublication = null
 		},
 
 		/**
 		 * Fetch publications for a catalog
-		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @param {object} params - Optional parameters for pagination and filtering
 		 * @param {number} params.page - Page number (default: 1)
 		 * @param {number} params.limit - Items per page (default: 20)
+		 * @param {string|null} catalogId - The ID of the catalog to fetch publications for, if null the active catalog is used
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			if (!catalogId && !this.activeCatalog) {
+			const resolvedCatalogId = catalogId || this.activeCatalog?.slug || this.activeCatalog?.id || this.lastCatalogId
+			if (!resolvedCatalogId) {
 				console.error('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
 				return
 			}
+
+			this.lastCatalogId = resolvedCatalogId
 
 			this.loading = true
 			objectStore.setLoading('publication', true)
@@ -134,10 +155,11 @@ export const useCatalogStore = defineStore('catalog', {
 			const queryParams = new URLSearchParams(searchParams)
 
 			try {
-				const catalogIdToUse = catalogId || this.activeCatalog.id
+				const catalogIdToUse = resolvedCatalogId
 
-				const url = `/index.php/apps/opencatalogi/api/catalogi/${catalogIdToUse}?${queryParams}`
-				const response = await fetch(url)
+				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
+				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
+				const response = await fetch(url, { method: 'GET', headers: buildHeaders() })
 				const data = await response.json()
 
 				this.publications = {
@@ -155,18 +177,31 @@ export const useCatalogStore = defineStore('catalog', {
 					limit: data.limit || 20,
 				}
 
-				// Process each publication to register its type in the object store
+				// Process each publication to register its type in the object store.
+				// The backend returns per-publication @self.schema / @self.register as IDs,
+				// with the resolved schema/register objects on data['@self'].schemas / .registers
+				// (keyed by id). Older shapes embedded the full object on the publication itself.
+				const schemasMap = data['@self']?.schemas || {}
+				const registersMap = data['@self']?.registers || {}
 				for (const publication of data.results || []) {
-					if (publication.schema && publication.register) {
-						const slug = publication.schema.slug
-						if (!this.registeredTypes.has(slug)) {
-							await objectStore.registerObjectType(
-								slug,
-								publication.schema.id,
-								publication.register.id,
-							)
-							this.registeredTypes.add(slug)
-						}
+					const schemaRef = publication['@self']?.schema ?? publication.schema
+					const registerRef = publication['@self']?.register ?? publication.register
+					if (!schemaRef || !registerRef) continue
+
+					const schemaObj = typeof schemaRef === 'object'
+						? schemaRef
+						: schemasMap[String(schemaRef)] || schemasMap[Number(schemaRef)]
+					const registerObj = typeof registerRef === 'object'
+						? registerRef
+						: registersMap[String(registerRef)] || registersMap[Number(registerRef)]
+
+					const slug = schemaObj?.slug
+					const schemaId = schemaObj?.id ?? schemaRef
+					const registerId = registerObj?.id ?? registerRef
+
+					if (slug && !this.registeredTypes.has(slug)) {
+						await objectStore.registerObjectType(slug, schemaId, registerId)
+						this.registeredTypes.add(slug)
 					}
 				}
 
@@ -187,6 +222,7 @@ export const useCatalogStore = defineStore('catalog', {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		async getPublicationAttachments() {
 			const publication = objectStore.getActiveObject('publication')
 			const register = publication['@self'].register
@@ -195,13 +231,14 @@ export const useCatalogStore = defineStore('catalog', {
 
 			const response = await fetch(`/index.php/apps/openregister/api/objects/${register}/${schema}/${id}/files`)
 			const data = await response.json()
-			objectStore.setCollection('publicationAttachments', data)
+			objectStore.setCollection('publicationAttachments', data.results || [])
 		},
 
 		/**
 		 * Clear the active catalog and its publications
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		clearActiveCatalog() {
 
 			// Unregister all object types
@@ -228,6 +265,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Get the list of available registers from the active catalog
 		 * @return {Array<string>} List of register IDs
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		availableRegisters() {
 			return this.activeCatalog?.registers || []
 		},
@@ -236,6 +274,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * Get the list of available schemas from the active catalog
 		 * @return {Array<string>} List of schema IDs
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-1 */
 		availableSchemas() {
 			return this.activeCatalog?.schemas || []
 		},

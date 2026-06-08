@@ -1,0 +1,28 @@
+<template>
+	<NcAppSettingsDialog
+		:open="open"
+		:show-navigation="false"
+		:name="t('opencatalogi', 'OpenCatalogi settings')"
+		@update:open="$emit('update:open', $event)">
+		<NcAppSettingsSection id="general" :name="t('opencatalogi', 'General')">
+			<template #icon>
+				<CogIcon :size="20" />
+			</template>
+			<p>{{ t('opencatalogi', 'User preferences will appear here.') }}</p>
+		</NcAppSettingsSection>
+	</NcAppSettingsDialog>
+</template>
+<script>
+import { NcAppSettingsDialog, NcAppSettingsSection } from '@nextcloud/vue'
+import CogIcon from 'vue-material-design-icons/Cog.vue'
+/**
+ * UserSettings — placeholder user-preferences dialog.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-3
+ */
+export default {
+	name: 'UserSettings',
+	components: { NcAppSettingsDialog, NcAppSettingsSection, CogIcon },
+	props: { open: { type: Boolean, default: false } },
+}
+</script>

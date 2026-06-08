@@ -11,7 +11,7 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../store/store.js'
 </script>
 
@@ -42,8 +42,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 						v-if="massActions && massActions.length > 0"
 						:force-name="true"
 						:disabled="selectedObjects.length === 0"
-						:title="selectedObjects.length === 0 ? `Select one or more ${objectTypePlural} to use mass actions` : `Mass actions (${selectedObjects.length} selected)`"
-						:menu-name="`Mass Actions (${selectedObjects.length})`">
+						:title="selectedObjects.length === 0 ? t('opencatalogi', 'Select one or more {objectType} to use mass actions', { objectType: objectTypePlural }) : t('opencatalogi', 'Mass actions ({count} selected)', { count: selectedObjects.length })"
+						:menu-name="t('opencatalogi', 'Mass Actions ({count})', { count: selectedObjects.length })">
 						<template #icon>
 							<FormatListChecks :size="20" />
 						</template>
@@ -63,7 +63,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- View Mode Switch -->
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
-							v-tooltip="`See ${objectTypePlural} as cards`"
+							v-tooltip="t('opencatalogi', 'See {objectType} as cards', { objectType: objectTypePlural })"
 							:checked="viewMode === 'cards'"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
@@ -72,10 +72,10 @@ import { objectStore, navigationStore } from '../store/store.js'
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => setViewMode('cards')">
-							Cards
+							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							v-tooltip="`See ${objectTypePlural} as a table`"
+							v-tooltip="t('opencatalogi', 'See {objectType} as a table', { objectType: objectTypePlural })"
 							:checked="viewMode === 'table'"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
@@ -84,7 +84,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 							type="radio"
 							button-variant-grouped="horizontal"
 							@update:checked="() => setViewMode('table')">
-							Table
+							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 
@@ -92,7 +92,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<NcActions
 						:force-name="true"
 						:inline="actions && actions.length > 2 ? 3 : actions?.length || 2"
-						menu-name="Actions">
+						:menu-name="t('opencatalogi', 'Actions')">
 						<NcActionButton
 							v-for="action in actions"
 							:key="action.id"
@@ -112,13 +112,13 @@ import { objectStore, navigationStore } from '../store/store.js'
 						v-if="viewMode === 'table' && showColumnSelector"
 						:force-name="true"
 						:inline="1"
-						menu-name="Columns">
+						:menu-name="t('opencatalogi', 'Columns')">
 						<template #icon>
 							<FormatColumns :size="20" />
 						</template>
 
 						<!-- Metadata Section -->
-						<NcActionCaption name="Metadata" />
+						<NcActionCaption :name="t('opencatalogi', 'Metadata')" />
 						<NcActionCheckbox
 							v-for="meta in metadataColumns"
 							:key="`meta_${meta.id}`"
@@ -128,7 +128,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 						</NcActionCheckbox>
 
 						<!-- Properties Section -->
-						<NcActionCaption v-if="propertyColumns && propertyColumns.length > 0" name="Properties" />
+						<NcActionCaption v-if="propertyColumns && propertyColumns.length > 0" :name="t('opencatalogi', 'Properties')" />
 						<NcActionCheckbox
 							v-for="prop in propertyColumns"
 							:key="`prop_${prop.id}`"
@@ -165,7 +165,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 									<component :is="cardIcon" :size="20" />
 									{{ getObjectTitle(item) }}
 								</h2>
-								<NcActions :primary="true" menu-name="Actions">
+								<NcActions :primary="true" :menu-name="t('opencatalogi', 'Actions')">
 									<template #icon>
 										<DotsHorizontal :size="20" />
 									</template>
@@ -369,6 +369,9 @@ import FormatColumns from 'vue-material-design-icons/FormatColumns.vue'
 
 import PaginationComponent from './PaginationComponent.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'GenericObjectTable',
 	components: {
@@ -525,46 +528,55 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		filteredObjects() {
 			return objectStore.getCollection(this.objectType)?.results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		currentPagination() {
 			const pagination = objectStore.getPagination(this.objectType)
 			return pagination
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		paginatedObjects() {
 			return this.filteredObjects
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		selectedObjects() {
 			// Use store-managed selected objects if available, otherwise use local state
 			return (objectStore.selectedObjects || []).map(obj =>
 				this.getObjectId(obj),
 			).filter(Boolean)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		allSelected() {
 			return this.filteredObjects.length > 0 && this.filteredObjects.every(obj =>
 				this.selectedObjects.includes(this.getObjectId(obj)),
 			)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		someSelected() {
 			return this.selectedObjects.length > 0 && !this.allSelected
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentName() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', `Loading ${this.objectTypePlural}...`)
+				return t('opencatalogi', 'Loading {objectType}...', { objectType: this.objectTypePlural })
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', `No ${this.objectTypePlural} found`)
+				return t('opencatalogi', 'No {objectType} found', { objectType: this.objectTypePlural })
 			}
 			return ''
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		emptyContentDescription() {
 			if (objectStore.isLoading(this.objectType)) {
-				return t('opencatalogi', `Please wait while we fetch your ${this.objectTypePlural}.`)
+				return t('opencatalogi', 'Please wait while we fetch your {objectType}.', { objectType: this.objectTypePlural })
 			} else if (!this.filteredObjects.length) {
-				return t('opencatalogi', `No ${this.objectTypePlural} are available.`)
+				return t('opencatalogi', 'No {objectType} are available.', { objectType: this.objectTypePlural })
 			}
 			return ''
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		metadataColumns() {
 			// Get all available metadata columns from objectStore
 			return Object.entries(objectStore.metadata).map(([key, meta]) => ({
@@ -572,6 +584,7 @@ export default {
 				...meta,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		propertyColumns() {
 			// Get all available property columns from objectStore
 			return Object.entries(objectStore.properties || {}).map(([key, prop]) => ({
@@ -579,6 +592,7 @@ export default {
 				...prop,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		orderedEnabledColumns() {
 			// Get enabled columns from the store or use provided properties
 			const enabledColumns = objectStore.enabledColumns.length > 0
@@ -604,6 +618,7 @@ export default {
 		},
 	},
 
+	/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 	mounted() {
 		console.info(`GenericObjectTable mounted for ${this.objectType}, fetching objects...`)
 		this.refreshObjects()
@@ -612,11 +627,13 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		setViewMode(mode) {
 			console.info('Setting view mode to:', mode)
 			this.viewMode = mode
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		toggleSelectAll(checked) {
 			if (checked) {
 				// Select all - update store with full objects
@@ -631,6 +648,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		handleSelectObject(objectId) {
 			const currentSelected = [...(objectStore.selectedObjects || [])]
 			const existingIndex = currentSelected.findIndex(obj =>
@@ -656,6 +674,7 @@ export default {
 			objectStore.setSelectedObjects(currentSelected)
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		handleRowClick(id, event) {
 			// Don't select if clicking on the checkbox, actions button, or inside actions menu
 			if (event.target.closest('.tableColumnCheckbox')
@@ -680,6 +699,7 @@ export default {
 			return item?.summary || item?.description || ''
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getColumnValue(item, column) {
 			if (column.key) {
 				// Handle nested properties
@@ -694,6 +714,7 @@ export default {
 			return 'N/A'
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getCardProperties(item) {
 			// Convert properties to card display format
 			return this.orderedEnabledColumns.map(column => ({
@@ -704,6 +725,7 @@ export default {
 			})).filter(prop => prop.value !== 'N/A')
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		getActionDisabled(action) {
 			if (typeof action.disabled === 'function') {
 				return action.disabled()
@@ -711,6 +733,7 @@ export default {
 			return action.disabled || false
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		executeAction(action) {
 			if (action.handler) {
 				action.handler()
@@ -727,6 +750,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		executeObjectAction(action, item) {
 			if (action.handler) {
 				action.handler(item)
@@ -746,6 +770,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		executeMassAction(action) {
 			if (this.selectedObjects.length === 0) return
 
@@ -758,6 +783,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		onPageChanged(page) {
 			console.info('Page changed to:', page)
 			if (this.paginationFunction) {
@@ -767,6 +793,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		onPageSizeChanged(pageSize) {
 			console.info('Page size changed to:', pageSize)
 			if (this.paginationFunction) {
@@ -776,6 +803,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		refreshObjects() {
 			if (this.refreshFunction) {
 				this.refreshFunction()
@@ -786,6 +814,7 @@ export default {
 			objectStore.setSelectedObjects([])
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-1 */
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
@@ -795,9 +824,9 @@ export default {
 
 <style>
 .actionsButton > div > button {
-    margin-top: 0px !important;
-    margin-right: 0px !important;
-    padding-right: 0px !important;
+	margin-top: 0px !important;
+	margin-right: 0px !important;
+	padding-right: 0px !important;
 }
 </style>
 

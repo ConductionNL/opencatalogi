@@ -87,8 +87,10 @@ class CatalogiControllerTest extends TestCase
             ->with('OCA\OpenRegister\Service\ObjectService')
             ->willReturn($mockObjService);
 
+        // Default-pass every config key (catalog config + CORS allowlist) to its
+        // documented default value so the controller falls back to '*' for CORS.
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnCallback(fn(string $app, string $key, string $default = '') => $default);
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -116,11 +118,16 @@ class CatalogiControllerTest extends TestCase
         $this->container->method('get')
             ->willReturn($mockObjService);
 
+        // Configure catalog scope and leave CORS allowlist at its default '*'.
         $this->config->method('getValueString')
-            ->willReturnMap([
-                ['opencatalogi', 'catalog_schema', '', '5'],
-                ['opencatalogi', 'catalog_register', '', '3'],
-            ]);
+            ->willReturnCallback(function (string $app, string $key, string $default = '') {
+                return match ($key) {
+                    'catalog_schema'       => '5',
+                    'catalog_register'     => '3',
+                    'cors_allowed_origins' => $default,
+                    default                => $default,
+                };
+            });
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -138,7 +145,7 @@ class CatalogiControllerTest extends TestCase
             ->willReturn([]);
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnCallback(fn(string $app, string $key, string $default = '') => $default);
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -200,5 +207,70 @@ class CatalogiControllerTest extends TestCase
         $response = $this->controller->show(42);
 
         $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    /**
+     * Security (#735): an attacker-controlled Origin header must NOT be reflected
+     * back in Access-Control-Allow-Origin when the allowlist is not '*'. The
+     * controller must fall back to the configured allowlist entry instead.
+     */
+    public function testShowDoesNotReflectArbitraryOriginWhenAllowlistConfigured(): void
+    {
+        $expectedResponse = new JSONResponse(['id' => '123']);
+
+        $this->catalogiService->method('index')
+            ->with('123')
+            ->willReturn($expectedResponse);
+
+        $this->config->method('getValueString')
+            ->willReturnCallback(function (string $app, string $key, string $default = '') {
+                return match ($key) {
+                    'cors_allowed_origins' => 'https://trusted.example',
+                    default                => $default,
+                };
+            });
+
+        $this->request->method('getHeader')
+            ->with('Origin')
+            ->willReturn('https://evil.attacker.test');
+
+        $response = $this->controller->show('123');
+
+        $this->assertSame(
+            'https://trusted.example',
+            $response->getHeaders()['Access-Control-Allow-Origin']
+        );
+    }
+
+    /**
+     * When the configured allowlist contains the caller's Origin, that exact value
+     * may be echoed back (CORS by-design); otherwise the first allowlist entry wins.
+     */
+    public function testShowEchoesOriginOnlyWhenOnAllowlist(): void
+    {
+        $expectedResponse = new JSONResponse(['id' => '123']);
+
+        $this->catalogiService->method('index')
+            ->with('123')
+            ->willReturn($expectedResponse);
+
+        $this->config->method('getValueString')
+            ->willReturnCallback(function (string $app, string $key, string $default = '') {
+                return match ($key) {
+                    'cors_allowed_origins' => 'https://trusted.example,https://other.example',
+                    default                => $default,
+                };
+            });
+
+        $this->request->method('getHeader')
+            ->with('Origin')
+            ->willReturn('https://other.example');
+
+        $response = $this->controller->show('123');
+
+        $this->assertSame(
+            'https://other.example',
+            $response->getHeaders()['Access-Control-Allow-Origin']
+        );
     }
 }

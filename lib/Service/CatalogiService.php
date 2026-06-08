@@ -12,9 +12,20 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-61
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-62
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-65
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -110,8 +121,11 @@ class CatalogiService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       service from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -126,10 +140,28 @@ class CatalogiService
     }//end getObjectService()
 
     /**
+     * Resolve the PublicationQueryService for shared visibility enforcement.
+     *
+     * @return PublicationQueryService The query/visibility helper service.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the shared
+     *       PublicationQueryService from the container; pure framework plumbing.
+     */
+    private function getQueryService(): PublicationQueryService
+    {
+        return $this->container->get(PublicationQueryService::class);
+
+    }//end getQueryService()
+
+    /**
      * Attempts to retrieve the OpenRegister FileService from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       FileService from the container; pure framework plumbing, no domain behavior.
      */
     public function getFileService(): ?\OCA\OpenRegister\Service\FileService
     {
@@ -149,6 +181,9 @@ class CatalogiService
      * @return \OCA\OpenRegister\Db\SchemaMapper|null
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
     {
@@ -158,15 +193,18 @@ class CatalogiService
             return $schemaMapper;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
     }//end getSchemaMapper()
 
     /**
      * Attempts to retrieve the RegisterMapper from the Container
      *
-     * @return \OCA\OpenRegister\Db\SchemaMapper|null
+     * @return \OCA\OpenRegister\Db\RegisterMapper|null
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
     {
@@ -176,63 +214,130 @@ class CatalogiService
             return $registerMapper;
         }
 
-        throw new \RuntimeException('OpenRegister service is not available.');
+        throw new RuntimeException('OpenRegister service is not available.');
     }//end getRegisterMapper()
 
     /**
-     * Attempts to rewrite slugs and uuids in register and schema fields of a Catalog to actual ids
+     * Compute rewritten register and schema arrays for a catalog object.
      *
-     * @param ObjectEntity $objectEntity The catalog object to rewrite
+     * Resolves slug-or-id values in `registers` and `schemas` to integer ids. Returns
+     * only the keys that actually changed, so callers can pass the result straight
+     * into a pre-save hook's `setModifiedData(...)` without overwriting unrelated fields.
+     *
+     * @param array<string, mixed> $object The decoded catalog object payload.
+     *
+     * @return array<string, array<int|string>> Map containing only the changed keys
+     *                                          (`registers` and/or `schemas`). Empty
+     *                                          when nothing needs rewriting.
+     *
+     * @throws \RuntimeException When a slug cannot be resolved to a register/schema.
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
+    public function computeRewrittenRegistersAndSchemas(array $object): array
+    {
+        $modified = [];
+
+        if (isset($object['registers']) === true && is_array($object['registers']) === true) {
+            $rewrittenRegisters = array_map(
+                function ($register) {
+                    if ($this->isNumericId($register) === true) {
+                        return $register;
+                    }
+
+                    try {
+                        return $this->getRegisterMapper()->find($register)->getId();
+                    } catch (NotFoundException $e) {
+                        throw new RuntimeException('Register '.$register.' not found.');
+                    }
+                },
+                $object['registers']
+            );
+
+            if ($rewrittenRegisters !== $object['registers']) {
+                $modified['registers'] = $rewrittenRegisters;
+            }
+        }
+
+        if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
+            $rewrittenSchemas = array_map(
+                function ($schema) {
+                    if ($this->isNumericId($schema) === true) {
+                        return $schema;
+                    }
+
+                    try {
+                        return $this->getSchemaMapper()->find($schema)->getId();
+                    } catch (NotFoundException $e) {
+                        throw new RuntimeException('Schema '.$schema.' not found.');
+                    }
+                },
+                $object['schemas']
+            );
+
+            if ($rewrittenSchemas !== $object['schemas']) {
+                $modified['schemas'] = $rewrittenSchemas;
+            }
+        }
+
+        return $modified;
+
+    }//end computeRewrittenRegistersAndSchemas()
+
+    /**
+     * Determine whether a value is already a numeric integer ID (not a slug).
+     *
+     * Used inside computeRewrittenRegistersAndSchemas() to short-circuit
+     * mapper lookups when the value is already a resolved integer ID.
+     *
+     * @param mixed $value The register or schema value to test.
+     *
+     * @return bool True when the value consists entirely of digits.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     */
+    private function isNumericId($value): bool
+    {
+        return preg_match("/^\d+$/", (string) $value) === 1;
+
+    }//end isNumericId()
+
+    /**
+     * Rewrite slugs and uuids in register and schema fields of a Catalog to actual ids.
+     *
+     * @param ObjectEntity $objectEntity The catalog object to rewrite.
      *
      * @return bool Whether the object has been updated.
      *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     *
+     * @deprecated Calling this from a post-save event handler causes an infinite loop
+     *             because the inner `saveObject(...)` re-emits `ObjectUpdatedEvent`. Subscribe
+     *             to the pre-save events (`ObjectCreatingEvent` / `ObjectUpdatingEvent`) and use
+     *             {@see self::computeRewrittenRegistersAndSchemas()} together with
+     *             `$event->setModifiedData(...)` instead.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
      */
     public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
     {
-        $object = $objectEntity->getObject();
+        $object   = $objectEntity->getObject() ?? [];
+        $modified = $this->computeRewrittenRegistersAndSchemas($object);
 
-        $registers = $object['registers'];
-        $schemas   = $object['schemas'];
+        if ($modified === []) {
+            return false;
+        }
 
-        // First, attempt to rewrite the registers.
-        $registers = array_map(function ($register) {
-            if (preg_match("/^\d+$/", $register)) {
-                return $register;
-            }
-            try {
-                $registerObject = $this->getRegisterMapper()->find($register);
-
-                return $registerObject->getId();
-            } catch (NotFoundException $e) {
-                throw new \RuntimeException('Register ' . $register . ' not found.');
-            }
-        }, $registers);
-
-        // Then, attempt to rewrite the schemas.
-        $schemas = array_map(function ($schema) {
-            if (preg_match("/^\d+$/", $schema)) {
-                return $schema;
-            }
-            try {
-                $schemaObject = $this->getSchemaMapper()->find($schema);
-
-                return $schemaObject->getId();
-            } catch (NotFoundException $e) {
-                throw new \RuntimeException('Register ' . $schema . ' not found.');
-            }
-        }, $schemas);
-
-        // Set the registers and schemas in the object and update the object.
-        $object['registers'] = $registers;
-        $object['schemas']   = $schemas;
-
-        $objectEntity->setObject($object);
-
+        $objectEntity->setObject(array_merge($object, $modified));
         $this->getObjectService()->saveObject($objectEntity);
 
         return true;
+
     }//end rewriteSchemasAndRegisters()
 
     /**
@@ -245,6 +350,10 @@ class CatalogiService
      *
      * @return array<string, array<string>> Array containing available registers and schemas
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -264,10 +373,10 @@ class CatalogiService
         // UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
         // on the object's own 'slug' field.
         if ($catalogId !== null) {
-              if (Uuid::isValid($catalogId) === true) {
+            $query['slug'] = (string) $catalogId;
+            if (Uuid::isValid((string) $catalogId) === true) {
+                unset($query['slug']);
                 $query['@self']['uuid'] = $catalogId;
-            } else {
-                $query['slug'] = $catalogId;
             }
         }
 
@@ -332,9 +441,13 @@ class CatalogiService
      * @param string|null $schema   Optional schema identifier
      * @param array|null  $ids      Optional array of specific IDs to filter
      *
-     * @return array Configuration array with limit, offset, page, filters, sort, search, extend, fields, unset, queries, ids.
+     * @return array Configuration array with limit, offset, page,
+     *                filters, sort, search, extend, fields, unset,
+     *                queries, ids.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-61
      */
     private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
     {
@@ -395,6 +508,8 @@ class CatalogiService
      *
      * @return array|null The catalog data as an array, or null if not found
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-62
      */
     public function getCatalogBySlug(string $slug): ?array
     {
@@ -434,7 +549,7 @@ class CatalogiService
                 '_limit'    => 1,
             ];
 
-            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+            $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: true, _multitenancy: false);
 
             if (empty($catalogs) === true) {
                 $this->logger->error(
@@ -449,6 +564,13 @@ class CatalogiService
             }
 
             $catalog = $catalogs[0]->jsonSerialize();
+
+            // Enforce published predicate: anonymous callers may not see unpublished catalogs.
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($catalog) === false
+            ) {
+                return null;
+            }
 
             // Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
             $this->cache->set($cacheKey, $catalog, 3600);
@@ -477,6 +599,8 @@ class CatalogiService
      * @param string $slug The slug of the catalog to invalidate
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
      */
     public function invalidateCatalogCache(string $slug): void
     {
@@ -495,6 +619,8 @@ class CatalogiService
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
      */
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
@@ -535,6 +661,8 @@ class CatalogiService
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
      */
     public function warmupCatalogCache(string $slug): void
     {
@@ -552,6 +680,8 @@ class CatalogiService
      *
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
      */
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
@@ -598,6 +728,8 @@ class CatalogiService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-65
      */
     public function index(null|string|int $catalogId=null): JSONResponse
     {
@@ -663,10 +795,24 @@ class CatalogiService
         // Use searchObjectsPaginated which handles pagination internally.
         $result = $objectService->searchObjectsPaginated($query);
 
+        // Enforce server-side published predicate for anonymous callers. Authenticated
+        // callers keep RBAC-scoped behavior; anonymous callers only see published
+        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
+
         // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(
             function ($object) {
-                $objectArray = $object->jsonSerialize();
+                // The OR SOLR backend returns array shapes (not ObjectEntity instances)
+                // from searchObjectsPaginated; the magic-mapper backend returns entities.
+                // Guard so we do not fatal with "Call to a member function jsonSerialize()
+                // on array" under SOLR (#736), mirroring the dual-shape handling already
+                // present in CatalogiController/PublicationsController::index.
+                if (is_array($object) === true) {
+                    $objectArray = $object;
+                } else {
+                    $objectArray = $object->jsonSerialize();
+                }
 
                 // @todo: a logged-in user should be able to see the full object.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {

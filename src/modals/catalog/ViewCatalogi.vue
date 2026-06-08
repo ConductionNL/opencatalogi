@@ -1,11 +1,11 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog v-if="navigationStore.modal === 'viewCatalogi'"
-		:name="`View Catalog: ${activeCatalog?.title || 'Unknown'}`"
+		:name="t('opencatalogi', 'View Catalog: {title}', { title: activeCatalog?.title || t('opencatalogi', 'Unknown') })"
 		size="large"
 		:can-close="false">
 		<div class="formContainer viewCatalogiDialog">
@@ -21,7 +21,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<div class="catalogProperties">
 					<div class="propertyItem">
 						<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-						<span>{{ activeCatalog?.listed ? 'Publiek vindbaar' : 'Niet publiek vindbaar' }}</span>
+						<span>{{ activeCatalog?.listed ? t('opencatalogi', 'Publicly findable') : t('opencatalogi', 'Not publicly findable') }}</span>
 					</div>
 					<div v-if="activeCatalog?.description" class="propertyItem">
 						<strong>{{ t('opencatalogi', 'Description') }}:</strong>
@@ -59,7 +59,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 								:key="registerId"
 								class="itemCard">
 								<div class="itemHeader">
-									<h3>{{ getRegisterById(registerId)?.title || 'Unknown Register' }}</h3>
+									<h3>{{ getRegisterById(registerId)?.title || t('opencatalogi', 'Unknown Register') }}</h3>
 								</div>
 								<p v-if="getRegisterById(registerId)?.description" class="itemDescription">
 									{{ getRegisterById(registerId).description }}
@@ -84,7 +84,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 								:key="schemaId"
 								class="itemCard">
 								<div class="itemHeader">
-									<h3>{{ getSchemaById(schemaId)?.title || 'Unknown Schema' }}</h3>
+									<h3>{{ getSchemaById(schemaId)?.title || t('opencatalogi', 'Unknown Schema') }}</h3>
 								</div>
 								<p v-if="getSchemaById(schemaId)?.description" class="itemDescription">
 									{{ getSchemaById(schemaId).description }}
@@ -115,7 +115,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 										<template #icon>
 											<OpenInApp :size="20" />
 										</template>
-										View Organization
+										{{ t('opencatalogi', 'View Organization') }}
 									</NcActionButton>
 								</NcActions>
 							</div>
@@ -139,25 +139,25 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
-				Edit Catalog
+				{{ t('opencatalogi', 'Edit Catalog') }}
 			</NcActionButton>
 			<NcActionButton close-after-click @click="viewCatalog">
 				<template #icon>
 					<OpenInApp :size="20" />
 				</template>
-				View Catalog
+				{{ t('opencatalogi', 'View Catalog') }}
 			</NcActionButton>
 			<NcActionButton close-after-click @click="deleteCatalog">
 				<template #icon>
 					<TrashCanOutline :size="20" />
 				</template>
-				Delete Catalog
+				{{ t('opencatalogi', 'Delete Catalog') }}
 			</NcActionButton>
 			<NcButton type="primary" @click="closeModal">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				Close
+				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -180,6 +180,11 @@ import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 
+/**
+ * ViewCatalogi — read-only tabbed view of a catalog's details.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-3
+ */
 export default {
 	name: 'ViewCatalogi',
 	components: {
@@ -207,20 +212,25 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		activeCatalog() {
 			return objectStore.getActiveObject('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		organization() {
 			return this.activeCatalog?.organization ? objectStore.getObject('organization', this.activeCatalog.organization) : null
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		editCatalog() {
 			navigationStore.setModal('catalog')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		viewCatalog() {
 			if (!this.activeCatalog?.slug) {
 				console.error('[ViewCatalogi#viewCatalog] Cannot navigate: catalog or slug is missing')
@@ -229,18 +239,22 @@ export default {
 			navigationStore.setModal(false)
 			this.$router.push(`/publications/${this.activeCatalog.slug}`)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		deleteCatalog() {
 			navigationStore.setModal(false)
 			navigationStore.setDialog('deleteObject', { objectType: 'catalog', dialogTitle: 'Catalogus' })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		getRegisterById(id) {
 			const availableRegisters = objectStore.availableRegisters
 			return availableRegisters.find(register => register.id === id)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		getSchemaById(id) {
 			const availableSchemas = objectStore.availableSchemas
 			return availableSchemas.find(schema => schema.id === id)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		goToOrganization() {
 			if (this.organization) {
 				objectStore.setActiveObject('organization', this.organization)

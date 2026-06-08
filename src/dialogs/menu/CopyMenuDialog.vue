@@ -11,7 +11,6 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>
@@ -23,26 +22,26 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		label-id="copyMenuDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
-			<h2>Copy Menu</h2>
+			<h2>{{ t('opencatalogi', 'Copy Menu') }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Menu successfully copied</p>
+					<p>{{ t('opencatalogi', 'Menu successfully copied') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while copying the menu</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while copying the menu') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Do you want to copy the menu '{{ menu.title }}'?</p>
+				<p>{{ t('opencatalogi', 'Do you want to copy the menu {name}?', { name: menu.title }) }}</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="navigationStore.setDialog(false)">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -54,7 +53,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<ContentCopy v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Copy
+					{{ t('opencatalogi', 'Copy') }}
 				</NcButton>
 			</span>
 		</div>
@@ -119,6 +118,11 @@ const handleCopy = async () => {
 	}
 }
 
+/**
+ * CopyMenuDialog — clone the active menu with a "(kopie)" title.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'CopyMenuDialog',
 	components: {
@@ -135,6 +139,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-5 */
 		closeDialog() {
 			this.navigationStore.setDialog(false)
 		},

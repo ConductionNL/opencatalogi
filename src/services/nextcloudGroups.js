@@ -50,12 +50,15 @@
  */
 
 import axios from '@nextcloud/axios'
+import { getCurrentUser } from '@nextcloud/auth'
 import { generateUrl } from '@nextcloud/router'
 
 /**
  * Fetch all available groups from the Nextcloud instance
  *
  * @return {Promise<Array<{label: string, value: string}>>} Array of group objects with label and value
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
  */
 export async function fetchNextcloudGroups() {
 	try {
@@ -104,6 +107,7 @@ let cachedGroups = null
 let cacheTimestamp = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+/** @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1 */
 export async function getNextcloudGroups() {
 	const now = Date.now()
 
@@ -166,6 +170,8 @@ export async function getNextcloudGroups() {
  * Clear the groups cache to force a fresh fetch
  *
  * @return {void}
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
  */
 export function clearGroupsCache() {
 	cachedGroups = null
@@ -176,6 +182,8 @@ export function clearGroupsCache() {
  * Check if the current user is logged in
  *
  * @return {boolean} True if user is logged in, false otherwise
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
  */
 export function isUserLoggedIn() {
 	// Check if we have user information in the Nextcloud context
@@ -183,9 +191,9 @@ export function isUserLoggedIn() {
 	// Nextcloud's user context or session management
 	try {
 		// Check if we're in a Nextcloud context and have user info
-		if (typeof OC !== 'undefined' && OC.getCurrentUser) {
-			const currentUser = OC.getCurrentUser()
-			return currentUser && currentUser.uid && currentUser.uid !== ''
+		const currentUser = getCurrentUser()
+		if (currentUser) {
+			return currentUser.uid && currentUser.uid !== ''
 		}
 
 		// Fallback: check if we have any user-related data in localStorage
@@ -204,18 +212,17 @@ export function isUserLoggedIn() {
  * Get the current user's groups
  *
  * @return {Promise<Array<string>>} Array of group names the current user belongs to
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
  */
 export async function getCurrentUserGroups() {
 	try {
-		// Try to get user groups from Nextcloud API
-		const response = await axios.get(generateUrl('/ocs/v1.php/cloud/users/current'))
+		const response = await axios.get('/ocs/v1.php/cloud/user?format=json', {
+			headers: { 'OCS-APIREQUEST': 'true' },
+		})
 
-		if (response.data && response.data.ocs && response.data.ocs.data) {
-			const userData = response.data.ocs.data
-			return userData.groups || []
-		}
-
-		return []
+		const groups = response?.data?.ocs?.data?.groups
+		return Array.isArray(groups) ? groups : []
 	} catch (error) {
 		console.error('Error fetching current user groups:', error)
 		return []

@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 </script>
@@ -11,26 +10,26 @@ import { objectStore, navigationStore } from '../../store/store.js'
 		label-id="publishPublicationDialog"
 		@close="closeDialog">
 		<div class="dialog__content">
-			<h2>{{ publication.title }} {{ publication.status === 'Published' ? 'depubliceren' : 'publiceren' }}</h2>
+			<h2>{{ publication.status === 'Published' ? t('opencatalogi', 'Depublish publication') : t('opencatalogi', 'Publish publication') }}: {{ publication.title }}</h2>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Publication successfully published</p>
+					<p>{{ t('opencatalogi', 'Publication successfully published') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while publishing the publication</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while publishing the publication') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Do you want to publish the publication '{{ publication.title }}'?</p>
+				<p>{{ t('opencatalogi', 'Do you want to publish the publication {name}?', { name: publication.title }) }}</p>
 			</div>
 
 			<span class="buttonContainer">
 				<NcButton
 					@click="navigationStore.setDialog(false)">
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -42,7 +41,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 							<ContentCopy v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Publish
+					{{ t('opencatalogi', 'Publish') }}
 				</NcButton>
 			</span>
 		</div>
@@ -50,6 +49,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+/**
+ * PublishPublicationDialog — confirmation dialog for publishing/depublishing a publication.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-3
+ */
 import {
 	NcButton,
 	NcDialog,
@@ -123,11 +127,13 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-3 */
 		publication() {
 			return objectStore.getActiveObject('publication')
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-3 */
 		closeDialog() {
 			this.navigationStore.setDialog(false)
 		},

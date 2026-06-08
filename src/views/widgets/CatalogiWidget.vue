@@ -1,5 +1,5 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +9,7 @@ import { objectStore } from '../../store/store.js'
 		:item-menu="itemMenu"
 		@show="onShow">
 		<template #empty-content>
-			<NcEmptyContent :title="t('opencatalogi', 'Geen catalogi gevonden')">
+			<NcEmptyContent :title="t('opencatalogi', 'No catalogs found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
@@ -27,6 +27,11 @@ import FolderIcon from 'vue-material-design-icons/Folder.vue'
 
 import { getTheme } from '../../services/getTheme.js'
 
+/**
+ * CatalogiWidget — Nextcloud dashboard widget listing catalogs.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-4
+ */
 export default {
 	name: 'CatalogiWidget',
 	components: {
@@ -51,6 +56,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
 			return objectStore.getCollection('catalog').results.map((catalog) => ({
 				// expecting that slug exists on the catalog object
@@ -70,6 +76,7 @@ export default {
 		 * @param {object} item - The catalog item to show
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		onShow(item) {
 			window.location.href = `/index.php/apps/opencatalogi/publications/${item.id}`
 		},
@@ -78,6 +85,7 @@ export default {
 		 * @param {string|null} search - Optional search term
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData(search = null) {
 			this.loading = true
 			await objectStore.fetchCollection('catalog', search)

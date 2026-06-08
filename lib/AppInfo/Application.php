@@ -9,9 +9,14 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-1
  */
 
 declare(strict_types=1);
@@ -30,8 +35,11 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 
@@ -61,6 +69,10 @@ class Application extends App implements IBootstrap
      * @param IRegistrationContext $context The registration context.
      *
      * @return void
+     *
+     * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-1
      */
     public function register(IRegistrationContext $context): void
     {
@@ -95,14 +107,27 @@ class Application extends App implements IBootstrap
             listener: CatalogCacheEventListener::class
         );
 
-        // Register catalog rewrite event listeners.
-        $context->registerEventListener(ObjectCreatedEvent::class, CatalogSchemaEventListener::class);
-        $context->registerEventListener(ObjectUpdatedEvent::class, CatalogSchemaEventListener::class);
+        // Register catalog rewrite event listeners on the *pre-save* events so the
+        // listener can mutate the in-flight payload via `setModifiedData(...)` instead
+        // of issuing a second save. Subscribing to the post-save events caused an
+        // infinite event loop on every catalog update/soft-delete.
+        $context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
+        $context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
 
         // Register tool registration listener for OpenRegister agents.
         $context->registerEventListener(
             event: ToolRegistrationEvent::class,
             listener: ToolRegistrationListener::class
+        );
+
+        // Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.
+        // The alias key 'OCA\OpenRegister\Mcp\IMcpToolProvider::opencatalogi' is the format
+        // that OR's McpToolsService enumerates to discover per-app providers (hydra ADR-034/035).
+        // The interface ships in openregister PR #1466 (ai-chat-companion-orchestrator); until
+        // then apps implement the test stub in tests/Stubs/Mcp/IMcpToolProvider.php.
+        $context->registerServiceAlias(
+            'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::opencatalogi',
+            OpenCatalogiToolProvider::class
         );
 
     }//end register()

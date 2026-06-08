@@ -1,14 +1,13 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog name="Upload Object"
+	<NcDialog :name="t('opencatalogi', 'Upload Object')"
 		size="normal"
 		:can-close="false">
 		<NcNoteCard v-if="success" type="success">
-			<p>Object successfully uploaded</p>
+			<p>{{ t('opencatalogi', 'Object successfully uploaded') }}</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
 			<p>{{ error }}</p>
@@ -21,7 +20,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back to Register
+				{{ t('opencatalogi', 'Back to Register') }}
 			</NcButton>
 			<NcButton v-if="registers.value?.id && schemas.value?.id"
 				:disabled="loading"
@@ -29,14 +28,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back to Schema
+				{{ t('opencatalogi', 'Back to Schema') }}
 			</NcButton>
 			<NcButton
 				@click="closeModal">
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success ? 'Close' : 'Cancel' }}
+				{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="!registers.value?.id || !schemas.value?.id || loading || !validateJson(object)"
@@ -46,21 +45,21 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Upload v-if="!loading" :size="20" />
 				</template>
-				Upload
+				{{ t('opencatalogi', 'Upload') }}
 			</NcButton>
 		</template>
 
 		<div v-if="!success" class="formContainer">
 			<div v-if="registers?.value?.id && success === null">
-				<b>Register:</b> {{ registers.value.label }}
+				<b>{{ t('opencatalogi', 'Register:') }}</b> {{ registers.value.label }}
 				<NcButton @click="registers.value = null">
-					Edit Register
+					{{ t('opencatalogi', 'Edit Register') }}
 				</NcButton>
 			</div>
 			<div v-if="schemas.value?.id && success === null">
-				<b>Schema:</b> {{ schemas.value.label }}
+				<b>{{ t('opencatalogi', 'Schema:') }}</b> {{ schemas.value.label }}
 				<NcButton @click="schemas.value = null">
-					Edit Schema
+					{{ t('opencatalogi', 'Edit Schema') }}
 				</NcButton>
 			</div>
 
@@ -68,7 +67,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<div v-if="!registers?.value?.id">
 				<NcSelect v-bind="registers"
 					v-model="registers.value"
-					input-label="Register"
+					:input-label="t('opencatalogi', 'Register')"
 					:loading="registersLoading"
 					:disabled="loading" />
 			</div>
@@ -77,7 +76,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<div v-if="registers?.value?.id && !schemas?.value?.id">
 				<NcSelect v-bind="schemas"
 					v-model="schemas.value"
-					input-label="Schemas"
+					:input-label="t('opencatalogi', 'Schemas')"
 					:loading="schemasLoading"
 					:disabled="loading" />
 			</div>
@@ -86,24 +85,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			<div v-if="registers.value?.id && schemas.value?.id">
 				<NcSelect v-bind="mappings"
 					v-model="mappings.value"
-					input-label="Mappings"
+					:input-label="t('opencatalogi', 'Mappings')"
 					:loading="mappingsLoading"
 					:disabled="loading || !mappings.options?.length" />
 
 				<div :class="`codeMirrorContainer ${getTheme()}`">
-					<p>Object</p>
+					<p>{{ t('opencatalogi', 'Object') }}</p>
 					<CodeMirror v-model="object"
 						:basic="true"
 						:dark="getTheme() === 'dark'"
 						:lang="json()"
 						:linter="jsonParseLinter()"
-						placeholder="Enter your object here..." />
+						:placeholder="t('opencatalogi', 'Enter your object here...')" />
 
 					<NcButton class="prettifyButton" @click="prettifyJson">
 						<template #icon>
 							<AutoFix :size="20" />
 						</template>
-						Prettify
+						{{ t('opencatalogi', 'Prettify') }}
 					</NcButton>
 				</div>
 			</div>
@@ -128,6 +127,9 @@ import Upload from 'vue-material-design-icons/Upload.vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ */
 export default {
 	name: 'UploadObject',
 	components: {
@@ -155,12 +157,14 @@ export default {
 			hasUpdated: false,
 		}
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 	mounted() {
 		this.initializeMappings()
 		this.initializeSchemas()
 		this.initializeRegisters()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeMappings() {
 			this.mappingsLoading = true
 
@@ -180,6 +184,7 @@ export default {
 					this.mappingsLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeSchemas() {
 			this.schemasLoading = true
 
@@ -199,6 +204,7 @@ export default {
 					this.schemasLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeRegisters() {
 			this.registersLoading = true
 
@@ -218,6 +224,7 @@ export default {
 					this.registersLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.success = null
@@ -229,6 +236,7 @@ export default {
 				url: '',
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		async uploadObject() {
 			this.loading = true
 
@@ -252,9 +260,11 @@ export default {
 					this.loading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		prettifyJson() {
 			this.object = JSON.stringify(JSON.parse(this.object), null, 2)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		validateJson(json) {
 			try {
 				JSON.parse(json)
@@ -292,12 +302,15 @@ export default {
 	border-radius: 0 !important;
 	border: none !important;
 }
+
 .codeMirrorContainer :deep(.cm-editor) {
 	outline: none !important;
 }
+
 .codeMirrorContainer.light > .vue-codemirror {
 	border: 1px dotted silver;
 }
+
 .codeMirrorContainer.dark > .vue-codemirror {
 	border: 1px dotted grey;
 }
@@ -307,6 +320,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼe) {
 	color: #448c27;
 }
+
 .codeMirrorContainer.dark :deep(.ͼe) {
 	color: #88c379;
 }
@@ -315,6 +329,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼc) {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.ͼc) {
 	color: #8d64f7;
 }
@@ -323,6 +338,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼb) {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.ͼb) {
 	color: #be55cd;
 }
@@ -331,6 +347,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -344,26 +361,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -372,6 +392,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -380,6 +401,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

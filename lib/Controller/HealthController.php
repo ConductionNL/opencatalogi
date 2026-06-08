@@ -11,9 +11,14 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -59,6 +64,8 @@ class HealthController extends Controller
      * @NoCSRFRequired
      *
      * @return JSONResponse Health status.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
      */
     public function index(): JSONResponse
     {
@@ -76,9 +83,6 @@ class HealthController extends Controller
         if ($checks['filesystem'] !== 'ok' && $status !== 'error') {
             $status = 'degraded';
         }
-
-        // Check search backend.
-        $checks['search_backend'] = $this->checkSearchBackend();
 
         // Only database failure is critical (503). Degraded is still 200.
         $httpStatus = Http::STATUS_OK;
@@ -101,6 +105,8 @@ class HealthController extends Controller
      * Check database connectivity.
      *
      * @return string 'ok' or error message.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
      */
     private function checkDatabase(): string
     {
@@ -125,6 +131,8 @@ class HealthController extends Controller
      * Check filesystem access.
      *
      * @return string 'ok' or error message.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-15
      */
     private function checkFilesystem(): string
     {
@@ -146,29 +154,6 @@ class HealthController extends Controller
         }
 
     }//end checkFilesystem()
-
-    /**
-     * Check search backend availability.
-     *
-     * @return string Backend type and status.
-     */
-    private function checkSearchBackend(): string
-    {
-        try {
-            // Check if ElasticSearch is configured.
-            $container = \OCP\Server::get(\Psr\Container\ContainerInterface::class);
-            $esService = $container->get(\OCA\OpenCatalogi\Service\ElasticSearchService::class);
-            if ($esService !== null && method_exists($esService, 'isAvailable') === true) {
-                return $esService->isAvailable() === true ? 'elasticsearch: ok' : 'elasticsearch: unreachable';
-            }
-
-            return 'database';
-        } catch (\Exception $e) {
-            // ElasticSearch not configured — using database backend.
-            return 'database';
-        }
-
-    }//end checkSearchBackend()
 
     /**
      * Get the app version.

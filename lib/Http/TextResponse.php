@@ -9,6 +9,9 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -20,6 +23,8 @@ use OCP\AppFramework\Http\Response;
 
 /**
  * A simple response for plain text data.
+ *
+ * @psalm-suppress MissingTemplateParam
  */
 class TextResponse extends Response
 {

@@ -11,6 +11,9 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -87,6 +90,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function dashboard(): TemplateResponse
     {
@@ -101,6 +106,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function catalogi(): TemplateResponse
     {
@@ -115,6 +122,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function publicationsIndex(): TemplateResponse
     {
@@ -129,6 +138,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function publicationsPage(): TemplateResponse
     {
@@ -143,6 +154,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function search(): TemplateResponse
     {
@@ -157,6 +170,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function organizations(): TemplateResponse
     {
@@ -171,6 +186,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function themes(): TemplateResponse
     {
@@ -185,6 +202,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function glossary(): TemplateResponse
     {
@@ -199,6 +218,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function pages(): TemplateResponse
     {
@@ -213,6 +234,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function menus(): TemplateResponse
     {
@@ -227,6 +250,8 @@ class UiController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
      */
     public function directory(): TemplateResponse
     {

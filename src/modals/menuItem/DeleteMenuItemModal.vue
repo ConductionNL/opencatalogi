@@ -11,7 +11,6 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { EventBus } from '../../eventBus.js'
@@ -22,22 +21,22 @@ import { EventBus } from '../../eventBus.js'
 		ref="modalRef"
 		class="deleteMenuItemModal"
 		label-id="deleteMenuItemModal"
-		:name="'Delete menu item'"
+		:name="t('opencatalogi', 'Delete menu item')"
 		@close="handleCancel">
 		<div class="modal__content">
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Menu item successfully deleted</p>
+					<p>{{ t('opencatalogi', 'Menu item successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while deleting the menu item</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while deleting the menu item') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<div v-if="success === null" class="form-group">
-				<p>Are you sure you want to delete the menu item '{{ menuItem.title || menuItem.name }}'?</p>
+				<p>{{ t('opencatalogi', 'Are you sure you want to delete the menu item {name}?', { name: menuItem.title || menuItem.name }) }}</p>
 			</div>
 
 			<div class="modalActions">
@@ -47,7 +46,7 @@ import { EventBus } from '../../eventBus.js'
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -59,7 +58,7 @@ import { EventBus } from '../../eventBus.js'
 							<Delete v-if="!loading" :size="20" />
 						</span>
 					</template>
-					Delete
+					{{ t('opencatalogi', 'Delete') }}
 				</NcButton>
 			</div>
 		</div>
@@ -170,6 +169,11 @@ const handleCancel = () => {
 	objectStore.clearActiveObject('menuItem')
 }
 
+/**
+ * DeleteMenuItemModal — remove a menu item by updating the parent menu.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'DeleteMenuItemModal',
 	components: {
@@ -187,6 +191,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		closeModal() {
 			this.navigationStore.setModal(false)
 		},

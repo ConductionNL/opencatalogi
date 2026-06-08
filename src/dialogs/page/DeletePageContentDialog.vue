@@ -1,28 +1,27 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcDialog v-if="navigationStore.dialog === 'deletePageContent'"
 		ref="dialogRef"
-		name="Delete content"
+		:name="t('opencatalogi', 'Delete content')"
 		:can-close="false"
 		@close="closeDialog">
 		<div>
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Content successfully deleted</p>
+					<p>{{ t('opencatalogi', 'Content successfully deleted') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="!success" type="error">
-					<p>Something went wrong while deleting content</p>
+					<p>{{ t('opencatalogi', 'Something went wrong while deleting content') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 			<p v-if="success === null">
-				Do you want to delete this content item? This action cannot be undone.
+				{{ t('opencatalogi', 'Do you want to delete this content item? This action cannot be undone.') }}
 			</p>
 
 			<span class="modalActions">
@@ -30,7 +29,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<template #icon>
 						<Cancel :size="20" />
 					</template>
-					{{ success ? 'Close' : 'Cancel' }}
+					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
@@ -40,7 +39,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						<NcLoadingIcon v-if="loading" :size="20" />
 						<Delete v-if="!loading" :size="20" />
 					</template>
-					Delete
+					{{ t('opencatalogi', 'Delete') }}
 				</NcButton>
 			</span>
 		</div>
@@ -54,6 +53,11 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import _ from 'lodash'
 import { Page } from '../../entities/index.js'
 
+/**
+ * DeletePageContentDialog — remove a content block by updating the parent page.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'DeletePageContentDialog',
 	components: {
@@ -72,19 +76,23 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		contentItem() {
 			return objectStore.getActiveObject('pageContent')
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeDialog() {
 			navigationStore.setDialog(false)
 			objectStore.setState('page', { success: null, error: null })
 			objectStore.clearActiveObject('pageContent')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		async handleDelete() {
 			this.loading = true
 			this.success = null
@@ -109,6 +117,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-</style>

@@ -319,10 +319,10 @@
 }
 
 .publishedIcon > svg {
-  fill: var(--color-success);
+  fill: var(--color-element-success);
 }
 .warningIcon > svg {
-  fill: var(--color-warning);
+  fill: var(--color-element-warning);
 }
 
 .tabPagination {
@@ -374,11 +374,6 @@
 }
 .errorMessage {
   color: var(--color-error);
-}
-
-/* Dialogs */
-.dialog__content {
-  padding: var(--OC-margin-15);
 }
 
 /* File drag and drop */

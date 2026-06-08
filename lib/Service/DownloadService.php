@@ -13,9 +13,19 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-77
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-78
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-79
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-80
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-81
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-82
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -41,6 +51,8 @@ use Exception;
  * Provides functionality to create and manage publication files and archives, including
  * generating PDFs and ZIP files containing metadata and attachments, and storing files
  * in NextCloud.
+ *
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  */
 class DownloadService
 {
@@ -68,6 +80,8 @@ class DownloadService
      *
      * @return JSONResponse A download response, download URL, or error response.
      * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-77
      */
     public function createPublicationFile(
         ObjectService $objectService,
@@ -137,6 +151,8 @@ class DownloadService
      * @param ObjectService  $objectService The objectService.
      *
      * @return array|JSONResponse The publication found as array or an error JSONResponse.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-78
      */
     private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse
     {
@@ -146,10 +162,21 @@ class DownloadService
                 return $entity->jsonSerialize();
             }
 
-            return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 404);
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-        }
+            return new JSONResponse(
+                data: ['error' => 'Publication not found'],
+                statusCode: 404
+            );
+        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        }//end try
 
     }//end getPublicationData()
 
@@ -164,6 +191,8 @@ class DownloadService
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-79
      */
     public function saveFileToNextCloud(string $filename, array $publication): string|JSONResponse
     {
@@ -191,114 +220,12 @@ class DownloadService
             );
         }
 
-        // Create or find ShareLink.
-        $share     = $this->fileService->findShare(path: $filePath);
-        $shareLink = $this->fileService->createShareLink(path: $filePath);
-        if ($share !== null) {
-            $shareLink = $this->fileService->getShareLink($share);
-        }
+        // Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
+        $shareLink = $this->fileService->createPublicShareLink(relativePath: $filePath);
 
         return $shareLink;
 
     }//end saveFileToNextCloud()
-
-    /**
-     * Prepares the creation of a ZIP archive for a publication.
-     *
-     * @param string $tempFolder      The tmp location for creating the ZIP archive.
-     * @param array  $attachments     All Attachments (Bijlagen) for the Publication.
-     * @param array  $publicationFile The downloadUrl and filename of the metadata pdf.
-     *
-     * @return void
-     */
-    private function prepareZip(string $tempFolder, array $attachments, array $publicationFile): void
-    {
-        // Create temporary directory structure.
-        if (file_exists($tempFolder) === false) {
-            mkdir($tempFolder, recursive: true);
-            if (count($attachments) > 0) {
-                mkdir("$tempFolder/Bijlagen", recursive: true);
-            }
-        }
-
-        // Add publication metadata PDF file.
-        $fileContent = file_get_contents($publicationFile['downloadUrl']);
-        if ($fileContent !== false) {
-            file_put_contents("$tempFolder/{$publicationFile['filename']}", $fileContent);
-        }
-
-        // Add all attachments to Bijlagen folder.
-        foreach ($attachments as $attachment) {
-            if (is_object($attachment) === true && method_exists($attachment, 'jsonSerialize') === true) {
-                $attachment = $attachment->jsonSerialize();
-            }
-
-            $fileContent = file_get_contents($attachment['downloadUrl']);
-            if ($fileContent !== false) {
-                $filePath = explode('/', $attachment['reference']);
-                file_put_contents("$tempFolder/Bijlagen/".end($filePath), $fileContent);
-            }
-        }
-
-    }//end prepareZip()
-
-    /**
-     * Creates a ZIP archive with metadata pdf and attachments for a publication.
-     *
-     * @param ObjectService  $objectService The ObjectService for database access.
-     * @param string|integer $id            The id of the Publication to create a ZIP for.
-     *
-     * @return JSONResponse A download response or an error response.
-     * @throws LoaderError|MpdfException|RuntimeError|SyntaxError
-     */
-    public function createPublicationZip(ObjectService $objectService, string|int $id): JSONResponse
-    {
-        // Get the publication data.
-        $publication = $this->getPublicationData($id, $objectService);
-        if ($publication instanceof JSONResponse) {
-            return $publication;
-        }
-
-        // Create or update the publication PDF file.
-        $jsonResponse = $this->createPublicationFile(
-            objectService: $objectService,
-            id: $id,
-            options: [
-                'download'    => false,
-                'publication' => $publication,
-            ]
-        );
-        if ($jsonResponse->getStatus() !== 200) {
-            return $jsonResponse;
-        }
-
-        $publicationFile = $jsonResponse->getData();
-
-        // Get all publication attachments.
-        $attachments = $this->publicationAttachments($id, $objectService);
-        if ($attachments instanceof JSONResponse) {
-            return $attachments;
-        }
-
-        // Set up temporary paths.
-        $tempFolder = '/tmp/nextcloud_download_'.$publication['title'];
-        $tempZip    = '/tmp/publicatie_'.$publication['title'].'.zip';
-
-        // Prepare ZIP contents.
-        $this->prepareZip(tempFolder: $tempFolder, attachments: $attachments, publicationFile: $publicationFile);
-
-        // Create the ZIP archive.
-        $error = $this->fileService->createZip($tempFolder, $tempZip);
-        if ($error !== null) {
-            return new JSONResponse(['error' => "Failed to create ZIP archive for this publication: $id"], 500);
-        }
-
-        // Return a download response and clean up temp files and folders.
-        $this->fileService->downloadZip($tempZip, $tempFolder);
-
-        return new JSONResponse([], 200);
-
-    }//end createPublicationZip()
 
     /**
      * Gets all attachments for a publication.
@@ -307,6 +234,8 @@ class DownloadService
      * @param ObjectService  $objectService The objectService.
      *
      * @return array|JSONResponse All attachments for the publication or an error JSONResponse.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-82
      */
     public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse
     {
@@ -314,10 +243,9 @@ class DownloadService
         try {
             // Fetch the publication object by its ID.
             $entity = $objectService->find($id);
+            $object = null;
             if ($entity !== null) {
                 $object = $entity->jsonSerialize();
-            } else {
-                $object = null;
             }
 
             if ($object === null) {
@@ -334,8 +262,16 @@ class DownloadService
             }
 
             return $attachments;
-        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException | ContainerExceptionInterface | DoesNotExistException $e) {
-            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+        } catch (NotFoundExceptionInterface | MultipleObjectsReturnedException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
+        } catch (ContainerExceptionInterface | DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['error' => $e->getMessage()],
+                statusCode: 500
+            );
         }//end try
 
     }//end publicationAttachments()

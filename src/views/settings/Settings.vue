@@ -1,8 +1,8 @@
 <template>
 	<div>
 		<NcSettingsSection
-			name="Open Catalogi"
-			description="A central place for managing your Catalogi and publications"
+			:name="t('opencatalogi', 'Open Catalogi')"
+			:description="t('opencatalogi', 'A central place for managing your Catalogi and publications')"
 			doc-url="https://docs.opencatalogi.nl" />
 
 		<CnVersionInfoCard
@@ -11,7 +11,7 @@
 			:configured-version="versionInfo.configuredVersion"
 			:is-up-to-date="versionInfo.versionsMatch"
 			:show-update-button="versionInfo.needsUpdate"
-			:title="t('opencatalogi', 'Version Information')"
+			:title="t('opencatalogi', 'Version information')"
 			:description="t('opencatalogi', 'Current application and configuration versions')">
 			<template #actions>
 				<NcButton
@@ -22,7 +22,7 @@
 						<NcLoadingIcon v-if="importing" :size="20" />
 						<Refresh v-else :size="20" />
 					</template>
-					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update Configuration') : t('opencatalogi', 'Reimport Configuration') }}
+					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update configuration') : t('opencatalogi', 'Reimport configuration') }}
 				</NcButton>
 
 				<NcButton
@@ -33,7 +33,7 @@
 						<NcLoadingIcon v-if="importing" :size="20" />
 						<Refresh v-else :size="20" />
 					</template>
-					{{ t('opencatalogi', 'Force Import') }}
+					{{ t('opencatalogi', 'Force import') }}
 				</NcButton>
 			</template>
 			<template #default>
@@ -67,36 +67,36 @@
 		</CnVersionInfoCard>
 
 		<NcSettingsSection
-			name="Data storage"
-			description="Configure where to store your publication data">
+			:name="t('opencatalogi', 'Data storage')"
+			:description="t('opencatalogi', 'Configure where to store your publication data')">
 			<div v-if="!loading">
 				<!-- Warning if OpenRegister is not installed -->
 				<NcNoteCard v-if="!settings.openRegisters" type="warning">
-					Open Register is not installed. Please install it to use the Open Catalogi app with full functionality.
+					{{ t('opencatalogi', 'Open Register is not installed. Please install it to use the Open Catalogi app with full functionality.') }}
 				</NcNoteCard>
 
 				<!-- Register Selection -->
 				<div class="register-selection">
-					<h3>Register</h3>
-					<p>Select the register to store all your publicatie data</p>
+					<h3>{{ t('opencatalogi', 'Register') }}</h3>
+					<p>{{ t('opencatalogi', 'Select the register to store all your publication data') }}</p>
 
 					<NcSelect
 						v-model="selectedRegister"
 						:options="registerOptions"
-						input-label="Register"
+						:input-label="t('opencatalogi', 'Register')"
 						:disabled="loading || !settings.openRegisters"
 						@change="handleRegisterChange" />
 				</div>
 
 				<!-- Warning if selected register has no schemas -->
 				<NcNoteCard v-if="selectedRegister && !hasSchemas" type="warning">
-					The selected register has no schemas. Please create schemas in this register or select a different register.
+					{{ t('opencatalogi', 'The selected register has no schemas. Please create schemas in this register or select a different register.') }}
 				</NcNoteCard>
 
 				<!-- Object Type Schema Configuration -->
 				<div v-if="selectedRegister && hasSchemas" class="schema-configuration">
-					<h3>Schema Configuration</h3>
-					<p>Select which schema to use for each object type</p>
+					<h3>{{ t('opencatalogi', 'Schema Configuration') }}</h3>
+					<p>{{ t('opencatalogi', 'Select which schema to use for each object type') }}</p>
 
 					<div v-for="objectType in settings.objectTypes" :key="objectType" class="object-type-section">
 						<div class="object-type-header">
@@ -106,7 +106,7 @@
 						<NcSelect
 							v-model="configuration[objectType].schema"
 							:options="computedSchemaOptions"
-							input-label="Schema"
+							:input-label="t('opencatalogi', 'Schema')"
 							:disabled="loading" />
 					</div>
 				</div>
@@ -121,7 +121,7 @@
 							<NcLoadingIcon v-if="saving" :size="20" />
 							<Save v-else :size="20" />
 						</template>
-						Save Configuration
+						{{ t('opencatalogi', 'Save Configuration') }}
 					</NcButton>
 				</div>
 			</div>
@@ -134,18 +134,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
-			name="Publishing Options"
-			description="Configure automatic publishing behavior and interface preferences">
+			:name="t('opencatalogi', 'Publishing Options')"
+			:description="t('opencatalogi', 'Configure automatic publishing behavior and interface preferences')">
 			<div v-if="!loading" class="publishing-options">
 				<!-- Auto Publish Attachments -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
 						:checked.sync="publishingOptions.autoPublishAttachments"
 						:disabled="saving">
-						Auto publish attachments
+						{{ t('opencatalogi', 'Auto publish attachments') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						When an object that has published not null automatically publish all publications
+						{{ t('opencatalogi', 'When an object is published, automatically publish all its attachments as Nextcloud shares') }}
 					</p>
 				</div>
 
@@ -154,10 +154,10 @@
 					<NcCheckboxRadioSwitch
 						:checked.sync="publishingOptions.autoPublishObjects"
 						:disabled="saving">
-						Auto publish objects
+						{{ t('opencatalogi', 'Auto publish objects') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						When an object that has a schema and register matching a catalog is created automatically set it to published
+						{{ t('opencatalogi', 'When an object matching a catalog schema is created, automatically apply public read access via RBAC rules') }}
 					</p>
 				</div>
 
@@ -166,10 +166,10 @@
 					<NcCheckboxRadioSwitch
 						:checked.sync="publishingOptions.useOldStylePublishingView"
 						:disabled="saving">
-						Use old style publishing view
+						{{ t('opencatalogi', 'Use old style publishing view') }}
 					</NcCheckboxRadioSwitch>
 					<p class="option-description">
-						Use the legacy publishing interface instead of the new interface
+						{{ t('opencatalogi', 'Use the legacy publishing interface instead of the new interface') }}
 					</p>
 				</div>
 
@@ -183,7 +183,7 @@
 							<NcLoadingIcon v-if="saving" :size="20" />
 							<Save v-else :size="20" />
 						</template>
-						Save Publishing Options
+						{{ t('opencatalogi', 'Save Publishing Options') }}
 					</NcButton>
 				</div>
 			</div>
@@ -223,6 +223,8 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
  *
  * Settings component for the Open Catalogi that allows users to configure
  * data storage options for different object types using Open Registers.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-1
  */
 export default defineComponent({
 	name: 'Settings',
@@ -282,6 +284,7 @@ export default defineComponent({
 		 *
 		 * @return {Array<object>} Array of register options with label and value
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		registerOptions() {
 			return this.settings.availableRegisters.map(register => ({
 				label: register.title,
@@ -294,6 +297,7 @@ export default defineComponent({
 		 *
 		 * @return {boolean} True if the selected register has schemas, false otherwise
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		hasSchemas() {
 			if (!this.selectedRegister) return false
 
@@ -315,6 +319,7 @@ export default defineComponent({
 		 *
 		 * @return {Array<object>} Array of available schema options
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		computedSchemaOptions() {
 			// Don't filter out used schemas - allow reuse of schemas across object types
 			return this.schemaOptions
@@ -324,6 +329,7 @@ export default defineComponent({
 	/**
 	 * Lifecycle hook that loads settings when component is created
 	 */
+	/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 	async created() {
 		await Promise.all([
 			this.loadSettings(),
@@ -338,6 +344,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadSettings() {
 			try {
 				// Load main settings
@@ -373,6 +380,7 @@ export default defineComponent({
 		/**
 		 * Initializes the configuration object based on existing settings
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		initializeConfiguration() {
 			// Create empty configuration for each object type
 			this.settings.objectTypes.forEach(type => {
@@ -442,6 +450,7 @@ export default defineComponent({
 		/**
 		 * Automatically selects the opencatalogi register if it exists
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		autoSelectOpenCatalogiRegister() {
 			// Look for a register with "opencatalogi" in the name.
 			const opencatalogiRegister = this.settings.availableRegisters.find(
@@ -488,6 +497,7 @@ export default defineComponent({
 		 *
 		 * @param {object} register - The selected register object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		autoSelectMatchingSchemas(register) {
 			// Only proceed if register has schemas array
 			if (!register || !Array.isArray(register.schemas)) {
@@ -521,6 +531,7 @@ export default defineComponent({
 		 *
 		 * @param {string} registerId - The ID of the selected register
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		updateSchemaOptions(registerId) {
 			const register = this.settings.availableRegisters.find(r => r.id.toString() === registerId)
 			if (register && Array.isArray(register.schemas)) {
@@ -553,6 +564,7 @@ export default defineComponent({
 		 * @param {string} objectType - The object type to format
 		 * @return {string} The formatted title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		formatTitle(objectType) {
 			return objectType.charAt(0).toUpperCase() + objectType.slice(1)
 		},
@@ -560,6 +572,7 @@ export default defineComponent({
 		/**
 		 * Handles register change event
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		handleRegisterChange() {
 			if (this.selectedRegister) {
 				// Update schema options for the new register
@@ -596,6 +609,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async saveAll() {
 			if (!this.selectedRegister || !this.hasSchemas) {
 				return
@@ -638,6 +652,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadConfiguration() {
 			this.loadingConfiguration = true
 			this.configurationResults = null
@@ -666,6 +681,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async savePublishingOptions() {
 			this.saving = true
 			try {
@@ -709,6 +725,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadVersionInfo() {
 			try {
 				const response = await fetch('/index.php/apps/opencatalogi/api/settings/version')
@@ -734,6 +751,7 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async manualImport(force = false) {
 			this.importing = true
 			this.importResult = null

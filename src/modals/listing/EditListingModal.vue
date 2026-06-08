@@ -8,10 +8,12 @@
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @link https://github.com/opencatalogi/opencatalogi
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-5
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcButton, NcInputField, NcTags } from '@nextcloud/vue'
@@ -58,15 +60,15 @@ const handleCancel = () => {
 	<div class="edit-listing-modal">
 		<NcInputField
 			:value.sync="directory.title"
-			:label="t('opencatalogi', 'Titel')"
+			:label="t('opencatalogi', 'Title')"
 			:disabled="loading" />
 		<NcInputField
 			:value.sync="directory.summary"
-			:label="t('opencatalogi', 'Samenvatting')"
+			:label="t('opencatalogi', 'Summary')"
 			:disabled="loading" />
 		<NcInputField
 			:value.sync="directory.description"
-			:label="t('opencatalogi', 'Beschrijving')"
+			:label="t('opencatalogi', 'Description')"
 			:disabled="loading" />
 		<NcTags
 			v-model="directory.labels"
@@ -74,10 +76,10 @@ const handleCancel = () => {
 			:disabled="loading" />
 		<div class="edit-listing-modal__actions">
 			<NcButton :disabled="loading" @click="handleCancel">
-				{{ t('opencatalogi', 'Annuleren') }}
+				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton type="primary" :disabled="loading" @click="handleSave">
-				{{ t('opencatalogi', 'Opslaan') }}
+				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>
 	</div>

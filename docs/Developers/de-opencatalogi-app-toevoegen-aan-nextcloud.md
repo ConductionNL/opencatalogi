@@ -28,7 +28,5 @@ Klik op het icoontje van OpenCatalogi en je zit in de app!
 
   * default instellingen voor opslag (optioneel)
   * DRC or ORC (optioneel)
-  * Een MongoDB API met sleutel en clusternaam(optioneel).
-  * Voor het activeren van het zoekendpoint: een Elasticsearch met API key en index(optioneel).
 
   ![img](../assets/Instellingen_voor_opslag.png)

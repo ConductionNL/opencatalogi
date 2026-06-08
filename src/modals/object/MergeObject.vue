@@ -1,48 +1,46 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDialog name="Merge Objects"
+	<NcDialog :name="t('opencatalogi', 'Merge Objects')"
 		size="large"
 		:can-close="false">
 		<!-- Register and Schema Information -->
 		<div class="detail-grid">
 			<div class="detail-item">
-				<span class="detail-label">Register:</span>
+				<span class="detail-label">{{ t('opencatalogi', 'Register:') }}</span>
 				<span class="detail-value">{{ catalogStore.catalogiItem?.title || catalogStore.catalogiItem?.id }}</span>
 			</div>
 			<div class="detail-item">
-				<span class="detail-label">Schema:</span>
+				<span class="detail-label">{{ t('opencatalogi', 'Schema:') }}</span>
 				<span class="detail-value">{{ catalogStore.schemaItem?.title || catalogStore.schemaItem?.id }}</span>
 			</div>
 		</div>
 
 		<!-- Information about merge restrictions (only show if not completed) -->
 		<NcNoteCard v-if="step !== 3" type="info">
-			Objects can only be merged if they belong to the same register and schema.
-			If you want to merge objects from different schemas or registers, you need to migrate them first.
+			{{ t('opencatalogi', 'Objects can only be merged if they belong to the same register and schema. If you want to merge objects from different schemas or registers, you need to migrate them first.') }}
 		</NcNoteCard>
 
 		<!-- Step 1: Select Target Object -->
 		<div v-if="step === 1" class="merge-step step-1">
 			<h3 class="step-title">
-				Select Target Object
+				{{ t('opencatalogi', 'Select Target Object') }}
 			</h3>
-			<p>Select the object to merge <strong>{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id }}</strong> into:</p>
+			<p>{{ t('opencatalogi', 'Select the object to merge {name} into:', { name: sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id }) }}</p>
 
 			<div class="search-container">
 				<NcTextField
 					v-model="searchTerm"
-					label="Search objects"
-					placeholder="Type to search for objects..."
+					:label="t('opencatalogi', 'Search objects')"
+					:placeholder="t('opencatalogi', 'Type to search for objects...')"
 					@input="searchObjects" />
 			</div>
 
 			<div v-if="loading" class="loading-container">
 				<NcLoadingIcon :size="32" />
-				<p>Loading objects...</p>
+				<p>{{ t('opencatalogi', 'Loading objects...') }}</p>
 			</div>
 
 			<div v-else-if="availableObjects.length" class="object-list">
@@ -60,19 +58,21 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</div>
 			</div>
 
-			<NcEmptyContent v-else-if="!loading" name="No objects found">
+			<NcEmptyContent v-else-if="!loading" :name="t('opencatalogi', 'No objects found')">
 				<template #description>
-					{{ searchTerm ? 'No objects match your search criteria' : 'No objects available for merging' }}
+					{{ searchTerm ? t('opencatalogi', 'No objects match your search criteria') : t('opencatalogi', 'No objects available for merging') }}
 				</template>
 			</NcEmptyContent>
 		</div>
 
 		<!-- Step 2: Merge Configuration -->
 		<div v-if="step === 2" class="merge-step">
-			<h3>Configure Merge</h3>
+			<h3>{{ t('opencatalogi', 'Configure Merge') }}</h3>
 			<p>
-				Merging <strong>{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id }}</strong>
-				into <strong>{{ selectedTargetObject?.['@self']?.name || selectedTargetObject?.name || selectedTargetObject?.['@self']?.title || selectedTargetObject?.['@self']?.id }}</strong>
+				{{ t('opencatalogi', 'Merging {source} into {target}', {
+					source: sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.['@self']?.id,
+					target: selectedTargetObject?.['@self']?.name || selectedTargetObject?.name || selectedTargetObject?.['@self']?.title || selectedTargetObject?.['@self']?.id,
+				}) }}
 			</p>
 
 			<!-- Property Comparison Table -->
@@ -80,10 +80,10 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<table class="merge-table">
 					<thead>
 						<tr>
-							<th>Property</th>
-							<th>Source</th>
-							<th>Target</th>
-							<th>Result Value</th>
+							<th>{{ t('opencatalogi', 'Property') }}</th>
+							<th>{{ t('opencatalogi', 'Source') }}</th>
+							<th>{{ t('opencatalogi', 'Target') }}</th>
+							<th>{{ t('opencatalogi', 'Result Value') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -99,7 +99,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 							</td>
 							<td class="merge-target">
 								<template v-if="property === 'id'">
-									<span class="fixed-value">{{ selectedTargetObject[property] }} (Target ID)</span>
+									<span class="fixed-value">{{ selectedTargetObject[property] }} {{ t('opencatalogi', '(Target ID)') }}</span>
 								</template>
 								<template v-else>
 									<NcSelect
@@ -107,12 +107,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										:options="getMergeOptions(property)"
 										label="label"
 										track-by="value"
-										:placeholder="'Choose value for ' + property"
+										:input-label="t('opencatalogi', 'Merge value')"
+										:placeholder="t('opencatalogi', 'Choose value for {property}', { property })"
 										@input="onPropertySelectionChange(property, $event)" />
 									<NcTextField
 										v-if="mergedData[property] === 'custom'"
 										v-model="customValues[property]"
-										:placeholder="'Enter custom value for ' + property"
+										:placeholder="t('opencatalogi', 'Enter custom value for {property}', { property })"
 										class="custom-input" />
 								</template>
 							</td>
@@ -123,7 +124,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 			<!-- File Handling Options -->
 			<div class="options-section">
-				<h4>Files attached to source object: ({{ sourceFiles.length }})</h4>
+				<h4>{{ t('opencatalogi', 'Files attached to source object: ({count})', { count: sourceFiles.length }) }}</h4>
 
 				<div class="radio-options">
 					<NcCheckboxRadioSwitch
@@ -131,20 +132,20 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						value="transfer"
 						name="fileAction"
 						type="radio">
-						Transfer to target object's folder
+						{{ t('opencatalogi', "Transfer to target object's folder") }}
 					</NcCheckboxRadioSwitch>
 					<NcCheckboxRadioSwitch
 						v-model="fileAction"
 						value="delete"
 						name="fileAction"
 						type="radio">
-						Delete files
+						{{ t('opencatalogi', 'Delete files') }}
 					</NcCheckboxRadioSwitch>
 				</div>
 
 				<div class="table-toggle">
 					<NcButton type="tertiary" @click="toggleFileList">
-						{{ showFileList ? 'Hide Files' : 'View Files' }}
+						{{ showFileList ? t('opencatalogi', 'Hide Files') : t('opencatalogi', 'View Files') }}
 						<template #icon>
 							<ChevronUp v-if="showFileList" :size="20" />
 							<ChevronDown v-else :size="20" />
@@ -156,9 +157,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<table class="file-table">
 						<thead>
 							<tr>
-								<th>Filename</th>
-								<th>Size</th>
-								<th>Type</th>
+								<th>{{ t('opencatalogi', 'Filename') }}</th>
+								<th>{{ t('opencatalogi', 'Size') }}</th>
+								<th>{{ t('opencatalogi', 'Type') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -174,13 +175,13 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</div>
 
 				<div v-else-if="showFileList && !sourceFiles.length" class="no-files">
-					<p>No files attached to source object</p>
+					<p>{{ t('opencatalogi', 'No files attached to source object') }}</p>
 				</div>
 			</div>
 
 			<!-- Relation Handling Options -->
 			<div class="options-section">
-				<h4>Relations to source object: ({{ sourceRelations.length }})</h4>
+				<h4>{{ t('opencatalogi', 'Relations to source object: ({count})', { count: sourceRelations.length }) }}</h4>
 
 				<div class="radio-options">
 					<NcCheckboxRadioSwitch
@@ -188,20 +189,20 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						value="transfer"
 						name="relationAction"
 						type="radio">
-						Transfer to target object
+						{{ t('opencatalogi', 'Transfer to target object') }}
 					</NcCheckboxRadioSwitch>
 					<NcCheckboxRadioSwitch
 						v-model="relationAction"
 						value="drop"
 						name="relationAction"
 						type="radio">
-						Drop relations
+						{{ t('opencatalogi', 'Drop relations') }}
 					</NcCheckboxRadioSwitch>
 				</div>
 
 				<div class="table-toggle">
 					<NcButton type="tertiary" @click="toggleRelationList">
-						{{ showRelationList ? 'Hide Relations' : 'View Relations' }}
+						{{ showRelationList ? t('opencatalogi', 'Hide Relations') : t('opencatalogi', 'View Relations') }}
 						<template #icon>
 							<ChevronUp v-if="showRelationList" :size="20" />
 							<ChevronDown v-else :size="20" />
@@ -213,9 +214,9 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<table class="relation-table">
 						<thead>
 							<tr>
-								<th>Related Object</th>
-								<th>Relation Type</th>
-								<th>Register/Schema</th>
+								<th>{{ t('opencatalogi', 'Related Object') }}</th>
+								<th>{{ t('opencatalogi', 'Relation Type') }}</th>
+								<th>{{ t('opencatalogi', 'Register/Schema') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -223,7 +224,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<td :title="relation.title || relation.name || relation.id">
 									{{ truncateText(relation.title || relation.name || relation.id, 40) }}
 								</td>
-								<td>{{ relation.relationType || 'Related' }}</td>
+								<td>{{ relation.relationType || t('opencatalogi', 'Related') }}</td>
 								<td :title="(relation.register || 'N/A') + ' / ' + (relation.schema || 'N/A')">
 									{{ truncateText((relation.register || 'N/A') + ' / ' + (relation.schema || 'N/A'), 30) }}
 								</td>
@@ -233,7 +234,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				</div>
 
 				<div v-else-if="showRelationList && !sourceRelations.length" class="no-relations">
-					<p>No relations to source object</p>
+					<p>{{ t('opencatalogi', 'No relations to source object') }}</p>
 				</div>
 			</div>
 		</div>
@@ -241,60 +242,60 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Step 3: Merge Report -->
 		<div v-if="step === 3" class="merge-step">
 			<h3 class="report-title">
-				Merge Report
+				{{ t('opencatalogi', 'Merge Report') }}
 			</h3>
 
 			<NcNoteCard v-if="mergeResult?.success" type="success">
-				<p>Objects successfully merged!</p>
+				<p>{{ t('opencatalogi', 'Objects successfully merged!') }}</p>
 			</NcNoteCard>
 			<NcNoteCard v-if="mergeResult && !mergeResult.success" type="error">
-				<p>Merge failed. Please check the details below.</p>
+				<p>{{ t('opencatalogi', 'Merge failed. Please check the details below.') }}</p>
 			</NcNoteCard>
 
 			<div v-if="mergeResult" class="merge-report">
 				<!-- Object Information -->
 				<div class="report-section">
-					<h4>Merge Summary</h4>
+					<h4>{{ t('opencatalogi', 'Merge Summary') }}</h4>
 					<div class="object-info">
 						<div class="object-detail">
-							<strong>Target Object (Result):</strong>
+							<strong>{{ t('opencatalogi', 'Target Object (Result):') }}</strong>
 							<div class="object-meta">
 								<span class="object-id">ID: {{ selectedTargetObject?.['@self']?.id || selectedTargetObject?.id }}</span>
-								<span class="object-title">{{ selectedTargetObject?.['@self']?.name || selectedTargetObject?.name || selectedTargetObject?.['@self']?.title || selectedTargetObject?.title || 'Untitled' }}</span>
+								<span class="object-title">{{ selectedTargetObject?.['@self']?.name || selectedTargetObject?.name || selectedTargetObject?.['@self']?.title || selectedTargetObject?.title || t('opencatalogi', 'Untitled') }}</span>
 							</div>
 						</div>
 						<div class="object-detail">
-							<strong>Source Object:</strong>
+							<strong>{{ t('opencatalogi', 'Source Object:') }}</strong>
 							<div class="object-meta">
 								<span class="object-id">ID: {{ sourceObject?.['@self']?.id || sourceObject?.id }}</span>
-								<span class="object-title">{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.title || 'Untitled' }}</span>
-								<span class="object-status deleted">Status: Deleted</span>
+								<span class="object-title">{{ sourceObject?.['@self']?.name || sourceObject?.name || sourceObject?.['@self']?.title || sourceObject?.title || t('opencatalogi', 'Untitled') }}</span>
+								<span class="object-status deleted">{{ t('opencatalogi', 'Status: Deleted') }}</span>
 							</div>
 						</div>
 					</div>
 				</div>
 				<!-- Statistics -->
 				<div class="report-section">
-					<h4>Statistics</h4>
+					<h4>{{ t('opencatalogi', 'Statistics') }}</h4>
 					<ul>
-						<li>Properties changed: {{ mergeResult.statistics?.propertiesChanged || 0 }}</li>
-						<li>Files transferred: {{ mergeResult.statistics?.filesTransferred || 0 }}</li>
-						<li>Files deleted: {{ mergeResult.statistics?.filesDeleted || 0 }}</li>
-						<li>Relations transferred: {{ mergeResult.statistics?.relationsTransferred || 0 }}</li>
-						<li>Relations dropped: {{ mergeResult.statistics?.relationsDropped || 0 }}</li>
-						<li>References updated: {{ mergeResult.statistics?.referencesUpdated || 0 }}</li>
+						<li>{{ t('opencatalogi', 'Properties changed: {count}', { count: mergeResult.statistics?.propertiesChanged || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Files transferred: {count}', { count: mergeResult.statistics?.filesTransferred || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Files deleted: {count}', { count: mergeResult.statistics?.filesDeleted || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Relations transferred: {count}', { count: mergeResult.statistics?.relationsTransferred || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'Relations dropped: {count}', { count: mergeResult.statistics?.relationsDropped || 0 }) }}</li>
+						<li>{{ t('opencatalogi', 'References updated: {count}', { count: mergeResult.statistics?.referencesUpdated || 0 }) }}</li>
 					</ul>
 				</div>
 
 				<!-- Changed Properties -->
 				<div v-if="mergeResult.actions?.properties?.length" class="report-section">
-					<h4>Changed Properties</h4>
+					<h4>{{ t('opencatalogi', 'Changed Properties') }}</h4>
 					<table class="report-table">
 						<thead>
 							<tr>
-								<th>Property</th>
-								<th>Old Value</th>
-								<th>New Value</th>
+								<th>{{ t('opencatalogi', 'Property') }}</th>
+								<th>{{ t('opencatalogi', 'Old Value') }}</th>
+								<th>{{ t('opencatalogi', 'New Value') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -309,18 +310,18 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 				<!-- File Actions -->
 				<div v-if="mergeResult.actions?.files?.length" class="report-section">
-					<h4>File Actions</h4>
+					<h4>{{ t('opencatalogi', 'File Actions') }}</h4>
 					<ul>
 						<li v-for="fileActionItem in mergeResult.actions.files" :key="fileActionItem.name">
 							{{ fileActionItem.name }}: {{ fileActionItem.action }}
-							<span v-if="!fileActionItem.success" class="error-text"> (Failed: {{ fileActionItem.error }})</span>
+							<span v-if="!fileActionItem.success" class="error-text"> {{ t('opencatalogi', '(Failed: {error})', { error: fileActionItem.error }) }}</span>
 						</li>
 					</ul>
 				</div>
 
 				<!-- Warnings -->
 				<div v-if="mergeResult.warnings?.length" class="report-section">
-					<h4>Warnings</h4>
+					<h4>{{ t('opencatalogi', 'Warnings') }}</h4>
 					<ul>
 						<li v-for="warning in mergeResult.warnings" :key="warning" class="warning-text">
 							{{ warning }}
@@ -330,7 +331,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 
 				<!-- Errors -->
 				<div v-if="mergeResult.errors?.length" class="report-section">
-					<h4>Errors</h4>
+					<h4>{{ t('opencatalogi', 'Errors') }}</h4>
 					<ul>
 						<li v-for="error in mergeResult.errors" :key="error" class="error-text">
 							{{ error }}
@@ -345,7 +346,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ step === 3 ? 'Close' : 'Cancel' }}
+				{{ step === 3 ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 
 			<NcButton v-if="step === 3 && mergeResult?.success"
@@ -354,7 +355,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Eye :size="20" />
 				</template>
-				View Object
+				{{ t('opencatalogi', 'View Object') }}
 			</NcButton>
 
 			<NcButton v-if="step === 1"
@@ -364,7 +365,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<ArrowRight :size="20" />
 				</template>
-				Next
+				{{ t('opencatalogi', 'Next') }}
 			</NcButton>
 
 			<NcButton v-if="step === 2"
@@ -373,7 +374,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<ArrowLeft :size="20" />
 				</template>
-				Back
+				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
 
 			<NcButton v-if="step === 2"
@@ -384,7 +385,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Merge v-else :size="20" />
 				</template>
-				Merge Objects
+				{{ t('opencatalogi', 'Merge Objects') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -411,6 +412,9 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-3
+ */
 export default {
 	name: 'MergeObject',
 	components: {
@@ -451,9 +455,11 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		sourceObject() {
 			return objectStore.objectItem
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		mergeableProperties() {
 			if (!this.sourceObject || !this.selectedTargetObject) {
 				return []
@@ -464,6 +470,7 @@ export default {
 
 			return [...new Set([...sourceProps, ...targetProps])]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		canMerge() {
 			return Object.keys(this.mergedData).length > 0
 		},
@@ -472,6 +479,7 @@ export default {
 		this.initializeMerge()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		initializeMerge() {
 			if (!this.sourceObject) {
 				this.closeModal()
@@ -480,6 +488,7 @@ export default {
 			this.loadSourceData()
 			this.searchObjects()
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async searchObjects() {
 			                    if (!catalogStore.catalogiItem || !catalogStore.schemaItem) {
 				return
@@ -499,20 +508,24 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		selectTargetObject(obj) {
 			this.selectedTargetObject = obj
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		nextStep() {
 			if (this.step === 1 && this.selectedTargetObject) {
 				this.step = 2
 				this.initializeMergeData()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		previousStep() {
 			if (this.step === 2) {
 				this.step = 1
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		initializeMergeData() {
 			// Initialize merge data with default values
 			this.mergedData = {}
@@ -555,6 +568,7 @@ export default {
 			// eslint-disable-next-line no-console
 			console.log('Initial propertySelections after setup:', this.propertySelections)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		getMergeOptions(property) {
 			const options = []
 
@@ -581,6 +595,7 @@ export default {
 			return options
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		onPropertySelectionChange(property, selectedOption) {
 			// eslint-disable-next-line no-console
 			console.log('Property selection change:', property, selectedOption)
@@ -597,6 +612,7 @@ export default {
 				}
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		displayValue(value, maxLength = 100) {
 			if (value === null || value === undefined) {
 				return 'N/A'
@@ -616,11 +632,13 @@ export default {
 
 			return displayText
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		truncateText(text, maxLength) {
 			if (!text) return ''
 			if (text.length <= maxLength) return text
 			return text.substring(0, maxLength) + '...'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async performMerge() {
 			if (!this.canMerge) {
 				return
@@ -682,6 +700,7 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		viewMergedObject() {
 			// Navigate to the merged object in view mode
 			if (this.selectedTargetObject) {
@@ -689,18 +708,22 @@ export default {
 				navigationStore.setModal('viewObject')
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		toggleFileList() {
 			this.showFileList = !this.showFileList
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		toggleRelationList() {
 			this.showRelationList = !this.showRelationList
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		formatFileSize(bytes) {
 			if (!bytes) return 'N/A'
 			const sizes = ['Bytes', 'KB', 'MB', 'GB']
 			const i = Math.floor(Math.log(bytes) / Math.log(1024))
 			return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		getFileType(filename) {
 			if (!filename) return 'Unknown'
 			const ext = filename.split('.').pop()?.toLowerCase()
@@ -722,6 +745,7 @@ export default {
 			}
 			return types[ext] || ext?.toUpperCase() || 'Unknown'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async loadSourceData() {
 			// Load files and relations for the source object
 			if (!this.sourceObject) return
@@ -744,6 +768,7 @@ export default {
 				this.sourceRelations = []
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
@@ -816,6 +841,7 @@ export default {
 .object-id {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
+	font-family: monospace;
 	margin: 0;
 }
 
@@ -999,12 +1025,6 @@ export default {
 	margin-top: 8px;
 }
 
-.object-id {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-	font-family: monospace;
-}
-
 .object-title {
 	color: var(--color-main-text);
 	font-weight: 500;
@@ -1063,6 +1083,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -1076,26 +1097,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -1104,6 +1128,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -1112,6 +1137,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { createZodErrorHandler } from '../../services/formatZodErrors.js'
 import { EventBus } from '../../eventBus.js'
@@ -8,14 +7,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? 'Edit Menu Item' : 'Add Menu Item'"
+		:name="isEdit ? t('opencatalogi', 'Edit Menu Item') : t('opencatalogi', 'Add Menu Item')"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
 		<div class="dialog__content">
 			<div v-if="objectStore.getState('menu').success !== null || objectStore.getState('menu').error">
 				<NcNoteCard v-if="objectStore.getState('menu').success" type="success">
-					<p>Menu item successfully {{ isEdit ? 'edited' : 'added' }}</p>
+					<p>{{ isEdit ? t('opencatalogi', 'Menu item successfully edited') : t('opencatalogi', 'Menu item successfully added') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="objectStore.getState('menu').error" type="error">
 					<p>{{ objectStore.getState('menu').error }}</p>
@@ -25,11 +24,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			<div v-if="objectStore.getState('menu').success === null" class="tabContainer">
 				<BTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab title="Configuration" active>
+					<BTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-container">
 							<NcTextField
 								:disabled="loading"
-								label="Order"
+								:label="t('opencatalogi', 'Order')"
 								type="number"
 								min="0"
 								:value.sync="menuItem.order"
@@ -39,21 +38,21 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<NcTextField
 								:disabled="loading"
-								label="Name*"
+								:label="t('opencatalogi', 'Name*')"
 								:value.sync="menuItem.name"
 								:error="!!inputValidation.getError(`items.${index}.name`)"
-								:helper-text="inputValidation.getError(`items.${index}.name`) || 'Name is required.'" />
+								:helper-text="inputValidation.getError(`items.${index}.name`) || t('opencatalogi', 'Name is required.')" />
 
 							<NcTextField
 								:disabled="loading"
-								label="Description"
+								:label="t('opencatalogi', 'Description')"
 								:value.sync="menuItem.description"
 								:error="!!inputValidation.getError(`items.${index}.description`)"
 								:helper-text="inputValidation.getError(`items.${index}.description`)" />
 
 							<div v-if="isFooterPosition" class="viewModeSwitchContainer">
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a standard link'"
+									v-tooltip="t('opencatalogi', 'Use a standard link')"
 									:checked="linkMode === 'link'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': linkMode === 'link' }"
@@ -62,10 +61,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setLinkMode('link')">
-									Link
+									{{ t('opencatalogi', 'Link') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a markdown link'"
+									v-tooltip="t('opencatalogi', 'Use a markdown link')"
 									:checked="linkMode === 'markdown'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': linkMode === 'markdown' }"
@@ -74,20 +73,20 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setLinkMode('markdown')">
-									Markdown Link
+									{{ t('opencatalogi', 'Markdown Link') }}
 								</NcCheckboxRadioSwitch>
 							</div>
 
 							<NcTextField
 								:disabled="loading"
-								:label="linkMode === 'markdown' ? 'Markdown Link*' : 'Link*'"
-								:helper-text="inputValidation.getError(`items.${index}.link`) || (linkMode === 'markdown' ? 'Enter a markdown-formatted link (e.g. [Text](https://example.com)) or internal anchor.' : 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.')"
+								:label="linkMode === 'markdown' ? t('opencatalogi', 'Markdown Link*') : t('opencatalogi', 'Link*')"
+								:helper-text="inputValidation.getError(`items.${index}.link`) || (linkMode === 'markdown' ? t('opencatalogi', 'Enter a markdown-formatted link (e.g. [Text](https://example.com)) or internal anchor.') : t('opencatalogi', 'This can be an external link (e.g. https://www.opencatalogi.nl) or an internal path (e.g. /login). Link is required.'))"
 								:value.sync="menuItem.link"
 								:error="!!inputValidation.getError(`items.${index}.link`)" />
 
 							<div v-if="isFooterPosition" class="viewModeSwitchContainer">
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a single-line value'"
+									v-tooltip="t('opencatalogi', 'Use a single-line value')"
 									:checked="valueMode === 'value'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': valueMode === 'value' }"
@@ -96,10 +95,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('value')">
-									Value
+									{{ t('opencatalogi', 'Value') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a title (no link)'"
+									v-tooltip="t('opencatalogi', 'Use a title (no link)')"
 									:checked="valueMode === 'title'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': valueMode === 'title' }"
@@ -108,10 +107,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('title')">
-									Title
+									{{ t('opencatalogi', 'Title') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a multi-row text'"
+									v-tooltip="t('opencatalogi', 'Use a multi-row text')"
 									:checked="valueMode === 'multiRow'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': valueMode === 'multiRow' }"
@@ -120,35 +119,35 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setValueMode('multiRow')">
-									MultiRow
+									{{ t('opencatalogi', 'MultiRow') }}
 								</NcCheckboxRadioSwitch>
 							</div>
 
 							<NcTextArea
 								v-if="isFooterPosition && valueMode === 'multiRow'"
 								:disabled="loading"
-								label="Value"
+								:label="t('opencatalogi', 'Value')"
 								:value.sync="menuItem.value"
-								:helper-text="inputValidation.getError(`items.${index}.value`) || 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.'" />
+								:helper-text="inputValidation.getError(`items.${index}.value`) || t('opencatalogi', 'This will be displayed as a multi-row text. The link will not be used. If no value is set, the name will be used.')" />
 
 							<NcTextField
 								v-if="isFooterPosition && valueMode !== 'multiRow'"
 								:disabled="loading"
-								label="Value"
+								:label="t('opencatalogi', 'Value')"
 								:value.sync="menuItem.value"
-								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.' : 'If no value is set, the name will be used.')"
+								:helper-text="inputValidation.getError(`items.${index}.value`) || (valueMode === 'title' ? t('opencatalogi', 'This will be displayed as a title. The link will not be used. If no value is set, the name will be used.') : t('opencatalogi', 'If no value is set, the name will be used.'))"
 								@update:value="onSingleLineValueChange" />
 
 							<NcTextField
 								:disabled="loading"
-								label="Aria Label"
-								:helper-text="inputValidation.getError(`items.${index}.ariaLabel`) || 'This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.'"
+								:label="t('opencatalogi', 'Aria Label')"
+								:helper-text="inputValidation.getError(`items.${index}.ariaLabel`) || t('opencatalogi', 'This label is used for the aria-label attribute, providing an accessible name for the menu item to assistive technologies like screen readers.')"
 								:value.sync="menuItem.ariaLabel"
 								:error="!!inputValidation.getError(`items.${index}.ariaLabel`)" />
 
 							<div class="viewModeSwitchContainer">
 								<NcCheckboxRadioSwitch
-									v-tooltip="'Use a standard icon'"
+									v-tooltip="t('opencatalogi', 'Use a standard icon')"
 									:checked="iconMode === 'standard'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': iconMode === 'standard' }"
@@ -157,11 +156,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setIconMode('standard')">
-									Icon
+									{{ t('opencatalogi', 'Icon') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									v-model="iconMode"
-									v-tooltip="'Use a custom icon'"
+									v-tooltip="t('opencatalogi', 'Use a custom icon')"
 									:checked="iconMode === 'custom'"
 									:button-variant="true"
 									:class="{ 'checkbox-radio-switch--checked': iconMode === 'custom' }"
@@ -170,7 +169,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									type="radio"
 									button-variant-grouped="horizontal"
 									@update:checked="() => setIconMode('custom')">
-									Custom
+									{{ t('opencatalogi', 'Custom') }}
 								</NcCheckboxRadioSwitch>
 							</div>
 
@@ -179,7 +178,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-model="iconPrefixOptions.value"
 								:options="iconPrefixOptions.options"
 								label="label"
-								input-label="Icon Prefix"
+								:input-label="t('opencatalogi', 'Icon Prefix')"
 								track-by="value"
 								:disabled="loading" />
 
@@ -187,7 +186,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-model="iconPlacementOptions.value"
 								:options="iconPlacementOptions.options"
 								label="label"
-								input-label="Icon Placement"
+								:input-label="t('opencatalogi', 'Icon Placement')"
 								track-by="value"
 								:disabled="loading" />
 
@@ -196,10 +195,10 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								v-model="iconOptions.value"
 								:options="filteredLimitedIconOptions"
 								label="label"
-								input-label="Icon"
+								:input-label="t('opencatalogi', 'Icon')"
 								track-by="value"
 								:disabled="loading"
-								placeholder="Search icons… (more results appear when searching)"
+								:placeholder="t('opencatalogi', 'Search icons… (more results appear when searching)')"
 								@search="iconSearchQuery = $event">
 								<template #option="{ label, value }">
 									<span class="icon-option">
@@ -216,11 +215,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</template>
 							</NcSelect>
 							<p v-if="iconMode === 'standard'" class="help-text">
-								Tip: type to search all icons. More results are shown when searching.
+								{{ t('opencatalogi', 'Tip: type to search all icons. More results are shown when searching.') }}
 							</p>
 
 							<div v-if="iconMode === 'custom'" class="json-editor">
-								<label>Custom Icon (SVG)</label>
+								<label>{{ t('opencatalogi', 'Custom Icon (SVG)') }}</label>
 								<div :class="`codeMirrorContainer ${getTheme()}`">
 									<CodeMirror
 										v-model="customIcon"
@@ -236,7 +235,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 										type="secondary"
 										size="small"
 										@click="formatSVG">
-										Format SVG
+										{{ t('opencatalogi', 'Format SVG') }}
 									</NcButton>
 								</div>
 							</div>
@@ -244,40 +243,40 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					</BTab>
 
 					<!-- Security Tab -->
-					<BTab title="Security">
+					<BTab :title="t('opencatalogi', 'Security')">
 						<div class="form-container">
 							<div class="groups-section">
-								<label class="groups-label">Groups Access</label>
+								<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
 								<NcNoteCard type="info">
-									<p>When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.</p>
+									<p>{{ t('opencatalogi', 'When you add groups to a menu item, the item will only appear if the user belongs to one of the selected groups. If no groups are selected, the item will be visible to all users.') }}</p>
 								</NcNoteCard>
 								<NcSelect
 									v-model="groupsOptions.value"
 									:options="groupsOptions.options"
 									:disabled="loading || groupsOptions.loading"
-									input-label="Select Groups"
+									:input-label="t('opencatalogi', 'Select Groups')"
 									multiple />
 								<p v-if="groupsOptions.loading" class="groups-loading">
-									Loading groups...
+									{{ t('opencatalogi', 'Loading groups...') }}
 								</p>
 							</div>
 
 							<div class="hide-after-login">
 								<NcNoteCard type="info">
-									<p>When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.</p>
+									<p>{{ t('opencatalogi', 'When checked, this menu item will be hidden after a user is logged in. This is useful for menu items that should only be visible to guests, such as login or registration items.') }}</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideAfterLogin"
 									:disabled="menuItem.hideBeforeLogin || loading">
-									Verberg na inloggen
+									{{ t('opencatalogi', 'Hide after login') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
 									:checked.sync="menuItem.hideBeforeLogin"
 									:disabled="menuItem.hideAfterLogin || loading">
-									Verberg voor inloggen
+									{{ t('opencatalogi', 'Hide before login') }}
 								</NcCheckboxRadioSwitch>
 								<p v-if="menuItem.hideAfterLogin && menuItem.hideBeforeLogin" class="field-error">
-									'Hide before login' and 'Hide after login' cannot both be selected.
+									{{ t('opencatalogi', "'Hide before login' and 'Hide after login' cannot both be selected.") }}
 								</p>
 							</div>
 						</div>
@@ -288,7 +287,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 		<template #actions>
 			<NcButton @click="() => closeModal('back')">
-				{{ isEdit ? 'Close' : 'Cancel' }}
+				{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="objectStore.getState('menu').success === null"
 				v-tooltip="inputValidation.flatErrorMessages[0]"
@@ -300,7 +299,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 					<ContentSaveOutline v-if="!loading && isEdit" :size="20" />
 					<Plus v-if="!loading && !isEdit" :size="20" />
 				</template>
-				{{ isEdit ? 'Save' : 'Add' }}
+				{{ isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -321,6 +320,11 @@ import { fas } from '@fortawesome/free-solid-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 
+/**
+ * MenuItemForm — add/edit a menu item (persists the parent menu).
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'MenuItemForm',
 	components: {
@@ -531,13 +535,16 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		menuObject() {
 			return objectStore.getActiveObject('menu')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		isFooterPosition() {
 			const pos = Number(this.menuObject?.position || 0)
 			return pos >= 3 && pos <= 6
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		currentFullIconList() {
 			const prefix = this.iconPrefixOptions.value?.value || 'fas'
 			if (this.iconFullOptions && this.iconFullOptions.length) return this.iconFullOptions
@@ -546,6 +553,7 @@ export default {
 			// default fas: prefer manual list first
 			return this.allSolidIconOptions?.length ? this.allSolidIconOptions : this.iconOptions.options
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		filteredLimitedIconOptions() {
 			const query = (this.iconSearchQuery || '').toLowerCase().trim()
 			let list = this.currentFullIconList
@@ -573,6 +581,7 @@ export default {
 			}
 			return sliced
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		inputValidation() {
 			const updatedMenuItem = {
 				...this.menuItem,
@@ -611,6 +620,7 @@ export default {
 			this.iconSearchQuery = ''
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 	created() {
 		// Build lists from imported FA packs by iterating the pack objects
 		try {
@@ -642,6 +652,7 @@ export default {
 		}
 		this.iconSearchQuery = ''
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 	mounted() {
 		objectStore.setState('menu', { success: null, error: null })
 		this.fetchGroups()
@@ -694,6 +705,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		normalizeMenuItemFields(item = {}) {
 			return {
 				order: Number(item.order || 0),
@@ -715,6 +727,7 @@ export default {
 				valueMode: item.valueMode ?? 'value',
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		buildUniqueOptions(lists = []) {
 			const seen = new Set()
 			const out = []
@@ -734,6 +747,7 @@ export default {
 		 * Fetch Nextcloud groups from the API
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		async fetchGroups() {
 			this.groupsOptions.loading = true
 			try {
@@ -763,11 +777,13 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal('full')
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		closeModal(mode = 'full') {
 			if (mode === 'back') {
 				navigationStore.setModal('viewMenu')
@@ -778,6 +794,7 @@ export default {
 			objectStore.setState('menu', { success: null, error: null })
 			clearTimeout(this.closeModalTimeout)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		applyIconOptionsForPrefix() {
 			const prefix = this.iconPrefixOptions.value?.value || 'fas'
 			// Preserve current selection if possible
@@ -807,6 +824,7 @@ export default {
 			this.iconOptions.value = match || (this.iconFullOptions || [])[0] || null
 			this.menuItem.icon = this.iconOptions.value?.value || ''
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		formatSVG() {
 			try {
 				const input = String(this.customIcon || '').trim()
@@ -839,6 +857,7 @@ export default {
 				console.error('Error formatting SVG:', error)
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		prettySvg(root) {
 			const indentUnit = '\t'
 			const indent = d => indentUnit.repeat(d)
@@ -876,6 +895,7 @@ export default {
 		 * Save the menu item (either create new or update existing)
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		async saveMenuItem() {
 			this.loading = true
 			objectStore.setState('menu', { success: null, error: null, loading: true })
@@ -966,6 +986,7 @@ export default {
 					objectStore.setState('menu', { loading: false })
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		handleOrderUpdate(value) {
 			const numeric = parseInt(value, 10)
 			this.menuItem.order = Number.isNaN(numeric) ? 0 : numeric
@@ -973,6 +994,7 @@ export default {
 		setIconMode(mode) {
 			this.iconMode = mode
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		handleIconSelect(selectedOption) {
 			this.iconOptions.value = selectedOption
 		},
@@ -980,11 +1002,13 @@ export default {
 			this.linkMode = mode
 		},
 		// Keep the selected FA prefix in sync with menuItem and previews
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		updateIconPrefix(prefix) {
 			const selected = this.iconPrefixOptions.options.find(o => o.value === prefix) || this.iconPrefixOptions.options[0]
 			this.iconPrefixOptions.value = selected
 			this.menuItem.iconPrefix = selected.value
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		setValueMode(mode) {
 			const previousMode = this.valueMode
 			this.valueMode = mode
@@ -1003,11 +1027,13 @@ export default {
 				}
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		onSingleLineValueChange(newValue) {
 			// User is editing the single-line field: apply value and clear cache
 			this.menuItem.value = newValue
 			this.valueMultiRowCache = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		encodeMultilineForStorage(input) {
 			if (typeof input !== 'string') return ''
 			// Store actual newlines: normalize CRLF, convert literal "\\n" to real newlines
@@ -1016,10 +1042,12 @@ export default {
 				.replace(/\r/g, '\n')
 				.replace(/\\n/g, '\n')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		decodeMultilineFromStorage(input) {
 			if (typeof input !== 'string') return ''
 			return input.replace(/\\n/g, '\n')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-2 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {
@@ -1107,12 +1135,15 @@ export default {
 	border-radius: 0 !important;
 	border: none !important;
 }
+
 .codeMirrorContainer :deep(.cm-editor) {
 	outline: none !important;
 }
+
 .codeMirrorContainer.light > .vue-codemirror {
 	border: 1px dotted silver;
 }
+
 .codeMirrorContainer.dark > .vue-codemirror {
 	border: 1px dotted grey;
 }
@@ -1122,6 +1153,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼe) {
 	color: #448c27;
 }
+
 .codeMirrorContainer.dark :deep(.ͼe) {
 	color: #88c379;
 }
@@ -1130,6 +1162,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼc) {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.ͼc) {
 	color: #8d64f7;
 }
@@ -1138,6 +1171,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼb) {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.ͼb) {
 	color: #be55cd;
 }
@@ -1146,6 +1180,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -1159,26 +1194,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -1187,6 +1225,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -1195,6 +1234,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

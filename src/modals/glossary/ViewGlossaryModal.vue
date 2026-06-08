@@ -11,20 +11,20 @@
  */
 
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
 	<NcModal v-if="navigationStore.modal === 'viewGlossary'"
 		ref="modalRef"
-		:name="term?.title || 'Glossary Term'"
+		:name="term?.title || t('opencatalogi', 'Glossary Term')"
 		label-id="viewGlossaryModal"
 		@close="closeModal">
 		<div class="modal__content">
 			<div v-if="term" class="glossaryDetails">
 				<div class="detailSection">
-					<h3>{{ t('opencatalogi', 'Basic Information') }}</h3>
+					<h3>{{ t('opencatalogi', 'Basic information') }}</h3>
 					<div class="detailGrid">
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Title') }}:</strong>
@@ -32,7 +32,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						</div>
 						<div class="detailItem">
 							<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-							<span>{{ term.published ? 'Published' : 'Draft' }}</span>
+							<span>{{ term.published ? t('opencatalogi', 'Published') : t('opencatalogi', 'Draft') }}</span>
 						</div>
 						<div v-if="term.summary" class="detailItem">
 							<strong>{{ t('opencatalogi', 'Summary') }}:</strong>
@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 							<span>{{ term.description }}</span>
 						</div>
 						<div v-if="term.externalLink" class="detailItem">
-							<strong>{{ t('opencatalogi', 'External Link') }}:</strong>
+							<strong>{{ t('opencatalogi', 'External link') }}:</strong>
 							<span>
 								<a :href="term.externalLink" target="_blank" rel="noopener noreferrer">
 									{{ term.externalLink }}
@@ -65,7 +65,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</div>
 
 				<div v-if="term.relatedTerms?.length" class="detailSection">
-					<h3>{{ t('opencatalogi', 'Related Terms') }}</h3>
+					<h3>{{ t('opencatalogi', 'Related terms') }}</h3>
 					<div class="relatedTermsList">
 						<NcButton v-for="relatedTerm in term.relatedTerms"
 							:key="relatedTerm.id"
@@ -111,6 +111,11 @@ import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
+/**
+ * ViewGlossaryModal — read-only view of a glossary term.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-4
+ */
 export default {
 	name: 'ViewGlossaryModal',
 	components: {
@@ -124,6 +129,7 @@ export default {
 		 * Get the currently active glossary term from the store
 		 * @return {object|null} The active glossary term object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		term() {
 			return objectStore.getActiveObject('glossary')
 		},
@@ -133,6 +139,7 @@ export default {
 		 * Close the modal and clear the active object
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('glossary')
@@ -141,6 +148,7 @@ export default {
 		 * Open the edit modal for the current term
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		openEditModal() {
 			navigationStore.setModal('glossary')
 		},
@@ -149,6 +157,7 @@ export default {
 		 * @param {object} term - The term to select
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		selectTerm(term) {
 			objectStore.setActiveObject('glossary', term)
 		},

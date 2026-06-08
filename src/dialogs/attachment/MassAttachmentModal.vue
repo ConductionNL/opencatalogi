@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { objectStore, navigationStore, catalogStore } from '../../store/store.js'
 </script>
 
@@ -13,24 +12,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<div v-if="success === null" class="publish-step">
 			<NcNoteCard type="info">
 				<template v-if="operation === 'publish'">
-					Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.
+					{{ t('opencatalogi', 'Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.') }}
 				</template>
 				<template v-else>
-					Selected attachments will be depublished immediately and will no longer be publicly accessible.
+					{{ t('opencatalogi', 'Selected attachments will be depublished immediately and will no longer be publicly accessible.') }}
 				</template>
 			</NcNoteCard>
 
 			<SelectAttachmentsList
-				:title="`Selected Attachments`"
-				:empty-title="`No attachments selected`"
-				:empty-description="`No attachments are currently selected.`"
+				:title="t('opencatalogi', 'Selected Attachments')"
+				:empty-title="t('opencatalogi', 'No attachments selected')"
+				:empty-description="t('opencatalogi', 'No attachments are currently selected.')"
 				:attachments="filteredAttachmentIds"
 				:show-remove="true" />
 		</div>
 
 		<NcNoteCard v-if="success" type="success">
 			<p>
-				{{ operation === 'publish' ? 'Attachment' : 'Attachment' }}{{ originalSelectedCount > 1 ? 's' : '' }} successfully {{ operation === 'publish' ? 'published' : 'depublished' }}
+				{{ operation === 'publish' ? t('opencatalogi', 'Attachment successfully published') : t('opencatalogi', 'Attachment successfully depublished') }}
 			</p>
 		</NcNoteCard>
 		<NcNoteCard v-if="error" type="error">
@@ -42,7 +41,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 				<template #icon>
 					<Cancel :size="20" />
 				</template>
-				{{ success === null ? 'Cancel' : 'Close' }}
+				{{ success === null ? t('opencatalogi', 'Cancel') : t('opencatalogi', 'Close') }}
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="loading || (attachments?.length || 0) === 0"
@@ -53,7 +52,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 					<Publish v-if="!loading && operation === 'publish'" :size="20" />
 					<LockOutline v-if="!loading && operation === 'depublish'" :size="20" />
 				</template>
-				{{ operation === 'publish' ? 'Publish' : 'Depublish' }}
+				{{ operation === 'publish' ? t('opencatalogi', 'Publish') : t('opencatalogi', 'Depublish') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -72,6 +71,11 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import SelectAttachmentsList from '../../components/SelectAttachmentsList.vue'
 
+/**
+ * MassAttachmentModal — bulk attachment operations built on useFileSelection.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-4
+ */
 export default {
 	name: 'MassAttachmentModal',
 	components: {
@@ -108,6 +112,7 @@ export default {
 		 * Get the objects to operate on from selected objects
 		 * @return {Array<object>} Array of objects to publish
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		objectsToPublish() {
 			return objectStore.selectedAttachments || []
 		},
@@ -115,6 +120,7 @@ export default {
 		/**
 		 * IDs filtered by operation and current file states
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		filteredAttachmentIds() {
 			const ids = Array.isArray(this.attachments) ? this.attachments : []
 			const filesData = objectStore.getRelatedData('publication', 'files')
@@ -133,6 +139,7 @@ export default {
 			})
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		filteredCount() {
 			return this.filteredAttachmentIds.length
 		},
@@ -141,6 +148,7 @@ export default {
 		 * Get the dialog title based on number of objects
 		 * @return {string} Dialog title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		dialogTitle() {
 			const count = this.filteredCount
 			if (count === 1) {
@@ -153,6 +161,7 @@ export default {
 		this.initializeSelection()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		initializeSelection() {
 			// Pick data from navigationStore dialog properties
 			const props = navigationStore.dialogProperties || {}
@@ -161,6 +170,7 @@ export default {
 			this.attachments = ids
 			this.originalSelectedCount = this.filteredAttachmentIds.length
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
@@ -169,11 +179,13 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		async process() {
 			this.loading = true
 

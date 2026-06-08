@@ -11,45 +11,51 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-37
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
  */
 
 namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Container\ContainerInterface;
-use OCP\App\IAppManager;
+use OCP\IUserSession;
 use OCA\OpenCatalogi\Service\SettingsService;
-use RuntimeException;
 
 /**
  * Controller for handling settings-related operations in the OpenCatalogi.
  */
 class SettingsController extends Controller
 {
-
     /**
      * SettingsController constructor.
      *
-     * @param string             $appName         The name of the app
-     * @param IRequest           $request         The request object
-     * @param ContainerInterface $container       The container.
-     * @param IAppManager        $appManager      The app manager.
-     * @param SettingsService    $settingsService The settings service.
-     * @param IL10N              $l10n            The localization service.
+     * @param string          $appName         The name of the app
+     * @param IRequest        $request         The request object
+     * @param SettingsService $settingsService The settings service.
+     * @param IL10N           $l10n            The localization service.
+     * @param IUserSession    $userSession     The user session.
      */
     public function __construct(
         $appName,
         IRequest $request,
-        private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly IL10N $l10n,
+        private readonly IUserSession $userSession,
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -62,9 +68,15 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-37
      */
     public function index(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $data = $this->settingsService->getSettings();
             return new JSONResponse($data);
@@ -80,6 +92,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing the updated settings.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
      */
     public function create(): JSONResponse
     {
@@ -99,6 +113,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing the settings.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
      */
     public function load(): JSONResponse
     {
@@ -118,9 +134,15 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
      */
     public function getPublishingOptions(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $data = $this->settingsService->getPublishingOptions();
             return new JSONResponse($data);
@@ -136,6 +158,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing the updated publishing options.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
      */
     public function updatePublishingOptions(): JSONResponse
     {
@@ -156,9 +180,15 @@ class SettingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
      */
     public function getVersionInfo(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $data = $this->settingsService->getVersionInfo();
             return new JSONResponse($data);
@@ -174,6 +204,8 @@ class SettingsController extends Controller
      * @return JSONResponse JSON response containing import results.
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
      */
     public function manualImport(): JSONResponse
     {

@@ -1,5 +1,5 @@
 <script setup>
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { objectStore } from '../../store/store.js'
 </script>
 
@@ -8,7 +8,7 @@ import { objectStore } from '../../store/store.js'
 		:loading="loading"
 		:item-menu="itemMenu">
 		<template #empty-content>
-			<NcEmptyContent :title="t('opencatalogi', 'Geen concept bijlagen gevonden')">
+			<NcEmptyContent :title="t('opencatalogi', 'No concept attachments found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
@@ -26,6 +26,11 @@ import FolderIcon from 'vue-material-design-icons/Folder.vue'
 
 import { getTheme } from '../../services/getTheme.js'
 
+/**
+ * UnpublishedAttachmentsWidget — dashboard widget listing unpublished attachments.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-3
+ */
 export default {
 	name: 'UnpublishedAttachmentsWidget',
 	components: {
@@ -45,6 +50,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
 			return objectStore.getCollection('attachment').results
 				.filter((attachment) => attachment.status === 'Concept')
@@ -64,6 +70,7 @@ export default {
 		 * Fetch the attachment data
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData() {
 			this.loading = true
 			await objectStore.fetchCollection('attachment')
