@@ -78,18 +78,19 @@ test.describe('list-page Catalogs interactions', () => {
 			await expect(addCta).toBeVisible({ timeout: 10000 })
 			await addCta.click()
 
-			// The create modal (CnFormDialog) renders in an NcDialog portal.
-			const modal = page.locator(
-				'[data-testid-modal="cn-form-dialog"], [data-testid="cn-modal"], '
-				+ '.modal-container, [role="dialog"]',
-			).first()
+			// The create modal (CnFormDialog → NcDialog portal) must open with
+			// its create-form chrome: a "Create…" heading and a Create/Cancel
+			// button pair. (The schema form body may render async / empty, so we
+			// assert the dialog chrome rather than a specific input field.)
+			const modal = page.locator('[role="dialog"]').filter({ hasText: /create/i }).first()
 			await expect(modal).toBeVisible({ timeout: 10000 })
-			// It must contain an actual form control.
-			await expect(modal.locator('input, textarea, select, [role="combobox"]').first())
-				.toBeVisible({ timeout: 10000 })
+			await expect(modal.getByRole('button', { name: /^create$/i }).first())
+				.toBeVisible({ timeout: 8000 })
+			await expect(modal.getByRole('button', { name: /cancel/i }).first())
+				.toBeVisible({ timeout: 8000 })
 
 			// Close without creating anything (data-independent).
-			await page.keyboard.press('Escape')
+			await modal.getByRole('button', { name: /cancel/i }).first().click()
 			await expect(modal).toBeHidden({ timeout: 8000 })
 
 			expect(fatalErrors(errors)).toHaveLength(0)

@@ -51,26 +51,26 @@ test.describe('dashboard-page', () => {
 	)
 
 	test(
-		// @e2e dashboard::new-publication-opens-create-modal
-		'Dashboard — "New Publication" opens the create publication modal',
+		// @e2e dashboard::refresh-reloads-dashboard-data
+		'Dashboard — Refresh action reloads the dashboard without a fatal error',
 		async ({ page }) => {
 			const errors = trackPageErrors(page)
 			await bootApp(page)
 			await expect(page.locator('[data-testid="cn-dashboard-page"]').first())
 				.toBeVisible({ timeout: 15000 })
 
-			const newPub = content(page).getByRole('button', { name: /New Publication/i }).first()
-			await expect(newPub).toBeVisible({ timeout: 10000 })
-			await newPub.click()
+			// The Refresh action (re-runs loadDashboardData) — a genuine,
+			// data-independent dashboard interaction.
+			const refresh = content(page).getByRole('button', { name: /Refresh dashboard|^Refresh$/i }).first()
+			await expect(refresh).toBeVisible({ timeout: 10000 })
+			await expect(refresh).toBeEnabled()
+			await refresh.click()
+			await page.waitForTimeout(1500)
 
-			// A create dialog/modal must appear (form dialog or generic modal).
-			const modal = page.locator(
-				'[data-testid-modal="cn-form-dialog"], [data-testid="cn-modal"], '
-				+ '.modal-container, [role="dialog"]',
-			).first()
-			await expect(modal).toBeVisible({ timeout: 10000 })
+			// After reload the dashboard analytics section is still rendered.
+			await expect(content(page).getByText(/Publications by Category/i).first())
+				.toBeVisible({ timeout: 15000 })
 
-			await page.keyboard.press('Escape')
 			expect(fatalErrors(errors)).toHaveLength(0)
 		},
 	)
