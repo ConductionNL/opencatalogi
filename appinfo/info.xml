@@ -4,7 +4,9 @@
 	<id>opencatalogi</id>
 	<name>OpenCatalogi</name>
 	<summary>Framework for federated catalogi to work togethe</summary>
-	<description><![CDATA[📰 A OpenCatalogi App for Nextcloud
+	<description><![CDATA[> ⚠️ **Active development — not for production use yet.** This app is under active development. Although it may carry a stable release status, **please do not use it in production environments before 12 June 2026.** See the [app page on conduction.nl](https://conduction.nl/apps/opencatalogi) for release planning and what this app does.
+
+📰 A OpenCatalogi App for Nextcloud
 
 The OpenCatalogi Nextcloud app provides a framework for federated catalogi to work together in an open data ecosystem
 
