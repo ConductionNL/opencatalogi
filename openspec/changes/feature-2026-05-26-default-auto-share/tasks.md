@@ -29,16 +29,29 @@
 
 ## Phase 3 — Verification
 
-- [ ] 3. Manual: on a publication whose schema has
+- [~] 3. Manual: on a publication whose schema has
       `configuration.defaultAutoShare: true`, open the attachment
       dialog → toggle is on. Flip off, upload → backend receives
       `share=false`. On a schema without the key, toggle is off
       (current behaviour). Re-test with an explicit
       `defaultAutoShare: false`.
 
-- [ ] 4. Library: run `npm test` (all 2619 suites pass) and
+  *Verified by code path:* `src/modals/generic/UploadFiles.vue:603-636` —
+  `onOpenModal()` invokes `applySchemaDefaults()`, which resolves the active
+  publication's schema (both inflated and bare-id shapes), reads
+  `configuration.defaultAutoShare`, seeds `this.share`, and falls back to
+  `false` on any error. Phase 0 verified in `openregister/lib/Db/Schema.php:1655`
+  (`$boolFields = ['allowFiles', 'autoPublish', 'defaultAutoShare']`).
+  Phase 2 verified in `nextcloud-vue/src/components/CnObjectSidebar/CnFilesTab.vue`
+  (`showShareToggle` / `defaultShare` / `shareLabel` props present).
+  Full end-to-end manual browser re-run is a follow-up against a live container.
+
+- [~] 4. Library: run `npm test` (all 2619 suites pass) and
       `npm run check:jsdoc` / `npm run check:docs` (baselines hold)
       in the `nextcloud-vue` repo before opening that PR.
+
+  *Deferred to the nextcloud-vue PR:* this verification gate belongs to
+  the sibling library's release flow, not this opencatalogi change.
 
 ## Acceptance criteria
 
