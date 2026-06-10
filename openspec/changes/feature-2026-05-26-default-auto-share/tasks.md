@@ -29,14 +29,14 @@
 
 ## Phase 3 — Verification
 
-- [ ] 3. Manual: on a publication whose schema has
+- [~] 3. Manual: on a publication whose schema has — deferred to downstream cycle (handoff)
       `configuration.defaultAutoShare: true`, open the attachment
       dialog → toggle is on. Flip off, upload → backend receives
       `share=false`. On a schema without the key, toggle is off
       (current behaviour). Re-test with an explicit
       `defaultAutoShare: false`.
 
-- [ ] 4. Library: run `npm test` (all 2619 suites pass) and
+- [~] 4. Library: run `npm test` (all 2619 suites pass) and — deferred to downstream cycle (handoff)
       `npm run check:jsdoc` / `npm run check:docs` (baselines hold)
       in the `nextcloud-vue` repo before opening that PR.
 
