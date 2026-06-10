@@ -46,7 +46,7 @@ cluster.
       the common-pattern clusters: missing return-type / param-type
       declarations, mixed types (specify generic / union),
       possibly-null dereferences (add null guards).
-- [~] 10. Once the baseline reaches 0 lines, delete — deferred to downstream cycle (handoff)
+- [ ] 10. Once the baseline reaches 0 lines, delete
       `phpstan-baseline.neon`.
 
 ## Phase 5 — CI integration
@@ -62,5 +62,5 @@ cluster.
 
 - [x] 13. Update the README quality-gates section and note in
       `app-config.json` that legacy quality cleanup is done.
-- [~] 14. Close the burn-down tracking issue once the last baseline — deferred to downstream cycle (handoff)
+- [ ] 14. Close the burn-down tracking issue once the last baseline
       line is removed.
