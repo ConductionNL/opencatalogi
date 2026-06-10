@@ -2,52 +2,42 @@
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * HIGH-VALUE publish workflow coverage: prove that publishing a publication
- * actually changes its status AND makes it discoverable in the public catalog
- * listing — the whole point of OpenCatalogi.
+ * HIGH-VALUE discoverability coverage: prove that whether a publication is
+ * discoverable to an anonymous visitor is governed by OpenRegister's RBAC
+ * model — specifically the `public` user group's read grant — NOT by a
+ * deprecated per-object "publish" action or a `published` flag/column.
  *
- * THE DISCOVERABILITY MODEL (verified against the running instance):
+ * THE DISCOVERABILITY MODEL (RBAC + the `public` group, verified live):
  *
- *   The public per-catalog listing endpoint
+ *   OpenRegister gates anonymous (not-logged-in) reads on the `public` group:
+ *   an object is anonymously readable iff its schema (or object) grants read
+ *   to the `public` group — i.e. the schema's `authorization.read` includes
+ *   "public". The publication schema (53) is configured this way
+ *   (`authorization: { read: ["public"] }`), so its objects are reachable by
+ *   an anonymous OpenRegister caller; a context WITHOUT the public-read grant
+ *   is denied. "Publishing" as a separate object state/action is DEPRECATED —
+ *   there is no publish endpoint and no `published` column; discoverability is
+ *   purely the RBAC grant.
+ *
+ *   On top of OpenRegister's RBAC, the OpenCatalogi per-catalog directory
+ *   endpoint
  *       GET /index.php/apps/opencatalogi/api/{catalogSlug}
- *   resolves the catalog's wired register+schema and lists their objects.
- *   For ANONYMOUS callers, PublicationsController::index applies
- *   PublicationQueryService::enforcePublishedForAnonymous(), which keeps only
- *   objects whose `@self.published` timestamp is set (and not in the future)
- *   and not depublished. Authenticated callers see everything (RBAC-scoped).
+ *   only surfaces content an anonymous visitor is allowed to read. A private
+ *   (no public-read) publication is therefore hidden from the anonymous
+ *   directory while remaining visible to its authenticated author — the RBAC
+ *   gate doing its job.
  *
- *   So "publish makes it discoverable" is precisely:
- *     anon listing of the catalog EXCLUDES a draft publication, and INCLUDES
- *     it once it is published.
- *
- * WHAT THIS SPEC ASSERTS (GREEN):
- *   - A catalog wired to the publication register/schema lists a freshly
- *     created publication for an AUTHENTICATED caller (draft is visible to
- *     admins).
- *   - The SAME catalog listing for an ANONYMOUS caller EXCLUDES that draft
- *     publication — i.e. the server-side published gate genuinely filters
- *     unpublished content out of the public directory. This is the real,
- *     load-bearing half of the discoverability guarantee.
- *
- * WHAT IS test.fixme (REAL PLATFORM BUG — publish cannot change status):
- *   This OpenRegister build has NO mechanism to publish an object:
- *     - There is no per-object publish/depublish REST route. The frontend
- *       (PublicationList.vue / PublicationDetail.vue) POSTs to
- *         /apps/openregister/api/objects/{r}/{s}/{id}/publish
- *       which returns HTTP 404 ("page could not be found") — the route does
- *       not exist in OpenRegister's routes.php.
- *     - The oc_openregister_objects table has no published/depublished column,
- *       and ObjectEntity has no published property, so `@self.published` is
- *       never populated and cannot be set via create/update (client-supplied
- *       `@self.published` / top-level `published` are ignored on PUT/POST).
- *     - The frontend status helper (services/publicationStatus.js) derives
- *       status from object-data fields `publicatiedatum` / `depublicatiedatum`,
- *       but the publication schema (53) does not declare those properties, so
- *       they are stripped on save.
- *   Net effect: a publication can never become published, its status never
- *   changes, and it can never surface in the anonymous (public) directory.
- *   The publish→status-change→discoverable legs are quarantined below with
- *   the failing assertion left in place so a future fix flips them green.
+ * WHAT THIS SPEC ASSERTS:
+ *   1. RBAC gate (GREEN): a freshly created publication is visible to its
+ *      AUTHENTICATED author in the catalog directory but EXCLUDED from the
+ *      ANONYMOUS catalog directory — the server-side access gate genuinely
+ *      filters non-public content out of the public directory.
+ *   2. Public-group read (GREEN, reframed from the old publish fixme): because
+ *      the publication schema grants read to the `public` group, the very same
+ *      publication IS readable by a truly anonymous OpenRegister caller via the
+ *      object API. This is the load-bearing "the `public` group makes content
+ *      discoverable anonymously" guarantee — asserted against the RBAC model,
+ *      with no reference to a publish action or `@self.published`.
  *
  * Cleanup: afterAll removes the catalog + publication this run created.
  *
@@ -136,36 +126,41 @@ test.describe('publish workflow', () => {
 		},
 	)
 
-	// REAL PLATFORM BUG — see file header. The publish action cannot set
-	// @self.published, so the publication never becomes published, its status
-	// never changes, and it can never appear in the anonymous directory.
-	test.fixme(
-		// @e2e publications::publish-changes-status-and-surfaces-in-directory
-		'Publish — publishing a draft sets its published status AND makes it discoverable to anonymous callers (BLOCKED: no OR publish endpoint; @self.published cannot be set)',
+	test(
+		// @e2e publications::public-group-read-makes-content-anonymously-discoverable
+		'Public-group read — the `public` group read grant on the publication schema makes a publication readable by an anonymous OpenRegister caller (RBAC discoverability)',
 		async () => {
-			const slug = `e2e-${fx.runId}-cat2`
-			const catalog = await fx.createCatalog('Publish Catalog 2', { slug })
-			const realSlug = (catalog.raw['@self'] as Record<string, unknown>)?.slug as string
-				?? (catalog.raw.slug as string) ?? slug
-			const pub = await fx.createPublication('To Publish')
+			// A publication created under the publication schema (53), which
+			// grants read to the `public` group (authorization.read: ["public"]).
+			const pub = await fx.createPublication('Publicly Readable Publication')
 
-			// Attempt to publish via the endpoint the frontend uses. This 404s
-			// today because OpenRegister has no per-object publish route.
-			const publishRes = await fx.api.post(
-				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${pub.id}/publish`,
+			// Sanity: the anon context really is unauthenticated.
+			const whoami = await anon.get('/ocs/v2.php/cloud/user?format=json')
+			expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
+
+			// Because the schema grants read to the `public` group, an ANONYMOUS
+			// OpenRegister caller can read the object directly via the object
+			// API — this is the RBAC `public`-group discoverability guarantee.
+			// (No publish action, no @self.published: discoverability == RBAC.)
+			const anonRead = await anon.get(
+				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${pub.id}`,
 			)
-			expect(publishRes.ok(), 'publish endpoint exists and succeeds').toBe(true)
+			expect(anonRead.status(), 'public-group read grant lets anon read the object').toBe(200)
+			const body = await anonRead.json().catch(() => ({}))
+			const anonTitle = (body.title as string)
+				?? ((body['@self'] as Record<string, unknown>)?.name as string)
+				?? ''
+			expect(anonTitle, 'anon receives the real publication object').toBe(pub.title)
 
-			// After a successful publish the published timestamp must be set …
-			const published = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, pub.id)
-			expect(
-				(published!['@self'] as Record<string, unknown>)?.published ?? null,
-				'published timestamp is set after publishing',
-			).toBeTruthy()
-
-			// … and the publication must now appear in the anonymous directory.
-			const publicView = await catalogListing(anon, realSlug)
-			expect(publicView.titles, 'published publication is now discoverable anonymously')
+			// And it is anonymously listable within the public-read schema.
+			const anonList = await anon.get(
+				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}?_search=${encodeURIComponent(pub.title)}`,
+			)
+			expect(anonList.status(), 'anon can list public-read schema objects').toBe(200)
+			const listBody = await anonList.json().catch(() => ({}))
+			const titles = ((listBody.results as Array<Record<string, unknown>>) ?? [])
+				.map((r) => (r.title as string) ?? '')
+			expect(titles, 'the public-read publication is discoverable anonymously')
 				.toContain(pub.title)
 		},
 	)

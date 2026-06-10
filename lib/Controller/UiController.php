@@ -24,6 +24,8 @@ namespace OCA\OpenCatalogi\Controller;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IInitialState;
+use OCP\IAppConfig;
 use OCP\IRequest;
 
 /**
@@ -32,17 +34,57 @@ use OCP\IRequest;
  * @psalm-type TemplateName = 'index'
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
  */
 class UiController extends Controller
 {
     /**
+     * The IAppConfig register/schema keys surfaced to the frontend so the
+     * nextcloud-vue manifest renderer can resolve its "resolve" sentinels
+     * synchronously via loadState('opencatalogi', key).
+     *
+     * A runtime fetch fallback (GET /apps/opencatalogi/api/configs/key)
+     * cannot be used because the public catch-all route /api/catalogSlug
+     * (requirement [a-z0-9-]+) shadows it and answers "Catalog not found".
+     * Provisioning these as initial-state is the zero-network path the
+     * resolver tries first.
+     *
+     * @var string[]
+     */
+    private const MANIFEST_CONFIG_KEYS = [
+        'catalog_register',
+        'catalog_schema',
+        'listing_register',
+        'listing_schema',
+        'organization_register',
+        'organization_schema',
+        'theme_register',
+        'theme_schema',
+        'page_register',
+        'page_schema',
+        'menu_register',
+        'menu_schema',
+        'glossary_register',
+        'glossary_schema',
+        'publication_register',
+        'publication_schema',
+    ];
+
+    /**
      * Constructor.
      *
-     * @param string   $appName The application name.
-     * @param IRequest $request The HTTP request.
+     * @param string        $appName      The application name.
+     * @param IRequest      $request      The HTTP request.
+     * @param IAppConfig    $appConfig    App configuration interface.
+     * @param IInitialState $initialState Initial-state service.
      */
-    public function __construct(string $appName, IRequest $request)
-    {
+    public function __construct(
+        string $appName,
+        IRequest $request,
+        private readonly IAppConfig $appConfig,
+        private readonly IInitialState $initialState
+    ) {
         parent::__construct($appName, $request);
 
     }//end __construct()
@@ -58,6 +100,17 @@ class UiController extends Controller
     private function makeSpaResponse(): TemplateResponse
     {
         try {
+            // Surface the configured register/schema ids so the manifest
+            // renderer can resolve `@resolve:<key>` sentinels synchronously
+            // (zero-network) instead of hitting the catch-all-shadowed
+            // `/api/configs/<key>` route. Only non-empty values are provided.
+            foreach (self::MANIFEST_CONFIG_KEYS as $key) {
+                $value = $this->appConfig->getValueString($this->appName, $key, '');
+                if ($value !== '') {
+                    $this->initialState->provideInitialState($key, $value);
+                }
+            }
+
             // Create a new TemplateResponse for the index page.
             $response = new TemplateResponse(
                 $this->appName,

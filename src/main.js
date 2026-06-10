@@ -6,6 +6,7 @@ import VueRouter from 'vue-router'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
 	defaultPageTypes,
@@ -117,6 +118,72 @@ function mergeManifestFragments(base) {
 const mergedManifest = mergeManifestFragments(bundledManifest)
 
 /**
+ * Synchronously substitute every `@resolve:<key>` sentinel under
+ * `pages[].config` with the matching IAppConfig value surfaced as
+ * initial-state by UiController. This MUST run before the router and the
+ * CnAppRoot `manifest` prop are built: the library's async `useAppManifest`
+ * resolver only updates the manifest AFTER first paint, by which time
+ * CnIndexPage has already registered its object-type from the (then still
+ * unresolved) config and self-fetched the 404 `@resolve:...` URL. Resolving
+ * up-front guarantees every page renders with real register/schema ids from
+ * the very first mount. Unknown / unset keys are left untouched.
+ *
+ * @param {object} manifest The merged manifest.
+ * @return {object} A new manifest with sentinels substituted in pages[].config.
+ */
+function resolveManifestSentinelsSync(manifest) {
+	const SENTINEL = /^@resolve:([a-z][a-z0-9_-]*)$/
+	const cache = new Map()
+	const lookup = (key) => {
+		if (cache.has(key)) {
+			return cache.get(key)
+		}
+		let value = null
+		try {
+			const v = loadState('opencatalogi', key, null)
+			if (v !== undefined && v !== null && v !== '') {
+				value = v
+			}
+		} catch (e) {
+			value = null
+		}
+		cache.set(key, value)
+		return value
+	}
+	const substitute = (node) => {
+		if (Array.isArray(node)) {
+			return node.map(substitute)
+		}
+		if (node !== null && typeof node === 'object') {
+			const out = {}
+			for (const [k, v] of Object.entries(node)) {
+				out[k] = substitute(v)
+			}
+			return out
+		}
+		if (typeof node === 'string') {
+			const m = node.match(SENTINEL)
+			if (m) {
+				const resolved = lookup(m[1])
+				return resolved !== null ? resolved : node
+			}
+		}
+		return node
+	}
+	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
+	return {
+		...manifest,
+		pages: pages.map((page) => (
+			page && typeof page === 'object' && page.config && typeof page.config === 'object'
+				? { ...page, config: substitute(page.config) }
+				: page
+		)),
+	}
+}
+
+const resolvedManifest = resolveManifestSentinelsSync(mergedManifest)
+
+/**
  * Build the vue-router config from the manifest. Each manifest page becomes
  * one route; the route's `name` IS `page.id` (per the lib's manifest contract).
  * Routes whose path declares a `:` parameter receive `props: true` so the
@@ -140,7 +207,7 @@ function routesFromManifest(manifest) {
 const router = new VueRouter({
 	mode: 'history',
 	base: generateUrl('/apps/opencatalogi'),
-	routes: routesFromManifest(mergedManifest),
+	routes: routesFromManifest(resolvedManifest),
 })
 
 tryLoadTranslations()
@@ -160,7 +227,7 @@ new Vue({
 	router,
 	render: (h) => h(App, {
 		props: {
-			manifest: mergedManifest,
+			manifest: resolvedManifest,
 			customComponents: customComponentsProp,
 			pageTypes: pageTypesProp,
 		},

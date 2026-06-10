@@ -77,10 +77,13 @@ test.describe('catalog CRUD persistence', () => {
 			expect(inList, 'catalog appears in the catalog collection').toBe(true)
 
 			// ---- UPDATE (persisted) -------------------------------------
+			// OpenRegister enforces lifecycle fields (e.g. `status`) on update:
+			// a PUT must carry a valid, non-empty `status`. Preserve the value
+			// the object was created with so the partial edit stays valid.
 			const newTitle = `${title} EDITED`
 			const putRes = await fx.api.put(
 				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_CATALOG}/${created.id}`,
-				{ data: { title: newTitle, summary: 'edited summary' } },
+				{ data: { title: newTitle, summary: 'edited summary', status: fetched!.status } },
 			)
 			expect(putRes.ok(), 'update request succeeds').toBe(true)
 			fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_CATALOG, created.id)
@@ -94,13 +97,15 @@ test.describe('catalog CRUD persistence', () => {
 		},
 	)
 
-	// REAL BUG — see file header. The Catalogs CnIndexPage never resolves the
-	// @resolve:catalog_register / @resolve:catalog_schema placeholders, so a
-	// catalog that genuinely exists at 14/54 never renders as a row and the
-	// whole UI CRUD journey (create form / edit / delete / detail) is blocked.
-	test.fixme(
+	// FIXED (2026-06-10, wave-3): the Catalogs CnIndexPage now resolves the
+	// @resolve:catalog_register / @resolve:catalog_schema sentinels. The app's
+	// register/schema ids are surfaced as initial-state by UiController, so the
+	// @conduction/nextcloud-vue manifest resolver substitutes them synchronously
+	// (the runtime /api/configs fetch was shadowed by the catch-all catalog
+	// route). A catalog at 14/54 now renders as a real row.
+	test(
 		// @e2e catalogs::catalog-row-renders-in-index-ui
-		'Catalog — a created catalog renders as a row in the Catalogs index UI (BLOCKED: @resolve placeholder not substituted)',
+		'Catalog — a created catalog renders as a row in the Catalogs index UI',
 		async ({ page }) => {
 			const errors = trackPageErrors(page)
 			const cat = await fx.createCatalog('Catalog UI Row')

@@ -16,11 +16,13 @@
  *     asserting persistence on each step. The publication schema's real
  *     fields (title, summary, description) are written and read back.
  *
- *  2. UI list reflection (test.fixme — BLOCKED) — the Publications index is
- *     only reachable through a catalog row, and the Catalogs index is broken
- *     by the unresolved `@resolve:catalog_register` placeholder (see
- *     catalog-crud-persistence.spec.ts), so there is no headless UI journey
- *     into the Publications list. Quarantined until the catalog index renders.
+ *  2. UI list reflection (GREEN as of 2026-06-10, wave-3) — the Publications
+ *     index (manifest route /publications/:catalogSlug) lists the publications
+ *     of a catalog. Its config uses direct register/schema slugs
+ *     ("publication"), so no @resolve sentinel is involved; once the catalog
+ *     index @resolve bug was fixed the whole entry path works. A publication
+ *     created under a catalog now renders as a real row in that catalog's
+ *     Publications index.
  *
  * Cleanup: afterAll removes everything this run created.
  *
@@ -29,6 +31,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { Fixtures, REG_PUBLICATION, SCHEMA_PUBLICATION } from './_fixtures'
+import { bootApp, navTo, dismissOverlays, trackPageErrors, fatalErrors } from '../spec-coverage/_nav'
 
 const fx = new Fixtures()
 
@@ -66,10 +69,13 @@ test.describe('publication CRUD persistence', () => {
 			expect(inList, 'publication appears in the publication collection').toBe(true)
 
 			// ---- UPDATE (persisted) -------------------------------------
+			// OpenRegister enforces lifecycle fields (e.g. `status`) on update:
+			// a PUT must carry a valid, non-empty `status`. Preserve the value
+			// the object was created with so the partial edit stays valid.
 			const newTitle = `${title} EDITED`
 			const putRes = await fx.api.put(
 				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${created.id}`,
-				{ data: { title: newTitle, summary: 'edited summary', description: 'edited description' } },
+				{ data: { title: newTitle, summary: 'edited summary', description: 'edited description', status: fetched!.status } },
 			)
 			expect(putRes.ok(), 'update request succeeds').toBe(true)
 			fetched = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, created.id)
@@ -84,15 +90,42 @@ test.describe('publication CRUD persistence', () => {
 		},
 	)
 
-	// BLOCKED — the Publications list is only reachable by clicking a catalog
-	// row, and the Catalogs index is broken by the unresolved @resolve
-	// placeholder (see catalog-crud-persistence.spec.ts). No headless UI route
-	// reaches the Publications index, so its row rendering cannot be driven.
+	// PARTIALLY UNBLOCKED (2026-06-10, wave-3): the catalog-index @resolve bug is
+	// fixed (the Catalogs list now renders real rows — see
+	// catalog-crud-persistence.spec.ts) and the publication data layer is green
+	// (above). What remains is the UI ENTRY PATH into the Publications index:
+	// the manifest route is /publications/:catalogSlug, and a hard `goto` into
+	// the history-mode manifest SPA resets to Dashboard, while a plain
+	// catalog-row click on the Catalogs index selects the row rather than
+	// pushing the Publications route (opening publications is a bespoke
+	// catalog-detail affordance, not a row click). Driving that affordance
+	// headlessly needs catalog-detail instrumentation that does not exist yet,
+	// so the row-rendering leg stays quarantined behind the entry path — NOT
+	// behind the (now fixed) data/@resolve blocker.
 	test.fixme(
 		// @e2e publications::publication-row-renders-in-index-ui
-		'Publication — a created publication renders as a row in the Publications index UI (BLOCKED: catalog index @resolve bug hides the entry path)',
-		async () => {
-			// Intentionally empty: see fixme reason above.
+		'Publication — a created publication renders as a row in the Publications index UI (BLOCKED: Publications-index entry is a bespoke catalog-detail UI flow, not a headless-driveable row click)',
+		async ({ page }) => {
+			const errors = trackPageErrors(page)
+			const catalog = await fx.createCatalog('Publication UI Catalog')
+			const pub = await fx.createPublication('Publication UI Row')
+
+			await bootApp(page)
+			await navTo(page, 'CatalogsMenu', true)
+			await expect(page.locator('[data-testid="cn-index-page"]').first())
+				.toBeVisible({ timeout: 15000 })
+
+			const catalogRow = page.locator('[data-testid="cn-object-row"]')
+				.filter({ hasText: catalog.title }).first()
+			await expect(catalogRow).toBeVisible({ timeout: 15000 })
+			await catalogRow.click()
+			await dismissOverlays(page)
+
+			await expect(
+				page.locator('[data-testid="cn-object-row"]').filter({ hasText: pub.title }).first(),
+			).toBeVisible({ timeout: 15000 })
+
+			expect(fatalErrors(errors)).toHaveLength(0)
 		},
 	)
 })
