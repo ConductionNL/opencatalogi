@@ -1,13 +1,8 @@
 # PHPStan baseline — tracked lint debt for opencatalogi.
 #
-# Shrunk from 13 entries (legacy) to 1 entry after Phase 3 cleanup.
-# The remaining entry is a GuzzleHttp edge case: RequestException::__construct()
-# requires a RequestInterface but we legitimately throw it without an HTTP request
-# (for non-HTTP failures in syncDirectory). Fixing requires changing the public API
-# exception contract; tracked for follow-up.
+# Empty: legacy debt fully retired (opencatalogi-legacy-quality-cleanup Task 10).
+# The Guzzle RequestException edge case in DirectoryService::syncDirectory was
+# fixed by constructing a synthetic Psr7\Request from the upstream directoryUrl
+# rather than passing null.
 parameters:
-	ignoreErrors:
-		-
-			message: "#^Parameter \\$request of class GuzzleHttp\\\\Exception\\\\RequestException constructor expects Psr\\\\Http\\\\Message\\\\RequestInterface, null given\\.$#"
-			count: 1
-			path: lib/Service/DirectoryService.php
+	ignoreErrors: []

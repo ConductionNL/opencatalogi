@@ -46,8 +46,19 @@ cluster.
       the common-pattern clusters: missing return-type / param-type
       declarations, mixed types (specify generic / union),
       possibly-null dereferences (add null guards).
-- [ ] 10. Once the baseline reaches 0 lines, delete
-      `phpstan-baseline.neon`.
+- [x] 10. Baseline reduced to zero entries. The canonical fleet pattern
+      (per `phpstan.neon` line 3 comment "Apps without debt ship an empty
+      baseline file") keeps the empty `phpstan-baseline.neon` so the
+      shared `includes:` block stays byte-identical across the fleet —
+      deleting the file would break the `phpstan.neon` include and force
+      a per-app neon divergence. The one remaining baseline entry (Guzzle
+      `RequestException` with `request: null` in
+      `DirectoryService::syncDirectory`) was fixed by constructing a
+      synthetic `GuzzleHttp\Psr7\Request('GET', $directoryUrl)` rather
+      than passing null — preserves the originating URL for downstream
+      consumers while satisfying `Psr\Http\Message\RequestInterface`.
+      Verified: `vendor/bin/phpstan analyse` returns "No errors" with the
+      empty `ignoreErrors: []` baseline.
 
 ## Phase 5 — CI integration
 
@@ -62,5 +73,8 @@ cluster.
 
 - [x] 13. Update the README quality-gates section and note in
       `app-config.json` that legacy quality cleanup is done.
-- [ ] 14. Close the burn-down tracking issue once the last baseline
-      line is removed.
+- [~] 14. Close the burn-down tracking issue once the last baseline
+      line is removed. [DEFERRED — requires Codeberg API auth; will be
+      closed by the PR-merge automation once this change archives to
+      development. The technical work is done: PHPCS legacy excludes
+      removed, PHPMD baseline gone, PHPStan baseline empty.]
