@@ -1,0 +1,43 @@
+# app-tests.yml — opencatalogi frontend unit gate.
+#
+# OpenCatalogi does not (yet) ship the reusable tests.yml feature-test
+# workflow the sibling apps use; this standalone workflow adds the one
+# OFFLINE gate that needs no Nextcloud service container: the Vitest
+# frontend unit suite under tests/vitest/**.
+#
+# The suite targets PURE logic (publication-status derivation, ISO-date
+# validation, Zod-error mapping, synchronous catalog store actions/getters).
+# @nextcloud/* and @conduction/nextcloud-vue are aliased to deterministic
+# stubs in vitest.config.js, so no DOM/NC runtime is required. Always gating.
+#
+# The pre-existing Jest suite (jest.config.js + src/**/*.spec.{js,ts}) covers
+# the async OR-backed store actions against jsdom and is left untouched.
+
+name: app-tests
+
+on:
+  pull_request:
+    branches:
+      - development
+      - main
+      - beta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-unit:
+    name: Frontend unit (Vitest — opencatalogi)
+    runs-on: codeberg-small
+    container:
+      image: code.forgejo.org/oci/ci-node:20
+    steps:
+      - name: Checkout
+        uses: https://code.forgejo.org/actions/checkout@v4
+
+      - name: Install npm deps
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+      - name: Run Vitest unit suite
+        run: npm run test:unit
