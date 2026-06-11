@@ -44,11 +44,25 @@ export const BASE = process.env.NEXTCLOUD_URL || 'http://localhost:8080'
 export const ADMIN_USER = process.env.NC_ADMIN_USER || 'admin'
 export const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 
-/** Publication register + the schemas it carries, in this dev container. */
-export const REG_PUBLICATION = 14
-export const SCHEMA_PUBLICATION = 53
-export const SCHEMA_CATALOG = 54
-export const SCHEMA_ORGANIZATION = 47
+/**
+ * Publication register + the schemas it carries.
+ *
+ * The NUMERIC ids vary between environments (dev box = register 14, a fresh CI
+ * boot re-imports the register by slug and gets a different id). These are seeded
+ * with the dev-box values and RESOLVED FROM STABLE SLUGS at runtime by
+ * Fixtures.init() (GET /openregister/api/registers + .../schemas), so the deep
+ * suite survives a fresh CI boot. They are `let`, not `const`, because init()
+ * reassigns them once the live ids are known; every spec reads them inside its
+ * test body (after init()), so the resolved value is what gets used.
+ */
+export let REG_PUBLICATION: number | string = 14
+export let SCHEMA_PUBLICATION: number | string = 53
+export let SCHEMA_CATALOG: number | string = 54
+export let SCHEMA_ORGANIZATION: number | string = 47
+
+/** Stable slugs the OpenCatalogi register import uses (slug -> resolved id). */
+const REGISTER_SLUG = 'publication'
+const SCHEMA_SLUGS = { publication: 'publication', catalog: 'catalog', organization: 'organization' }
 
 const OBJ = (reg: number | string, schema: number | string, id?: string) =>
 	`/index.php/apps/openregister/api/objects/${reg}/${schema}${id ? `/${id}` : ''}`
@@ -84,6 +98,38 @@ export class Fixtures {
 			httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS },
 			extraHTTPHeaders: { 'OCS-APIRequest': 'true', 'Content-Type': 'application/json' },
 		})
+		await this.resolveRegisterAndSchemas()
+	}
+
+	/**
+	 * Resolve the numeric register + schema ids from their stable slugs so the
+	 * suite is portable to a fresh CI boot where the re-imported ids differ.
+	 * Best-effort: on any failure the dev-box seed ids are kept, so a transient
+	 * registers/schemas hiccup never breaks the suite harder than the original
+	 * hardcoded ids would have.
+	 */
+	private async resolveRegisterAndSchemas(): Promise<void> {
+		try {
+			const regRes = await this.ctx.get('/index.php/apps/openregister/api/registers?_limit=300')
+			if (regRes.ok()) {
+				const body = await regRes.json()
+				const list = Array.isArray(body) ? body : (body.results || [])
+				const reg = list.find((r: Record<string, unknown>) => r.slug === REGISTER_SLUG)
+				if (reg && (reg.id || reg.id === 0)) REG_PUBLICATION = reg.id as number | string
+			}
+			const schRes = await this.ctx.get('/index.php/apps/openregister/api/schemas?_limit=1000')
+			if (schRes.ok()) {
+				const body = await schRes.json()
+				const list = Array.isArray(body) ? body : (body.results || [])
+				const bySlug = new Map<string, number | string>()
+				for (const s of list) if (s && s.slug) bySlug.set(s.slug as string, s.id as number | string)
+				if (bySlug.has(SCHEMA_SLUGS.publication)) SCHEMA_PUBLICATION = bySlug.get(SCHEMA_SLUGS.publication)!
+				if (bySlug.has(SCHEMA_SLUGS.catalog)) SCHEMA_CATALOG = bySlug.get(SCHEMA_SLUGS.catalog)!
+				if (bySlug.has(SCHEMA_SLUGS.organization)) SCHEMA_ORGANIZATION = bySlug.get(SCHEMA_SLUGS.organization)!
+			}
+		} catch {
+			/* keep dev-box seed ids on any resolution failure */
+		}
 	}
 
 	get api(): APIRequestContext {
