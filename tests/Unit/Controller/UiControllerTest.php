@@ -6,6 +6,8 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\UiController;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IInitialState;
+use OCP\IAppConfig;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -17,15 +19,21 @@ class UiControllerTest extends TestCase
 {
 
     private IRequest|MockObject $request;
+    private IAppConfig|MockObject $appConfig;
+    private IInitialState|MockObject $initialState;
     private UiController $controller;
 
     protected function setUp(): void
     {
-        $this->request = $this->createMock(IRequest::class);
+        $this->request      = $this->createMock(IRequest::class);
+        $this->appConfig    = $this->createMock(IAppConfig::class);
+        $this->initialState = $this->createMock(IInitialState::class);
 
         $this->controller = new UiController(
             'opencatalogi',
-            $this->request
+            $this->request,
+            $this->appConfig,
+            $this->initialState
         );
     }
 

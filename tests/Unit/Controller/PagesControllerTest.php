@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PagesController;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -27,15 +28,17 @@ class PagesControllerTest extends TestCase
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
     private IL10N|MockObject $l10n;
+    private PublicationQueryService|MockObject $queryService;
     private PagesController $controller;
 
     protected function setUp(): void
     {
-        $this->request    = $this->createMock(IRequest::class);
-        $this->config     = $this->createMock(IAppConfig::class);
-        $this->container  = $this->createMock(ContainerInterface::class);
-        $this->appManager = $this->createMock(IAppManager::class);
-        $this->l10n       = $this->createMock(IL10N::class);
+        $this->request      = $this->createMock(IRequest::class);
+        $this->config       = $this->createMock(IAppConfig::class);
+        $this->container    = $this->createMock(ContainerInterface::class);
+        $this->appManager   = $this->createMock(IAppManager::class);
+        $this->l10n         = $this->createMock(IL10N::class);
+        $this->queryService = $this->createMock(PublicationQueryService::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text) => $text);
@@ -46,8 +49,35 @@ class PagesControllerTest extends TestCase
             $this->config,
             $this->container,
             $this->appManager,
-            $this->l10n
+            $this->l10n,
+            $this->queryService
         );
+    }
+
+    /**
+     * Build a JsonSerializable result row mirroring an OpenRegister entity.
+     *
+     * show() calls ->jsonSerialize() on the first result before checking whether it is
+     * a plain array (see FLAGGED lib bug PagesController::299 — the is_array() guard runs
+     * one line too late). Production results are entity objects, so the test feeds a
+     * serializable object to exercise the intended path.
+     *
+     * @param array<string,mixed> $data Page payload.
+     *
+     * @return \JsonSerializable
+     */
+    private function serializableObject(array $data): \JsonSerializable
+    {
+        return new class($data) implements \JsonSerializable {
+            public function __construct(private array $data)
+            {
+            }
+
+            public function jsonSerialize(): array
+            {
+                return $this->data;
+            }
+        };
     }
 
     private function mockObjectService(): MockObject
@@ -121,6 +151,7 @@ class PagesControllerTest extends TestCase
             ->willReturnMap([
                 ['opencatalogi', 'page_schema', '', '10'],
                 ['opencatalogi', 'page_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
             ]);
 
         $this->request->method('getParams')
@@ -163,7 +194,7 @@ class PagesControllerTest extends TestCase
 
         $mockObjService->method('searchObjectsPaginated')
             ->willReturn([
-                'results' => [['id' => 1, 'slug' => 'about-us', 'title' => 'About Us']],
+                'results' => [$this->serializableObject(['id' => 1, 'slug' => 'about-us', 'title' => 'About Us'])],
             ]);
 
         $this->config->method('getValueString')
@@ -203,7 +234,7 @@ class PagesControllerTest extends TestCase
 
         $mockObjService->method('searchObjectsPaginated')
             ->willReturn([
-                'results' => [['id' => 1, 'slug' => 'contact']],
+                'results' => [$this->serializableObject(['id' => 1, 'slug' => 'contact'])],
             ]);
 
         $this->config->method('getValueString')

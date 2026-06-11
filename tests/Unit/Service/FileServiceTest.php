@@ -157,6 +157,27 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     }//end setupUserFolder()
 
     /**
+     * Wire $userFolder->get($path)->getPath() to resolve to the given absolute path.
+     *
+     * createPublicShareLink() (and the upload/enrich paths that call it) fetch the node
+     * via $userFolder->get($relativePath) and then read $node->getPath(). Tests that
+     * exercise the share-link path must stub get() to return such a node; this helper
+     * centralises that wiring. Call it INSTEAD of stubbing get() yourself.
+     *
+     * @param Folder&MockObject $userFolder   The user-folder mock from setupUserFolder().
+     * @param string            $absolutePath The absolute path the node should report.
+     *
+     * @return void
+     */
+    private function wireShareNode(Folder $userFolder, string $absolutePath): void
+    {
+        $node = $this->createMock(\OCP\Files\Node::class);
+        $node->method('getPath')->willReturn($absolutePath);
+        $userFolder->method('get')->willReturn($node);
+
+    }//end wireShareNode()
+
+    /**
      * Sets up the OR FileService mock via the DI container.
      *
      * @param string $shareUrl The share URL the OR service should return.
@@ -211,7 +232,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     public function testCreatePublicShareLinkSuccess(): void
     {
         $userFolder = $this->setupUserFolder('admin');
-        $userFolder->method('getPath')->willReturn('/admin/files');
+        $this->wireShareNode($userFolder, '/admin/files');
 
         $this->setupOrFileService('https://example.com/index.php/s/abc123');
 
@@ -228,7 +249,9 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     public function testCreatePublicShareLinkTrimsLeadingSlash(): void
     {
         $userFolder = $this->setupUserFolder('admin');
-        $userFolder->method('getPath')->willReturn('/admin/files');
+        // The trimmed relative path resolves to this absolute node path; the leaf is
+        // then asked to share that absolute path.
+        $this->wireShareNode($userFolder, '/admin/files/Publicaties/folder/file.pdf');
 
         $orFileService = $this->setupOrFileService();
         $orFileService->expects($this->once())
@@ -248,7 +271,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     public function testCreatePublicShareLinkOrUnavailableReturnsEmpty(): void
     {
         $userFolder = $this->setupUserFolder('admin');
-        $userFolder->method('getPath')->willReturn('/admin/files');
+        $this->wireShareNode($userFolder, '/admin/files/file.pdf');
 
         $this->appManager->method('getInstalledApps')->willReturn([]);
 
@@ -295,7 +318,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
 
         $userFolder = $this->createMock(Folder::class);
         $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
-        $userFolder->method('getPath')->willReturn('/Guest/files');
+        $this->wireShareNode($userFolder, '/Guest/files/file.pdf');
 
         $this->setupOrFileService('https://example.com/index.php/s/guest-token');
 
@@ -339,6 +362,8 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
 
         $file = $this->createMock(File::class);
         $file->method('getId')->willReturn(1);
+        // createPublicShareLink() reads $node->getPath() on the node returned by get().
+        $file->method('getPath')->willReturn('/admin/files/Publicaties/Test Publication/document.pdf');
 
         $getCallIndex = 0;
         $userFolder->method('get')->willReturnCallback(
@@ -615,7 +640,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     public function testAddFileInfoToDataEnrichment(): void
     {
         $userFolder = $this->setupUserFolder('admin');
-        $userFolder->method('getPath')->willReturn('/admin/files');
+        $this->wireShareNode($userFolder, '/admin/files/Publicaties/folder/report.summary.pdf');
 
         $this->setupOrFileService('https://example.com/index.php/s/mytoken');
 
@@ -650,7 +675,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
     public function testAddFileInfoToDataPreservesExistingUrls(): void
     {
         $userFolder = $this->setupUserFolder('admin');
-        $userFolder->method('getPath')->willReturn('/admin/files');
+        $this->wireShareNode($userFolder, '/admin/files/path/file.txt');
 
         $this->setupOrFileService('https://example.com/index.php/s/t');
 
@@ -938,7 +963,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
 
         $userFolder = $this->createMock(Folder::class);
         $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
-        $userFolder->method('getPath')->willReturn('/Guest/files');
+        $this->wireShareNode($userFolder, '/Guest/files/file.pdf');
 
         $this->setupOrFileService('https://example.com/index.php/s/guest-token');
 
@@ -978,7 +1003,7 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
 
         $userFolder = $this->createMock(Folder::class);
         $this->rootFolder->method('getUserFolder')->with('Guest')->willReturn($userFolder);
-        $userFolder->method('getPath')->willReturn('/Guest/files');
+        $this->wireShareNode($userFolder, '/Guest/files/path/file.txt');
 
         $this->setupOrFileService('https://example.com/index.php/s/gt');
 

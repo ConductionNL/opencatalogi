@@ -30,12 +30,12 @@ jobs:
       enable-phpmetrics: true
       enable-frontend: true
       enable-eslint: true
-      # PHPUnit temporarily disabled — unit tests hang in CI after ~61/1212
-      # tests, exceeding the 1h PHP max_execution_time. Tests run fine locally
-      # but something in the NC test container interaction (likely a real HTTP
-      # call sneaking through despite mocks) hangs deterministically.
-      # Tracked in https://github.com/ConductionNL/opencatalogi/issues — see
-      # the upstream-dev-cleanup PR for context.
-      enable-phpunit: false
+      # PHPUnit re-enabled after the unit-suite revival. The original CI hang was
+      # caused by the DirectoryService::syncDirectory / BroadcastService::broadcast
+      # tests driving the SSRF outbound-URL guard, which does real DNS resolution
+      # (dns_get_record / gethostbyname) and stalls on runners without outbound DNS.
+      # Those tests are now tagged @group network and excluded by default in both
+      # phpunit.xml and phpunit-unit.xml, so the suite is deterministic and offline-safe.
+      enable-phpunit: true
       additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"development"}]'
       enable-newman: false

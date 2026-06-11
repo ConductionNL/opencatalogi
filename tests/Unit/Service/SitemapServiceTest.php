@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
@@ -24,6 +25,7 @@ class SitemapServiceTest extends TestCase
     private IAppManager|MockObject $appManager;
     private SettingsService|MockObject $settingsService;
     private IURLGenerator|MockObject $urlGenerator;
+    private PublicationQueryService|MockObject $queryService;
     private SitemapService $service;
 
     protected function setUp(): void
@@ -32,12 +34,19 @@ class SitemapServiceTest extends TestCase
         $this->appManager      = $this->createMock(IAppManager::class);
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->urlGenerator    = $this->createMock(IURLGenerator::class);
+        $this->queryService    = $this->createMock(PublicationQueryService::class);
+
+        // The service runs catalog/publication result sets through the published-predicate
+        // filter; default to an identity pass-through so the unfiltered fixtures survive.
+        $this->queryService->method('enforcePublishedForAnonymous')
+            ->willReturnArgument(0);
 
         $this->service = new SitemapService(
             $this->container,
             $this->appManager,
             $this->settingsService,
             $this->urlGenerator,
+            $this->queryService,
         );
     }
 

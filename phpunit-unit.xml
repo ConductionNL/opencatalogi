@@ -17,6 +17,21 @@
         </testsuite>
     </testsuites>
 
+    <!--
+        The @group network tests (DirectoryService::syncDirectory /
+        BroadcastService::broadcast) exercise the SSRF outbound-URL guard, which performs
+        real DNS resolution (dns_get_record / gethostbyname) of the target host. They hang
+        or fail in sandboxed/CI runners without outbound DNS (this is why PHPUnit was
+        originally disabled in CI; see .github/workflows/code-quality.yml). They are
+        excluded by default so the unit suite is deterministic and offline-safe; run them
+        explicitly with the network group in an environment that has outbound DNS.
+    -->
+    <groups>
+        <exclude>
+            <group>network</group>
+        </exclude>
+    </groups>
+
     <source>
         <include>
             <directory suffix=".php">lib/</directory>

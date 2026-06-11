@@ -371,7 +371,10 @@ class PublicationQueryServiceTest extends TestCase
                 $funcBuilder->method('count')->willReturn($this->createMock(IQueryFunction::class));
                 $expr = $this->createMock(IExpressionBuilder::class);
                 $expr->method('eq')->willReturn('eq');
-                $expr->method('andWhere')->willReturn('andWhere');
+                // NOTE: andWhere() lives on the query builder ($qb->andWhere()), not on
+                // the expression builder — IExpressionBuilder has no such method, so a
+                // stub here raises MethodCannotBeConfigured. The $qb->andWhere() stub is
+                // configured below.
 
                 $qb->method('select')->willReturnSelf();
                 $qb->method('from')->willReturnSelf();

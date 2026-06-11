@@ -25,6 +25,11 @@ use RuntimeException;
 /**
  * Unit tests for DirectoryService.
  *
+ * The testSyncDirectory* cases are tagged `@group network`: syncDirectory() runs the
+ * SSRF outbound-URL guard (assertSafeOutboundUrl) which does real DNS resolution of the
+ * target host, so they require outbound DNS and are excluded by default (see phpunit.xml /
+ * phpunit-unit.xml). Run them with the network group in an environment that has DNS.
+ *
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
  */
 class DirectoryServiceTest extends TestCase
@@ -471,6 +476,9 @@ class DirectoryServiceTest extends TestCase
         $this->service->syncDirectory('https://myserver.example.com/apps/opencatalogi/api/directory');
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectorySuccessWithResults(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -511,6 +519,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertArrayHasKey('total_processed', $result);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryFiltersOutOwnListings(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -548,6 +559,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertEquals(0, $result['total_processed']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryFiltersOutLocalUrls(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2334,6 +2348,9 @@ class DirectoryServiceTest extends TestCase
     // syncDirectory – additional coverage
     // =========================================================================
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryInitializesUniqueDirectoriesWhenEmpty(): void
     {
         $objectService = $this->createMockObjectService();
@@ -2384,6 +2401,9 @@ class DirectoryServiceTest extends TestCase
         $service->syncDirectory('https://other.example.com/api/directory');
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryProcessesMultipleListings(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2425,6 +2445,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertEquals(2, $result['listings_created']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryBroadcastsWhenNoOurListings(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2461,6 +2484,9 @@ class DirectoryServiceTest extends TestCase
         $service->syncDirectory('https://other.example.com/api/directory');
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectorySkipsBroadcastDuringSystemBroadcast(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2497,6 +2523,9 @@ class DirectoryServiceTest extends TestCase
         $service->syncDirectory('https://other.example.com/api/directory');
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectorySkipsBroadcastWhenOurUrlIsLocal(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2532,6 +2561,9 @@ class DirectoryServiceTest extends TestCase
         $service->syncDirectory('https://other.example.com/api/directory');
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryHandlesBroadcastException(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2569,6 +2601,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertEquals(1, $result['listings_created']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryHandlesGuzzleException(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2597,6 +2632,9 @@ class DirectoryServiceTest extends TestCase
         $service->syncDirectory('https://other.example.com/api/directory');
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryUpdatesExistingListingOnGuzzleError(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2640,6 +2678,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertEquals(503, $savedData['statusCode']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryHandlesResponseWithNoResults(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2666,6 +2707,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertEquals(0, $result['total_processed']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryCountsUpdatedAndUnchangedListings(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2714,6 +2758,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $result['listings_updated']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryCountsFailedListings(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2749,6 +2796,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertNotEmpty($result['errors']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryCountsSkippedOutdatedListings(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -2801,6 +2851,9 @@ class DirectoryServiceTest extends TestCase
         $this->assertEquals(1, $result['listings_skipped']);
     }
 
+    /**
+     * @group network
+     */
     public function testSyncDirectorySkipsListingFromOtherKnownDirectory(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -3701,6 +3754,9 @@ class DirectoryServiceTest extends TestCase
     // syncDirectory – error code 0 handling
     // =========================================================================
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryErrorCodeZeroBecomesInternalServerError(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -3749,6 +3805,9 @@ class DirectoryServiceTest extends TestCase
     // syncDirectory – general exception (non-Guzzle) handling
     // =========================================================================
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryHandlesGenericException(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
@@ -4176,6 +4235,9 @@ class DirectoryServiceTest extends TestCase
     // syncDirectory – promise error handling for listing sync
     // =========================================================================
 
+    /**
+     * @group network
+     */
     public function testSyncDirectoryHandlesPromiseException(): void
     {
         $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');

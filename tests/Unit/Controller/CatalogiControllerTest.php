@@ -6,6 +6,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -24,6 +25,7 @@ class CatalogiControllerTest extends TestCase
 
     private IRequest|MockObject $request;
     private CatalogiService|MockObject $catalogiService;
+    private PublicationQueryService|MockObject $queryService;
     private IAppConfig|MockObject $config;
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
@@ -33,6 +35,7 @@ class CatalogiControllerTest extends TestCase
     {
         $this->request         = $this->createMock(IRequest::class);
         $this->catalogiService = $this->createMock(CatalogiService::class);
+        $this->queryService    = $this->createMock(PublicationQueryService::class);
         $this->config          = $this->createMock(IAppConfig::class);
         $this->container       = $this->createMock(ContainerInterface::class);
         $this->appManager      = $this->createMock(IAppManager::class);
@@ -41,6 +44,7 @@ class CatalogiControllerTest extends TestCase
             'opencatalogi',
             $this->request,
             $this->catalogiService,
+            $this->queryService,
             $this->config,
             $this->container,
             $this->appManager

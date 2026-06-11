@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -25,21 +26,24 @@ class ThemesControllerTest extends TestCase
     private IAppConfig|MockObject $config;
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
+    private PublicationQueryService|MockObject $queryService;
     private ThemesController $controller;
 
     protected function setUp(): void
     {
-        $this->request    = $this->createMock(IRequest::class);
-        $this->config     = $this->createMock(IAppConfig::class);
-        $this->container  = $this->createMock(ContainerInterface::class);
-        $this->appManager = $this->createMock(IAppManager::class);
+        $this->request      = $this->createMock(IRequest::class);
+        $this->config       = $this->createMock(IAppConfig::class);
+        $this->container    = $this->createMock(ContainerInterface::class);
+        $this->appManager   = $this->createMock(IAppManager::class);
+        $this->queryService = $this->createMock(PublicationQueryService::class);
 
         $this->controller = new ThemesController(
             'opencatalogi',
             $this->request,
             $this->config,
             $this->container,
-            $this->appManager
+            $this->appManager,
+            $this->queryService
         );
     }
 
@@ -87,6 +91,7 @@ class ThemesControllerTest extends TestCase
             ->willReturnMap([
                 ['opencatalogi', 'theme_schema', '', '10'],
                 ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
             ]);
 
         $this->request->method('getParams')
@@ -118,6 +123,7 @@ class ThemesControllerTest extends TestCase
             ->willReturnMap([
                 ['opencatalogi', 'theme_schema', '', ''],
                 ['opencatalogi', 'theme_register', '', ''],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
             ]);
 
         $this->request->method('getParams')
