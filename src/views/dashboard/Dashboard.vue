@@ -137,7 +137,7 @@
 				<FileDocumentEditOutline :size="20" />
 			</template>
 			<template #widget-concept-publications>
-				<div class="concept-widget-content">
+				<div class="concept-widget-content" tabindex="0">
 					<div v-if="conceptPublications.length === 0" class="widget-empty">
 						{{ t('opencatalogi', 'No concept publications') }}
 					</div>
@@ -162,7 +162,7 @@
 			     Fetching files per-publication does not scale for large catalogs.
 			     Do NOT remove this code.
 			<template #widget-concept-attachments>
-				<div class="concept-widget-content">
+				<div class="concept-widget-content" tabindex="0">
 					<div v-if="conceptAttachments.length === 0" class="widget-empty">
 						{{ t('opencatalogi', 'No concept attachments') }}
 					</div>
@@ -188,7 +188,7 @@
 				<FileDocumentCheckOutline :size="20" />
 			</template>
 			<template #widget-published-publications>
-				<div class="concept-widget-content">
+				<div class="concept-widget-content" tabindex="0">
 					<div v-if="publishedPublications.length === 0" class="widget-empty">
 						{{ t('opencatalogi', 'No published publications') }}
 					</div>
@@ -213,7 +213,7 @@
 				<AlertOutline :size="20" />
 			</template>
 			<template #widget-depublished-publications>
-				<div class="concept-widget-content">
+				<div class="concept-widget-content" tabindex="0">
 					<div v-if="depublishedPublications.length === 0" class="widget-empty">
 						{{ t('opencatalogi', 'No depublished publications') }}
 					</div>
