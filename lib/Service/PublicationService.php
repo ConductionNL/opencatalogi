@@ -1023,9 +1023,9 @@ class PublicationService
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
                 // on array" under SOLR (#736), mirroring the dual-shape handling that
                 // already exists in PublicationsController::index.
-                $objectArray = $object->jsonSerialize();
-                if (is_array($object) === true) {
-                    $objectArray = $object;
+                $objectArray = $object;
+                if (is_array($object) === false) {
+                    $objectArray = $object->jsonSerialize();
                 }
 
                 // Remove unwanted properties from the '@self' array.

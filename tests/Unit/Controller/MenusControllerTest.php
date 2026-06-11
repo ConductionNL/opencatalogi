@@ -57,10 +57,10 @@ class MenusControllerTest extends TestCase
     /**
      * Build a JsonSerializable result row mirroring an OpenRegister entity.
      *
-     * show() calls ->jsonSerialize() on the first result before checking whether it is
-     * a plain array (see FLAGGED lib bug MenusController::290 — the is_array() guard runs
-     * one line too late). Production results are entity objects, so the test feeds a
-     * serializable object to exercise the intended path.
+     * Production results from the magic-mapper backend are entity objects; the SOLR
+     * backend returns plain arrays. show() now checks is_array() before calling
+     * jsonSerialize() (#736), so both shapes are handled. This helper exercises the
+     * entity path; testShowAcceptsArrayShape exercises the SOLR array path.
      *
      * @param array<string,mixed> $data Menu payload.
      *
@@ -221,6 +221,28 @@ class MenusControllerTest extends TestCase
         $this->request->server = [];
 
         $response = $this->controller->show(42);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
+    }
+
+    /**
+     * #736: the SOLR backend returns plain array shapes (no jsonSerialize()).
+     * show() must accept them without fataling now that the is_array() guard
+     * precedes the jsonSerialize() call.
+     */
+    public function testShowAcceptsArrayShape(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn([
+                'results' => [['id' => 7, 'name' => 'SOLR Menu', 'items' => []]],
+            ]);
+
+        $this->request->server = [];
+
+        $response = $this->controller->show('7');
 
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(200, $response->getStatus());

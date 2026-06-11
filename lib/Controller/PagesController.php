@@ -295,10 +295,12 @@ class PagesController extends Controller
         $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
         if (empty($result['results']) === false) {
             // Return the first matching page; enforce published predicate for anonymous callers.
-            $page      = $result['results'][0];
-            $pageArray = $page->jsonSerialize();
-            if (is_array($page) === true) {
-                $pageArray = $page;
+            $page = $result['results'][0];
+            // Guard the array-shape first: the SOLR backend returns arrays (no jsonSerialize()),
+            // only call jsonSerialize() on entity objects (#736).
+            $pageArray = $page;
+            if (is_array($page) === false) {
+                $pageArray = $page->jsonSerialize();
             }
 
             $response = new JSONResponse($page);

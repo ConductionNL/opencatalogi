@@ -287,9 +287,11 @@ class MenusController extends Controller
         $menu = $result['results'][0];
 
         // Enforce published predicate for anonymous callers on single-item lookup.
-        $menuArray = $menu->jsonSerialize();
-        if (is_array($menu) === true) {
-            $menuArray = $menu;
+        // Guard the array-shape first: the SOLR backend returns arrays (no jsonSerialize()),
+        // only call jsonSerialize() on entity objects (#736).
+        $menuArray = $menu;
+        if (is_array($menu) === false) {
+            $menuArray = $menu->jsonSerialize();
         }
 
         if ($this->queryService->isAnonymous() === true

@@ -319,9 +319,11 @@ class GlossaryController extends Controller
         $glossaryTerm = $result['results'][0];
 
         // Enforce published predicate for anonymous callers on single-item lookup.
-        $termArray = $glossaryTerm->jsonSerialize();
-        if (is_array($glossaryTerm) === true) {
-            $termArray = $glossaryTerm;
+        // Guard the array-shape first: the SOLR backend returns arrays (no jsonSerialize()),
+        // only call jsonSerialize() on entity objects (#736).
+        $termArray = $glossaryTerm;
+        if (is_array($glossaryTerm) === false) {
+            $termArray = $glossaryTerm->jsonSerialize();
         }
 
         if ($this->queryService->isAnonymous() === true
