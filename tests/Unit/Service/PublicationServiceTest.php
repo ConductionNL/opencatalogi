@@ -59,30 +59,20 @@ class PublicationServiceTest extends TestCase
     /**
      * Set up the container to return the given mock when ObjectService is requested.
      *
-     * Also sets up a PublicationQueryService stub that:
-     * - passes through enforcePublishedForAnonymous (authenticated caller)
-     * - treats the caller as authenticated (isAnonymous = false)
-     * - confirms any UUID is in catalog scope (findObjectLocation returns a valid location)
-     *
-     * This mirrors the authenticated fast path and lets existing tests focus on the
-     * domain behaviour they were originally testing rather than the new security gates.
+     * Also sets up a PublicationQueryService stub that confirms any UUID is in catalog
+     * scope (findObjectLocation returns a valid location). Object visibility itself is
+     * enforced by OpenRegister RBAC, not by this service, so there is no published
+     * predicate to stub. This lets these tests focus on their domain behaviour.
      */
     private function mockObjectServiceAvailable(MockObject $objectService): void
     {
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
-        // The index/search/aggregate paths now also resolve PublicationQueryService
-        // from the container to enforce the published-for-anonymous predicate. Return
-        // the correct collaborator per requested id: the ObjectService for OpenRegister
-        // and a pass-through PublicationQueryService for its class id.
+        // The index/search/aggregate paths resolve PublicationQueryService from the
+        // container as a collaborator. Visibility is enforced by OpenRegister RBAC, not by
+        // an app-side predicate, so only the catalog-scope helper needs stubbing here.
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
-
-        // Treat the request as authenticated so the anonymous published-predicate guard
-        // and the catalog-scope gate (isObjectInCatalogScope) are bypassed in these tests.
-        $queryService->method('isAnonymous')->willReturn(false);
 
         // isObjectInCatalogScope() calls findObjectLocation() on the QueryService.
         // Return a valid location so the scope check passes for all UUIDs in these tests.
@@ -630,13 +620,10 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
-        // QueryService mock: treat caller as authenticated and confirm object is in scope
-        // so that the C-1/C-3 security gates pass without interfering with this test.
+        // QueryService mock: confirm the object is in catalog scope so the C-1/C-3 scope
+        // gate passes. Object visibility is enforced by OpenRegister RBAC, not here.
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
-        $queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
 
         // Provide a minimal catalog so getCatalogFilters() resolves a non-empty scope.
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
@@ -683,7 +670,6 @@ class PublicationServiceTest extends TestCase
             ->willReturn(['openregister']);
 
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
         $objectService->method('searchObjects')->willReturn([$catalog]);
@@ -721,7 +707,6 @@ class PublicationServiceTest extends TestCase
             ->willReturn(['openregister']);
 
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
         $objectService->method('searchObjects')->willReturn([$catalog]);
@@ -762,7 +747,6 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
         $objectService->method('searchObjects')->willReturn([$catalog]);
@@ -797,7 +781,6 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
         $objectService->method('searchObjects')->willReturn([$catalog]);
@@ -3429,7 +3412,6 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
         $objectService->method('searchObjects')->willReturn([$catalog]);
@@ -3476,7 +3458,6 @@ class PublicationServiceTest extends TestCase
             ->willReturn(['openregister']);
 
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('isAnonymous')->willReturn(false);
         $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
         $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
         $objectService->method('searchObjects')->willReturn([$catalog]);

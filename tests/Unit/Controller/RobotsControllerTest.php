@@ -6,7 +6,6 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\RobotsController;
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -29,7 +28,6 @@ class RobotsControllerTest extends TestCase
     private IAppManager|MockObject $appManager;
     private IURLGenerator|MockObject $urlGenerator;
     private IL10N|MockObject $l10n;
-    private PublicationQueryService|MockObject $queryService;
     private RobotsController $controller;
 
     protected function setUp(): void
@@ -40,7 +38,6 @@ class RobotsControllerTest extends TestCase
         $this->appManager      = $this->createMock(IAppManager::class);
         $this->urlGenerator    = $this->createMock(IURLGenerator::class);
         $this->l10n            = $this->createMock(IL10N::class);
-        $this->queryService    = $this->createMock(PublicationQueryService::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text) => $text);
@@ -52,8 +49,7 @@ class RobotsControllerTest extends TestCase
             $this->container,
             $this->appManager,
             $this->urlGenerator,
-            $this->l10n,
-            $this->queryService
+            $this->l10n
         );
     }
 

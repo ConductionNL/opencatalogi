@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ThemesController;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -26,7 +25,6 @@ class ThemesControllerTest extends TestCase
     private IAppConfig|MockObject $config;
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
-    private PublicationQueryService|MockObject $queryService;
     private ThemesController $controller;
 
     protected function setUp(): void
@@ -35,15 +33,13 @@ class ThemesControllerTest extends TestCase
         $this->config       = $this->createMock(IAppConfig::class);
         $this->container    = $this->createMock(ContainerInterface::class);
         $this->appManager   = $this->createMock(IAppManager::class);
-        $this->queryService = $this->createMock(PublicationQueryService::class);
 
         $this->controller = new ThemesController(
             'opencatalogi',
             $this->request,
             $this->config,
             $this->container,
-            $this->appManager,
-            $this->queryService
+            $this->appManager
         );
     }
 

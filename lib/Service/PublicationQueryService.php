@@ -22,10 +22,8 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
-use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -72,158 +70,15 @@ class PublicationQueryService
     /**
      * Constructor.
      *
-     * @param IDBConnection      $db          Database connection
-     * @param ContainerInterface $container   DI container
-     * @param IUserSession       $userSession Current user session (for anon detection)
+     * @param IDBConnection      $db        Database connection
+     * @param ContainerInterface $container DI container
      */
     public function __construct(
         private readonly IDBConnection $db,
         private readonly ContainerInterface $container,
-        private readonly IUserSession $userSession,
     ) {
 
     }//end __construct()
-
-    /**
-     * Determine whether the current request is from an anonymous (not logged-in) caller.
-     *
-     * Derived strictly server-side from the user session — never from a client parameter.
-     *
-     * @return bool True when no user is logged in.
-     *
-     * @spec exclude Server-side auth-state probe used to gate the anonymous published predicate;
-     *       wraps IUserSession::isLoggedIn(), no domain behavior.
-     */
-    public function isAnonymous(): bool
-    {
-        return $this->userSession->isLoggedIn() === false;
-
-    }//end isAnonymous()
-
-    /**
-     * Determine whether a single object is publicly visible right now.
-     *
-     * An object is public only when its @self.published timestamp is set and not in
-     * the future, AND it is not depublished (depublished unset/null, or in the future).
-     *
-     * @param array|object $object The object (array with '@self', or an object exposing jsonSerialize()).
-     *
-     * @return bool True when the object may be served to an anonymous caller.
-     */
-    public function isObjectPublic(array | object $object): bool
-    {
-        if (is_array($object) === false) {
-            if (method_exists($object, 'jsonSerialize') === false) {
-                return false;
-            }
-
-            $object = $object->jsonSerialize();
-        }
-
-        $self = ($object['@self'] ?? []);
-        if (is_array($self) === false) {
-            return false;
-        }
-
-        $now         = new DateTime();
-        $published   = ($self['published'] ?? null);
-        $depublished = ($self['depublished'] ?? null);
-
-        // Must have a published timestamp that is not in the future.
-        if (empty($published) === true) {
-            return false;
-        }
-
-        try {
-            if (new DateTime((string) $published) > $now) {
-                return false;
-            }
-        } catch (\Exception $e) {
-            return false;
-        }
-
-        // If depublished is set, it must be in the future to still be public.
-        if ($this->isDepublished($depublished, $now) === true) {
-            return false;
-        }
-
-        return true;
-
-    }//end isObjectPublic()
-
-    /**
-     * Determine whether a depublished timestamp indicates the object is no longer public.
-     *
-     * Returns true (i.e. the object IS depublished) when $depublished is set and the
-     * depublication date is not in the future. Returns false when unset or in the future.
-     * Extracted from isObjectPublic() to reduce cyclomatic complexity.
-     *
-     * @param mixed    $depublished The depublished value from @self (string, null, or empty).
-     * @param DateTime $now         The current date/time for comparison.
-     *
-     * @return bool True when the object has been depublished (i.e. should be hidden).
-     */
-    private function isDepublished($depublished, DateTime $now): bool
-    {
-        if (empty($depublished) === true) {
-            return false;
-        }
-
-        try {
-            return new DateTime((string) $depublished) <= $now;
-        } catch (\Exception $e) {
-            return false;
-        }
-
-    }//end isDepublished()
-
-    /**
-     * Filter a result set down to publicly-visible objects for anonymous callers.
-     *
-     * For authenticated callers the list is returned unchanged (OR RBAC already scoped it).
-     * For anonymous callers only published/non-depublished objects survive. The result
-     * array's 'total'/'count' bookkeeping is adjusted so it cannot over-report.
-     *
-     * @param array $result The paginated result array (expects a 'results' list).
-     *
-     * @return array The result array with anonymous-visibility enforced.
-     *
-     * @spec exclude Server-side published-predicate enforcement for anonymous public reads
-     *       (mirrors openregister #1951 "logged-in unless published"); security plumbing.
-     */
-    public function enforcePublishedForAnonymous(array $result): array
-    {
-        if ($this->isAnonymous() === false) {
-            return $result;
-        }
-
-        if (isset($result['results']) === false || is_array($result['results']) === false) {
-            return $result;
-        }
-
-        $removed  = 0;
-        $filtered = [];
-        foreach ($result['results'] as $item) {
-            if ($this->isObjectPublic($item) === false) {
-                $removed++;
-                continue;
-            }
-
-            $filtered[] = $item;
-        }
-
-        $result['results'] = array_values($filtered);
-
-        // Adjust pagination bookkeeping so totals never over-report visible objects.
-        foreach (['total', 'count'] as $key) {
-            if (isset($result[$key]) === true && is_int($result[$key]) === true) {
-                $result[$key] = max(0, ($result[$key] - $removed));
-            }
-        }
-
-        return $result;
-
-    }//end enforcePublishedForAnonymous()
 
     /**
      * Find the register and schema IDs for an object UUID within a constrained scope.

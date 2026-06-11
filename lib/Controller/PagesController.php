@@ -24,7 +24,6 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -77,16 +76,15 @@ class PagesController extends Controller
     /**
      * PagesController constructor.
      *
-     * @param string                  $appName            The name of the app
-     * @param IRequest                $request            The request object
-     * @param IAppConfig              $config             App configuration interface
-     * @param ContainerInterface      $container          Server container for dependency injection
-     * @param IAppManager             $appManager         App manager for checking installed apps
-     * @param IL10N                   $l10n               Localization service
-     * @param PublicationQueryService $queryService       Publication query/visibility helper
-     * @param string                  $corsMethods        Allowed CORS methods
-     * @param string                  $corsAllowedHeaders Allowed CORS headers
-     * @param integer                 $corsMaxAge         CORS max age
+     * @param string             $appName            The name of the app
+     * @param IRequest           $request            The request object
+     * @param IAppConfig         $config             App configuration interface
+     * @param ContainerInterface $container          Server container for dependency injection
+     * @param IAppManager        $appManager         App manager for checking installed apps
+     * @param IL10N              $l10n               Localization service
+     * @param string             $corsMethods        Allowed CORS methods
+     * @param string             $corsAllowedHeaders Allowed CORS headers
+     * @param integer            $corsMaxAge         CORS max age
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -97,7 +95,6 @@ class PagesController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly IL10N $l10n,
-        private readonly PublicationQueryService $queryService,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
         int $corsMaxAge=1728000
@@ -240,9 +237,7 @@ class PagesController extends Controller
         // Rbac=true enforces schema authorization; multi=false for public page access.
         $result = $this->getObjectService()->searchObjectsPaginated($searchQuery, _rbac: true, _multitenancy: false);
 
-        // Enforce server-side published predicate for anonymous callers.
-        $result = $this->queryService->enforcePublishedForAnonymous($result);
-
+        // Visibility governed by RBAC on the search above (_rbac: true).
         // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
         $response = new JSONResponse($result);
 
@@ -294,21 +289,10 @@ class PagesController extends Controller
 
         $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
         if (empty($result['results']) === false) {
-            // Return the first matching page; enforce published predicate for anonymous callers.
-            $page = $result['results'][0];
-            // Guard the array-shape first: the SOLR backend returns arrays (no jsonSerialize()),
-            // only call jsonSerialize() on entity objects (#736).
-            $pageArray = $page;
-            if (is_array($page) === false) {
-                $pageArray = $page->jsonSerialize();
-            }
-
+            // Visibility governed by RBAC on the search above (_rbac: true); a page the
+            // caller may not read resolves to an empty result and keeps the 404 above.
+            $page     = $result['results'][0];
             $response = new JSONResponse($page);
-            if ($this->queryService->isAnonymous() === true
-                && $this->queryService->isObjectPublic($pageArray) === false
-            ) {
-                $response = new JSONResponse(['error' => $this->l10n->t('Page not found')], 404);
-            }
         }
 
         // Add CORS headers for public API access (#735 — never reflect arbitrary Origin).

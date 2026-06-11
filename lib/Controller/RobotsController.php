@@ -24,7 +24,6 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\AppFramework\Controller;
@@ -56,14 +55,13 @@ class RobotsController extends Controller
     /**
      * RobotsController constructor.
      *
-     * @param string                  $appName         The name of the app.
-     * @param IRequest                $request         The request object.
-     * @param SettingsService         $settingsService The settings service.
-     * @param ContainerInterface      $container       The container for DI.
-     * @param IAppManager             $appManager      The app manager.
-     * @param IURLGenerator           $urlGenerator    The URL generator.
-     * @param IL10N                   $l10n            The localization service.
-     * @param PublicationQueryService $queryService    Publication query/visibility helper.
+     * @param string             $appName         The name of the app.
+     * @param IRequest           $request         The request object.
+     * @param SettingsService    $settingsService The settings service.
+     * @param ContainerInterface $container       The container for DI.
+     * @param IAppManager        $appManager      The app manager.
+     * @param IURLGenerator      $urlGenerator    The URL generator.
+     * @param IL10N              $l10n            The localization service.
      */
     public function __construct(
         $appName,
@@ -73,7 +71,6 @@ class RobotsController extends Controller
         private readonly IAppManager $appManager,
         private readonly IURLGenerator $urlGenerator,
         private readonly IL10N $l10n,
-        private readonly PublicationQueryService $queryService,
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -114,9 +111,9 @@ class RobotsController extends Controller
             deleted: false
         );
 
-        // Enforce published predicate: robots.txt should only reference public catalogs.
-        $catalogResult = $this->queryService->enforcePublishedForAnonymous($catalogResult);
-        $catalogs      = ($catalogResult['results'] ?? []);
+        // Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
+        // references only catalogs the public group may read.
+        $catalogs = ($catalogResult['results'] ?? []);
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 

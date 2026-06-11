@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\MenusController;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -28,7 +27,6 @@ class MenusControllerTest extends TestCase
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
     private IL10N|MockObject $l10n;
-    private PublicationQueryService|MockObject $queryService;
     private MenusController $controller;
 
     protected function setUp(): void
@@ -38,7 +36,6 @@ class MenusControllerTest extends TestCase
         $this->container    = $this->createMock(ContainerInterface::class);
         $this->appManager   = $this->createMock(IAppManager::class);
         $this->l10n         = $this->createMock(IL10N::class);
-        $this->queryService = $this->createMock(PublicationQueryService::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text) => $text);
@@ -49,8 +46,7 @@ class MenusControllerTest extends TestCase
             $this->config,
             $this->container,
             $this->appManager,
-            $this->l10n,
-            $this->queryService
+            $this->l10n
         );
     }
 

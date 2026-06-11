@@ -29,7 +29,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCP\App\IAppManager;
 use OCA\OpenCatalogi\Http\XMLResponse;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -71,18 +70,16 @@ class SitemapService
     /**
      * Constructor for SitemapService.
      *
-     * @param ContainerInterface      $container       Server container for dependency injection
-     * @param IAppManager             $appManager      App manager for checking installed apps
-     * @param SettingsService         $settingsService The settings service
-     * @param IURLGenerator           $urlGenerator    The Nextcloud URL generator
-     * @param PublicationQueryService $queryService    Publication query/visibility helper
+     * @param ContainerInterface $container       Server container for dependency injection
+     * @param IAppManager        $appManager      App manager for checking installed apps
+     * @param SettingsService    $settingsService The settings service
+     * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly IURLGenerator $urlGenerator,
-        private readonly PublicationQueryService $queryService,
     ) {
 
     }//end __construct()
@@ -167,9 +164,8 @@ class SitemapService
             deleted: false
         );
 
-        // Enforce published predicate: sitemaps expose only public publications.
-        $firstPage = $this->queryService->enforcePublishedForAnonymous($firstPage);
-
+        // Visibility is governed by RBAC above (_rbac: true) — sitemaps expose only the
+        // published objects the public group may read.
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
         if (empty($firstPage['results']) === true) {
@@ -210,8 +206,7 @@ class SitemapService
                 deleted: false
             );
 
-            // Enforce published predicate for each paginated batch.
-            $batch   = $this->queryService->enforcePublishedForAnonymous($batch);
+            // Visibility governed by RBAC on the paginated search above (_rbac: true).
             $next    = $batch['next'] ?? null;
             $results = ($batch['results'] ?? []);
 
@@ -283,9 +278,8 @@ class SitemapService
             deleted: false
         );
 
-        // Enforce published predicate: sitemaps expose only public publications.
-        $publicationResult = $this->queryService->enforcePublishedForAnonymous($publicationResult);
-        $publications      = ($publicationResult['results'] ?? []);
+        // Visibility governed by RBAC on the search above (_rbac: true).
+        $publications = ($publicationResult['results'] ?? []);
 
         $fileService = $this->getFileService();
 
@@ -428,9 +422,8 @@ class SitemapService
             deleted: false
         );
 
-        // Enforce published predicate: sitemap catalog must be public.
-        $catalogResult = $this->queryService->enforcePublishedForAnonymous($catalogResult);
-        $catalog       = ($catalogResult['results'][0] ?? []);
+        // Visibility governed by RBAC on the search above (_rbac: true).
+        $catalog = ($catalogResult['results'][0] ?? []);
 
         if (empty($catalog) === true) {
             return new XMLResponse('Invalid Woo catalog', 400);

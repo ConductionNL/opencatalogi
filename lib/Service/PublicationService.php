@@ -494,11 +494,8 @@ class PublicationService
             )
         );
 
-        // Enforce server-side published predicate for anonymous callers. Authenticated
-        // callers keep RBAC-scoped behavior; anonymous callers only see published
-        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
-        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
-
+        // Visibility is governed entirely by OpenRegister RBAC (the schemas' conditional
+        // public-read rules with the $now variable), applied above via _rbac: true.
         // Filter unwanted properties from results.
         $result['results'] = $this->filterUnwantedProperties($result['results']);
 
@@ -773,19 +770,9 @@ class PublicationService
         try {
             // Render the object with requested extensions and filters.
             // Use positional parameters for compatibility with different ObjectService versions.
+            // find() enforces OpenRegister RBAC: anonymous callers only receive objects the
+            // public group may read (e.g. published publications via the $now conditional rule).
             $object = $this->getObjectService()->find($id, $extend);
-
-            // Enforce published predicate: anonymous callers must not see unpublished objects.
-            $objectArray = $object->jsonSerialize();
-            if (is_array($object) === true) {
-                $objectArray = $object;
-            }
-
-            if ($this->getQueryService()->isAnonymous() === true
-                && $this->getQueryService()->isObjectPublic($objectArray) === false
-            ) {
-                return new JSONResponse(['error' => 'Not Found'], 404);
-            }
 
             return new JSONResponse($object);
         } catch (DoesNotExistException $exception) {
@@ -861,17 +848,10 @@ class PublicationService
         $objectService = $this->getObjectService();
         $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
-        // Validate that the object exists (throws if not found) and enforce
-        // published predicate for anonymous callers.
-        $object      = $objectService->find(id: $id, _extend: []);
-        $objectArray = $object->jsonSerialize();
-        if (is_array($object) === true) {
-            $objectArray = $object;
-        }
-
-        if ($this->getQueryService()->isAnonymous() === true
-            && $this->getQueryService()->isObjectPublic($objectArray) === false
-        ) {
+        // Validate existence and enforce RBAC: find() denies objects the caller may not read
+        // (anonymous callers are limited to public-group reads).
+        $object = $objectService->find(id: $id, _extend: []);
+        if ($object === null) {
             return new JSONResponse(['error' => 'Not Found'], 404);
         }
 
@@ -932,17 +912,10 @@ class PublicationService
             $objectService = $this->getObjectService();
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
-            // Validate that the object exists and enforce published predicate for
-            // anonymous callers before serving any file content.
-            $object      = $objectService->find(id: $id, _extend: []);
-            $objectArray = $object->jsonSerialize();
-            if (is_array($object) === true) {
-                $objectArray = $object;
-            }
-
-            if ($this->getQueryService()->isAnonymous() === true
-                && $this->getQueryService()->isObjectPublic($objectArray) === false
-            ) {
+            // Validate existence and enforce RBAC before serving any file content: find()
+            // denies objects the caller may not read (anonymous → public-group reads only).
+            $object = $objectService->find(id: $id, _extend: []);
+            if ($object === null) {
                 return new JSONResponse(['error' => 'Not Found'], 404);
             }
 
@@ -1081,25 +1054,12 @@ class PublicationService
             // Set register/schema context so the object can be found in magic tables.
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
-            // Enforce published predicate on the root object for anonymous callers (C-3 /
-            // wave-7). Without this guard an anonymous caller can probe the relation graph
-            // of any object — including unpublished ones — simply by knowing its UUID.
-            // Mirror the guard that show() (line 803) and attachments() (line 842) use.
+            // The find() call enforces OpenRegister RBAC: an anonymous caller can only
+            // traverse the relation graph of objects the public group may read (C-3 / wave-7).
             $rootObject = $objectService->find(id: $id, _extend: []);
 
-            // Object not found — return 404 before any relation traversal.
+            // Object not found or not readable by the caller — return 404 before traversal.
             if ($rootObject === null) {
-                return new JSONResponse(['error' => 'Not Found'], 404);
-            }
-
-            $rootObjectArray = $rootObject->jsonSerialize();
-            if (is_array($rootObject) === true) {
-                $rootObjectArray = $rootObject;
-            }
-
-            if ($this->getQueryService()->isAnonymous() === true
-                && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
-            ) {
                 return new JSONResponse(['error' => 'Not Found'], 404);
             }
 
@@ -1166,25 +1126,12 @@ class PublicationService
             // Set register/schema context so the object can be found in magic tables.
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
-            // Enforce published predicate on the root object for anonymous callers (C-3 /
-            // wave-7). Without this guard an anonymous caller can probe the relation graph
-            // of any object — including unpublished ones — simply by knowing its UUID.
-            // Mirror the guard that show() (line 803) and attachments() (line 842) use.
+            // The find() call enforces OpenRegister RBAC: an anonymous caller can only
+            // traverse the relation graph of objects the public group may read (C-3 / wave-7).
             $rootObject = $objectService->find(id: $id, _extend: []);
 
-            // Object not found — return 404 before any relation traversal.
+            // Object not found or not readable by the caller — return 404 before traversal.
             if ($rootObject === null) {
-                return new JSONResponse(['error' => 'Not Found'], 404);
-            }
-
-            $rootObjectArray = $rootObject->jsonSerialize();
-            if (is_array($rootObject) === true) {
-                $rootObjectArray = $rootObject;
-            }
-
-            if ($this->getQueryService()->isAnonymous() === true
-                && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
-            ) {
                 return new JSONResponse(['error' => 'Not Found'], 404);
             }
 
@@ -2046,14 +1993,16 @@ class PublicationService
         // ObjectService timing.
         $objectServiceStart = microtime(true);
 
-        // Call ObjectService directly - bypass all middleware.
+        // Call ObjectService directly - bypass all middleware. RBAC governs visibility
+        // (_rbac: true); _multitenancy: false so cross-org public reads resolve, matching
+        // searchPublications(). No extra published filtering — the schemas' conditional
+        // public-read rules (with $now) already gate published-vs-draft for anonymous callers.
         $objectService = $this->getObjectService();
-        $result        = $objectService->searchObjectsPaginated($searchQuery);
-
-        // Enforce server-side published predicate for anonymous callers. The ultra-fast
-        // path bypasses searchPublications() which already applies this guard, so it must
-        // be applied here as well to close the gap (C1).
-        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
+        $result        = $objectService->searchObjectsPaginated(
+            query: $searchQuery,
+            _rbac: true,
+            _multitenancy: false
+        );
 
         $timings['objectservice'] = ((microtime(true) - $objectServiceStart) * 1000);
 

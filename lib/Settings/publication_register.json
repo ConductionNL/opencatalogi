@@ -130,6 +130,18 @@
             },
             "description": "List of themes associated with this publication",
             "facetable": true
+          },
+          "publicatiedatum": {
+            "type": "string",
+            "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this publication is live and publicly accessible",
+            "format": "date-time",
+            "facetable": true
+          },
+          "depublicatiedatum": {
+            "type": "string",
+            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access",
+            "format": "date-time",
+            "facetable": true
           }
         },
         "configuration": {
@@ -139,7 +151,15 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {
+              "group": "public",
+              "match": {
+                "publicatiedatum": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
           ]
         }
       },

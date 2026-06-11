@@ -140,21 +140,6 @@ class CatalogiService
     }//end getObjectService()
 
     /**
-     * Resolve the PublicationQueryService for shared visibility enforcement.
-     *
-     * @return PublicationQueryService The query/visibility helper service.
-     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the shared
-     *       PublicationQueryService from the container; pure framework plumbing.
-     */
-    private function getQueryService(): PublicationQueryService
-    {
-        return $this->container->get(PublicationQueryService::class);
-
-    }//end getQueryService()
-
-    /**
      * Attempts to retrieve the OpenRegister FileService from the container.
      *
      * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
@@ -563,14 +548,9 @@ class CatalogiService
                 return null;
             }
 
+            // RBAC already filtered unpublished catalogs for anonymous callers above
+            // (catalog schema grants public read only when published <= $now).
             $catalog = $catalogs[0]->jsonSerialize();
-
-            // Enforce published predicate: anonymous callers may not see unpublished catalogs.
-            if ($this->getQueryService()->isAnonymous() === true
-                && $this->getQueryService()->isObjectPublic($catalog) === false
-            ) {
-                return null;
-            }
 
             // Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
             $this->cache->set($cacheKey, $catalog, 3600);
@@ -792,13 +772,15 @@ class CatalogiService
             $query['_order'] = $config['order'];
         }
 
-        // Use searchObjectsPaginated which handles pagination internally.
-        $result = $objectService->searchObjectsPaginated($query);
-
-        // Enforce server-side published predicate for anonymous callers. Authenticated
-        // callers keep RBAC-scoped behavior; anonymous callers only see published
-        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
-        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
+        // Use searchObjectsPaginated which handles pagination internally. RBAC governs
+        // visibility (_rbac: true); _multitenancy: false so cross-org public reads resolve.
+        // The catalog schema's conditional public-read rule (published <= $now) already
+        // gates published-vs-draft for anonymous callers — no extra filtering needed.
+        $result = $objectService->searchObjectsPaginated(
+            query: $query,
+            _rbac: true,
+            _multitenancy: false
+        );
 
         // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(

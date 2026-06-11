@@ -2,7 +2,9 @@
 /**
  * Unit tests for PublicationQueryService.
  *
- * Covers: isAnonymous, isObjectPublic, enforcePublishedForAnonymous, findObjectLocation.
+ * Covers: findObjectLocation (the constrained object-location query). Visibility/published
+ * filtering now lives entirely in OpenRegister RBAC, so the former published-predicate
+ * helpers (isAnonymous / isObjectPublic / enforcePublishedForAnonymous) no longer exist.
  *
  * @category Test
  * @package  Unit\Service
@@ -30,7 +32,6 @@ use OCP\DB\QueryBuilder\IFunctionBuilder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\DB\QueryBuilder\IQueryFunction;
 use OCP\IDBConnection;
-use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -38,8 +39,8 @@ use Psr\Container\ContainerInterface;
 /**
  * Unit tests for PublicationQueryService.
  *
- * Focuses on security-relevant predicates: anonymous detection, object visibility,
- * published-predicate enforcement, and the constrained findObjectLocation query.
+ * Focuses on the constrained findObjectLocation query (#734). Object visibility is now
+ * enforced by OpenRegister RBAC, not by an app-side published predicate.
  */
 class PublicationQueryServiceTest extends TestCase
 {
@@ -59,13 +60,6 @@ class PublicationQueryServiceTest extends TestCase
     private ContainerInterface|MockObject $container;
 
     /**
-     * User session mock.
-     *
-     * @var IUserSession|MockObject
-     */
-    private IUserSession|MockObject $userSession;
-
-    /**
      * Service under test.
      *
      * @var PublicationQueryService
@@ -79,195 +73,15 @@ class PublicationQueryServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->db          = $this->createMock(IDBConnection::class);
-        $this->container   = $this->createMock(ContainerInterface::class);
-        $this->userSession = $this->createMock(IUserSession::class);
+        $this->db        = $this->createMock(IDBConnection::class);
+        $this->container = $this->createMock(ContainerInterface::class);
 
         $this->service = new PublicationQueryService(
             db: $this->db,
-            container: $this->container,
-            userSession: $this->userSession
+            container: $this->container
         );
 
     }//end setUp()
-
-    // -------------------------------------------------------------------------
-    // isAnonymous() tests
-    // -------------------------------------------------------------------------
-
-    /**
-     * IsAnonymous returns true when no user is logged in.
-     *
-     * @return void
-     */
-    public function testIsAnonymousReturnsTrueWhenNotLoggedIn(): void
-    {
-        $this->userSession->method('isLoggedIn')->willReturn(false);
-        $this->assertTrue($this->service->isAnonymous());
-
-    }//end testIsAnonymousReturnsTrueWhenNotLoggedIn()
-
-    /**
-     * IsAnonymous returns false when a user is logged in.
-     *
-     * @return void
-     */
-    public function testIsAnonymousReturnsFalseWhenLoggedIn(): void
-    {
-        $this->userSession->method('isLoggedIn')->willReturn(true);
-        $this->assertFalse($this->service->isAnonymous());
-
-    }//end testIsAnonymousReturnsFalseWhenLoggedIn()
-
-    // -------------------------------------------------------------------------
-    // isObjectPublic() tests
-    // -------------------------------------------------------------------------
-
-    /**
-     * IsObjectPublic returns false when @self.published is absent.
-     *
-     * @return void
-     */
-    public function testIsObjectPublicReturnsFalseWithNoPublished(): void
-    {
-        $object = ['@self' => []];
-        $this->assertFalse($this->service->isObjectPublic($object));
-
-    }//end testIsObjectPublicReturnsFalseWithNoPublished()
-
-    /**
-     * IsObjectPublic returns false when @self.published is in the future.
-     *
-     * @return void
-     */
-    public function testIsObjectPublicReturnsFalseWithFuturePublished(): void
-    {
-        $object = ['@self' => ['published' => '2099-01-01T00:00:00Z']];
-        $this->assertFalse($this->service->isObjectPublic($object));
-
-    }//end testIsObjectPublicReturnsFalseWithFuturePublished()
-
-    /**
-     * IsObjectPublic returns true when published in the past and no depublished set.
-     *
-     * @return void
-     */
-    public function testIsObjectPublicReturnsTrueWhenPublishedInPast(): void
-    {
-        $object = ['@self' => ['published' => '2000-01-01T00:00:00Z']];
-        $this->assertTrue($this->service->isObjectPublic($object));
-
-    }//end testIsObjectPublicReturnsTrueWhenPublishedInPast()
-
-    /**
-     * IsObjectPublic returns false when depublished is in the past (already depublished).
-     *
-     * @return void
-     */
-    public function testIsObjectPublicReturnsFalseWhenAlreadyDepublished(): void
-    {
-        $object = [
-            '@self' => [
-                'published'   => '2000-01-01T00:00:00Z',
-                'depublished' => '2001-01-01T00:00:00Z',
-            ],
-        ];
-        $this->assertFalse($this->service->isObjectPublic($object));
-
-    }//end testIsObjectPublicReturnsFalseWhenAlreadyDepublished()
-
-    /**
-     * IsObjectPublic returns true when depublished is in the future.
-     *
-     * @return void
-     */
-    public function testIsObjectPublicReturnsTrueWhenDepublishedInFuture(): void
-    {
-        $object = [
-            '@self' => [
-                'published'   => '2000-01-01T00:00:00Z',
-                'depublished' => '2099-01-01T00:00:00Z',
-            ],
-        ];
-        $this->assertTrue($this->service->isObjectPublic($object));
-
-    }//end testIsObjectPublicReturnsTrueWhenDepublishedInFuture()
-
-    // -------------------------------------------------------------------------
-    // enforcePublishedForAnonymous() tests
-    // -------------------------------------------------------------------------
-
-    /**
-     * EnforcePublishedForAnonymous is a no-op for authenticated callers.
-     *
-     * @return void
-     */
-    public function testEnforcePublishedForAnonymousSkipsWhenAuthenticated(): void
-    {
-        $this->userSession->method('isLoggedIn')->willReturn(true);
-
-        $result = [
-            'results' => [
-                ['@self' => []],
-            ],
-            'total'   => 1,
-        ];
-
-        $filtered = $this->service->enforcePublishedForAnonymous($result);
-        $this->assertCount(1, $filtered['results']);
-
-    }//end testEnforcePublishedForAnonymousSkipsWhenAuthenticated()
-
-    /**
-     * EnforcePublishedForAnonymous removes unpublished items for anonymous callers.
-     *
-     * @return void
-     */
-    public function testEnforcePublishedForAnonymousFiltersUnpublishedItems(): void
-    {
-        $this->userSession->method('isLoggedIn')->willReturn(false);
-
-        $result = [
-            'results' => [
-                ['@self' => ['published' => '2000-01-01T00:00:00Z']],
-                ['@self' => []],
-                ['@self' => ['published' => '2099-01-01T00:00:00Z']],
-            ],
-            'total'   => 3,
-            'count'   => 3,
-        ];
-
-        $filtered = $this->service->enforcePublishedForAnonymous($result);
-        $this->assertCount(1, $filtered['results']);
-        $this->assertSame(1, $filtered['total']);
-
-    }//end testEnforcePublishedForAnonymousFiltersUnpublishedItems()
-
-    /**
-     * EnforcePublishedForAnonymous adjusts total downward by removed item count.
-     *
-     * @return void
-     */
-    public function testEnforcePublishedForAnonymousAdjustsTotalCount(): void
-    {
-        $this->userSession->method('isLoggedIn')->willReturn(false);
-
-        $result = [
-            'results' => [
-                ['@self' => ['published' => '2000-01-01T00:00:00Z']],
-                ['@self' => ['published' => '2000-06-01T00:00:00Z']],
-                ['@self' => []],
-            ],
-            'total'   => 10,
-            'count'   => 3,
-        ];
-
-        $filtered = $this->service->enforcePublishedForAnonymous($result);
-        $this->assertCount(2, $filtered['results']);
-        // Total reduced by 1 (one item removed).
-        $this->assertSame(9, $filtered['total']);
-
-    }//end testEnforcePublishedForAnonymousAdjustsTotalCount()
 
     // -------------------------------------------------------------------------
     // findObjectLocation() tests

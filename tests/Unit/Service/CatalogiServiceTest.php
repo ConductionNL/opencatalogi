@@ -1186,13 +1186,10 @@ class CatalogiServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
-        // index() now also resolves PublicationQueryService from the container to
-        // enforce the published-for-anonymous predicate. Return the correct type
-        // per requested service id: the ObjectService for OpenRegister's id, and a
-        // pass-through PublicationQueryService for its class id.
+        // index() resolves PublicationQueryService from the container as a collaborator.
+        // Object visibility is enforced by OpenRegister RBAC, not by this service, so no
+        // published-predicate stub is needed — the mock is returned for its class id below.
         $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-        $queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
 
         $this->container->method('get')
             ->willReturnCallback(

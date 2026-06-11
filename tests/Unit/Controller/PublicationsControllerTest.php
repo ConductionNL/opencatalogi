@@ -60,21 +60,15 @@ class PublicationsControllerTest extends TestCase
             ->willReturnCallback(fn(string $app, string $key, string $default = '') => $default);
 
         // Default query-service behaviour: the search query and result shaping are
-        // pass-throughs, schema/register resolution is empty, and the published
-        // predicate enforcement leaves results untouched. The published-enforcement
-        // collaborators (isAnonymous/isObjectPublic) default to the authenticated,
-        // permitted path so existing happy-path tests keep passing; tests that
-        // exercise the fail-closed anonymous behaviour override them explicitly.
+        // pass-throughs and schema/register resolution is empty. Object visibility is
+        // enforced by OpenRegister RBAC (not by the controller), so there is no
+        // published-predicate collaborator to stub here.
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $data) => $data);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
         $this->queryService->method('findObjectLocation')->willReturn(null);
-        $this->queryService->method('isAnonymous')->willReturn(false);
-        $this->queryService->method('isObjectPublic')->willReturn(true);
         // findObjectInCatalog defaults to "found" so the attachments/download happy
         // paths proceed; the not-found/exception tests rebuild the controller with a
         // query service that returns null (or whose collaborators throw).
@@ -107,15 +101,11 @@ class PublicationsControllerTest extends TestCase
     {
         $this->queryService = $this->createMock(PublicationQueryService::class);
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $data) => $data);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
         $this->queryService->method('findObjectLocation')->willReturn(null);
-        $this->queryService->method('isAnonymous')->willReturn(false);
-        $this->queryService->method('isObjectPublic')->willReturn(true);
         if ($throw !== null) {
             $this->queryService->method('findObjectInCatalog')->willThrowException($throw);
         } else {
@@ -755,14 +745,10 @@ class PublicationsControllerTest extends TestCase
         // tables; the controller then re-queries ObjectService with that location.
         $this->queryService = $this->createMock(PublicationQueryService::class);
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $data) => $data);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
-        $this->queryService->method('isAnonymous')->willReturn(false);
-        $this->queryService->method('isObjectPublic')->willReturn(true);
         $this->queryService->method('findObjectLocation')
             ->willReturn(['register' => 2, 'schema' => 3]);
         $this->controller = $this->newControllerWithQueryService();
@@ -834,12 +820,12 @@ class PublicationsControllerTest extends TestCase
     }
 
     /**
-     * Security (#737): an anonymous caller must not be able to retrieve an
-     * unpublished object via show(). Even when the object is found in the
-     * catalog, the published-for-anonymous predicate must fail closed and the
-     * controller must report it as not found (404) rather than disclosing it.
+     * Security (#737): an anonymous caller must not be able to retrieve an object that
+     * OpenRegister RBAC does not grant them. Visibility is enforced inside the _rbac: true
+     * searches, so a denied object (e.g. an unpublished publication) resolves to an empty
+     * result and the controller reports 404 — it never discloses the object.
      */
-    public function testShowDeniesAnonymousAccessToUnpublishedObject(): void
+    public function testShowDeniesAnonymousAccessToRbacDeniedObject(): void
     {
         $mockObjService = $this->mockObjectService();
 
@@ -850,24 +836,18 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObj = $this->createObjectEntityMock();
-
+        // RBAC denies the object to this (anonymous) caller, so the _rbac: true search
+        // returns nothing — the controller must treat it as not found.
         $mockObjService->method('searchObjects')
-            ->willReturn([$mockObj]);
+            ->willReturn([]);
 
-        // The object exists but the caller is anonymous and the object is not
-        // public — the controller must fail closed.
         $this->queryService = $this->createMock(PublicationQueryService::class);
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $result) => $result);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $data) => $data);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
         $this->queryService->method('findObjectLocation')->willReturn(null);
-        $this->queryService->method('isAnonymous')->willReturn(true);
-        $this->queryService->method('isObjectPublic')->willReturn(false);
         $this->controller = $this->newControllerWithQueryService();
 
         $this->request->method('getParams')->willReturn([]);
@@ -1489,14 +1469,10 @@ class PublicationsControllerTest extends TestCase
         // exercise the post-lookup membership check (not the upstream constraint).
         $this->queryService = $this->createMock(PublicationQueryService::class);
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $r) => $r);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $d) => $d);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
-        $this->queryService->method('isAnonymous')->willReturn(false);
-        $this->queryService->method('isObjectPublic')->willReturn(true);
         $this->queryService->method('findObjectLocation')
             ->willReturn(['register' => 20, 'schema' => 10]);
         $this->controller = $this->newControllerWithQueryService();
@@ -1532,14 +1508,10 @@ class PublicationsControllerTest extends TestCase
 
         $this->queryService = $this->createMock(PublicationQueryService::class);
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $r) => $r);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $d) => $d);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
-        $this->queryService->method('isAnonymous')->willReturn(false);
-        $this->queryService->method('isObjectPublic')->willReturn(true);
 
         // The controller MUST call findObjectLocation with the catalog's scope
         // (allowedRegisters + allowedSchemas), never with just $uuid alone.
@@ -1583,14 +1555,10 @@ class PublicationsControllerTest extends TestCase
 
         $this->queryService = $this->createMock(PublicationQueryService::class);
         $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
-        $this->queryService->method('enforcePublishedForAnonymous')
-            ->willReturnCallback(fn(array $r) => $r);
         $this->queryService->method('stripEmptyValues')
             ->willReturnCallback(fn(array $d) => $d);
         $this->queryService->method('resolveSchemaAndRegisterObjects')
             ->willReturn(['schemas' => [], 'registers' => []]);
-        $this->queryService->method('isAnonymous')->willReturn(false);
-        $this->queryService->method('isObjectPublic')->willReturn(true);
 
         // findObjectLocation MUST NOT be called for an unscoped catalog.
         $this->queryService->expects($this->never())
