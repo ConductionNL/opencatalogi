@@ -38,6 +38,7 @@ use RuntimeException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request as Psr7Request;
 use GuzzleHttp\RequestOptions;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -542,9 +543,14 @@ class DirectoryService
                 );
             }
 
+            // Construct a synthetic GET request representing the upstream call
+            // that produced the non-HTTP failure. PHPStan rejects null here
+            // because RequestException::__construct requires RequestInterface;
+            // we satisfy the contract while preserving the originating URL
+            // for downstream consumers (logs, retry queues).
             throw new RequestException(
                 message: $error,
-                request: null,
+                request: new Psr7Request('GET', $directoryUrl),
                 response: null,
                 previous: $e
             );
