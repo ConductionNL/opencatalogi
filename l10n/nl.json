@@ -1,5 +1,15 @@
 {
   "translations": {
+    "Action": "Actie",
+    "Add": "Toevoegen",
+    "Back": "Terug",
+    "Create": "Aanmaken",
+    "Details": "Details",
+    "Loading...": "Laden...",
+    "Saving...": "Opslaan...",
+    "Search": "Zoeken",
+    "Upload": "Uploaden",
+    "Yes": "Ja",
     "Actions": "Acties",
     "Active facets": "Actieve facetten",
     "Active filters": "Actieve filters",
