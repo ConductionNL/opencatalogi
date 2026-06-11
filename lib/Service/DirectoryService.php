@@ -64,6 +64,8 @@ use React\Promise\PromiseInterface;
  * @category Service
  * @package  OCA\OpenCatalogi\Service
  *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
+ *
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -1426,6 +1428,37 @@ class DirectoryService
     }//end isSystemBroadcast()
 
     /**
+     * Check whether a host is on the dev-only local-federation allowlist.
+     *
+     * The SSRF guard ({@see assertSafeOutboundUrl()}) and the local-URL listing filter
+     * ({@see isLocalUrl()}) reject localhost, .local and RFC1918 hosts so a production
+     * instance can never be coerced into contacting an internal address. For local
+     * development we sometimes need two instances on a private docker network to federate
+     * with each other. The `opencatalogi/local_federation_hosts` app-config key holds a
+     * comma-separated allowlist of hostnames (no port) that are exempted from those checks.
+     * It is empty by default, so production — and any instance that has not opted in —
+     * keeps the full guard.
+     *
+     * @param string $host The lower-cased hostname (without port) to test.
+     *
+     * @return boolean True when the host is explicitly allowlisted for local federation.
+     *
+     * @spec exclude Dev-only SSRF allowlist toggle; security plumbing, no new domain behavior.
+     */
+    private function isAllowlistedFederationHost(string $host): bool
+    {
+        $allowlist = $this->config->getValueString($this->appName, 'local_federation_hosts', '');
+        if ($allowlist === '') {
+            return false;
+        }
+
+        $allowedHosts = array_filter(array_map('trim', explode(',', strtolower($allowlist))));
+
+        return in_array($host, $allowedHosts, true);
+
+    }//end isAllowlistedFederationHost()
+
+    /**
      * Assert that an outbound URL is safe to fetch (SSRF guard).
      *
      * Restricts the scheme to http/https and rejects any URL whose host resolves
@@ -1458,6 +1491,13 @@ class DirectoryService
         }
 
         $host = strtolower($parsed['host']);
+
+        // Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
+        // two local instances on a private network can federate. Empty by default, so a
+        // production instance keeps the full SSRF protection below.
+        if ($this->isAllowlistedFederationHost($host) === true) {
+            return;
+        }
 
         // Reject obvious local hostnames outright.
         if ($host === 'localhost' || str_ends_with($host, '.local') === true
@@ -1687,6 +1727,12 @@ class DirectoryService
         }
 
         $host = strtolower($parsedUrl['host']);
+
+        // Dev-only: allowlisted hosts are treated as remote so their synced listings
+        // survive the local-URL filter. Empty allowlist by default keeps production behavior.
+        if ($this->isAllowlistedFederationHost($host) === true) {
+            return false;
+        }
 
         // Check for localhost, local IPs, and local domains.
         $localPatterns = [

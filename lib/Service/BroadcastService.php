@@ -30,6 +30,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -46,6 +47,8 @@ use InvalidArgumentException;
  * This class provides functionality to broadcast this OpenCatalogi directory to other instances.
  * It allows for broadcasting to a specific URL or to all known directories.
  * The service uses dynamic versioning in User-Agent headers for proper identification.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
@@ -98,12 +101,14 @@ class BroadcastService
      * @param ContainerInterface $container    Server container for dependency injection
      * @param IAppManager        $appManager   App manager for checking installed apps
      * @param LoggerInterface    $logger       Logger for recording broadcast activities
+     * @param IAppConfig         $config       App configuration (local-federation allowlist)
      */
     public function __construct(
         private readonly IURLGenerator $urlGenerator,
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
+        private readonly IAppConfig $config,
     ) {
         // Initialize HTTP client with default configuration.
         $this->client = new Client(
@@ -208,15 +213,38 @@ class BroadcastService
     private function getDirectoryUrls(): array
     {
         try {
-            // Retrieve all listing objects from OpenRegister.
-            $listings = $this->getObjectService()->getObjects('listing');
+            // Get listing configuration; without it there are no listings to read.
+            $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
+            $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+            if (empty($listingSchema) === true || empty($listingRegister) === true) {
+                return [];
+            }//end if
 
-            // Extract unique directory URLs from the listings.
-            $directoryUrls = array_unique(array_column($listings, 'directory'));
+            // Retrieve all listing objects from OpenRegister via the canonical search API.
+            $query = [
+                '@self' => [
+                    'register' => $listingRegister,
+                    'schema'   => $listingSchema,
+                ],
+            ];
 
-            // Filter out empty or invalid URLs.
+            // Directory data is public by design; RBAC is disabled for discovery (see ADR-002).
+            $listings = $this->getObjectService()->searchObjects($query, _rbac: false);
+
+            // Extract directory URLs from each listing's object data.
+            $directoryUrls = [];
+            foreach ($listings as $listing) {
+                $listingData = $listing->jsonSerialize();
+                $objectData  = ($listingData['object'] ?? $listingData);
+                $url         = ($objectData['directory'] ?? null);
+                if (empty($url) === false) {
+                    $directoryUrls[] = $url;
+                }//end if
+            }//end foreach
+
+            // Filter to unique, valid URLs.
             return array_filter(
-                $directoryUrls,
+                array_unique($directoryUrls),
                 function ($url) {
                     return empty($url) === false && filter_var($url, FILTER_VALIDATE_URL) !== false;
                 }
@@ -225,7 +253,7 @@ class BroadcastService
             // Log the error and re-throw for caller handling.
             $this->logger->error('Failed to retrieve directory URLs: '.$e->getMessage());
             throw $e;
-        }
+        }//end try
 
     }//end getDirectoryUrls()
 
@@ -386,6 +414,32 @@ class BroadcastService
     }//end broadcast()
 
     /**
+     * Check whether a host is on the dev-only local-federation allowlist.
+     *
+     * Mirrors {@see DirectoryService::isAllowlistedFederationHost()}. The
+     * `opencatalogi/local_federation_hosts` app-config key holds a comma-separated
+     * allowlist of hostnames (no port) that are exempted from the SSRF guard so two local
+     * instances on a private docker network can broadcast to each other. Empty by default,
+     * so production keeps the full protection.
+     *
+     * @param string $host The lower-cased hostname (without port) to test.
+     *
+     * @return boolean True when the host is explicitly allowlisted for local federation.
+     */
+    private function isAllowlistedFederationHost(string $host): bool
+    {
+        $allowlist = $this->config->getValueString($this->appName, 'local_federation_hosts', '');
+        if ($allowlist === '') {
+            return false;
+        }
+
+        $allowedHosts = array_filter(array_map('trim', explode(',', strtolower($allowlist))));
+
+        return in_array($host, $allowedHosts, true);
+
+    }//end isAllowlistedFederationHost()
+
+    /**
      * Assert that a URL is safe for outbound HTTP requests.
      *
      * Performs DNS resolution and rejects URLs that resolve to private/loopback
@@ -413,6 +467,13 @@ class BroadcastService
         }
 
         $host = strtolower($parsed['host']);
+
+        // Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
+        // two local instances on a private network can federate. Empty by default, so a
+        // production instance keeps the full SSRF protection below.
+        if ($this->isAllowlistedFederationHost($host) === true) {
+            return;
+        }
 
         // Reject obvious local hostnames outright.
         if ($host === 'localhost' || str_ends_with($host, '.local') === true
