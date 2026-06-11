@@ -29,6 +29,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -43,11 +44,13 @@ class PreferencesController extends Controller
      * @param IRequest     $request     The request.
      * @param IConfig      $config      The Nextcloud config (user values).
      * @param IUserSession $userSession The user session.
+     * @param IL10N        $l10n        The localization service.
      */
     public function __construct(
         IRequest $request,
         private readonly IConfig $config,
         private readonly IUserSession $userSession,
+        private readonly IL10N $l10n,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -69,12 +72,12 @@ class PreferencesController extends Controller
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
         $safeKey = $this->sanitizeKey(key: $key);
         if ($safeKey === '') {
-            return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
+            return new JSONResponse(data: ['message' => $this->l10n->t('Invalid key')], statusCode: Http::STATUS_BAD_REQUEST);
         }
 
         $value = $this->config->getUserValue(
@@ -110,12 +113,12 @@ class PreferencesController extends Controller
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
         $safeKey = $this->sanitizeKey(key: $key);
         if ($safeKey === '') {
-            return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
+            return new JSONResponse(data: ['message' => $this->l10n->t('Invalid key')], statusCode: Http::STATUS_BAD_REQUEST);
         }
 
         $stored = $value;
