@@ -9,6 +9,7 @@ use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -20,17 +21,24 @@ class SearchControllerTest extends TestCase
 
     private IRequest|MockObject $request;
     private PublicationService|MockObject $publicationService;
+    private IUserSession|MockObject $userSession;
     private SearchController $controller;
 
     protected function setUp(): void
     {
         $this->request            = $this->createMock(IRequest::class);
         $this->publicationService = $this->createMock(PublicationService::class);
+        $this->userSession        = $this->createMock(IUserSession::class);
+
+        // index()/show()/etc. guard on an authenticated user; default to logged-in.
+        $this->userSession->method('getUser')
+            ->willReturn($this->createMock(\OCP\IUser::class));
 
         $this->controller = new SearchController(
             'opencatalogi',
             $this->request,
-            $this->publicationService
+            $this->publicationService,
+            $this->userSession
         );
     }
 

@@ -54,6 +54,9 @@ import {
 import Close from 'vue-material-design-icons/Close.vue'
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'SelectedObjectsList',
 	components: {
@@ -139,6 +142,7 @@ export default {
 		 * Get objects to display (either from props or from store)
 		 * @return {Array<object>} Array of publication objects
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		selectedObjects() {
 			// If explicit objects are provided via props, prefer them.
 			if (this.objects && Array.isArray(this.objects)) {
@@ -172,6 +176,7 @@ export default {
 		 * Remove object from selected objects in the store
 		 * @param {string|number} objectId - The object ID to remove
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		removeObject(objectId) {
 			// Always remove from store - the store is the source of truth
 			// 1) Remove from selectedObjects (objects flow)
@@ -196,6 +201,7 @@ export default {
 		 * @param {object} obj - The object to get name for
 		 * @return {string} The display name
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectName(obj) {
 			return obj['@self']?.name
 				|| obj.name
@@ -209,6 +215,7 @@ export default {
 		 * @param {object} obj - The object to get schema for
 		 * @return {string} The schema name or fallback text
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectSchema(obj) {
 			const schema = obj['@self']?.schema || obj.schema
 
@@ -230,6 +237,7 @@ export default {
 		 * @param {object} obj - The object to get the subtitle for
 		 * @return {string} The subtitle text
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectSubtitle(obj) {
 			if (this.subtitleAttribute === 'schema') {
 				return this.getObjectSchema(obj)
@@ -244,6 +252,7 @@ export default {
 		 * @param {object} obj - The object to get error for
 		 * @return {string|null} The error message or null if no error
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getObjectError(obj) {
 			const objectId = obj.id || obj['@self']?.id
 			return objectStore.getObjectError(objectId)
@@ -263,6 +272,7 @@ export default {
 		 * @param {object} obj - The object to inspect.
 		 * @return {string|null} The reason or null.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		getDisabledReason(obj) {
 			if (!this.isItemDisabled(obj)) return null
 			if (typeof this.disabledReason !== 'function') return null

@@ -118,6 +118,11 @@ const handleCopy = async () => {
 	}
 }
 
+/**
+ * CopyMenuDialog — clone the active menu with a "(kopie)" title.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'CopyMenuDialog',
 	components: {
@@ -134,6 +139,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-5 */
 		closeDialog() {
 			this.navigationStore.setDialog(false)
 		},

@@ -94,6 +94,9 @@ const DETAIL_LAYOUT = [
 	{ id: 3, widgetId: 'raw-data', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 4 },
 ]
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'EntityDetailPage',
 	components: {
@@ -155,9 +158,11 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		entityId() {
 			return this.$route.params.id
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		metadataItems() {
 			if (!this.entity) return []
 			const self = this.entity['@self'] || {}
@@ -172,6 +177,7 @@ export default {
 			]
 			return base
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		widgetDefs() {
 			return [
 				{ id: 'metadata', title: t('opencatalogi', 'Metadata'), type: 'custom' },
@@ -183,6 +189,7 @@ export default {
 	watch: {
 		entityId: {
 			immediate: true,
+			/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 			handler() {
 				if (this.entityId) {
 					this.loadEntity()
@@ -191,6 +198,7 @@ export default {
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		async loadEntity() {
 			this.loading = true
 			this.error = null
@@ -208,13 +216,16 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		goBack() {
 			this.$router.push({ name: this.backRoute })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		editEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)
 			navigationStore.setModal(this.editModal)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-4 */
 		deleteEntity() {
 			objectStore.setActiveObject(this.entityType, this.entity)
 			navigationStore.setDialog('deleteObject', { objectType: this.entityType, dialogTitle: this.entityLabel })

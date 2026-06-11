@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\DashboardController;
-use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -48,29 +47,8 @@ class DashboardControllerTest extends TestCase
         $this->assertEquals('index', $response->getTemplateName());
     }
 
-    public function testIndexReturnsJsonResponse(): void
-    {
-        $response = $this->controller->index();
-
-        $this->assertInstanceOf(JSONResponse::class, $response);
-    }
-
-    public function testIndexReturnsEmptyResults(): void
-    {
-        $response = $this->controller->index();
-
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(200, $response->getStatus());
-    }
-
-    public function testIndexReturnsResultsKey(): void
-    {
-        $response = $this->controller->index();
-        $data = $response->getData();
-
-        $this->assertArrayHasKey('results', $data);
-        $this->assertSame([], $data['results']);
-    }
+    // NOTE: DashboardController::index() was removed from lib/; the controller now
+    // only exposes page(). The former testIndex* cases were retired accordingly.
 
     public function testPageHasContentSecurityPolicy(): void
     {

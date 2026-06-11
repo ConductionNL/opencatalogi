@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * SearchSideBar — facet filter controls for the search view.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
+ */
 import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'
@@ -333,6 +338,7 @@ watch([
 								:value="getSelectedFilterValue(fieldName)"
 								:options="getFacetOptions(facetResult)"
 								label="label"
+								:aria-label-combobox="t('opencatalogi', 'Filter results')"
 								:placeholder="t('opencatalogi', 'Select a filter...')"
 								:clearable="true"
 								@option:selected="(option) => handleFilterSelect(fieldName, option)"
@@ -352,6 +358,7 @@ watch([
 							:value="currentSortOption"
 							:options="sortOptions"
 							label="label"
+							:aria-label-combobox="t('opencatalogi', 'Sort by')"
 							:label-outside="true"
 							:placeholder="t('opencatalogi', 'Choose sorting')"
 							@update:value="handleSortChange" />

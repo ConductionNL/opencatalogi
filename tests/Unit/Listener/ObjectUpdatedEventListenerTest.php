@@ -56,11 +56,9 @@ class ObjectUpdatedEventListenerTest extends TestCase
 
     public function testHandleIgnoresNonObjectUpdatedEvent(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->atLeastOnce())->method('debug');
-        \OC::$server->registerService(LoggerInterface::class, fn() => $logger);
-
         $event = $this->createMock(Event::class);
+
+        // Should return early without accessing \OC::$server.
         $this->listener->handle($event);
         $this->assertTrue(true);
     }

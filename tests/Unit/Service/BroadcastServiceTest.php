@@ -22,6 +22,12 @@ use RuntimeException;
  *
  * Tests all public and private methods including broadcast logic,
  * retry mechanisms, service resolution, and URL handling.
+ *
+ * The testBroadcast* cases that perform a live broadcast are tagged `@group network`:
+ * broadcast() runs the SSRF outbound-URL guard (assertSafeOutboundUrl) which does real
+ * DNS resolution of the target host, so they require outbound DNS and are excluded by
+ * default (see phpunit.xml / phpunit-unit.xml). Run them with the network group in an
+ * environment that has DNS.
  */
 class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
 {
@@ -473,6 +479,9 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
     /**
      * Test broadcast with a specific valid URL.
      */
+    /**
+     * @group network
+     */
     public function testBroadcastWithSpecificUrl(): void
     {
         $this->urlGeneratorMock->method('linkToRoute')
@@ -599,6 +608,9 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
     /**
      * Test broadcast to all directories with mixed success.
      */
+    /**
+     * @group network
+     */
     public function testBroadcastAllDirectoriesMixed(): void
     {
         $this->urlGeneratorMock->method('linkToRoute')
@@ -645,6 +657,9 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
 
     /**
      * Test broadcast logs summary with correct counts.
+     */
+    /**
+     * @group network
      */
     public function testBroadcastLogsSummary(): void
     {

@@ -1,134 +1,180 @@
 ---
-status: reviewed
+status: needs-rewrite
+or_dep: zoeken-filteren
+audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
 
 # Search
 
+> **NEEDS-REWRITE notice:** This spec was rewritten as part of
+> `opencatalogi-adopt-or-abstractions` (Phase 7). The bespoke query
+> parsing, faceting, ranking, and filter-generation logic described in
+> the previous version of this spec is replaced by a citation of OR's
+> `zoeken-filteren` capability. opencatalogi's search surface is now a
+> thin orchestrator on top of `zoeken-filteren`. See the REMOVED section.
+>
+> Upstream dependency: OR `zoeken-filteren` capability.
+
 ## Purpose
 
-The search feature provides an internal search API endpoint that queries publications across all available catalogs. Unlike the public publication endpoints (scoped by catalog slug), the internal search endpoint is for authenticated Nextcloud users and administrative purposes. The `SearchController` delegates to `PublicationService` for all search operations. Note: There is no separate `SearchService` or `ElasticSearchService` class in the OpenCatalogi codebase -- all search and federation logic is handled by `PublicationService`.
+opencatalogi's search capability aggregates publications from local
+catalogs and federated remote OpenCatalogi instances into a single
+search interface. After Phase 7, the query parsing, faceting, and
+ranking are owned by OR's `zoeken-filteren` capability; opencatalogi
+is responsible only for:
 
-## Requirements
+1. Fanning out parallel `zoeken-filteren` calls across all configured
+   catalog contexts (local + federated).
+2. Merging the ranked result sets in a documented, stable order.
+3. Merging facet buckets across sources by `_id`.
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| SCH-001 | Provide an internal search endpoint at `/api/search` for authenticated users | Must | Implemented |
-| SCH-002 | Support full-text search via `_search` parameter | Must | Implemented |
-| SCH-003 | Support filtering by catalog ID | Should | Implemented |
-| SCH-004 | Support pagination (_limit, _page, _offset) | Must | Implemented |
-| SCH-005 | Support ordering (_order) | Must | Implemented |
-| SCH-006 | Integrate with ElasticSearch when configured | Should | Not Implemented (no ElasticSearchService in OpenCatalogi) |
-| SCH-007 | Support distributed search across remote directories via async HTTP | Should | Implemented (via PublicationService federation) |
-| SCH-008 | Merge facets/aggregations from multiple sources | Should | Implemented (via PublicationService federation) |
-| SCH-009 | Parse complex query strings with nested parameters | Should | Implemented (via ObjectService.buildSearchQuery) |
-| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | Must | Not Applicable (no SearchService exists -- search uses OpenRegister's ObjectService directly) |
-| SCH-011 | SearchController has show(), attachments(), download(), uses(), used() methods with no routes | Nice | Dead Code |
-| SCH-012 | Support filter syntax with special query parameters (_search, _order, _limit, _page, _offset, _queries) | Must | Implemented |
-| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters from request query parameters | Must | Not Applicable (no SearchService exists in OpenCatalogi) |
-| SCH-014 | Parse complex nested query strings with bracket notation (e.g., `_order[title]=asc`, `themes[or]=1,2,3`) | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
-| SCH-015 | Unset all underscore-prefixed special parameters before passing to database filter layer | Must | Implemented (via ObjectService.buildSearchQuery in OpenRegister) |
+opencatalogi MUST NOT re-implement query string parsing, bracket-notation
+parsing, facet generation, score computation, or pagination arithmetic.
+Those are owned upstream by OR `zoeken-filteren`.
 
-## Data Model
+## ADDED Requirements
 
-Search does not have its own schema. It queries across publication objects from all catalogs.
+### Requirement: single-catalog search delegates to OR `zoeken-filteren` (SCH-OR-001)
 
-Search response structure:
+When a user issues a search query within a single catalog, opencatalogi
+MUST delegate the full query — including `_search`, `_order`, `_limit`,
+`_page`, `_offset`, `_filters`, and any `_facetable` / `_aggregate` flags
+— to OR's `zoeken-filteren` API unmodified. opencatalogi MUST NOT alter
+the query, re-parse bracket notation, or inject custom filter parameters.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| results | array | Publication objects matching the search query |
-| facets | object | Aggregation/facet data for filtering UI |
-| count | integer | Number of results in current page |
-| total | integer | Total matching results |
-| limit | integer | Page size |
-| page | integer | Current page |
-| pages | integer | Total pages |
+> @e2e exclude Backend query-passthrough contract (full query delegated to OR `zoeken-filteren` unmodified; no local filter transformation or score adjustment) — a server-side delegation with no UI surface; verified by PHPUnit/Newman asserting the constructed call and unchanged response. The search UI itself is already real-UI covered under search::run-a-publication-search.
 
-## User Interface
+#### Scenario: single-catalog search passes through
 
-- **SearchIndex.vue** (`/search`) - Main search page with filters and results
-- **SearchResults.vue** - Search results display component
-- **SearchSideBar.vue** - Sidebar with facet filters
-- **FacetComponent.vue** - Individual facet filter component
+- **WHEN** a user issues a search query within a single catalog,
+- **THEN** opencatalogi constructs a single `zoeken-filteren` call for
+  that catalog context,
+- **AND** returns the OR response to the caller unchanged,
+- **AND** does NOT apply local filter transformation or score adjustment.
+
+### Requirement: federated search is a thin orchestrator (SCH-OR-002)
+
+When a user issues a federated search across N catalogs or remote
+directories, opencatalogi:
+
+1. Makes N parallel `zoeken-filteren` calls (one per catalog context
+   / remote endpoint) using async HTTP.
+2. Merges the result arrays in a stable, documented order (descending
+   `_score`; ties broken by source order declared in the active listings).
+3. Merges facet buckets by `_id`; counts are summed across sources.
+4. Returns a single paginated response whose `total` is the sum of all
+   source totals.
+
+opencatalogi MUST NOT alter individual ranking scores, re-rank within
+a source's result set, or apply cross-source deduplication beyond
+merging on `_id` equality.
+
+> @e2e exclude Backend federation-orchestration contract (N parallel `zoeken-filteren` calls; stable descending-_score merge; facet buckets summed by _id; total = sum of source totals; no re-ranking) — server-side merge math with no UI surface; verified by PHPUnit/Newman over the orchestrator with seeded multi-source responses. The federated search UI is already real-UI covered under search::run-a-publication-search and ::toggle-a-facet-from-the-ui.
+
+#### Scenario: cross-catalog search merges OR results
+
+- **WHEN** a user issues a federated search across N catalogs,
+- **THEN** opencatalogi makes N parallel `zoeken-filteren` calls,
+- **AND** merges the results in stable descending `_score` order,
+- **AND** does NOT alter individual ranking scores.
+
+#### Scenario: facet merging
+
+- **GIVEN** catalog A returns `{theme: [{_id: "milieu", count: 5}]}`
+  and catalog B returns `{theme: [{_id: "milieu", count: 3}, {_id: "energie", count: 2}]}`,
+- **WHEN** the federated results are merged,
+- **THEN** the response contains `{theme: [{_id: "milieu", count: 8}, {_id: "energie", count: 2}]}`.
+
+### Requirement: internal search endpoint delegates to `zoeken-filteren` (SCH-OR-003)
+
+The `SearchController::index` (`GET /api/search`) MUST delegate to OR's
+`zoeken-filteren` with the `publications` context. It MUST NOT call a
+bespoke `buildSearchQuery()` or `searchObjectsPaginated()` method in
+opencatalogi itself.
+
+> @e2e exclude Backend controller-delegation contract (`SearchController::index` delegates to `zoeken-filteren` with the publications context, no bespoke buildSearchQuery/searchObjectsPaginated) — a server endpoint with no UI surface; verified by PHPUnit/Newman over `GET /api/search`.
+
+#### Scenario: internal endpoint delegates
+
+- **GIVEN** an authenticated request to `GET /api/search`,
+- **WHEN** `SearchController::index` runs,
+- **THEN** it calls `zoeken-filteren` with the `publications` context
+  and the caller's query parameters,
+- **AND** returns the OR response.
+
+### Requirement: search frontend store calls the federation endpoint (SCH-OR-004)
+
+The frontend search store MUST query publications via the federation
+endpoint `GET /api/federation/publications`, building query parameters
+from the current search term, pagination, active filters, ordering, and
+the federation flags `_facetable=true`, `_aggregate=true`. The federation
+endpoint in turn calls `zoeken-filteren` per catalog context. The frontend
+store MUST NOT call OR's `zoeken-filteren` endpoint directly.
+
+> @e2e exclude Frontend network-target contract (search store queries `/api/federation/publications` with the term/pagination/filters/order + `_facetable`/`_aggregate` flags, never calling `zoeken-filteren` directly) — the assertion is the request target/params, not a distinct browsable surface; verified by vitest mocking the federation endpoint and asserting the URL + params. The search UI is already real-UI covered under search::run-a-publication-search.
+
+#### Scenario: frontend search runs through the federation endpoint
+
+- **GIVEN** a search term and optional filters,
+- **WHEN** the search store runs a search,
+- **THEN** it sends the request to `/api/federation/publications`,
+- **AND** does NOT call `zoeken-filteren` directly from the frontend.
+
+### Requirement: facet discovery and active-facet query building (SCH-OR-005)
+
+The search frontend MUST provide facet discovery (`discoverFacetableFields()`)
+and active-facet encoding (`buildFacetQuery()`). These translate the user's
+enabled facets into the `_facetable` / `_aggregate` parameters on the
+`zoeken-filteren` call — they do NOT compute facet buckets locally.
+
+#### Scenario: discover facetable fields
+
+- **GIVEN** the search view loads,
+- **WHEN** `discoverFacetableFields()` runs,
+- **THEN** the facetable-fields map is populated from the OR response's
+  `facetable` metadata.
+
+### Requirement: search UI components (SCH-OR-006)
+
+opencatalogi MUST provide a `SearchSideBar` (facet filter controls),
+a `SearchResults` component (result list), and a `FacetComponent`
+(individual facet toggle). These components render the OR `zoeken-filteren`
+response; they do NOT contain local filter computation.
+
+## REMOVED Requirements
+
+The following requirements described bespoke implementations that OR's
+`zoeken-filteren` capability now owns. They are retained for traceability;
+implementation MUST NOT re-introduce them.
+
+| ID | Title | Reason removed |
+|----|-------|----------------|
+| SCH-010 | Create MySQL/MongoDB-compatible search filters and sort parameters | REMOVED — re-implements OR's `zoeken-filteren` query layer; consume OR per ADR-022. OpenRegister's `ObjectService::buildSearchQuery()` is the authoritative implementation. |
+| SCH-013 | Generate dual MySQL and MongoDB filter/sort parameters | REMOVED — same rationale as SCH-010. |
+| SCH-014 | Parse complex nested query strings with bracket notation | REMOVED — bracket notation parsing (`_order[title]=asc`, `themes[or]=1,2,3`) is owned by OR `zoeken-filteren`; opencatalogi MUST NOT re-implement or duplicate it. |
+| SCH-015 | Unset underscore-prefixed special parameters before passing to database layer | REMOVED — owned by OR `zoeken-filteren`; opencatalogi passes the raw query to OR unmodified. |
+
+SCH-001 through SCH-009, SCH-011, SCH-012, SCH-016 through SCH-020 are superseded
+by SCH-OR-001 through SCH-OR-006. The observable behaviours they describe are
+preserved; the implementation path now routes through `zoeken-filteren`.
+
+## Breaking Changes
+
+| Breaking change | Old behaviour | New behaviour |
+|---|---|---|
+| Local `buildSearchQuery()` removed | opencatalogi applied bracket-notation parsing before calling OR | Raw query parameters forwarded to OR `zoeken-filteren`; OR parses them. Operators or clients relying on opencatalogi-side parsing must verify compatibility with the OR implementation. |
+| `ElasticSearch` integration removed | SCH-006 noted "not implemented"; any future bespoke ElasticSearch integration is forbidden | Search goes through OR `zoeken-filteren`; OR owns the storage backend choice. |
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/search` | Internal search across all catalogs (authenticated) |
+| GET | `/api/search` | Internal search — delegates to OR `zoeken-filteren` with the `publications` context (authenticated) |
 
-Note: The search endpoint does NOT have CORS preflight routes, as it is intended for internal/authenticated use only.
+## References
 
-## Dead Code: SearchController Extra Methods (Gap 10)
-
-The `SearchController` (`lib/Controller/SearchController.php`) contains the following methods that have **no corresponding routes** in `routes.php`:
-
-| Method | Signature | Delegates To | Status |
-|--------|-----------|-------------|--------|
-| `show(string $id)` | Get single publication | `PublicationService::show()` | **Dead Code** - No route registered |
-| `attachments(string $id)` | Get publication attachments | `PublicationService::attachments()` | **Dead Code** - No route registered |
-| `download(string $id)` | Download publication files | `PublicationService::download()` | **Dead Code** - No route registered |
-| `uses(string $id)` | Get outgoing relations | `PublicationService::uses()` | **Dead Code** - No route registered |
-| `used(string $id)` | Get incoming relations | `PublicationService::used()` | **Dead Code** - No route registered |
-
-Only `SearchController::index()` has a route (`/api/search`). The other methods exist in the controller code and delegate to `PublicationService` but are completely unreachable via HTTP because no routes are defined for them. These likely represent planned features (an authenticated search detail API) that were never completed, or were superseded by the public `PublicationsController` endpoints.
-
-## Filter Syntax and Special Query Parameters (Gap 20)
-
-**Important**: There is no `SearchService` class in the OpenCatalogi codebase. The filter parsing, query building, and search infrastructure described below is provided by **OpenRegister's ObjectService** (`ObjectService::buildSearchQuery()`), not by OpenCatalogi itself. The SearchController delegates directly to `PublicationService`, which in turn uses OpenRegister's ObjectService for all search operations.
-
-### Special Query Parameters
-
-| Parameter | Purpose | Example |
-|-----------|---------|---------|
-| `_search` | Full-text search term | `?_search=klimaat` |
-| `_order` | Sort order (field to direction map) | `?_order[title]=asc&_order[date]=desc` |
-| `_limit` | Results per page (default: 20) | `?_limit=50` |
-| `_page` | Current page number | `?_page=2` |
-| `_offset` | Skip N results | `?_offset=20` |
-| `_queries` | Fields to aggregate/facet | `?_queries[]=theme&_queries[]=organization` |
-| `_catalogi` | Filter by catalog IDs | `?_catalogi[]=cat1&_catalogi[]=cat2` |
-
-### Query Building (via OpenRegister ObjectService)
-
-`ObjectService::buildSearchQuery()` handles:
-- PHP dot-to-underscore conversion (`@self.register` to `@self_register`)
-- Nested property conversion (`person.address.street` to `person_address_street`)
-- System parameter extraction (removes `id`, `_route`, `rbac`, `multi`, `published`, `deleted`)
-- Bracket notation parsing (e.g., `_order[title]=asc`, `themes[or]=1,2,3`)
-
-The actual search, filter generation, and pagination is handled internally by OpenRegister's `searchObjectsPaginated()` method, which supports both magic table (SQL) and blob storage backends.
-
-## Scenarios
-
-### Scenario: Internal publication search
-- GIVEN catalogs with publications exist
-- WHEN an authenticated user sends GET `/api/search?_search=klimaat`
-- THEN PublicationService.index() is called
-- AND results from all catalogs are returned with pagination
-
-### Scenario: Search with federation
-- GIVEN federated directory listings exist with `default: true`
-- WHEN a search is performed via `/api/search` or `/api/federation/publications`
-- THEN PublicationService queries local catalogs for publications
-- AND remote directories are queried via async HTTP
-- AND all results are merged and sorted by relevance score
-
-### Scenario: Facet merging from multiple sources
-- GIVEN local search returns facets {theme: [{_id: "milieu", count: 5}]}
-- AND a remote source returns facets {theme: [{_id: "milieu", count: 3}, {_id: "energie", count: 2}]}
-- WHEN PublicationService merges aggregations
-- THEN the merged result is {theme: [{_id: "milieu", count: 8}, {_id: "energie", count: 2}]}
-
-### Scenario: Query building via ObjectService
-- GIVEN a query string `_order[title]=asc&themes[or]=1,2,3&_search=test`
-- WHEN ObjectService.buildSearchQuery() is called with the request params
-- THEN it returns a normalized query with proper bracket/dot notation handled
-- AND the query is passed to searchObjectsPaginated() for execution
-
-## Dependencies
-
-- **PublicationService** - `index()` for internal search, `getAggregatedPublications()` for federated search with facet merging and result sorting
-- **OpenRegister ObjectService** - `buildSearchQuery()` for query parsing, `searchObjectsPaginated()` for paginated search with facets
-- **DirectoryService** - Provides remote listing data for federated search (used by PublicationService)
-- **GuzzleHttp** - Async HTTP requests to remote directories (used by PublicationService)
+- OR `zoeken-filteren` capability (upstream dependency)
+- `.claude/audit-2026-05-03/02-spec-rewrite.md` (Stream 2 MISSING-OR-DEP rationale)
+- `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 7 implementation change)
+- `openspec/specs/federation/spec.md` (federated search orchestration)
+- ADR-022 — Apps consume OR abstractions

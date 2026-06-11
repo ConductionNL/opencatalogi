@@ -107,6 +107,9 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ */
 export default {
 	name: 'MassPublishObjects',
 	components: {
@@ -134,35 +137,44 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		mode() {
 			return this.selectedMode?.id || 'now'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		today() {
 			return new Date().toISOString().slice(0, 10)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		minPublishDate() {
 			const start = new Date()
 			start.setHours(0, 0, 0, 0)
 			return start
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		publishDateObj() {
 			if (!this.publishDate) return null
 			const [year, month, day] = this.publishDate.split('-').map(Number)
 			return new Date(year, month - 1, day)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		selectedObjects() {
 			return objectStore.selectedObjects || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		anyDepublished() {
 			return this.selectedObjects.some(obj => this.isDepublished(obj))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		allDepublished() {
 			return this.selectedObjects.length > 0
 				&& this.selectedObjects.every(obj => this.isDepublished(obj))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		alreadyPublishedCount() {
 			return this.selectedObjects.filter(obj => this.isAlreadyPublished(obj)).length
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		alreadyPublishedWarning() {
 			const count = this.alreadyPublishedCount
 			if (count === 1) {
@@ -170,9 +182,11 @@ export default {
 			}
 			return t('opencatalogi', '{count} of the selected publications are already published and will be skipped. Their publication dates will not be changed.', { count })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		unsupportedCount() {
 			return this.selectedObjects.filter(obj => !schemaHasPublicationDateFields(obj)).length
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		unsupportedWarning() {
 			const count = this.unsupportedCount
 			if (count === 1) {
@@ -180,6 +194,7 @@ export default {
 			}
 			return t('opencatalogi', '{count} of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help.', { count })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		modeOptions() {
 			const options = [
 				{ id: 'now', label: t('opencatalogi', 'Publish now') },
@@ -197,6 +212,7 @@ export default {
 			}
 			return options
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		dialogTitle() {
 			const count = this.selectedObjects.length
 			if (count === 1) {
@@ -204,6 +220,7 @@ export default {
 			}
 			return t('opencatalogi', 'Publish {count} publications', { count })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		infoText() {
 			if (this.mode === 'later') {
 				return t('opencatalogi', 'The publication date will be set to the chosen date. Any existing depublication date will be removed.')
@@ -213,6 +230,7 @@ export default {
 			}
 			return t('opencatalogi', 'Publications will be published with today\'s date. Any existing depublication date will be removed.')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		submitDisabled() {
 			if (this.loading) return true
 			if (this.selectedObjects.length === 0) return true
@@ -228,6 +246,7 @@ export default {
 			}
 			return false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		successMessage() {
 			const plural = this.originalSelectedCount > 1
 			if (this.mode === 'retroactive') {
@@ -244,6 +263,7 @@ export default {
 	watch: {
 		selectedObjects: {
 			deep: true,
+			/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 			handler() {
 				// If the user removed items so retroactive is no longer valid,
 				// reset the mode to the default.
@@ -255,6 +275,7 @@ export default {
 		},
 	},
 
+	/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 	mounted() {
 		this.originalSelectedCount = this.selectedObjects.length
 		this.selectedMode = this.modeOptions[0]
@@ -270,6 +291,7 @@ export default {
 		 * @param {unknown} value - The raw date value from the object
 		 * @return {string|null} The normalized YYYY-MM-DD string or null
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		normalizeDate(value) {
 			if (value == null || value === '') return null
 			return String(value).slice(0, 10)
@@ -284,6 +306,7 @@ export default {
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently published
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		isAlreadyPublished(obj) {
 			const pub = this.normalizeDate(obj?.publicatiedatum)
 			if (!pub) return false
@@ -301,6 +324,7 @@ export default {
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently depublished
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		isDepublished(obj) {
 			const depub = this.normalizeDate(obj?.depublicatiedatum)
 			if (!depub) return false
@@ -327,6 +351,7 @@ export default {
 		 *
 		 * @return {string} The reason.
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		unsupportedReason() {
 			return t('opencatalogi', 'This schema does not support publishing. Ask your IT manager for help.')
 		},
@@ -338,6 +363,7 @@ export default {
 		 * @param {Date} date - A day passed by the picker
 		 * @return {boolean} true if the date should be unselectable
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		isDateBeforeMin(date) {
 			if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false
 			const d = new Date(date)
@@ -345,6 +371,7 @@ export default {
 			return d.getTime() < this.minPublishDate.getTime()
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		handleDateInput(value) {
 			if (!value) {
 				this.publishDate = null
@@ -370,6 +397,7 @@ export default {
 			this.publishDate = `${year}-${month}-${day}`
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		closeDialog() {
 			if (this.closeModalTimeout) {
 				clearTimeout(this.closeModalTimeout)
@@ -378,12 +406,14 @@ export default {
 			navigationStore.setDialog(false)
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		async publishObjects() {
 			if (this.selectedMode?.disabled) return
 			this.loading = true

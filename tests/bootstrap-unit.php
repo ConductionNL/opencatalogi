@@ -1,49 +1,228 @@
 <?php
 /**
- * Bootstrap file for Unit Tests
- *
- * This bootstrap loads the full Nextcloud environment since tests run inside
- * the Nextcloud Docker container. This gives access to \OC::$server and the
- * full DI container, enabling tests to cover code that depends on Nextcloud services.
+ * Lightweight unit-test bootstrap — does NOT require a live Nextcloud installation.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
  *
- * @author    Conduction Development Team <dev@conductio.nl>
+ * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://www.OpenCatalogi.nl
  */
 
 declare(strict_types=1);
 
-// Define that we're running PHPUnit.
 define('PHPUNIT_RUN', 1);
 
-// Include Composer's autoloader.
-require_once __DIR__ . '/../vendor/autoload.php';
+// Skip the full Nextcloud bootstrap.
+define('OC_CONSOLE', 1);
 
-// Bootstrap Nextcloud — since we run inside the Docker container,
-// the full environment (including \OC::$server) is available.
-if (file_exists(__DIR__ . '/../../../lib/base.php')) {
-    require_once __DIR__ . '/../../../lib/base.php';
+require_once __DIR__.'/../vendor/autoload.php';
+
+// Register OCP (Nextcloud public API from vendor/nextcloud/ocp).
+spl_autoload_register(
+        static function (string $class): void {
+            $prefix = 'OCP\\';
+            if (str_starts_with($class, $prefix) === false) {
+                return;
+            }
+
+            $relative = substr($class, strlen($prefix));
+            $path     = __DIR__.'/../vendor/nextcloud/ocp/OCP/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+            if (file_exists($path) === true) {
+                include_once $path;
+            }
+        }
+        );
+
+// Resolve the OpenRegister app root. It is installed as a sibling Nextcloud app, but
+// the install location varies between environments (dev container, CI, custom_apps).
+// Probe a list of known roots plus the OPENREGISTER_PATH env override and use the first
+// directory that actually contains the app's lib/ tree.
+$openRegisterRoot = (static function (): ?string {
+    $candidates = [];
+    $envPath    = getenv('OPENREGISTER_PATH');
+    if (is_string($envPath) === true && $envPath !== '') {
+        $candidates[] = rtrim($envPath, '/');
+    }
+
+    $candidates = array_merge(
+        $candidates,
+        [
+            // Dev/local Nextcloud container: apps live under custom_apps.
+            '/var/www/html/custom_apps/openregister',
+            '/var/www/html/apps/openregister',
+            // Legacy hardcoded CI path.
+            '/srv/nextcloud/apps/openregister',
+            // Sibling checkout relative to this app (apps-extra/opencatalogi → apps-extra/openregister).
+            __DIR__.'/../../openregister',
+            __DIR__.'/../../../openregister',
+        ]
+    );
+
+    foreach ($candidates as $candidate) {
+        if (is_dir($candidate.'/lib') === true) {
+            return $candidate;
+        }
+    }
+
+    return null;
+})();
+
+// Register OCA\OpenRegister from the resolved app root.
+if ($openRegisterRoot !== null) {
+    spl_autoload_register(
+            static function (string $class) use ($openRegisterRoot): void {
+                $prefix = 'OCA\\OpenRegister\\';
+                if (str_starts_with($class, $prefix) === false) {
+                    return;
+                }
+
+                $relative = substr($class, strlen($prefix));
+                $path     = $openRegisterRoot.'/lib/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+                if (file_exists($path) === true) {
+                    include_once $path;
+                }
+            }
+            );
 }
 
-// Load OpenRegister autoloader so its classes are available for mocking.
-// Skip if Psr\Log\LoggerInterface is already loaded (avoids v1/v3 conflict
-// when OpenRegister's vendor ships an older psr/log than the NC server).
-$openRegisterAutoload = __DIR__ . '/../../openregister/vendor/autoload.php';
-if (file_exists($openRegisterAutoload)
-    && !interface_exists('Psr\Log\LoggerInterface')
-) {
-    require_once $openRegisterAutoload;
+// Register the Nextcloud server autoloader so OC\ / Doctrine / Symfony classes referenced
+// by OpenRegister (and transitively by OpenCatalogi services) are resolvable. The server
+// autoloader is optional: when running in a bare CI container without a full NC tree, the
+// individual OCP stubs above still cover the public API surface the unit tests need.
+foreach (['/var/www/html/lib/composer/autoload.php', '/var/www/html/3rdparty/autoload.php'] as $serverAutoload) {
+    if (file_exists($serverAutoload) === true) {
+        require_once $serverAutoload;
+    }
 }
 
-// Register Test\ namespace for NC test classes.
-$serverTestsLib = __DIR__ . '/../../../tests/lib/';
-if (is_dir($serverTestsLib)) {
-    $loader = new \Composer\Autoload\ClassLoader();
-    $loader->addPsr4('Test\\', $serverTestsLib);
-    $loader->register(true);
-}
+// Minimal OC stub used by CatalogCacheEventListener tests that call \OC::$server->get().
+if (class_exists('OC') === false) {
+    class OC
+    {
 
-error_log('[UNIT TEST BOOTSTRAP] Full Nextcloud bootstrap complete - \OC::$server available');
+        /**
+         * The DI container stub.
+         *
+         * @var \OC_Server_Stub
+         */
+        public static $server;
+    }//end class
+
+    class OC_Server_Stub
+    {
+
+        /**
+         * Registered service factories keyed by class name.
+         *
+         * @var array<string, callable>
+         */
+        private array $services = [];
+
+        /**
+         * Register a service factory.
+         *
+         * @param string   $name    The service class name.
+         * @param callable $factory Factory callable returning the service.
+         *
+         * @return void
+         */
+        public function registerService(string $name, callable $factory): void
+        {
+            $this->services[$name] = $factory;
+        }//end registerService()
+
+        /**
+         * Retrieve a registered service.
+         *
+         * @param string $name The service class name.
+         *
+         * @return mixed The service instance.
+         */
+        public function get(string $name): mixed
+        {
+            if (isset($this->services[$name]) === false) {
+                throw new \RuntimeException('Service '.$name.' not registered in OC_Server_Stub.');
+            }
+
+            return ($this->services[$name])();
+        }//end get()
+    }//end class
+
+    OC::$server = new OC_Server_Stub();
+}//end if
+
+// Pre-register the handful of framework services that the real OCP\AppFramework\Http
+// responses and OCP\Util pull from the server container at runtime. Without these the
+// stub container throws as soon as a Response builds its headers (Server::get(IRequest))
+// or a dashboard widget calls Util::addScript (Server::get(L10N\IFactory)). The stubs are
+// intentionally minimal — just enough surface for the unit tests to exercise our own code.
+if (OC::$server instanceof OC_Server_Stub) {
+    // IRequest — Response::getHeaders() calls ->getId().
+    OC::$server->registerService(
+        'OCP\\IRequest',
+        static fn() => new class {
+            public function getId(): string
+            {
+                return 'test-request-id';
+            }
+
+            public function __call(string $name, array $arguments)
+            {
+                return null;
+            }
+        }
+    );
+
+    // IUserSession — Response::getHeaders() resolves it to add the X-User-Id header.
+    OC::$server->registerService(
+        'OCP\\IUserSession',
+        static fn() => new class {
+            public function getUser(): ?object
+            {
+                return null;
+            }
+
+            public function __call(string $name, array $arguments)
+            {
+                return null;
+            }
+        }
+    );
+
+    // L10N\IFactory — Util::addScript/addStyle resolve the app version via this factory.
+    OC::$server->registerService(
+        'OCP\\L10N\\IFactory',
+        static fn() => new class {
+            public function get(string $app, ?string $lang = null, ?string $locale = null): object
+            {
+                return new class {
+                    public function t(string $text, array $parameters = []): string
+                    {
+                        return $text;
+                    }
+
+                    public function n(string $singular, string $plural, int $count, array $parameters = []): string
+                    {
+                        return $count === 1 ? $singular : $plural;
+                    }
+                };
+            }
+
+            public function __call(string $name, array $arguments)
+            {
+                return null;
+            }
+        }
+    );
+}//end if
+
+// IMcpToolProvider stub — loaded when the openregister runtime (PR #1466) is absent.
+// OpenCatalogiToolProvider implements this interface in production; the stub keeps the
+// class loadable in bare CI containers until the real interface ships.
+if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
+    require_once __DIR__.'/Stubs/Mcp/IMcpToolProvider.php';
+}

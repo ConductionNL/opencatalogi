@@ -107,6 +107,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 										:options="getMergeOptions(property)"
 										label="label"
 										track-by="value"
+										:input-label="t('opencatalogi', 'Merge value')"
 										:placeholder="t('opencatalogi', 'Choose value for {property}', { property })"
 										@input="onPropertySelectionChange(property, $event)" />
 									<NcTextField
@@ -411,6 +412,9 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-3
+ */
 export default {
 	name: 'MergeObject',
 	components: {
@@ -451,9 +455,11 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		sourceObject() {
 			return objectStore.objectItem
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		mergeableProperties() {
 			if (!this.sourceObject || !this.selectedTargetObject) {
 				return []
@@ -464,6 +470,7 @@ export default {
 
 			return [...new Set([...sourceProps, ...targetProps])]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		canMerge() {
 			return Object.keys(this.mergedData).length > 0
 		},
@@ -472,6 +479,7 @@ export default {
 		this.initializeMerge()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		initializeMerge() {
 			if (!this.sourceObject) {
 				this.closeModal()
@@ -480,6 +488,7 @@ export default {
 			this.loadSourceData()
 			this.searchObjects()
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async searchObjects() {
 			                    if (!catalogStore.catalogiItem || !catalogStore.schemaItem) {
 				return
@@ -499,20 +508,24 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		selectTargetObject(obj) {
 			this.selectedTargetObject = obj
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		nextStep() {
 			if (this.step === 1 && this.selectedTargetObject) {
 				this.step = 2
 				this.initializeMergeData()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		previousStep() {
 			if (this.step === 2) {
 				this.step = 1
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		initializeMergeData() {
 			// Initialize merge data with default values
 			this.mergedData = {}
@@ -555,6 +568,7 @@ export default {
 			// eslint-disable-next-line no-console
 			console.log('Initial propertySelections after setup:', this.propertySelections)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		getMergeOptions(property) {
 			const options = []
 
@@ -581,6 +595,7 @@ export default {
 			return options
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		onPropertySelectionChange(property, selectedOption) {
 			// eslint-disable-next-line no-console
 			console.log('Property selection change:', property, selectedOption)
@@ -597,6 +612,7 @@ export default {
 				}
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		displayValue(value, maxLength = 100) {
 			if (value === null || value === undefined) {
 				return 'N/A'
@@ -616,11 +632,13 @@ export default {
 
 			return displayText
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		truncateText(text, maxLength) {
 			if (!text) return ''
 			if (text.length <= maxLength) return text
 			return text.substring(0, maxLength) + '...'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async performMerge() {
 			if (!this.canMerge) {
 				return
@@ -682,6 +700,7 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		viewMergedObject() {
 			// Navigate to the merged object in view mode
 			if (this.selectedTargetObject) {
@@ -689,18 +708,22 @@ export default {
 				navigationStore.setModal('viewObject')
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		toggleFileList() {
 			this.showFileList = !this.showFileList
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		toggleRelationList() {
 			this.showRelationList = !this.showRelationList
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		formatFileSize(bytes) {
 			if (!bytes) return 'N/A'
 			const sizes = ['Bytes', 'KB', 'MB', 'GB']
 			const i = Math.floor(Math.log(bytes) / Math.log(1024))
 			return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		getFileType(filename) {
 			if (!filename) return 'Unknown'
 			const ext = filename.split('.').pop()?.toLowerCase()
@@ -722,6 +745,7 @@ export default {
 			}
 			return types[ext] || ext?.toUpperCase() || 'Unknown'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async loadSourceData() {
 			// Load files and relations for the source object
 			if (!this.sourceObject) return
@@ -744,6 +768,7 @@ export default {
 				this.sourceRelations = []
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		closeModal() {
 			navigationStore.setModal(false)
 		},
@@ -816,6 +841,7 @@ export default {
 .object-id {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
+	font-family: monospace;
 	margin: 0;
 }
 
@@ -999,12 +1025,6 @@ export default {
 	margin-top: 8px;
 }
 
-.object-id {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-	font-family: monospace;
-}
-
 .object-title {
 	color: var(--color-main-text);
 	font-weight: 500;
@@ -1063,6 +1083,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -1076,26 +1097,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -1104,6 +1128,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -1112,6 +1137,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

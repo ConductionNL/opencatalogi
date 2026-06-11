@@ -37,6 +37,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedCatalogus"
 									v-model="selectedCatalogus"
 									:options="catalogOptions"
+									:aria-label-combobox="t('opencatalogi', 'Catalogus')"
 									label-outside
 									:disabled="objectStore.isLoading('object')"
 									required
@@ -59,6 +60,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedRegister"
 									v-model="selectedRegister"
 									:options="registerOptions"
+									:aria-label-combobox="t('opencatalogi', 'Register')"
 									label-outside
 									:disabled="objectStore.isLoading('object') || !selectedCatalogus"
 									required
@@ -80,6 +82,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedSchema"
 									v-model="selectedSchema"
 									:options="schemaOptions"
+									:aria-label-combobox="t('opencatalogi', 'Schema')"
 									label-outside
 									:disabled="objectStore.isLoading('object') || !selectedRegister"
 									required
@@ -228,6 +231,9 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ */
 export default {
 	name: 'ObjectModal',
 	components: {
@@ -259,12 +265,14 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		catalogOptions() {
 			return objectStore.getCollection('catalog').results.map(catalog => ({
 				id: catalog.id,
 				label: catalog.title,
 			}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		registerOptions() {
 			if (!this.selectedCatalogus) {
 				return []
@@ -280,6 +288,7 @@ export default {
 					label: register.title,
 				}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		schemaOptions() {
 			if (!this.selectedRegister || !this.selectedCatalogus) {
 				return []
@@ -301,18 +310,22 @@ export default {
 					label: schema.title,
 				}))
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		fullSelectedSchema() {
 			return objectStore.availableSchemas.find(schema => schema.id === this.selectedSchema?.id)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		schemaProperties() {
 			return this.fullSelectedSchema?.properties || {}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		dialogTitle() {
 			return this.isNewObject ? 'Add Publication' : 'Edit Publication'
 		},
 	},
 	watch: {
 		objectStore: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 			handler(newValue) {
 				if (newValue) {
 					this.initializeData()
@@ -321,6 +334,7 @@ export default {
 			deep: true,
 		},
 		'navigationStore.modal': {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 			handler(newValue) {
 				if (newValue === 'objectModal') {
 					// Reinitialize when modal opens
@@ -334,6 +348,7 @@ export default {
 			},
 		},
 		jsonData: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 			handler(newValue) {
 				if (this.activeTab === 1 && this.isValidJson(newValue)) {
 					this.updateFormFromJson()
@@ -341,6 +356,7 @@ export default {
 			},
 		},
 		formData: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 			handler(newValue) {
 				if (this.activeTab === 0) {
 					this.updateJsonFromForm()
@@ -356,6 +372,7 @@ export default {
 		clearTimeout(this.closeModalTimeout)
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		initializeData() {
 			const activeCatalog = objectStore.getActiveObject('catalog')
 
@@ -455,6 +472,7 @@ export default {
 				}
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		async saveObject() {
 			if (!this.selectedRegister || !this.selectedSchema) {
 				this.error = 'Register and schema are required'
@@ -544,6 +562,7 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		updateFormFromJson() {
 			try {
 				const parsed = JSON.parse(this.jsonData)
@@ -553,6 +572,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		updateJsonFromForm() {
 			try {
 				this.jsonData = JSON.stringify(this.formData, null, 2)
@@ -561,6 +581,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		isValidJson(str) {
 			if (!str || !str.trim()) {
 				return false
@@ -573,6 +594,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		formatJSON() {
 			try {
 				if (this.jsonData) {
@@ -584,6 +606,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeModalTimeout)
@@ -604,11 +627,13 @@ export default {
 			return this.formData[key] ?? ''
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		setFieldValue(key, value) {
 			if (this.formData[key] === value) return
 			this.$set(this.formData, key, value)
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		openUploadFilesModal() {
 			// Set the navigationStore modal to 'uploadFiles' to show the UploadFiles modal
 			navigationStore.setModal('uploadFiles')
@@ -619,7 +644,7 @@ export default {
 
 <style scoped>
 :deep(.modal-container) {
-    width: 937px !important;
+	width: 937px !important;
 }
 
 /* Add consistent dialog content spacing */
@@ -642,45 +667,46 @@ export default {
 }
 
 .detail-item {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-        "label button"
-        "value value";
-    gap: 8px;
-    padding: 12px;
-    background-color: var(--color-background-hover);
-    border-radius: 4px;
-    border-left: 3px solid var(--color-primary);
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-areas:
+		'label button'
+		'value value';
+	gap: 8px;
+	padding: 12px;
+	background-color: var(--color-background-hover);
+	border-radius: 4px;
+	border-left: 3px solid var(--color-primary);
 }
 
 .detail-label {
-    grid-area: label;
-    font-weight: bold;
-    color: var(--color-text-maxcontrast);
+	grid-area: label;
+	font-weight: bold;
+	color: var(--color-text-maxcontrast);
 }
 
 .pencil-button {
-    grid-area: button;
+	grid-area: button;
 }
 
 .detail-value-container {
-    grid-area: value;
-    display: flex;
-    flex-direction: column;
+	grid-area: value;
+	display: flex;
+	flex-direction: column;
 }
 
 .detail-value {
-    word-break: break-word;
+	word-break: break-word;
 }
+
 .sub-detail-value {
-    word-break: break-word;
-    font-size: 0.8rem;
-    color: var(--color-text-maxcontrast);
+	word-break: break-word;
+	font-size: 0.8rem;
+	color: var(--color-text-maxcontrast);
 }
 
 .detail-item.empty-value {
-    border-left-color: var(--color-warning);
+	border-left-color: var(--color-warning);
 }
 
 .edit-tabs {
@@ -706,6 +732,7 @@ export default {
 
 .codeMirrorContainer :deep(.cm-editor) {
 	height: 100%;
+	outline: none !important;
 }
 
 .codeMirrorContainer :deep(.cm-scroller) {
@@ -778,25 +805,15 @@ export default {
 	padding: 16px;
 }
 
-.form-field {
-	margin-bottom: 16px;
-}
-
-/* CodeMirror */
-.codeMirrorContainer {
-	margin-block-start: 6px;
-}
-
 .codeMirrorContainer :deep(.cm-content) {
 	border-radius: 0 !important;
 	border: none !important;
 }
-.codeMirrorContainer :deep(.cm-editor) {
-	outline: none !important;
-}
+
 .codeMirrorContainer.light > .vue-codemirror {
 	border: 1px dotted silver;
 }
+
 .codeMirrorContainer.dark > .vue-codemirror {
 	border: 1px dotted grey;
 }
@@ -806,6 +823,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼe) {
 	color: #448c27;
 }
+
 .codeMirrorContainer.dark :deep(.ͼe) {
 	color: #88c379;
 }
@@ -814,6 +832,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼc) {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.ͼc) {
 	color: #8d64f7;
 }
@@ -822,6 +841,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼb) {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.ͼb) {
 	color: #be55cd;
 }
@@ -830,6 +850,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -843,26 +864,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -871,6 +895,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -879,6 +904,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

@@ -62,6 +62,9 @@ import {
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ */
 export default {
 	name: 'LockObject',
 	components: {
@@ -84,6 +87,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeModalTimeout)
@@ -93,6 +97,7 @@ export default {
 			this.process = ''
 			this.duration = 3600
 		},
+		/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 		async lockObject() {
 			this.loading = true
 

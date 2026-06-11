@@ -27,6 +27,11 @@ import FolderIcon from 'vue-material-design-icons/Folder.vue'
 
 import { getTheme } from '../../services/getTheme.js'
 
+/**
+ * UnpublishedPublicationsWidget — dashboard widget listing unpublished publications.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-3
+ */
 export default {
 	name: 'UnpublishedPublicationsWidget',
 	components: {
@@ -51,6 +56,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		items() {
 			return objectStore.getCollection('publication').results
 				.filter((publication) => publication.status === 'Concept')
@@ -71,6 +77,7 @@ export default {
 		 * @param {object} item - The publication item to show
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		onShow(item) {
 			// navigationStore.setSelected('publication')
 			// navigationStore.setSelectedCatalogus(item.id)
@@ -80,6 +87,7 @@ export default {
 		 * Fetch the publication data
 		 * @return {Promise<void>}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData() {
 			this.loading = true
 			await objectStore.fetchCollection('publication')

@@ -7,7 +7,7 @@ on:
 jobs:
   unstable:
     if: github.ref == 'refs/heads/development'
-    uses: ConductionNL/.github/.github/workflows/release.yml@main
+    uses: Conduction/.github/.github/workflows/release.yml@main
     with:
       release-type: unstable
       app-name: opencatalogi
@@ -15,7 +15,7 @@ jobs:
 
   beta:
     if: github.ref == 'refs/heads/beta'
-    uses: ConductionNL/.github/.github/workflows/release.yml@main
+    uses: Conduction/.github/.github/workflows/release.yml@main
     with:
       release-type: beta
       app-name: opencatalogi
@@ -23,7 +23,7 @@ jobs:
 
   stable:
     if: github.ref == 'refs/heads/main'
-    uses: ConductionNL/.github/.github/workflows/release.yml@main
+    uses: Conduction/.github/.github/workflows/release.yml@main
     with:
       release-type: stable
       app-name: opencatalogi

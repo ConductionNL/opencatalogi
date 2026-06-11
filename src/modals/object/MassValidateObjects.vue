@@ -73,6 +73,9 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ */
 export default {
 	name: 'MassValidateObjects',
 	components: {
@@ -106,6 +109,7 @@ export default {
 		 * Get the objects to operate on from selected objects
 		 * @return {Array<object>} Array of objects to validate
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		objectsToValidate() {
 			return objectStore.selectedObjects || []
 		},
@@ -114,6 +118,7 @@ export default {
 		 * Get the dialog title based on number of objects
 		 * @return {string} Dialog title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		dialogTitle() {
 			const count = this.objectsToValidate.length
 			if (count === 1) {
@@ -126,10 +131,12 @@ export default {
 		this.initializeSelection()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		initializeSelection() {
 			// Store the original count for success message
 			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
@@ -138,11 +145,13 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-5 */
 		async validateObjects() {
 			this.loading = true
 

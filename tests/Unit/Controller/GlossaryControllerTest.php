@@ -31,11 +31,11 @@ class GlossaryControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->request    = $this->createMock(IRequest::class);
-        $this->config     = $this->createMock(IAppConfig::class);
-        $this->container  = $this->createMock(ContainerInterface::class);
-        $this->appManager = $this->createMock(IAppManager::class);
-        $this->l10n       = $this->createMock(IL10N::class);
+        $this->request      = $this->createMock(IRequest::class);
+        $this->config       = $this->createMock(IAppConfig::class);
+        $this->container    = $this->createMock(ContainerInterface::class);
+        $this->appManager   = $this->createMock(IAppManager::class);
+        $this->l10n         = $this->createMock(IL10N::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text) => $text);
@@ -48,6 +48,32 @@ class GlossaryControllerTest extends TestCase
             $this->appManager,
             $this->l10n
         );
+    }
+
+    /**
+     * Build a JsonSerializable result row mirroring an OpenRegister entity.
+     *
+     * Production results from the magic-mapper backend are entity objects; the SOLR
+     * backend returns plain arrays. show() now checks is_array() before calling
+     * jsonSerialize() (#736), so both shapes are handled. This helper exercises the
+     * entity path; testShowAcceptsArrayShape exercises the SOLR array path.
+     *
+     * @param array<string,mixed> $data Term payload.
+     *
+     * @return \JsonSerializable
+     */
+    private function serializableObject(array $data): \JsonSerializable
+    {
+        return new class($data) implements \JsonSerializable {
+            public function __construct(private array $data)
+            {
+            }
+
+            public function jsonSerialize(): array
+            {
+                return $this->data;
+            }
+        };
     }
 
     private function mockObjectService(): MockObject
@@ -192,7 +218,7 @@ class GlossaryControllerTest extends TestCase
 
         $mockObjService->method('searchObjectsPaginated')
             ->willReturn([
-                'results' => [['id' => 1, 'term' => 'API', 'definition' => 'Application Programming Interface']],
+                'results' => [$this->serializableObject(['id' => 1, 'term' => 'API', 'definition' => 'Application Programming Interface'])],
             ]);
 
         $this->request->server = [];
@@ -222,12 +248,34 @@ class GlossaryControllerTest extends TestCase
 
         $mockObjService->method('searchObjectsPaginated')
             ->willReturn([
-                'results' => [['id' => 42, 'term' => 'Test']],
+                'results' => [$this->serializableObject(['id' => 42, 'term' => 'Test'])],
             ]);
 
         $this->request->server = [];
 
         $response = $this->controller->show(42);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
+    }
+
+    /**
+     * #736: the SOLR backend returns plain array shapes (no jsonSerialize()).
+     * show() must accept them without fataling now that the is_array() guard
+     * precedes the jsonSerialize() call.
+     */
+    public function testShowAcceptsArrayShape(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn([
+                'results' => [['id' => 7, 'term' => 'SOLR', 'definition' => 'Search backend']],
+            ]);
+
+        $this->request->server = [];
+
+        $response = $this->controller->show('7');
 
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(200, $response->getStatus());

@@ -1,5 +1,15 @@
 {
   "translations": {
+    "Action": "Action",
+    "Add": "Add",
+    "Back": "Back",
+    "Create": "Create",
+    "Details": "Details",
+    "Loading...": "Loading...",
+    "Saving...": "Saving...",
+    "Search": "Search",
+    "Upload": "Upload",
+    "Yes": "Yes",
     "Actions": "Actions",
     "Active facets": "Active facets",
     "Active filters": "Active filters",

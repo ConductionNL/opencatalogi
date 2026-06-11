@@ -59,6 +59,9 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-2
+ */
 export default {
 	name: 'MassDeleteObject',
 	components: {
@@ -92,6 +95,7 @@ export default {
 		 * Get the objects to operate on from selected objects
 		 * @return {Array<object>} Array of objects to delete
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		objectsToDelete() {
 			return objectStore.selectedObjects || []
 		},
@@ -100,6 +104,7 @@ export default {
 		 * Get the dialog title based on number of objects
 		 * @return {string} Dialog title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		dialogTitle() {
 			const count = objectStore.selectedObjects?.length || 0
 			if (count === 1) {
@@ -113,10 +118,12 @@ export default {
 		this.initializeSelection()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		initializeSelection() {
 			// Store the original count for success message
 			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
@@ -125,12 +132,14 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		navigateToDeleted() {
 			// Close the dialog first
 			this.closeDialog()
 			// Navigate to the deleted objects section
 			this.$router.push('/deleted')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		async deleteObject() {
 			this.loading = true
 
@@ -165,6 +174,7 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-3 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()

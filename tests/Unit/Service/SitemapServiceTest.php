@@ -33,6 +33,9 @@ class SitemapServiceTest extends TestCase
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->urlGenerator    = $this->createMock(IURLGenerator::class);
 
+        // Object visibility is enforced by OpenRegister RBAC inside the _rbac: true
+        // searches, not by an app-side predicate, so the query service is no longer a dep.
+
         $this->service = new SitemapService(
             $this->container,
             $this->appManager,

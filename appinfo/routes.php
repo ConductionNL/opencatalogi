@@ -5,9 +5,7 @@ return [
 		/**
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
 		 */
-		// Dashboard
-		['name' => 'dashboard#index', 'url' => '/index', 'verb' => 'GET'],
-		// this may seem like a duplicate of the UI routes at the bottom, but this is needed
+		// Dashboard (note: dashboard#index was removed — DashboardController has no index method; page() serves /)
 		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
 
 		// Catalogi
@@ -22,6 +20,9 @@ return [
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
+		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
+		['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+		['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
@@ -94,6 +95,11 @@ return [
 		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
+		['name' => 'search#show', 'url' => '/api/search/{id}', 'verb' => 'GET'],
+		['name' => 'search#attachments', 'url' => '/api/search/{id}/attachments', 'verb' => 'GET'],
+		['name' => 'search#download', 'url' => '/api/search/{id}/download', 'verb' => 'GET'],
+		['name' => 'search#uses', 'url' => '/api/search/{id}/uses', 'verb' => 'GET'],
+		['name' => 'search#used', 'url' => '/api/search/{id}/used', 'verb' => 'GET'],
 		// Federation (specific route - must be before wildcard catalog routes)
 		['name' => 'federation#publications', 'url' => '/api/federation/publications', 'verb' => 'GET'],
 		['name' => 'federation#publication', 'url' => '/api/federation/publications/{id}', 'verb' => 'GET'],

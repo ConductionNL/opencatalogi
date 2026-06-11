@@ -9,11 +9,9 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\App\IAppManager;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
-use RuntimeException;
 
 /**
  * Unit tests for SettingsController.
@@ -22,86 +20,41 @@ class SettingsControllerTest extends TestCase
 {
 
     private IRequest|MockObject $request;
-    private ContainerInterface|MockObject $container;
-    private IAppManager|MockObject $appManager;
     private SettingsService|MockObject $settingsService;
     private IL10N|MockObject $l10n;
+    private IUserSession|MockObject $userSession;
     private SettingsController $controller;
 
     protected function setUp(): void
     {
         $this->request         = $this->createMock(IRequest::class);
-        $this->container       = $this->createMock(ContainerInterface::class);
-        $this->appManager      = $this->createMock(IAppManager::class);
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->l10n            = $this->createMock(IL10N::class);
+        $this->userSession     = $this->createMock(IUserSession::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text, array $params = []) => $text);
 
+        // The controller guards its read/write endpoints on an authenticated user.
+        // Default to a logged-in user so the per-method happy/error paths run; tests
+        // that assert the unauthenticated path override this with willReturn(null).
+        $this->userSession->method('getUser')
+            ->willReturn($this->createMock(\OCP\IUser::class));
+
         $this->controller = new SettingsController(
             'opencatalogi',
             $this->request,
-            $this->container,
-            $this->appManager,
             $this->settingsService,
-            $this->l10n
+            $this->l10n,
+            $this->userSession
         );
     }
 
-    public function testGetObjectServiceReturnsServiceWhenInstalled(): void
-    {
-        $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-
-        $this->appManager->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
-
-        $result = $this->controller->getObjectService();
-
-        $this->assertNotNull($result);
-    }
-
-    public function testGetObjectServiceThrowsWhenNotInstalled(): void
-    {
-        $this->appManager->method('getInstalledApps')
-            ->willReturn([]);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('OpenRegister service is not available.');
-
-        $this->controller->getObjectService();
-    }
-
-    public function testGetConfigurationServiceReturnsServiceWhenInstalled(): void
-    {
-        $mockConfigService = $this->createMock(\OCA\OpenRegister\Service\ConfigurationService::class);
-
-        $this->appManager->method('getInstalledApps')
-            ->willReturn(['openregister']);
-
-        $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ConfigurationService')
-            ->willReturn($mockConfigService);
-
-        $result = $this->controller->getConfigurationService();
-
-        $this->assertNotNull($result);
-    }
-
-    public function testGetConfigurationServiceThrowsWhenNotInstalled(): void
-    {
-        $this->appManager->method('getInstalledApps')
-            ->willReturn([]);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Configuration service is not available.');
-
-        $this->controller->getConfigurationService();
-    }
+    // NOTE: getObjectService() / getConfigurationService() were removed from
+    // SettingsController — the OpenRegister service resolution now lives in
+    // SettingsService (and is covered by SettingsServiceTest). The former
+    // testGetObjectService*/testGetConfigurationService* cases were retired, along
+    // with the container/appManager constructor args they depended on.
 
     public function testIndexReturnsSettings(): void
     {

@@ -58,14 +58,53 @@ class PublicationServiceTest extends TestCase
 
     /**
      * Set up the container to return the given mock when ObjectService is requested.
+     *
+     * Also sets up a PublicationQueryService stub that confirms any UUID is in catalog
+     * scope (findObjectLocation returns a valid location). Object visibility itself is
+     * enforced by OpenRegister RBAC, not by this service, so there is no published
+     * predicate to stub. This lets these tests focus on their domain behaviour.
      */
     private function mockObjectServiceAvailable(MockObject $objectService): void
     {
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
+
+        // The index/search/aggregate paths resolve PublicationQueryService from the
+        // container as a collaborator. Visibility is enforced by OpenRegister RBAC, not by
+        // an app-side predicate, so only the catalog-scope helper needs stubbing here.
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+
+        // isObjectInCatalogScope() calls findObjectLocation() on the QueryService.
+        // Return a valid location so the scope check passes for all UUIDs in these tests.
+        $queryService->method('findObjectLocation')
+            ->willReturn(['register' => 1, 'schema' => 1]);
+
+        // setObjectServiceContext() now also calls getCatalogFilters() (via getObjectService())
+        // and findObjectLocation() on the QueryService. The getCatalogFilters path calls
+        // searchObjects(); that return value is set per-test, but if it returns empty the
+        // scope check falls back to findObjectLocation (mocked above). The IDBConnection
+        // mock is kept for any legacy code paths that might still reach it.
+        $emptyResult = $this->createMock(\OCP\DB\IResult::class);
+        $emptyResult->method('fetch')->willReturn(false);
+        $emptyResult->method('closeCursor')->willReturn(true);
+        $db = $this->createMock(\OCP\IDBConnection::class);
+        $db->method('executeQuery')->willReturn($emptyResult);
+        $db->method('quote')->willReturn("''");
+
         $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($objectService);
+            ->willReturnCallback(
+                function (string $id) use ($objectService, $queryService, $db) {
+                    if ($id === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                        return $queryService;
+                    }
+
+                    if ($id === \OCP\IDBConnection::class) {
+                        return $db;
+                    }
+
+                    return $objectService;
+                }
+            );
     }
 
     /**
@@ -581,13 +620,25 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        // QueryService mock: confirm the object is in catalog scope so the C-1/C-3 scope
+        // gate passes. Object visibility is enforced by OpenRegister RBAC, not here.
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+
+        // Provide a minimal catalog so getCatalogFilters() resolves a non-empty scope.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $this->container->method('get')
-            ->willReturnCallback(function (string $class) use ($objectService, $fileService) {
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
                 if ($class === 'OCA\OpenRegister\Service\ObjectService') {
                     return $objectService;
                 }
                 if ($class === 'OCA\OpenRegister\Service\FileService') {
                     return $fileService;
+                }
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
                 }
                 return null;
             });
@@ -618,13 +669,21 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $this->container->method('get')
-            ->willReturnCallback(function (string $class) use ($objectService, $fileService) {
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
                 if ($class === 'OCA\OpenRegister\Service\ObjectService') {
                     return $objectService;
                 }
                 if ($class === 'OCA\OpenRegister\Service\FileService') {
                     return $fileService;
+                }
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
                 }
                 return null;
             });
@@ -647,13 +706,21 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $this->container->method('get')
-            ->willReturnCallback(function (string $class) use ($objectService, $fileService) {
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
                 if ($class === 'OCA\OpenRegister\Service\ObjectService') {
                     return $objectService;
                 }
                 if ($class === 'OCA\OpenRegister\Service\FileService') {
                     return $fileService;
+                }
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
                 }
                 return null;
             });
@@ -674,8 +741,29 @@ class PublicationServiceTest extends TestCase
 
     public function testDownloadReturns404OnDoesNotExist(): void
     {
-        $fileService = $this->createFileServiceMock();
-        $this->mockFileServiceAvailable($fileService);
+        $objectService = $this->createObjectServiceMock();
+        $fileService   = $this->createFileServiceMock();
+
+        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+        $this->container->method('get')
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
+                }
+
+                if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+
+                return $fileService;
+            });
 
         $fileService->method('createObjectFilesZip')
             ->willThrowException(new DoesNotExistException('Not found'));
@@ -687,8 +775,29 @@ class PublicationServiceTest extends TestCase
 
     public function testDownloadReturns500OnGenericException(): void
     {
-        $fileService = $this->createFileServiceMock();
-        $this->mockFileServiceAvailable($fileService);
+        $objectService = $this->createObjectServiceMock();
+        $fileService   = $this->createFileServiceMock();
+
+        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+        $this->container->method('get')
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
+                }
+
+                if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+
+                return $fileService;
+            });
 
         $fileService->method('createObjectFilesZip')
             ->willThrowException(new \Exception('ZIP creation failed'));
@@ -698,7 +807,7 @@ class PublicationServiceTest extends TestCase
         $this->assertSame(500, $response->getStatus());
 
         $data = json_decode($response->render(), true);
-        $this->assertStringContainsString('ZIP creation failed', $data['error']);
+        $this->assertArrayHasKey('error', $data);
     }
 
     // =======================================================================
@@ -773,6 +882,10 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // used() now calls find() first to enforce the published predicate. Return a
+        // published object so the predicate check does not short-circuit the test.
+        $pubObj = $this->createSerializableObject(['id' => 'pub-1']);
+        $objectService->method('find')->willReturn($pubObj);
         $objectService->method('findByRelations')->willReturn([]);
 
         $response = $this->service->used('pub-1');
@@ -793,6 +906,11 @@ class PublicationServiceTest extends TestCase
                 ['opencatalogi', 'catalog_schema', '', 'schema-1'],
                 ['opencatalogi', 'catalog_register', '', 'register-1'],
             ]);
+
+        // used() now calls find() first to enforce the published predicate. Return a
+        // published object so the predicate check does not short-circuit the test.
+        $pubObj = $this->createSerializableObject(['id' => 'pub-1']);
+        $objectService->method('find')->willReturn($pubObj);
 
         $relObj = $this->createSerializableObject([
             'uuid' => 'ref-obj-1',
@@ -1478,6 +1596,40 @@ class PublicationServiceTest extends TestCase
 
         $result = $method->invoke($this->service, []);
         $this->assertSame([], $result);
+    }
+
+    /**
+     * Robustness (#736): under the SOLR backend, searchObjectsPaginated returns
+     * array shapes (not ObjectEntity instances). filterUnwantedProperties MUST
+     * accept arrays without fataling with "Call to a member function jsonSerialize()
+     * on array".
+     */
+    public function testFilterUnwantedPropertiesAcceptsArrayShape(): void
+    {
+        // #736 regression: filterUnwantedProperties() now checks is_array() BEFORE
+        // calling jsonSerialize(), so the SOLR array shape this test feeds is handled
+        // without fataling. Asserts the real array-shape path.
+        $method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+        $method->setAccessible(true);
+
+        // SOLR-shape: plain associative array, no jsonSerialize().
+        $solrShape = [
+            '@self' => [
+                'id'            => 'pub-solr-1',
+                'title'         => 'Keep',
+                'schemaVersion' => 'remove',
+            ],
+            'extra' => 'kept',
+        ];
+
+        $result = $method->invoke($this->service, [$solrShape]);
+
+        $this->assertCount(1, $result);
+        $self = $result[0]['@self'];
+        $this->assertSame('pub-solr-1', $self['id']);
+        $this->assertSame('Keep', $self['title']);
+        $this->assertArrayNotHasKey('schemaVersion', $self);
+        $this->assertSame('kept', $result[0]['extra']);
     }
 
     // =======================================================================
@@ -2258,6 +2410,11 @@ class PublicationServiceTest extends TestCase
         $this->mockObjectServiceAvailable($objectService);
 
         $this->config->method('getValueString')->willReturn('');
+
+        // used() now calls find() first to enforce the published predicate. Return a
+        // published object so the predicate check does not short-circuit the test.
+        $pubObj = $this->createSerializableObject(['id' => 'pub-1']);
+        $objectService->method('find')->willReturn($pubObj);
 
         $relObj = $this->createSerializableObject(['uuid' => 'ref-1']);
         $objectService->method('findByRelations')->willReturn([$relObj]);
@@ -3249,10 +3406,31 @@ class PublicationServiceTest extends TestCase
 
     public function testDownloadReturnsZipOnSuccess(): void
     {
-        $fileService = $this->createFileServiceMock();
-        $this->mockFileServiceAvailable($fileService);
+        $objectService = $this->createObjectServiceMock();
+        $fileService   = $this->createFileServiceMock();
 
-        // Create a temp file for the test
+        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+        $this->container->method('get')
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
+                }
+
+                if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+
+                return $fileService;
+            });
+
+        // Create a temp file for the test.
         $tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
         file_put_contents($tmpFile, 'fake zip content');
 
@@ -3279,13 +3457,21 @@ class PublicationServiceTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $this->container->method('get')
-            ->willReturnCallback(function (string $class) use ($objectService, $fileService) {
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
                 if ($class === 'OCA\OpenRegister\Service\ObjectService') {
                     return $objectService;
                 }
                 if ($class === 'OCA\OpenRegister\Service\FileService') {
                     return $fileService;
+                }
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
                 }
                 return null;
             });

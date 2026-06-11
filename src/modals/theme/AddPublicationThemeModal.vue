@@ -22,6 +22,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:items="themeOptions"
 					:value.sync="selectedTheme"
 					label="Choose a theme"
+					:input-label="t('opencatalogi', 'Theme')"
 					:disabled="isSaving || !themeOptions.length" />
 			</div>
 
@@ -51,6 +52,11 @@ import {
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 
+/**
+ * AddPublicationThemeModal — attach a theme to a publication via updateObject.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ */
 export default {
 	name: 'AddPublicationThemeModal',
 	components: {
@@ -70,9 +76,11 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themes() {
 			return objectStore.getCollection('theme').results || []
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		themeOptions() {
 			const publication = objectStore.getActiveObject('publication')
 			return this.themes
@@ -84,12 +92,14 @@ export default {
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.successState = null
 			this.errorState = null
 			this.selectedTheme = null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-1 */
 		async saveTheme() {
 			if (!this.selectedTheme) return
 			this.isSaving = true
@@ -122,7 +132,7 @@ export default {
 
 <style>
 .selectWrapper {
-  display: flex;
-  justify-content: center;
+	display: flex;
+	justify-content: center;
 }
 </style>

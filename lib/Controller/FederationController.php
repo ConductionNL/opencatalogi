@@ -12,9 +12,19 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-7
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-8
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-9
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-10
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-11
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-12
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -27,6 +37,7 @@ use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling federation endpoints.
@@ -40,12 +51,14 @@ class FederationController extends Controller
      * @param IRequest           $request            The request object.
      * @param PublicationService $publicationService The publication service.
      * @param IL10N              $l10n               The localization service.
+     * @param LoggerInterface    $logger             PSR-3 logger.
      */
     public function __construct(
         $appName,
         IRequest $request,
         private readonly PublicationService $publicationService,
-        private readonly IL10N $l10n
+        private readonly IL10N $l10n,
+        private readonly ?LoggerInterface $logger=null
     ) {
         parent::__construct($appName, $request);
 
@@ -56,11 +69,12 @@ class FederationController extends Controller
      *
      * @return JSONResponse JSON response containing publications.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
      *
      * @SuppressWarnings(PHPMD.Superglobals)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-7
      */
     public function publications(): JSONResponse
     {
@@ -87,11 +101,18 @@ class FederationController extends Controller
 
             return new JSONResponse($responseData);
         } catch (\Exception $e) {
+            $this->logger?->error(
+                '[FederationController::publications] Failed to retrieve publications',
+                [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]
+            );
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publications').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publications')],
                 statusCode: 500
             );
-        }
+        }//end try
 
     }//end publications()
 
@@ -104,9 +125,10 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-8
      */
     public function publication(string $id): JSONResponse
     {
@@ -116,8 +138,16 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
+            $this->logger?->error(
+                '[FederationController::publication] Failed to retrieve publication',
+                [
+                    'id'    => $id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]
+            );
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publication').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publication')],
                 statusCode: 500
             );
         }
@@ -136,9 +166,10 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-9
      */
     public function publicationUses(string $id): JSONResponse
     {
@@ -148,8 +179,16 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
+            $this->logger?->error(
+                '[FederationController::publicationUses] Failed to retrieve publication uses',
+                [
+                    'id'    => $id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]
+            );
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publication uses').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publication uses')],
                 statusCode: 500
             );
         }
@@ -168,9 +207,10 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-10
      */
     public function publicationUsed(string $id): JSONResponse
     {
@@ -180,8 +220,16 @@ class FederationController extends Controller
 
             return new JSONResponse($result['data'], $result['status']);
         } catch (\Exception $e) {
+            $this->logger?->error(
+                '[FederationController::publicationUsed] Failed to retrieve publication used',
+                [
+                    'id'    => $id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]
+            );
             return new JSONResponse(
-                data: ['error' => $this->l10n->t('Failed to retrieve publication used').': '.$e->getMessage()],
+                data: ['error' => $this->l10n->t('Failed to retrieve publication used')],
                 statusCode: 500
             );
         }
@@ -197,9 +245,10 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-11
      */
     public function publicationAttachments(string $id): JSONResponse
     {
@@ -216,9 +265,10 @@ class FederationController extends Controller
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-12
      */
     public function publicationDownload(string $id): DataDownloadResponse|JSONResponse
     {

@@ -1,162 +1,183 @@
 ---
 status: reviewed
+or_dep: outbound-webhook-policy
+audit_ref: .claude/audit-2026-05-03/04-hardcoded.md
 ---
 
 # Federation
 
+> **OR webhook retry policy citation (Phase 8):** This spec is updated
+> as part of `opencatalogi-adopt-or-abstractions` (Phase 8). The
+> app-local retry constants (`BroadcastService::MAX_RETRIES = 3`,
+> `REQUEST_TIMEOUT = 30`) are promoted to admin-config keys (see
+> [admin-settings/spec.md](../admin-settings/spec.md)) and the retry/backoff
+> schedule is delegated to OR's outbound webhook policy. opencatalogi MUST
+> NOT re-derive backoff maths. See the REMOVED section and Breaking Changes.
+>
+> Upstream dependency: OR outbound webhook retry policy.
+
 ## Purpose
 
-Federation enables OpenCatalogi to aggregate publications from both local catalogs and external (federated) OpenCatalogi instances into a unified search interface. The federation endpoints mirror the publication API but include aggregation logic that queries remote directories, merges results, and provides a single response to the frontend. This is the backbone of the decentralized catalog network where multiple government organizations can share and discover each other's publications.
+@e2e exclude pure API/backend spec — all scenarios test server-side federation
+aggregation logic (async Guzzle HTTP, facet merging, result sorting) with no
+browser-observable UI surface; covered by Newman API tests instead.
+
+Federation enables opencatalogi to aggregate publications from both local
+catalogs and external (federated) OpenCatalogi instances into a unified search
+interface. After Phase 8:
+
+- Retry attempts, timeout, and dead-letter behaviour for outbound federation
+  broadcasts MUST follow OR's outbound webhook retry policy. opencatalogi
+  MUST NOT hard-code retry counts, timeout values, jitter, or backoff
+  intervals. These are read from admin-config keys
+  (`broadcast_max_retries`, `broadcast_request_timeout`) per
+  [admin-settings/spec.md](../admin-settings/spec.md).
+- The search aggregation (fanning out `zoeken-filteren` calls per catalog
+  context, merging results and facets) remains a legitimate in-app
+  orchestration with no OR leaf equivalent.
+
+## ADDED Requirements
+
+### Requirement: federation outbound retry follows OR webhook retry policy (FED-OR-001)
+
+When an outbound federation broadcast (e.g. broadcasting this instance's
+directory to remote OpenCatalogi instances) fails transiently, the retry
+schedule — attempt count, initial delay, backoff multiplier, jitter, and
+dead-letter threshold — MUST conform to OR's outbound webhook retry policy.
+
+opencatalogi reads the operator-tunable parameters via admin-config:
+- `broadcast_max_retries` (default: 3) — maximum retry attempts
+- `broadcast_request_timeout` (default: 30 s) — HTTP request timeout per attempt
+
+These values MUST be read from `IAppConfig`, NOT from PHP class constants.
+See [admin-settings/spec.md](../admin-settings/spec.md) for the full inventory.
+
+#### Scenario: federation outbound calls follow OR's retry policy
+
+- **GIVEN** a federation push fails transiently,
+- **WHEN** the retry behaviour fires,
+- **THEN** the attempt count is bounded by `broadcast_max_retries` (read
+  from `IAppConfig`),
+- **AND** opencatalogi does NOT carry app-local retry constants,
+- **AND** the retry schedule (delay, jitter, dead-letter) matches the OR
+  outbound webhook policy.
+
+#### Scenario: admin tunes retry parameters
+
+- **GIVEN** an admin sets `broadcast_max_retries = 5`,
+- **WHEN** a broadcast fails,
+- **THEN** the service attempts up to 5 retries,
+- **AND** does NOT rely on a PHP class constant for the attempt ceiling.
+
+### Requirement: dead-letter behaviour for permanently failing federation pushes (FED-OR-002)
+
+When a federation push exceeds `broadcast_max_retries` consecutive failures,
+the push MUST be moved to a dead-letter state per OR's outbound webhook policy.
+opencatalogi MUST NOT define its own dead-letter logic.
+
+#### Scenario: dead-letter threshold reached
+
+- **GIVEN** a federation push has failed `broadcast_max_retries` times,
+- **WHEN** the next retry fires,
+- **THEN** the push is marked dead-letter per OR's policy,
+- **AND** opencatalogi does NOT apply a different or longer retry sequence.
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| FED-001 | List all publications from local and federated sources with merged pagination | Must | Implemented |
-| FED-002 | Retrieve a single publication by ID from local or federated sources | Must | Implemented |
-| FED-003 | Retrieve outgoing relations (uses) with federation support | Must | Implemented |
-| FED-004 | Retrieve incoming relations (used-by) with federation support | Must | Implemented |
-| FED-005 | Retrieve publication attachments from local or federated sources | Must | Implemented |
-| FED-006 | Download publication files from local or federated sources | Must | Implemented |
-| FED-007 | All federation endpoints must be public (no auth required) | Must | Implemented |
-| FED-008 | Federation aggregation uses async HTTP requests to remote directories | Should | Implemented |
-| FED-009 | Directory listings provide the directory URLs for remote instances | Must | Implemented |
-| FED-010 | Listings with `integrationLevel: "search"` are included in federated search | Should | Implemented |
-| FED-011 | Sort merged results by relevance score (`_score`) | Should | Implemented |
-| FED-012 | All federation publication endpoints have corresponding routes in routes.php | Must | Implemented |
+### Requirement: List all publications from local and federated sources (FED-001)
 
-## Data Model
+The system MUST list all publications from local and federated sources with
+merged pagination. Federated results are obtained by calling OR's
+`zoeken-filteren` per catalog context (see [search/spec.md](../search/spec.md)).
 
-Federation does not have its own schema. It aggregates data from:
-- Local catalogs (via PublicationService)
-- Remote OpenCatalogi instances (via DirectoryService and HTTP calls)
+**Priority:** Must **Status:** Implemented
 
-The aggregation response follows the same structure as the publications API:
+### Requirement: Retrieve a single publication by ID from local or federated sources (FED-002)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| results | array | Merged publication objects from local and remote sources |
-| total | integer | Combined total count |
-| page | integer | Current page number |
-| pages | integer | Total pages |
-| limit | integer | Items per page |
-| offset | integer | Current offset |
-| facets | object | Merged facets from all sources |
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve outgoing relations (uses) with federation support (FED-003)
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve incoming relations (used-by) with federation support (FED-004)
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Retrieve publication attachments from local or federated sources (FED-005)
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Download publication files from local or federated sources (FED-006)
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: All federation endpoints must be public (FED-007)
+
+All federation endpoints MUST be public (`@PublicPage`, `@NoCSRFRequired`,
+`@NoAdminRequired`).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Federation aggregation uses async HTTP requests to remote directories (FED-008)
+
+Federation aggregation SHOULD use async HTTP requests (GuzzleHttp promises)
+to remote directories.
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Directory listings provide the directory URLs for remote instances (FED-009)
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Listings with `integrationLevel: "search"` included in federated search (FED-010)
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: Sort merged results by relevance score (`_score`) (FED-011)
+
+**Priority:** Should **Status:** Implemented
+
+### Requirement: All federation publication endpoints have corresponding routes (FED-012)
+
+All federation publication endpoints MUST have corresponding routes in
+`appinfo/routes.php`.
+
+**Priority:** Must **Status:** Implemented
+
+## REMOVED Requirements
+
+| ID | Title | Reason removed |
+|----|-------|----------------|
+| (BroadcastService class constants) | `BroadcastService::MAX_RETRIES = 3` and `REQUEST_TIMEOUT = 30` as hardcoded PHP constants | REMOVED — re-derives retry/timeout constants that the OR outbound webhook policy owns. Promoted to admin-config keys `broadcast_max_retries` / `broadcast_request_timeout` per ADR-022 and `.claude/audit-2026-05-03/04-hardcoded.md`. |
+| (app-local backoff maths) | Any PHP code in BroadcastService computing delay, jitter, or backoff interval | REMOVED — re-implements OR's outbound webhook retry schedule; consume OR per ADR-022. |
+
+## Breaking Changes
+
+| Breaking change | Old behaviour | New behaviour |
+|---|---|---|
+| `BroadcastService::MAX_RETRIES` constant removed | PHP class constant `3` | Read from `IAppConfig::getValueInt('broadcast_max_retries', 3)`; code reading the constant directly will throw |
+| `BroadcastService::REQUEST_TIMEOUT` constant removed | PHP class constant `30` | Read from `IAppConfig::getValueInt('broadcast_request_timeout', 30)`; code reading the constant directly will throw |
+| Backoff maths removed | App-local retry delay computation | Delegated to OR outbound webhook policy; delay/jitter/dead-letter managed by OR |
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/federation/publications` | List publications from all sources (local + federated) |
+| GET | `/api/federation/publications` | List publications from all sources (local + federated) — delegates to `zoeken-filteren` |
 | GET | `/api/federation/publications/{id}` | Get single publication from any source |
 | GET | `/api/federation/publications/{id}/uses` | Get outgoing relations with federation |
 | GET | `/api/federation/publications/{id}/used` | Get incoming relations with federation |
 | GET | `/api/federation/publications/{id}/attachments` | Get attachments from any source |
 | GET | `/api/federation/publications/{id}/download` | Download files from any source |
 
-All six endpoints are registered in `routes.php` and map to methods on `FederationController`. All endpoints use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations.
+All six endpoints use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations.
 
-## Federation Implementation Details (Gap 18)
+## References
 
-### Aggregation Architecture
-
-The `FederationController` delegates all business logic to `PublicationService`:
-
-| Endpoint | Controller Method | Service Method |
-|----------|-------------------|----------------|
-| `/api/federation/publications` | `publications()` | `getAggregatedPublications()` |
-| `/api/federation/publications/{id}` | `publication()` | `getFederatedPublication()` |
-| `/api/federation/publications/{id}/uses` | `publicationUses()` | `getFederatedUses()` |
-| `/api/federation/publications/{id}/used` | `publicationUsed()` | `getFederatedUsed()` |
-| `/api/federation/publications/{id}/attachments` | `publicationAttachments()` | `attachments()` |
-| `/api/federation/publications/{id}/download` | `publicationDownload()` | `download()` |
-
-### Search Flow
-
-The federated publication list uses `PublicationService.getAggregatedPublications()` which:
-
-1. Queries local catalogs for publications via ObjectService
-2. When remote directory listings exist with `default: true`:
-   - Listings pointing to the local instance are skipped
-   - Remote search endpoints are queried via async HTTP (`GuzzleHttp\Promise\Utils::settle()`)
-   - Results from all sources are merged and sorted by `_score` (relevance)
-   - Facets/aggregations from all sources are merged
-
-### Facet Merging
-
-`PublicationService` merges facets from multiple sources:
-- For each aggregation key (e.g., "theme"), bucket items are merged
-- Items with the same `_id` have their `count` values summed
-- New items from remote sources are added to the aggregation
-
-### Result Sorting
-
-Merged results are sorted by `_score` (relevance score) using `usort()`. This ensures that the most relevant results appear first regardless of which source they came from.
-
-Note: There is no separate `SearchService` or `ElasticSearchService` in the OpenCatalogi codebase. All federation logic lives in `PublicationService`.
-
-## Federation Endpoints for Attachments and Download (Gap 24)
-
-The federation controller provides complete coverage of the publication sub-resources:
-
-### `/api/federation/publications/{id}/attachments`
-- Route: `federation#publicationAttachments`
-- Calls `PublicationService::attachments($id)`
-- Returns file metadata for all attachments of the publication
-- Public endpoint (no auth required)
-
-### `/api/federation/publications/{id}/download`
-- Route: `federation#publicationDownload`
-- Calls `PublicationService::download($id)`
-- Returns download information for publication files
-- Public endpoint (no auth required)
-
-Both endpoints are fully registered in `routes.php` (lines 98-99) and delegate directly to PublicationService. Unlike the main federation list/detail endpoints, these do NOT include federated source searching -- they only serve local files. This is by design since file content cannot be meaningfully aggregated from remote sources.
-
-## Scenarios
-
-### Scenario: Federated publication list with aggregation
-- GIVEN local catalogs contain 50 publications
-- AND a remote directory at "https://remote.example.nl" is configured with `integrationLevel: "search"`
-- WHEN a GET request is made to `/api/federation/publications?_search=opendata`
-- THEN PublicationService.getAggregatedPublications() is called
-- AND local results are fetched from all configured catalogs
-- AND remote results are fetched via async HTTP GET to the remote directory's publication endpoint
-- AND results are merged, deduplicated, and paginated
-- AND facets from all sources are merged
-- AND a unified response is returned
-
-### Scenario: Get federated single publication
-- GIVEN a publication UUID "abc-123" exists on a remote instance
-- WHEN a GET request is made to `/api/federation/publications/abc-123`
-- THEN PublicationService.getFederatedPublication() first searches local catalogs
-- AND if not found locally, queries remote directories
-- AND returns the publication from whichever source has it
-- AND returns 404 if not found in any source
-
-### Scenario: Federation endpoints are public
-- GIVEN no authentication is provided
-- WHEN any federation endpoint is called
-- THEN the request succeeds (endpoints have @PublicPage, @NoCSRFRequired, @NoAdminRequired)
-- AND the response includes appropriate data or error messages
-
-### Scenario: Federated search with result merging
-- GIVEN local Elasticsearch returns 10 results with scores 0.9-0.5
-- AND a remote directory returns 5 results with scores 0.8-0.3
-- WHEN results are merged
-- THEN all 15 results are combined
-- AND sorted by _score descending
-- AND the top results may interleave local and remote items
-
-### Scenario: Federation attachments (local-only)
-- GIVEN a publication "abc-123" exists locally with 3 attachments
-- WHEN GET `/api/federation/publications/abc-123/attachments` is called
-- THEN PublicationService.attachments() is called with the publication ID
-- AND local file metadata is returned (no federated search for attachments)
-
-## Dependencies
-
-- **PublicationService** - getAggregatedPublications(), getFederatedPublication(), getFederatedUses(), getFederatedUsed(), attachments(), download(); also handles federated search, async HTTP to remote directories, facet merging, and result sorting
-- **DirectoryService** - Provides listing data for remote instances
-- **Listings** - Listing objects with `integrationLevel` determine which remote sources to include
-- **GuzzleHttp** - Async HTTP client for parallel requests to remote directories
+- OR outbound webhook retry policy (upstream dependency)
+- `.claude/audit-2026-05-03/04-hardcoded.md` (Stream 4 — hardcoded constants rationale)
+- `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 8 implementation change)
+- `openspec/specs/admin-settings/spec.md` (broadcast_max_retries / broadcast_request_timeout inventory)
+- `openspec/specs/search/spec.md` (zoeken-filteren delegation for federated search)
+- ADR-022 — Apps consume OR abstractions

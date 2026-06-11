@@ -49,6 +49,7 @@
 		"phpqa": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa",
 		"phpqa:full": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs:0,phpmd:0,phploc:0,phpmetrics,phpcpd:0,parallel-lint:0",
 		"phpqa:ci": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs,phpmd,phploc,phpmetrics,phpcpd,parallel-lint",
+		"check:strict": "@lint && @cs:check && @phpmd && @psalm && @phpstan",
 		"qa:check": [
 			"@phpqa"
 		],
@@ -57,7 +58,7 @@
 		]
 	},
 	"require": {
-		"php": "^8.1",
+		"php": "^8.3",
 		"ext-zip": "*",
 		"adbario/php-dot-notation": "^3.3.0",
 		"bamarni/composer-bin-plugin": "^1.8",
@@ -68,7 +69,8 @@
 		"react/promise": "^3.0",
 		"symfony/process": "^6.4.33",
 		"symfony/twig-bundle": "^6.4",
-		"symfony/uid": "^6.4"
+		"symfony/uid": "^6.4",
+		"twig/twig": "^3.27.0"
 	},
 	"require-dev": {
 		"cyclonedx/cyclonedx-php-composer": "^6.2",
@@ -94,7 +96,7 @@
 		"optimize-autoloader": true,
 		"sort-packages": true,
 		"platform": {
-			"php": "8.1"
+			"php": "8.3"
 		}
 	},
 	"extra": {

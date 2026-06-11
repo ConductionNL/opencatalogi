@@ -6,22 +6,61 @@ status: reviewed
 
 ## Purpose
 
+@e2e exclude pure backend/API spec — all scenarios test server-side PHP XML sitemap generation, DIWOO metadata mapping, robots.txt rendering, and catalog schema queries; no browser-observable UI surface; covered by Newman API tests instead.
+
 OpenCatalogi supports Dutch WOO (Wet Open Overheid) compliance by generating XML sitemaps and robots.txt files that conform to the DIWOO metadata standard. This enables government organizations to make their publications discoverable by the Dutch government's central search index (KOOP/DIWOO). Sitemaps are generated per catalog and per WOO information category (informatiecategorie), mapping publications to the DIWOO XML schema with proper metadata including creation dates, publishers, file formats, and document handling information.
 
 ## Requirements
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| WOO-001 | Generate XML sitemap index per catalog per WOO information category | Must | Implemented |
-| WOO-002 | Generate XML sitemap with DIWOO Document metadata for publications | Must | Implemented |
-| WOO-003 | Support all 17 WOO information categories (informatiecategorieen) | Must | Implemented |
-| WOO-004 | Generate robots.txt with sitemap URLs for all WOO-enabled catalogs | Must | Implemented |
-| WOO-005 | Paginate sitemaps (max 1000 entries per page) | Must | Implemented |
-| WOO-006 | Map publication + file metadata to DIWOO Document XML structure | Must | Implemented |
-| WOO-007 | Validate that requested category belongs to the catalog's schemas | Must | Implemented |
-| WOO-008 | Only catalogs with `hasWooSitemap: true` appear in robots.txt | Must | Bug (RobotsController does NOT check hasWooSitemap) |
-| WOO-009 | All sitemap/robots endpoints are public | Must | Implemented |
-| WOO-010 | Include file metadata: download URL, format, creation date, publisher, handling type | Must | Implemented |
+### Requirement: Generate XML sitemap index per catalog per WOO information category (WOO-001)
+The system MUST generate an XML sitemap index per catalog per WOO information category.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Generate XML sitemap with DIWOO Document metadata for publications (WOO-002)
+The system MUST generate an XML sitemap with DIWOO Document metadata for publications.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Support all 17 WOO information categories (informatiecategorieen) (WOO-003)
+The system MUST support all 17 WOO information categories (informatiecategorieen).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Generate robots.txt with sitemap URLs for all WOO-enabled catalogs (WOO-004)
+The system MUST generate a robots.txt with sitemap URLs for all WOO-enabled catalogs.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Paginate sitemaps (max 1000 entries per page) (WOO-005)
+The system MUST paginate sitemaps (max 1000 entries per page).
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Map publication + file metadata to DIWOO Document XML structure (WOO-006)
+The system MUST map publication + file metadata to the DIWOO Document XML structure.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Validate that requested category belongs to the catalog's schemas (WOO-007)
+The system MUST validate that the requested category belongs to the catalog's schemas.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Only catalogs with `hasWooSitemap: true` appear in robots.txt (WOO-008)
+Only catalogs with `hasWooSitemap: true` MUST appear in robots.txt.
+
+**Priority:** Must **Status:** Bug (RobotsController does NOT check hasWooSitemap)
+
+### Requirement: All sitemap/robots endpoints are public (WOO-009)
+All sitemap/robots endpoints MUST be public.
+
+**Priority:** Must **Status:** Implemented
+
+### Requirement: Include file metadata: download URL, format, creation date, publisher, handling type (WOO-010)
+The system MUST include file metadata: download URL, format, creation date, publisher, handling type.
+
+**Priority:** Must **Status:** Implemented
 
 ## Data Model
 

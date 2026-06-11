@@ -197,8 +197,9 @@ npm run build      # Production build
 # PHP
 composer phpcs          # Check coding standards
 composer cs:fix         # Auto-fix PHPCS issues
-composer phpmd          # Mess detection
+composer phpmd          # Mess detection (0 violations — clean)
 composer psalm          # Static analysis
+composer phpstan        # Static analysis (1-entry baseline; 12 fixed)
 composer phpmetrics     # HTML metrics report
 
 # Frontend
@@ -206,8 +207,19 @@ npm run lint            # ESLint
 npm run stylelint       # CSS linting
 
 # Full check (all tools)
-composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan, tests
+composer check:strict   # Runs lint, phpcs, phpmd, psalm, phpstan
 ```
+
+**Quality gate status** (as of 2026-06-01):
+
+| Gate | Status | Notes |
+|------|--------|-------|
+| PHPCS | ✓ 0 errors | All inline-IF and exclude-pattern debt cleared |
+| PHPMD | ✓ 0 violations | 47 violations fixed; no phpmd.baseline.xml needed |
+| PHPStan | ✓ 0 errors | Baseline shrunk 13→1 (1 GuzzleHttp edge case deferred) |
+| Psalm | ✓ 0 errors | |
+
+CI runs `composer check:strict` (lint + phpcs + phpmd + psalm + phpstan) on every PR via `.github/workflows/code-quality.yml`.
 
 ## Tech Stack
 

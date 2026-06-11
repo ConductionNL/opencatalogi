@@ -12,9 +12,17 @@
  * @copyright 2025 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -117,6 +125,8 @@ class SitemapService
      * @return XMLResponse The sitemap index XML response.
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -149,11 +159,13 @@ class SitemapService
         // First call: only to retrieve total publications count.
         $firstPage = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
         );
 
+        // Visibility is governed by RBAC above (_rbac: true) — sitemaps expose only the
+        // published objects the public group may read.
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
         if (empty($firstPage['results']) === true) {
@@ -189,11 +201,12 @@ class SitemapService
 
             $batch = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                _rbac: false,
+                _rbac: true,
                 _multitenancy: false,
                 deleted: false
             );
 
+            // Visibility governed by RBAC on the paginated search above (_rbac: true).
             $next    = $batch['next'] ?? null;
             $results = ($batch['results'] ?? []);
 
@@ -231,6 +244,8 @@ class SitemapService
      * @param integer $page         The page number to retrieve.
      *
      * @return XMLResponse The publications sitemap XML response.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
      */
     public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
@@ -256,12 +271,15 @@ class SitemapService
         $searchQuery['_limit']            = $this::MAX_PER_PAGE;
         $searchQuery['_page'] = $page;
 
-        $publications = ($objectService->searchObjectsPaginated(
+        $publicationResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
-        )['results'] ?? []);
+        );
+
+        // Visibility governed by RBAC on the search above (_rbac: true).
+        $publications = ($publicationResult['results'] ?? []);
 
         $fileService = $this->getFileService();
 
@@ -328,6 +346,11 @@ class SitemapService
      * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
      *
      * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
      */
     private function isValidSitemapRequest(
         string $catalogSlug,
@@ -392,12 +415,15 @@ class SitemapService
             'hasWooSitemap' => true,
         ];
 
-        $catalog = ($objectService->searchObjectsPaginated(
+        $catalogResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
-        )['results'][0] ?? []);
+        );
+
+        // Visibility governed by RBAC on the search above (_rbac: true).
+        $catalog = ($catalogResult['results'][0] ?? []);
 
         if (empty($catalog) === true) {
             return new XMLResponse('Invalid Woo catalog', 400);
@@ -421,6 +447,8 @@ class SitemapService
      * @param array $file        The file metadata belonging to that publication
      *
      * @return array A DIWOO metadata array ready for XMLResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
      */
     private function mapDiwooDocument(array $publication, array $file): array
     {

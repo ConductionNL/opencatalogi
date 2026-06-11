@@ -59,6 +59,9 @@ import { getPublicationStatus } from '../services/publicationStatus.js'
 import PublishedIcon from './PublishedIcon.vue'
 import getValidISOstring from '../services/getValidISOstring.js'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ */
 export default {
 	name: 'PublicationCard',
 	components: {
@@ -82,20 +85,25 @@ export default {
 		},
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		status() {
 			return getPublicationStatus(this.object)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		title() {
 			return this.object['@self']?.name || this.object.title || this.object.name || this.object.id || '—'
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		summary() {
 			return this.object.summary || null
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		truncatedSummary() {
 			if (!this.summary) return null
 			if (this.summary.length > 120) return this.summary.substring(0, 120) + '...'
 			return this.summary
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		filesCount() {
 			const countFromSelf = this.object?.['@self']?.filesCount
 				|| this.object?.['@self']?.attachmentsCount
@@ -109,6 +117,7 @@ export default {
 	},
 	methods: {
 		t,
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		formatDate(dateString) {
 			if (!dateString) return 'N/A'
 			if (!getValidISOstring(dateString)) return dateString

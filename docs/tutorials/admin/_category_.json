@@ -1,0 +1,8 @@
+{
+	"label": "Admin track",
+	"position": 2,
+	"link": {
+		"type": "generated-index",
+		"description": "Walkthroughs for whoever runs OpenCatalogi: configure a catalogue, manage federation sources, and tune instance-wide options from the Nextcloud admin settings page."
+	}
+}

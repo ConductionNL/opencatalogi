@@ -11,15 +11,21 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
  */
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Http\TextResponse;
+use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\AppFramework\Controller;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -28,13 +34,13 @@ use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use OCA\OpenCatalogi\Service\SitemapService;
 use RuntimeException;
 
 /**
  * Controller for generating robots.txt content.
  *
- * @psalm-suppress UnusedClass
+ * @psalm-suppress                                 UnusedClass
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class RobotsController extends Controller
 {
@@ -75,9 +81,10 @@ class RobotsController extends Controller
      *
      * @return TextResponse The robots.txt response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
      */
     public function index(): TextResponse
     {
@@ -96,12 +103,17 @@ class RobotsController extends Controller
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
         $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
 
-        $catalogs = ($this->getObjectService()->searchObjectsPaginated(
+        // Rbac=true enforces schema authorization; multi=false for public robots.txt.
+        $catalogResult = $this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
-        )['results'] ?? []);
+        );
+
+        // Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
+        // references only catalogs the public group may read.
+        $catalogs = ($catalogResult['results'] ?? []);
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
@@ -130,9 +142,12 @@ class RobotsController extends Controller
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {

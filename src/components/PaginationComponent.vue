@@ -80,6 +80,7 @@ import { NcButton, NcSelect } from '@nextcloud/vue'
  * @copyright 2024 Conduction B.V.
  * @license EUPL-1.2
  * @version 1.0.0
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
  */
 export default {
 	name: 'PaginationComponent',
@@ -156,6 +157,7 @@ export default {
 		 * Get current page size option object
 		 * @return {object} Current page size option object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		currentPageSizeOption() {
 			return this.pageSizeOptions.find(option => option.value === this.currentPageSize) || this.pageSizeOptions[1]
 		},
@@ -163,6 +165,7 @@ export default {
 		 * Calculate visible page numbers for pagination
 		 * @return {Array} Array of page numbers and ellipsis
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		visiblePages() {
 			const current = this.currentPage
 			const total = this.totalPages
@@ -210,6 +213,7 @@ export default {
 		 * @param {number} page - The page number to change to
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		changePage(page) {
 			if (page !== this.currentPage && page >= 1 && page <= this.totalPages) {
 				/**
@@ -225,6 +229,7 @@ export default {
 		 * @param {object} option - Selected page size option
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		changePageSize(option) {
 			if (option.value !== this.currentPageSize) {
 				/**

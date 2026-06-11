@@ -6,9 +6,11 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -28,11 +30,13 @@ class PublicationsControllerTest extends TestCase
     private IRequest|MockObject $request;
     private PublicationService|MockObject $publicationService;
     private CatalogiService|MockObject $catalogiService;
+    private PublicationQueryService|MockObject $queryService;
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
     private LoggerInterface|MockObject $logger;
     private IDBConnection|MockObject $db;
     private IL10N|MockObject $l10n;
+    private IAppConfig|MockObject $appConfig;
     private PublicationsController $controller;
 
     protected function setUp(): void
@@ -40,25 +44,94 @@ class PublicationsControllerTest extends TestCase
         $this->request            = $this->createMock(IRequest::class);
         $this->publicationService = $this->createMock(PublicationService::class);
         $this->catalogiService    = $this->createMock(CatalogiService::class);
+        $this->queryService       = $this->createMock(PublicationQueryService::class);
         $this->container          = $this->createMock(ContainerInterface::class);
         $this->appManager         = $this->createMock(IAppManager::class);
         $this->logger             = $this->createMock(LoggerInterface::class);
         $this->db                 = $this->createMock(IDBConnection::class);
         $this->l10n               = $this->createMock(IL10N::class);
+        $this->appConfig          = $this->createMock(IAppConfig::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text, array $params = []) => $text);
+
+        // CORS allowlist defaults to '*' (wildcard) unless a test overrides it.
+        $this->appConfig->method('getValueString')
+            ->willReturnCallback(fn(string $app, string $key, string $default = '') => $default);
+
+        // Default query-service behaviour: the search query and result shaping are
+        // pass-throughs and schema/register resolution is empty. Object visibility is
+        // enforced by OpenRegister RBAC (not by the controller), so there is no
+        // published-predicate collaborator to stub here.
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        // findObjectInCatalog defaults to "found" so the attachments/download happy
+        // paths proceed; the not-found/exception tests rebuild the controller with a
+        // query service that returns null (or whose collaborators throw).
+        $this->queryService->method('findObjectInCatalog')
+            ->willReturn($this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class));
 
         $this->controller = new PublicationsController(
             'opencatalogi',
             $this->request,
             $this->publicationService,
             $this->catalogiService,
+            $this->queryService,
             $this->container,
             $this->appManager,
             $this->logger,
-            $this->db,
-            $this->l10n
+            $this->l10n,
+            $this->appConfig
+        );
+    }
+
+    /**
+     * Rebuilds $this->queryService and the controller so findObjectInCatalog either
+     * returns null (object not in catalog) or throws the supplied exception. Used by
+     * the attachments/download not-found and error-path tests, whose object lookup
+     * now lives in PublicationQueryService rather than the controller.
+     *
+     * @param \Throwable|null $throw When set, findObjectInCatalog throws it; otherwise it returns null.
+     */
+    private function stubFindObjectInCatalog(?\Throwable $throw = null): void
+    {
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        if ($throw !== null) {
+            $this->queryService->method('findObjectInCatalog')->willThrowException($throw);
+        } else {
+            $this->queryService->method('findObjectInCatalog')->willReturn(null);
+        }
+
+        $this->controller = $this->newControllerWithQueryService();
+    }
+
+    /**
+     * Rebuilds the controller using the current $this->queryService mock. Used by
+     * tests that need to re-stub query-service behaviour after setUp().
+     */
+    private function newControllerWithQueryService(): PublicationsController
+    {
+        return new PublicationsController(
+            'opencatalogi',
+            $this->request,
+            $this->publicationService,
+            $this->catalogiService,
+            $this->queryService,
+            $this->container,
+            $this->appManager,
+            $this->logger,
+            $this->l10n,
+            $this->appConfig
         );
     }
 
@@ -668,25 +741,17 @@ class PublicationsControllerTest extends TestCase
         $mockObjService->method('renderEntity')
             ->willReturn(['id' => 'pub-fallback']);
 
-        // Mock findObjectLocation: mock DB to return a table with matching UUID
-        $tableResult = $this->createMock(\OCP\DB\IResult::class);
-        $tableResult->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['table_name' => 'oc_openregister_table_2_3'],
-                false
-            );
-        $tableResult->method('closeCursor');
-
-        $locationResult = $this->createMock(\OCP\DB\IResult::class);
-        $locationResult->method('fetch')
-            ->willReturn(['register_id' => 2, 'schema_id' => 3]);
-        $locationResult->method('closeCursor');
-
-        $this->db->method('executeQuery')
-            ->willReturnOnConsecutiveCalls($tableResult, $locationResult);
-
-        $this->db->method('quote')
-            ->willReturn("'pub-fallback'");
+        // The query service resolves the object's register/schema across the magic
+        // tables; the controller then re-queries ObjectService with that location.
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')
+            ->willReturn(['register' => 2, 'schema' => 3]);
+        $this->controller = $this->newControllerWithQueryService();
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -754,6 +819,46 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(404, $response->getStatus());
     }
 
+    /**
+     * Security (#737): an anonymous caller must not be able to retrieve an object that
+     * OpenRegister RBAC does not grant them. Visibility is enforced inside the _rbac: true
+     * searches, so a denied object (e.g. an unpublished publication) resolves to an empty
+     * result and the controller reports 404 — it never discloses the object.
+     */
+    public function testShowDeniesAnonymousAccessToRbacDeniedObject(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Test',
+                'schemas'   => [1],
+                'registers' => [1],
+            ]);
+
+        // RBAC denies the object to this (anonymous) caller, so the _rbac: true search
+        // returns nothing — the controller must treat it as not found.
+        $mockObjService->method('searchObjects')
+            ->willReturn([]);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+        $this->request->server = [];
+
+        $response = $this->controller->show('test-catalog', 'pub-secret');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
     // =======================================================================
     // attachments() — success path
     // =======================================================================
@@ -794,8 +899,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -814,8 +918,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \Exception('Unexpected error'));
+        $this->stubFindObjectInCatalog(new \Exception('Unexpected error'));
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -859,9 +962,8 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        // find throws DoesNotExist for all schemas
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        // findObjectInCatalog throws DoesNotExist (object absent from every schema).
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -881,8 +983,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [],
             ]);
 
-        $mockObjService->method('find')
-            ->willReturn(null);
+        $this->stubFindObjectInCatalog();
 
         $response = $this->controller->attachments('test-catalog', 'pub-123');
 
@@ -933,8 +1034,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->download('test-catalog', 'pub-123');
 
@@ -953,8 +1053,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \Exception('Unexpected'));
+        $this->stubFindObjectInCatalog(new \Exception('Unexpected'));
 
         $response = $this->controller->download('test-catalog', 'pub-123');
 
@@ -997,8 +1096,7 @@ class PublicationsControllerTest extends TestCase
                 'registers' => [1],
             ]);
 
-        $mockObjService->method('find')
-            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+        $this->stubFindObjectInCatalog(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
         $response = $this->controller->download('test-catalog', 'pub-123');
 
@@ -1233,11 +1331,12 @@ class PublicationsControllerTest extends TestCase
             $this->request,
             $this->publicationService,
             $this->catalogiService,
+            $this->queryService,
             $this->container,
             $this->appManager,
             $this->logger,
-            $this->db,
             $this->l10n,
+            $this->appConfig,
             'GET, POST',
             'Authorization',
             3600
@@ -1250,5 +1349,305 @@ class PublicationsControllerTest extends TestCase
         $response = $controller->preflightedCors();
 
         $this->assertInstanceOf(Response::class, $response);
+    }
+
+    // =======================================================================
+    // #732 — extend allowlist + breadth cap on public show()
+    // =======================================================================
+
+    /**
+     * Security (#732): a non-'@self.'-prefixed extend entry must be stripped before
+     * reaching ObjectService::renderEntity. The public endpoint must only traverse
+     * relations under @self.* — never arbitrary properties.
+     */
+    public function testShowStripsNonSelfExtendOnPublicEndpoint(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn(['title' => 'T', 'schemas' => [1], 'registers' => [1]]);
+
+        $mockObj = $this->createObjectEntityMock(register: 1, schema: 1);
+        $mockObjService->method('searchObjects')->willReturn([$mockObj]);
+
+        $captured = [];
+        $mockObjService->method('renderEntity')
+            ->willReturnCallback(function (...$args) use (&$captured) {
+                // Named args land as a single assoc array on PHP positional call.
+                $captured[] = func_get_args();
+                return ['id' => 'pub-123'];
+            });
+
+        $this->request->method('getParams')
+            ->willReturn(['_extend' => ['@self.files', 'parent', 'children', '@self.metadata']]);
+
+        $this->request->server = [];
+
+        $response = $this->controller->show('test-catalog', 'pub-123');
+
+        $this->assertEquals(200, $response->getStatus());
+        // Inspect the rendered-entity call: only '@self.'-prefixed entries should survive.
+        $this->assertGreaterThan(0, count($captured));
+        $renderArgs = $captured[0];
+        // The _extend arg is the 2nd positional one.
+        $extendArg = $renderArgs[1];
+        $this->assertContains('@self.files', $extendArg);
+        $this->assertContains('@self.metadata', $extendArg);
+        $this->assertNotContains('parent', $extendArg);
+        $this->assertNotContains('children', $extendArg);
+    }
+
+    /**
+     * Security (#732): extend breadth is capped to MAX_PUBLIC_EXTEND (5) to prevent
+     * N+1 amplification on the public endpoint.
+     */
+    public function testShowCapsExtendBreadthAtFive(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn(['title' => 'T', 'schemas' => [1], 'registers' => [1]]);
+
+        $mockObj = $this->createObjectEntityMock(register: 1, schema: 1);
+        $mockObjService->method('searchObjects')->willReturn([$mockObj]);
+
+        $captured = [];
+        $mockObjService->method('renderEntity')
+            ->willReturnCallback(function (...$args) use (&$captured) {
+                $captured[] = $args;
+                return ['id' => 'pub-123'];
+            });
+
+        // Twelve valid '@self.' entries — only five should survive the cap.
+        $extend = [];
+        for ($i = 0; $i < 12; $i++) {
+            $extend[] = '@self.field'.$i;
+        }
+
+        $this->request->method('getParams')->willReturn(['_extend' => $extend]);
+        $this->request->server = [];
+
+        $response = $this->controller->show('test-catalog', 'pub-123');
+
+        $this->assertEquals(200, $response->getStatus());
+        $this->assertCount(5, $captured[0][1]);
+    }
+
+    // =======================================================================
+    // #733 — catalog-membership validation on show()
+    // =======================================================================
+
+    /**
+     * Security (#733): when the resolved object's register/schema is NOT in the
+     * requested catalog's scope, show() MUST return 404 — never disclose the object.
+     */
+    public function testShowReturns404WhenObjectOutsideCatalogScope(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Catalog A',
+                'schemas'   => [10],
+                'registers' => [20],
+            ]);
+
+        // Object belongs to a DIFFERENT register/schema than the catalog's scope.
+        $foreignObject = $this->createObjectEntityMock(register: 99, schema: 99);
+
+        // Fast-path searchObjects returns nothing (since the catalog scope is 20/10).
+        // The fallback then finds the foreign object via findObjectLocation.
+        $callCount = 0;
+        $mockObjService->method('searchObjects')
+            ->willReturnCallback(function () use (&$callCount, $foreignObject) {
+                $callCount++;
+                // Fast path empty; fallback returns the foreign-scope object.
+                return ($callCount === 1 ? [] : [$foreignObject]);
+            });
+
+        // Stub findObjectLocation to claim the object is in the catalog's scope so we
+        // exercise the post-lookup membership check (not the upstream constraint).
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $d) => $d);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')
+            ->willReturn(['register' => 20, 'schema' => 10]);
+        $this->controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+        $this->request->server = [];
+
+        $response = $this->controller->show('catalog-a', 'foreign-uuid');
+
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    // =======================================================================
+    // #734 — findObjectLocation must NOT be called platform-wide on show()
+    // =======================================================================
+
+    /**
+     * Security (#734): findObjectLocation must be invoked WITH catalog-scope
+     * constraints, never as an unbounded platform-wide lookup.
+     */
+    public function testShowCallsFindObjectLocationWithCatalogScope(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Catalog',
+                'schemas'   => [11, 12],
+                'registers' => [21],
+            ]);
+
+        $mockObjService->method('searchObjects')->willReturn([]);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $d) => $d);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+
+        // The controller MUST call findObjectLocation with the catalog's scope
+        // (allowedRegisters + allowedSchemas), never with just $uuid alone.
+        $this->queryService->expects($this->atLeastOnce())
+            ->method('findObjectLocation')
+            ->with(
+                $this->equalTo('missing-id'),
+                $this->equalTo([21]),
+                $this->equalTo([11, 12])
+            )
+            ->willReturn(null);
+
+        $this->controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+        $this->request->server = [];
+
+        $response = $this->controller->show('any-slug', 'missing-id');
+
+        // Object not found — 404. The point is the call-shape assertion above.
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    /**
+     * Security (#734): show() must NOT invoke findObjectLocation at all when the
+     * catalog has no configured registers/schemas — an unscoped catalog cannot be
+     * used as a platform-wide namespace.
+     */
+    public function testShowSkipsFindObjectLocationForUnscopedCatalog(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Empty',
+                'schemas'   => [],
+                'registers' => [],
+            ]);
+
+        $mockObjService->method('searchObjects')->willReturn([]);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $d) => $d);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+
+        // findObjectLocation MUST NOT be called for an unscoped catalog.
+        $this->queryService->expects($this->never())
+            ->method('findObjectLocation');
+
+        $this->controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+        $this->request->server = [];
+
+        $response = $this->controller->show('unscoped-catalog', 'any-uuid');
+
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    // =======================================================================
+    // #735 — CORS Origin allowlist + generic error responses
+    // =======================================================================
+
+    /**
+     * Security (#735): when the allowlist is configured (non-'*'), an attacker-
+     * controlled Origin must NOT be reflected back in Access-Control-Allow-Origin.
+     */
+    public function testIndexDoesNotReflectArbitraryOriginWhenAllowlistConfigured(): void
+    {
+        $this->appConfig = $this->createMock(IAppConfig::class);
+        $this->appConfig->method('getValueString')
+            ->willReturnCallback(function (string $app, string $key, string $default = '') {
+                return match ($key) {
+                    'cors_allowed_origins' => 'https://trusted.example',
+                    default                => $default,
+                };
+            });
+        $this->controller = $this->newControllerWithQueryService();
+
+        $mockObjService = $this->mockObjectService();
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn(['title' => 'T', 'schemas' => [1], 'registers' => [1]]);
+        $mockObjService->method('buildSearchQuery')->willReturn([]);
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturn(['results' => [], 'total' => 0]);
+        $this->request->method('getParams')->willReturn([]);
+        $this->request->method('getHeader')
+            ->with('Origin')
+            ->willReturn('https://evil.attacker.test');
+        $this->request->server = ['HTTP_ORIGIN' => 'https://evil.attacker.test'];
+
+        $response = $this->controller->index('test');
+
+        $this->assertSame(
+            'https://trusted.example',
+            $response->getHeaders()['Access-Control-Allow-Origin']
+        );
+    }
+
+    /**
+     * Security (#735): a public 500 response must NOT leak the raw exception message.
+     */
+    public function testShowReturns500WithoutLeakingExceptionMessage(): void
+    {
+        $secretMessage = 'PDOException: SQLSTATE[42S22] internal_table.column at /var/www/secret.php:99';
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willThrowException(new \Exception($secretMessage));
+
+        $response = $this->controller->show('test-catalog', 'pub-123');
+
+        $this->assertSame(500, $response->getStatus());
+        $body = json_encode($response->getData());
+        $this->assertStringNotContainsString($secretMessage, (string) $body);
+        $this->assertStringNotContainsString('PDOException', (string) $body);
+        $this->assertStringNotContainsString('/var/www', (string) $body);
+    }
+
+    /**
+     * Security (#735): a public 500 on index() must NOT leak the raw exception message.
+     */
+    public function testIndexReturns500WithoutLeakingExceptionMessage(): void
+    {
+        $secretMessage = 'PDOException: internal-server-hostname:1234 leaked';
+
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willThrowException(new \Exception($secretMessage));
+
+        $response = $this->controller->index('test-catalog');
+
+        $this->assertSame(500, $response->getStatus());
+        $body = json_encode($response->getData());
+        $this->assertStringNotContainsString($secretMessage, (string) $body);
+        $this->assertStringNotContainsString('internal-server-hostname', (string) $body);
     }
 }

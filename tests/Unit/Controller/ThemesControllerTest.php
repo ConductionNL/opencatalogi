@@ -29,10 +29,10 @@ class ThemesControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->request    = $this->createMock(IRequest::class);
-        $this->config     = $this->createMock(IAppConfig::class);
-        $this->container  = $this->createMock(ContainerInterface::class);
-        $this->appManager = $this->createMock(IAppManager::class);
+        $this->request      = $this->createMock(IRequest::class);
+        $this->config       = $this->createMock(IAppConfig::class);
+        $this->container    = $this->createMock(ContainerInterface::class);
+        $this->appManager   = $this->createMock(IAppManager::class);
 
         $this->controller = new ThemesController(
             'opencatalogi',
@@ -87,6 +87,7 @@ class ThemesControllerTest extends TestCase
             ->willReturnMap([
                 ['opencatalogi', 'theme_schema', '', '10'],
                 ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
             ]);
 
         $this->request->method('getParams')
@@ -118,6 +119,7 @@ class ThemesControllerTest extends TestCase
             ->willReturnMap([
                 ['opencatalogi', 'theme_schema', '', ''],
                 ['opencatalogi', 'theme_register', '', ''],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
             ]);
 
         $this->request->method('getParams')

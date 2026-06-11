@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * Unit tests for DownloadService.
+ *
+ * Covers publication PDF generation, saving to NextCloud via the OR shares leaf,
+ * ZIP creation, and attachment enumeration.
+ *
+ * @category Test
+ * @package  Unit\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -11,18 +27,38 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\Share\IShare;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionClass;
 
 /**
  * Unit tests for the DownloadService class.
+ *
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  */
 class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 {
+
+    // phpcs:disable CustomSniffs.Functions.NamedParameters
+
+    /**
+     * Service under test.
+     *
+     * @var DownloadService
+     */
     private DownloadService $downloadService;
+
+    /**
+     * FileService mock.
+     *
+     * @var FileService&MockObject
+     */
     private FileService&MockObject $fileService;
 
+    /**
+     * Sets up mocks and instantiates DownloadService.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->fileService = $this->createMock(FileService::class);
@@ -30,50 +66,67 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $this->downloadService = new DownloadService(
             $this->fileService
         );
-    }
+
+    }//end setUp()
 
     /**
-     * Helper to invoke a private method via reflection.
+     * Invokes a private method via reflection.
+     *
+     * @param string $method     The method name.
+     * @param array  $parameters Parameters to pass.
+     *
+     * @return mixed
      */
-    private function invokePrivateMethod(string $method, array $parameters = []): mixed
+    private function invokePrivateMethod(string $method, array $parameters=[]): mixed
     {
         $reflection = new ReflectionClass($this->downloadService);
         $method     = $reflection->getMethod($method);
         $method->setAccessible(true);
 
         return $method->invokeArgs($this->downloadService, $parameters);
-    }
+
+    }//end invokePrivateMethod()
 
     /**
-     * Create a mock ObjectService with find returning appropriate entities.
+     * Creates a mock ObjectService.
+     *
+     * @return ObjectService&MockObject
      */
-    private function createObjectServiceMock(): ObjectService|MockObject
+    private function createObjectServiceMock(): ObjectService&MockObject
     {
         return $this->createMock(ObjectService::class);
-    }
+
+    }//end createObjectServiceMock()
 
     /**
-     * Create an ObjectEntity from array data.
+     * Creates an ObjectEntity populated from an array.
+     *
+     * @param array $data The data to populate the entity with.
+     *
+     * @return ObjectEntity
      */
     private function createObjectEntityFromData(array $data): ObjectEntity
     {
         $entity = new ObjectEntity();
-        if (isset($data['id'])) {
+        if (isset($data['id']) === true) {
             $entity->setUuid((string) $data['id']);
         }
+
         $entity->setObject($data);
         return $entity;
-    }
 
-    // -------------------------------------------------------------------------
-    // getPublicationData (private)
-    // -------------------------------------------------------------------------
+    }//end createObjectEntityFromData()
 
+    /**
+     * Returns deserialized data when the entity is found.
+     *
+     * @return void
+     */
     public function testGetPublicationDataSuccess(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $pubData = ['id' => '42', 'title' => 'Test Publication'];
-        $entity = $this->createObjectEntityFromData($pubData);
+        $pubData       = ['id' => '42', 'title' => 'Test Publication'];
+        $entity        = $this->createObjectEntityFromData($pubData);
 
         $objectService->method('find')
             ->with('42')
@@ -82,8 +135,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $result = $this->invokePrivateMethod('getPublicationData', ['42', $objectService]);
         $this->assertIsArray($result);
         $this->assertSame('42', $result['id']);
-    }
 
+    }//end testGetPublicationDataSuccess()
+
+    /**
+     * Returns 500 JSON response when entity is not found.
+     *
+     * @return void
+     */
     public function testGetPublicationDataNotFound(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -94,12 +153,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $result = $this->invokePrivateMethod('getPublicationData', ['999', $objectService]);
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
-    // -------------------------------------------------------------------------
-    // createPublicationFile
-    // -------------------------------------------------------------------------
+    }//end testGetPublicationDataNotFound()
 
+    /**
+     * Returns 500 when both download and saveToNextCloud options are false.
+     *
+     * @return void
+     */
     public function testCreatePublicationFileBothOptionsFalse(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -112,8 +173,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
+    }//end testCreatePublicationFileBothOptionsFalse()
+
+    /**
+     * Saves to NextCloud and returns download URL when publication is provided.
+     *
+     * @return void
+     */
     public function testCreatePublicationFileWithPublicationProvided(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -132,8 +199,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
             ->willReturn('(1) MyPub');
         $this->fileService->method('updateFile')->willReturn(true);
 
-        $this->fileService->method('findShare')->willReturn(null);
-        $this->fileService->method('createShareLink')
+        $this->fileService->method('createPublicShareLink')
             ->willReturn('https://example.com/index.php/s/token123');
 
         $result = $this->downloadService->createPublicationFile(
@@ -147,8 +213,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $data = $result->getData();
         $this->assertStringContainsString('/download', $data['downloadUrl']);
         $this->assertSame('MyPub.pdf', $data['filename']);
-    }
 
+    }//end testCreatePublicationFileWithPublicationProvided()
+
+    /**
+     * Returns 500 when the publication cannot be fetched.
+     *
+     * @return void
+     */
     public function testCreatePublicationFileFetchFails(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -164,8 +236,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
+    }//end testCreatePublicationFileFetchFails()
+
+    /**
+     * Sends file to browser download when saveToNextCloud is false.
+     *
+     * @return void
+     */
     public function testCreatePublicationFileDownloadOnlySaveToNextCloudFalse(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -187,12 +265,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(200, $result->getStatus());
         $this->assertEmpty($result->getData());
-    }
 
-    // -------------------------------------------------------------------------
-    // saveFileToNextCloud
-    // -------------------------------------------------------------------------
+    }//end testCreatePublicationFileDownloadOnlySaveToNextCloudFalse()
 
+    /**
+     * Stores a file and returns a share link URL.
+     *
+     * @return void
+     */
     public function testSaveFileToNextCloudSuccess(): void
     {
         $publication = ['id' => '10', 'title' => 'SaveTest'];
@@ -205,17 +285,22 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
             ->willReturn('(10) SaveTest');
 
         $this->fileService->method('updateFile')->willReturn(true);
-        $this->fileService->method('findShare')->willReturn(null);
-        $this->fileService->method('createShareLink')
+        $this->fileService->method('createPublicShareLink')
             ->willReturn('https://example.com/index.php/s/sharetoken');
 
         $result = $this->downloadService->saveFileToNextCloud('test.pdf', $publication);
 
         $this->assertIsString($result);
         $this->assertStringContainsString('sharetoken', $result);
-    }
 
-    public function testSaveFileToNextCloudExistingShare(): void
+    }//end testSaveFileToNextCloudSuccess()
+
+    /**
+     * Obtains share URL via the OR shares leaf (ADR-022 / FIL-005).
+     *
+     * @return void
+     */
+    public function testSaveFileToNextCloudShareViaLeaf(): void
     {
         $publication = ['id' => '10', 'title' => 'SaveTest'];
 
@@ -224,18 +309,21 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
             ->willReturn('(10) SaveTest');
         $this->fileService->method('updateFile')->willReturn(true);
 
-        $share = $this->createMock(IShare::class);
-        $this->fileService->method('findShare')->willReturn($share);
-        $this->fileService->method('getShareLink')
-            ->with($share)
-            ->willReturn('https://example.com/index.php/s/existingtoken');
+        $this->fileService->method('createPublicShareLink')
+            ->willReturn('https://example.com/index.php/s/leaftoken');
 
         $result = $this->downloadService->saveFileToNextCloud('test.pdf', $publication);
 
         $this->assertIsString($result);
-        $this->assertStringContainsString('existingtoken', $result);
-    }
+        $this->assertStringContainsString('leaftoken', $result);
 
+    }//end testSaveFileToNextCloudShareViaLeaf()
+
+    /**
+     * Returns 500 when file creation in NextCloud fails.
+     *
+     * @return void
+     */
     public function testSaveFileToNextCloudFileCreationFails(): void
     {
         $publication = ['id' => '10', 'title' => 'FailTest'];
@@ -249,120 +337,69 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
-    // -------------------------------------------------------------------------
-    // createPublicationZip
-    // -------------------------------------------------------------------------
+    }//end testSaveFileToNextCloudFileCreationFails()
 
-    public function testCreatePublicationZipPublicationNotFound(): void
+    /**
+     * Asserts that createPublicationZip no longer exists (removed in wave-3 fix C5).
+     *
+     * The ZIP-creation path was eliminated; callers should use createPublicationFile
+     * directly. These tests document the removal so regressions are caught.
+     *
+     * @return void
+     */
+    public function testCreatePublicationZipMethodDoesNotExist(): void
     {
-        $objectService = $this->createObjectServiceMock();
-        $objectService->method('find')
-            ->willThrowException(new DoesNotExistException('Not found'));
-
-        $result = $this->downloadService->createPublicationZip($objectService, '999');
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
-    }
-
-    public function testCreatePublicationZipPdfCreationFails(): void
-    {
-        $objectService = $this->createObjectServiceMock();
-        $entity = $this->createObjectEntityFromData(['id' => '1', 'title' => 'ZipTest', 'attachments' => []]);
-        $objectService->method('find')
-            ->willReturn($entity);
-
-        $this->fileService->method('createPdf')
-            ->willThrowException(new \Mpdf\MpdfException('PDF generation failed'));
-
-        $this->expectException(\Mpdf\MpdfException::class);
-
-        $this->downloadService->createPublicationZip($objectService, '1');
-    }
-
-    public function testCreatePublicationZipSuccess(): void
-    {
-        $objectService = $this->createObjectServiceMock();
-        $entity = $this->createObjectEntityFromData(['id' => '1', 'title' => 'ZipPub', 'attachments' => []]);
-        $objectService->method('find')
-            ->willReturn($entity);
-
-        $downloadService = $this->getMockBuilder(DownloadService::class)
-            ->setConstructorArgs([$this->fileService])
-            ->onlyMethods(['createPublicationFile'])
-            ->getMock();
-
-        $pdfResponse = new JSONResponse(
-            ['downloadUrl' => 'https://example.com/dl', 'filename' => 'ZipPub.pdf'],
-            200
+        $this->assertFalse(
+            method_exists($this->downloadService, 'createPublicationZip'),
+            'createPublicationZip was removed in wave-3 (C5) and must not be re-introduced.'
         );
 
-        $downloadService->method('createPublicationFile')
-            ->willReturn($pdfResponse);
+    }//end testCreatePublicationZipMethodDoesNotExist()
 
-        $this->fileService->method('createZip')->willReturn(null);
-        $this->fileService->method('downloadZip');
-
-        $result = $downloadService->createPublicationZip($objectService, '1');
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(200, $result->getStatus());
-    }
-
-    public function testCreatePublicationZipCreateZipFails(): void
-    {
-        $objectService = $this->createObjectServiceMock();
-        $entity = $this->createObjectEntityFromData(['id' => '2', 'title' => 'FailZip', 'attachments' => []]);
-        $objectService->method('find')
-            ->willReturn($entity);
-
-        $downloadService = $this->getMockBuilder(DownloadService::class)
-            ->setConstructorArgs([$this->fileService])
-            ->onlyMethods(['createPublicationFile'])
-            ->getMock();
-
-        $pdfResponse = new JSONResponse(
-            ['downloadUrl' => 'https://example.com/dl', 'filename' => 'FailZip.pdf'],
-            200
-        );
-        $downloadService->method('createPublicationFile')->willReturn($pdfResponse);
-
-        $this->fileService->method('createZip')
-            ->willReturn('failed to create ZIP archive');
-
-        $result = $downloadService->createPublicationZip($objectService, '2');
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
-    }
-
-    // -------------------------------------------------------------------------
-    // publicationAttachments
-    // -------------------------------------------------------------------------
-
+    /**
+     * Returns all resolved attachment entities.
+     *
+     * @return void
+     */
     public function testPublicationAttachmentsSuccess(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $pubEntity = $this->createObjectEntityFromData(['id' => '1', 'attachments' => ['a1', 'a2']]);
-        $att1Entity = $this->createObjectEntityFromData(['id' => 'a1', 'title' => 'Att1']);
-        $att2Entity = $this->createObjectEntityFromData(['id' => 'a2', 'title' => 'Att2']);
+        $pubEntity     = $this->createObjectEntityFromData(['id' => '1', 'attachments' => ['a1', 'a2']]);
+        $att1Entity    = $this->createObjectEntityFromData(['id' => 'a1', 'title' => 'Att1']);
+        $att2Entity    = $this->createObjectEntityFromData(['id' => 'a2', 'title' => 'Att2']);
 
         $objectService->method('find')
-            ->willReturnCallback(function ($id) use ($pubEntity, $att1Entity, $att2Entity) {
-                if ($id === '1') return $pubEntity;
-                if ($id === 'a1') return $att1Entity;
-                if ($id === 'a2') return $att2Entity;
-                return null;
-            });
+            ->willReturnCallback(
+                function ($id) use ($pubEntity, $att1Entity, $att2Entity) {
+                    if ($id === '1') {
+                        return $pubEntity;
+                    }
+
+                    if ($id === 'a1') {
+                        return $att1Entity;
+                    }
+
+                    if ($id === 'a2') {
+                        return $att2Entity;
+                    }
+
+                    return null;
+                }
+            );
 
         $result = $this->downloadService->publicationAttachments('1', $objectService);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
-    }
 
+    }//end testPublicationAttachmentsSuccess()
+
+    /**
+     * Returns 500 when the publication lookup throws an exception.
+     *
+     * @return void
+     */
     public function testPublicationAttachmentsException(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -373,12 +410,18 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
+    }//end testPublicationAttachmentsException()
+
+    /**
+     * Accepts integer IDs as publication identifier.
+     *
+     * @return void
+     */
     public function testPublicationAttachmentsIntegerId(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $pubEntity = $this->createObjectEntityFromData(['id' => '42', 'attachments' => []]);
+        $pubEntity     = $this->createObjectEntityFromData(['id' => '42', 'attachments' => []]);
 
         $objectService->method('find')
             ->willReturn($pubEntity);
@@ -387,17 +430,27 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
-    }
 
-    // -------------------------------------------------------------------------
-    // prepareZip (private)
-    // -------------------------------------------------------------------------
+    }//end testPublicationAttachmentsIntegerId()
 
+    /**
+     * Skips test that requires real filesystem I/O.
+     *
+     * @return void
+     */
     public function testPrepareZipRequiresFilesystem(): void
     {
-        $this->markTestSkipped('prepareZip() relies on filesystem I/O (mkdir, file_get_contents, file_put_contents).');
-    }
+        $this->markTestSkipped(
+            'prepareZip() relies on filesystem I/O (mkdir, file_get_contents, file_put_contents).'
+        );
 
+    }//end testPrepareZipRequiresFilesystem()
+
+    /**
+     * Returns 500 error response when entity lookup throws exception.
+     *
+     * @return void
+     */
     public function testGetPublicationDataReturnsErrorOnException(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -408,8 +461,14 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $result = $this->invokePrivateMethod('getPublicationData', ['null-id', $objectService]);
         $this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
+    }//end testGetPublicationDataReturnsErrorOnException()
+
+    /**
+     * Returns 500 when the publication entity is null.
+     *
+     * @return void
+     */
     public function testPublicationAttachmentsReturnsErrorWhenEntityIsNull(): void
     {
         $objectService = $this->createObjectServiceMock();
@@ -420,31 +479,46 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
 
+    }//end testPublicationAttachmentsReturnsErrorWhenEntityIsNull()
+
+    /**
+     * Skips attachments whose entities cannot be resolved.
+     *
+     * @return void
+     */
     public function testPublicationAttachmentsSkipsNullAttachments(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $pubEntity = $this->createObjectEntityFromData(['id' => '1', 'attachments' => ['a1', 'a2']]);
+        $pubEntity     = $this->createObjectEntityFromData(['id' => '1', 'attachments' => ['a1', 'a2']]);
 
         $objectService->method('find')
-            ->willReturnCallback(function ($id) use ($pubEntity) {
-                if ($id === '1') {
-                    return $pubEntity;
+            ->willReturnCallback(
+                function ($id) use ($pubEntity) {
+                    if ($id === '1') {
+                        return $pubEntity;
+                    }
+
+                    return null;
                 }
-                return null; // Attachment not found.
-            });
+            );
 
         $result = $this->downloadService->publicationAttachments('1', $objectService);
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
-    }
 
+    }//end testPublicationAttachmentsSkipsNullAttachments()
+
+    /**
+     * Returns empty array when publication has no attachments key.
+     *
+     * @return void
+     */
     public function testPublicationAttachmentsNoAttachmentsKey(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $pubEntity = $this->createObjectEntityFromData(['id' => '1']);
+        $pubEntity     = $this->createObjectEntityFromData(['id' => '1']);
 
         $objectService->method('find')
             ->willReturn($pubEntity);
@@ -453,17 +527,24 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
-    }
 
+    }//end testPublicationAttachmentsNoAttachmentsKey()
+
+    /**
+     * Returns 500 when saving publication file to NextCloud fails.
+     *
+     * @return void
+     */
     public function testCreatePublicationFileSaveToNextCloudFails(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $publication = ['id' => '1', 'title' => 'FailSave'];
+        $publication   = ['id' => '1', 'title' => 'FailSave'];
 
         $mpdf = $this->createMock(\Mpdf\Mpdf::class);
         $this->fileService->method('createPdf')->willReturn($mpdf);
         $this->fileService->method('createFolder')->willReturn(true);
-        $this->fileService->method('getPublicationFolderName')->willReturn('(1) FailSave');
+        $this->fileService->method('getPublicationFolderName')
+            ->willReturn('(1) FailSave');
         $this->fileService->method('updateFile')->willReturn(false);
 
         $result = $this->downloadService->createPublicationFile(
@@ -474,5 +555,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $result);
         $this->assertSame(500, $result->getStatus());
-    }
-}
+
+    }//end testCreatePublicationFileSaveToNextCloudFails()
+
+    // phpcs:enable CustomSniffs.Functions.NamedParameters
+
+}//end class
