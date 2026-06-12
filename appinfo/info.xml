@@ -4,7 +4,7 @@
 	<id>opencatalogi</id>
 	<name>OpenCatalogi</name>
 	<summary>Framework for federated catalogi to work togethe</summary>
-	<description><![CDATA[> ⚠️ **Active development — not for production use yet.** This app is under active development. Although it may carry a stable release status, **please do not use it in production environments before 12 June 2026.** See the [app page on conduction.nl](https://conduction.nl/apps/opencatalogi) for release planning and what this app does.
+	<description><![CDATA[> ⚠️ **Active development — not for production use yet.** This app is under active development. Although it may carry a stable release status, **please do not use it in production environments before 17 June 2026.** See the [app page on conduction.nl](https://conduction.nl/apps/opencatalogi) for release planning and what this app does.
 
 📰 A OpenCatalogi App for Nextcloud
 
@@ -27,7 +27,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 
 **Support:** For support, contact support@conduction.nl. For a Service Level Agreement (SLA), contact sales@conduction.nl.
     ]]></description>
-	<version>0.7.33</version>
+	<version>0.7.34</version>
 	<licence>agpl</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
