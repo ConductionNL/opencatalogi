@@ -305,6 +305,12 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // WF2 guard (wave-12): find() must return a non-null, public object so the
+        // published-predicate check passes and control reaches getObjectUses().
+        $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+        $mockObjService->method('find')
+            ->willReturn($rootObject);
+
         $mockObjService->method('getObjectUses')
             ->willReturn(['results' => [], 'total' => 0]);
 
@@ -319,9 +325,50 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
+    public function testUsesReturnsNotFoundWhenObjectIsNull(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns null → guard returns 404 before reaching getObjectUses().
+        $mockObjService->method('find')->willReturn(null);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->controller->uses('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    public function testUsesReturnsNotFoundWhenAnonymousAndUnpublished(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns an unpublished object; caller is anonymous.
+        $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => []]);
+        $mockObjService->method('find')->willReturn($rootObject);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(true);
+        $this->queryService->method('isObjectPublic')->willReturn(false);
+        $controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $controller->uses('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
     public function testUsesReturns500OnException(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // find() returns a valid object so the guard passes; getObjectUses throws.
+        $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+        $mockObjService->method('find')->willReturn($rootObject);
 
         $mockObjService->method('getObjectUses')
             ->willThrowException(new \Exception('Error'));
@@ -339,6 +386,12 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // WF2 guard (wave-12): find() must return a non-null, public object so the
+        // published-predicate check passes and control reaches getObjectUsedBy().
+        $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+        $mockObjService->method('find')
+            ->willReturn($rootObject);
+
         $mockObjService->method('getObjectUsedBy')
             ->willReturn(['results' => [], 'total' => 0]);
 
@@ -353,9 +406,50 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
+    public function testUsedReturnsNotFoundWhenObjectIsNull(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns null → guard returns 404 before reaching getObjectUsedBy().
+        $mockObjService->method('find')->willReturn(null);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->controller->used('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    public function testUsedReturnsNotFoundWhenAnonymousAndUnpublished(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // find() returns an unpublished object; caller is anonymous.
+        $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => []]);
+        $mockObjService->method('find')->willReturn($rootObject);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('findObjectLocation')->willReturn(null);
+        $this->queryService->method('isAnonymous')->willReturn(true);
+        $this->queryService->method('isObjectPublic')->willReturn(false);
+        $controller = $this->newControllerWithQueryService();
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $controller->used('test-catalog', 'pub-123');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+    }
+
     public function testUsedReturns500OnException(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // find() returns a valid object so the guard passes; getObjectUsedBy throws.
+        $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+        $mockObjService->method('find')->willReturn($rootObject);
 
         $mockObjService->method('getObjectUsedBy')
             ->willThrowException(new \Exception('Error'));
@@ -576,6 +670,28 @@ class PublicationsControllerTest extends TestCase
     // =======================================================================
     // show() — success path with object found
     // =======================================================================
+
+    /**
+     * Helper to create an ObjectEntity mock whose jsonSerialize() returns a given payload.
+     *
+     * ObjectService::find() declares a return type of ?ObjectEntity, so the WF2
+     * published-predicate guard in uses()/used() receives an ObjectEntity (not a raw
+     * array). The controller calls jsonSerialize() on it before passing it to the
+     * isObjectPublic() check, so the mock must surface the desired array there.
+     *
+     * @param array $payload The array jsonSerialize() should return.
+     *
+     * @return \OCA\OpenRegister\Db\ObjectEntity
+     */
+    private function createFindResultMock(array $payload): \OCA\OpenRegister\Db\ObjectEntity
+    {
+        $mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['jsonSerialize'])
+            ->getMock();
+        $mockObj->method('jsonSerialize')->willReturn($payload);
+        return $mockObj;
+    }
 
     /**
      * Helper to create an ObjectEntity mock that supports magic __call getters.
@@ -1275,6 +1391,11 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // WF2 guard (wave-12): find() must return a published object so control
+        // reaches getObjectUses() where the param stripping under test happens.
+        $mockObjService->method('find')
+            ->willReturn($this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]));
+
         $mockObjService->method('getObjectUses')
             ->willReturn(['results' => [['id' => 'related-1']], 'total' => 1]);
 
@@ -1301,6 +1422,11 @@ class PublicationsControllerTest extends TestCase
     public function testUsedStripsExtraParams(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // WF2 guard (wave-12): find() must return a published object so control
+        // reaches getObjectUsedBy() where the param stripping under test happens.
+        $mockObjService->method('find')
+            ->willReturn($this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]));
 
         $mockObjService->method('getObjectUsedBy')
             ->willReturn(['results' => [['id' => 'parent-1']], 'total' => 1]);

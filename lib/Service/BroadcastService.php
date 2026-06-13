@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\IAppConfig;
@@ -290,6 +291,10 @@ class BroadcastService
 
             try {
                 // Send POST request with directory URL payload.
+                // SSRF hardening (WF4 / wave-12): disable automatic redirect following so that a
+                // broadcast target cannot redirect to cloud-metadata. The pre-flight
+                // assertSafeOutboundUrl() validates the initial URL; disabling redirects ensures
+                // Guzzle never silently follows a 302 to an unvalidated host.
                 $response = $this->client->post(
                     uri: $url,
                     options: [
@@ -302,6 +307,7 @@ class BroadcastService
                             'User-Agent'   => 'OpenCatalogi-Broadcast/'.$this->getAppVersion(),
                             'Content-Type' => 'application/json',
                         ],
+                        RequestOptions::ALLOW_REDIRECTS => false,
                     ]
                 );
 

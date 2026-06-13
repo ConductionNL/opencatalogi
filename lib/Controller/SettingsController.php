@@ -28,8 +28,10 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -89,12 +91,18 @@ class SettingsController extends Controller
     /**
      * Handle the post request to update settings.
      *
+     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces admin gate).
+     * CSRF protection is enforced (no @NoCSRFRequired).
+     * #[AuthorizedAdminSetting] makes this endpoint auditable via NC's delegated-admin
+     * system and scopes it to the OpenCatalogiAdmin settings class (WF3 / wave-12).
+     *
      * @return JSONResponse JSON response containing the updated settings.
      *
      * @NoCSRFRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function create(): JSONResponse
     {
         try {
