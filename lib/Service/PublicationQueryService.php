@@ -24,6 +24,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -70,15 +71,72 @@ class PublicationQueryService
     /**
      * Constructor.
      *
-     * @param IDBConnection      $db        Database connection
-     * @param ContainerInterface $container DI container
+     * @param IDBConnection      $db          Database connection
+     * @param ContainerInterface $container   DI container
+     * @param IUserSession|null  $userSession User session for anonymity checks (auto-wired at runtime)
      */
     public function __construct(
         private readonly IDBConnection $db,
         private readonly ContainerInterface $container,
+        private readonly ?IUserSession $userSession=null,
     ) {
 
     }//end __construct()
+
+
+    /**
+     * Determine whether the current request is made by an anonymous (logged-out) caller.
+     *
+     * Used by the published-predicate guard on the public per-catalog relation endpoints
+     * (PublicationsController::uses/used) so an anonymous caller cannot enumerate the
+     * relation graph of an unpublished object by guessing its UUID.
+     *
+     * @return boolean True when there is no authenticated user on the session.
+     *
+     * @spec exclude Visibility helper for the public-endpoint published-predicate guard.
+     */
+    public function isAnonymous(): bool
+    {
+        if ($this->userSession === null) {
+            // Fail closed: when the session is unavailable, treat the caller as anonymous
+            // so the published-predicate guard applies the stricter visibility rule.
+            return true;
+        }
+
+        return $this->userSession->getUser() === null;
+
+    }//end isAnonymous()
+
+
+    /**
+     * Determine whether an object is publicly visible (published and not depublished).
+     *
+     * Mirrors the published-predicate used elsewhere (EventService::isObjectPublished):
+     * an object is public when it carries a `@self.published` date and either has no
+     * `@self.depublished` date or was re-published after it.
+     *
+     * @param array $objectData The serialized object data (`@self` envelope).
+     *
+     * @return boolean True when the object is currently published.
+     *
+     * @spec exclude Visibility helper for the public-endpoint published-predicate guard.
+     */
+    public function isObjectPublic(array $objectData): bool
+    {
+        $published   = ($objectData['@self']['published'] ?? null);
+        $depublished = ($objectData['@self']['depublished'] ?? null);
+
+        if ($published === null) {
+            return false;
+        }
+
+        if ($depublished === null) {
+            return true;
+        }
+
+        return strtotime($published) > strtotime($depublished);
+
+    }//end isObjectPublic()
 
     /**
      * Find the register and schema IDs for an object UUID within a constrained scope.
