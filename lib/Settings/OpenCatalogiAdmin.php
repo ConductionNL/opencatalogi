@@ -21,12 +21,17 @@ namespace OCA\OpenCatalogi\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IConfig;
-use OCP\Settings\ISettings;
+use OCP\Settings\IDelegatedSettings;
 
 /**
  * Admin settings page for OpenCatalogi.
+ *
+ * Implements IDelegatedSettings so that SettingsController::create() can be
+ * annotated with #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)].
+ * This makes the settings write endpoint auditable via NC's delegated-admin system
+ * and explicitly declares which app-config keys the section is authorised to modify.
  */
-class OpenCatalogiAdmin implements ISettings
+class OpenCatalogiAdmin implements IDelegatedSettings
 {
 
     /**
@@ -93,4 +98,37 @@ class OpenCatalogiAdmin implements ISettings
         return 10;
 
     }//end getPriority()
+
+    /**
+     * Get the name of the settings section for delegated-admin display.
+     *
+     * Required by IDelegatedSettings. Returns null so only the section name
+     * is shown (no sub-item label needed for this single-section app).
+     *
+     * @return string|null
+     */
+    public function getName(): ?string
+    {
+        return null;
+
+    }//end getName()
+
+    /**
+     * Declare which app-config keys this settings section is authorised to write.
+     *
+     * Used by Nextcloud's delegated-admin system to gate partial-admin access.
+     * Lists all keys managed via SettingsService::updateSettings().
+     *
+     * @return array<string, array<string>>
+     */
+    public function getAuthorizedAppConfig(): array
+    {
+        return [
+            'opencatalogi' => [
+                '/^(catalog_register|catalog_schema|listing_register|listing_schema'
+                .'|auto_publish_attachments|auto_publish_objects|use_old_style_publishing_view)$/',
+            ],
+        ];
+
+    }//end getAuthorizedAppConfig()
 }//end class

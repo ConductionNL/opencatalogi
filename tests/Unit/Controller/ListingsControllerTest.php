@@ -46,6 +46,7 @@ class ListingsControllerTest extends TestCase
             ->willReturnCallback(fn(string $text) => $text);
 
         // index() and friends guard on an authenticated user; default to logged-in.
+        // Tests that verify the 401 path override this with willReturn(null).
         $this->userSession->method('getUser')
             ->willReturn($this->createMock(\OCP\IUser::class));
 

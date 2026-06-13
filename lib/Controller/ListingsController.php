@@ -436,10 +436,14 @@ class ListingsController extends Controller
     /**
      * Add a new listing from a URL.
      *
+     * Requires authentication and CSRF protection. Federation peer-registration must
+     * not be anonymous — an unauthenticated caller could otherwise register a hostile
+     * directory pointing to attacker-controlled URLs and chain it into the federation
+     * SSRF path (SB1 / WF1, wave-12). Dropped @PublicPage and @NoCSRFRequired.
+     *
      * @return JSONResponse The response indicating the result of adding the listing.
      *
-     * @PublicPage
-     * @NoCSRFRequired
+     * @NoAdminRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-22
      */
