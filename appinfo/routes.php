@@ -35,6 +35,14 @@ return [
 		['name' => 'retention#setDefaults', 'url' => '/api/retention/defaults', 'verb' => 'POST'],
 		['name' => 'retention#decide', 'url' => '/api/retention/publications/{id}/decision', 'verb' => 'POST'],
 		['name' => 'retention#exportReport', 'url' => '/api/retention/report', 'verb' => 'GET'],
+		// WOO transparency (woo-transparency)
+		['name' => 'woo#weigeringsgronden', 'url' => '/api/woo/weigeringsgronden', 'verb' => 'GET'],
+		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
+		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
+		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
+		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
+		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'POST'],
+		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */

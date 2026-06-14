@@ -29,7 +29,8 @@
 				{ "id": "GlossaryMenu",  "label": "Glossary",  "icon": "icon-toggle-filelist",       "route": "Glossary",  "order": 93 },
 				{ "id": "ThemesMenu",    "label": "Themes",    "icon": "icon-category-customization","route": "Themes",    "order": 94 },
 				{ "id": "PagesMenu",     "label": "Pages",     "icon": "icon-category-files",        "route": "Pages",     "order": 95 },
-				{ "id": "MenusMenu",     "label": "Menus",     "icon": "icon-category-customization","route": "Menus",     "order": 96 }
+				{ "id": "MenusMenu",     "label": "Menus",     "icon": "icon-category-customization","route": "Menus",     "order": 96 },
+				{ "id": "WooBatchesMenu","label": "WOO",       "icon": "icon-toggle-filelist",       "route": "WooBatches","order": 98 }
 			]
 		},
 		{
@@ -61,6 +62,34 @@
 		}
 	],
 	"pages": [
+		{
+			"id": "WooBatches",
+			"route": "/woo",
+			"type": "index",
+			"title": "WOO batches",
+			"config": {
+				"register": "@resolve:woo_register",
+				"schema": "@resolve:woo_batch_schema",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showViewToggle": true,
+					"selectable": false
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			},
+			"_note": "WOO disclosure-batch list via the generic index renderer over the WOO register/schema (ADR-022 — reuses the lib, no bespoke table). Per-batch detail (deck board widget + WOO tabs) is the WooBatchDetail custom page."
+		},
+		{
+			"id": "WooBatchDetail",
+			"route": "/woo/:id",
+			"type": "custom",
+			"title": "WOO batch",
+			"component": "WooBatchDetailView",
+			"_note": "Surfaces the OpenRegister deck-board widget (queue/board — not bespoke) plus WOO-specific surfaces: progress summary, redaction review, inventarislijst download, ready-for-review/publish (approval-workflow gated)."
+		},
 		{
 			"id": "Dashboard",
 			"route": "/",
