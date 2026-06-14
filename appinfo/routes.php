@@ -29,6 +29,12 @@ return [
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
 		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
+		// Retention lifecycle (publication-retention-lifecycle)
+		['name' => 'retention#queueSummary', 'url' => '/api/retention/queue', 'verb' => 'GET'],
+		['name' => 'retention#getDefaults', 'url' => '/api/retention/defaults', 'verb' => 'GET'],
+		['name' => 'retention#setDefaults', 'url' => '/api/retention/defaults', 'verb' => 'POST'],
+		['name' => 'retention#decide', 'url' => '/api/retention/publications/{id}/decision', 'verb' => 'POST'],
+		['name' => 'retention#exportReport', 'url' => '/api/retention/report', 'verb' => 'GET'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */

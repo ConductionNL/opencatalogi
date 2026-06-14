@@ -65,6 +65,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 
 	<background-jobs>
 		<job>OCA\OpenCatalogi\Cron\DirectorySync</job>
+		<job>OCA\OpenCatalogi\Cron\RetentionEvaluation</job>
 	</background-jobs>
 
 	<navigations>

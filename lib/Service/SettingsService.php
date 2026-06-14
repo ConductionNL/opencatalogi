@@ -873,10 +873,13 @@ class SettingsService
     private function updateObjectTypeConfiguration(array $importResult): void
     {
         // Get the object types that need configuration.
+        // 'publication' is included so publication_register/publication_schema
+        // resolve for retention evaluation (RET-005); it was previously omitted.
         $objectTypes = [
             'catalog',
             'listing',
             'organization',
+            'publication',
             'theme',
             'page',
             'menu',
