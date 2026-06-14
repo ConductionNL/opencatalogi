@@ -61,6 +61,7 @@ export default {
 	watch: {
 		batchId: {
 			immediate: true,
+			/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 			handler() {
 				if (this.batchId) {
 					this.loadBatch()

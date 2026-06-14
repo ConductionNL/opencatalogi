@@ -210,6 +210,8 @@ class WooService
      * The configured WOO register id/uuid (shared by batch + assessment objects).
      *
      * @return string|null The register id/uuid, or null when unconfigured.
+     *
+     * @spec exclude pure config plumbing — reads the configured WOO register id.
      */
     public function getRegister(): ?string
     {
@@ -222,6 +224,8 @@ class WooService
      * The configured WOO batch schema id/uuid.
      *
      * @return string|null The schema id/uuid, or null when unconfigured.
+     *
+     * @spec exclude pure config plumbing — reads the configured WOO batch schema id.
      */
     public function getBatchSchema(): ?string
     {
@@ -234,6 +238,8 @@ class WooService
      * The configured WOO document-assessment schema id/uuid.
      *
      * @return string|null The schema id/uuid, or null when unconfigured.
+     *
+     * @spec exclude pure config plumbing — reads the configured WOO assessment schema id.
      */
     public function getAssessmentSchema(): ?string
     {
