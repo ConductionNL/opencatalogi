@@ -6,6 +6,49 @@
 > changes. Phase order encodes upstream-dependency order — see
 > "Phase order rationale" at the bottom for the why.
 
+## Implementation status (2026-06-14)
+
+> The spec-authoring tasks below remain complete. This section records the
+> CODE adoption that landed on `build/opencatalogi-adopt-or-abstractions-2026-06-14`,
+> covering only the **unblocked** phases (those whose upstream OpenRegister
+> dependency is already archived). Blocked phases stay `[~]`/`[ ]` with reasons.
+
+- [x] **Phase 1 — IMPLEMENTED.** `RegisterResolverService` adopted across the
+      five register-backed controllers via a shared `ResolvesRegisterConfiguration`
+      trait. `getThemeConfiguration()`/`getCatalogConfiguration()`/
+      `getPageConfiguration()`/`getMenuConfiguration()`/`getGlossaryConfiguration()`
+      now call `resolveRegisterId`/`resolveSchemaId`; the empty-string fallback is
+      gone — an unconfigured context throws `MissingConfigException` and the
+      controller returns an operator-actionable **503**. Upstream `register-resolver-service`
+      is archived in OpenRegister, so this phase is unblocked.
+- [x] **Phase 8 (partial) — IMPLEMENTED.** `BroadcastService::MAX_RETRIES`/`REQUEST_TIMEOUT`
+      promoted to `broadcast_max_retries`/`broadcast_request_timeout` app-config keys
+      (defaults unchanged, clamped ≥1); `SitemapService::MAX_PER_PAGE` promoted to
+      `sitemap_max_per_page`.
+- [~] **Phase 8 (MIN_OPENREGISTER_VERSION) — DEFERRED.** The proposal claimed
+      `appinfo/info.xml <dependencies>` "already enforces" the OR version floor.
+      **It does not** — Nextcloud `<dependencies>` only supports `<php>`/`<database>`/
+      `<nextcloud>` version pins, not per-app (`openregister`) version enforcement.
+      Deleting `SettingsService::MIN_OPENREGISTER_VERSION` would silently drop the
+      only version floor (regression). Kept until a real enforcement mechanism exists.
+- [~] **Phase 8 (auto-publishing / federation spec rewrites) — DEFERRED (spec-only).**
+      Tracked as spec authoring; no code in scope for this slice.
+- [ ] **Phase 2 — NOT STARTED (blocked).** `createObjectStore()` migration of
+      `src/store/modules/object.js` requires the `@conduction/nextcloud-vue` plugin
+      surface (filesPlugin/auditTrailsPlugin/relationsPlugin/searchPlugin) shipped in a
+      published beta. Tracked separately in `opencatalogi-store-migration`.
+- [ ] **Phase 3 — NOT STARTED (blocked).** OR File Attachments public surface
+      (`IFileService::attach/list/delete` + `x-openregister-file`) not yet a stable
+      consumable contract.
+- [ ] **Phase 4 — NOT STARTED (blocked).** Requires OR `TranslationHandler` public
+      surface + `i18n-api-language-negotiation` consumable (see `register-i18n` change).
+- [ ] **Phase 5 — NOT STARTED (blocked).** Requires `nextcloud-vue` `multi-tenancy-context`
+      (`useTenantContext()`/`<CnTenantBadge>`) to be archived + published.
+- [ ] **Phase 6 — NOT STARTED (blocked).** Requires `hydra/adopt-app-manifest` (ADR-024)
+      manifest interpreter; this is the AppHost track blocked on ADR-040.
+- [ ] **Phase 7 (search/admin-settings/dashboard/download-service) — NOT STARTED.**
+      Spec rewrites; deferred with the blocked code phases above.
+
 ## Phase 1 — Adopt `RegisterResolverService` across all controllers
 
 - [x] 1. Spec the five canonical contexts (`publications`, `listings`,

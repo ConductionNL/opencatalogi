@@ -91,6 +91,14 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
                 }
             );
 
+        // Retry count and request timeout are now operator-tunable app-config
+        // keys (`broadcast_max_retries` / `broadcast_request_timeout`); honour the
+        // production defaults the service passes (3 retries, 30s timeout).
+        $this->configMock->method('getValueInt')
+            ->willReturnCallback(
+                static fn (string $app, string $key, int $default = 0): int => $default
+            );
+
         $this->broadcastService = new BroadcastService(
             $this->urlGeneratorMock,
             $this->containerMock,
@@ -801,6 +809,63 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertEmpty($result);
 
     }//end testBroadcastSpecificUrlEqualsSelf()
+
+
+    /**
+     * getMaxRetries() / getRequestTimeout() honour the operator-configured
+     * app-config keys and fall back to the shipped defaults otherwise.
+     *
+     * @return void
+     */
+    public function testRetryAndTimeoutAreOperatorTunable(): void
+    {
+        $config = $this->createMock(IAppConfig::class);
+        $config->method('getValueString')->willReturnArgument(2);
+        $config->method('getValueInt')->willReturnMap(
+            [
+                ['opencatalogi', 'broadcast_max_retries', 3, 7],
+                ['opencatalogi', 'broadcast_request_timeout', 30, 12],
+            ]
+        );
+
+        $service = new BroadcastService(
+            $this->urlGeneratorMock,
+            $this->containerMock,
+            $this->appManagerMock,
+            $this->loggerMock,
+            $config
+        );
+
+        $this->assertSame(7, $this->invokePrivateMethod($service, 'getMaxRetries'));
+        $this->assertSame(12, $this->invokePrivateMethod($service, 'getRequestTimeout'));
+
+    }//end testRetryAndTimeoutAreOperatorTunable()
+
+
+    /**
+     * Out-of-range config values are clamped so the loop always runs at least
+     * once and the timeout is never below one second.
+     *
+     * @return void
+     */
+    public function testRetryAndTimeoutClampInvalidValues(): void
+    {
+        $config = $this->createMock(IAppConfig::class);
+        $config->method('getValueString')->willReturnArgument(2);
+        $config->method('getValueInt')->willReturn(0);
+
+        $service = new BroadcastService(
+            $this->urlGeneratorMock,
+            $this->containerMock,
+            $this->appManagerMock,
+            $this->loggerMock,
+            $config
+        );
+
+        $this->assertSame(1, $this->invokePrivateMethod($service, 'getMaxRetries'));
+        $this->assertSame(1, $this->invokePrivateMethod($service, 'getRequestTimeout'));
+
+    }//end testRetryAndTimeoutClampInvalidValues()
 
 
 }//end class

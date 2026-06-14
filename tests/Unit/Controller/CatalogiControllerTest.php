@@ -83,14 +83,36 @@ class CatalogiControllerTest extends TestCase
         $mockObjService->method('searchObjectsPaginated')
             ->willReturn(['results' => [], 'total' => 0]);
 
-        $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
-
-        // Default-pass every config key (catalog config + CORS allowlist) to its
-        // documented default value so the controller falls back to '*' for CORS.
+        // Configure catalog scope so the RegisterResolverService resolves it.
         $this->config->method('getValueString')
-            ->willReturnCallback(fn(string $app, string $key, string $default = '') => $default);
+            ->willReturnCallback(
+                static fn (string $app, string $key, string $default = '') => match ($key) {
+                    'catalog_schema'   => '5',
+                    'catalog_register' => '3',
+                    default            => $default,
+                }
+            );
+
+        $this->container->method('get')
+            ->willReturnCallback(
+                function (string $id) use ($mockObjService) {
+                    if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+                        // RegisterResolverService is final; use a hand-rolled double.
+                        return new class {
+                            public function resolveRegisterId(string $a, string $k, ?string $d = null): string
+                            {
+                                return '3';
+                            }
+
+                            public function resolveSchemaId(string $a, string $k, ?string $d = null): string
+                            {
+                                return '5';
+                            }
+                        };
+                    }
+                    return $mockObjService;
+                }
+            );
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -100,6 +122,7 @@ class CatalogiControllerTest extends TestCase
         $response = $this->controller->index();
 
         $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
     }
 
     public function testIndexWithCatalogConfiguration(): void
@@ -116,7 +139,25 @@ class CatalogiControllerTest extends TestCase
             ->willReturn(['results' => [['id' => 1]], 'total' => 1]);
 
         $this->container->method('get')
-            ->willReturn($mockObjService);
+            ->willReturnCallback(
+                function (string $id) use ($mockObjService) {
+                    if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+                        // RegisterResolverService is final; use a hand-rolled double.
+                        return new class {
+                            public function resolveRegisterId(string $a, string $k, ?string $d = null): string
+                            {
+                                return '3';
+                            }
+
+                            public function resolveSchemaId(string $a, string $k, ?string $d = null): string
+                            {
+                                return '5';
+                            }
+                        };
+                    }
+                    return $mockObjService;
+                }
+            );
 
         // Configure catalog scope and leave CORS allowlist at its default '*'.
         $this->config->method('getValueString')
@@ -139,10 +180,14 @@ class CatalogiControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
     }
 
-    public function testIndexThrowsWhenOpenRegisterNotInstalled(): void
+    public function testIndexReturns503WhenOpenRegisterNotInstalled(): void
     {
+        // With OpenRegister unavailable the resolver cannot be obtained; the
+        // controller degrades gracefully to a 503 instead of a raw 500.
         $this->appManager->method('getInstalledApps')
             ->willReturn([]);
+        $this->container->method('get')
+            ->willThrowException(new RuntimeException('not available'));
 
         $this->config->method('getValueString')
             ->willReturnCallback(fn(string $app, string $key, string $default = '') => $default);
@@ -152,10 +197,10 @@ class CatalogiControllerTest extends TestCase
 
         $this->request->server = [];
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('OpenRegister service is not available.');
+        $response = $this->controller->index();
 
-        $this->controller->index();
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
     }
 
     public function testShowReturnsJsonResponse(): void

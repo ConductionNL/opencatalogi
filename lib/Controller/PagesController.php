@@ -51,6 +51,8 @@ use RuntimeException;
  */
 class PagesController extends Controller
 {
+    use ResolvesRegisterConfiguration;
+
 
     /**
      * Allowed CORS methods.
@@ -125,18 +127,20 @@ class PagesController extends Controller
     /**
      * Get the schema and register configuration for pages.
      *
+     * Resolved through OpenRegister's RegisterResolverService (no empty-string
+     * fallback); an unconfigured `page_register`/`page_schema` raises
+     * MissingConfigException which the caller converts to a 503.
+     *
      * @return array<string, string> Array containing schema and register configuration
+     *
+     * @throws \RuntimeException                                                       When OpenRegister is unavailable.
+     * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
      */
     private function getPageConfiguration(): array
     {
-        // Get the page schema and register from configuration.
-        $schema   = $this->config->getValueString($this->appName, 'page_schema', '');
-        $register = $this->config->getValueString($this->appName, 'page_register', '');
-
-        return [
-            'schema'   => $schema,
-            'register' => $register,
-        ];
+        return $this->resolveRegisterConfiguration('page_register', 'page_schema');
 
     }//end getPageConfiguration()
 
@@ -211,8 +215,12 @@ class PagesController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get page configuration from settings.
-        $pageConfig = $this->getPageConfiguration();
+        // Get page configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+        try {
+            $pageConfig = $this->getPageConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
         // Get query parameters from request.
         $queryParams = $this->request->getParams();
@@ -264,8 +272,12 @@ class PagesController extends Controller
      */
     public function show(string $slug): JSONResponse
     {
-        // Get page configuration from settings.
-        $pageConfig = $this->getPageConfiguration();
+        // Get page configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+        try {
+            $pageConfig = $this->getPageConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
         // Build search query to find page by slug.
         $searchQuery = [

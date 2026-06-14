@@ -43,6 +43,44 @@ class ThemesControllerTest extends TestCase
         );
     }
 
+    /**
+     * Build a test double for OpenRegister's (final) RegisterResolverService.
+     *
+     * Mirrors resolveRegisterId()/resolveSchemaId(): read the IAppConfig key and
+     * throw MissingConfigException when it is empty.
+     *
+     * @param IAppConfig $config The (mocked) app config the double reads from.
+     *
+     * @return object A double exposing resolveRegisterId / resolveSchemaId.
+     */
+    private function makeResolverDouble(IAppConfig $config): object
+    {
+        return new class($config) {
+            public function __construct(private IAppConfig $config)
+            {
+            }
+
+            public function resolveRegisterId(string $appId, string $key, ?string $default = null): string
+            {
+                return $this->resolve($appId, $key);
+            }
+
+            public function resolveSchemaId(string $appId, string $key, ?string $default = null): string
+            {
+                return $this->resolve($appId, $key);
+            }
+
+            private function resolve(string $appId, string $key): string
+            {
+                $value = $this->config->getValueString($appId, $key, '');
+                if ($value === '') {
+                    throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($appId, $key);
+                }
+                return $value;
+            }
+        };
+    }
+
     private function mockObjectService(): MockObject
     {
         $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
@@ -50,9 +88,24 @@ class ThemesControllerTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        // The controller now resolves register/schema via RegisterResolverService
+        // before hitting ObjectService; the resolver reads the same app-config
+        // keys (throwing MissingConfigException on empty) so tests keep driving
+        // behaviour through the getValueString map below.
+        // RegisterResolverService is declared final and cannot be mocked, so we
+        // pass a hand-rolled double that mirrors the real resolveRegisterId /
+        // resolveSchemaId contract (read app config; throw on empty).
+        $resolver = $this->makeResolverDouble($this->config);
+
         $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
+            ->willReturnCallback(
+                static function (string $id) use ($mockObjService, $resolver) {
+                    if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+                        return $resolver;
+                    }
+                    return $mockObjService;
+                }
+            );
 
         return $mockObjService;
     }
@@ -111,9 +164,12 @@ class ThemesControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
-    public function testIndexWithEmptyThemeConfiguration(): void
+    public function testIndexWithEmptyThemeConfigurationReturns503(): void
     {
-        $mockObjService = $this->mockObjectService();
+        // An unconfigured theme_register/theme_schema now surfaces an
+        // operator-actionable 503 instead of silently returning an empty list
+        // (RegisterResolverService adoption — no empty-string fallback).
+        $this->mockObjectService();
 
         $this->config->method('getValueString')
             ->willReturnMap([
@@ -127,20 +183,11 @@ class ThemesControllerTest extends TestCase
 
         $this->request->server = [];
 
-        $mockObjService->method('searchObjectsPaginated')
-            ->willReturn([
-                'results' => [],
-                'total'   => 0,
-                'limit'   => 20,
-                'offset'  => 0,
-                'page'    => 1,
-                'pages'   => 1,
-            ]);
-
         $response = $this->controller->index();
 
         $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(200, $response->getStatus());
+        $this->assertEquals(503, $response->getStatus());
+        $this->assertEquals('register_not_configured', $response->getData()['error']);
     }
 
     public function testIndexWithFacets(): void
@@ -148,7 +195,11 @@ class ThemesControllerTest extends TestCase
         $mockObjService = $this->mockObjectService();
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -178,7 +229,11 @@ class ThemesControllerTest extends TestCase
         $mockObjService = $this->mockObjectService();
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -207,7 +262,11 @@ class ThemesControllerTest extends TestCase
         $mockObjService = $this->mockObjectService();
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnMap([
+                ['opencatalogi', 'theme_schema', '', '10'],
+                ['opencatalogi', 'theme_register', '', '2'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -232,10 +291,15 @@ class ThemesControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
-    public function testIndexThrowsWhenOpenRegisterNotInstalled(): void
+    public function testIndexReturns503WhenOpenRegisterNotInstalled(): void
     {
+        // With OpenRegister unavailable the resolver cannot be obtained; the
+        // controller now degrades gracefully to a 503 instead of letting a
+        // RuntimeException bubble up as an opaque 500.
         $this->appManager->method('getInstalledApps')
             ->willReturn([]);
+        $this->container->method('get')
+            ->willThrowException(new RuntimeException('not available'));
 
         $this->config->method('getValueString')
             ->willReturn('');
@@ -243,9 +307,10 @@ class ThemesControllerTest extends TestCase
         $this->request->method('getParams')
             ->willReturn([]);
 
-        $this->expectException(RuntimeException::class);
+        $response = $this->controller->index();
 
-        $this->controller->index();
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
     }
 
     public function testShowReturnsThemeAsJsonResponse(): void

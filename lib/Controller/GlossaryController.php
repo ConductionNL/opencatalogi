@@ -50,6 +50,8 @@ use RuntimeException;
  */
 class GlossaryController extends Controller
 {
+    use ResolvesRegisterConfiguration;
+
 
     /**
      * Allowed CORS methods.
@@ -124,18 +126,20 @@ class GlossaryController extends Controller
     /**
      * Get the schema and register configuration for glossary.
      *
+     * Resolved through OpenRegister's RegisterResolverService (no empty-string
+     * fallback); an unconfigured `glossary_register`/`glossary_schema` raises
+     * MissingConfigException which the caller converts to a 503.
+     *
      * @return array<string, string> Array containing schema and register configuration
+     *
+     * @throws \RuntimeException                                                       When OpenRegister is unavailable.
+     * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
      */
     private function getGlossaryConfiguration(): array
     {
-        // Get the glossary schema and register from configuration.
-        $schema   = $this->config->getValueString($this->appName, 'glossary_schema', '');
-        $register = $this->config->getValueString($this->appName, 'glossary_register', '');
-
-        return [
-            'schema'   => $schema,
-            'register' => $register,
-        ];
+        return $this->resolveRegisterConfiguration('glossary_register', 'glossary_schema');
 
     }//end getGlossaryConfiguration()
 
@@ -213,8 +217,12 @@ class GlossaryController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get glossary configuration from settings.
-        $glossaryConfig = $this->getGlossaryConfiguration();
+        // Get glossary configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+        try {
+            $glossaryConfig = $this->getGlossaryConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
         // Get query parameters from request.
         $queryParams = $this->request->getParams();

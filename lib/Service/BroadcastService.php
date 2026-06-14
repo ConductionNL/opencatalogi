@@ -72,18 +72,39 @@ class BroadcastService
     private Client $client;
 
     /**
-     * Maximum number of broadcast retries on failure.
+     * Default maximum number of broadcast retries on failure.
      *
-     * @var int Maximum number of broadcast retries on failure
+     * Overridable via the `broadcast_max_retries` app-config key (see
+     * getMaxRetries()). The constant is the shipped default only — operators
+     * tune the live value without a code change (audit Stream 4).
+     *
+     * @var int Default maximum number of broadcast retries on failure
      */
-    private const MAX_RETRIES = 3;
+    private const DEFAULT_MAX_RETRIES = 3;
 
     /**
-     * Timeout for HTTP requests in seconds.
+     * App-config key that overrides DEFAULT_MAX_RETRIES.
      *
-     * @var int Timeout for HTTP requests in seconds
+     * @var string
      */
-    private const REQUEST_TIMEOUT = 30;
+    private const CONFIG_MAX_RETRIES = 'broadcast_max_retries';
+
+    /**
+     * Default timeout for HTTP requests in seconds.
+     *
+     * Overridable via the `broadcast_request_timeout` app-config key (see
+     * getRequestTimeout()).
+     *
+     * @var int Default timeout for HTTP requests in seconds
+     */
+    private const DEFAULT_REQUEST_TIMEOUT = 30;
+
+    /**
+     * App-config key that overrides DEFAULT_REQUEST_TIMEOUT.
+     *
+     * @var string
+     */
+    private const CONFIG_REQUEST_TIMEOUT = 'broadcast_request_timeout';
 
     /**
      * Maximum wall-clock seconds allowed for all retries to a single URL.
@@ -111,16 +132,53 @@ class BroadcastService
         private readonly LoggerInterface $logger,
         private readonly IAppConfig $config,
     ) {
-        // Initialize HTTP client with default configuration.
+        // Initialize HTTP client; the per-request timeout is operator-tunable.
         $this->client = new Client(
             config: [
-                'timeout'         => self::REQUEST_TIMEOUT,
+                'timeout'         => $this->getRequestTimeout(),
                 'connect_timeout' => 10,
                 'verify'          => true,
             ]
         );
 
     }//end __construct()
+
+
+    /**
+     * Resolve the operator-configured maximum broadcast-retry count.
+     *
+     * Reads `broadcast_max_retries` from IAppConfig, falling back to
+     * DEFAULT_MAX_RETRIES. Values below 1 are clamped to 1 so a broadcast is
+     * always attempted at least once.
+     *
+     * @return int The effective maximum number of retries.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Promote hardcoded constants)
+     */
+    private function getMaxRetries(): int
+    {
+        $value = $this->config->getValueInt($this->appName, self::CONFIG_MAX_RETRIES, self::DEFAULT_MAX_RETRIES);
+        return max(1, $value);
+
+    }//end getMaxRetries()
+
+
+    /**
+     * Resolve the operator-configured per-request HTTP timeout in seconds.
+     *
+     * Reads `broadcast_request_timeout` from IAppConfig, falling back to
+     * DEFAULT_REQUEST_TIMEOUT. Values below 1 are clamped to 1.
+     *
+     * @return int The effective request timeout in seconds.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Promote hardcoded constants)
+     */
+    private function getRequestTimeout(): int
+    {
+        $value = $this->config->getValueInt($this->appName, self::CONFIG_REQUEST_TIMEOUT, self::DEFAULT_REQUEST_TIMEOUT);
+        return max(1, $value);
+
+    }//end getRequestTimeout()
 
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
@@ -274,11 +332,12 @@ class BroadcastService
      */
     private function sendBroadcastRequest(string $url, string $directoryUrl): bool
     {
-        $attempt   = 0;
-        $startTime = time();
+        $attempt    = 0;
+        $startTime  = time();
+        $maxRetries = $this->getMaxRetries();
 
         // Retry loop with wall-clock cap to prevent indefinite blocking.
-        while ($attempt < self::MAX_RETRIES) {
+        while ($attempt < $maxRetries) {
             // Abort if we have exceeded the per-target wall-time budget.
             if ((time() - $startTime) >= self::MAX_RETRY_WALL_SECONDS) {
                 $this->logger->warning(
@@ -326,7 +385,7 @@ class BroadcastService
                 $this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: ".$e->getMessage());
 
                 // If this was the last attempt, log as error and stop.
-                if ($attempt === self::MAX_RETRIES) {
+                if ($attempt === $maxRetries) {
                     $this->logger->error(
                         "All {$attempt} broadcast attempts to {$url} failed. Final error: ".$e->getMessage()
                     );
