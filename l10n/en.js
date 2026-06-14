@@ -872,6 +872,11 @@ OC.L10N.register(
 		"WOO Sitemap": "WOO Sitemap",
 		"Yes": "Yes",
 		"You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.": "You need at least one catalog before you can create a publication. Create a catalog from the catalogs page first.",
+		"Traffic": "Traffic",
+		"No traffic data": "No traffic data",
+		"Requests": "Requests",
+		"Popular Search Terms": "Popular Search Terms",
+		"No search data yet": "No search data yet",
 	},
 	"nplurals=2; plural=(n != 1);",
 )

@@ -132,6 +132,49 @@
 				</div>
 			</template>
 
+			<!-- Traffic graph widget (API read requests over time) -->
+			<template #widget-traffic>
+				<CnChartWidget
+					v-if="trafficChartData.series.length > 0"
+					type="area"
+					:series="trafficChartData.series"
+					:categories="trafficChartData.labels"
+					:height="280"
+					:options="{
+						stroke: { curve: 'smooth', width: 2 },
+						colors: ['#079cff'],
+						fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
+						xaxis: { labels: { rotate: -30, style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+						yaxis: { labels: { style: { fontSize: '11px' } } },
+						grid: { borderColor: 'var(--color-border, #e0e0e0)', strokeDashArray: 4 },
+						dataLabels: { enabled: false },
+						tooltip: { shared: true, intersect: false }
+					}" />
+				<div v-else class="widget-empty">
+					<ChartAreaspline :size="40" class="widget-empty-icon" />
+					<p>{{ t('opencatalogi', 'No traffic data') }}</p>
+				</div>
+			</template>
+
+			<!-- Popular Search Terms widget -->
+			<template #widget-popular-searches>
+				<div class="search-terms-content">
+					<div v-if="popularSearchTerms.length === 0" class="widget-empty">
+						{{ t('opencatalogi', 'No search data yet') }}
+					</div>
+					<div v-else class="search-terms-list">
+						<div
+							v-for="(term, index) in popularSearchTerms"
+							:key="term.term || index"
+							class="search-term-item">
+							<span class="search-term-rank">{{ index + 1 }}</span>
+							<span class="search-term-text">{{ term.term }}</span>
+							<span class="search-term-count">{{ term.count }}</span>
+						</div>
+					</div>
+				</div>
+			</template>
+
 			<!-- Concept Publications widget -->
 			<template #widget-concept-publications-title-icon>
 				<FileDocumentEditOutline :size="20" />
@@ -286,9 +329,11 @@ const DEFAULT_LAYOUT = [
 	// { id: x, widgetId: 'count-concept-attachments', ... },
 	{ id: 4, widgetId: 'publications-by-category', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 6 },
 	{ id: 5, widgetId: 'activity', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
-	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 11, gridWidth: 4, gridHeight: 5 },
-	{ id: 8, widgetId: 'published-publications', gridX: 4, gridY: 11, gridWidth: 4, gridHeight: 5 },
-	{ id: 10, widgetId: 'depublished-publications', gridX: 8, gridY: 11, gridWidth: 4, gridHeight: 5 },
+	{ id: 11, widgetId: 'traffic', gridX: 0, gridY: 11, gridWidth: 8, gridHeight: 5 },
+	{ id: 12, widgetId: 'popular-searches', gridX: 8, gridY: 11, gridWidth: 4, gridHeight: 5 },
+	{ id: 6, widgetId: 'concept-publications', gridX: 0, gridY: 16, gridWidth: 4, gridHeight: 5 },
+	{ id: 8, widgetId: 'published-publications', gridX: 4, gridY: 16, gridWidth: 4, gridHeight: 5 },
+	{ id: 10, widgetId: 'depublished-publications', gridX: 8, gridY: 16, gridWidth: 4, gridHeight: 5 },
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 	// { id: 7, widgetId: 'concept-attachments', ... },
 ]
@@ -329,6 +374,8 @@ export default {
 			refreshTimer: null,
 			dashboardLayout: [...DEFAULT_LAYOUT],
 			activityChartData: { labels: [], series: [] },
+			trafficChartData: { labels: [], series: [] },
+			popularSearchTerms: [],
 			publicationTotal: 0,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 			// attachmentsList: [],
@@ -409,6 +456,8 @@ export default {
 				// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 				{ id: 'publications-by-category', title: t('opencatalogi', 'Publications by Category'), type: 'custom' },
 				{ id: 'activity', title: t('opencatalogi', 'Activity'), type: 'custom' },
+				{ id: 'traffic', title: t('opencatalogi', 'Traffic'), type: 'custom' },
+				{ id: 'popular-searches', title: t('opencatalogi', 'Popular Search Terms'), type: 'custom' },
 				{ id: 'concept-publications', title: t('opencatalogi', 'Concept Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-warning)' },
 				{ id: 'published-publications', title: t('opencatalogi', 'Published Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-success)' },
 				{ id: 'depublished-publications', title: t('opencatalogi', 'Depublished Publications'), type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-error)' },
@@ -442,6 +491,8 @@ export default {
 					objectStore.fetchCollection('catalog'),
 					this.fetchAllPublications(),
 					this.fetchActivityChart(),
+					this.fetchTrafficChart(),
+					this.fetchPopularSearchTerms(),
 				])
 			} catch (err) {
 				this.error = err.message || t('opencatalogi', 'Failed to load dashboard data')
@@ -509,6 +560,57 @@ export default {
 			}
 		},
 
+		/**
+		 * Fetch API read-request volume over time (traffic graph).
+		 * Filters the audit-trail-actions chart to the "Read" series.
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
+		async fetchTrafficChart() {
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/dashboard/charts/audit-trail-actions`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					const allSeries = data.series || []
+					const readSeries = allSeries.filter((s) => s.name === 'Read')
+					this.trafficChartData = {
+						labels: data.labels || [],
+						series: readSeries.length > 0
+							? readSeries.map((s) => ({ ...s, name: t('opencatalogi', 'Requests') }))
+							: allSeries.map((s) => ({ ...s, name: t('opencatalogi', s.name) })),
+					}
+				}
+			} catch (err) {
+				console.warn('Failed to load traffic chart:', err)
+			}
+		},
+
+		/**
+		 * Fetch the most popular search terms from OpenRegister search trails.
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
+		async fetchPopularSearchTerms() {
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/search-trails/popular-terms?limit=10`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					this.popularSearchTerms = (data.results || []).map((item) => ({
+						term: item.search_term || item.term || item.query || '-',
+						count: item.count || item.total || 0,
+					}))
+				}
+			} catch (err) {
+				console.warn('Failed to load popular search terms:', err)
+			}
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		resolveSchemaName(publication) {
 			const schemaRef = publication['@self']?.schema
@@ -542,6 +644,44 @@ export default {
 </script>
 
 <style scoped>
+/* Search terms widget */
+.search-terms-content {
+	padding: 4px 0;
+	height: 100%;
+	overflow: auto;
+}
+
+.search-terms-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.search-term-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--color-border-dark, rgba(0, 0, 0, 0.07));
+}
+
+.search-term-rank {
+	font-weight: 700;
+	color: var(--color-text-maxcontrast);
+	min-width: 20px;
+	text-align: center;
+}
+
+.search-term-text {
+	flex: 1;
+	font-size: 14px;
+}
+
+.search-term-count {
+	font-weight: 600;
+	color: var(--color-primary-element);
+	font-size: 13px;
+}
+
 /* Concept widgets (publications & attachments) */
 .concept-widget-content {
 	padding: 4px 0;
