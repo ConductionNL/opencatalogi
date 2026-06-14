@@ -2315,6 +2315,17 @@ class DirectoryService
             'published'    => ($catalog['published'] ?? (new DateTime())->format('c')),
         ];
 
+        // Federation discovery (DCAT-009): advertise the per-catalog DCAT harvest endpoint
+        // when the catalog is DCAT-enabled, so remote instances and aggregators learn where
+        // to harvest. Disabled catalogs carry no dcatEndpoint. Extends the existing directory
+        // machinery with one field — no new broadcast channel or cron (FED-OR-001/002).
+        $hasDcat     = filter_var(($catalog['hasDcat'] ?? false), FILTER_VALIDATE_BOOLEAN);
+        $catalogSlug = ($catalog['slug'] ?? '');
+        if ($hasDcat === true && $catalogSlug !== '') {
+            $base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+            $listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
+        }
+
         return $listing;
 
     }//end convertCatalogToListing()
