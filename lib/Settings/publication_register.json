@@ -145,9 +145,88 @@
           },
           "depublicatiedatum": {
             "type": "string",
-            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access",
+            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access. A future value schedules automatic depublication via the OpenRegister published-predicate.",
             "format": "date-time",
             "facetable": true
+          },
+          "retentionCategory": {
+            "type": "string",
+            "description": "Selectielijst / WOO information-category reference that keys the statutory retention term (RET-003).",
+            "maxLength": 255,
+            "facetable": true
+          },
+          "retentionTermMonths": {
+            "type": "integer",
+            "description": "Statutory retention term in months, counted from the publication date (RET-003).",
+            "minimum": 0,
+            "facetable": true
+          },
+          "retentionAction": {
+            "type": "string",
+            "description": "Action taken when the retention term expires: review (flag only), depublish (set depublicatiedatum), or archive (lifecycle transition) (RET-003).",
+            "enum": [
+              "review",
+              "depublish",
+              "archive"
+            ],
+            "facetable": true
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "description": "Computed retention expiry = publication date + retentionTermMonths. May be manually overridden, in which case retentionNote is required (RET-003).",
+            "format": "date-time",
+            "facetable": true
+          },
+          "retentionNote": {
+            "type": "string",
+            "description": "Legal basis or exception rationale for the retention decision; mandatory when retentionExpiresAt is manually overridden or extended (RET-003).",
+            "maxLength": 2555,
+            "facetable": false
+          },
+          "retentionLastEvaluatedAt": {
+            "type": "string",
+            "description": "Idempotency marker recording the date the retention evaluation job last actioned this publication (RET-005).",
+            "format": "date-time",
+            "facetable": false
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status of the publication; the archived state retains the object internally while removing it from every public surface (RET-006).",
+            "enum": [
+              "published",
+              "archived"
+            ],
+            "facetable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initial": "published",
+          "final": ["archived"],
+          "transitions": {
+            "archive": { "from": ["published"], "to": "archived", "description": "Archive a publication on retention expiry — removes it from public surfaces while retaining it internally with full history (RET-006)." }
+          }
+        },
+        "x-openregister-notifications": {
+          "retention-expiring-soon": {
+            "trigger": { "type": "field-changed", "field": "retentionExpiresAt" },
+            "enabled": true,
+            "channels": ["nc-notification"],
+            "recipients": [ { "kind": "object-acl", "permission": "manage" } ],
+            "subject": {
+              "nl": "Publicatie {{title}} verloopt binnenkort (bewaartermijn)",
+              "en": "Publication {{title}} is expiring soon (retention term)"
+            }
+          },
+          "retention-review-required": {
+            "trigger": { "type": "transition", "action": "archive" },
+            "enabled": true,
+            "channels": ["nc-notification"],
+            "recipients": [ { "kind": "object-acl", "permission": "manage" } ],
+            "subject": {
+              "nl": "Publicatie {{title}} gearchiveerd (bewaartermijn verlopen)",
+              "en": "Publication {{title}} archived (retention term expired)"
+            }
           }
         },
         "configuration": {
