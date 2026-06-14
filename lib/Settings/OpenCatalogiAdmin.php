@@ -126,7 +126,9 @@ class OpenCatalogiAdmin implements IDelegatedSettings
         return [
             'opencatalogi' => [
                 '/^(catalog_register|catalog_schema|listing_register|listing_schema'
-                .'|auto_publish_attachments|auto_publish_objects|use_old_style_publishing_view)$/',
+                .'|auto_publish_attachments|auto_publish_objects|use_old_style_publishing_view'
+                .'|dcat_publisher_name|dcat_publisher_uri|dcat_default_license|dcat_contact_point'
+                .'|dcat_instance_title)$/',
             ],
         ];
 

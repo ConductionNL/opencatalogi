@@ -14,6 +14,8 @@ return [
 		// Catalogi sitemap
 		['name' => 'sitemap#index', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}', 'verb' => 'GET'],
 		['name' => 'sitemap#sitemap', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/publications', 'verb' => 'GET'],
+		// DCAT-AP-NL feed validation (admin-only — auditable via AuthorizedAdminSetting)
+		['name' => 'dcat#validate', 'url' => '/api/catalogs/{catalogSlug}/dcat/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
@@ -38,6 +40,9 @@ return [
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// DCAT-AP-NL CORS (public harvest endpoints)
+		['name' => 'dcat#preflightedCors', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
+		['name' => 'dcat#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Catalogi CORS
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
@@ -66,6 +71,9 @@ return [
 		 * IMPORTANT: Routes are matched in order from top to bottom.
 		 * Specific routes MUST come BEFORE wildcard routes to avoid incorrect matching.
 		 */
+		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
+		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
+		['name' => 'dcat#catalog', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Glossary (specific route - must be before wildcard catalog routes)
 		['name' => 'glossary#index', 'url' => '/api/glossary', 'verb' => 'GET'],
 		['name' => 'glossary#show', 'url' => '/api/glossary/{id}', 'verb' => 'GET'],

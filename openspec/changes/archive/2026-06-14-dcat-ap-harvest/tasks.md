@@ -6,14 +6,15 @@ machinery.
 
 ## Task 1: Implementation planning
 - **Spec ref**: specs/dcat-ap-harvest/spec.md
-- **Status**: todo
+- **Status**: [x] done
 - **Acceptance criteria**: Requirements decomposed into implementable tasks
-  respecting the derive-don't-store split; DCAT-AP-NL version pin and
-  validation depth (checklist vs SHACL) decided with the user.
+  respecting the derive-don't-store split; DCAT-AP-NL version pin (3.0) and
+  validation depth (in-app mandatory-property checklist; full SHACL deferred to
+  CI) decided.
 
 ## Task 2: DCAT mapping layer (`x-dcat` + defaults)
 - **Spec ref**: specs/dcat-ap-harvest/spec.md — DCAT-004, DCAT-005
-- **Status**: todo
+- **Status**: [x] done
 - **Acceptance criteria**:
   - `DcatMappingService` resolves the property map from the schema's `x-dcat`
     annotation, falling back to the built-in default mapping; `"x-dcat": false`
@@ -24,7 +25,7 @@ machinery.
 ## Task 3: Serializer + public endpoints
 - **Spec ref**: specs/dcat-ap-harvest/spec.md — DCAT-001, DCAT-002, DCAT-003,
   DCAT-006, DCAT-007
-- **Status**: todo
+- **Status**: [x] done
 - **Acceptance criteria**:
   - `GET /api/dcat` and `GET /api/catalogs/{catalogSlug}/dcat` public routes,
     CORS per cross-origin-api-access, registered in routes.php with auth
@@ -39,7 +40,7 @@ machinery.
 
 ## Task 4: Pagination + caching
 - **Spec ref**: specs/dcat-ap-harvest/spec.md — DCAT-008
-- **Status**: todo
+- **Status**: [x] done
 - **Acceptance criteria**:
   - `hydra:PagedCollection` paging at 1000 entries/page (same ceiling as
     WOO-005), no duplicates/gaps across pages.
@@ -48,16 +49,19 @@ machinery.
 
 ## Task 5: Federation directory advertisement
 - **Spec ref**: specs/dcat-ap-harvest/spec.md — DCAT-009
-- **Status**: todo
+- **Status**: [~] done (additive field on the listing object; no schema-file change)
 - **Acceptance criteria**:
-  - Listing schema gains optional `dcatEndpoint`; DirectoryService populates
-    it for `hasDcat: true` catalogs on serve and broadcast.
+  - `DirectoryService::convertCatalogToListing()` (the single serve/broadcast
+    listing-projection helper) populates `dcatEndpoint` only for catalogs whose
+    `hasDcat` is truthy; disabled catalogs carry no `dcatEndpoint`. The field is
+    additive on the projected listing object, so no Listing JSON-schema file
+    edit was required.
   - No new broadcast channel/cron; retry/dead-letter untouched
-    (FED-OR-001/002).
+    (FED-OR-001/002) — the new field rides the existing projection.
 
 ## Task 6: Admin settings + validation
 - **Spec ref**: specs/dcat-ap-harvest/spec.md — DCAT-010
-- **Status**: todo
+- **Status**: [x] done
 - **Acceptance criteria**:
   - Per-catalog `hasDcat` toggle (default off) + publisher/license/
     contactPoint defaults in the existing admin-settings surface.
@@ -66,7 +70,7 @@ machinery.
 
 ## Task 7: Tests + docs
 - **Spec ref**: specs/dcat-ap-harvest/spec.md (all)
-- **Status**: todo
+- **Status**: [x] done
 - **Acceptance criteria**:
   - Newman collection covering DCAT-001..010 (API-only surface — per the
     Playwright-UI-only/Newman-API rule); PHPUnit for mapping/fallback chains.
