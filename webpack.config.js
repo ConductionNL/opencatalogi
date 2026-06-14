@@ -40,6 +40,10 @@ webpackConfig.entry = {
 		import: path.join(__dirname, 'src', 'mostViewedPublicationsWidget.js'),
 		filename: appId + '-mostViewedPublicationsWidget.js',
 	},
+	retentionWidget: {
+		import: path.join(__dirname, 'src', 'retentionWidget.js'),
+		filename: appId + '-retentionWidget.js',
+	},
 }
 
 // Drop the base config's ts-loader rule (it type-checks the entire project

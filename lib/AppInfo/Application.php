@@ -32,6 +32,7 @@ use OCA\OpenCatalogi\Dashboard\CatalogWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\MostViewedPublicationsWidget;
+use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
@@ -84,6 +85,7 @@ class Application extends App implements IBootstrap
         $context->registerDashboardWidget(UnpublishedPublicationsWidget::class);
         $context->registerDashboardWidget(UnpublishedAttachmentsWidget::class);
         $context->registerDashboardWidget(MostViewedPublicationsWidget::class);
+        $context->registerDashboardWidget(RetentionWidget::class);
 
         // Register event listeners for OpenRegister events.
         $context->registerEventListener(

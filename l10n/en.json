@@ -2,6 +2,11 @@
     "translations": {
         "Action": "Action",
         "Add": "Add",
+        "Archived": "Archived",
+        "Expiring soon": "Expiring soon",
+        "Nothing requires retention review": "Nothing requires retention review",
+        "Retention review": "Retention review",
+        "Retention review required": "Retention review required",
         "Back": "Back",
         "Create": "Create",
         "Details": "Details",
