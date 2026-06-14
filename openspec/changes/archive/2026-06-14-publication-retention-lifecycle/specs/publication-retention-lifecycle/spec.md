@@ -16,6 +16,17 @@ declared in `x-openregister-lifecycle` (APB-SM-001), schema-declared
 notifications (ADR-031), and the OR immutable audit-trail abstraction. The
 only new moving part is one daily retention-evaluation background job.
 
+> @e2e exclude Backend-and-data capability — every scenario asserts server-side
+> behaviour with no distinct browser-observable surface of its own (schema
+> validation/expiry computation, per-catalog defaults, the daily evaluation job
+> + idempotency, schema-declared notifications, disposal recording, the
+> authenticated CSV report, and published-predicate visibility). Verified by
+> PHPUnit (RetentionServiceTest, RetentionEvaluationTest) and Vitest
+> (retentionStatus.spec.js). The user-facing surfaces are reused, already-e2e
+> -covered ones (mass publish/depublish modals, the publications table with
+> retention facets) plus an NC dashboard widget (not reliably present in a
+> default test environment).
+
 ## Context
 The `publications` spec treats publish/depublish as instantaneous manual
 actions (PUB-016/017/018). The lifecycle schema declares `archived` but no

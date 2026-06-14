@@ -1,7 +1,34 @@
 # publication-retention-lifecycle Specification
 
 ## Purpose
-TBD - created by archiving change publication-retention-lifecycle. Update Purpose after archive.
+Give publications an explicit, auditable time dimension: scheduled (embargoed)
+publication, scheduled depublication, statutory retention metadata per WOO
+information category (Archiefwet / selectielijst), automatic action on retention
+expiry, and an `archived` end state with a disposal decision trail. Built
+entirely on mechanisms OpenCatalogi already consumes (hydra ADR-022): the
+`publicatiedatum` / `depublicatiedatum` timestamps that the OR published-predicate
+evaluates, the `archived` state declared in `x-openregister-lifecycle`,
+schema-declared notifications (ADR-031), and the OR immutable audit-trail
+abstraction. The only new moving part is one daily retention-evaluation
+background job (`Cron\RetentionEvaluation`).
+
+> @e2e exclude Backend-and-data capability — every scenario asserts server-side
+> behaviour with no distinct browser-observable surface of its own: schema-field
+> validation and expiry computation (RET-003), per-catalog default resolution
+> (RET-004), the daily evaluation job's per-action behaviour and idempotency
+> (RET-005), schema-declared notification rules (RET-008), disposal-decision
+> recording and the authenticated CSV report (RET-006/RET-009), and the
+> published-predicate visibility of scheduled publish/depublish (RET-001/RET-002).
+> These are verified by PHPUnit (`tests/Unit/Service/RetentionServiceTest.php`,
+> `tests/Unit/Cron/RetentionEvaluationTest.php`) and Vitest
+> (`tests/vitest/retentionStatus.spec.js`). The user-facing surfaces are reused,
+> already-e2e-covered ones: the scheduled publish/depublish date pickers live in
+> the mass publish/depublish modals (covered under
+> generic-object-modals), the review queue is the existing publications table
+> with retention facets, and the dashboard retention widget is an NC dashboard
+> widget (not reliably present in a default test environment — same exclusion
+> rationale as catalogs::dashboard-widget scenarios).
+
 ## Requirements
 ### Requirement: Scheduled publication (embargo) via future `@self.published` (RET-001)
 The system MUST support scheduling a publication by setting
