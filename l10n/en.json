@@ -311,7 +311,12 @@
         "With labels": "With labels",
         "{count} selected": "{count} selected",
         "Not logged in": "Not logged in",
-        "Invalid key": "Invalid key"
+        "Invalid key": "Invalid key",
+        "Traffic": "Traffic",
+        "No traffic data": "No traffic data",
+        "Requests": "Requests",
+        "Popular Search Terms": "Popular Search Terms",
+        "No search data yet": "No search data yet"
     },
     "plurals": {}
 }
