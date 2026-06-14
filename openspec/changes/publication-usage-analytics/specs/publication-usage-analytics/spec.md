@@ -53,16 +53,19 @@ requests, list-endpoint hits (PUB-001), and authenticated back-office reads
 through the internal UI.
 
 #### Scenario: Public detail view is counted
+<!-- @e2e exclude Server-side counting hook on the public API read path; verified by PHPUnit (UsageCounterService) + Newman, not drivable through the officer UI. -->
 - GIVEN a publicly visible publication
 - WHEN an anonymous client fetches its public detail endpoint successfully
 - THEN the publication's view counter for today MUST increase by 1
 
 #### Scenario: Failed fetch is not counted
+<!-- @e2e exclude Server-side guard (non-2xx not counted); asserted by PHPUnit + Newman, no officer-facing UI. -->
 - GIVEN a request for a non-existent publication returning `404`
 - WHEN the response is sent
 - THEN no counter MUST be incremented
 
 #### Scenario: Counter failure never breaks a download
+<!-- @e2e exclude Fire-and-forget failure-swallow behaviour on the server; covered by PHPUnit (increment swallows failure), not a UI surface. -->
 - GIVEN the counter write path is failing (e.g. OR temporarily unavailable
   for writes)
 - WHEN an anonymous client downloads a publication file
@@ -70,6 +73,7 @@ through the internal UI.
 - AND the failure MUST be logged, not propagated
 
 #### Scenario: Back-office reads are not reach
+<!-- @e2e exclude Server-side scoping (count hooks only on public read paths, not internal endpoints); verified by code review + PHPUnit, no dedicated UI. -->
 - GIVEN a publication officer opens a publication in the authenticated admin
   UI
 - WHEN the internal endpoints serve the object
@@ -88,18 +92,21 @@ to the app and officer roles. OpenCatalogi MUST NOT create bespoke database
 tables for counters (hydra ADR-022).
 
 #### Scenario: Counter object shape
+<!-- @e2e exclude Privacy invariant on the stored OR object; asserted by PHPUnit (stored counter contains no request data), not a UI surface. -->
 - GIVEN a counted view
 - WHEN today's counter object for that publication is inspected in OR
 - THEN it MUST contain only publication reference, date, kind, and count
 - AND no request-derived attribute beyond those fields
 
 #### Scenario: Counters are invisible on public surfaces
+<!-- @e2e exclude Schema configured as internal (searchable:false, no public read, excluded from DCAT/sitemap/federation); enforced by OR RBAC + the schema seed, verified via Newman on the public surfaces. -->
 - GIVEN counter objects exist
 - WHEN public publications API, search, sitemap, DCAT, and federation
   surfaces are queried
 - THEN no counter object MUST appear on any of them
 
 #### Scenario: One object per publication per day per kind
+<!-- @e2e exclude Daily upsert/aggregation behaviour in the counting service; covered by PHPUnit (increment bumps existing counter), no UI. -->
 - GIVEN 50 views of one publication on one day
 - WHEN the day ends
 - THEN exactly one `view` counter object MUST exist for that
@@ -115,11 +122,13 @@ of counting. The crawler list MUST be maintainable without a code release
 (config-backed, with a shipped default).
 
 #### Scenario: Crawler download not counted
+<!-- @e2e exclude In-memory crawler filtering at count time; asserted by PHPUnit (increment skipped for crawler), no UI. -->
 - GIVEN a request with user agent `Googlebot/2.1`
 - WHEN it downloads a publication file successfully
 - THEN no download counter MUST be incremented
 
 #### Scenario: User agent is not persisted
+<!-- @e2e exclude Privacy invariant (UA never stored/logged); asserted by PHPUnit (counter + failure-log contain no user agent), no UI. -->
 - GIVEN any counted or skipped request
 - WHEN counter objects and application logs from the counting path are
   inspected
@@ -137,17 +146,20 @@ MUST include the counting-start date so consumers can distinguish "zero
 views" from "not yet measured".
 
 #### Scenario: Officer fetches a publication's reach
+<!-- @e2e exclude Stats API response shape (timeseries + totals + counting-start); asserted by PHPUnit (StatsController) + Newman, the UI rendering of it is covered by the stats-panel scenario. -->
 - GIVEN a publication with 120 counted views and 40 downloads in May 2026
 - WHEN an authorized officer requests its stats for May with `granularity=day`
 - THEN the response MUST contain per-day series summing to 120 views and 40
   downloads, plus the totals and the counting-start date
 
 #### Scenario: Anonymous request rejected
+<!-- @e2e exclude Server-side auth posture (endpoint not public); enforced by the NC route auth annotation + asserted via Newman, no UI. -->
 - GIVEN an unauthenticated request to a stats endpoint
 - WHEN it is processed
 - THEN it MUST be rejected (this surface is not public in this change)
 
 #### Scenario: Unauthorized user cannot read stats (no IDOR)
+<!-- @e2e exclude Per-object authorization (no-IDOR) on the server; asserted by PHPUnit (stats denied for unauthorized user) + Newman, no UI. -->
 - GIVEN an authenticated user without access to publication X
 - WHEN they request `GET /api/publications/X/stats`
 - THEN the request MUST be denied by the same authorization rule that
@@ -161,12 +173,14 @@ downloaded publications (default N=10), aggregated from the counter objects
 via OR queries.
 
 #### Scenario: Top-10 of a catalog
+<!-- @e2e exclude Top-N ranking maths in the aggregation service; asserted by PHPUnit (aggregateCatalog top-N ranking), surfaced in the most-viewed widget scenario. -->
 - GIVEN a catalog with 200 publications with varying counted usage
 - WHEN an officer requests the catalog stats for the last 30 days
 - THEN the response MUST contain catalog totals and the 10 publications with
   the highest view counts, each with its own totals
 
 #### Scenario: Period without data
+<!-- @e2e exclude Server-side zeros-plus-counting-start response for empty periods; asserted by PHPUnit (aggregateSeries empty) + Newman, no dedicated UI. -->
 - GIVEN a period before counting started
 - WHEN catalog stats are requested for it
 - THEN the response MUST return zeros together with the counting-start date
@@ -201,6 +215,7 @@ objects; no separate reporting store. Multiple-month ranges MUST be
 supported (a year for the WOO annual report).
 
 #### Scenario: Annual report export
+<!-- @e2e exclude CSV byte-level contract (UTF-8 BOM, columns, zero-usage rows); asserted by PHPUnit (buildCsv BOM + columns) + Newman, file-download not a render surface. -->
 - GIVEN catalog "woo-besluiten" with counted usage during 2026
 - WHEN the officer exports the usage CSV for 2026
 - THEN the CSV MUST contain one row per publication that was publicly
@@ -217,6 +232,7 @@ Per-publication labels MUST NOT be emitted (cardinality), and no second
 metrics endpoint MUST be introduced.
 
 #### Scenario: Metrics endpoint exposes usage families
+<!-- @e2e exclude Prometheus text-format scrape output; asserted by Newman against /api/metrics + PHPUnit on the metrics controller, not a render surface. -->
 - GIVEN counted usage exists
 - WHEN `GET /api/metrics` is scraped
 - THEN both new families MUST appear in valid Prometheus text format with

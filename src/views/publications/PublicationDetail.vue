@@ -644,15 +644,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						</tr>
 					</table>
 				</BTab>
-				<BTab v-if="1 == 2" :title="t('opencatalogi', 'Statistics')">
-					<apexchart v-if="publication.status === 'Published'"
-						width="100%"
-						type="line"
-						:options="chart.options"
-						:series="chart.series" />
-					<NcNoteCard type="info">
-						<p>{{ t('opencatalogi', 'There are no statistics known about this publication') }}</p>
-					</NcNoteCard>
+				<BTab :title="t('opencatalogi', 'Statistics')">
+					<div class="tabPanel">
+						<PublicationStatsPanel v-if="publication && publication.id"
+							:publication-id="String(publication.id)" />
+					</div>
 				</BTab>
 			</BTabs>
 		</div>
@@ -687,6 +683,7 @@ import TagOff from 'vue-material-design-icons/TagOff.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import SelectAllIcon from 'vue-material-design-icons/SelectAll.vue'
 import SelectRemove from 'vue-material-design-icons/SelectRemove.vue'
+import PublicationStatsPanel from './PublicationStatsPanel.vue'
 
 export default {
 	name: 'PublicationDetail',
@@ -702,6 +699,7 @@ export default {
 		NcCheckboxRadioSwitch,
 		BTab,
 		BTabs,
+		PublicationStatsPanel,
 	},
 	data() {
 		return {
