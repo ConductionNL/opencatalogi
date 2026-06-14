@@ -742,11 +742,11 @@ class RetentionService
      * @param string               $schema        The schema id.
      * @param array<string, mixed> $data          The publication data.
      *
-     * @return object The saved ObjectEntity.
+     * @return mixed The saved ObjectEntity (OR returns an entity; normalise at the call site).
      *
      * @spec exclude thin pass-through to the consumed OR saveObject (ADR-022).
      */
-    private function save(object $objectService, string $register, string $schema, array $data): object
+    private function save(object $objectService, string $register, string $schema, array $data): mixed
     {
         return $objectService->saveObject(
             object: $data,
