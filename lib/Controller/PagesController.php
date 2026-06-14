@@ -53,7 +53,6 @@ class PagesController extends Controller
 {
     use ResolvesRegisterConfiguration;
 
-
     /**
      * Allowed CORS methods.
      *

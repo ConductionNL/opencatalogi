@@ -43,7 +43,6 @@ class CatalogiController extends Controller
 {
     use ResolvesRegisterConfiguration;
 
-
     /**
      * Allowed CORS methods.
      *

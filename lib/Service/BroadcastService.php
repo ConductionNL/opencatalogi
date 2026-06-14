@@ -143,7 +143,6 @@ class BroadcastService
 
     }//end __construct()
 
-
     /**
      * Resolve the operator-configured maximum broadcast-retry count.
      *
@@ -161,7 +160,6 @@ class BroadcastService
         return max(1, $value);
 
     }//end getMaxRetries()
-
 
     /**
      * Resolve the operator-configured per-request HTTP timeout in seconds.
@@ -357,12 +355,12 @@ class BroadcastService
                 $response = $this->client->post(
                     uri: $url,
                     options: [
-                        'json'    => [
+                        'json'                          => [
                             'directory' => $directoryUrl,
                             'timestamp' => (new DateTime())->format('c'),
                             'source'    => $this->appName,
                         ],
-                        'headers' => [
+                        'headers'                       => [
                             'User-Agent'   => 'OpenCatalogi-Broadcast/'.$this->getAppVersion(),
                             'Content-Type' => 'application/json',
                         ],

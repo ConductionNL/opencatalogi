@@ -110,7 +110,6 @@ class SitemapService
 
     }//end __construct()
 
-
     /**
      * Resolve the operator-configured maximum publications per sitemap page.
      *

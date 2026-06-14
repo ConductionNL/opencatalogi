@@ -31,7 +31,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use Psr\Container\ContainerInterface;
 
 /**
  * Resolve `<context>_register` / `<context>_schema` config via OpenRegister.
@@ -42,8 +41,6 @@ use Psr\Container\ContainerInterface;
  */
 trait ResolvesRegisterConfiguration
 {
-
-
     /**
      * Lazily resolve OpenRegister's RegisterResolverService from the container.
      *
@@ -64,15 +61,12 @@ trait ResolvesRegisterConfiguration
     private function getRegisterResolver(): ?object
     {
         try {
-            /** @var ContainerInterface $container */
-            $container = $this->container;
-            return $container->get('OCA\OpenRegister\Service\RegisterResolverService');
+            return $this->container->get('OCA\OpenRegister\Service\RegisterResolverService');
         } catch (\Throwable $e) {
             return null;
         }
 
     }//end getRegisterResolver()
-
 
     /**
      * Resolve the register + schema identifiers for a configuration context.
@@ -109,7 +103,6 @@ trait ResolvesRegisterConfiguration
 
     }//end resolveRegisterConfiguration()
 
-
     /**
      * Build the operator-actionable 503 response for an unresolved register context.
      *
@@ -137,6 +130,4 @@ trait ResolvesRegisterConfiguration
         );
 
     }//end registerConfigErrorResponse()
-
-
 }//end trait

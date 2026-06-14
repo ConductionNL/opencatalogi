@@ -52,7 +52,6 @@ class GlossaryController extends Controller
 {
     use ResolvesRegisterConfiguration;
 
-
     /**
      * Allowed CORS methods.
      *
