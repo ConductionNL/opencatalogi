@@ -99,6 +99,10 @@ return [
 		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
 		// Prometheus metrics endpoint (specific route - must be before wildcard catalog routes).
 		['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+		// Usage analytics (authenticated; specific routes - MUST be before wildcard catalog routes).
+		['name' => 'stats#publication', 'url' => '/api/publications/{id}/stats', 'verb' => 'GET'],
+		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
+		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		// Health check endpoint (specific route - must be before wildcard catalog routes).
 		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)

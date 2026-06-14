@@ -468,7 +468,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+        $expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'usageCounter'];
         $this->assertSame($expectedTypes, $result['objectTypes']);
 
     }//end testGetSettingsObjectTypesContainAllExpectedTypes()
