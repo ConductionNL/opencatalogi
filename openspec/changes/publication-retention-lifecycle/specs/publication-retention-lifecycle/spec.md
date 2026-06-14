@@ -258,9 +258,10 @@ review-required counts linking into the queue.
 - AND clicking a count MUST open the queue pre-filtered to that status
 
 ### Requirement: Retention notifications are schema-declared (RET-008)
-Retention notifications — "publication expiring soon", "retention review
-required", "publication auto-depublished/archived on expiry" — MUST be
-declared via the canonical `x-openregister-notifications` dialect on the
+Retention notifications MUST be declared via the canonical
+`x-openregister-notifications` dialect. The notifications — "publication
+expiring soon", "retention review required", "publication
+auto-depublished/archived on expiry" — are declared on the
 publication schema (ADR-031, extending the rules established by the
 `opencatalogi-notifications` change). OpenCatalogi MUST NOT register bespoke
 notification listeners or its own cron-based reminder dispatch beyond the

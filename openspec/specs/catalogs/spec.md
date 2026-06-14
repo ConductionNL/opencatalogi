@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: done
 retrofit_extensions:
   - CAT-013
   - CAT-014
