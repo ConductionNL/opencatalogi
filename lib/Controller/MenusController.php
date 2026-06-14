@@ -41,6 +41,7 @@ use RuntimeException;
  */
 class MenusController extends Controller
 {
+    use ResolvesRegisterConfiguration;
 
     /**
      * Allowed CORS methods.
@@ -116,18 +117,20 @@ class MenusController extends Controller
     /**
      * Get the schema and register configuration for menus.
      *
+     * Resolved through OpenRegister's RegisterResolverService (no empty-string
+     * fallback); an unconfigured `menu_register`/`menu_schema` raises
+     * MissingConfigException which the caller converts to a 503.
+     *
      * @return array<string, string> Array containing schema and register configuration.
+     *
+     * @throws \RuntimeException                                                       When OpenRegister is unavailable.
+     * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
      */
     private function getMenuConfiguration(): array
     {
-        // Get the menu schema and register from configuration.
-        $schema   = $this->config->getValueString($this->appName, 'menu_schema', '');
-        $register = $this->config->getValueString($this->appName, 'menu_register', '');
-
-        return [
-            'schema'   => $schema,
-            'register' => $register,
-        ];
+        return $this->resolveRegisterConfiguration('menu_register', 'menu_schema');
 
     }//end getMenuConfiguration()
 
@@ -203,8 +206,12 @@ class MenusController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get menu configuration from settings.
-        $menuConfig = $this->getMenuConfiguration();
+        // Get menu configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+        try {
+            $menuConfig = $this->getMenuConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
         // Get query parameters from request.
         $queryParams = $this->request->getParams();

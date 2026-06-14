@@ -28,6 +28,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -45,7 +46,30 @@ use OCP\IURLGenerator;
 class SitemapService
 {
 
-    private const MAX_PER_PAGE = 1000;
+    /**
+     * Default maximum number of publications fetched per sitemap page.
+     *
+     * Overridable via the `sitemap_max_per_page` app-config key (see
+     * getMaxPerPage()). The constant is the shipped default only — operators
+     * tune the live value without a code change (audit Stream 4).
+     *
+     * @var int
+     */
+    private const DEFAULT_MAX_PER_PAGE = 1000;
+
+    /**
+     * App-config key that overrides DEFAULT_MAX_PER_PAGE.
+     *
+     * @var string
+     */
+    private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
+
+    /**
+     * The app id used for IAppConfig reads.
+     *
+     * @var string
+     */
+    private const APP_NAME = 'opencatalogi';
 
     public const INFO_CAT = [
         'sitemapindex-diwoo-infocat001.xml' => 'Wetten en algemeen verbindende voorschriften',
@@ -74,15 +98,34 @@ class SitemapService
      * @param IAppManager        $appManager      App manager for checking installed apps
      * @param SettingsService    $settingsService The settings service
      * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
+     * @param IAppConfig         $config          App configuration (operator-tunable page size)
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly IURLGenerator $urlGenerator,
+        private readonly IAppConfig $config,
     ) {
 
     }//end __construct()
+
+    /**
+     * Resolve the operator-configured maximum publications per sitemap page.
+     *
+     * Reads `sitemap_max_per_page` from IAppConfig, falling back to
+     * DEFAULT_MAX_PER_PAGE. Values below 1 are clamped to 1.
+     *
+     * @return int The effective per-page limit.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Promote hardcoded constants)
+     */
+    private function getMaxPerPage(): int
+    {
+        $value = $this->config->getValueInt(self::APP_NAME, self::CONFIG_MAX_PER_PAGE, self::DEFAULT_MAX_PER_PAGE);
+        return max(1, $value);
+
+    }//end getMaxPerPage()
 
     /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
@@ -153,7 +196,7 @@ class SitemapService
         $searchQuery['@self']['register'] = $registerId;
         $searchQuery['@self']['schema']   = $schemaId;
         $searchQuery['_order']['updated'] = 'desc';
-        $searchQuery['_limit']            = $this::MAX_PER_PAGE;
+        $searchQuery['_limit']            = $this->getMaxPerPage();
         $page = 1;
 
         // First call: only to retrieve total publications count.
@@ -268,7 +311,7 @@ class SitemapService
         $searchQuery = [];
         $searchQuery['@self']['register'] = $registerId;
         $searchQuery['@self']['schema']   = $schemaId;
-        $searchQuery['_limit']            = $this::MAX_PER_PAGE;
+        $searchQuery['_limit']            = $this->getMaxPerPage();
         $searchQuery['_page'] = $page;
 
         $publicationResult = $objectService->searchObjectsPaginated(

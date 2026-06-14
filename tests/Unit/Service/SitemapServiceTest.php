@@ -8,6 +8,7 @@ use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ class SitemapServiceTest extends TestCase
     private IAppManager|MockObject $appManager;
     private SettingsService|MockObject $settingsService;
     private IURLGenerator|MockObject $urlGenerator;
+    private IAppConfig|MockObject $config;
     private SitemapService $service;
 
     protected function setUp(): void
@@ -32,6 +34,14 @@ class SitemapServiceTest extends TestCase
         $this->appManager      = $this->createMock(IAppManager::class);
         $this->settingsService = $this->createMock(SettingsService::class);
         $this->urlGenerator    = $this->createMock(IURLGenerator::class);
+        $this->config          = $this->createMock(IAppConfig::class);
+
+        // The page-size limit is now operator-tunable via the `sitemap_max_per_page`
+        // app-config key; honour the default the production code passes.
+        $this->config->method('getValueInt')
+            ->willReturnCallback(
+                static fn (string $app, string $key, int $default = 0): int => $default
+            );
 
         // Object visibility is enforced by OpenRegister RBAC inside the _rbac: true
         // searches, not by an app-side predicate, so the query service is no longer a dep.
@@ -41,6 +51,7 @@ class SitemapServiceTest extends TestCase
             $this->appManager,
             $this->settingsService,
             $this->urlGenerator,
+            $this->config,
         );
     }
 
@@ -792,6 +803,56 @@ class SitemapServiceTest extends TestCase
         $result = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1);
 
         $this->assertInstanceOf(XMLResponse::class, $result);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // Operator-tunable page size
+    // ──────────────────────────────────────────────────────────
+
+    public function testMaxPerPageDefaultsTo1000(): void
+    {
+        // setUp wires getValueInt to return the passed default.
+        $method = $this->getPrivateMethod('getMaxPerPage');
+        $this->assertSame(1000, $method->invoke($this->service));
+    }
+
+    public function testMaxPerPageHonoursConfigOverride(): void
+    {
+        $config = $this->createMock(IAppConfig::class);
+        $config->method('getValueInt')
+            ->willReturnMap([['opencatalogi', 'sitemap_max_per_page', 1000, 250]]);
+
+        $service = new SitemapService(
+            $this->container,
+            $this->appManager,
+            $this->settingsService,
+            $this->urlGenerator,
+            $config,
+        );
+
+        $reflection = new \ReflectionClass($service);
+        $method     = $reflection->getMethod('getMaxPerPage');
+        $method->setAccessible(true);
+        $this->assertSame(250, $method->invoke($service));
+    }
+
+    public function testMaxPerPageClampsInvalidValue(): void
+    {
+        $config = $this->createMock(IAppConfig::class);
+        $config->method('getValueInt')->willReturn(0);
+
+        $service = new SitemapService(
+            $this->container,
+            $this->appManager,
+            $this->settingsService,
+            $this->urlGenerator,
+            $config,
+        );
+
+        $reflection = new \ReflectionClass($service);
+        $method     = $reflection->getMethod('getMaxPerPage');
+        $method->setAccessible(true);
+        $this->assertSame(1, $method->invoke($service));
     }
 
     // ──────────────────────────────────────────────────────────
