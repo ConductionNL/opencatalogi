@@ -22,9 +22,10 @@ truth), all in `hydra/openspec/architecture/`.
 
 ### Requirement: opencatalogi controllers MUST resolve registers and schemas via `RegisterResolverService`
 
-Every controller in `lib/Controller/` that today calls
+Every controller in `lib/Controller/` MUST resolve registers and schemas via
+`RegisterResolverService`. A controller that today calls
 `IAppConfig::getValueString($appName, '<context>_register' | '<context>_schema', '')`
-MUST instead call `RegisterResolverService::resolveRegister($context)`,
+instead calls `RegisterResolverService::resolveRegister($context)`,
 `resolveSchema($context)`, or `resolvePair($context)` from the upstream
 OpenRegister `register-resolver-service` capability.
 
@@ -134,7 +135,8 @@ helpers from nextcloud-vue are the only sanctioned access pattern.
 
 ### Requirement: opencatalogi MUST consume the OR file APIs for file management
 
-The `file-management` spec is rewritten to declare that opencatalogi
+opencatalogi MUST consume the OR file APIs for file management. The
+`file-management` spec is rewritten to declare that opencatalogi
 consumes OR's File Attachments capability via `x-openregister-file`
 schema annotations and the OR-provided file service. Sharing is delegated
 to `OCP\Share\IShareManager`. opencatalogi MUST NOT re-implement file
@@ -167,9 +169,10 @@ CRUD, share creation, share enumeration, or share revocation.
 
 ### Requirement: opencatalogi MUST honour API language negotiation for translatable content
 
-Every controller serving translatable resources — `PagesController`,
-`MenusController`, `PublicationsController`, `ThemesController`,
-`GlossaryController` — MUST consume the OR `TranslationHandler` (or
+Every controller serving translatable resources MUST honour API language
+negotiation. `PagesController`,
+`MenusController`, `PublicationsController`, `ThemesController`, and
+`GlossaryController` consume the OR `TranslationHandler` (or
 its post-`i18n-source-of-truth` public equivalent) so that
 `Accept-Language` and `?_lang=` resolve translatable fields per the
 `i18n-api-language-negotiation` capability.
@@ -208,10 +211,10 @@ quality-factor parsing and RFC 4647 lookup matching are owned upstream.
 
 ### Requirement: translatable schema properties MUST declare `translatable: true` and `sourceLanguage`
 
-Every schema owning user-facing string content (publications, pages,
-menus, themes, glossary entries, navigation labels) MUST mark the
-relevant properties `translatable: true` and MUST declare
-`sourceLanguage` per ADR-025.
+Every schema owning user-facing string content MUST declare `translatable: true`
+and `sourceLanguage`. This covers publications, pages,
+menus, themes, glossary entries, and navigation labels; each relevant
+property is marked `translatable: true` with a `sourceLanguage` per ADR-025.
 
 #### Scenario: publication schema marks title and body translatable
 
@@ -269,10 +272,11 @@ translatable content: `PublicationDetailPage.vue`, `ViewPageModal.vue`,
 
 ### Requirement: opencatalogi MUST consume `useTenantContext()` from nextcloud-vue
 
+opencatalogi MUST consume `useTenantContext()` from nextcloud-vue.
 Once `nextcloud-vue/openspec/changes/multi-tenancy-context/` is archived,
-opencatalogi MUST call `useTenantContext()` from
-`@conduction/nextcloud-vue` in `App.vue::setup()`, expose the active
-organisation UUID as a reactive `organisationUuidGetter`, and pass that
+opencatalogi calls `useTenantContext()` from
+`@conduction/nextcloud-vue` in `App.vue::setup()`, exposes the active
+organisation UUID as a reactive `organisationUuidGetter`, and passes that
 getter into every `createObjectStore` invocation.
 
 #### Scenario: store queries scope to the active tenant
@@ -309,8 +313,9 @@ getter into every `createObjectStore` invocation.
 
 ### Requirement: opencatalogi MUST ship `src/manifest.json` per the manifest convention (Tier 2-3)
 
-Per ADR-024 and `hydra/openspec/changes/adopt-app-manifest/`,
-opencatalogi MUST ship `src/manifest.json` as the single source of
+opencatalogi MUST ship `src/manifest.json` per the manifest convention
+(Tier 2-3). Per ADR-024 and `hydra/openspec/changes/adopt-app-manifest/`,
+that manifest is the single source of
 truth for routes, navigation, and view types. opencatalogi declares
 itself **Tier 2-3**: bespoke catalog landing pages, the publication
 renderer, and the public CMS edit experience use `type: "custom"`;
@@ -466,7 +471,8 @@ behaviour. opencatalogi MUST NOT re-derive retry maths.
 
 ### Requirement: hardcoded magic numbers MUST be promoted to admin-config or deleted
 
-Per `.claude/audit-2026-05-03/04-hardcoded.md`:
+Hardcoded magic numbers MUST be promoted to admin-config keys or deleted, per
+`.claude/audit-2026-05-03/04-hardcoded.md`:
 
 - `lib/Service/BroadcastService.php:68,75` — `MAX_RETRIES = 3` and
   `REQUEST_TIMEOUT = 30` MUST be promoted to admin-config keys
@@ -502,8 +508,9 @@ Per `.claude/audit-2026-05-03/04-hardcoded.md`:
 
 ### Requirement: every new admin-config key MUST appear in the `admin-settings` inventory
 
+Every new admin-config key MUST appear in the `admin-settings` inventory.
 Whenever Phase 8 (or any other phase) introduces an admin-config key,
-the `admin-settings` spec inventory table MUST be updated in the same
+the `admin-settings` spec inventory table is updated in the same
 spec change. The inventory is the single canonical list operators read.
 
 #### Scenario: admin-settings inventory is the source of truth
@@ -516,8 +523,9 @@ spec change. The inventory is the single canonical list operators read.
 
 ### Requirement: this change's phases MUST NOT ship before their upstream dependencies are archived
 
-Each phase declares its upstream dependency in `tasks.md`. A phase
-MUST NOT be implemented until the corresponding upstream openspec
+This change's phases MUST NOT ship before their upstream dependencies are
+archived. Each phase declares its upstream dependency in `tasks.md`, and is
+not implemented until the corresponding upstream openspec
 change is archived in its source repository.
 
 #### Scenario: Phase 1 waits for OR resolver

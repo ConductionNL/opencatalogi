@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: done
 or_dep: outbound-webhook-policy
 audit_ref: .claude/audit-2026-05-03/04-hardcoded.md
 ---

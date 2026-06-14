@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: done
 or_dep: x-openregister-aggregations
 audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 retrofit_extensions:

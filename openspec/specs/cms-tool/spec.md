@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: done
 ---
 
 # CMS Tool (AI Agent Integration)

@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: done
 ---
 
 # WOO Compliance (Sitemaps, Robots, DIWOO)

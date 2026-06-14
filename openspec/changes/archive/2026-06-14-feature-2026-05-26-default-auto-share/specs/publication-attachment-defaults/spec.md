@@ -30,14 +30,14 @@ This spec applies to both. The library exposes a `defaultShare` prop
 as a consumer override and a `null` default that triggers the
 schema-driven path described below.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Schema MAY opt in via `configuration.defaultAutoShare`
 
-A Publication schema MAY set `configuration.defaultAutoShare: true`
-to make the upload dialog seed its "Automatically publish" toggle as
-on by default. The key lives on the existing
-`OpenRegister.Schema.configuration` JSON column (no migration).
+The upload dialog MUST seed its "Automatically publish" toggle as on by
+default when a Publication schema sets `configuration.defaultAutoShare: true`.
+The key lives on the existing `OpenRegister.Schema.configuration` JSON column
+(no migration), and absence MUST be treated as `false`.
 
 #### Scenario: Schema opts in
 - GIVEN a publication schema with `configuration.defaultAutoShare: true`
@@ -58,8 +58,9 @@ on by default. The key lives on the existing
 
 ### Requirement: Schema-driven default MUST NOT lock the toggle
 
-The schema configuration only seeds the **initial** value of the
-toggle. The user can always flip it before submitting an upload.
+The schema configuration MUST only seed the **initial** value of the toggle.
+The user MUST always be able to flip it before submitting an upload; the seed
+MUST NOT disable or lock the control.
 
 #### Scenario: User overrides schema default before upload
 - GIVEN the dialog opened with the toggle seeded `true` from schema config
@@ -69,10 +70,10 @@ toggle. The user can always flip it before submitting an upload.
 
 ### Requirement: Lookup MUST fail closed
 
-Any failure path (network error, 404, malformed schema response,
-missing `@self.schema`, missing `configuration` block, non-boolean
-key value) MUST result in the toggle being off — never on. The
-schema's `true` is the only signal that flips the seed.
+Any failure path MUST result in the toggle being off — never on. This covers
+network errors, 404s, malformed schema responses, missing `@self.schema`,
+a missing `configuration` block, and non-boolean key values. The schema's
+strict boolean `true` is the only signal that flips the seed.
 
 #### Scenario: Schema API returns an error
 - GIVEN the schema lookup fetch returns an HTTP error or times out
@@ -114,12 +115,11 @@ schema fetch.
 
 ### Requirement: Existing deprecated `configuration.autoPublish` MUST remain untouched
 
-`configuration.autoPublish` (deprecated per
-`OpenRegister.MetadataHydrationHandler::$deprecatedKeys`) has
-different semantics — "share all attachments when the parent object
-is published". This spec MUST NOT read, write, or migrate
-`autoPublish`. The two keys coexist on the same `configuration`
-block without interaction.
+This spec MUST NOT read, write, or migrate `configuration.autoPublish`
+(deprecated per `OpenRegister.MetadataHydrationHandler::$deprecatedKeys`),
+which has different semantics — "share all attachments when the parent object
+is published". The two keys MUST coexist on the same `configuration` block
+without interaction.
 
 #### Scenario: Schema has both keys set
 - GIVEN a schema with `autoPublish: true` and `defaultAutoShare: false`

@@ -26,7 +26,7 @@ Dutch municipalities increasingly serve multilingual populations and must comply
 - **Glossary item**: Term, definition -- domain-specific terminology
 - **Organization**: Title, description -- public-facing organization names
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Publication fields MUST support multi-language content
 Publication objects MUST store and serve multi-language content for their primary text fields.
@@ -326,14 +326,6 @@ When publications are federated across OpenCatalogi instances, language metadata
 - GIVEN an OpenCatalogi instance with catalogs in nl, en, and de
 - WHEN the directory listing is served
 - THEN the directory entry MUST include `supportedLanguages: ["nl", "en", "de"]`
-
-## MODIFIED Requirements
-
-_None -- this is a new capability._
-
-## REMOVED Requirements
-
-_None._
 
 ## Current Implementation Status
 - **Not implemented**: No multi-language content support exists in OpenCatalogi. All content is stored in a single language (typically Dutch). Publications, catalogs, pages, themes, and all other content types are single-language.
