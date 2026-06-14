@@ -449,6 +449,16 @@ class ListingsController extends Controller
      */
     public function add(): JSONResponse
     {
+        // Auth guard (SB1/WF1): this endpoint registers a federation directory and
+        // must never be anonymous — an unauthenticated caller could otherwise point
+        // it at an attacker-controlled URL and chain it into the federation SSRF path.
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Authentication required.')],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
+
         // Get the URL parameter from the request.
         $url = $this->request->getParam('url');
 

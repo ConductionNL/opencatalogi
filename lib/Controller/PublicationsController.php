@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -104,6 +105,7 @@ class PublicationsController extends Controller
      * @param IAppManager             $appManager         The app manager
      * @param LoggerInterface         $logger             PSR-3 logger
      * @param IL10N                   $l10n               Localization service
+     * @param UsageCounterService     $usageCounterService Privacy-safe usage counter (fire-and-forget)
      * @param IAppConfig|null         $appConfig          App config for CORS allowlist (optional)
      * @param string                  $corsMethods        Allowed CORS methods
      * @param string                  $corsAllowedHeaders Allowed CORS headers
@@ -121,6 +123,7 @@ class PublicationsController extends Controller
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
         private readonly IL10N $l10n,
+        private readonly UsageCounterService $usageCounterService,
         private readonly ?IAppConfig $appConfig=null,
         string $corsMethods='PUT, POST, GET, DELETE, PATCH',
         string $corsAllowedHeaders='Authorization, Content-Type, Accept',
@@ -148,6 +151,45 @@ class PublicationsController extends Controller
         throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
+
+    /**
+     * Record a privacy-safe reach signal, fire-and-forget (ANA-001).
+     *
+     * Wraps UsageCounterService::increment so that any counting failure can
+     * NEVER break or slow the public read. The request User-Agent is passed for
+     * in-memory crawler evaluation only; UsageCounterService discards it and
+     * never stores it (ANA-003). HEAD requests are skipped here as a guard.
+     *
+     * @param string $publicationId The publication UUID just served.
+     * @param string $kind          UsageCounterService::KIND_VIEW or KIND_DOWNLOAD.
+     * @param string $catalogSlug   The catalog slug for roll-up labelling.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     */
+    private function countReach(string $publicationId, string $kind, string $catalogSlug): void
+    {
+        try {
+            if (strtoupper((string) $this->request->getMethod()) === 'HEAD') {
+                return;
+            }
+
+            $this->usageCounterService->increment(
+                publicationId: $publicationId,
+                kind: $kind,
+                userAgent: $this->request->getHeader('User-Agent'),
+                catalog: $catalogSlug
+            );
+        } catch (\Throwable $e) {
+            // Never propagate — a broken counter must not affect the public read.
+            $this->logger->warning(
+                '[PublicationsController] usage count failed (swallowed)',
+                ['error' => $e->getMessage()]
+            );
+        }
+
+    }//end countReach()
 
     /**
      * Resolve the Access-Control-Allow-Origin header value for the current request.
@@ -706,6 +748,11 @@ class PublicationsController extends Controller
             $response = new JSONResponse($result, 200);
             $this->addCorsHeaders($response);
 
+            // ANA-001: count this successful public detail view, fire-and-forget.
+            // HEAD requests, non-2xx, and back-office reads never reach this seam
+            // (this is the public detail path that already 404'd above on misses).
+            $this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
+
             return $response;
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(
@@ -880,7 +927,17 @@ class PublicationsController extends Controller
                 );
             }
 
-            return $this->publicationService->download(id: $id);
+            $downloadResponse = $this->publicationService->download(id: $id);
+
+            // ANA-001: count a successful public download only. A DataDownloadResponse
+            // is the success shape; a JSONResponse here is an error (e.g. no file) and
+            // is NOT counted. The increment runs after the response object is assembled
+            // and does NOT buffer or delay the streamed payload (DWN-OR-001).
+            if ($downloadResponse instanceof DataDownloadResponse) {
+                $this->countReach(publicationId: $id, kind: UsageCounterService::KIND_DOWNLOAD, catalogSlug: $catalogSlug);
+            }
+
+            return $downloadResponse;
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(
                 [

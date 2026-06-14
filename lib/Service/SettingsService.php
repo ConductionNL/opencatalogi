@@ -399,6 +399,7 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            'usageCounter',
         ];
         $data['openRegisters']      = false;
         $data['availableRegisters'] = [];

@@ -37,6 +37,7 @@ class PublicationsControllerTest extends TestCase
     private IDBConnection|MockObject $db;
     private IL10N|MockObject $l10n;
     private IAppConfig|MockObject $appConfig;
+    private \OCA\OpenCatalogi\Service\UsageCounterService|MockObject $usageCounterService;
     private PublicationsController $controller;
 
     protected function setUp(): void
@@ -51,6 +52,7 @@ class PublicationsControllerTest extends TestCase
         $this->db                 = $this->createMock(IDBConnection::class);
         $this->l10n               = $this->createMock(IL10N::class);
         $this->appConfig          = $this->createMock(IAppConfig::class);
+        $this->usageCounterService = $this->createMock(\OCA\OpenCatalogi\Service\UsageCounterService::class);
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text, array $params = []) => $text);
@@ -85,6 +87,7 @@ class PublicationsControllerTest extends TestCase
             $this->appManager,
             $this->logger,
             $this->l10n,
+            $this->usageCounterService,
             $this->appConfig
         );
     }
@@ -131,6 +134,7 @@ class PublicationsControllerTest extends TestCase
             $this->appManager,
             $this->logger,
             $this->l10n,
+            $this->usageCounterService,
             $this->appConfig
         );
     }
@@ -1462,6 +1466,7 @@ class PublicationsControllerTest extends TestCase
             $this->appManager,
             $this->logger,
             $this->l10n,
+            $this->usageCounterService,
             $this->appConfig,
             'GET, POST',
             'Authorization',

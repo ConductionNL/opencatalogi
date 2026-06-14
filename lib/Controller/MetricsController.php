@@ -164,6 +164,35 @@ class MetricsController extends Controller
         $lines[]        = 'opencatalogi_directory_entries_total '.$directoryCount;
         $lines[]        = '';
 
+        // Usage analytics — catalog-labelled view/download totals (ANA-008).
+        // Per-publication labels are deliberately NOT emitted (cardinality);
+        // there is no second metrics endpoint — these extend this one.
+        $usage = $this->getUsageTotalsByCatalog();
+
+        $lines[] = '# HELP opencatalogi_publication_views_total Total counted publication views by catalog';
+        $lines[] = '# TYPE opencatalogi_publication_views_total counter';
+        foreach ($usage['view'] as $catalog => $count) {
+            $lines[] = 'opencatalogi_publication_views_total{catalog="'.$this->sanitizeLabel((string) $catalog).'"} '.(int) $count;
+        }
+
+        if (empty($usage['view']) === true) {
+            $lines[] = 'opencatalogi_publication_views_total{catalog=""} 0';
+        }
+
+        $lines[] = '';
+
+        $lines[] = '# HELP opencatalogi_file_downloads_total Total counted file downloads by catalog';
+        $lines[] = '# TYPE opencatalogi_file_downloads_total counter';
+        foreach ($usage['download'] as $catalog => $count) {
+            $lines[] = 'opencatalogi_file_downloads_total{catalog="'.$this->sanitizeLabel((string) $catalog).'"} '.(int) $count;
+        }
+
+        if (empty($usage['download']) === true) {
+            $lines[] = 'opencatalogi_file_downloads_total{catalog=""} 0';
+        }
+
+        $lines[] = '';
+
         return implode("\n", $lines)."\n";
     }//end collectMetrics()
 
@@ -347,6 +376,58 @@ class MetricsController extends Controller
             return 0;
         }
     }//end countDirectoryEntries()
+
+    /**
+     * Sum usage-counter objects by catalog and kind for the metrics families.
+     *
+     * Reads the privacy-safe `usageCounter` objects (schema title matched by
+     * pattern) and sums their JSON `count` grouped by `catalog` + `kind`.
+     * Returns ['view' => [catalog => total], 'download' => [catalog => total]].
+     * No per-publication grouping is performed (cardinality, ANA-008).
+     *
+     * @return array{view: array<string,int>, download: array<string,int>} Totals by catalog.
+     *
+     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     */
+    private function getUsageTotalsByCatalog(): array
+    {
+        $out = ['view' => [], 'download' => []];
+
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select(
+                $qb->createFunction("JSON_UNQUOTE(JSON_EXTRACT(o.object, '$.catalog')) AS catalog"),
+                $qb->createFunction("JSON_UNQUOTE(JSON_EXTRACT(o.object, '$.kind')) AS kind"),
+            )
+                ->selectAlias(
+                    $qb->createFunction("SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(o.object, '$.count')) AS UNSIGNED))"),
+                    'total'
+                )
+                ->from('openregister_objects', 'o')
+                ->innerJoin('o', 'openregister_schemas', 's', $qb->expr()->eq('o.schema', 's.id'))
+                ->where($qb->expr()->like('s.title', $qb->createNamedParameter('%sageCounter%')))
+                ->groupBy('catalog', 'kind');
+
+            $result = $qb->executeQuery();
+            $rows   = $result->fetchAll();
+            $result->closeCursor();
+
+            foreach ($rows as $row) {
+                $kind = (string) ($row['kind'] ?? '');
+                if (isset($out[$kind]) === false) {
+                    continue;
+                }
+
+                $catalog        = (string) ($row['catalog'] ?? '');
+                $out[$kind][$catalog] = (int) ($row['total'] ?? 0);
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('[MetricsController] Failed to get usage totals', ['error' => $e->getMessage()]);
+        }//end try
+
+        return $out;
+
+    }//end getUsageTotalsByCatalog()
 
     /**
      * Sanitize a label value for Prometheus format.
