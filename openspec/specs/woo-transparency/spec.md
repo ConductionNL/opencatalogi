@@ -10,6 +10,8 @@ workflow-integration triggers, and audit immutability is OpenRegister's audit
 trail; only the WOO-specific domain (weigeringsgronden, redaction metadata,
 inventarislijst, reading-room rendering) lives in OpenCatalogi.
 
+@e2e exclude WOO-specific logic is verified by the WooService PHPUnit suite (batch/assessment/inventarislijst/publish, 13 tests) and the wooHelpers vitest suite (redaction-instruction + progress derivation, 10 tests); the queue/board UI is the consumed OpenRegister deck-leaf widget (its own e2e coverage, ADR-022) and notifications are workflow-integration triggers (not an OpenCatalogi UI surface). No bespoke Playwright e2e is owned by this change.
+
 ## Requirements
 ### Requirement: WOO document queue (consumes the OpenRegister deck leaf)
 The system MUST provide the WOO document processing queue by **consuming the OpenRegister deck leaf** (`nextcloud-entity-relations` `DeckCardService`, `openregister_deck_links`, `nl.openregister.object.deck.*` events) — NOT by building a bespoke queue table or kanban UI (hydra ADR-022). A disclosure batch is represented as a Deck board whose stacks are the assessment stages; each document is a Deck card linked to its OpenRegister assessment object. WOO contributes only the assessment status vocabulary and the per-document assessment metadata stored on the linked object; board/card mechanics (drag, bulk move, progress, sort/filter/search) are delivered by the leaf and surfaced as the deck widget on the batch object detail page (ADR-019 / ADR-024).
