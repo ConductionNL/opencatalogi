@@ -1,53 +1,35 @@
----
-status: draft
----
-
 # publication-retention-lifecycle Specification
 
 ## Purpose
-Give publications an explicit, auditable time dimension: scheduled
-(embargoed) publication, scheduled depublication, statutory retention
-metadata per WOO information category (Archiefwet / selectielijst), automatic
-action on retention expiry, and an `archived` end state with a disposal
-decision trail. Built entirely on mechanisms OpenCatalogi already consumes
-(hydra ADR-022): the `@self.published` / `@self.depublished` timestamps that
-the OR published-predicate evaluates (APB-006), the `archived` state already
-declared in `x-openregister-lifecycle` (APB-SM-001), schema-declared
-notifications (ADR-031), and the OR immutable audit-trail abstraction. The
-only new moving part is one daily retention-evaluation background job.
+Give publications an explicit, auditable time dimension: scheduled (embargoed)
+publication, scheduled depublication, statutory retention metadata per WOO
+information category (Archiefwet / selectielijst), automatic action on retention
+expiry, and an `archived` end state with a disposal decision trail. Built
+entirely on mechanisms OpenCatalogi already consumes (hydra ADR-022): the
+`publicatiedatum` / `depublicatiedatum` timestamps that the OR published-predicate
+evaluates, the `archived` state declared in `x-openregister-lifecycle`,
+schema-declared notifications (ADR-031), and the OR immutable audit-trail
+abstraction. The only new moving part is one daily retention-evaluation
+background job (`Cron\RetentionEvaluation`).
 
-## Context
-The `publications` spec treats publish/depublish as instantaneous manual
-actions (PUB-016/017/018). The lifecycle schema declares `archived` but no
-code path ever reaches it; no retention metadata exists; nothing warns an
-officer that a statutory term is expiring. WOO information categories carry
-retention expectations and the Archiefwet requires substantiated, recorded
-retention/disposal decisions — today the app can satisfy neither without
-hand-work outside the system.
+> @e2e exclude Backend-and-data capability — every scenario asserts server-side
+> behaviour with no distinct browser-observable surface of its own: schema-field
+> validation and expiry computation (RET-003), per-catalog default resolution
+> (RET-004), the daily evaluation job's per-action behaviour and idempotency
+> (RET-005), schema-declared notification rules (RET-008), disposal-decision
+> recording and the authenticated CSV report (RET-006/RET-009), and the
+> published-predicate visibility of scheduled publish/depublish (RET-001/RET-002).
+> These are verified by PHPUnit (`tests/Unit/Service/RetentionServiceTest.php`,
+> `tests/Unit/Cron/RetentionEvaluationTest.php`) and Vitest
+> (`tests/vitest/retentionStatus.spec.js`). The user-facing surfaces are reused,
+> already-e2e-covered ones: the scheduled publish/depublish date pickers live in
+> the mass publish/depublish modals (covered under
+> generic-object-modals), the review queue is the existing publications table
+> with retention facets, and the dashboard retention widget is an NC dashboard
+> widget (not reliably present in a default test environment — same exclusion
+> rationale as catalogs::dashboard-widget scenarios).
 
-**Relation to existing specs:**
-- `auto-publishing` APB-006: public visibility is derived from
-  `@self.published`/`@self.depublished` — this spec makes the future-dated
-  use of those timestamps an explicit, surfaced contract (embargo/scheduling)
-  rather than an accident.
-- `auto-publishing` APB-SM-001: the `published → archived` transition is
-  declared in `x-openregister-lifecycle`; this spec adds the triggers that
-  request it. No PHP state machine.
-- `publications` PUB-016/017/018: the publish/depublish store actions and
-  confirmation dialog gain date-time scheduling; the depublication path is
-  reused unchanged for retention-driven depublication.
-- `woo-compliance` WOO-003: the 17 WOO information categories key the
-  per-catalog retention defaults; sitemaps must stay coherent with scheduled
-  visibility.
-- `opencatalogi-notifications` (in-flight change): establishes the
-  schema-declared `x-openregister-notifications` pattern these retention
-  notifications extend.
-- `dashboard` / `retrofit-2026-05-26-object-table-listing` /
-  `retrofit-2026-05-26-mass-object-actions`: the review queue and widget are
-  built on these existing surfaces.
-
-## ADDED Requirements
-
+## Requirements
 ### Requirement: Scheduled publication (embargo) via future `@self.published` (RET-001)
 The system MUST support scheduling a publication by setting
 `@self.published` to a future date-time. Until that moment the object MUST be
@@ -302,52 +284,3 @@ audit-trail records; no separate reporting store.
 - THEN it MUST be rejected (this is an internal accountability surface, not
   a public API)
 
-## Non-Requirements
-- This spec does NOT build a scheduler/state machine — scheduling is the
-  published-predicate timestamps; transitions are `x-openregister-lifecycle`
-  (ADR-022).
-- This spec does NOT build notification dispatch — schema-declared dialect
-  (ADR-031).
-- This spec does NOT build an audit store — OR immutable audit-trail
-  abstraction.
-- This spec does NOT cover physical transfer to an e-Depot or TMLO/MDTO
-  export — a future change consuming the archive state + decision trail.
-- This spec does NOT delete files or objects automatically — disposal is
-  always an explicit recorded human decision.
-- This spec does NOT change WOO sitemap structure (woo-compliance) — it only
-  relies on sitemaps already filtering on the published-predicate.
-
-## Dependencies
-- OR published-predicate over `@self.published`/`@self.depublished`
-  (APB-006) — consumed for all scheduled visibility (NOTE: the known OR
-  magic-mapping gap where magic-mapped objects cannot set `@self.published`
-  is an upstream dependency for embargo on such objects).
-- `x-openregister-lifecycle` on the publication schema (APB-SM-001) —
-  consumed for the `archive` transition.
-- `x-openregister-notifications` dialect (ADR-031) + the in-flight
-  `opencatalogi-notifications` change — consumed for all retention
-  notifications.
-- OR immutable audit-trail abstraction — consumed for extension/disposal
-  decision records.
-- Existing publish/depublish store actions + dialog (PUB-016/017/018) —
-  extended with date-time scheduling.
-- Existing object-table, mass-object-actions, dashboard-widget surfaces
-  (retrofit specs) — host the review queue and widget.
-- admin-settings spec — hosts per-catalog category defaults and the warning
-  window.
-- woo-compliance WOO-003 — the WOO information-category list keying the
-  defaults.
-
-### Current Implementation Status
-- **Not yet implemented**: no retention fields, defaults, evaluation job,
-  review queue, archived-filter UI, retention notifications, or report exist.
-- **Building blocks that exist**: published-predicate evaluation (APB-006)
-  already honours future-dated timestamps end-to-end on the API path;
-  `archived` is already declared in the lifecycle example (APB-SM-001);
-  publish/depublish store actions + confirmation dialog (PUB-016..018);
-  directory-sync cron as the background-job registration pattern; object
-  table + facets, mass actions, dashboard widgets (retrofit specs); CSV
-  export precedent (inventarislijst in `woo-transparency`).
-- **Key gaps**: publish/depublish UI is now-or-nothing (no date pickers); no
-  code path ever requests the `archive` transition; cache validators on
-  public surfaces have not been audited against embargo boundaries.
