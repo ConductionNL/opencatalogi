@@ -67,6 +67,7 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		periodOptions() {
 			return [
 				{ value: 7, label: this.t('opencatalogi', 'Last 7 days') },
@@ -74,6 +75,7 @@ export default {
 				{ value: 90, label: this.t('opencatalogi', 'Last 90 days') },
 			]
 		},
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		items() {
 			return this.topViewed.map((entry) => ({
 				id: entry.publication,
@@ -86,11 +88,13 @@ export default {
 		this.load()
 	},
 	methods: {
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		rangeFrom() {
 			const d = new Date()
 			d.setDate(d.getDate() - this.period)
 			return d.toISOString().slice(0, 10)
 		},
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		async load() {
 			this.loading = true
 			try {
@@ -102,6 +106,7 @@ export default {
 				this.loading = false
 			}
 		},
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		onShow(item) {
 			window.location.href = `/index.php/apps/opencatalogi/publications/${item.id}`
 		},

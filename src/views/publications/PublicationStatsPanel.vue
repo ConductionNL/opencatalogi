@@ -79,12 +79,15 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		trendViews() {
 			return deriveTrend(this.stats.series, 'views')
 		},
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		trendDownloads() {
 			return deriveTrend(this.stats.series, 'downloads')
 		},
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		countingStartText() {
 			return countingStartNote(this.stats.countingStart, this.t)
 		},
@@ -97,11 +100,13 @@ export default {
 	},
 	methods: {
 		formatCount,
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		trendLabel(trend) {
 			if (trend === 'up') return this.t('opencatalogi', 'Trending up')
 			if (trend === 'down') return this.t('opencatalogi', 'Trending down')
 			return this.t('opencatalogi', 'Stable')
 		},
+		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		async loadStats() {
 			if (!this.publicationId) {
 				this.loading = false

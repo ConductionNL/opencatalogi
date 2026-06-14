@@ -29,6 +29,8 @@ use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -52,6 +54,8 @@ class StatsControllerTest extends TestCase
 
     private IL10N|MockObject $l10n;
 
+    private IUserSession|MockObject $userSession;
+
     private LoggerInterface|MockObject $logger;
 
     private StatsController $controller;
@@ -64,11 +68,17 @@ class StatsControllerTest extends TestCase
         $this->appManager = $this->createMock(IAppManager::class);
         $this->container  = $this->createMock(ContainerInterface::class);
         $this->l10n       = $this->createMock(IL10N::class);
+        $this->userSession = $this->createMock(IUserSession::class);
         $this->logger     = $this->createMock(LoggerInterface::class);
 
         $this->l10n->method('t')->willReturnCallback(fn(string $t, array $p = []) => $t);
         $this->request->method('getParam')
             ->willReturnCallback(fn(string $k, $d = null) => $d);
+
+        // Default: an authenticated officer is present (override in anon tests).
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('officer');
+        $this->userSession->method('getUser')->willReturn($user);
 
         $this->controller = new StatsController(
             'opencatalogi',
@@ -78,6 +88,7 @@ class StatsControllerTest extends TestCase
             $this->appManager,
             $this->container,
             $this->l10n,
+            $this->userSession,
             $this->logger,
         );
     }//end setUp()

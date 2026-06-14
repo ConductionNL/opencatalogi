@@ -19,6 +19,7 @@ import axios from '@nextcloud/axios'
  * @param {string} id Publication UUID.
  * @param {object} [opts] Optional { from, to, granularity }.
  * @return {Promise<object>} The stats payload (views, downloads, series, countingStart).
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export async function fetchPublicationStats(id, opts = {}) {
 	const url = generateUrl('/apps/opencatalogi/api/publications/{id}/stats', { id })
@@ -32,6 +33,7 @@ export async function fetchPublicationStats(id, opts = {}) {
  * @param {string} slug Catalog slug.
  * @param {object} [opts] Optional { from, to, top }.
  * @return {Promise<object>} The catalog stats payload.
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export async function fetchCatalogStats(slug, opts = {}) {
 	const url = generateUrl('/apps/opencatalogi/api/catalogs/{slug}/stats', { slug })
@@ -45,6 +47,7 @@ export async function fetchCatalogStats(slug, opts = {}) {
  * @param {string} slug Catalog slug.
  * @param {object} [opts] Optional { from, to }.
  * @return {string} The export URL (caller navigates/downloads).
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export function catalogExportUrl(slug, opts = {}) {
 	const base = generateUrl('/apps/opencatalogi/api/catalogs/{slug}/stats/export', { slug })
@@ -60,6 +63,7 @@ export function catalogExportUrl(slug, opts = {}) {
  *
  * @param {number} value Raw count.
  * @return {string} Human-readable count.
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export function formatCount(value) {
 	const n = Number(value) || 0
@@ -75,6 +79,7 @@ export function formatCount(value) {
  * @param {Array<{date:string, views:number}>} series Daily series (chronological).
  * @param {string} [metric] 'views' or 'downloads'.
  * @return {'up'|'down'|'flat'} The trend direction.
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export function deriveTrend(series, metric = 'views') {
 	if (!Array.isArray(series) || series.length < 2) {
@@ -94,6 +99,7 @@ export function deriveTrend(series, metric = 'views') {
  * @param {?string} countingStart First measured day (YYYY-MM-DD) or null.
  * @param {function} t Translation function t('opencatalogi', key, params).
  * @return {?string} The note, or null when there is nothing to qualify.
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export function countingStartNote(countingStart, t) {
 	if (!countingStart) {

@@ -29,10 +29,12 @@ use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -54,6 +56,7 @@ class StatsController extends Controller
      * @param IAppManager         $appManager          Detects OpenRegister availability.
      * @param ContainerInterface  $container           DI container for the OR ObjectService.
      * @param IL10N               $l10n                Localization service.
+     * @param IUserSession        $userSession         Current-user session for the auth guard.
      * @param LoggerInterface     $logger              PSR-3 logger.
      */
     public function __construct(
@@ -64,6 +67,7 @@ class StatsController extends Controller
         private readonly IAppManager $appManager,
         private readonly ContainerInterface $container,
         private readonly IL10N $l10n,
+        private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct($appName, $request);
@@ -91,12 +95,15 @@ class StatsController extends Controller
     {
         [$from, $to, $granularity] = $this->readRange();
 
-        // Per-object authorization (no IDOR): confirm the caller may read this
-        // publication under its own OR RBAC rule before returning any stats.
-        if ($this->canReadPublication($id) === false) {
+        // Per-object authorization (no IDOR): require an authenticated user AND
+        // confirm the caller may read this publication under its own OR RBAC
+        // rule before returning any stats.
+        if ($this->requireAuthenticatedUser() === null
+            || $this->canReadPublication($id) === false
+        ) {
             return new JSONResponse(
                 ['error' => $this->l10n->t('You are not allowed to view statistics for this publication.')],
-                403
+                Http::STATUS_FORBIDDEN
             );
         }
 
@@ -125,6 +132,14 @@ class StatsController extends Controller
      */
     public function catalog(string $slug): JSONResponse
     {
+        // Auth guard: catalog usage roll-ups are officer-facing, never anonymous.
+        if ($this->requireAuthenticatedUser() === null) {
+            return new JSONResponse(
+                ['error' => $this->l10n->t('Authentication required.')],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
         $catalog = $this->catalogiService->getCatalogBySlug($slug);
         if ($catalog === null) {
             return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
@@ -171,6 +186,14 @@ class StatsController extends Controller
      */
     public function export(string $slug): DataDownloadResponse|JSONResponse
     {
+        // Auth guard: the CSV export is officer-facing, never anonymous.
+        if ($this->requireAuthenticatedUser() === null) {
+            return new JSONResponse(
+                ['error' => $this->l10n->t('Authentication required.')],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
         $catalog = $this->catalogiService->getCatalogBySlug($slug);
         if ($catalog === null) {
             return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
@@ -278,6 +301,28 @@ class StatsController extends Controller
     }//end readRange()
 
     /**
+     * Require an authenticated user; return the user id, or null when absent.
+     *
+     * Defence-in-depth alongside the route's `@NoAdminRequired` posture and the
+     * OR RBAC on the counter schema — the stats surfaces are officer-facing and
+     * never anonymous (ANA-004/ANA-005).
+     *
+     * @return string|null The authenticated user id, or null.
+     *
+     * @spec openspec/specs/publication-usage-analytics/spec.md
+     */
+    private function requireAuthenticatedUser(): ?string
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return null;
+        }
+
+        return $user->getUID();
+
+    }//end requireAuthenticatedUser()
+
+    /**
      * Check whether the current caller may read a publication under OR RBAC.
      *
      * Resolves the publication with `_rbac: true`; an empty result means the
@@ -289,7 +334,7 @@ class StatsController extends Controller
      *
      * @return boolean True when the caller may read the publication.
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     private function canReadPublication(string $id): bool
     {
