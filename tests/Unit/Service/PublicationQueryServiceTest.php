@@ -2,9 +2,11 @@
 /**
  * Unit tests for PublicationQueryService.
  *
- * Covers: findObjectLocation (the constrained object-location query). Visibility/published
- * filtering now lives entirely in OpenRegister RBAC, so the former published-predicate
- * helpers (isAnonymous / isObjectPublic / enforcePublishedForAnonymous) no longer exist.
+ * Covers: findObjectLocation (the constrained object-location query) and isObjectPublic
+ * (the public-relation-endpoint visibility guard). Bulk visibility filtering lives in
+ * OpenRegister RBAC; isObjectPublic mirrors the same RBAC rule
+ * (`publicatiedatum <= now`, APB-006) for the per-object guard on the public uses/used
+ * relation endpoints. The removed object-level @self.published predicate is not consulted.
  *
  * @category Test
  * @package  Unit\Service
@@ -220,4 +222,84 @@ class PublicationQueryServiceTest extends TestCase
         );
 
     }//end stubMagicTableExists()
+
+    // -------------------------------------------------------------------------
+    // isObjectPublic() tests — RBAC publicatiedatum model (APB-006)
+    // -------------------------------------------------------------------------
+
+    /**
+     * A past publicatiedatum with no depublicatiedatum is publicly visible.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function testIsObjectPublicWithPastPublicatiedatum(): void
+    {
+        $this->assertTrue(
+            $this->service->isObjectPublic(['publicatiedatum' => '2024-01-15T10:00:00+00:00'])
+        );
+
+    }//end testIsObjectPublicWithPastPublicatiedatum()
+
+    /**
+     * No publicatiedatum means the object is not public (concept).
+     *
+     * @return void
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function testIsObjectPublicWithoutPublicatiedatum(): void
+    {
+        $this->assertFalse($this->service->isObjectPublic([]));
+        $this->assertFalse(
+            $this->service->isObjectPublic(['depublicatiedatum' => '2024-01-15T10:00:00+00:00'])
+        );
+
+    }//end testIsObjectPublicWithoutPublicatiedatum()
+
+    /**
+     * A future publicatiedatum (embargo) is not yet public.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function testIsObjectPublicWithFuturePublicatiedatum(): void
+    {
+        $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
+        $this->assertFalse($this->service->isObjectPublic(['publicatiedatum' => $future]));
+
+    }//end testIsObjectPublicWithFuturePublicatiedatum()
+
+    /**
+     * A reached depublicatiedatum hides the object; a future one keeps it visible.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function testIsObjectPublicRespectsDepublicatiedatum(): void
+    {
+        $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
+
+        $this->assertFalse(
+            $this->service->isObjectPublic(
+                [
+                    'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
+                    'depublicatiedatum' => '2024-06-01T10:00:00+00:00',
+                ]
+            )
+        );
+
+        $this->assertTrue(
+            $this->service->isObjectPublic(
+                [
+                    'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
+                    'depublicatiedatum' => $future,
+                ]
+            )
+        );
+
+    }//end testIsObjectPublicRespectsDepublicatiedatum()
 }//end class

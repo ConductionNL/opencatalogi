@@ -38,9 +38,21 @@ class ObjectUpdatedEventListenerTest extends TestCase
         ?\DateTime $depublished = null,
         array $jsonData = []
     ): ObjectEntity&MockObject {
+        // The removed object-level @self.published predicate is gone from OR core,
+        // so the listener no longer calls getPublished()/getDepublished(). Visibility
+        // is governed by the object's own publicatiedatum/depublicatiedatum fields,
+        // which arrive via jsonSerialize().
+        if ($published !== null) {
+            $jsonData['publicatiedatum'] = $published->format('c');
+        }
+
+        if ($depublished !== null) {
+            $jsonData['depublicatiedatum'] = $depublished->format('c');
+        }
+
         $entity = $this->getMockBuilder(ObjectEntity::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getUuid', 'getRegister', 'getSchema', 'getPublished', 'getDepublished'])
+            ->addMethods(['getUuid', 'getRegister', 'getSchema'])
             ->onlyMethods(['jsonSerialize'])
             ->getMock();
 
@@ -48,8 +60,6 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $entity->method('getUuid')->willReturn($uuid);
         $entity->method('getRegister')->willReturn($register);
         $entity->method('getSchema')->willReturn($schema);
-        $entity->method('getPublished')->willReturn($published);
-        $entity->method('getDepublished')->willReturn($depublished);
 
         return $entity;
     }
@@ -72,32 +82,33 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $method = new \ReflectionMethod(ObjectUpdatedEventListener::class, 'isObjectPublished');
         $method->setAccessible(true);
 
-        // Not published.
+        $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
+
+        // Not published (no publicatiedatum).
+        $this->assertFalse($method->invoke($this->listener, []));
         $this->assertFalse($method->invoke($this->listener, ['@self' => []]));
 
-        // Published, not depublished.
+        // Past publicatiedatum, no depublicatiedatum -> published.
         $this->assertTrue($method->invoke($this->listener, [
-            '@self' => ['published' => '2025-01-01T00:00:00+00:00'],
+            'publicatiedatum' => '2025-01-01T00:00:00+00:00',
         ]));
 
-        // Published before depublished.
+        // Future publicatiedatum (embargo) -> not yet published.
         $this->assertFalse($method->invoke($this->listener, [
-            '@self' => [
-                'published'   => '2025-01-01T00:00:00+00:00',
-                'depublished' => '2025-02-01T00:00:00+00:00',
-            ],
+            'publicatiedatum' => $future,
         ]));
 
-        // Published after depublished.
+        // Past publicatiedatum but depublicatiedatum already passed -> depublished.
+        $this->assertFalse($method->invoke($this->listener, [
+            'publicatiedatum'   => '2025-01-01T00:00:00+00:00',
+            'depublicatiedatum' => '2025-02-01T00:00:00+00:00',
+        ]));
+
+        // Past publicatiedatum with a future depublicatiedatum -> still published.
         $this->assertTrue($method->invoke($this->listener, [
-            '@self' => [
-                'published'   => '2025-03-01T00:00:00+00:00',
-                'depublished' => '2025-02-01T00:00:00+00:00',
-            ],
+            'publicatiedatum'   => '2025-01-01T00:00:00+00:00',
+            'depublicatiedatum' => $future,
         ]));
-
-        // No @self key at all.
-        $this->assertFalse($method->invoke($this->listener, []));
     }
 
     // -------------------------------------------------------------------------
@@ -109,25 +120,25 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $method = new \ReflectionMethod(ObjectUpdatedEventListener::class, 'isObjectEntityPublished');
         $method->setAccessible(true);
 
-        // Not published (both null).
+        // Not published (no publicatiedatum).
         $entity1 = $this->createObjectEntityMock();
         $this->assertFalse($method->invoke($this->listener, $entity1));
 
-        // Published, not depublished.
+        // Past publicatiedatum, no depublicatiedatum -> published.
         $entity2 = $this->createObjectEntityMock(published: new \DateTime('2025-01-01'));
         $this->assertTrue($method->invoke($this->listener, $entity2));
 
-        // Published before depublished.
+        // Past publicatiedatum, depublicatiedatum already passed -> depublished.
         $entity3 = $this->createObjectEntityMock(
             published: new \DateTime('2025-01-01'),
             depublished: new \DateTime('2025-06-01')
         );
         $this->assertFalse($method->invoke($this->listener, $entity3));
 
-        // Published after depublished (re-published).
+        // Past publicatiedatum with a future depublicatiedatum -> still published.
         $entity4 = $this->createObjectEntityMock(
-            published: new \DateTime('2025-06-01'),
-            depublished: new \DateTime('2025-01-01')
+            published: new \DateTime('2025-01-01'),
+            depublished: new \DateTime('+10 days')
         );
         $this->assertTrue($method->invoke($this->listener, $entity4));
     }
@@ -141,16 +152,16 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $method = new \ReflectionMethod(ObjectUpdatedEventListener::class, 'shouldProcessUpdate');
         $method->setAccessible(true);
 
-        // Auto-publish attachments enabled, object is published.
+        // Auto-publish attachments enabled, object is published (past publicatiedatum).
         $result = $method->invoke(
             $this->listener,
-            ['@self' => ['published' => '2025-01-01T00:00:00+00:00']],
+            ['publicatiedatum' => '2025-01-01T00:00:00+00:00'],
             null,
             ['auto_publish_attachments' => true, 'auto_publish_objects' => false]
         );
         $this->assertTrue($result);
 
-        // Auto-publish attachments enabled, object NOT published.
+        // Auto-publish attachments enabled, object NOT published (no publicatiedatum).
         $result = $method->invoke(
             $this->listener,
             ['@self' => []],
@@ -162,7 +173,7 @@ class ObjectUpdatedEventListenerTest extends TestCase
         // Nothing enabled.
         $result = $method->invoke(
             $this->listener,
-            ['@self' => ['published' => '2025-01-01T00:00:00+00:00']],
+            ['publicatiedatum' => '2025-01-01T00:00:00+00:00'],
             null,
             ['auto_publish_attachments' => false, 'auto_publish_objects' => false]
         );
@@ -172,7 +183,7 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $oldEntity = $this->createObjectEntityMock();
         $result = $method->invoke(
             $this->listener,
-            ['@self' => ['published' => '2025-01-01T00:00:00+00:00']],
+            ['publicatiedatum' => '2025-01-01T00:00:00+00:00'],
             $oldEntity,
             ['auto_publish_attachments' => false, 'auto_publish_objects' => true]
         );
@@ -182,7 +193,7 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $oldEntityPub = $this->createObjectEntityMock(published: new \DateTime('2024-01-01'));
         $result = $method->invoke(
             $this->listener,
-            ['@self' => ['published' => '2025-01-01T00:00:00+00:00']],
+            ['publicatiedatum' => '2025-01-01T00:00:00+00:00'],
             $oldEntityPub,
             ['auto_publish_attachments' => false, 'auto_publish_objects' => true]
         );
@@ -223,8 +234,10 @@ class ObjectUpdatedEventListenerTest extends TestCase
         $this->assertSame('upd-uuid', $result['@self']['uuid']);
         $this->assertSame('reg-u', $result['@self']['register']);
         $this->assertSame('schema-u', $result['@self']['schema']);
-        $this->assertSame($published->format('c'), $result['@self']['published']);
-        $this->assertNull($result['@self']['depublished']);
+        // Visibility now travels on the object's own publicatiedatum field; the dead
+        // @self.published envelope key is no longer set.
+        $this->assertSame($published->format('c'), $result['publicatiedatum']);
+        $this->assertArrayNotHasKey('published', $result['@self']);
         $this->assertSame([], $result['@self']['files']);
     }
 

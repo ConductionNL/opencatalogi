@@ -1,7 +1,11 @@
 # dcat-ap-harvest Specification
 
 ## Purpose
-TBD - created by archiving change dcat-ap-harvest. Update Purpose after archive.
+
+@e2e exclude pure backend/API spec — all scenarios test server-side DCAT-AP-NL document generation (JSON-LD / Turtle / RDF-XML over HTTP), content negotiation, mapping, and catalog-scoped OR object queries; no browser-observable UI surface; covered by Newman API tests instead.
+
+OpenCatalogi exposes its publicly visible publications as a DCAT-AP-NL 3.0 harvest feed so external harvesters (e.g. data.overheid.nl) can index them. The feed is a read-only rendering layer over the same OR object-search path the public publications API uses: visibility is governed by OR's RBAC `publicatiedatum <= now` predicate (the removed object-level `@self.published` predicate is gone), and no bespoke storage, visibility rule, or query layer is introduced (hydra ADR-022).
+
 ## Requirements
 ### Requirement: Per-catalog DCAT-AP-NL document endpoint (DCAT-001)
 The system MUST serve `GET /api/catalogs/{catalogSlug}/dcat` returning a
@@ -52,14 +56,14 @@ URL per instance.
 
 ### Requirement: Only publicly visible objects appear in the feed (DCAT-003)
 A publication MUST appear in any DCAT document **iff** it is publicly visible
-per the `@self.published` predicate — the identical rule used by the public
-publications API (PUB-001) and sitemaps (WOO-001). The DCAT layer MUST NOT
+per the OR RBAC `publicatiedatum <= now` predicate — the identical rule used by
+the public publications API (PUB-001) and sitemaps (WOO-001). The DCAT layer MUST NOT
 implement its own visibility logic, and querying MUST delegate to OR object
 search with the catalog's configured registers/schemas (PUB-003); no bespoke
 query layer (hydra ADR-022).
 
 #### Scenario: Unpublished object excluded
-- GIVEN a publication in a DCAT-enabled catalog with no `@self.published`
+- GIVEN a publication in a DCAT-enabled catalog with no `publicatiedatum`
   date (or a future one)
 - WHEN the catalog DCAT document is generated
 - THEN that publication MUST NOT appear as a `dcat:Dataset`

@@ -154,7 +154,7 @@ Each file attached to a publication generates a `diwoo:Document` with:
 | diwoo:informatiecategorie #text | publication.tooiCategorieNaam |
 | diwoo:informatiecategorie @resource | publication.tooiCategorieUri |
 | diwoo:soortHandeling | "ontvangst" (receipt) |
-| diwoo:atTime | file.published or publication.@self.published |
+| diwoo:atTime | file.published or publication.publicatiedatum (the removed object-level @self.published is always empty for magic-mapped publications) |
 
 ## API Endpoints
 

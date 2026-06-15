@@ -37,9 +37,13 @@ After Phase 8:
   are declared in the publication schema via `x-openregister-lifecycle`
   and executed by OR. opencatalogi is NOT responsible for computing allowed
   transitions or enforcing guards.
-- **Auto-publish side effect** (setting `@self.published` when an object
-  matches a catalog) remains in-app because it is opencatalogi-specific
-  policy with no OR leaf equivalent.
+- **Auto-publish side effect** (setting the object's own `publicatiedatum`
+  field when an object matches a catalog) remains in-app because it is
+  opencatalogi-specific policy with no OR leaf equivalent. The removed
+  object-level `@self.published` / `@self.depublished` predicate is no longer
+  available; visibility is governed by OR's RBAC rule
+  `{group:public, match:{publicatiedatum:{$lte:$now}}}` on the publication
+  schema (see APB-006).
 
 ## ADDED Requirements
 
@@ -150,7 +154,7 @@ The system MUST auto-publish newly created objects when `auto_publish_objects` i
 #### Scenario: new object is auto-published
 - GIVEN `auto_publish_objects` is `"true"`
 - WHEN a new object matching a configured catalog is created
-- THEN the system MUST set `@self.published` on that object
+- THEN the system MUST set the object's own `publicatiedatum` field to "now" (and clear any `depublicatiedatum`) and persist it via the normal OpenRegister save path, so OR's public RBAC rule makes the object visible
 
 ### Requirement: Auto-publish file attachments when `auto_publish_attachments` is enabled (APB-004)
 
@@ -176,19 +180,34 @@ The system MUST only auto-publish objects whose register/schema match a configur
 - WHEN the auto-publish listener evaluates it
 - THEN the system MUST NOT publish it
 
-### Requirement: Determine publication status from `@self.published` and `@self.depublished` timestamps (APB-006)
+### Requirement: Determine publication status from `publicatiedatum` and `depublicatiedatum` (APB-006)
 
-The system MUST determine publication status from the `@self.published` and
-`@self.depublished` timestamps. These are set by OR's lifecycle declarations
-(APB-SM-001); opencatalogi reads them to determine whether an object is
-currently published.
+The system MUST determine publication status from the object's own
+`publicatiedatum` and `depublicatiedatum` date-time fields under the live
+OpenRegister RBAC model. The removed object-level `@self.published` /
+`@self.depublished` predicate (dropped from OR core) MUST NOT be consulted —
+reading it always yields null. An object is currently published when its
+`publicatiedatum` is set and is at or before "now", and either carries no
+`depublicatiedatum` or one that is still in the future. This is the same rule
+OR's public RBAC predicate (`{group:public, match:{publicatiedatum:{$lte:$now}}}`)
+and the frontend `publicationStatus` helpers apply.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: published status derived from timestamps
-- GIVEN an object with `@self.published` set and no later `@self.depublished`
+#### Scenario: published status derived from publicatiedatum
+- GIVEN an object whose `publicatiedatum` is at or before "now" and whose `depublicatiedatum` is empty or in the future
 - WHEN its publication status is evaluated
 - THEN the system MUST treat the object as currently published
+
+#### Scenario: future publicatiedatum is not yet published
+- GIVEN an object whose `publicatiedatum` is in the future
+- WHEN its publication status is evaluated
+- THEN the system MUST treat the object as not yet published (concept)
+
+#### Scenario: reached depublicatiedatum hides the object
+- GIVEN a published object whose `depublicatiedatum` is at or before "now"
+- WHEN its publication status is evaluated
+- THEN the system MUST treat the object as no longer published (depublished)
 
 ### Requirement: Skip event processing when both auto-publish options are disabled (APB-007)
 The system MUST skip event processing when both auto-publish options are disabled.
@@ -301,7 +320,7 @@ The system MUST register the event listeners in the Application.php bootstrap.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `auto_publish_objects` | string (bool) | `"false"` | When `"true"`, auto-set `@self.published` on objects matching a catalog |
+| `auto_publish_objects` | string (bool) | `"false"` | When `"true"`, auto-set the object's own `publicatiedatum` (RBAC model, APB-006) on objects matching a catalog |
 | `auto_publish_attachments` | string (bool) | `"false"` | When `"true"`, auto-create public share links for attachments on published objects |
 
 ## References

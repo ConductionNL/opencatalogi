@@ -349,61 +349,92 @@ class EventService
     /**
      * Check if an object is currently published.
      *
-     * An object is considered published if it has a published timestamp
-     * and no depublished timestamp, or if depublished is before published.
+     * Visibility is governed by the live OpenRegister RBAC model (APB-006): an
+     * object is public when its own `publicatiedatum` field is set and is at or
+     * before "now", and either carries no `depublicatiedatum` or one that is
+     * still in the future. The removed object-level `@self.published` /
+     * `@self.depublished` predicate is no longer consulted.
      *
      * @param array $objectData The object data to check.
      *
      * @return boolean True if the object is published, false otherwise.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     private function isObjectPublished(array $objectData): bool
     {
-        $published   = $objectData['@self']['published'] ?? null;
-        $depublished = $objectData['@self']['depublished'] ?? null;
+        $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
+        $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
 
-        // Object is published if it has a published date and no depublished date.
-        if ($published !== null && $depublished === null) {
+        // Not published until a publication date is set and reached.
+        if ($publicatiedatum === null || $publicatiedatum === '') {
+            return false;
+        }
+
+        $now            = time();
+        $publishedTime  = strtotime((string) $publicatiedatum);
+        if ($publishedTime === false || $publishedTime > $now) {
+            return false;
+        }
+
+        // No depublication date -> still live.
+        if ($depublicatiedatum === null || $depublicatiedatum === '') {
             return true;
         }
 
-        // Object is published if published date is after depublished date.
-        if ($published !== null && $depublished !== null) {
-            $publishedTime   = strtotime($published);
-            $depublishedTime = strtotime($depublished);
-            return $publishedTime > $depublishedTime;
-        }
-
-        return false;
+        // Live only while the depublication date is still in the future.
+        $depublishedTime = strtotime((string) $depublicatiedatum);
+        return ($depublishedTime === false || $depublishedTime > $now);
 
     }//end isObjectPublished()
 
     /**
-     * Publish an object using the OpenRegister service.
+     * Publish an object via the live OpenRegister RBAC model.
      *
-     * This method sets the object's published status using the OpenRegister
-     * ObjectService publish functionality.
+     * The removed `ObjectService::publish()` predicate is no longer used.
+     * "Publish" means setting the object's own `publicatiedatum` field to "now"
+     * (and clearing any `depublicatiedatum`) and persisting it through the
+     * normal OpenRegister save path, so the public RBAC rule
+     * `{group:public, match:{publicatiedatum:{$lte:$now}}}` makes it visible.
      *
      * @param array $objectData The object data to publish.
      *
      * @return array Result of the publish operation.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-86
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     private function publishObject(array $objectData): array
     {
         try {
             $objectService = $this->getObjectService();
-            $objectId      = ($objectData['@self']['uuid'] ?? $objectData['@self']['id']);
+            $objectId      = ($objectData['@self']['uuid'] ?? $objectData['@self']['id'] ?? null);
+            $register      = ($objectData['@self']['register'] ?? null);
+            $schema        = ($objectData['@self']['schema'] ?? null);
 
-            // Use the OpenRegister ObjectService to publish the object.
-            $publishedObject = $objectService->publish($objectId);
+            if ($objectId === null || $register === null || $schema === null) {
+                throw new RuntimeException('Object is missing id, register or schema and cannot be published.');
+            }
+
+            // Build the persisted payload from the object's own fields (drop the
+            // read-only @self envelope) and set the publication date to now.
+            $data = $objectData;
+            unset($data['@self']);
+            $now                       = new \DateTime();
+            $data['publicatiedatum']   = $now->format(\DateTimeInterface::ATOM);
+            // Clearing any prior depublication date keeps the object live.
+            $data['depublicatiedatum'] = null;
+
+            $objectService->saveObject(
+                object: $data,
+                register: (string) $register,
+                schema: (string) $schema,
+                uuid: (string) $objectId,
+            );
 
             return [
                 'success'     => true,
                 'objectId'    => $objectId,
-                'publishedAt' => $publishedObject->getPublished()?->format('c'),
+                'publishedAt' => $data['publicatiedatum'],
             ];
         } catch (\Exception $e) {
             return [
@@ -411,7 +442,7 @@ class EventService
                 'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
                 'error'    => $e->getMessage(),
             ];
-        }
+        }//end try
 
     }//end publishObject()
 
