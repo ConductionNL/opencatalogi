@@ -17,6 +17,8 @@ audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 
 ## Purpose
 
+@e2e exclude OR-abstraction-consumer spec — query parsing/faceting/ranking delegated to OpenRegister's `zoeken-filteren`, verified by PHPUnit/vitest/Newman; the search UI is separately real-UI covered.
+
 opencatalogi's search capability aggregates publications from local
 catalogs and federated remote OpenCatalogi instances into a single
 search interface. After Phase 7, the query parsing, faceting, and
@@ -32,12 +34,11 @@ opencatalogi MUST NOT re-implement query string parsing, bracket-notation
 parsing, facet generation, score computation, or pagination arithmetic.
 Those are owned upstream by OR `zoeken-filteren`.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: single-catalog search delegates to OR `zoeken-filteren` (SCH-OR-001)
 
-When a user issues a search query within a single catalog, opencatalogi
-MUST delegate the full query — including `_search`, `_order`, `_limit`,
+When a user issues a search query within a single catalog, opencatalogi MUST delegate the full query — including `_search`, `_order`, `_limit`,
 `_page`, `_offset`, `_filters`, and any `_facetable` / `_aggregate` flags
 — to OR's `zoeken-filteren` API unmodified. opencatalogi MUST NOT alter
 the query, re-parse bracket notation, or inject custom filter parameters.
@@ -54,8 +55,7 @@ the query, re-parse bracket notation, or inject custom filter parameters.
 
 ### Requirement: federated search is a thin orchestrator (SCH-OR-002)
 
-When a user issues a federated search across N catalogs or remote
-directories, opencatalogi:
+When a user issues a federated search across N catalogs or remote directories, opencatalogi MUST act as a thin orchestrator that:
 
 1. Makes N parallel `zoeken-filteren` calls (one per catalog context
    / remote endpoint) using async HTTP.
@@ -140,6 +140,13 @@ opencatalogi MUST provide a `SearchSideBar` (facet filter controls),
 a `SearchResults` component (result list), and a `FacetComponent`
 (individual facet toggle). These components render the OR `zoeken-filteren`
 response; they do NOT contain local filter computation.
+
+#### Scenario: search UI renders OR results without local computation
+
+- **GIVEN** a `zoeken-filteren` response is returned to the search view,
+- **WHEN** `SearchSideBar`, `SearchResults`, and `FacetComponent` render,
+- **THEN** they MUST display the OR-provided results and facets,
+- **AND** they MUST NOT compute filters, facet buckets, or scores locally.
 
 ## REMOVED Requirements
 

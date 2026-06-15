@@ -17,50 +17,100 @@ The system MUST generate an XML sitemap index per catalog per WOO information ca
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: sitemap index generated for a catalog and category
+- GIVEN a catalog with slug "woo-publicaties" and `hasWooSitemap=true`
+- WHEN a GET request is made to `/api/woo-publicaties/sitemaps/sitemapindex-diwoo-infocat014.xml`
+- THEN the system MUST return a `<sitemapindex>` XML with `<sitemap>` entries for that catalog and WOO category
+
 ### Requirement: Generate XML sitemap with DIWOO Document metadata for publications (WOO-002)
 The system MUST generate an XML sitemap with DIWOO Document metadata for publications.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: DIWOO sitemap generated for publications
+- GIVEN publications exist for a catalog and WOO category
+- WHEN a GET request is made to the `.../publications` sitemap endpoint
+- THEN the response MUST wrap each file as a `diwoo:Document` element inside `<diwoo:Documents>` with the proper XML namespaces
 
 ### Requirement: Support all 17 WOO information categories (informatiecategorieen) (WOO-003)
 The system MUST support all 17 WOO information categories (informatiecategorieen).
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: every WOO category code is resolvable
+- GIVEN the 17 mandatory WOO information categories
+- WHEN a sitemap request uses any of the `sitemapindex-diwoo-infocat001..017.xml` codes
+- THEN the system MUST map the code to its category and generate a sitemap for it
+
 ### Requirement: Generate robots.txt with sitemap URLs for all WOO-enabled catalogs (WOO-004)
 The system MUST generate a robots.txt with sitemap URLs for all WOO-enabled catalogs.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: robots.txt lists sitemap URLs
+- GIVEN WOO-enabled catalogs exist
+- WHEN a GET request is made to `/api/robots.txt`
+- THEN the response MUST be plain text containing a `Sitemap: {url}` line for each WOO category of each qualifying catalog
 
 ### Requirement: Paginate sitemaps (max 1000 entries per page) (WOO-005)
 The system MUST paginate sitemaps (max 1000 entries per page).
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: sitemap pagination caps page size
+- GIVEN a catalog/category with more than 1000 publications
+- WHEN sitemaps are generated
+- THEN the system MUST split entries into pages of at most 1000 and expose additional `?page=N` sitemap entries
+
 ### Requirement: Map publication + file metadata to DIWOO Document XML structure (WOO-006)
 The system MUST map publication + file metadata to the DIWOO Document XML structure.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: publication and file metadata mapped to DIWOO
+- GIVEN a publication with attached files
+- WHEN the DIWOO sitemap is generated
+- THEN each file MUST map to a `diwoo:Document` with the DIWOO fields (loc, lastmod, creatiedatum, publisher, format, informatiecategorie, soortHandeling, atTime)
 
 ### Requirement: Validate that requested category belongs to the catalog's schemas (WOO-007)
 The system MUST validate that the requested category belongs to the catalog's schemas.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: schema not in catalog is rejected
+- GIVEN a valid category code maps to a schema the catalog does not include
+- WHEN the sitemap endpoint is called
+- THEN the system MUST return a 400 XMLResponse with "Schema not configured in catalog"
+
 ### Requirement: Only catalogs with `hasWooSitemap: true` appear in robots.txt (WOO-008)
 Only catalogs with `hasWooSitemap: true` MUST appear in robots.txt.
 
 **Priority:** Must **Status:** Bug (RobotsController does NOT check hasWooSitemap)
+
+#### Scenario: robots.txt restricted to WOO-enabled catalogs
+- GIVEN catalogs both with and without `hasWooSitemap=true`
+- WHEN `/api/robots.txt` is generated
+- THEN only catalogs with `hasWooSitemap: true` MUST contribute sitemap entries
 
 ### Requirement: All sitemap/robots endpoints are public (WOO-009)
 All sitemap/robots endpoints MUST be public.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: sitemap endpoints require no authentication
+- GIVEN an unauthenticated client
+- WHEN it requests any sitemap or robots.txt endpoint
+- THEN the request MUST succeed without authentication
+
 ### Requirement: Include file metadata: download URL, format, creation date, publisher, handling type (WOO-010)
 The system MUST include file metadata: download URL, format, creation date, publisher, handling type.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: DIWOO document carries file metadata
+- GIVEN a file attached to a publication
+- WHEN its `diwoo:Document` is generated
+- THEN it MUST include the download URL, format, creation date, publisher, and handling type
 
 ## Data Model
 
