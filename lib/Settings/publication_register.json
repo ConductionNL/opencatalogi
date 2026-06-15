@@ -34,7 +34,8 @@
           "theme",
           "page",
           "menu",
-          "glossary"
+          "glossary",
+          "usageCounter"
         ],
         "tablePrefix": "",
         "folder": "Open Registers/Publication Register",
@@ -81,6 +82,11 @@
               "magicMapping": true,
               "autoCreateTable": true,
               "comment": "Definitions and terms - benefits from SQL indexing for search and lookups"
+            },
+            "usageCounter": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "Internal aggregate usage counters (publication, date, kind, count) - high write volume, dedicated table; never published, excluded from public surfaces (ANA-002)"
             }
           }
         }
@@ -139,9 +145,88 @@
           },
           "depublicatiedatum": {
             "type": "string",
-            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access",
+            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access. A future value schedules automatic depublication via the OpenRegister published-predicate.",
             "format": "date-time",
             "facetable": true
+          },
+          "retentionCategory": {
+            "type": "string",
+            "description": "Selectielijst / WOO information-category reference that keys the statutory retention term (RET-003).",
+            "maxLength": 255,
+            "facetable": true
+          },
+          "retentionTermMonths": {
+            "type": "integer",
+            "description": "Statutory retention term in months, counted from the publication date (RET-003).",
+            "minimum": 0,
+            "facetable": true
+          },
+          "retentionAction": {
+            "type": "string",
+            "description": "Action taken when the retention term expires: review (flag only), depublish (set depublicatiedatum), or archive (lifecycle transition) (RET-003).",
+            "enum": [
+              "review",
+              "depublish",
+              "archive"
+            ],
+            "facetable": true
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "description": "Computed retention expiry = publication date + retentionTermMonths. May be manually overridden, in which case retentionNote is required (RET-003).",
+            "format": "date-time",
+            "facetable": true
+          },
+          "retentionNote": {
+            "type": "string",
+            "description": "Legal basis or exception rationale for the retention decision; mandatory when retentionExpiresAt is manually overridden or extended (RET-003).",
+            "maxLength": 2555,
+            "facetable": false
+          },
+          "retentionLastEvaluatedAt": {
+            "type": "string",
+            "description": "Idempotency marker recording the date the retention evaluation job last actioned this publication (RET-005).",
+            "format": "date-time",
+            "facetable": false
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status of the publication; the archived state retains the object internally while removing it from every public surface (RET-006).",
+            "enum": [
+              "published",
+              "archived"
+            ],
+            "facetable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initial": "published",
+          "final": ["archived"],
+          "transitions": {
+            "archive": { "from": ["published"], "to": "archived", "description": "Archive a publication on retention expiry — removes it from public surfaces while retaining it internally with full history (RET-006)." }
+          }
+        },
+        "x-openregister-notifications": {
+          "retention-expiring-soon": {
+            "trigger": { "type": "field-changed", "field": "retentionExpiresAt" },
+            "enabled": true,
+            "channels": ["nc-notification"],
+            "recipients": [ { "kind": "object-acl", "permission": "manage" } ],
+            "subject": {
+              "nl": "Publicatie {{title}} verloopt binnenkort (bewaartermijn)",
+              "en": "Publication {{title}} is expiring soon (retention term)"
+            }
+          },
+          "retention-review-required": {
+            "trigger": { "type": "transition", "action": "archive" },
+            "enabled": true,
+            "channels": ["nc-notification"],
+            "recipients": [ { "kind": "object-acl", "permission": "manage" } ],
+            "subject": {
+              "nl": "Publicatie {{title}} gearchiveerd (bewaartermijn verlopen)",
+              "en": "Publication {{title}} archived (retention term expired)"
+            }
           }
         },
         "configuration": {
@@ -947,6 +1032,75 @@
         "authorization": {
           "read": [
             "public"
+          ]
+        }
+      },
+      "usageCounter": {
+        "slug": "usageCounter",
+        "title": "UsageCounter",
+        "version": "0.0.1",
+        "published": null,
+        "summary": "Internal aggregate usage counter (privacy-safe)",
+        "description": "Internal plumbing schema holding privacy-safe daily aggregate usage counters for publications: one object per (publication, date, kind). It stores ONLY a publication reference, a day, a kind (view/download), an integer count, and an optional catalog slug for roll-ups — no IP address, user agent, session id, referrer, or any request-derived attribute is ever stored (ANA-002). It is never published, is excluded from catalogs, sitemaps, DCAT, search, and federation, and is RBAC-restricted to the app and officer roles.",
+        "icon": null,
+        "required": [
+          "publication",
+          "date",
+          "kind",
+          "count"
+        ],
+        "properties": {
+          "publication": {
+            "type": "string",
+            "description": "Reference (UUID) of the counted publication",
+            "maxLength": 255,
+            "facetable": true
+          },
+          "catalog": {
+            "type": "string",
+            "description": "Catalog slug for roll-up labelling (not personal data)",
+            "maxLength": 255,
+            "facetable": true
+          },
+          "date": {
+            "type": "string",
+            "description": "The day this counter aggregates (YYYY-MM-DD)",
+            "maxLength": 10,
+            "facetable": true
+          },
+          "kind": {
+            "type": "string",
+            "description": "Counter kind",
+            "enum": [
+              "view",
+              "download"
+            ],
+            "facetable": true
+          },
+          "count": {
+            "type": "integer",
+            "description": "Non-negative aggregate count for this (publication, date, kind)",
+            "minimum": 0,
+            "facetable": false
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": false,
+        "authorization": {
+          "read": [
+            "admin"
+          ],
+          "create": [
+            "admin"
+          ],
+          "update": [
+            "admin"
+          ],
+          "delete": [
+            "admin"
           ]
         }
       }

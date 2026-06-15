@@ -1,0 +1,117 @@
+<?php
+/**
+ * Dashboard widget listing the most-viewed publications.
+ *
+ * @category Dashboard
+ * @package  OCA\OpenCatalogi\Dashboard
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+namespace OCA\OpenCatalogi\Dashboard;
+
+use OCP\Dashboard\IWidget;
+use OCP\IL10N;
+use OCP\Util;
+
+use OCA\OpenCatalogi\AppInfo\Application;
+
+/**
+ * Widget showing the most-viewed publications (privacy-safe reach) on the dashboard.
+ */
+class MostViewedPublicationsWidget implements IWidget
+{
+    /**
+     * Constructor.
+     *
+     * @param IL10N $l10n Localization service.
+     */
+    public function __construct(
+        private IL10N $l10n,
+    ) {
+
+    }//end __construct()
+
+    /**
+     * Get the widget identifier.
+     *
+     * @return string
+     */
+    public function getId(): string
+    {
+        return 'opencatalogi_most_viewed_publications_widget';
+
+    }//end getId()
+
+    /**
+     * Get the widget title.
+     *
+     * @return string
+     */
+    public function getTitle(): string
+    {
+        return $this->l10n->t('Most viewed publications');
+
+    }//end getTitle()
+
+    /**
+     * Get the widget display order.
+     *
+     * @return int
+     */
+    public function getOrder(): int
+    {
+        return 11;
+
+    }//end getOrder()
+
+    /**
+     * Get the widget icon CSS class.
+     *
+     * @return string
+     */
+    public function getIconClass(): string
+    {
+        return 'icon-catalogi-widget';
+
+    }//end getIconClass()
+
+    /**
+     * Get the widget URL.
+     *
+     * @return string|null
+     */
+    public function getUrl(): ?string
+    {
+        return null;
+
+    }//end getUrl()
+
+    /**
+     * Load the widget scripts and styles.
+     *
+     * @return void
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
+     *
+     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     */
+    public function load(): void
+    {
+        // Shared vendor chunks emitted by webpack splitChunks (see webpack.config.js).
+        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-shared-vendor');
+        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-shared-nc-vue');
+        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-mostViewedPublicationsWidget');
+        Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
+
+    }//end load()
+}//end class

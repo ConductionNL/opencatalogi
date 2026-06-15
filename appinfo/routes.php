@@ -14,6 +14,8 @@ return [
 		// Catalogi sitemap
 		['name' => 'sitemap#index', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}', 'verb' => 'GET'],
 		['name' => 'sitemap#sitemap', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/publications', 'verb' => 'GET'],
+		// DCAT-AP-NL feed validation (admin-only — auditable via AuthorizedAdminSetting)
+		['name' => 'dcat#validate', 'url' => '/api/catalogs/{catalogSlug}/dcat/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
@@ -27,6 +29,20 @@ return [
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
 		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
+		// Retention lifecycle (publication-retention-lifecycle)
+		['name' => 'retention#queueSummary', 'url' => '/api/retention/queue', 'verb' => 'GET'],
+		['name' => 'retention#getDefaults', 'url' => '/api/retention/defaults', 'verb' => 'GET'],
+		['name' => 'retention#setDefaults', 'url' => '/api/retention/defaults', 'verb' => 'POST'],
+		['name' => 'retention#decide', 'url' => '/api/retention/publications/{id}/decision', 'verb' => 'POST'],
+		['name' => 'retention#exportReport', 'url' => '/api/retention/report', 'verb' => 'GET'],
+		// WOO transparency (woo-transparency)
+		['name' => 'woo#weigeringsgronden', 'url' => '/api/woo/weigeringsgronden', 'verb' => 'GET'],
+		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
+		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
+		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
+		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
+		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'POST'],
+		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
 		/**
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
@@ -38,6 +54,9 @@ return [
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// DCAT-AP-NL CORS (public harvest endpoints)
+		['name' => 'dcat#preflightedCors', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
+		['name' => 'dcat#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Catalogi CORS
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
@@ -66,6 +85,9 @@ return [
 		 * IMPORTANT: Routes are matched in order from top to bottom.
 		 * Specific routes MUST come BEFORE wildcard routes to avoid incorrect matching.
 		 */
+		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
+		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
+		['name' => 'dcat#catalog', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Glossary (specific route - must be before wildcard catalog routes)
 		['name' => 'glossary#index', 'url' => '/api/glossary', 'verb' => 'GET'],
 		['name' => 'glossary#show', 'url' => '/api/glossary/{id}', 'verb' => 'GET'],
@@ -91,6 +113,10 @@ return [
 		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
 		// Prometheus metrics endpoint (specific route - must be before wildcard catalog routes).
 		['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+		// Usage analytics (authenticated; specific routes - MUST be before wildcard catalog routes).
+		['name' => 'stats#publication', 'url' => '/api/publications/{id}/stats', 'verb' => 'GET'],
+		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
+		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		// Health check endpoint (specific route - must be before wildcard catalog routes).
 		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)

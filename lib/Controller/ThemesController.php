@@ -40,6 +40,7 @@ use RuntimeException;
  */
 class ThemesController extends Controller
 {
+    use ResolvesRegisterConfiguration;
 
     /**
      * Allowed CORS methods.
@@ -111,18 +112,20 @@ class ThemesController extends Controller
     /**
      * Get the schema and register configuration for themes.
      *
+     * Resolved through OpenRegister's RegisterResolverService (no empty-string
+     * fallback); an unconfigured `theme_register`/`theme_schema` raises
+     * MissingConfigException which the caller converts to a 503.
+     *
      * @return array<string, string> Array containing schema and register configuration.
+     *
+     * @throws \RuntimeException                                                       When OpenRegister is unavailable.
+     * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
      */
     private function getThemeConfiguration(): array
     {
-        // Get the theme schema and register from configuration.
-        $schema   = $this->config->getValueString($this->appName, 'theme_schema', '');
-        $register = $this->config->getValueString($this->appName, 'theme_register', '');
-
-        return [
-            'schema'   => $schema,
-            'register' => $register,
-        ];
+        return $this->resolveRegisterConfiguration('theme_register', 'theme_schema');
 
     }//end getThemeConfiguration()
 
@@ -201,8 +204,12 @@ class ThemesController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get theme configuration from settings.
-        $themeConfig = $this->getThemeConfiguration();
+        // Get theme configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+        try {
+            $themeConfig = $this->getThemeConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
         // Get query parameters from request.
         $queryParams = $this->request->getParams();

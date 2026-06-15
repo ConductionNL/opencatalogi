@@ -248,7 +248,7 @@ Full documentation is available at **[documentatie.opencatalogi.nl](https://docu
 
 ## Standards & Compliance
 
-- **Metadata standard:** DCAT-AP (EU) for publication metadata interoperability
+- **Metadata standard:** DCAT-AP-NL 3.0 (EU/NL open-data profile) for publication metadata interoperability. Every DCAT-enabled catalog is harvestable as a machine-readable catalog document — `GET /apps/opencatalogi/api/dcat` (instance-level list of catalogs) and `GET /apps/opencatalogi/api/catalogs/{catalogSlug}/dcat` (per-catalog datasets). Content-negotiated JSON-LD (default), Turtle, and RDF/XML (`Accept` header or `?format=jsonld|turtle|rdfxml`), with `hydra:PagedCollection` paging and `Last-Modified`/`ETag` conditional-GET caching. National (data.overheid.nl) and EU (data.europa.eu) portals can poll these endpoints directly; enable per catalog via Admin settings (`hasDcat`) and register the instance DCAT URL at data.overheid.nl once. See the `dcat-ap-harvest` spec.
 - **WOO compliance:** Publication categories aligned with Dutch Open Government Act requirements
 - **Common Ground:** Follows Common Ground principles for federated, reusable government IT
 - **Accessibility:** WCAG AA (Dutch government requirement)

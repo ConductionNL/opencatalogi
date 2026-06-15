@@ -130,18 +130,26 @@ test.describe('publish workflow', () => {
 		// @e2e publications::public-group-read-makes-content-anonymously-discoverable
 		'Public-group read — the `public` group read grant on the publication schema makes a publication readable by an anonymous OpenRegister caller (RBAC discoverability)',
 		async () => {
-			// A publication created under the publication schema (53), which
-			// grants read to the `public` group (authorization.read: ["public"]).
-			const pub = await fx.createPublication('Publicly Readable Publication')
+			// A publication created under the publication schema (53). That schema's
+			// `public`-group read grant is CONDITIONAL on a publication date that has
+			// already passed (authorization.read.public.match = { publicatiedatum:
+			// { $lte: $now } }) — that is precisely what makes "publishing" control
+			// anonymous discoverability. So seed publicatiedatum in the PAST to satisfy
+			// the public-read match; a draft (no publicatiedatum) is correctly hidden
+			// and is covered by the publish-gate test above.
+			const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
+			const pub = await fx.createPublication('Publicly Readable Publication', {
+				publicatiedatum: pastPublicatiedatum,
+			})
 
 			// Sanity: the anon context really is unauthenticated.
 			const whoami = await anon.get('/ocs/v2.php/cloud/user?format=json')
 			expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
 
-			// Because the schema grants read to the `public` group, an ANONYMOUS
-			// OpenRegister caller can read the object directly via the object
-			// API — this is the RBAC `public`-group discoverability guarantee.
-			// (No publish action, no @self.published: discoverability == RBAC.)
+			// Because the schema grants read to the `public` group for publications
+			// whose publicatiedatum has passed, an ANONYMOUS OpenRegister caller can
+			// read this (past-dated) object directly via the object API — this is the
+			// RBAC `public`-group discoverability guarantee.
 			const anonRead = await anon.get(
 				`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${pub.id}`,
 			)

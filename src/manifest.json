@@ -20,6 +20,31 @@
 			"order": 30
 		},
 		{
+			"id": "CatalogueGroup",
+			"label": "Catalogue",
+			"icon": "icon-files",
+			"order": 40,
+			"children": [
+				{ "id": "CatalogsMenu",  "label": "Catalogs",  "icon": "icon-files",                 "route": "Catalogs",  "order": 92 },
+				{ "id": "GlossaryMenu",  "label": "Glossary",  "icon": "icon-toggle-filelist",       "route": "Glossary",  "order": 93 },
+				{ "id": "ThemesMenu",    "label": "Themes",    "icon": "icon-category-customization","route": "Themes",    "order": 94 },
+				{ "id": "PagesMenu",     "label": "Pages",     "icon": "icon-category-files",        "route": "Pages",     "order": 95 },
+				{ "id": "MenusMenu",     "label": "Menus",     "icon": "icon-category-customization","route": "Menus",     "order": 96 },
+				{ "id": "WooBatchesMenu","label": "WOO",       "icon": "icon-toggle-filelist",       "route": "WooBatches","order": 98 }
+			]
+		},
+		{
+			"id": "AdminGroup",
+			"label": "Administration",
+			"icon": "icon-settings",
+			"order": 80,
+			"children": [
+				{ "id": "OrganizationsMenu", "label": "Organizations", "icon": "icon-group",   "route": "Organizations",  "order": 91 },
+				{ "id": "DirectoryMenu",     "label": "Directory",     "icon": "icon-folder",  "route": "Directory",      "order": 97 },
+				{ "id": "SettingsMenu",      "label": "Settings",      "icon": "icon-settings","action": "user-settings", "order": 99 }
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -34,73 +59,37 @@
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 2
-		},
-		{
-			"id": "OrganizationsMenu",
-			"label": "Organizations",
-			"icon": "icon-group",
-			"route": "Organizations",
-			"section": "settings",
-			"order": 91
-		},
-		{
-			"id": "CatalogsMenu",
-			"label": "Catalogs",
-			"icon": "icon-files",
-			"route": "Catalogs",
-			"section": "settings",
-			"order": 92
-		},
-		{
-			"id": "GlossaryMenu",
-			"label": "Glossary",
-			"icon": "icon-toggle-filelist",
-			"route": "Glossary",
-			"section": "settings",
-			"order": 93
-		},
-		{
-			"id": "ThemesMenu",
-			"label": "Themes",
-			"icon": "icon-category-customization",
-			"route": "Themes",
-			"section": "settings",
-			"order": 94
-		},
-		{
-			"id": "PagesMenu",
-			"label": "Pages",
-			"icon": "icon-category-files",
-			"route": "Pages",
-			"section": "settings",
-			"order": 95
-		},
-		{
-			"id": "MenusMenu",
-			"label": "Menus",
-			"icon": "icon-category-customization",
-			"route": "Menus",
-			"section": "settings",
-			"order": 96
-		},
-		{
-			"id": "DirectoryMenu",
-			"label": "Directory",
-			"icon": "icon-folder",
-			"route": "Directory",
-			"section": "settings",
-			"order": 97
-		},
-		{
-			"id": "SettingsMenu",
-			"label": "Settings",
-			"icon": "icon-settings",
-			"action": "user-settings",
-			"section": "settings",
-			"order": 99
 		}
 	],
 	"pages": [
+		{
+			"id": "WooBatches",
+			"route": "/woo",
+			"type": "index",
+			"title": "WOO batches",
+			"config": {
+				"register": "@resolve:woo_register",
+				"schema": "@resolve:woo_batch_schema",
+				"actionToggles": {
+					"showAdd": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showViewToggle": true,
+					"selectable": false
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			},
+			"_note": "WOO disclosure-batch list via the generic index renderer over the WOO register/schema (ADR-022 — reuses the lib, no bespoke table). Per-batch detail (deck board widget + WOO tabs) is the WooBatchDetail custom page."
+		},
+		{
+			"id": "WooBatchDetail",
+			"route": "/woo/:id",
+			"type": "custom",
+			"title": "WOO batch",
+			"component": "WooBatchDetailView",
+			"_note": "Surfaces the OpenRegister deck-board widget (queue/board — not bespoke) plus WOO-specific surfaces: progress summary, redaction review, inventarislijst download, ready-for-review/publish (approval-workflow gated)."
+		},
 		{
 			"id": "Dashboard",
 			"route": "/",
@@ -128,7 +117,8 @@
 					"showMassDelete": false,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -157,7 +147,8 @@
 					"showDeleteAction": true,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -168,7 +159,8 @@
 			"config": {
 				"register": "publication",
 				"schema": "publication",
-				"idParam": "@route.id"
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"widgets": [
 				{
@@ -269,7 +261,8 @@
 					"showMassDelete": false,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -280,7 +273,8 @@
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "organization",
-				"idParam": "@route.id"
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"widgets": [
 				{
@@ -328,7 +322,8 @@
 					"showMassDelete": false,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -339,7 +334,8 @@
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "theme",
-				"idParam": "@route.id"
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"widgets": [
 				{
@@ -387,7 +383,8 @@
 					"showMassDelete": false,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -398,7 +395,8 @@
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "glossary",
-				"idParam": "@route.id"
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"widgets": [
 				{
@@ -446,7 +444,8 @@
 					"showMassDelete": false,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -457,7 +456,8 @@
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "page",
-				"idParam": "@route.id"
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -479,7 +479,8 @@
 					"showMassDelete": false,
 					"showViewToggle": true,
 					"selectable": true
-				}
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			}
 		},
 		{
@@ -490,7 +491,8 @@
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "menu",
-				"idParam": "@route.id"
+				"idParam": "@route.id",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"widgets": [
 				{

@@ -6,6 +6,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\IURLGenerator;
+use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -58,6 +59,11 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
     private $clientMock;
 
     /**
+     * @var IAppConfig|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $configMock;
+
+    /**
      * @var BroadcastService
      */
     private BroadcastService $broadcastService;
@@ -69,12 +75,36 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
         $this->containerMock    = $this->createMock(ContainerInterface::class);
         $this->appManagerMock   = $this->createMock(IAppManager::class);
         $this->loggerMock       = $this->createMock(LoggerInterface::class);
+        $this->configMock       = $this->createMock(IAppConfig::class);
+
+        // Default config: a configured listing schema/register so getDirectoryUrls()
+        // proceeds to OpenRegister, but an EMPTY local-federation allowlist so the SSRF
+        // guard stays fully active (matching production defaults).
+        $this->configMock->method('getValueString')
+            ->willReturnCallback(
+                static function (string $app, string $key, string $default = '') {
+                    return match ($key) {
+                        'listing_schema'   => 'listing',
+                        'listing_register' => 'directory',
+                        default            => $default,
+                    };
+                }
+            );
+
+        // Retry count and request timeout are now operator-tunable app-config
+        // keys (`broadcast_max_retries` / `broadcast_request_timeout`); honour the
+        // production defaults the service passes (3 retries, 30s timeout).
+        $this->configMock->method('getValueInt')
+            ->willReturnCallback(
+                static fn (string $app, string $key, int $default = 0): int => $default
+            );
 
         $this->broadcastService = new BroadcastService(
             $this->urlGeneratorMock,
             $this->containerMock,
             $this->appManagerMock,
-            $this->loggerMock
+            $this->loggerMock,
+            $this->configMock
         );
 
         // Replace the private $client with a mock via reflection.
@@ -108,20 +138,36 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
 
 
     /**
-     * Create a mock ObjectService with getObjects method.
+     * Create a mock ObjectService with searchObjects method.
      *
-     * @param array $listings The listings to return from getObjects.
+     * getDirectoryUrls() calls jsonSerialize() on each returned listing (the canonical
+     * OpenRegister contract: searchObjects() yields ObjectEntity objects), so each plain
+     * listing array is wrapped in an ObjectEntity mock whose jsonSerialize() returns it.
+     *
+     * @param array $listings The listing arrays to return from searchObjects.
      *
      * @return \PHPUnit\Framework\MockObject\MockObject
      */
     private function createMockObjectService(array $listings = []): \PHPUnit\Framework\MockObject\MockObject
     {
+        $listingObjects = array_map(
+            function (array $listing) {
+                $entity = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+                    ->disableOriginalConstructor()
+                    ->onlyMethods(['jsonSerialize'])
+                    ->getMock();
+                $entity->method('jsonSerialize')->willReturn($listing);
+                return $entity;
+            },
+            $listings
+        );
+
         $mock = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getObjects'])
+            ->onlyMethods(['searchObjects'])
             ->getMock();
-        $mock->method('getObjects')
-            ->willReturn($listings);
+        $mock->method('searchObjects')
+            ->willReturn($listingObjects);
 
         return $mock;
 
@@ -763,6 +809,63 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertEmpty($result);
 
     }//end testBroadcastSpecificUrlEqualsSelf()
+
+
+    /**
+     * getMaxRetries() / getRequestTimeout() honour the operator-configured
+     * app-config keys and fall back to the shipped defaults otherwise.
+     *
+     * @return void
+     */
+    public function testRetryAndTimeoutAreOperatorTunable(): void
+    {
+        $config = $this->createMock(IAppConfig::class);
+        $config->method('getValueString')->willReturnArgument(2);
+        $config->method('getValueInt')->willReturnMap(
+            [
+                ['opencatalogi', 'broadcast_max_retries', 3, 7],
+                ['opencatalogi', 'broadcast_request_timeout', 30, 12],
+            ]
+        );
+
+        $service = new BroadcastService(
+            $this->urlGeneratorMock,
+            $this->containerMock,
+            $this->appManagerMock,
+            $this->loggerMock,
+            $config
+        );
+
+        $this->assertSame(7, $this->invokePrivateMethod($service, 'getMaxRetries'));
+        $this->assertSame(12, $this->invokePrivateMethod($service, 'getRequestTimeout'));
+
+    }//end testRetryAndTimeoutAreOperatorTunable()
+
+
+    /**
+     * Out-of-range config values are clamped so the loop always runs at least
+     * once and the timeout is never below one second.
+     *
+     * @return void
+     */
+    public function testRetryAndTimeoutClampInvalidValues(): void
+    {
+        $config = $this->createMock(IAppConfig::class);
+        $config->method('getValueString')->willReturnArgument(2);
+        $config->method('getValueInt')->willReturn(0);
+
+        $service = new BroadcastService(
+            $this->urlGeneratorMock,
+            $this->containerMock,
+            $this->appManagerMock,
+            $this->loggerMock,
+            $config
+        );
+
+        $this->assertSame(1, $this->invokePrivateMethod($service, 'getMaxRetries'));
+        $this->assertSame(1, $this->invokePrivateMethod($service, 'getRequestTimeout'));
+
+    }//end testRetryAndTimeoutClampInvalidValues()
 
 
 }//end class

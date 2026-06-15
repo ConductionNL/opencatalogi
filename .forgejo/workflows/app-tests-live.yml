@@ -9,8 +9,20 @@
 # pre-merge workflows.
 #
 # Gate status for opencatalogi (see TESTING-CI-ROLLOUT.md for the evidence table):
-#   deep-e2e: false  — TODO: e2e _fixtures hardcodes REG_PUBLICATION=14 (dev numeric); resolve by slug to arm
-#   newman:   false  — TODO: no tests/integration/run-newman.sh yet
+#   deep-e2e: true  — ARMED: the deep _fixtures (tests/e2e/workflows/_fixtures.ts) resolve the
+#                     publication register + publication/catalog/organization schema ids from their
+#                     stable slugs at runtime (Fixtures.init() -> GET /openregister/api/registers +
+#                     .../schemas), so the suite survives a fresh CI boot where the re-imported ids
+#                     differ; the publish-workflow public-read case seeds a past publicatiedatum so
+#                     the schema's conditional `public`-group read grant (match publicatiedatum<=now)
+#                     actually exposes the object to an anonymous caller.
+#   newman:   false  — DETERMINISTIC, DOCUMENTED EXCLUSION (not a gap): the only Newman collection is
+#                     tests/federation/federation-tests.postman_collection.json, a cross-instance
+#                     FEDERATION suite that needs TWO federation-peered NC instances (nc1+nc2) and
+#                     outbound DNS — the single-NC live rig has neither. A runner exists
+#                     (tests/federation/run-newman.sh) for manual runs against a real federation
+#                     testbed; it is intentionally NOT gated here, mirroring the @group network
+#                     PHPUnit exclusion in phpunit.xml.
 
 name: app-tests-live
 
@@ -35,6 +47,11 @@ jobs:
     with:
       app-id: opencatalogi
       is-openregister: false
-      run-e2e: false
+      run-e2e: true
       run-newman: false
+      # NON-GATING (GAP-5): runs the visual-regression project + uploads
+      # snapshots/diffs as an artifact. Committed baselines are dev-container
+      # native, so they won't byte-match the CI Linux runner until regenerated
+      # in-CI (see tests-live.yml run-visual caveat) — continue-on-error.
+      run-visual: true
       newman-entrypoint: tests/integration/run-newman.sh

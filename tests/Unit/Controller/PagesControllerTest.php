@@ -76,6 +76,41 @@ class PagesControllerTest extends TestCase
         };
     }
 
+    /**
+     * Build a test double for OpenRegister's (final) RegisterResolverService.
+     *
+     * @param IAppConfig $config The (mocked) app config the double reads from.
+     *
+     * @return object A double exposing resolveRegisterId / resolveSchemaId.
+     */
+    private function makeResolverDouble(IAppConfig $config): object
+    {
+        return new class($config) {
+            public function __construct(private IAppConfig $config)
+            {
+            }
+
+            public function resolveRegisterId(string $appId, string $key, ?string $default = null): string
+            {
+                return $this->resolve($appId, $key);
+            }
+
+            public function resolveSchemaId(string $appId, string $key, ?string $default = null): string
+            {
+                return $this->resolve($appId, $key);
+            }
+
+            private function resolve(string $appId, string $key): string
+            {
+                $value = $this->config->getValueString($appId, $key, '');
+                if ($value === '') {
+                    throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($appId, $key);
+                }
+                return $value;
+            }
+        };
+    }
+
     private function mockObjectService(): MockObject
     {
         $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
@@ -83,9 +118,22 @@ class PagesControllerTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        // The controller resolves register/schema via RegisterResolverService
+        // before hitting ObjectService; the resolver reads the same app-config
+        // keys (throwing MissingConfigException on empty).
+        // RegisterResolverService is declared final and cannot be mocked, so we
+        // pass a hand-rolled double mirroring its contract.
+        $resolver = $this->makeResolverDouble($this->config);
+
         $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
+            ->willReturnCallback(
+                static function (string $id) use ($mockObjService, $resolver) {
+                    if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+                        return $resolver;
+                    }
+                    return $mockObjService;
+                }
+            );
 
         return $mockObjService;
     }
@@ -120,7 +168,7 @@ class PagesControllerTest extends TestCase
             ->willReturn(['results' => [['id' => 1, 'title' => 'About']], 'total' => 1]);
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnCallback($this->pageConfigStub());
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -134,6 +182,23 @@ class PagesControllerTest extends TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(200, $response->getStatus());
+    }
+
+    /**
+     * Config stub returning a configured page register/schema (so the resolver
+     * succeeds) while echoing the default for any other key.
+     *
+     * @return callable
+     */
+    private function pageConfigStub(): callable
+    {
+        return static function (string $app, string $key, string $default = '') {
+            return match ($key) {
+                'page_register' => '1',
+                'page_schema'   => '3',
+                default         => $default,
+            };
+        };
     }
 
     public function testIndexWithPageConfiguration(): void
@@ -163,10 +228,12 @@ class PagesControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
     }
 
-    public function testIndexThrowsWhenOpenRegisterNotInstalled(): void
+    public function testIndexReturns503WhenOpenRegisterNotInstalled(): void
     {
         $this->appManager->method('getInstalledApps')
             ->willReturn([]);
+        $this->container->method('get')
+            ->willThrowException(new RuntimeException('not available'));
 
         $this->config->method('getValueString')
             ->willReturn('');
@@ -179,9 +246,10 @@ class PagesControllerTest extends TestCase
 
         $this->request->server = [];
 
-        $this->expectException(RuntimeException::class);
+        $response = $this->controller->index();
 
-        $this->controller->index();
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
     }
 
     public function testShowReturnsPageBySlug(): void
@@ -194,7 +262,7 @@ class PagesControllerTest extends TestCase
             ]);
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnCallback($this->pageConfigStub());
 
         $this->request->method('getHeader')
             ->willReturn('');
@@ -213,7 +281,7 @@ class PagesControllerTest extends TestCase
             ->willReturn(['results' => []]);
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnCallback($this->pageConfigStub());
 
         $this->request->method('getHeader')
             ->willReturn('');
@@ -259,7 +327,7 @@ class PagesControllerTest extends TestCase
             ]);
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnCallback($this->pageConfigStub());
 
         $this->request->method('getHeader')
             ->willReturn('');

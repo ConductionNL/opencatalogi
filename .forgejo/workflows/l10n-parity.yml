@@ -1,0 +1,25 @@
+# Translation-PARITY hard gate.
+#
+# Asserts every required locale (nl/de/fr/es/it) is at full parity with the
+# English source — no missing keys, no empty values — for both the frontend
+# (l10n/*.js) and backend (l10n/*.json) translation sets. Without this, a new
+# English string ships and the other languages silently fall back to English.
+# Pure Node, no NC, no npm install.
+name: l10n-parity
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, development]
+
+jobs:
+  l10n-parity:
+    name: l10n translation parity (nl/de/fr/es/it)
+    runs-on: codeberg-small
+    container:
+      image: code.forgejo.org/oci/ci-node:22
+    steps:
+      - name: Checkout
+        uses: https://code.forgejo.org/actions/checkout@v4
+      - name: Assert every required locale is at full parity
+        run: node tests/l10n/check-l10n-parity.js

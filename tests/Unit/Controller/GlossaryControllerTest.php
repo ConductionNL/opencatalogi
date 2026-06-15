@@ -76,6 +76,41 @@ class GlossaryControllerTest extends TestCase
         };
     }
 
+    /**
+     * Build a test double for OpenRegister's (final) RegisterResolverService.
+     *
+     * @param IAppConfig $config The (mocked) app config the double reads from.
+     *
+     * @return object A double exposing resolveRegisterId / resolveSchemaId.
+     */
+    private function makeResolverDouble(IAppConfig $config): object
+    {
+        return new class($config) {
+            public function __construct(private IAppConfig $config)
+            {
+            }
+
+            public function resolveRegisterId(string $appId, string $key, ?string $default = null): string
+            {
+                return $this->resolve($appId, $key);
+            }
+
+            public function resolveSchemaId(string $appId, string $key, ?string $default = null): string
+            {
+                return $this->resolve($appId, $key);
+            }
+
+            private function resolve(string $appId, string $key): string
+            {
+                $value = $this->config->getValueString($appId, $key, '');
+                if ($value === '') {
+                    throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($appId, $key);
+                }
+                return $value;
+            }
+        };
+    }
+
     private function mockObjectService(): MockObject
     {
         $mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
@@ -83,9 +118,22 @@ class GlossaryControllerTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        // The controller resolves register/schema via RegisterResolverService
+        // before hitting ObjectService; the resolver reads the same app-config
+        // keys (throwing MissingConfigException on empty).
+        // RegisterResolverService is declared final and cannot be mocked, so we
+        // pass a hand-rolled double mirroring its contract.
+        $resolver = $this->makeResolverDouble($this->config);
+
         $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
+            ->willReturnCallback(
+                static function (string $id) use ($mockObjService, $resolver) {
+                    if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+                        return $resolver;
+                    }
+                    return $mockObjService;
+                }
+            );
 
         return $mockObjService;
     }
@@ -127,7 +175,11 @@ class GlossaryControllerTest extends TestCase
             ]);
 
         $this->config->method('getValueString')
-            ->willReturn('');
+            ->willReturnMap([
+                ['opencatalogi', 'glossary_schema', '', '5'],
+                ['opencatalogi', 'glossary_register', '', '1'],
+                ['opencatalogi', 'cors_allowed_origins', '*', '*'],
+            ]);
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -194,10 +246,12 @@ class GlossaryControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
     }
 
-    public function testIndexThrowsWhenOpenRegisterNotInstalled(): void
+    public function testIndexReturns503WhenOpenRegisterNotInstalled(): void
     {
         $this->appManager->method('getInstalledApps')
             ->willReturn([]);
+        $this->container->method('get')
+            ->willThrowException(new RuntimeException('not available'));
 
         $this->config->method('getValueString')
             ->willReturn('');
@@ -207,9 +261,10 @@ class GlossaryControllerTest extends TestCase
 
         $this->request->server = [];
 
-        $this->expectException(RuntimeException::class);
+        $response = $this->controller->index();
 
-        $this->controller->index();
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
     }
 
     public function testShowReturnsGlossaryTerm(): void

@@ -37,7 +37,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 								<NcSelect v-if="!selectedCatalogus"
 									v-model="selectedCatalogus"
 									:options="catalogOptions"
-									:aria-label-combobox="t('opencatalogi', 'Catalogus')"
+									:aria-label-combobox="t('opencatalogi', 'Catalog')"
 									label-outside
 									:disabled="objectStore.isLoading('object')"
 									required

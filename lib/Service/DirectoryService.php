@@ -978,7 +978,11 @@ class DirectoryService
                 resolver: function ($resolve) use ($client, $publicationsUrl) {
                     $failResult = ['success' => false, 'results' => [], 'facets' => [], 'total' => 0];
                     try {
-                        $response   = $client->get($publicationsUrl);
+                        // SSRF hardening (SB1 / wave-12): disable automatic redirect following so
+                        // that a federated peer cannot pivot to cloud-metadata via a 302 response.
+                        // The initial URL is already validated by assertSafeOutboundUrl(); here we
+                        // ensure Guzzle never silently follows a redirect to an unvalidated host.
+                        $response   = $client->get($publicationsUrl, [RequestOptions::ALLOW_REDIRECTS => false]);
                         $statusCode = $response->getStatusCode();
 
                         if ($statusCode < 200 || $statusCode >= 300) {
@@ -1869,7 +1873,9 @@ class DirectoryService
                 function ($resolve) use ($client, $usedUrl) {
                     $failResult = ['success' => false, 'results' => []];
                     try {
-                        $response = $client->get($usedUrl);
+                        // SSRF hardening (SB1 / wave-12): disable automatic redirect following
+                        // to prevent a federated peer from pivoting via 302 to internal services.
+                        $response = $client->get($usedUrl, [RequestOptions::ALLOW_REDIRECTS => false]);
 
                         if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
                             $resolve($failResult);
@@ -2030,7 +2036,9 @@ class DirectoryService
             $promises[] = new Promise(
                 function ($resolve) use ($client, $publicationUrl) {
                     try {
-                        $response = $client->get($publicationUrl);
+                        // SSRF hardening (SB1 / wave-12): disable automatic redirect following
+                        // to prevent a federated peer from pivoting via 302 to internal services.
+                        $response = $client->get($publicationUrl, [RequestOptions::ALLOW_REDIRECTS => false]);
 
                         if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
                             $data = json_decode($response->getBody()->getContents(), true);
@@ -2306,6 +2314,17 @@ class DirectoryService
             // Publication date from catalog, default to now for public visibility.
             'published'    => ($catalog['published'] ?? (new DateTime())->format('c')),
         ];
+
+        // Federation discovery (DCAT-009): advertise the per-catalog DCAT harvest endpoint
+        // when the catalog is DCAT-enabled, so remote instances and aggregators learn where
+        // to harvest. Disabled catalogs carry no dcatEndpoint. Extends the existing directory
+        // machinery with one field — no new broadcast channel or cron (FED-OR-001/002).
+        $hasDcat     = filter_var(($catalog['hasDcat'] ?? false), FILTER_VALIDATE_BOOLEAN);
+        $catalogSlug = ($catalog['slug'] ?? '');
+        if ($hasDcat === true && $catalogSlug !== '') {
+            $base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+            $listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
+        }
 
         return $listing;
 

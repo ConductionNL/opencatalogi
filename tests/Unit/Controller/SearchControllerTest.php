@@ -10,6 +10,7 @@ use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserSession;
+use OCP\IL10N;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,7 @@ class SearchControllerTest extends TestCase
     private IRequest|MockObject $request;
     private PublicationService|MockObject $publicationService;
     private IUserSession|MockObject $userSession;
+    private IL10N|MockObject $l10n;
     private SearchController $controller;
 
     protected function setUp(): void
@@ -29,6 +31,11 @@ class SearchControllerTest extends TestCase
         $this->request            = $this->createMock(IRequest::class);
         $this->publicationService = $this->createMock(PublicationService::class);
         $this->userSession        = $this->createMock(IUserSession::class);
+        $this->l10n               = $this->createMock(IL10N::class);
+
+        // l10n->t() returns the source string unchanged for assertions.
+        $this->l10n->method('t')
+            ->willReturnArgument(0);
 
         // index()/show()/etc. guard on an authenticated user; default to logged-in.
         $this->userSession->method('getUser')
@@ -38,7 +45,8 @@ class SearchControllerTest extends TestCase
             'opencatalogi',
             $this->request,
             $this->publicationService,
-            $this->userSession
+            $this->userSession,
+            $this->l10n
         );
     }
 

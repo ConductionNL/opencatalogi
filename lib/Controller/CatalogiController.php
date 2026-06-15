@@ -41,6 +41,7 @@ use RuntimeException;
  */
 class CatalogiController extends Controller
 {
+    use ResolvesRegisterConfiguration;
 
     /**
      * Allowed CORS methods.
@@ -116,18 +117,20 @@ class CatalogiController extends Controller
     /**
      * Get the schema and register configuration for catalogs.
      *
+     * Resolved through OpenRegister's RegisterResolverService (no empty-string
+     * fallback); an unconfigured `catalog_register`/`catalog_schema` raises
+     * MissingConfigException which the caller converts to a 503.
+     *
      * @return array<string, string> Array containing schema and register configuration.
+     *
+     * @throws \RuntimeException                                                       When OpenRegister is unavailable.
+     * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
      */
     private function getCatalogConfiguration(): array
     {
-        // Get the catalog schema and register from configuration.
-        $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
-        $register = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-        return [
-            'schema'   => $schema,
-            'register' => $register,
-        ];
+        return $this->resolveRegisterConfiguration('catalog_register', 'catalog_schema');
 
     }//end getCatalogConfiguration()
 
@@ -204,8 +207,12 @@ class CatalogiController extends Controller
      */
     public function index(): JSONResponse
     {
-        // Get catalog configuration from settings.
-        $catalogConfig = $this->getCatalogConfiguration();
+        // Get catalog configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+        try {
+            $catalogConfig = $this->getCatalogConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
 
         // Retrieve all request parameters.
         $requestParams = $this->request->getParams();

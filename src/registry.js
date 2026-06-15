@@ -32,6 +32,7 @@
 
 import DashboardView from './views/dashboard/Dashboard.vue'
 import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
+import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 import {
 	CnFederationStatus,
 	CnFileManager,
@@ -44,6 +45,7 @@ export default {
 	// --- Page components (referenced by `component` in manifest pages). ---
 	DashboardView,
 	CatalogDetailPageView,
+	WooBatchDetailView,
 	CnFederationStatus,
 
 	// --- Detail-page widgets (referenced by `widgetKey` in manifest pages). ---

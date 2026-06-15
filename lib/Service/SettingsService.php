@@ -399,6 +399,7 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            'usageCounter',
         ];
         $data['openRegisters']      = false;
         $data['availableRegisters'] = [];
@@ -433,6 +434,15 @@ class SettingsService
         $defaults['auto_publish_attachments']      = 'false';
         $defaults['auto_publish_objects']          = 'false';
         $defaults['use_old_style_publishing_view'] = 'false';
+
+        // Add DCAT-AP-NL harvest publisher defaults (DCAT-005 / DCAT-010). These are the
+        // instance-level fallbacks used to complete mandatory dataset properties; the
+        // per-catalog DCAT enable toggle (hasDcat) lives on the catalog object itself.
+        $defaults['dcat_instance_title']  = 'OpenCatalogi';
+        $defaults['dcat_publisher_name']  = '';
+        $defaults['dcat_publisher_uri']   = '';
+        $defaults['dcat_default_license'] = 'http://creativecommons.org/publicdomain/zero/1.0/';
+        $defaults['dcat_contact_point']   = '';
 
         // Get the current values for the object types from the configuration.
         try {
@@ -568,6 +578,13 @@ class SettingsService
             $allowedKeys[] = 'auto_publish_attachments';
             $allowedKeys[] = 'auto_publish_objects';
             $allowedKeys[] = 'use_old_style_publishing_view';
+
+            // DCAT-AP-NL harvest publisher defaults (DCAT-010).
+            $allowedKeys[] = 'dcat_instance_title';
+            $allowedKeys[] = 'dcat_publisher_name';
+            $allowedKeys[] = 'dcat_publisher_uri';
+            $allowedKeys[] = 'dcat_default_license';
+            $allowedKeys[] = 'dcat_contact_point';
 
             $updated = [];
 
@@ -856,10 +873,13 @@ class SettingsService
     private function updateObjectTypeConfiguration(array $importResult): void
     {
         // Get the object types that need configuration.
+        // 'publication' is included so publication_register/publication_schema
+        // resolve for retention evaluation (RET-005); it was previously omitted.
         $objectTypes = [
             'catalog',
             'listing',
             'organization',
+            'publication',
             'theme',
             'page',
             'menu',
