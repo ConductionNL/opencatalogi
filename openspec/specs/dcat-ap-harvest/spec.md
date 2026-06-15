@@ -1,7 +1,11 @@
 # dcat-ap-harvest Specification
 
 ## Purpose
-TBD - created by archiving change dcat-ap-harvest. Update Purpose after archive.
+
+@e2e exclude pure backend/API spec — all scenarios test server-side DCAT-AP-NL document generation (JSON-LD / Turtle / RDF-XML over HTTP), content negotiation, mapping, and catalog-scoped OR object queries; no browser-observable UI surface; covered by Newman API tests instead.
+
+OpenCatalogi exposes its publicly visible publications as a DCAT-AP-NL 3.0 harvest feed so external harvesters (e.g. data.overheid.nl) can index them. The feed is a read-only rendering layer over the same OR object-search path the public publications API uses: visibility is governed by OR's RBAC `publicatiedatum <= now` predicate (the removed object-level `@self.published` predicate is gone), and no bespoke storage, visibility rule, or query layer is introduced (hydra ADR-022).
+
 ## Requirements
 ### Requirement: Per-catalog DCAT-AP-NL document endpoint (DCAT-001)
 The system MUST serve `GET /api/catalogs/{catalogSlug}/dcat` returning a
