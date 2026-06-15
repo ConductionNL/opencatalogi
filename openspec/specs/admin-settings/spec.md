@@ -18,6 +18,8 @@ audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 
 ## Purpose
 
+@e2e exclude OR-abstraction-consumer spec — admin-config conventions delegated to OpenRegister's IAppConfig and verified by unit/Newman tests, not browser-UI observable.
+
 The admin settings module provides the configuration interface for
 opencatalogi. After the Phase 7 rewrite, this spec cites OR's `IAppConfig`
 conventions as the authoritative source for key naming, validation,
@@ -27,7 +29,7 @@ conventions locally — the convention is owned upstream and consumed here.
 Phase 8 promotes three hardcoded class constants to admin-config keys;
 those keys are added to the inventory table below.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: every admin-config key follows the OR `IAppConfig` naming convention (SET-OR-001)
 
@@ -52,9 +54,7 @@ inventory update MUST be rejected.
 
 ### Requirement: secrets are stored per OR conventions (SET-OR-002)
 
-Any configuration key that carries a secret (token, credential, password)
-MUST be marked sensitive per OR's `IAppConfig` convention so that it does
-not leak through generic settings dumps.
+Any configuration key that carries a secret (token, credential, password) MUST be marked sensitive per OR's `IAppConfig` convention so that it does not leak through generic settings dumps.
 
 > @e2e exclude Backend secret-storage contract (sensitive flag on IAppConfig keys so secrets do not appear in generic dumps) — no UI surface; verified by PHPUnit asserting the sensitive marking and absence from a generic config dump.
 
@@ -104,6 +104,13 @@ The auto-configuration path (`autoConfigure()`) MUST use OR's
 `ConfigurationService` for register/schema discovery. It MUST NOT
 implement its own register-slug-matching logic if OR's service provides
 equivalent discovery.
+
+#### Scenario: auto-configuration discovers registers via OR
+
+- **GIVEN** the auto-configuration path runs,
+- **WHEN** `autoConfigure()` resolves registers and schemas,
+- **THEN** it MUST call OR's `ConfigurationService` for discovery,
+- **AND** it MUST NOT run a bespoke register-slug-matching routine.
 
 ### Requirement: admin settings page loads and saves configuration (SET-OR-006)
 

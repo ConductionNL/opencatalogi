@@ -12,6 +12,8 @@ retrofit_extensions:
 
 ## Purpose
 
+@e2e exclude retrofit spec — public CMS HTTP API contract (pages, menus, themes, glossary) verified by Newman API tests, not browser-UI observable.
+
 OpenCatalogi includes a lightweight CMS layer for managing static content on catalog websites. This includes pages (static content with block-based structure), menus (hierarchical navigation), themes (publication categorization/cards), and glossary terms (definitions). All content types are stored as OpenRegister objects and served via public CORS-enabled API endpoints for consumption by external frontends like tilburg-woo-ui.
 ## Requirements
 
@@ -22,30 +24,60 @@ The system MUST list all pages with pagination via public API.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: List pages publicly
+- GIVEN pages exist in the configured page schema/register
+- WHEN a GET request is made to `/api/pages`
+- THEN all pages MUST be returned with pagination metadata
+
 ### Requirement: Retrieve a single page by slug (CMS-002)
 The system MUST retrieve a single page by slug.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: Get a page by slug
+- GIVEN a page with slug "about-us" exists
+- WHEN a GET request is made to `/api/pages/about-us`
+- THEN the page MUST be found via a slug filter and its data including content blocks returned
 
 ### Requirement: Pages support block-based content structure (contents array with type, data, groups) (CMS-003)
 Pages MUST support block-based content structure (contents array with type, data, groups).
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Page stores block-based content
+- GIVEN a page with a `contents` array
+- WHEN the page is retrieved
+- THEN each content block MUST carry its type, data, and groups
+
 ### Requirement: Pages support group-based access control (groups, hideAfterLogin, hideBeforeLogin) (CMS-004)
-Pages SHOULD support group-based access control (groups, hideAfterLogin, hideBeforeLogin).
+Pages SHALL support group-based access control via `groups`, `hideAfterLogin`, and `hideBeforeLogin`. The system SHOULD honour these visibility fields.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: Page visibility controlled by group fields
+- GIVEN a page with `groups`, `hideAfterLogin`, or `hideBeforeLogin` set
+- WHEN the page is served
+- THEN those access-control fields MUST be present so a frontend can apply group-based visibility
 
 ### Requirement: Page configuration stored in IAppConfig as `page_schema` and `page_register` (CMS-005)
 Page configuration MUST be stored in IAppConfig as `page_schema` and `page_register`.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Resolve page schema and register from config
+- GIVEN the app reads page configuration
+- WHEN it resolves the page schema and register
+- THEN it MUST read IAppConfig keys `page_schema` and `page_register`
+
 ### Requirement: CORS headers included on all page endpoints (CMS-006)
 CORS headers MUST be included on all page endpoints.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: CORS headers on page endpoints
+- GIVEN a cross-origin frontend
+- WHEN it requests any `/api/pages` endpoint
+- THEN the response MUST include CORS headers
 
 <!-- Menus -->
 
@@ -54,35 +86,70 @@ The system MUST list all menus with pagination via public API.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: List menus publicly
+- GIVEN menus exist in the configured menu schema/register
+- WHEN a GET request is made to `/api/menus`
+- THEN all menus MUST be returned with pagination metadata
+
 ### Requirement: Retrieve a single menu by ID (CMS-011)
 The system MUST retrieve a single menu by ID.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: Get a menu by ID
+- GIVEN a menu with a known ID exists
+- WHEN a GET request is made to `/api/menus/{id}`
+- THEN that menu MUST be returned
 
 ### Requirement: Menus support hierarchical items with sub-items (CMS-012)
 Menus MUST support hierarchical items with sub-items.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Menu items can nest sub-items
+- GIVEN a menu whose items contain nested items
+- WHEN the menu is retrieved
+- THEN the nested sub-items MUST be preserved in the hierarchy
+
 ### Requirement: Menu items support group-based visibility (groups, hideAfterLogin, hideBeforeLogin) (CMS-013)
-Menu items SHOULD support group-based visibility (groups, hideAfterLogin, hideBeforeLogin).
+Menu items SHALL support group-based visibility via `groups`, `hideAfterLogin`, and `hideBeforeLogin`. The system SHOULD honour these visibility fields per item.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: Menu item visibility controlled by group fields
+- GIVEN a menu item with `groups`, `hideAfterLogin`, or `hideBeforeLogin` set
+- WHEN the menu is served
+- THEN those fields MUST be present so a frontend can apply per-item group visibility
 
 ### Requirement: Menu configuration stored in IAppConfig as `menu_schema` and `menu_register` (CMS-014)
 Menu configuration MUST be stored in IAppConfig as `menu_schema` and `menu_register`.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Resolve menu schema and register from config
+- GIVEN the app reads menu configuration
+- WHEN it resolves the menu schema and register
+- THEN it MUST read IAppConfig keys `menu_schema` and `menu_register`
+
 ### Requirement: Default fallback: menu schema ID 7, register ID 1 when not configured (CMS-015)
-The system SHOULD default to menu schema ID 7 and register ID 1 when not configured.
+The system SHALL default to menu schema ID 7 and register ID 1 when menu configuration is absent. It SHOULD apply this fallback transparently.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: Menu defaults applied when unconfigured
+- GIVEN `menu_schema` and `menu_register` are not configured in IAppConfig
+- WHEN a GET request is made to `/api/menus`
+- THEN the controller MUST fall back to schema ID 7 and register ID 1
 
 ### Requirement: CORS headers included on all menu endpoints (CMS-016)
 CORS headers MUST be included on all menu endpoints.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: CORS headers on menu endpoints
+- GIVEN a cross-origin frontend
+- WHEN it requests any `/api/menus` endpoint
+- THEN the response MUST include CORS headers
 
 <!-- Themes -->
 
@@ -91,25 +158,50 @@ The system MUST list all themes with pagination and facets via public API.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: List themes with facets
+- GIVEN themes exist in the configured theme schema/register
+- WHEN a GET request is made to `/api/themes`
+- THEN themes MUST be returned with pagination metadata and facets when present
+
 ### Requirement: Retrieve a single theme by ID (CMS-021)
 The system MUST retrieve a single theme by ID.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: Get a theme by ID
+- GIVEN a theme with a known ID exists
+- WHEN a GET request is made to `/api/themes/{id}`
+- THEN that theme MUST be returned
 
 ### Requirement: Theme configuration stored in IAppConfig as `theme_schema` and `theme_register` (CMS-022)
 Theme configuration MUST be stored in IAppConfig as `theme_schema` and `theme_register`.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Resolve theme schema and register from config
+- GIVEN the app reads theme configuration
+- WHEN it resolves the theme schema and register
+- THEN it MUST read IAppConfig keys `theme_schema` and `theme_register`
+
 ### Requirement: Themes include display fields (image, icon, link, url, sort, isExternal) (CMS-023)
 Themes MUST include display fields (image, icon, link, url, sort, isExternal).
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Theme exposes display fields
+- GIVEN a theme object
+- WHEN it is retrieved
+- THEN it MUST expose its display fields image, icon, link, url, sort, and isExternal
+
 ### Requirement: CORS headers included on all theme endpoints (CMS-024)
 CORS headers MUST be included on all theme endpoints.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: CORS headers on theme endpoints
+- GIVEN a cross-origin frontend
+- WHEN it requests any `/api/themes` endpoint
+- THEN the response MUST include CORS headers
 
 <!-- Glossary -->
 
@@ -118,30 +210,60 @@ The system MUST list all glossary terms with pagination and facets via public AP
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: List glossary terms with facets
+- GIVEN glossary terms exist
+- WHEN a GET request is made to `/api/glossary`
+- THEN terms MUST be returned with pagination metadata and optional facets
+
 ### Requirement: Retrieve a single glossary term by ID (CMS-031)
 The system MUST retrieve a single glossary term by ID.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: Get a glossary term by ID
+- GIVEN a glossary term with a known ID exists
+- WHEN a GET request is made to `/api/glossary/{id}`
+- THEN that term MUST be returned
 
 ### Requirement: Glossary configuration stored in IAppConfig as `glossary_schema` and `glossary_register` (CMS-032)
 Glossary configuration MUST be stored in IAppConfig as `glossary_schema` and `glossary_register`.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Resolve glossary schema and register from config
+- GIVEN the app reads glossary configuration
+- WHEN it resolves the glossary schema and register
+- THEN it MUST read IAppConfig keys `glossary_schema` and `glossary_register`
+
 ### Requirement: Glossary queries force `_source: database` (no Solr dependency) (CMS-033)
 Glossary queries MUST force `_source: database` (no Solr dependency).
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: Glossary query bypasses Solr
+- GIVEN a glossary list query
+- WHEN it is built
+- THEN it MUST include `_source: database` so it does not depend on Solr
 
 ### Requirement: Glossary terms do not use publishing workflow (published=false in queries) (CMS-034)
 Glossary terms MUST NOT use the publishing workflow (published=false in queries).
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Glossary query does not require publication
+- GIVEN a glossary list query
+- WHEN it is built
+- THEN it MUST pass published=false so glossary terms bypass the publishing workflow
+
 ### Requirement: CORS headers included on all glossary endpoints (CMS-035)
 CORS headers MUST be included on all glossary endpoints.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: CORS headers on glossary endpoints
+- GIVEN a cross-origin frontend
+- WHEN it requests any `/api/glossary` endpoint
+- THEN the response MUST include CORS headers
 
 ### Requirement: Page management UI with embedded content blocks (CMS-036)
 The system SHALL provide a page management frontend comprising a `ViewPageModal` (read a

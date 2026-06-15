@@ -92,25 +92,71 @@ merged pagination. Federated results are obtained by calling OR's
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: list publications across sources
+
+- **GIVEN** local catalogs and one or more federated instances are configured,
+- **WHEN** a client requests the publication list,
+- **THEN** the response MUST include publications from local and federated sources with merged pagination.
+
 ### Requirement: Retrieve a single publication by ID from local or federated sources (FED-002)
 
+The system MUST retrieve a single publication by ID from either a local catalog or a federated source.
+
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: retrieve a single publication
+
+- **GIVEN** a publication ID that exists locally or on a federated instance,
+- **WHEN** a client requests that publication,
+- **THEN** the system MUST return the publication regardless of which source holds it.
 
 ### Requirement: Retrieve outgoing relations (uses) with federation support (FED-003)
 
+The system MUST retrieve a publication's outgoing relations (uses), resolving related publications across local and federated sources.
+
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: retrieve outgoing relations
+
+- **GIVEN** a publication that references other publications,
+- **WHEN** a client requests its outgoing relations,
+- **THEN** the system MUST return the used publications, including those on federated instances.
 
 ### Requirement: Retrieve incoming relations (used-by) with federation support (FED-004)
 
+The system MUST retrieve a publication's incoming relations (used-by), resolving referencing publications across local and federated sources.
+
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: retrieve incoming relations
+
+- **GIVEN** a publication referenced by other publications,
+- **WHEN** a client requests its incoming relations,
+- **THEN** the system MUST return the referencing publications, including those on federated instances.
 
 ### Requirement: Retrieve publication attachments from local or federated sources (FED-005)
 
+The system MUST retrieve a publication's attachments from either a local catalog or a federated source.
+
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: retrieve attachments
+
+- **GIVEN** a publication with attachments held locally or on a federated instance,
+- **WHEN** a client requests its attachments,
+- **THEN** the system MUST return the attachment list from the holding source.
 
 ### Requirement: Download publication files from local or federated sources (FED-006)
 
+The system MUST allow downloading a publication's files from either a local catalog or a federated source.
+
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: download a federated file
+
+- **GIVEN** a publication file held on a local or federated source,
+- **WHEN** a client requests the download,
+- **THEN** the system MUST stream the file from the holding source.
 
 ### Requirement: All federation endpoints must be public (FED-007)
 
@@ -119,24 +165,59 @@ All federation endpoints MUST be public (`@PublicPage`, `@NoCSRFRequired`,
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: anonymous access to federation endpoints
+
+- **GIVEN** an unauthenticated client,
+- **WHEN** it calls any federation endpoint,
+- **THEN** the request MUST be served (endpoints declare `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired`).
+
 ### Requirement: Federation aggregation uses async HTTP requests to remote directories (FED-008)
 
-Federation aggregation SHOULD use async HTTP requests (GuzzleHttp promises)
-to remote directories.
+Federation aggregation SHOULD use async HTTP requests (GuzzleHttp promises) to remote directories, and MUST aggregate the responses into a single result set.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: parallel aggregation across directories
+
+- **GIVEN** multiple remote directories are configured,
+- **WHEN** a federated query runs,
+- **THEN** the aggregation MUST issue the remote calls in parallel (async GuzzleHttp promises) and merge their responses.
 
 ### Requirement: Directory listings provide the directory URLs for remote instances (FED-009)
 
+Directory listings MUST provide the directory URLs used to reach remote OpenCatalogi instances.
+
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: directory listing exposes remote URLs
+
+- **GIVEN** remote instances are registered in the directory,
+- **WHEN** a client reads a directory listing,
+- **THEN** each entry MUST expose the directory URL for the remote instance.
 
 ### Requirement: Listings with `integrationLevel: "search"` included in federated search (FED-010)
 
+Listings whose `integrationLevel` is `"search"` MUST be included in the federated search fan-out.
+
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: search-level listing participates in federated search
+
+- **GIVEN** a listing with `integrationLevel: "search"`,
+- **WHEN** a federated search runs,
+- **THEN** that listing MUST be queried as part of the search fan-out.
 
 ### Requirement: Sort merged results by relevance score (`_score`) (FED-011)
 
+Merged federated results MUST be sorted by relevance score (`_score`) in descending order.
+
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: merged results ordered by score
+
+- **GIVEN** results returned from multiple sources with `_score` values,
+- **WHEN** the results are merged,
+- **THEN** they MUST be ordered by descending `_score`.
 
 ### Requirement: All federation publication endpoints have corresponding routes (FED-012)
 
@@ -144,6 +225,12 @@ All federation publication endpoints MUST have corresponding routes in
 `appinfo/routes.php`.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: federation endpoints are routed
+
+- **GIVEN** the documented federation publication endpoints,
+- **WHEN** the app's routes are loaded,
+- **THEN** each endpoint MUST have a corresponding entry in `appinfo/routes.php`.
 
 ## REMOVED Requirements
 

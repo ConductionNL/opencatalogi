@@ -20,6 +20,8 @@ audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 
 ## Purpose
 
+@e2e exclude OR-abstraction-consumer spec — file streaming/versioning delegated to OpenRegister's File Attachments and verified by PHPUnit/Newman, a download response not a browser-UI surface.
+
 The download service provides downloadable export files from publications.
 After the Phase 7 rewrite, it is a **streaming wrapper**:
 
@@ -32,12 +34,11 @@ After the Phase 7 rewrite, it is a **streaming wrapper**:
 - Version selection is passed through to OR; the download service does NOT
   maintain a separate version history or local snapshot.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: ZIP generation streams from OR file attachments (DWN-OR-001)
 
-When generating a ZIP archive of a publication's attachments, the download
-service MUST:
+When generating a ZIP archive of a publication's attachments, the download service MUST:
 
 1. Resolve the publication's register/schema via `RegisterResolverService`.
 2. Obtain file streams from OR's file service (resolved via DI, not by
@@ -72,10 +73,7 @@ purposes.
 
 ### Requirement: versioned downloads honour OR's version selectors (DWN-OR-002)
 
-When a request specifies a version selector (e.g. a specific file version ID
-or timestamp), the download service MUST pass the selector through to OR's
-file service. It MUST NOT maintain a separate version history, snapshot
-table, or local versioning logic.
+When a request specifies a version selector (e.g. a specific file version ID or timestamp), the download service MUST pass the selector through to OR's file service. It MUST NOT maintain a separate version history, snapshot table, or local versioning logic.
 
 > @e2e exclude Server-side version-passthrough contract (version selector forwarded to OR's file service; no local version table consulted) — a download response, not a UI surface; verified by PHPUnit/Newman asserting the selector is passed through and no local version table exists.
 
@@ -88,8 +86,7 @@ table, or local versioning logic.
 
 ### Requirement: metadata PDF generation remains as a rendering step (DWN-OR-003)
 
-Generating a publication metadata PDF (Twig + mPDF) remains in scope for
-the download service. This is a legitimate in-app rendering step because:
+Generating a publication metadata PDF (Twig + mPDF) MUST remain an in-app rendering step within the download service. This is a legitimate in-app rendering step because:
 
 - It uses opencatalogi-specific Twig templates and publication schema layout.
 - It is not a file that lives in OR's storage permanently — it is generated
@@ -111,14 +108,25 @@ storage via `IRootFolder` or `FileService`. If a persistent copy is needed
 
 ### Requirement: options validation remains in place (DWN-OR-004)
 
-At least one output option — stream to response (`download`) or save to OR
-storage (`saveToOR`) — MUST be enabled. If neither is enabled, the service
-MUST return a 400 error before generating any file content.
+At least one output option — stream to response (`download`) or save to OR storage (`saveToOR`) — MUST be enabled. If neither is enabled, the service MUST return a 400 error before generating any file content.
+
+#### Scenario: no output option enabled
+
+- **GIVEN** a download request with neither `download` nor `saveToOR` enabled,
+- **WHEN** the download service validates the request,
+- **THEN** it MUST return a 400 error,
+- **AND** it MUST NOT generate any file content.
 
 ### Requirement: missing publication produces an error response (DWN-OR-005)
 
-If the publication ID is not found via OR's object service, the download
-service MUST return a 404 response before generating any file content.
+If the publication ID is not found via OR's object service, the download service MUST return a 404 response before generating any file content.
+
+#### Scenario: publication not found
+
+- **GIVEN** a download request for a publication ID that OR's object service cannot resolve,
+- **WHEN** the download service handles the request,
+- **THEN** it MUST return a 404 response,
+- **AND** it MUST NOT generate any file content.
 
 ## REMOVED Requirements
 
