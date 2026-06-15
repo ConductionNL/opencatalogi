@@ -111,30 +111,39 @@ class PublicationQueryService
     /**
      * Determine whether an object is publicly visible (published and not depublished).
      *
-     * Mirrors the published-predicate used elsewhere (EventService::isObjectPublished):
-     * an object is public when it carries a `@self.published` date and either has no
-     * `@self.depublished` date or was re-published after it.
+     * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
+     * the public publications API and the frontend `publicationStatus` helpers use:
+     * an object is public when its own `publicatiedatum` field is set and is at or
+     * before "now", and either carries no `depublicatiedatum` or one still in the
+     * future. The removed object-level `@self.published` predicate is not consulted.
      *
-     * @param array $objectData The serialized object data (`@self` envelope).
+     * @param array $objectData The serialized object data (own fields + `@self` envelope).
      *
      * @return boolean True when the object is currently published.
      *
-     * @spec exclude Visibility helper for the public-endpoint published-predicate guard.
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     public function isObjectPublic(array $objectData): bool
     {
-        $published   = ($objectData['@self']['published'] ?? null);
-        $depublished = ($objectData['@self']['depublished'] ?? null);
+        $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
+        $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
 
-        if ($published === null) {
+        if ($publicatiedatum === null || $publicatiedatum === '') {
             return false;
         }
 
-        if ($depublished === null) {
+        $now           = time();
+        $publishedTime = strtotime((string) $publicatiedatum);
+        if ($publishedTime === false || $publishedTime > $now) {
+            return false;
+        }
+
+        if ($depublicatiedatum === null || $depublicatiedatum === '') {
             return true;
         }
 
-        return strtotime($published) > strtotime($depublished);
+        $depublishedTime = strtotime((string) $depublicatiedatum);
+        return ($depublishedTime === false || $depublishedTime > $now);
 
     }//end isObjectPublic()
 

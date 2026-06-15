@@ -186,8 +186,9 @@ class DcatMappingService
             $dataset[$dcatProperty] = $value;
         }//end foreach
 
-        // Mandatory: dct:modified (from @self.updated/published).
-        $modified = ($publication['@self']['updated'] ?? $publication['@self']['published'] ?? null);
+        // Mandatory: dct:modified (from @self.updated, falling back to the
+        // object's own publicatiedatum — the removed @self.published is gone).
+        $modified = ($publication['@self']['updated'] ?? $publication['publicatiedatum'] ?? null);
         if ($modified !== null) {
             $dataset['dct:modified'] = $this->isoDate((string) $modified);
         }
