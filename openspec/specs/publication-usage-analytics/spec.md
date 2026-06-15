@@ -58,7 +58,7 @@ OpenRegister — a `usageCounter` schema with fields `publication` (reference),
 `downloadFile` reference), and `count` (non-negative integer) — and nothing
 else. No IP address, user agent, session identifier, referrer, or any other
 request attribute MUST ever be persisted. The schema MUST be internal
-plumbing: never published (`@self.published` never set), excluded from
+plumbing: never published (`publicatiedatum` never set), excluded from
 catalogs, sitemaps, DCAT, search, and federation, and RBAC-restricted via OR
 to the app and officer roles. OpenCatalogi MUST NOT create bespoke database
 tables for counters (hydra ADR-022).

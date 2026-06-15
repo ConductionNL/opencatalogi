@@ -52,14 +52,14 @@ URL per instance.
 
 ### Requirement: Only publicly visible objects appear in the feed (DCAT-003)
 A publication MUST appear in any DCAT document **iff** it is publicly visible
-per the `@self.published` predicate — the identical rule used by the public
-publications API (PUB-001) and sitemaps (WOO-001). The DCAT layer MUST NOT
+per the OR RBAC `publicatiedatum <= now` predicate — the identical rule used by
+the public publications API (PUB-001) and sitemaps (WOO-001). The DCAT layer MUST NOT
 implement its own visibility logic, and querying MUST delegate to OR object
 search with the catalog's configured registers/schemas (PUB-003); no bespoke
 query layer (hydra ADR-022).
 
 #### Scenario: Unpublished object excluded
-- GIVEN a publication in a DCAT-enabled catalog with no `@self.published`
+- GIVEN a publication in a DCAT-enabled catalog with no `publicatiedatum`
   date (or a future one)
 - WHEN the catalog DCAT document is generated
 - THEN that publication MUST NOT appear as a `dcat:Dataset`

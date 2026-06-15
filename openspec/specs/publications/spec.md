@@ -324,7 +324,7 @@ The publication schema is defined in `publication_register.json`.
 | organization | string | No | Reference to the owning organization (facetable) |
 | themes | array(string) | No | List of theme references (facetable) |
 
-Note: Publications also inherit OpenRegister system fields (`@self.uuid`, `@self.created`, `@self.updated`, `@self.published`, `@self.depublished`, `@self.schema`, `@self.register`, `@self.files`, etc.).
+Note: Publications also inherit OpenRegister system fields (`@self.uuid`, `@self.created`, `@self.updated`, `@self.schema`, `@self.register`, `@self.files`, etc.). Publication visibility is NOT an OR system field: it is governed by the object's own `publicatiedatum`/`depublicatiedatum` fields under OR's RBAC predicate `{group:public, match:{publicatiedatum:{$lte:$now}}}`. The former object-level `@self.published`/`@self.depublished` predicate has been removed from OpenRegister core.
 
 ## User Interface
 
