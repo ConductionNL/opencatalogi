@@ -439,9 +439,40 @@ class SitemapServiceTest extends TestCase
         $this->assertEquals('Woo verzoeken', $classification['#text']);
         $this->assertEquals('https://example.com/tooi/woo', $classification['@resource']);
 
-        // Document handling.
+        // Document handling — diwoo:atTime comes from the file's published timestamp.
         $handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
         $this->assertEquals('ontvangst', $handling['diwoo:soortHandeling']['#text']);
+        $this->assertEquals('2024-05-10 12:00:00', $handling['diwoo:atTime']);
+    }
+
+    /**
+     * diwoo:atTime falls back to the publication's own publicatiedatum (RBAC model)
+     * when the file has no published timestamp. The removed object-level
+     * @self.published predicate is always empty for magic-mapped publications and
+     * MUST NOT be used.
+     *
+     * @spec openspec/specs/woo-compliance/spec.md
+     */
+    public function testMapDiwooDocumentAtTimeFallsBackToPublicatiedatum(): void
+    {
+        $publication = [
+            'id'              => 'pub-3',
+            'publicatiedatum' => '2024-04-02 09:30:00',
+            // A leftover (dead) @self.published MUST be ignored.
+            '@self'           => ['published' => '2099-01-01 00:00:00'],
+        ];
+
+        $file = [
+            'downloadUrl' => 'https://example.com/files/besluit.pdf',
+            'extension'   => 'pdf',
+            // No 'published' key on the file -> must fall back to publicatiedatum.
+        ];
+
+        $method = $this->getPrivateMethod('mapDiwooDocument');
+        $result = $method->invoke($this->service, $publication, $file);
+
+        $handling = $result['diwoo:Document']['diwoo:DiWoo']['diwoo:documenthandelingen']['diwoo:documenthandeling'];
+        $this->assertEquals('2024-04-02 09:30:00', $handling['diwoo:atTime']);
     }
 
     public function testMapDiwooDocumentFallbackValues(): void
