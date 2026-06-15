@@ -54,7 +54,7 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
         <lib>zip</lib>
 
         <owncloud max-version="0" min-version="0"/>
-		<nextcloud min-version="28" max-version="33"/>
+		<nextcloud min-version="28" max-version="34"/>
 	</dependencies>
 
 	<repair-steps>

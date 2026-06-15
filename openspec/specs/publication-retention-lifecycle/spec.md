@@ -30,18 +30,20 @@ background job (`Cron\RetentionEvaluation`).
 > rationale as catalogs::dashboard-widget scenarios).
 
 ## Requirements
-### Requirement: Scheduled publication (embargo) via future `@self.published` (RET-001)
-The system MUST support scheduling a publication by setting
-`@self.published` to a future date-time. Until that moment the object MUST be
+### Requirement: Scheduled publication (embargo) via future `publicatiedatum` (RET-001)
+The system MUST support scheduling a publication by setting its own
+`publicatiedatum` field to a future date-time. Until that moment the object MUST be
 invisible on every public surface — public publications API (PUB-001/002),
 search, sitemaps (WOO-001), DCAT feed, and federation — because all of them
-derive visibility from the OR published-predicate; OpenCatalogi MUST NOT
-implement a second embargo mechanism or visibility check (hydra ADR-022).
+derive visibility from the OR RBAC predicate
+`{group:public, match:{publicatiedatum:{$lte:$now}}}`; OpenCatalogi MUST NOT
+implement a second embargo mechanism or visibility check (hydra ADR-022). The
+removed object-level `@self.published` predicate is no longer available.
 From the scheduled moment the object MUST be publicly visible without any
 further user action.
 
 #### Scenario: Embargoed besluit invisible before its effective date
-- GIVEN a publication with `@self.published` set to tomorrow 09:00
+- GIVEN a publication with `publicatiedatum` set to tomorrow 09:00
 - WHEN the public publications API, search, and sitemap are requested today
 - THEN the publication MUST NOT appear on any of them
 - AND an anonymous direct fetch of the publication MUST return `404`
@@ -63,26 +65,26 @@ further user action.
 #### Scenario: Schedule set from the publish dialog
 - GIVEN a user opens the publish confirmation dialog (PUB-018)
 - WHEN they choose "Publish on" and pick a future date-time
-- THEN the store action MUST set `@self.published` to that date-time
+- THEN the store action MUST set the publication's `publicatiedatum` to that date-time
 - AND the publication list MUST show a "Scheduled" status with the scheduled
   moment
 
-### Requirement: Scheduled depublication via future `@self.depublished` (RET-002)
-The system MUST support scheduling depublication by setting
-`@self.depublished` to a future date-time, after which the object MUST
-disappear from all public surfaces via the same predicate evaluation — no
+### Requirement: Scheduled depublication via future `depublicatiedatum` (RET-002)
+The system MUST support scheduling depublication by setting the object's own
+`depublicatiedatum` field to a future date-time, after which the object MUST
+disappear from all public surfaces via the same RBAC predicate evaluation — no
 bespoke takedown job. The depublish dialog (PUB-018) MUST offer
 "Depublish on" alongside immediate depublication.
 
 #### Scenario: Time-limited publication expires automatically
 - GIVEN a publication of a temporary traffic measure with
-  `@self.depublished` set to 2026-09-01
+  `depublicatiedatum` set to 2026-09-01
 - WHEN public surfaces are requested on 2026-09-02
 - THEN the publication MUST NOT appear on any public surface
 - AND its internal (authenticated) record MUST remain intact
 
 #### Scenario: Clearing a scheduled depublication
-- GIVEN a publication with a future `@self.depublished`
+- GIVEN a publication with a future `depublicatiedatum`
 - WHEN an authorized user clears the scheduled date before it passes
 - THEN the publication MUST remain publicly visible past the previously
   scheduled moment

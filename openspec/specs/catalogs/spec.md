@@ -11,6 +11,8 @@ retrofit_extensions:
 
 ## Purpose
 
+@e2e exclude retrofit spec — public catalog HTTP API contract and backend caching/event behaviour verified by Newman API tests and PHPUnit, not browser-UI observable.
+
 Catalogs are the top-level organizational unit in OpenCatalogi. A catalog groups publications by associating them with specific OpenRegister registers and schemas, providing a URL-slug-based namespace for the public API. Catalogs enable multi-tenant content organization where different collections of publications can be served through distinct API endpoints.
 ## Requirements
 ### Requirement: List all catalogs via public API with CORS headers (CAT-001)
@@ -18,60 +20,126 @@ The system MUST list all catalogs via public API with CORS headers.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: List all catalogs publicly
+- GIVEN the catalog schema and register are configured in IAppConfig
+- WHEN a GET request is made to `/api/catalogi`
+- THEN all catalog objects MUST be returned with pagination metadata and CORS headers, with no RBAC/multitenancy filters applied
+
 ### Requirement: Retrieve a single catalog by ID, returning all publications scoped to that catalog (CAT-002)
 The system MUST retrieve a single catalog by ID, returning all publications scoped to that catalog.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: View catalog detail with scoped publications
+- GIVEN a catalog with a known ID exists
+- WHEN a GET request is made to `/api/catalogi/{id}`
+- THEN the response MUST include the catalog's publications scoped to its registers and schemas, paginated, with CORS headers
 
 ### Requirement: Catalogs are stored as OpenRegister objects using the `catalog` schema in the `publication` register (CAT-003)
 Catalogs MUST be stored as OpenRegister objects using the `catalog` schema in the `publication` register.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Catalog persisted as OpenRegister object
+- GIVEN a catalog is created
+- WHEN it is saved
+- THEN it MUST be stored as an OpenRegister object using the `catalog` schema in the `publication` register
+
 ### Requirement: Catalog configuration (schema ID, register ID) is stored in IAppConfig as `catalog_schema` and `catalog_register` (CAT-004)
 Catalog configuration (schema ID, register ID) MUST be stored in IAppConfig as `catalog_schema` and `catalog_register`.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Resolve catalog schema and register from config
+- GIVEN the app reads catalog configuration
+- WHEN it resolves the catalog schema and register
+- THEN it MUST read them from IAppConfig keys `catalog_schema` and `catalog_register`
+
 ### Requirement: Catalog lookups by slug are cached in a distributed cache (1 hour TTL) for performance (CAT-005)
-Catalog lookups by slug SHOULD be cached in a distributed cache (1 hour TTL) for performance.
+Catalog lookups by slug SHALL be cached in a distributed cache (1 hour TTL) for performance. Lookups by slug SHOULD be served from cache when present.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: Cache a catalog lookup by slug
+- GIVEN a catalog with slug "publications" exists
+- WHEN `getCatalogBySlug("publications")` is called and the cache is empty
+- THEN the result MUST be stored in the distributed cache under key `catalog_slug_publications` with a 3600-second TTL
+- AND subsequent calls MUST return the cached result
 
 ### Requirement: Cache invalidation is supported by slug or by catalog ID (CAT-006)
-Cache invalidation SHOULD be supported by slug or by catalog ID.
+Cache invalidation SHALL be supported by slug or by catalog ID. The service SHOULD expose invalidation by either key.
 
 **Priority:** Should **Status:** Implemented
 
+#### Scenario: Invalidate cache by slug
+- GIVEN a cached catalog with slug "publications"
+- WHEN `invalidateCatalogCache("publications")` is called
+- THEN the cache entry MUST be removed and the next lookup MUST fetch fresh data from the database
+
 ### Requirement: Cache warmup is available to pre-load catalogs into cache (CAT-007)
-Cache warmup SHOULD be available to pre-load catalogs into cache.
+Cache warmup SHALL be available to pre-load catalogs into cache. Warmup SHOULD force fresh data into the cache.
 
 **Priority:** Nice **Status:** Implemented
+
+#### Scenario: Warm up a catalog cache
+- GIVEN a catalog with slug "new-catalog"
+- WHEN `warmupCatalogCache("new-catalog")` is called
+- THEN the cache MUST be invalidated and re-fetched so the catalog is immediately available in cache
 
 ### Requirement: CORS preflight OPTIONS responses must be supported on all catalog endpoints (CAT-008)
 CORS preflight OPTIONS responses MUST be supported on all catalog endpoints.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: CORS preflight on a catalog endpoint
+- GIVEN a cross-origin frontend
+- WHEN it issues an OPTIONS request to `/api/catalogi` or `/api/catalogi/{id}`
+- THEN the endpoint MUST respond with the CORS preflight headers
+
 ### Requirement: Public catalog endpoints must use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations (CAT-009)
 Public catalog endpoints MUST use `@PublicPage`, `@NoCSRFRequired`, `@NoAdminRequired` annotations.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: Public catalog endpoint is anonymously reachable
+- GIVEN an anonymous (unauthenticated) caller
+- WHEN it requests a public catalog endpoint
+- THEN the endpoint MUST be reachable, declaring `@PublicPage`, `@NoCSRFRequired`, and `@NoAdminRequired`
+
 ### Requirement: Multi-schema and multi-register catalogs must be supported (a single catalog can span multiple schemas/registers) (CAT-010)
-Multi-schema and multi-register catalogs SHOULD be supported (a single catalog can span multiple schemas/registers).
+Multi-schema and multi-register catalogs SHALL be supported so that a single catalog can span multiple schemas/registers. Such catalogs SHOULD be served correctly.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: Catalog spanning multiple schemas and registers
+- GIVEN a catalog configured with multiple registers and schemas
+- WHEN its publications are listed
+- THEN the search MUST query across all the configured registers and schemas
 
 ### Requirement: Automatic cache invalidation/warmup via CatalogCacheEventListener on post-save events; slug-to-ID normalisation via CatalogSchemaEventListener on pre-save events (CAT-011)
 Automatic cache invalidation/warmup MUST occur via CatalogCacheEventListener on object create/update/delete (post-save). Slug-to-ID normalisation of `registers`/`schemas` happens via CatalogSchemaEventListener on the **pre-save** events (`ObjectCreatingEvent`, `ObjectUpdatingEvent`) using `setModifiedData(...)`, never via a second `saveObject` call.
 
 **Priority:** Should **Status:** Implemented
 
+#### Scenario: Cache warmup on catalog creation
+- GIVEN a new catalog object matching `catalog_schema`/`catalog_register` is created
+- WHEN OpenRegister dispatches the post-save `ObjectCreatedEvent`
+- THEN CatalogCacheEventListener MUST warm up the cache for the catalog's slug
+
+#### Scenario: Slug-to-ID normalisation on pre-save
+- GIVEN a catalog whose `registers`/`schemas` contain slug-or-uuid values is about to be saved
+- WHEN the pre-save `ObjectCreatingEvent`/`ObjectUpdatingEvent` fires
+- THEN CatalogSchemaEventListener MUST resolve them to integer IDs via `setModifiedData(...)` without issuing a second `saveObject`
+
 ### Requirement: No catalog event listener may trigger a re-save of the originating object from a post-save event handler (CAT-012)
 No catalog event listener MUST trigger a re-save of the originating object from a post-save event handler. Listeners that need to mutate the entity MUST subscribe to the pre-save events and use `setModifiedData(...)`.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: Post-save listener does not re-save the entity
+- GIVEN a catalog is saved or soft-deleted
+- WHEN the post-save event handler runs
+- THEN it MUST NOT call `saveObject(...)` on the originating object, so exactly one update event results and the request returns promptly without an event loop
 
 ### Requirement: Catalog store fetches a catalog's publications and registers object types (CAT-013)
 The frontend catalog store SHALL, when a catalog is set active, fetch that catalog's

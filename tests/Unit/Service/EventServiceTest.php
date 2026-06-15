@@ -201,51 +201,51 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
     }//end testGetFileMapperNotAvailable()
 
 
-    // ===== isObjectPublished tests =====
+    // ===== isObjectPublished tests (RBAC publicatiedatum model, APB-006) =====
 
     /**
-     * Test isObjectPublished returns true when published is set and depublished is null.
+     * Test isObjectPublished returns true when a past publicatiedatum is set and no depublicatiedatum.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
-    public function testIsObjectPublishedWithPublishedOnly(): void
+    public function testIsObjectPublishedWithPastPublicatiedatumOnly(): void
     {
         $objectData = [
-            '@self' => [
-                'published'   => '2024-01-15T10:00:00+00:00',
-                'depublished' => null,
-            ],
+            'publicatiedatum' => '2024-01-15T10:00:00+00:00',
         ];
 
         $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
         $this->assertTrue($result);
 
-    }//end testIsObjectPublishedWithPublishedOnly()
+    }//end testIsObjectPublishedWithPastPublicatiedatumOnly()
 
 
     /**
-     * Test isObjectPublished returns true when published is set and depublished is absent.
+     * Test isObjectPublished returns true when a past publicatiedatum is set and depublicatiedatum is null.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
-    public function testIsObjectPublishedWithNoDepublishedKey(): void
+    public function testIsObjectPublishedWithNullDepublicatiedatum(): void
     {
         $objectData = [
-            '@self' => [
-                'published' => '2024-01-15T10:00:00+00:00',
-            ],
+            'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
+            'depublicatiedatum' => null,
         ];
 
         $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
         $this->assertTrue($result);
 
-    }//end testIsObjectPublishedWithNoDepublishedKey()
+    }//end testIsObjectPublishedWithNullDepublicatiedatum()
 
 
     /**
-     * Test isObjectPublished returns false when neither published nor depublished is set.
+     * Test isObjectPublished returns false when no publicatiedatum is set (concept).
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     public function testIsObjectPublishedNeitherSet(): void
     {
-        $objectData = [
-            '@self' => [],
-        ];
+        $objectData = [];
 
         $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
         $this->assertFalse($result);
@@ -254,56 +254,75 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
 
     /**
-     * Test isObjectPublished returns false when only depublished is set.
+     * Test isObjectPublished returns false when only depublicatiedatum is set.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
-    public function testIsObjectPublishedOnlyDepublished(): void
+    public function testIsObjectPublishedOnlyDepublicatiedatum(): void
     {
         $objectData = [
-            '@self' => [
-                'depublished' => '2024-01-15T10:00:00+00:00',
-            ],
+            'depublicatiedatum' => '2024-01-15T10:00:00+00:00',
         ];
 
         $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
         $this->assertFalse($result);
 
-    }//end testIsObjectPublishedOnlyDepublished()
+    }//end testIsObjectPublishedOnlyDepublicatiedatum()
 
 
     /**
-     * Test isObjectPublished returns true when published is after depublished.
+     * Test isObjectPublished returns false when publicatiedatum is in the future (scheduled/embargo).
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
-    public function testIsObjectPublishedRepublished(): void
+    public function testIsObjectPublishedFuturePublicatiedatum(): void
     {
+        $future     = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
         $objectData = [
-            '@self' => [
-                'published'   => '2024-06-01T10:00:00+00:00',
-                'depublished' => '2024-01-15T10:00:00+00:00',
-            ],
+            'publicatiedatum' => $future,
+        ];
+
+        $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
+        $this->assertFalse($result);
+
+    }//end testIsObjectPublishedFuturePublicatiedatum()
+
+
+    /**
+     * Test isObjectPublished returns true when depublicatiedatum is still in the future.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function testIsObjectPublishedWithFutureDepublicatiedatum(): void
+    {
+        $future     = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
+        $objectData = [
+            'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
+            'depublicatiedatum' => $future,
         ];
 
         $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
         $this->assertTrue($result);
 
-    }//end testIsObjectPublishedRepublished()
+    }//end testIsObjectPublishedWithFutureDepublicatiedatum()
 
 
     /**
-     * Test isObjectPublished returns false when depublished is after published.
+     * Test isObjectPublished returns false when the depublicatiedatum has passed.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
-    public function testIsObjectPublishedDepublishedAfterPublished(): void
+    public function testIsObjectPublishedDepublicatiedatumPassed(): void
     {
         $objectData = [
-            '@self' => [
-                'published'   => '2024-01-15T10:00:00+00:00',
-                'depublished' => '2024-06-01T10:00:00+00:00',
-            ],
+            'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
+            'depublicatiedatum' => '2024-06-01T10:00:00+00:00',
         ];
 
         $result = $this->invokePrivateMethod($this->eventService, 'isObjectPublished', [$objectData]);
         $this->assertFalse($result);
 
-    }//end testIsObjectPublishedDepublishedAfterPublished()
+    }//end testIsObjectPublishedDepublicatiedatumPassed()
 
 
     // ===== shouldAutoPublishObject tests =====
@@ -512,34 +531,40 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
     // ===== publishObject tests =====
 
     /**
-     * Test publishObject succeeds with uuid present.
+     * Test publishObject sets publicatiedatum and persists via the OR save path.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     public function testPublishObjectSuccess(): void
     {
         $objectData = [
             '@self' => [
-                'uuid' => 'abc-123',
-                'id'   => 1,
+                'uuid'     => 'abc-123',
+                'id'       => 1,
+                'register' => '5',
+                'schema'   => '9',
             ],
+            'title' => 'Some publication',
         ];
 
         $this->appManagerMock->method('getInstalledApps')
             ->willReturn(['openregister']);
 
-        // Create mock that has both publish and getPublished methods.
-        $publishedObjectMock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getPublished'])
-            ->getMock();
-        $publishedDateTime = new \DateTime('2024-01-15T10:00:00+00:00');
-        $publishedObjectMock->method('getPublished')
-            ->willReturn($publishedDateTime);
-
+        // Capture what was persisted: publish() is gone; saveObject() carries the
+        // publicatiedatum (now) and a cleared depublicatiedatum, dropping @self.
+        $captured          = null;
         $mockObjectService = $this->getMockBuilder(ObjectService::class)
             ->disableOriginalConstructor()
-            ->addMethods(['publish'])
+            ->onlyMethods(['saveObject'])
             ->getMock();
-        $mockObjectService->method('publish')
-            ->willReturn($publishedObjectMock);
+        $mockObjectService->method('saveObject')
+            ->willReturnCallback(
+                function (...$args) use (&$captured) {
+                    // saveObject(object:, register:, schema:, uuid:) — named args.
+                    $captured = func_get_args();
+                    return new ObjectEntity();
+                }
+            );
 
         $this->containerMock->method('get')
             ->willReturn($mockObjectService);
@@ -548,37 +573,41 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals('abc-123', $result['objectId']);
-        $this->assertEquals('2024-01-15T10:00:00+00:00', $result['publishedAt']);
+        $this->assertNotEmpty($result['publishedAt']);
+        // The persisted payload sets publicatiedatum and clears depublicatiedatum,
+        // and never carries the read-only @self envelope.
+        $this->assertIsArray($captured);
+        $this->assertArrayHasKey('publicatiedatum', $captured[0]);
+        $this->assertNull($captured[0]['depublicatiedatum']);
+        $this->assertArrayNotHasKey('@self', $captured[0]);
 
     }//end testPublishObjectSuccess()
 
 
     /**
      * Test publishObject uses id when uuid is absent.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     public function testPublishObjectUsesIdFallback(): void
     {
         $objectData = [
             '@self' => [
-                'id' => 42,
+                'id'       => 42,
+                'register' => '5',
+                'schema'   => '9',
             ],
         ];
 
         $this->appManagerMock->method('getInstalledApps')
             ->willReturn(['openregister']);
 
-        $publishedObjectMock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getPublished'])
-            ->getMock();
-        $publishedObjectMock->method('getPublished')
-            ->willReturn(null);
-
         $mockObjectService = $this->getMockBuilder(ObjectService::class)
             ->disableOriginalConstructor()
-            ->addMethods(['publish'])
+            ->onlyMethods(['saveObject'])
             ->getMock();
-        $mockObjectService->method('publish')
-            ->willReturn($publishedObjectMock);
+        $mockObjectService->method('saveObject')
+            ->willReturn(new ObjectEntity());
 
         $this->containerMock->method('get')
             ->willReturn($mockObjectService);
@@ -587,19 +616,23 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals(42, $result['objectId']);
-        $this->assertNull($result['publishedAt']);
+        $this->assertNotEmpty($result['publishedAt']);
 
     }//end testPublishObjectUsesIdFallback()
 
 
     /**
-     * Test publishObject returns failure on exception.
+     * Test publishObject returns failure when OpenRegister is unavailable.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
     public function testPublishObjectFailure(): void
     {
         $objectData = [
             '@self' => [
-                'id' => 1,
+                'id'       => 1,
+                'register' => '5',
+                'schema'   => '9',
             ],
         ];
 
@@ -612,6 +645,39 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertNotEmpty($result['error']);
 
     }//end testPublishObjectFailure()
+
+
+    /**
+     * Test publishObject fails fast when register or schema is missing.
+     *
+     * @spec openspec/specs/auto-publishing/spec.md#APB-006
+     */
+    public function testPublishObjectMissingRegisterSchema(): void
+    {
+        $objectData = [
+            '@self' => [
+                'id' => 7,
+            ],
+        ];
+
+        $this->appManagerMock->method('getInstalledApps')
+            ->willReturn(['openregister']);
+
+        $mockObjectService = $this->getMockBuilder(ObjectService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['saveObject'])
+            ->getMock();
+        $mockObjectService->expects($this->never())->method('saveObject');
+
+        $this->containerMock->method('get')
+            ->willReturn($mockObjectService);
+
+        $result = $this->invokePrivateMethod($this->eventService, 'publishObject', [$objectData]);
+
+        $this->assertFalse($result['success']);
+        $this->assertNotEmpty($result['error']);
+
+    }//end testPublishObjectMissingRegisterSchema()
 
 
     // ===== publishObjectAttachments tests =====
@@ -924,21 +990,16 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
             }
         };
 
-        $publishedObjectMock = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['getPublished'])
-            ->getMock();
-        $publishedObjectMock->method('getPublished')
-            ->willReturn(new \DateTime('2024-01-15'));
-
+        // Publishing now persists via saveObject (the removed publish() predicate
+        // is gone); it sets the object's publicatiedatum under the RBAC model.
         $mockObjectService = $this->getMockBuilder(ObjectService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['searchObjects'])
-            ->addMethods(['publish'])
+            ->onlyMethods(['searchObjects', 'saveObject'])
             ->getMock();
         $mockObjectService->method('searchObjects')
             ->willReturn([$catalogMock]);
-        $mockObjectService->method('publish')
-            ->willReturn($publishedObjectMock);
+        $mockObjectService->method('saveObject')
+            ->willReturn(new ObjectEntity());
 
         $this->containerMock->method('get')
             ->willReturn($mockObjectService);
@@ -997,12 +1058,11 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $mockObjectService = $this->getMockBuilder(ObjectService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['searchObjects'])
-            ->addMethods(['publish'])
+            ->onlyMethods(['searchObjects', 'saveObject'])
             ->getMock();
         $mockObjectService->method('searchObjects')
             ->willReturn([$catalogMock]);
-        $mockObjectService->method('publish')
+        $mockObjectService->method('saveObject')
             ->willThrowException(new \Exception('Publish failed'));
 
         $this->containerMock->method('get')
@@ -1082,10 +1142,11 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $objects = [
             [
-                '@self' => [
-                    'id'        => 1,
-                    'uuid'      => 'uuid-1',
-                    'published' => '2024-01-15T10:00:00+00:00',
+                // Published under the RBAC model (past publicatiedatum).
+                'publicatiedatum' => '2024-01-15T10:00:00+00:00',
+                '@self'           => [
+                    'id'   => 1,
+                    'uuid' => 'uuid-1',
                 ],
             ],
         ];
@@ -1115,9 +1176,11 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $objects = [
             [
-                '@self' => [
-                    'id'        => 1,
-                    'published' => '2024-01-15T10:00:00+00:00',
+                // Published under the RBAC model: past publicatiedatum -> the
+                // attachment branch runs and fails because OR is not installed.
+                'publicatiedatum' => '2024-01-15T10:00:00+00:00',
+                '@self'           => [
+                    'id' => 1,
                 ],
             ],
         ];
@@ -1264,10 +1327,11 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $objects = [
             [
-                '@self' => [
-                    'id'        => 1,
-                    'uuid'      => 'uuid-1',
-                    'published' => '2024-01-15T10:00:00+00:00',
+                // Published under the RBAC model (past publicatiedatum).
+                'publicatiedatum' => '2024-01-15T10:00:00+00:00',
+                '@self'           => [
+                    'id'   => 1,
+                    'uuid' => 'uuid-1',
                 ],
             ],
         ];
@@ -1321,9 +1385,11 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase
 
         $objects = [
             [
-                '@self' => [
-                    'id'        => 1,
-                    'published' => '2024-01-15T10:00:00+00:00',
+                // Published under the RBAC model: past publicatiedatum -> the
+                // attachment branch runs and fails because OR is not installed.
+                'publicatiedatum' => '2024-01-15T10:00:00+00:00',
+                '@self'           => [
+                    'id' => 1,
                 ],
             ],
         ];

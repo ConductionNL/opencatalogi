@@ -20,9 +20,9 @@ with the real request.
 ## Requirements
 
 ### Requirement: Answer CORS preflight requests on public API controllers (COR-001)
-Every public OpenCatalogi API controller — `CatalogiController`, `DirectoryController`,
+Every public OpenCatalogi API controller SHALL answer CORS preflight requests. Each public controller — `CatalogiController`, `DirectoryController`,
 `GlossaryController`, `MenusController`, `PagesController`, `PublicationsController` and
-`ThemesController` — SHALL expose a `preflightedCors()` action, declared
+`ThemesController` — MUST expose a `preflightedCors()` action, declared
 `@NoAdminRequired` / `@NoCSRFRequired` / `@PublicPage`, that responds to `OPTIONS`
 requests with CORS headers so that cross-origin browser clients may proceed with the
 actual request. The response echoes the request `Origin` header (falling back to `*` when

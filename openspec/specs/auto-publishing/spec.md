@@ -18,6 +18,8 @@ audit_ref: .claude/audit-2026-05-03/04-hardcoded.md
 
 ## Purpose
 
+@e2e exclude retrofit spec — auto-publishing is event-driven backend behaviour (OR ObjectCreated/Updated listeners, catalog-membership evaluation, share-link side effects, lifecycle state-machine consumption) with no browser-UI surface; covered by PHPUnit and Newman API tests.
+
 The auto-publishing system automatically publishes OpenRegister objects and
 their file attachments when they are created or updated, based on configurable
 admin options. It listens to OR's `ObjectCreatedEvent` and
@@ -35,9 +37,13 @@ After Phase 8:
   are declared in the publication schema via `x-openregister-lifecycle`
   and executed by OR. opencatalogi is NOT responsible for computing allowed
   transitions or enforcing guards.
-- **Auto-publish side effect** (setting `@self.published` when an object
-  matches a catalog) remains in-app because it is opencatalogi-specific
-  policy with no OR leaf equivalent.
+- **Auto-publish side effect** (setting the object's own `publicatiedatum`
+  field when an object matches a catalog) remains in-app because it is
+  opencatalogi-specific policy with no OR leaf equivalent. The removed
+  object-level `@self.published` / `@self.depublished` predicate is no longer
+  available; visibility is governed by OR's RBAC rule
+  `{group:public, match:{publicatiedatum:{$lte:$now}}}` on the publication
+  schema (see APB-006).
 
 ## ADDED Requirements
 
@@ -123,6 +129,11 @@ leaf (APB-ACT-001). Debug `OPENCATALOGI_EVENT_*` logging is removed.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: object creation triggers auto-publishing
+- GIVEN an `ObjectCreatedEvent` is dispatched by OR
+- WHEN the listener handles it
+- THEN the system MUST run the catalog-membership and WOO publishing policy side effect
+
 ### Requirement: Listen to `ObjectUpdatedEvent` and trigger auto-publishing logic (APB-002)
 
 The system MUST listen to OR's `ObjectUpdatedEvent` and trigger auto-publishing
@@ -130,69 +141,167 @@ logic. Scope is identical to APB-001. Debug logging removed.
 
 **Priority:** Must **Status:** Implemented
 
+#### Scenario: object update triggers auto-publishing
+- GIVEN an `ObjectUpdatedEvent` is dispatched by OR
+- WHEN the listener handles it
+- THEN the system MUST run the same catalog-membership and WOO publishing policy side effect as on create
+
 ### Requirement: Auto-publish newly created objects when `auto_publish_objects` is enabled (APB-003)
+The system MUST auto-publish newly created objects when `auto_publish_objects` is enabled.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: new object is auto-published
+- GIVEN `auto_publish_objects` is `"true"`
+- WHEN a new object matching a configured catalog is created
+- THEN the system MUST set the object's own `publicatiedatum` field to "now" (and clear any `depublicatiedatum`) and persist it via the normal OpenRegister save path, so OR's public RBAC rule makes the object visible
 
 ### Requirement: Auto-publish file attachments when `auto_publish_attachments` is enabled (APB-004)
 
-Share links are created via the OR shares leaf or `OCP\Share\IShareManager`
-per `file-management/spec.md` FIL-OR-002. The auto-publishing system MUST NOT
-call a bespoke `FileService::createShareLink()`.
+The system MUST auto-publish file attachments when `auto_publish_attachments`
+is enabled. Share links are created via the OR shares leaf or
+`OCP\Share\IShareManager` per `file-management/spec.md` FIL-OR-002. The
+auto-publishing system MUST NOT call a bespoke `FileService::createShareLink()`.
 
 **Priority:** Must **Status:** Implemented (share path updated in Phase 3)
 
+#### Scenario: attachments get public share links
+- GIVEN `auto_publish_attachments` is `"true"` and an object is published
+- WHEN its attachments are processed
+- THEN the system MUST create public share links via the OR shares leaf or `IShareManager`, not a bespoke `FileService::createShareLink()`
+
 ### Requirement: Only auto-publish objects whose register/schema match a configured catalog (APB-005)
+The system MUST only auto-publish objects whose register/schema match a configured catalog.
 
 **Priority:** Must **Status:** Implemented
 
-### Requirement: Determine publication status from `@self.published` and `@self.depublished` timestamps (APB-006)
+#### Scenario: only catalog-matching objects are published
+- GIVEN an object whose register/schema does not match any configured catalog
+- WHEN the auto-publish listener evaluates it
+- THEN the system MUST NOT publish it
 
-`@self.published` and `@self.depublished` are set by OR's lifecycle
-declarations (APB-SM-001); opencatalogi reads them to determine whether an
-object is currently published.
+### Requirement: Determine publication status from `publicatiedatum` and `depublicatiedatum` (APB-006)
+
+The system MUST determine publication status from the object's own
+`publicatiedatum` and `depublicatiedatum` date-time fields under the live
+OpenRegister RBAC model. The removed object-level `@self.published` /
+`@self.depublished` predicate (dropped from OR core) MUST NOT be consulted —
+reading it always yields null. An object is currently published when its
+`publicatiedatum` is set and is at or before "now", and either carries no
+`depublicatiedatum` or one that is still in the future. This is the same rule
+OR's public RBAC predicate (`{group:public, match:{publicatiedatum:{$lte:$now}}}`)
+and the frontend `publicationStatus` helpers apply.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: published status derived from publicatiedatum
+- GIVEN an object whose `publicatiedatum` is at or before "now" and whose `depublicatiedatum` is empty or in the future
+- WHEN its publication status is evaluated
+- THEN the system MUST treat the object as currently published
+
+#### Scenario: future publicatiedatum is not yet published
+- GIVEN an object whose `publicatiedatum` is in the future
+- WHEN its publication status is evaluated
+- THEN the system MUST treat the object as not yet published (concept)
+
+#### Scenario: reached depublicatiedatum hides the object
+- GIVEN a published object whose `depublicatiedatum` is at or before "now"
+- WHEN its publication status is evaluated
+- THEN the system MUST treat the object as no longer published (depublished)
 
 ### Requirement: Skip event processing when both auto-publish options are disabled (APB-007)
+The system MUST skip event processing when both auto-publish options are disabled.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: no work when both options are off
+- GIVEN both `auto_publish_objects` and `auto_publish_attachments` are `"false"`
+- WHEN an OR object event arrives
+- THEN the system MUST skip processing and do no publishing work
 
 ### Requirement: On update events, only process attachment publishing for already-published objects (APB-008)
+The system MUST, on update events, only process attachment publishing for already-published objects.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: update only publishes attachments for published objects
+- GIVEN an update event for an object that is not yet published
+- WHEN attachment publishing is considered
+- THEN the system MUST NOT publish attachments until the object itself is published
 
 ### Requirement: On update events, detect publication status transitions (APB-009)
 
+The system MUST, on update events, detect publication status transitions.
 Status transitions are executed by OR per the `x-openregister-lifecycle`
 declaration (APB-SM-001). This listener detects the resulting state change
 in the event payload but does NOT compute or validate the transition.
 
 **Priority:** Should **Status:** Implemented
 
+#### Scenario: status transition detected from event payload
+- GIVEN an update event whose payload reflects a state change executed by OR
+- WHEN the listener processes it
+- THEN the system MUST detect the resulting publication status transition without computing or validating it itself
+
 ### Requirement: Use FileMapper for direct database file access to avoid infinite loop (APB-010)
+The system MUST use FileMapper for direct database file access to avoid an infinite loop.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: direct file access avoids re-triggering events
+- GIVEN attachment publishing needs file records
+- WHEN the system reads them
+- THEN it MUST use FileMapper for direct database access so it does not re-trigger OR object events
 
 ### Requirement: Skip already-published files (those with existing share tokens) (APB-011)
+The system MUST skip already-published files (those with existing share tokens).
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: already-shared files are skipped
+- GIVEN a file that already has a share token
+- WHEN attachment publishing runs
+- THEN the system MUST skip creating a new share link for it
 
 ### Requirement: Return structured results with processed/published/error counts (APB-012)
+The system MUST return structured results with processed/published/error counts.
 
 **Priority:** Should **Status:** Implemented
+
+#### Scenario: processing returns structured counts
+- GIVEN an auto-publish run over a batch
+- WHEN it completes
+- THEN it MUST return a structured result containing processed, published, and error counts
 
 ### Requirement: Log all processing results for monitoring (APB-013)
+The system MUST log all processing results for monitoring.
 
 **Priority:** Should **Status:** Implemented
 
+#### Scenario: results are logged
+- GIVEN an auto-publish run completes
+- WHEN results are available
+- THEN the system MUST log the processing results for monitoring
+
 ### Requirement: Gracefully handle exceptions without breaking the originating OR operation (APB-014)
+The system MUST gracefully handle exceptions without breaking the originating OR operation.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: exception does not break the OR operation
+- GIVEN auto-publishing raises an exception while handling an event
+- WHEN the exception occurs
+- THEN the system MUST catch it so the originating OR create/update operation still succeeds
 
 ### Requirement: Event listeners registered in Application.php bootstrap (APB-015)
+The system MUST register the event listeners in the Application.php bootstrap.
 
 **Priority:** Must **Status:** Implemented
+
+#### Scenario: listeners wired at bootstrap
+- GIVEN the app is bootstrapped via Application.php
+- WHEN registration runs
+- THEN the `ObjectCreatedEvent` and `ObjectUpdatedEvent` listeners MUST be registered
 
 ## REMOVED Requirements
 
@@ -211,7 +320,7 @@ in the event payload but does NOT compute or validate the transition.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `auto_publish_objects` | string (bool) | `"false"` | When `"true"`, auto-set `@self.published` on objects matching a catalog |
+| `auto_publish_objects` | string (bool) | `"false"` | When `"true"`, auto-set the object's own `publicatiedatum` (RBAC model, APB-006) on objects matching a catalog |
 | `auto_publish_attachments` | string (bool) | `"false"` | When `"true"`, auto-create public share links for attachments on published objects |
 
 ## References

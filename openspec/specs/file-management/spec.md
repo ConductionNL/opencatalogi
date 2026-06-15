@@ -20,6 +20,8 @@ audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 
 ## Purpose
 
+@e2e exclude OR-abstraction-consumer spec — file storage/sharing delegated to OpenRegister's File Attachments and `IShareManager`, verified by PHPUnit/vitest/Newman; the upload UI flow is separately real-UI covered.
+
 File management in opencatalogi is the set of operations by which publications
 acquire, store, share, and bundle file attachments. After Phase 3 lands,
 opencatalogi is a **thin consumer** of OR's File Attachments capability and
@@ -29,7 +31,7 @@ rendering of publication metadata. Those operations are either delegated to OR
 or to the `download-service` spec (which is itself a streaming wrapper;
 see [download-service/spec.md](../download-service/spec.md)).
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: file attachment goes through the OR file service (FIL-OR-001)
 
@@ -67,8 +69,7 @@ contain bespoke Nextcloud file storage, share creation, or URL assembly logic.
 
 ### Requirement: share creation goes through `OCP\Share\IShareManager` (FIL-OR-002)
 
-When opencatalogi needs to create a public share link on an attachment,
-it MUST call `OCP\Share\IShareManager::createShare()`. The legacy
+When opencatalogi needs to create a public share link on an attachment, it MUST call `OCP\Share\IShareManager::createShare()`. The legacy
 bespoke `FileService::createShareLink()` and `FileService::createShare()`
 methods are removed (see REMOVED section). opencatalogi MUST NOT hold a
 parallel share-creation implementation.
@@ -120,17 +121,36 @@ The register and schema identifiers MUST be read from the object store's
 After deletion it MUST refresh the publication's attachments and close the
 dialog.
 
+#### Scenario: attachment deletion targets the OR endpoint
+
+- **GIVEN** the delete-attachment dialog is confirmed for an attachment,
+- **WHEN** `DeleteAttachmentDialog` issues the request,
+- **THEN** it MUST send `DELETE` to the OR `/api/objects/{register}/{schema}/{publicationId}/files/{attachmentId}` endpoint,
+- **AND** it MUST refresh the publication's attachments and close the dialog.
+
 ### Requirement: attachment metadata editing goes through the object store (FIL-OR-005)
 
 `EditAttachmentModal` MUST persist updates via
 `objectStore.updateObject('attachment', id, attachment)`. It MUST NOT call
 a bespoke `FileService` update method.
 
+#### Scenario: attachment metadata is saved via the object store
+
+- **GIVEN** the user edits attachment metadata in `EditAttachmentModal`,
+- **WHEN** the edit is saved,
+- **THEN** the update MUST be persisted via `objectStore.updateObject('attachment', id, attachment)`,
+- **AND** no bespoke `FileService` update method is called.
+
 ### Requirement: file-selection composable is preserved (FIL-OR-006)
 
-The `useFileSelection` composable (drop-zone state, file list, tag setters,
-duplicate rejection, reset/open helpers) is a UI-only abstraction that does
-NOT conflict with OR's file service. It remains as-is.
+The `useFileSelection` composable (drop-zone state, file list, tag setters, duplicate rejection, reset/open helpers) is a UI-only abstraction that MUST be preserved as-is, since it does NOT conflict with OR's file service.
+
+#### Scenario: file-selection composable remains UI-only
+
+- **GIVEN** the upload UI uses the `useFileSelection` composable,
+- **WHEN** files are selected, deduplicated, tagged, or the selection is reset,
+- **THEN** the composable MUST manage only frontend selection state,
+- **AND** file content MUST still be sent to the OR file endpoint, not stored by the composable.
 
 ## REMOVED Requirements
 
