@@ -656,7 +656,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 </template>
 
 <script>
-import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcNoteCard, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTab, BTabs, BPagination } from 'bootstrap-vue'
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
@@ -694,7 +694,6 @@ export default {
 		NcButton,
 		NcListItem,
 		NcSelectTags,
-		NcNoteCard,
 		NcActionLink,
 		NcCheckboxRadioSwitch,
 		BTab,
