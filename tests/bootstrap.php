@@ -50,3 +50,14 @@ if (!defined('OC_CONSOLE')) {
 if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
     require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
 }
+
+// AppHost observability stubs — loaded when the openregister runtime is absent.
+// OpenCatalogiMetricsProvider implements IMetricsProvider and returns MetricSample
+// objects in production; these stubs keep the provider loadable in bare CI.
+if (class_exists('OCA\\OpenRegister\\AppHost\\Observability\\MetricSample') === false) {
+    require_once __DIR__ . '/Stubs/AppHost/MetricSample.php';
+}
+
+if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) {
+    require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
+}
