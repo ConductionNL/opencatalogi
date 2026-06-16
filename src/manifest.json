@@ -4,6 +4,47 @@
 	"dependencies": [
 		"openregister"
 	],
+	"observability": {
+		"_note": "ADR-040 declarative observability. OpenCatalogi adopts OpenRegister's AppHost engine: the /api/health and /api/metrics routes are aliased to AppHost\\Controller\\GenericHealth#index / GenericMetrics#index in appinfo/routes.php, and the engine reads this block at request time. The hand-written HealthController + MetricsController were deleted. Parity vs the pre-adoption contract: the two health checks (database critical, filesystem degraded) and search_requests_total map 1:1 to declarative descriptors; the JSON-field-grouped domain metrics (publications/catalogs/listings by status+catalog, directory entries, and the usageCounter view/download sums by catalog) are reproduced byte-for-byte by OpenCatalogiMetricsProvider via the {kind:provider} escape hatch, which runs the exact same OpenRegister-backed queries the deleted controller ran. Documented intentional improvements (matching OpenRegister's own adoption): the health JSON now carries an `app` field; the implicit opencatalogi_up gauge is engine-owned (always 1 once the request is served) rather than mirroring the DB check.",
+		"health": {
+			"statusCodePolicy": "adr006",
+			"checks": [
+				{
+					"id": "database",
+					"type": "database",
+					"severity": "critical"
+				},
+				{
+					"id": "filesystem",
+					"type": "filesystem",
+					"severity": "degraded"
+				}
+			]
+		},
+		"metrics": [
+			{
+				"name": "search_requests_total",
+				"type": "counter",
+				"help": "Total search requests",
+				"source": {
+					"kind": "tableCount",
+					"table": "openregister_metrics",
+					"filter": {
+						"metric_type": {
+							"like": "search_%"
+						}
+					}
+				}
+			},
+			{
+				"name": "domain",
+				"help": "OpenCatalogi domain metrics (publications, catalogs, listings, directory entries, usage view/download totals) reproduced via the provider escape hatch with the same OpenRegister-backed queries as the pre-adoption MetricsController.",
+				"source": {
+					"kind": "provider"
+				}
+			}
+		]
+	},
 	"menu": [
 		{
 			"id": "Dashboard",

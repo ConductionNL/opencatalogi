@@ -111,14 +111,25 @@ return [
 		['name' => 'listings#show', 'url' => '/api/listings/{id}', 'verb' => 'GET'],
 		['name' => 'listings#update', 'url' => '/api/listings/{id}', 'verb' => 'PUT'],
 		['name' => 'listings#destroy', 'url' => '/api/listings/{id}', 'verb' => 'DELETE'],
-		// Prometheus metrics endpoint (specific route - must be before wildcard catalog routes).
-		['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+		// Prometheus metrics endpoint — served by OpenRegister's AppHost engine
+		// (ADR-040 / ADR-006). The canonical /api/metrics URL is aliased at the
+		// GenericMetricsController, which reads the `observability.metrics` block
+		// of src/manifest.json (and this app's IMetricsProvider escape hatch).
+		// URL + Prometheus output contract are unchanged from the deleted
+		// MetricsController; the engine owns the admin-only auth posture.
+		// (Specific route - must be before wildcard catalog routes.)
+		['name' => 'AppHost\Controller\GenericMetrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
 		// Usage analytics (authenticated; specific routes - MUST be before wildcard catalog routes).
 		['name' => 'stats#publication', 'url' => '/api/publications/{id}/stats', 'verb' => 'GET'],
 		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
-		// Health check endpoint (specific route - must be before wildcard catalog routes).
-		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
+		// Health check endpoint — served by the AppHost engine from the
+		// `observability.health` block (ADR-040 / ADR-006). The engine adds
+		// #[PublicPage] (anonymous health — an intentional improvement over the
+		// bespoke login-gated controller) and owns the {status, app, version,
+		// checks} contract. URL unchanged. (Specific route - must be before
+		// wildcard catalog routes.)
+		['name' => 'AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		['name' => 'search#show', 'url' => '/api/search/{id}', 'verb' => 'GET'],
