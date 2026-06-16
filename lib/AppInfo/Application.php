@@ -38,6 +38,10 @@ use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
+use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
+use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
+use OCA\OpenRegister\AppHost\IMetricsProvider;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -132,6 +136,30 @@ class Application extends App implements IBootstrap
         $context->registerServiceAlias(
             'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::opencatalogi',
             OpenCatalogiToolProvider::class
+        );
+
+        // AppHost observability adoption (ADR-040). The /api/health and
+        // /api/metrics routes resolve to leaf-namespaced controller class names
+        // (OCA\OpenCatalogi\AppHost\Controller\Generic{Health,Metrics}Controller)
+        // that do not physically exist in this app; alias them to OpenRegister's
+        // shared AppHost generics so the engine serves both endpoints from the
+        // `observability` block of src/manifest.json. URL + contract unchanged.
+        $context->registerServiceAlias(
+            'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericHealthController',
+            GenericHealthController::class
+        );
+        $context->registerServiceAlias(
+            'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericMetricsController',
+            GenericMetricsController::class
+        );
+
+        // Register the domain-metrics escape hatch under the ADR-035 alias the
+        // engine's ProviderMetricSource enumerates. The {kind:provider} metric
+        // descriptor in the manifest merges this provider's samples into the
+        // /api/metrics response, preserving the pre-adoption contract.
+        $context->registerServiceAlias(
+            IMetricsProvider::class.'::opencatalogi',
+            OpenCatalogiMetricsProvider::class
         );
 
     }//end register()

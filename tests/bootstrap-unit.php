@@ -21,6 +21,13 @@ define('OC_CONSOLE', 1);
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+// Doctrine\DBAL\ParameterType stub — OCP\DB\QueryBuilder\IQueryBuilder references
+// it at class-load, but Doctrine\DBAL is a Nextcloud server dependency absent from
+// this standalone vendor tree. Load the stub before any QueryBuilder mock resolves.
+if (class_exists('Doctrine\\DBAL\\ParameterType') === false) {
+    require_once __DIR__.'/Stubs/Doctrine/ParameterType.php';
+}
+
 // Register OCP (Nextcloud public API from vendor/nextcloud/ocp).
 spl_autoload_register(
         static function (string $class): void {
@@ -225,4 +232,15 @@ if (OC::$server instanceof OC_Server_Stub) {
 // class loadable in bare CI containers until the real interface ships.
 if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
     require_once __DIR__.'/Stubs/Mcp/IMcpToolProvider.php';
+}
+
+// AppHost observability stubs — loaded when the openregister runtime is absent.
+// OpenCatalogiMetricsProvider implements IMetricsProvider and returns MetricSample
+// objects in production; these stubs keep the provider loadable in bare CI.
+if (class_exists('OCA\\OpenRegister\\AppHost\\Observability\\MetricSample') === false) {
+    require_once __DIR__.'/Stubs/AppHost/MetricSample.php';
+}
+
+if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) {
+    require_once __DIR__.'/Stubs/AppHost/IMetricsProvider.php';
 }
