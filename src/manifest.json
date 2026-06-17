@@ -38,6 +38,7 @@
 			},
 			{
 				"name": "domain",
+				"type": "gauge",
 				"help": "OpenCatalogi domain metrics (publications, catalogs, listings, directory entries, usage view/download totals) reproduced via the provider escape hatch with the same OpenRegister-backed queries as the pre-adoption MetricsController.",
 				"source": {
 					"kind": "provider"

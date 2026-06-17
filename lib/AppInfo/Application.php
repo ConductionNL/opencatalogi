@@ -183,8 +183,16 @@ class Application extends App implements IBootstrap
         // regex that the manifest-driven GenericAdminSettings does not
         // reproduce — required for delegated-admin gating), and the federation/
         // DCAT/catalog domain services + listeners.
+        // The /api/preferences/{key} and / + /{path} routes resolve to
+        // leaf-namespaced AppHost controller class names
+        // (OCA\OpenCatalogi\AppHost\Controller\Generic{Dashboard,Preferences}Controller)
+        // that do not physically exist in this app — same pattern as the
+        // Health/Metrics adoption above. Register them as services that
+        // construct the OpenRegister generics with this app's id injected as
+        // $appName, so templates/index.php and the `pref_` user-value namespace
+        // are scoped to opencatalogi, never OpenRegister.
         $context->registerService(
-            'OCA\\OpenCatalogi\\Controller\\DashboardController',
+            'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericDashboardController',
             static function ($c) {
                 return new GenericDashboardController(
                     appName: self::APP_ID,
@@ -193,7 +201,7 @@ class Application extends App implements IBootstrap
             }
         );
         $context->registerService(
-            'OCA\\OpenCatalogi\\Controller\\PreferencesController',
+            'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericPreferencesController',
             static function ($c) {
                 return new GenericPreferencesController(
                     appName: self::APP_ID,
