@@ -5,8 +5,10 @@ return [
 		/**
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
 		 */
-		// Dashboard (note: dashboard#index was removed — DashboardController has no index method; page() serves /)
-		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+		// Dashboard SPA page — served by OpenRegister's AppHost GenericDashboardController
+		// (aliased at AppHost\Controller\GenericDashboardController in Application::register,
+		// mirroring the Health/Metrics adoption precedent). URL + auth posture unchanged.
+		['name' => 'AppHost\Controller\GenericDashboard#page', 'url' => '/', 'verb' => 'GET'],
 
 		// Catalogi
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
@@ -22,9 +24,10 @@ return [
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
-		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
-		['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
-		['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
+		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog) —
+		// served by OpenRegister's AppHost GenericPreferencesController (aliased in Application::register).
+		['name' => 'AppHost\Controller\GenericPreferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+		['name' => 'AppHost\Controller\GenericPreferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
@@ -164,7 +167,9 @@ return [
 		['name' => 'ui#pages', 'url' => '/pages', 'verb' => 'GET'],
 		['name' => 'ui#menus', 'url' => '/menus', 'verb' => 'GET'],
 		['name' => 'ui#directory', 'url' => '/directory', 'verb' => 'GET'],
-		// SPA catch-all — serves the Vue app for any frontend route (history mode routing)
-		['name' => 'dashboard#page', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
+		// SPA catch-all — serves the Vue app for any frontend route (history mode routing).
+		// GenericDashboard#catchAll delegates to page() on the AppHost GenericDashboardController
+		// (aliased in Application::register); a distinct name keeps it from shadowing the / index route.
+		['name' => 'AppHost\Controller\GenericDashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
 ];
