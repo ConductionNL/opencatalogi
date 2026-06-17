@@ -5,7 +5,8 @@ return [
 		/**
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
 		 */
-		// Dashboard (note: dashboard#index was removed — DashboardController has no index method; page() serves /)
+		// Dashboard SPA page — served by OpenRegister's AppHost GenericDashboardController
+		// (aliased at OCA\OpenCatalogi\Controller\DashboardController in Application::register).
 		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
 
 		// Catalogi
@@ -22,7 +23,8 @@ return [
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
-		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
+		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog) —
+		// served by OpenRegister's AppHost GenericPreferencesController (aliased in Application::register).
 		['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
 		['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
@@ -164,7 +166,9 @@ return [
 		['name' => 'ui#pages', 'url' => '/pages', 'verb' => 'GET'],
 		['name' => 'ui#menus', 'url' => '/menus', 'verb' => 'GET'],
 		['name' => 'ui#directory', 'url' => '/directory', 'verb' => 'GET'],
-		// SPA catch-all — serves the Vue app for any frontend route (history mode routing)
-		['name' => 'dashboard#page', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
+		// SPA catch-all — serves the Vue app for any frontend route (history mode routing).
+		// dashboard#catchAll delegates to dashboard#page on the AppHost GenericDashboardController
+		// (aliased in Application::register); a distinct name keeps it from shadowing the / index route.
+		['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
 ];

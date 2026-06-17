@@ -39,8 +39,10 @@ use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
+use OCA\OpenRegister\AppHost\Controller\GenericPreferencesController;
 use OCA\OpenRegister\AppHost\IMetricsProvider;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -160,6 +162,46 @@ class Application extends App implements IBootstrap
         $context->registerServiceAlias(
             IMetricsProvider::class.'::opencatalogi',
             OpenCatalogiMetricsProvider::class
+        );
+
+        // AppHost boilerplate adoption (ADR-040). The Dashboard (SPA page +
+        // catch-all) and per-user Preferences controllers were byte-for-byte
+        // copies of OpenRegister's shared AppHost generics, so bind this app's
+        // conventional controller class names to the engine generics with the
+        // leaf app id injected as $appName. URLs, route names and JSON
+        // contracts are unchanged; the engine owns the (identical) auth
+        // posture so the leaf can never drift it. The bespoke
+        // DashboardController + PreferencesController classes were deleted.
+        //
+        // NOT adopted (kept bespoke — domain-entangled): SettingsController
+        // (carries getPublishingOptions/updatePublishingOptions/getVersionInfo/
+        // manualImport + a GET load() that runs the register.d fragment-merge
+        // via the bespoke SettingsService — the generic SettingsController only
+        // does index/create/load with force-reimport semantics and does not
+        // reproduce that envelope), the OpenCatalogiAdmin AdminSettings (its
+        // getAuthorizedAppConfig() declares an OpenCatalogi-specific allow-list
+        // regex that the manifest-driven GenericAdminSettings does not
+        // reproduce — required for delegated-admin gating), and the federation/
+        // DCAT/catalog domain services + listeners.
+        $context->registerService(
+            'OCA\\OpenCatalogi\\Controller\\DashboardController',
+            static function ($c) {
+                return new GenericDashboardController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest')
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\\OpenCatalogi\\Controller\\PreferencesController',
+            static function ($c) {
+                return new GenericPreferencesController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest'),
+                    config: $c->get('OCP\\IConfig'),
+                    userSession: $c->get('OCP\\IUserSession')
+                );
+            }
         );
 
     }//end register()
