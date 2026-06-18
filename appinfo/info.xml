@@ -72,7 +72,12 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 		<navigation>
 			<id>opencatalogi</id>
 			<name>Catalogi</name>
-			<route>opencatalogi.dashboard.page</route>
+			<!-- Internal route name is derived as strtolower("<app>.<controller>.<action>").
+			     The dashboard SPA page is served by the engine-namespaced AppHost route
+			     OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#page (see appinfo/routes.php),
+			     so the generated name is the verbose value below — not a typo. Keeping it in
+			     sync is what gives the app-menu icon a working href. -->
+			<route>opencatalogi.oca\opencatalogi\apphost\controller\genericdashboard.page</route>
 			<icon>app.svg</icon>
 			<type>link</type>
 		</navigation>

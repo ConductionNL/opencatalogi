@@ -143,16 +143,38 @@ class Application extends App implements IBootstrap
         // AppHost observability adoption (ADR-040). The /api/health and
         // /api/metrics routes resolve to leaf-namespaced controller class names
         // (OCA\OpenCatalogi\AppHost\Controller\Generic{Health,Metrics}Controller)
-        // that do not physically exist in this app; alias them to OpenRegister's
+        // that do not physically exist in this app; bind them to OpenRegister's
         // shared AppHost generics so the engine serves both endpoints from the
         // `observability` block of src/manifest.json. URL + contract unchanged.
-        $context->registerServiceAlias(
+        //
+        // These MUST be registerService closures (not registerServiceAlias) so
+        // this app's id is injected as the controllers' $appName — exactly like
+        // the Dashboard/Preferences registrations below. A bare alias leaves
+        // $appName to be autowired, and because the target class lives in the
+        // OCA\OpenRegister namespace the cross-container fallback resolves it to
+        // `openregister`, so /api/health + /api/metrics would report the wrong
+        // app and load OpenRegister's manifest instead of this app's.
+        $context->registerService(
             'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericHealthController',
-            GenericHealthController::class
+            static function ($c) {
+                return new GenericHealthController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest'),
+                    manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+                    executor: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\HealthCheckExecutor')
+                );
+            }
         );
-        $context->registerServiceAlias(
+        $context->registerService(
             'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericMetricsController',
-            GenericMetricsController::class
+            static function ($c) {
+                return new GenericMetricsController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest'),
+                    manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+                    engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine')
+                );
+            }
         );
 
         // Register the domain-metrics escape hatch under the ADR-035 alias the
