@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-object-table-listing Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-object-table-listing. Update Purpose after archive.
+Provides the generic object table, card, pagination, and markdown components used to list objects of any type. The table derives its columns from the active schema's properties in the configured order, supports per-row and select-all selection, offers per-object and mass actions that respect disabled state, and paginates with page and page-size controls, while the publication card renders a publication's title, truncated summary, status, date, and file count.
 
 > @e2e exclude Whole-spec reverse-engineered generic-table/card component-logic capability — every scenario asserts component internals (columns derived from schema properties in configured order, select-all toggling every row, disabled action not executed, page-change event emitted, long-summary truncation, markdown-editor content-change handling). These are deterministic prop/emit assertions verified by vitest over the table/card/pagination/markdown wrapper components; the rendered list surface itself is already real-UI covered under generic-object-modals::generic-table-lists-objects-of-any-type and the catalogs/publications list views.
 

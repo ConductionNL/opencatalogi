@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Capability: opencatalogi-store-migration
 
 ## Purpose

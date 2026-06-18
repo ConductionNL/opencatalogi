@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-catalog-management Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-catalog-management. Update Purpose after archive.
+Provides the create, edit, view, and detail surfaces for catalogs and their shared entities. A modal lets users create or edit a catalog with organization, register, and schema options and validates required input before saving, a view modal resolves a catalog's register and schema by id, and detail pages load a catalog or entity by route id to present its metadata, configuration, and widget definitions and link through to publications.
 
 > @e2e exclude Whole-spec reverse-engineered catalog modal/detail component-logic capability — every scenario asserts component internals (save blocked until required input is valid, register resolved by id in the view modal, catalog/entity loaded from the route id). These are deterministic prop/route-param assertions verified by vitest over the catalog modal and detail-page components; the user-facing catalog create/edit/detail surfaces are already real-UI covered under catalogs::create-a-new-catalog, ::edit-an-existing-catalog and ::open-a-catalog-detail-page-by-route-id.
 

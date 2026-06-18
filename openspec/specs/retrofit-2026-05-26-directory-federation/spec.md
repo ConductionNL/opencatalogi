@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-directory-federation Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-directory-federation. Update Purpose after archive.
+Provides the directory federation side bar for managing and synchronizing publication types across federated sources. Lets users create, copy, delete, and toggle the enablement of publication types, synchronize the directory and individual types with their source, and view listings through add-directory and view-directory modals with formatted dates and action labels.
 
 > @e2e exclude Whole-spec reverse-engineered directory side-bar component-logic capability — every scenario asserts component/state internals (publication-type enablement toggle updates state, directory synchronization triggered, listing displayed in a modal). The synchronization itself is a backend federation call (covered by federation Newman/PHPUnit), and the toggle/listing rendering are deterministic component-unit assertions verified by vitest; the directory surface is additionally exercised by the dashboard real-UI tests (dashboard::add-an-external-directory / ::edit-a-listing / ::delete-a-listing).
 

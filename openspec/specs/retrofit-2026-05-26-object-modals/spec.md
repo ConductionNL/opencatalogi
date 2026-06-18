@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-object-modals Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-object-modals. Update Purpose after archive.
+Provides the object view, edit, upload, merge, and migration modals for working with register objects. Renders a schema-driven form kept in two-way sync with a raw JSON view, enforces required, constant, and immutable field rules, manages file attachments with size validation and per-file publication actions, supports tags, creating objects from pasted JSON, merging objects, and migrating an object to a different register and schema via property mapping.
 
 > @e2e exclude Whole-spec reverse-engineered Vue object-modal component-logic capability — every scenario asserts component-internal behaviour (modal title/schema/property derivation from the active object, required-field validation blocking save, form↔JSON two-way sync, oversized-file rejection, per-file publish gating by state, tag add, invalid-JSON upload block, merge-needs-target, migration-needs-valid-mapping). These are deterministic component-unit assertions verified by vitest over src/modals/object/*.vue with mounted props/emit assertions — they have no distinct browsable page beyond the object view/edit modal, whose open/view flow is already real-UI covered under generic-object-modals::user-views-an-object and publications::open-the-publish-dialog.
 

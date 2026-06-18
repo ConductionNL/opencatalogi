@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-mass-object-actions Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-mass-object-actions. Update Purpose after archive.
+Provides bulk actions over a selection of objects, including mass publish, depublish, delete, lock, unlock, validate, and attachment publish/depublish. The dialogs validate publish/depublish dates against a minimum, distinguish immediate from scheduled changes, surface counts and warnings for objects already in the target state or unsupported, confirm operation counts, and present selection-list components that show each item with its details and allow removing it from the selection.
 
 > @e2e exclude Whole-spec reverse-engineered mass-action dialog component-logic capability — every scenario asserts selection-math and validation internals (past publish date flagged invalid + submit disabled, already-in-state objects counted, mass-delete count confirmation, lock/validate applied to the active selection, attachment selection initialised, selection-list item removal). These are deterministic component-unit assertions verified by vitest over the mass-action dialogs with a seeded selection prop; the underlying bulk surface is already real-UI covered under generic-object-modals::user-mass-deletes-selected-publications and ::bulk-action-with-empty-selection.
 
