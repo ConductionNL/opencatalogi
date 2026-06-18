@@ -6,9 +6,15 @@ return [
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
 		 */
 		// Dashboard SPA page — served by OpenRegister's AppHost GenericDashboardController
-		// (aliased at AppHost\Controller\GenericDashboardController in Application::register,
-		// mirroring the Health/Metrics adoption precedent). URL + auth posture unchanged.
-		['name' => 'AppHost\Controller\GenericDashboard#page', 'url' => '/', 'verb' => 'GET'],
+		// (aliased at OCA\OpenCatalogi\AppHost\Controller\GenericDashboardController in
+		// Application::register, mirroring the Health/Metrics adoption precedent). The
+		// controller portion must be the fully-qualified leaf class name minus the
+		// `Controller` suffix: RouteParser::buildControllerName() only appends `Controller`,
+		// and App::main() resolves the result through the leaf DI container, which can only
+		// reach names under the `OCA\OpenCatalogi\` namespace. A short `AppHost\Controller\…`
+		// name resolves to a string outside that namespace and fails with the misleading
+		// "App controller is not enabled". URL + auth posture unchanged.
+		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#page', 'url' => '/', 'verb' => 'GET'],
 
 		// Catalogi
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
@@ -26,8 +32,8 @@ return [
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
 		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog) —
 		// served by OpenRegister's AppHost GenericPreferencesController (aliased in Application::register).
-		['name' => 'AppHost\Controller\GenericPreferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
-		['name' => 'AppHost\Controller\GenericPreferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
+		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericPreferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericPreferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 		['name' => 'settings#getPublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'GET'],
 		['name' => 'settings#updatePublishingOptions', 'url' => '/api/settings/publishing', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
@@ -121,7 +127,7 @@ return [
 		// URL + Prometheus output contract are unchanged from the deleted
 		// MetricsController; the engine owns the admin-only auth posture.
 		// (Specific route - must be before wildcard catalog routes.)
-		['name' => 'AppHost\Controller\GenericMetrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericMetrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
 		// Usage analytics (authenticated; specific routes - MUST be before wildcard catalog routes).
 		['name' => 'stats#publication', 'url' => '/api/publications/{id}/stats', 'verb' => 'GET'],
 		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
@@ -132,7 +138,7 @@ return [
 		// bespoke login-gated controller) and owns the {status, app, version,
 		// checks} contract. URL unchanged. (Specific route - must be before
 		// wildcard catalog routes.)
-		['name' => 'AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
+		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericHealth#index', 'url' => '/api/health', 'verb' => 'GET'],
 		// Search (specific route - must be before wildcard catalog routes)
 		['name' => 'search#index', 'url' => '/api/search', 'verb' => 'GET'],
 		['name' => 'search#show', 'url' => '/api/search/{id}', 'verb' => 'GET'],
@@ -170,6 +176,6 @@ return [
 		// SPA catch-all — serves the Vue app for any frontend route (history mode routing).
 		// GenericDashboard#catchAll delegates to page() on the AppHost GenericDashboardController
 		// (aliased in Application::register); a distinct name keeps it from shadowing the / index route.
-		['name' => 'AppHost\Controller\GenericDashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
+		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
 ];
