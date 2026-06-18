@@ -1,8 +1,3 @@
-<script setup>
-import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnDetailPage
 		:title="entity?.title || entity?.name || entityLabel"
@@ -30,13 +25,13 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton type="primary" @click="editEntity">
+			<NcButton v-if="isAdmin" type="primary" @click="editEntity">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Edit') }}
 			</NcButton>
-			<NcActions>
+			<NcActions v-if="isAdmin">
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
@@ -80,9 +75,12 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
 import { CnDetailPage, CnDetailGrid, CnJsonViewer, buildHeaders } from '@conduction/nextcloud-vue'
+import { objectStore, navigationStore } from '../../store/store.js'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
@@ -144,6 +142,10 @@ export default {
 			type: Function,
 			default: () => [],
 		},
+	},
+	setup() {
+		const { isAdmin } = useIsAdmin()
+		return { isAdmin }
 	},
 	data() {
 		return {

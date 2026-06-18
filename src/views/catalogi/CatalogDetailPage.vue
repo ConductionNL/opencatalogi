@@ -1,8 +1,3 @@
-<script setup>
-import { translate as t } from '@nextcloud/l10n'
-import { objectStore, navigationStore } from '../../store/store.js'
-</script>
-
 <template>
 	<CnDetailPage
 		:title="catalog?.title || t('opencatalogi', 'Catalog')"
@@ -30,7 +25,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton type="primary" @click="editCatalog">
+			<NcButton v-if="isAdmin" type="primary" @click="editCatalog">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
@@ -82,8 +77,11 @@ import { objectStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
 import { NcButton } from '@nextcloud/vue'
 import { CnDetailPage, CnDetailGrid, CnJsonViewer } from '@conduction/nextcloud-vue'
+import { objectStore, navigationStore } from '../../store/store.js'
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
@@ -105,6 +103,10 @@ export default {
 		ArrowLeft,
 		Pencil,
 		OpenInApp,
+	},
+	setup() {
+		const { isAdmin } = useIsAdmin()
+		return { isAdmin }
 	},
 	data() {
 		return {
