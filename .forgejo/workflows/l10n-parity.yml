@@ -15,7 +15,7 @@ on:
 jobs:
   l10n-parity:
     name: l10n translation parity (nl/de/fr/es/it)
-    runs-on: codeberg-small
+    runs-on: docker
     container:
       image: code.forgejo.org/oci/ci-node:22
     steps:
