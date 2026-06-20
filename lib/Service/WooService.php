@@ -216,7 +216,11 @@ class WooService
     public function getRegister(): ?string
     {
         $value = (string) $this->config->getValueString('opencatalogi', self::CONFIG_BATCH_REGISTER, '');
-        return ($value === '' ? null : $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getRegister()
 
@@ -230,7 +234,11 @@ class WooService
     public function getBatchSchema(): ?string
     {
         $value = (string) $this->config->getValueString('opencatalogi', self::CONFIG_BATCH_SCHEMA, '');
-        return ($value === '' ? null : $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getBatchSchema()
 
@@ -244,7 +252,11 @@ class WooService
     public function getAssessmentSchema(): ?string
     {
         $value = (string) $this->config->getValueString('opencatalogi', self::CONFIG_ASSESSMENT_SCHEMA, '');
-        return ($value === '' ? null : $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getAssessmentSchema()
 
@@ -260,8 +272,12 @@ class WooService
      */
     public function getWeigeringsgronden(?string $search=null): array
     {
-        $needle = ($search !== null ? mb_strtolower(trim($search)) : '');
-        $rows   = [];
+        $needle = '';
+        if ($search !== null) {
+            $needle = mb_strtolower(trim($search));
+        }
+
+        $rows = [];
         foreach (self::WEIGERINGSGRONDEN as $article => $description) {
             if ($needle !== ''
                 && mb_strpos(mb_strtolower($article.' '.$description), $needle) === false
@@ -325,9 +341,16 @@ class WooService
                 'assessedBy'            => '',
                 'assessedAt'            => '',
             ];
-            $saved            = $this->normalise($this->save($objectService, $register, $assessmentSchema, $assessment));
+            $saved            = $this->normalise(
+                $this->save(
+                    objectService: $objectService,
+                    register: $register,
+                    schema: $assessmentSchema,
+                    data: $assessment
+                )
+            );
             $assessmentRefs[] = $saved;
-        }
+        }//end foreach
 
         // Provision (or re-use) the Deck board via the deck leaf, then link a card
         // per assessment object into the "Te beoordelen" stack.
@@ -336,7 +359,11 @@ class WooService
         $deckAvailable = $this->isDeckAvailable();
         if ($deckAvailable === true && $deckBoardId !== null) {
             $deck       = $this->getDeckCardService();
-            $registerId = (int) (is_numeric($register) === true ? $register : 0);
+            $registerId = 0;
+            if (is_numeric($register) === true) {
+                $registerId = (int) $register;
+            }
+
             foreach ($assessmentRefs as $ref) {
                 $uuid = (string) ($ref['id'] ?? ($ref['uuid'] ?? ''));
                 if ($uuid === '') {
@@ -344,22 +371,38 @@ class WooService
                 }
 
                 try {
-                    $link        = $deck->linkOrCreateCard(
+                    $title = 'Document';
+                    if ((string) ($ref['fileName'] ?? '') !== '') {
+                        $title = (string) $ref['fileName'];
+                    }
+
+                    $link = $deck->linkOrCreateCard(
                         objectUuid: $uuid,
                         registerId: $registerId,
                         data: [
                             'boardId'     => $deckBoardId,
                             'stackId'     => $this->resolveStackId($deckBoardId, 'te_beoordelen'),
-                            'title'       => ((string) ($ref['fileName'] ?? '') !== '' ? (string) $ref['fileName'] : 'Document'),
+                            'title'       => $title,
                             'description' => 'WOO document — '.$caseReference,
                         ]
                     );
-                    $deckLinks[] = (method_exists($link, 'jsonSerialize') === true ? $link->jsonSerialize() : ['objectUuid' => $uuid]);
+
+                    $deckLink = ['objectUuid' => $uuid];
+                    if (method_exists($link, 'jsonSerialize') === true) {
+                        $deckLink = $link->jsonSerialize();
+                    }
+
+                    $deckLinks[] = $deckLink;
                 } catch (\Throwable $e) {
                     $this->logger->warning('[WooService] deck card link failed for '.$uuid.': '.$e->getMessage());
-                }
+                }//end try
             }//end foreach
         }//end if
+
+        $createdBy = 'system';
+        if ($user !== null) {
+            $createdBy = $user->getUID();
+        }
 
         $batch      = [
             'caseReference'   => $caseReference,
@@ -371,9 +414,9 @@ class WooService
             'inventarislijst' => '',
             'createdAt'       => $now,
             'updatedAt'       => $now,
-            'createdBy'       => ($user !== null ? $user->getUID() : 'system'),
+            'createdBy'       => $createdBy,
         ];
-        $savedBatch = $this->normalise($this->save($objectService, $register, $batchSchema, $batch));
+        $savedBatch = $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
         $savedBatch['assessments'] = $assessmentRefs;
         $savedBatch['deckLinks']   = $deckLinks;
@@ -489,10 +532,15 @@ class WooService
             $data['weigeringsgronden'] = array_values(array_unique(array_map('strval', $weigeringsgronden)));
         }
 
-        $data['assessedBy'] = ($user !== null ? $user->getUID() : 'system');
+        $assessedBy = 'system';
+        if ($user !== null) {
+            $assessedBy = $user->getUID();
+        }
+
+        $data['assessedBy'] = $assessedBy;
         $data['assessedAt'] = $now;
 
-        $saved = $this->normalise($this->save($objectService, $register, $assessmentSchema, $data));
+        $saved = $this->normalise($this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
         // Move the linked Deck card to the matching stack via the leaf (best
         // effort; the leaf owns the move + stack-driven status sync).
@@ -677,7 +725,11 @@ class WooService
         $csv = stream_get_contents($handle);
         fclose($handle);
 
-        return ($csv === false ? '' : $csv);
+        if ($csv === false) {
+            return '';
+        }
+
+        return $csv;
 
     }//end renderInventarislijstCsv()
 
@@ -771,7 +823,7 @@ class WooService
         $batch['status'] = 'ready_for_review';
         $batch['updatedAt'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
 
-        return $this->normalise($this->save($objectService, $register, $batchSchema, $batch));
+        return $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
     }//end markReadyForReview()
 
@@ -786,7 +838,11 @@ class WooService
     public function getPublishApprovalChain(): ?string
     {
         $value = (string) $this->config->getValueString('opencatalogi', self::CONFIG_APPROVAL_CHAIN, '');
-        return ($value === '' ? null : $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getPublishApprovalChain()
 
@@ -832,11 +888,17 @@ class WooService
 
         $listings = [];
         foreach ($publishable as $assessment) {
-            $isPartial  = ((string) ($assessment['assessment'] ?? '') === 'deels_openbaar');
+            $isPartial = ((string) ($assessment['assessment'] ?? '') === 'deels_openbaar');
+
+            $document = (string) ($assessment['documentReference'] ?? '');
+            if ($isPartial === true) {
+                $document = (string) ($assessment['anonymizedDocument'] ?? '');
+            }
+
             $listings[] = [
                 'title'      => (string) ($assessment['fileName'] ?? ''),
                 'assessment' => (string) ($assessment['assessment'] ?? ''),
-                'document'   => ($isPartial === true ? (string) ($assessment['anonymizedDocument'] ?? '') : (string) ($assessment['documentReference'] ?? '')),
+                'document'   => $document,
             ];
         }
 
@@ -866,7 +928,7 @@ class WooService
         $batch['wooPublication'] = $publicationMeta;
         unset($batch['documentSummary']);
 
-        $saved = $this->normalise($this->save($objectService, $register, $batchSchema, $batch));
+        $saved = $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
         $saved['wooPublication'] = $publicationMeta;
 
         return $saved;
@@ -918,7 +980,11 @@ class WooService
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
             $serialized = $object->jsonSerialize();
-            return (is_array($serialized) === true ? $serialized : []);
+            if (is_array($serialized) === false) {
+                return [];
+            }
+
+            return $serialized;
         }
 
         return [];

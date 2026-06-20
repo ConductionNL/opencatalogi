@@ -366,7 +366,7 @@ class StatsController extends Controller
             // (never silently fall open — gate unsafe-auth-resolver).
             $this->logger->warning('[StatsController] publication authorization check failed', ['error' => $e->getMessage()]);
             return false;
-        }
+        }//end try
 
     }//end canReadPublication()
 }//end class
