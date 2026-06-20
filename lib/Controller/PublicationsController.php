@@ -96,20 +96,20 @@ class PublicationsController extends Controller
     /**
      * PublicationsController constructor.
      *
-     * @param string                  $appName            The name of the app
-     * @param IRequest                $request            The request object
-     * @param PublicationService      $publicationService The publication service
-     * @param CatalogiService         $catalogiService    The catalogi service
-     * @param PublicationQueryService $queryService       Query-building/shaping helpers
-     * @param ContainerInterface      $container          The container for dependency injection
-     * @param IAppManager             $appManager         The app manager
-     * @param LoggerInterface         $logger             PSR-3 logger
-     * @param IL10N                   $l10n               Localization service
+     * @param string                  $appName             The name of the app
+     * @param IRequest                $request             The request object
+     * @param PublicationService      $publicationService  The publication service
+     * @param CatalogiService         $catalogiService     The catalogi service
+     * @param PublicationQueryService $queryService        Query-building/shaping helpers
+     * @param ContainerInterface      $container           The container for dependency injection
+     * @param IAppManager             $appManager          The app manager
+     * @param LoggerInterface         $logger              PSR-3 logger
+     * @param IL10N                   $l10n                Localization service
      * @param UsageCounterService     $usageCounterService Privacy-safe usage counter (fire-and-forget)
-     * @param IAppConfig|null         $appConfig          App config for CORS allowlist (optional)
-     * @param string                  $corsMethods        Allowed CORS methods
-     * @param string                  $corsAllowedHeaders Allowed CORS headers
-     * @param integer                 $corsMaxAge         CORS max age
+     * @param IAppConfig|null         $appConfig           App config for CORS allowlist (optional)
+     * @param string                  $corsMethods         Allowed CORS methods
+     * @param string                  $corsAllowedHeaders  Allowed CORS headers
+     * @param integer                 $corsMaxAge          CORS max age
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */

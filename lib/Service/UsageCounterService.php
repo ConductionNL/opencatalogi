@@ -261,8 +261,8 @@ class UsageCounterService
             );
 
             if ($existing !== null) {
-                $data           = $this->normaliseCounter($existing);
-                $data['count']  = ((int) ($data['count'] ?? 0) + 1);
+                $data          = $this->normaliseCounter($existing);
+                $data['count'] = ((int) ($data['count'] ?? 0) + 1);
                 $objectService->saveObject(
                     object: $data,
                     register: $register,
@@ -384,7 +384,12 @@ class UsageCounterService
             _multitenancy: false,
         );
 
-        return $this->filterByRange((is_array($results) === true ? $results : []), $from, $to);
+        $rows = [];
+        if (is_array($results) === true) {
+            $rows = $results;
+        }
+
+        return $this->filterByRange(rows: $rows, from: $from, to: $to);
 
     }//end getCountersForPublication()
 
@@ -420,7 +425,12 @@ class UsageCounterService
             _multitenancy: false,
         );
 
-        return $this->filterByRange((is_array($results) === true ? $results : []), $from, $to);
+        $rows = [];
+        if (is_array($results) === true) {
+            $rows = $results;
+        }
+
+        return $this->filterByRange(rows: $rows, from: $from, to: $to);
 
     }//end getCountersForCatalog()
 
@@ -442,7 +452,7 @@ class UsageCounterService
      */
     public function getPublicationStats(string $publicationId, ?string $from=null, ?string $to=null): array
     {
-        $rows = $this->getCountersForPublication($publicationId, $from, $to);
+        $rows = $this->getCountersForPublication(publicationId: $publicationId, from: $from, to: $to);
         return $this->aggregateSeries($rows);
 
     }//end getPublicationStats()
@@ -461,7 +471,7 @@ class UsageCounterService
      */
     public function getCatalogStats(string $catalog, ?string $from=null, ?string $to=null, int $top=10): array
     {
-        $rows = $this->getCountersForCatalog($catalog, $from, $to);
+        $rows = $this->getCountersForCatalog(catalog: $catalog, from: $from, to: $to);
         return $this->aggregateCatalog($rows, $top);
 
     }//end getCatalogStats()
@@ -537,10 +547,10 @@ class UsageCounterService
      */
     public function aggregateCatalog(array $rows, int $top=10): array
     {
-        $top         = max(1, $top);
-        $byPub       = [];
-        $totalViews  = 0;
-        $totalDownl  = 0;
+        $top        = max(1, $top);
+        $byPub      = [];
+        $totalViews = 0;
+        $totalDownl = 0;
 
         foreach ($rows as $row) {
             $row   = $this->normaliseCounter($row);
@@ -557,7 +567,7 @@ class UsageCounterService
 
             if ($kind === self::KIND_VIEW) {
                 $byPub[$pub]['views'] += $count;
-                $totalViews += $count;
+                $totalViews           += $count;
             } else if ($kind === self::KIND_DOWNLOAD) {
                 $byPub[$pub]['downloads'] += $count;
                 $totalDownl += $count;
@@ -659,7 +669,11 @@ class UsageCounterService
     public function getRegisterId(): ?string
     {
         $value = (string) $this->appConfig->getValueString('opencatalogi', self::CONFIG_REGISTER, '');
-        return ($value !== '' ? $value : null);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getRegisterId()
 
@@ -673,8 +687,11 @@ class UsageCounterService
     public function getSchemaId(): ?string
     {
         $value = (string) $this->appConfig->getValueString('opencatalogi', self::CONFIG_SCHEMA, '');
-        return ($value !== '' ? $value : null);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getSchemaId()
-
 }//end class

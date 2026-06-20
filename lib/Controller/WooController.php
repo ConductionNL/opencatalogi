@@ -51,7 +51,6 @@ use OCP\IUserSession;
  */
 class WooController extends Controller
 {
-
     /**
      * Constructor.
      *
@@ -91,8 +90,12 @@ class WooController extends Controller
             return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $search  = $this->request->getParam('search', null);
-        $grounds = $this->wooService->getWeigeringsgronden(($search !== null ? (string) $search : null));
+        $search = $this->request->getParam('search', null);
+        if ($search !== null) {
+            $search = (string) $search;
+        }
+
+        $grounds = $this->wooService->getWeigeringsgronden(search: $search);
         return new JSONResponse(['results' => $grounds, 'total' => count($grounds)]);
 
     }//end weigeringsgronden()
@@ -120,15 +123,19 @@ class WooController extends Controller
                 return new JSONResponse(data: ['error' => $this->l10n->t('caseReference is required')], statusCode: Http::STATUS_BAD_REQUEST);
             }
 
+            if ($boardId !== null) {
+                $boardId = (int) $boardId;
+            }
+
             $batch = $this->wooService->createBatch(
-                $caseReference,
-                $documents,
-                ($boardId !== null ? (int) $boardId : null)
+                caseReference: $caseReference,
+                documents: $documents,
+                boardId: $boardId
             );
             return new JSONResponse($batch, Http::STATUS_CREATED);
         } catch (\Throwable $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-        }
+        }//end try
 
     }//end createBatch()
 
@@ -179,7 +186,11 @@ class WooController extends Controller
         try {
             $assessment        = (string) $this->request->getParam('assessment', '');
             $weigeringsgronden = (array) $this->request->getParam('weigeringsgronden', []);
-            $result            = $this->wooService->updateAssessment($docId, $assessment, $weigeringsgronden);
+            $result            = $this->wooService->updateAssessment(
+                assessmentId: $docId,
+                assessment: $assessment,
+                weigeringsgronden: $weigeringsgronden
+            );
             return new JSONResponse($result);
         } catch (\Throwable $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);

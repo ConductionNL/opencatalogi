@@ -53,7 +53,6 @@ use Psr\Log\LoggerInterface;
  */
 class OpenCatalogiMetricsProvider implements IMetricsProvider
 {
-
     /**
      * Constructor.
      *
@@ -66,7 +65,6 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
     ) {
 
     }//end __construct()
-
 
     /**
      * Produce OpenCatalogi's domain metric samples.
@@ -178,7 +176,6 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
 
     }//end metrics()
 
-
     /**
      * Get publication counts grouped by status and catalog.
      *
@@ -210,7 +207,6 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
 
     }//end getPublicationCounts()
 
-
     /**
      * Count objects matching a schema title pattern.
      *
@@ -238,7 +234,6 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
         }
 
     }//end countObjectsBySchemaPattern()
-
 
     /**
      * Get listing counts grouped by status.
@@ -269,7 +264,6 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
         }
 
     }//end getListingCounts()
-
 
     /**
      * Sum usage-counter objects by catalog and kind for the metrics families.
@@ -310,7 +304,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
                     continue;
                 }
 
-                $catalog              = (string) ($row['catalog'] ?? '');
+                $catalog = (string) ($row['catalog'] ?? '');
                 $out[$kind][$catalog] = (int) ($row['total'] ?? 0);
             }
         } catch (\Exception $e) {
@@ -320,6 +314,4 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
         return $out;
 
     }//end getUsageTotalsByCatalog()
-
-
 }//end class

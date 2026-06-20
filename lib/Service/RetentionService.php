@@ -130,7 +130,11 @@ class RetentionService
     private function getRegister(): ?string
     {
         $value = (string) $this->config->getValueString('opencatalogi', 'publication_register', '');
-        return ($value !== '' ? $value : null);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getRegister()
 
@@ -144,7 +148,11 @@ class RetentionService
     private function getSchema(): ?string
     {
         $value = (string) $this->config->getValueString('opencatalogi', 'publication_schema', '');
-        return ($value !== '' ? $value : null);
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
 
     }//end getSchema()
 
@@ -158,7 +166,11 @@ class RetentionService
     public function getWarningWindowDays(): int
     {
         $value = (int) $this->config->getValueString('opencatalogi', self::CONFIG_WARNING_WINDOW, (string) self::DEFAULT_WARNING_WINDOW);
-        return ($value > 0 ? $value : self::DEFAULT_WARNING_WINDOW);
+        if ($value <= 0) {
+            return self::DEFAULT_WARNING_WINDOW;
+        }
+
+        return $value;
 
     }//end getWarningWindowDays()
 
@@ -180,7 +192,11 @@ class RetentionService
         }
 
         $decoded = json_decode($raw, true);
-        return (is_array($decoded) === true ? $decoded : []);
+        if (is_array($decoded) === false) {
+            return [];
+        }
+
+        return $decoded;
 
     }//end getRetentionDefaults()
 
@@ -207,7 +223,9 @@ class RetentionService
                 }
 
                 if (isset($rule['action']) === true && in_array($rule['action'], self::ACTIONS, true) === false) {
-                    throw new RuntimeException('Invalid retention action "'.(string) $rule['action'].'" for '.(string) $catalog.'/'.(string) $category);
+                    $message = 'Invalid retention action "'.(string) $rule['action'].'" for '
+                        .(string) $catalog.'/'.(string) $category;
+                    throw new RuntimeException($message);
                 }
             }
         }
@@ -260,7 +278,7 @@ class RetentionService
      */
     public function applyDefaults(array $publication, string $catalogSlug): array
     {
-        $defaults = $this->getRetentionDefaults();
+        $defaults        = $this->getRetentionDefaults();
         $catalogDefaults = ($defaults[$catalogSlug] ?? []);
         if (is_array($catalogDefaults) === false) {
             return $publication;
@@ -291,9 +309,14 @@ class RetentionService
 
         // Recompute expiry from publication date + term when not manually held.
         if (empty($publication['retentionExpiresAt']) === true) {
+            $termMonths = null;
+            if (isset($publication['retentionTermMonths']) === true) {
+                $termMonths = (int) $publication['retentionTermMonths'];
+            }
+
             $computed = $this->computeExpiry(
                 ($publication['publicatiedatum'] ?? null),
-                (isset($publication['retentionTermMonths']) === true ? (int) $publication['retentionTermMonths'] : null)
+                $termMonths
             );
             if ($computed !== null) {
                 $publication['retentionExpiresAt'] = $computed;
@@ -333,7 +356,7 @@ class RetentionService
         }
 
         $now       = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $today      = $now->format('Y-m-d');
+        $today     = $now->format('Y-m-d');
         $windowEnd = $now->add(new \DateInterval('P'.$this->getWarningWindowDays().'D'));
 
         // Plain object search: publications with retentionExpiresAt at or before the
@@ -378,7 +401,7 @@ class RetentionService
             if ($expired === false) {
                 // Within the warning window but not yet expired -> flag expiring-soon.
                 $counts['expiringSoon']++;
-                $this->stampEvaluated($objectService, $register, $schema, $data, $now);
+                $this->stampEvaluated(objectService: $objectService, register: $register, schema: $schema, data: $data, now: $now);
                 continue;
             }
 
@@ -386,19 +409,19 @@ class RetentionService
                 case 'depublish':
                     $data['depublicatiedatum']        = $now->format(\DateTimeInterface::ATOM);
                     $data['retentionLastEvaluatedAt'] = $now->format(\DateTimeInterface::ATOM);
-                    $this->recordDecision($data, 'auto-depublish', 'retention term expired');
-                    $this->save($objectService, $register, $schema, $data);
+                    $this->recordDecision(data: $data, decision: 'auto-depublish', note: 'retention term expired');
+                    $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
                     $counts['depublished']++;
                     break;
 
                 case 'archive':
                     // Request the declared lifecycle transition; setting depublicatiedatum
                     // removes it from public surfaces as part of archiving (RET-006).
-                    $data['status']                  = 'archived';
-                    $data['depublicatiedatum']        = $now->format(\DateTimeInterface::ATOM);
+                    $data['status']            = 'archived';
+                    $data['depublicatiedatum'] = $now->format(\DateTimeInterface::ATOM);
                     $data['retentionLastEvaluatedAt'] = $now->format(\DateTimeInterface::ATOM);
-                    $this->recordDecision($data, 'auto-archive', 'retention term expired');
-                    $this->save($objectService, $register, $schema, $data);
+                    $this->recordDecision(data: $data, decision: 'auto-archive', note: 'retention term expired');
+                    $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
                     $counts['archived']++;
                     break;
 
@@ -406,7 +429,7 @@ class RetentionService
                 default:
                     // Flag only — visibility unchanged; humans decide in the queue.
                     $counts['reviewRequired']++;
-                    $this->stampEvaluated($objectService, $register, $schema, $data, $now);
+                    $this->stampEvaluated(objectService: $objectService, register: $register, schema: $schema, data: $data, now: $now);
                     break;
             }//end switch
         }//end foreach
@@ -535,9 +558,9 @@ class RetentionService
                     $newExpiry = $now->add(new \DateInterval('P'.$extendMonths.'M'));
                 }
 
-                $data['retentionExpiresAt']        = $newExpiry->format(\DateTimeInterface::ATOM);
-                $data['retentionNote']             = $rationale;
-                $data['retentionLastEvaluatedAt']  = '';
+                $data['retentionExpiresAt']       = $newExpiry->format(\DateTimeInterface::ATOM);
+                $data['retentionNote']            = $rationale;
+                $data['retentionLastEvaluatedAt'] = '';
                 break;
 
             case 'depublish':
@@ -554,8 +577,8 @@ class RetentionService
                 throw new RuntimeException('Unknown retention decision: '.$decision);
         }//end switch
 
-        $this->recordDecision($data, $decision, $rationale);
-        $saved = $this->save($objectService, $register, $schema, $data);
+        $this->recordDecision(data: $data, decision: $decision, note: $rationale);
+        $saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
 
         return $this->normalise($saved);
 
@@ -615,21 +638,35 @@ class RetentionService
                 continue;
             }
 
-            $log         = ($data['retentionDecisionLog'] ?? []);
-            $lastDecision = (is_array($log) === true && count($log) > 0 ? end($log) : null);
+            $log          = ($data['retentionDecisionLog'] ?? []);
+            $lastDecision = null;
+            if (is_array($log) === true && count($log) > 0) {
+                $lastDecision = end($log);
+            }
+
+            $actionTaken  = 'pending';
+            $decisionBy   = '';
+            $decisionAt   = '';
+            $decisionNote = '';
+            if ($lastDecision !== null) {
+                $actionTaken  = (string) ($lastDecision['decision'] ?? '');
+                $decisionBy   = (string) ($lastDecision['by'] ?? '');
+                $decisionAt   = (string) ($lastDecision['at'] ?? '');
+                $decisionNote = (string) ($lastDecision['note'] ?? '');
+            }
 
             $rows[] = [
-                'id'                => (string) ($data['id'] ?? $data['uuid'] ?? ''),
-                'title'             => (string) ($data['title'] ?? ''),
-                'publicatiedatum'   => $pubDate,
-                'retentionCategory' => (string) ($data['retentionCategory'] ?? ''),
+                'id'                  => (string) ($data['id'] ?? $data['uuid'] ?? ''),
+                'title'               => (string) ($data['title'] ?? ''),
+                'publicatiedatum'     => $pubDate,
+                'retentionCategory'   => (string) ($data['retentionCategory'] ?? ''),
                 'retentionTermMonths' => (string) ($data['retentionTermMonths'] ?? ''),
                 'retentionExpiresAt'  => (string) ($data['retentionExpiresAt'] ?? ''),
-                'status'            => (string) ($data['status'] ?? ''),
-                'actionTaken'       => ($lastDecision !== null ? (string) ($lastDecision['decision'] ?? '') : 'pending'),
-                'decisionBy'        => ($lastDecision !== null ? (string) ($lastDecision['by'] ?? '') : ''),
-                'decisionAt'        => ($lastDecision !== null ? (string) ($lastDecision['at'] ?? '') : ''),
-                'decisionNote'      => ($lastDecision !== null ? (string) ($lastDecision['note'] ?? '') : ''),
+                'status'              => (string) ($data['status'] ?? ''),
+                'actionTaken'         => $actionTaken,
+                'decisionBy'          => $decisionBy,
+                'decisionAt'          => $decisionAt,
+                'decisionNote'        => $decisionNote,
             ];
         }//end foreach
 
@@ -679,16 +716,20 @@ class RetentionService
         $csv = stream_get_contents($handle);
         fclose($handle);
 
-        return ($csv === false ? '' : $csv);
+        if ($csv === false) {
+            return '';
+        }
+
+        return $csv;
 
     }//end renderReportCsv()
 
     /**
      * Append a decision record to the publication's decision log.
      *
-     * @param array<string, mixed> &$data     The publication data (mutated).
-     * @param string                $decision The decision verb.
-     * @param string                $note     The rationale / reason.
+     * @param array<string, mixed> $data     The publication data (mutated).
+     * @param string               $decision The decision verb.
+     * @param string               $note     The rationale / reason.
      *
      * @return void
      *
@@ -696,15 +737,20 @@ class RetentionService
      */
     private function recordDecision(array &$data, string $decision, string $note): void
     {
-        $user = $this->userSession->getUser();
-        $log  = ($data['retentionDecisionLog'] ?? []);
+        $user       = $this->userSession->getUser();
+        $decisionBy = 'system';
+        if ($user !== null) {
+            $decisionBy = $user->getUID();
+        }
+
+        $log = ($data['retentionDecisionLog'] ?? []);
         if (is_array($log) === false) {
             $log = [];
         }
 
         $log[] = [
             'decision' => $decision,
-            'by'       => ($user !== null ? $user->getUID() : 'system'),
+            'by'       => $decisionBy,
             'at'       => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
             'note'     => $note,
             'basis'    => (string) ($data['retentionCategory'] ?? ''),
@@ -730,7 +776,7 @@ class RetentionService
     private function stampEvaluated(object $objectService, string $register, string $schema, array $data, \DateTimeImmutable $now): void
     {
         $data['retentionLastEvaluatedAt'] = $now->format(\DateTimeInterface::ATOM);
-        $this->save($objectService, $register, $schema, $data);
+        $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
 
     }//end stampEvaluated()
 
@@ -776,7 +822,11 @@ class RetentionService
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
             $serialized = $object->jsonSerialize();
-            return (is_array($serialized) === true ? $serialized : []);
+            if (is_array($serialized) === false) {
+                return [];
+            }
+
+            return $serialized;
         }
 
         return [];
