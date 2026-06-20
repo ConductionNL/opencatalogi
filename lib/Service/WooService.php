@@ -299,9 +299,9 @@ class WooService
      */
     public function createBatch(string $caseReference, array $documents, ?int $boardId=null): array
     {
-        $objectService   = $this->getObjectService();
-        $register        = $this->getRegister();
-        $batchSchema     = $this->getBatchSchema();
+        $objectService    = $this->getObjectService();
+        $register         = $this->getRegister();
+        $batchSchema      = $this->getBatchSchema();
         $assessmentSchema = $this->getAssessmentSchema();
         if ($objectService === null || $register === null || $batchSchema === null || $assessmentSchema === null) {
             throw new RuntimeException('OpenRegister WOO register/schema unavailable or unconfigured');
@@ -313,26 +313,26 @@ class WooService
         // First persist the assessment objects so we have their ids for the cards.
         $assessmentRefs = [];
         foreach ($documents as $document) {
-            $assessment = [
-                'documentReference'    => (string) ($document['documentReference'] ?? ($document['id'] ?? '')),
-                'fileName'             => (string) ($document['fileName'] ?? ''),
-                'fileType'             => (string) ($document['fileType'] ?? ''),
-                'assessment'           => 'te_beoordelen',
-                'weigeringsgronden'    => [],
+            $assessment       = [
+                'documentReference'     => (string) ($document['documentReference'] ?? ($document['id'] ?? '')),
+                'fileName'              => (string) ($document['fileName'] ?? ''),
+                'fileType'              => (string) ($document['fileType'] ?? ''),
+                'assessment'            => 'te_beoordelen',
+                'weigeringsgronden'     => [],
                 'redactionInstructions' => '',
-                'anonymizedDocument'   => '',
-                'caseReference'        => $caseReference,
-                'assessedBy'           => '',
-                'assessedAt'           => '',
+                'anonymizedDocument'    => '',
+                'caseReference'         => $caseReference,
+                'assessedBy'            => '',
+                'assessedAt'            => '',
             ];
-            $saved = $this->normalise($this->save($objectService, $register, $assessmentSchema, $assessment));
+            $saved            = $this->normalise($this->save($objectService, $register, $assessmentSchema, $assessment));
             $assessmentRefs[] = $saved;
         }
 
         // Provision (or re-use) the Deck board via the deck leaf, then link a card
         // per assessment object into the "Te beoordelen" stack.
-        $deckBoardId  = $boardId;
-        $deckLinks    = [];
+        $deckBoardId   = $boardId;
+        $deckLinks     = [];
         $deckAvailable = $this->isDeckAvailable();
         if ($deckAvailable === true && $deckBoardId !== null) {
             $deck       = $this->getDeckCardService();
@@ -344,7 +344,7 @@ class WooService
                 }
 
                 try {
-                    $link = $deck->linkOrCreateCard(
+                    $link        = $deck->linkOrCreateCard(
                         objectUuid: $uuid,
                         registerId: $registerId,
                         data: [
@@ -358,20 +358,20 @@ class WooService
                 } catch (\Throwable $e) {
                     $this->logger->warning('[WooService] deck card link failed for '.$uuid.': '.$e->getMessage());
                 }
-            }
-        }
+            }//end foreach
+        }//end if
 
-        $batch = [
-            'caseReference'  => $caseReference,
-            'status'         => 'in_progress',
-            'deckBoardId'    => $deckBoardId,
-            'deckAvailable'  => $deckAvailable,
-            'documents'      => array_map(static fn(array $r): string => (string) ($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
-            'besluit'        => '',
+        $batch      = [
+            'caseReference'   => $caseReference,
+            'status'          => 'in_progress',
+            'deckBoardId'     => $deckBoardId,
+            'deckAvailable'   => $deckAvailable,
+            'documents'       => array_map(static fn(array $r): string => (string) ($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
+            'besluit'         => '',
             'inventarislijst' => '',
-            'createdAt'      => $now,
-            'updatedAt'      => $now,
-            'createdBy'      => ($user !== null ? $user->getUID() : 'system'),
+            'createdAt'       => $now,
+            'updatedAt'       => $now,
+            'createdBy'       => ($user !== null ? $user->getUID() : 'system'),
         ];
         $savedBatch = $this->normalise($this->save($objectService, $register, $batchSchema, $batch));
 
@@ -463,8 +463,8 @@ class WooService
             }
         }
 
-        $objectService   = $this->getObjectService();
-        $register        = $this->getRegister();
+        $objectService    = $this->getObjectService();
+        $register         = $this->getRegister();
         $assessmentSchema = $this->getAssessmentSchema();
         if ($objectService === null || $register === null || $assessmentSchema === null) {
             throw new RuntimeException('OpenRegister WOO register/schema unavailable');
@@ -568,10 +568,10 @@ class WooService
         $assessed = ($total - $counts['te_beoordelen']);
 
         $batch['documentSummary'] = [
-            'counts'         => $counts,
-            'total'          => $total,
-            'assessed'       => $assessed,
-            'progressLabel'  => $assessed.'/'.$total,
+            'counts'        => $counts,
+            'total'         => $total,
+            'assessed'      => $assessed,
+            'progressLabel' => $assessed.'/'.$total,
         ];
 
         return $batch;
@@ -686,7 +686,7 @@ class WooService
      * (the print/PDF source). Conversion to PDF/A is delegated to Docudesk;
      * OpenCatalogi owns only the WOO-standard layout + header/footer.
      *
-     * @param string                             $batchId The batch uuid (for the header).
+     * @param string                            $batchId The batch uuid (for the header).
      * @param array<int, array<string, string>> $rows    The inventory rows.
      *
      * @return string The HTML payload.
@@ -733,7 +733,7 @@ class WooService
      */
     public function canMarkReadyForReview(string $batchId): bool
     {
-        $batch = $this->getBatch($batchId);
+        $batch  = $this->getBatch($batchId);
         $counts = ($batch['documentSummary']['counts'] ?? []);
         return (int) ($counts['te_beoordelen'] ?? 0) === 0 && (int) ($batch['documentSummary']['total'] ?? 0) > 0;
 
@@ -832,28 +832,26 @@ class WooService
 
         $listings = [];
         foreach ($publishable as $assessment) {
-            $isPartial = ((string) ($assessment['assessment'] ?? '') === 'deels_openbaar');
+            $isPartial  = ((string) ($assessment['assessment'] ?? '') === 'deels_openbaar');
             $listings[] = [
                 'title'      => (string) ($assessment['fileName'] ?? ''),
                 'assessment' => (string) ($assessment['assessment'] ?? ''),
-                'document'   => ($isPartial === true
-                    ? (string) ($assessment['anonymizedDocument'] ?? '')
-                    : (string) ($assessment['documentReference'] ?? '')),
+                'document'   => ($isPartial === true ? (string) ($assessment['anonymizedDocument'] ?? '') : (string) ($assessment['documentReference'] ?? '')),
             ];
         }
 
-        $now             = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
-        $publishedCount  = count($publishable);
+        $now            = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $publishedCount = count($publishable);
         $publicationMeta = [
-            'wooDecisionDate'    => substr($now, 0, 10),
+            'wooDecisionDate'     => substr($now, 0, 10),
             'wooRequestReference' => (string) ($batch['caseReference'] ?? ''),
-            'wooCategory'        => 'verzoek',
-            'documentCount'      => (int) ($batch['documentSummary']['total'] ?? 0),
-            'publishedCount'     => $publishedCount,
-            'besluit'            => (string) ($batch['besluit'] ?? ''),
-            'inventarislijst'    => (string) ($batch['inventarislijst'] ?? ''),
-            'listings'           => $listings,
-            'catalogType'        => 'woo_reading_room',
+            'wooCategory'         => 'verzoek',
+            'documentCount'       => (int) ($batch['documentSummary']['total'] ?? 0),
+            'publishedCount'      => $publishedCount,
+            'besluit'             => (string) ($batch['besluit'] ?? ''),
+            'inventarislijst'     => (string) ($batch['inventarislijst'] ?? ''),
+            'listings'            => $listings,
+            'catalogType'         => 'woo_reading_room',
         ];
 
         // The reading-room URL is derived from the existing catalog website route

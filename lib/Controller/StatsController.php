@@ -45,7 +45,6 @@ use Psr\Log\LoggerInterface;
  */
 class StatsController extends Controller
 {
-
     /**
      * StatsController constructor.
      *
@@ -108,7 +107,7 @@ class StatsController extends Controller
         }
 
         try {
-            $stats              = $this->usageCounterService->getPublicationStats($id, $from, $to);
+            $stats = $this->usageCounterService->getPublicationStats(publicationId: $id, from: $from, to: $to);
             $stats['publication'] = $id;
             $stats['granularity'] = $granularity;
             return new JSONResponse($stats, 200);
@@ -146,17 +145,17 @@ class StatsController extends Controller
         }
 
         [$from, $to] = $this->readRange();
-        $top = (int) ($this->request->getParam('top', 10));
+        $top         = (int) ($this->request->getParam('top', 10));
         if ($top < 1) {
             $top = 10;
         }
 
         try {
-            $stats            = $this->usageCounterService->getCatalogStats($slug, $from, $to, $top);
+            $stats            = $this->usageCounterService->getCatalogStats(catalog: $slug, from: $from, to: $to, top: $top);
             $stats['catalog'] = $slug;
             // Period without data still returns zeros + a counting-start marker (ANA-005).
             if (isset($stats['countingStart']) === false) {
-                $series = $this->usageCounterService->getCountersForCatalog($slug, null, null);
+                $series = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: null, to: null);
                 $stats['countingStart'] = $this->usageCounterService->aggregateSeries($series)['countingStart'];
             }
 
@@ -202,7 +201,7 @@ class StatsController extends Controller
         [$from, $to] = $this->readRange();
 
         try {
-            $rows = $this->usageCounterService->getCountersForCatalog($slug, $from, $to);
+            $rows = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: $from, to: $to);
             $csv  = $this->buildCsv($rows);
             $name = 'usage-'.preg_replace('/[^a-z0-9-]/i', '-', $slug).'.csv';
             return new DataDownloadResponse($csv, $name, 'text/csv; charset=utf-8');
@@ -293,8 +292,13 @@ class StatsController extends Controller
             $granularity = 'day';
         }
 
-        $from = (is_string($from) === true && $from !== '') ? $from : null;
-        $to   = (is_string($to) === true && $to !== '') ? $to : null;
+        if (is_string($from) === false || $from === '') {
+            $from = null;
+        }
+
+        if (is_string($to) === false || $to === '') {
+            $to = null;
+        }
 
         return [$from, $to, $granularity];
 
@@ -343,11 +347,12 @@ class StatsController extends Controller
         }
 
         try {
-            /**
+            /*
              * OpenRegister object service.
              *
              * @var \OCA\OpenRegister\Service\ObjectService $objectService
              */
+
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $results       = $objectService->searchObjects(
                 query: ['@self' => ['uuid' => $id]],
@@ -364,5 +369,4 @@ class StatsController extends Controller
         }
 
     }//end canReadPublication()
-
 }//end class

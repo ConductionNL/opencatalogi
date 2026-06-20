@@ -261,8 +261,8 @@ class UsageCounterService
             );
 
             if ($existing !== null) {
-                $data           = $this->normaliseCounter($existing);
-                $data['count']  = ((int) ($data['count'] ?? 0) + 1);
+                $data          = $this->normaliseCounter($existing);
+                $data['count'] = ((int) ($data['count'] ?? 0) + 1);
                 $objectService->saveObject(
                     object: $data,
                     register: $register,
@@ -537,10 +537,10 @@ class UsageCounterService
      */
     public function aggregateCatalog(array $rows, int $top=10): array
     {
-        $top         = max(1, $top);
-        $byPub       = [];
-        $totalViews  = 0;
-        $totalDownl  = 0;
+        $top        = max(1, $top);
+        $byPub      = [];
+        $totalViews = 0;
+        $totalDownl = 0;
 
         foreach ($rows as $row) {
             $row   = $this->normaliseCounter($row);
@@ -557,7 +557,7 @@ class UsageCounterService
 
             if ($kind === self::KIND_VIEW) {
                 $byPub[$pub]['views'] += $count;
-                $totalViews += $count;
+                $totalViews           += $count;
             } else if ($kind === self::KIND_DOWNLOAD) {
                 $byPub[$pub]['downloads'] += $count;
                 $totalDownl += $count;
@@ -676,5 +676,4 @@ class UsageCounterService
         return ($value !== '' ? $value : null);
 
     }//end getSchemaId()
-
 }//end class

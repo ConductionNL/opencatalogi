@@ -200,14 +200,14 @@ class RetentionController extends Controller
         try {
             $catalog = $this->request->getParam('catalog', null);
             $from    = $this->request->getParam('from', null);
-            $to       = $this->request->getParam('to', null);
+            $to      = $this->request->getParam('to', null);
 
             $rows = $this->retentionService->buildReport(
                 ($catalog !== null ? (string) $catalog : null),
                 ($from !== null ? (string) $from : null),
                 ($to !== null ? (string) $to : null)
             );
-            $csv = $this->retentionService->renderReportCsv($rows);
+            $csv  = $this->retentionService->renderReportCsv($rows);
 
             return new DataDownloadResponse($csv, 'retention-report.csv', 'text/csv');
         } catch (\Throwable $e) {
