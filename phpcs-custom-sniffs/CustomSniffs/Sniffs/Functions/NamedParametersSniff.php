@@ -216,7 +216,7 @@ class NamedParametersSniff implements Sniff
 
                 // File operations
                 'file_put_contents', 'file_get_contents', 'fopen', 'fclose',
-                'fread', 'fwrite', 'fgets', 'feof', 'fseek', 'ftell',
+                'fread', 'fwrite', 'fgets', 'fputcsv', 'fgetcsv', 'feof', 'fseek', 'ftell',
                 'mkdir', 'rmdir', 'rename', 'copy', 'unlink', 'symlink',
                 'chmod', 'chown', 'chgrp', 'glob', 'scandir', 'pathinfo',
                 'realpath', 'tempnam', 'tmpfile'

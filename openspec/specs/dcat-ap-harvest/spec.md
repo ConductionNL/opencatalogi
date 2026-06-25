@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # dcat-ap-harvest Specification
 
 ## Purpose

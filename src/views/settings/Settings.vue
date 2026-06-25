@@ -1,70 +1,50 @@
 <template>
-	<div>
-		<NcSettingsSection
-			:name="t('opencatalogi', 'Open Catalogi')"
-			:description="t('opencatalogi', 'A central place for managing your Catalogi and publications')"
-			doc-url="https://docs.opencatalogi.nl" />
+	<CnAdminSettingsShell
+		app-id="opencatalogi"
+		app-name="OpenCatalogi"
+		doc-url="https://docs.opencatalogi.nl"
+		:app-version="versionInfo.appVersion"
+		:configured-version="versionInfo.configuredVersion"
+		:is-up-to-date="versionInfo.versionsMatch"
+		:show-update-button="versionInfo.needsUpdate"
+		:show-reimport="false">
+		<template #actions>
+			<NcButton
+				type="secondary"
+				:disabled="importing"
+				@click="manualImport(false)">
+				<template #icon>
+					<NcLoadingIcon v-if="importing" :size="20" />
+					<Refresh v-else :size="20" />
+				</template>
+				{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update configuration') : t('opencatalogi', 'Reimport configuration') }}
+			</NcButton>
 
-		<CnVersionInfoCard
-			app-name="OpenCatalogi"
-			:app-version="versionInfo.appVersion"
-			:configured-version="versionInfo.configuredVersion"
-			:is-up-to-date="versionInfo.versionsMatch"
-			:show-update-button="versionInfo.needsUpdate"
-			:title="t('opencatalogi', 'Version information')"
-			:description="t('opencatalogi', 'Current application and configuration versions')">
-			<template #actions>
-				<NcButton
-					type="secondary"
-					:disabled="importing"
-					@click="manualImport(false)">
-					<template #icon>
-						<NcLoadingIcon v-if="importing" :size="20" />
-						<Refresh v-else :size="20" />
-					</template>
-					{{ versionInfo.needsUpdate ? t('opencatalogi', 'Update configuration') : t('opencatalogi', 'Reimport configuration') }}
-				</NcButton>
+			<NcButton
+				type="primary"
+				:disabled="importing"
+				@click="manualImport(true)">
+				<template #icon>
+					<NcLoadingIcon v-if="importing" :size="20" />
+					<Refresh v-else :size="20" />
+				</template>
+				{{ t('opencatalogi', 'Force import') }}
+			</NcButton>
+		</template>
 
-				<NcButton
-					type="primary"
-					:disabled="importing"
-					@click="manualImport(true)">
-					<template #icon>
-						<NcLoadingIcon v-if="importing" :size="20" />
-						<Refresh v-else :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Force import') }}
-				</NcButton>
-			</template>
-			<template #default>
-				<!-- Import Results -->
-				<div v-if="importResult" class="import-result">
-					<NcNoteCard
-						v-if="importResult.success"
-						type="success">
-						{{ importResult.message }}
-					</NcNoteCard>
-					<NcNoteCard
-						v-else
-						type="error">
-						{{ importResult.message }}
-					</NcNoteCard>
-				</div>
-			</template>
-			<template #footer>
-				<div class="cn-support-info">
-					<h4>{{ t('opencatalogi', 'Support') }}</h4>
-					<p>
-						{{ t('opencatalogi', 'For support, contact us at') }}
-						<a href="mailto:support@conduction.nl">support@conduction.nl</a>
-					</p>
-					<p>
-						{{ t('opencatalogi', 'For a Service Level Agreement (SLA), contact') }}
-						<a href="mailto:sales@conduction.nl">sales@conduction.nl</a>
-					</p>
-				</div>
-			</template>
-		</CnVersionInfoCard>
+		<!-- Import Results -->
+		<div v-if="importResult" class="import-result">
+			<NcNoteCard
+				v-if="importResult.success"
+				type="success">
+				{{ importResult.message }}
+			</NcNoteCard>
+			<NcNoteCard
+				v-else
+				type="error">
+				{{ importResult.message }}
+			</NcNoteCard>
+		</div>
 
 		<NcSettingsSection
 			:name="t('opencatalogi', 'Data storage')"
@@ -194,7 +174,7 @@
 				:size="64"
 				appearance="dark" />
 		</NcSettingsSection>
-	</div>
+	</CnAdminSettingsShell>
 </template>
 
 <script>
@@ -207,7 +187,7 @@ import {
 	NcLoadingIcon,
 	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
-import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
+import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 
@@ -235,7 +215,7 @@ export default defineComponent({
 		NcButton,
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
-		CnVersionInfoCard,
+		CnAdminSettingsShell,
 		Save,
 		Refresh,
 	},

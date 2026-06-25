@@ -4,6 +4,40 @@
 	"dependencies": [
 		"openregister"
 	],
+	"setup": {
+		"enabled": true,
+		"version": 1,
+		"completionConfigKey": "onboarding_completed_version",
+		"steps": [
+			{ "id": "welcome", "type": "info", "title": "Welcome to OpenCatalogi", "body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's make sure the publishing prerequisites are in place, then you can create your first catalog." },
+			{ "id": "config-check", "type": "config-fields", "title": "Publishing prerequisites", "required": true, "body": "OpenCatalogi publishes from OpenRegister. Confirm the catalog register and schema, the publication register and the listing register are configured before the app shell unlocks. These are normally set automatically on install; set them here if OpenRegister was enabled after OpenCatalogi.", "configKeys": ["catalog_register", "catalog_schema", "publication_register", "listing_register"], "schema": { "type": "object", "required": ["catalog_register", "catalog_schema", "publication_register", "listing_register"], "properties": { "catalog_register": { "type": "string", "title": "Catalog register" }, "catalog_schema": { "type": "string", "title": "Catalog schema" }, "publication_register": { "type": "string", "title": "Publication register" }, "listing_register": { "type": "string", "title": "Listing register" } } } },
+			{ "id": "catalog-scope", "type": "choice", "title": "Default catalog scope", "configKey": "default_catalog_scope", "body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for catalogs you create — you can still tighten or widen it per catalog later.", "options": [ { "value": "public", "label": "Public (anyone can discover and read)" }, { "value": "internal", "label": "Internal (signed-in users only)" }, { "value": "private", "label": "Private (explicitly granted groups only)" } ] },
+			{ "id": "done", "type": "summary", "title": "All set", "healthCheck": true, "body": "OpenCatalogi is ready. Head to Catalogs to create your first catalog, or open the Directory to see federated catalogs you can discover from." }
+		]
+	},
+	"walkthrough": {
+		"enabled": true,
+		"version": 1,
+		"completionConfigKey": "walkthrough_seen_version",
+		"tours": [
+			{
+				"id": "opencatalogi:getting-started",
+				"title": "Getting started",
+				"trigger": "first-visit",
+				"minAppVersion": "2.4.0",
+				"steps": [
+					{ "id": "welcome", "placement": "center", "sinceVersion": "2.4.0", "title": "Welcome to OpenCatalogi", "body": "Let's walk the publishing journey together — from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.", "target": { "kind": "page", "ref": "Catalogs" }, "advanceOn": { "type": "manual" } },
+					{ "id": "go-catalogs", "sinceVersion": "2.4.0", "placement": "right", "body": "Everything you publish lives in a catalog. Open Catalogs from the menu.", "task": "Open Catalogs", "target": { "kind": "nav-item", "ref": "Catalogs" }, "advanceOn": { "type": "route-match", "route": "Catalogs" } },
+					{ "id": "create-catalog", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "Create your first catalog — it's the container your publications will live in.", "task": "Create your first catalog", "target": { "kind": "element", "ref": "index-add" }, "advanceOn": { "type": "object-created", "register": "publication", "schema": "catalog", "capture": { "catalogId": ":id" } } },
+					{ "id": "open-catalog", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "Open the catalog you just created to manage what it publishes — its publications open inside it.", "task": "Open your catalog and view its Publications", "target": { "kind": "page", "ref": "CatalogDetail" }, "advanceOn": { "type": "route-match", "route": "Publications" } },
+					{ "id": "add-publication", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "A publication is a single thing you make open — a document, dataset or record. Add your first one.", "task": "Add a publication", "target": { "kind": "element", "ref": "index-add" }, "advanceOn": { "type": "object-created", "register": "publication", "schema": "publication", "capture": { "publicationId": ":id" } } },
+					{ "id": "publish", "sinceVersion": "2.4.0", "placement": "auto", "allowManualNext": true, "title": "Publishing is access-controlled", "body": "OpenCatalogi has no separate 'publish' switch — visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.", "target": { "kind": "page", "ref": "Publications" }, "advanceOn": { "type": "manual" } },
+					{ "id": "discover", "sinceVersion": "2.4.0", "placement": "right", "body": "Published catalogs are found through the Directory — your own and federated ones. Open it to see the discovery side.", "task": "Open the Directory", "target": { "kind": "nav-item", "ref": "Directory" }, "advanceOn": { "type": "route-match", "route": "Directory" } },
+					{ "id": "done", "sinceVersion": "2.4.0", "placement": "center", "title": "You're publishing", "body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.", "target": { "kind": "page", "ref": "Directory" }, "advanceOn": { "type": "manual" } }
+				]
+			}
+		]
+	},
 	"observability": {
 		"_note": "ADR-040 declarative observability. OpenCatalogi adopts OpenRegister's AppHost engine: the /api/health and /api/metrics routes are aliased to AppHost\\Controller\\GenericHealth#index / GenericMetrics#index in appinfo/routes.php, and the engine reads this block at request time. The hand-written HealthController + MetricsController were deleted. Parity vs the pre-adoption contract: the two health checks (database critical, filesystem degraded) and search_requests_total map 1:1 to declarative descriptors; the JSON-field-grouped domain metrics (publications/catalogs/listings by status+catalog, directory entries, and the usageCounter view/download sums by catalog) are reproduced byte-for-byte by OpenCatalogiMetricsProvider via the {kind:provider} escape hatch, which runs the exact same OpenRegister-backed queries the deleted controller ran. Documented intentional improvements (matching OpenRegister's own adoption): the health JSON now carries an `app` field; the implicit opencatalogi_up gauge is engine-owned (always 1 once the request is served) rather than mirroring the DB check.",
 		"health": {
@@ -38,6 +72,7 @@
 			},
 			{
 				"name": "domain",
+				"type": "gauge",
 				"help": "OpenCatalogi domain metrics (publications, catalogs, listings, directory entries, usage view/download totals) reproduced via the provider escape hatch with the same OpenRegister-backed queries as the pre-adoption MetricsController.",
 				"source": {
 					"kind": "provider"
@@ -100,6 +135,15 @@
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 2
+		},
+		{
+			"id": "RestartTutorial",
+			"label": "Restart tutorial",
+			"icon": "icon-play",
+			"action": "replay-walkthrough",
+			"tourId": "opencatalogi:getting-started",
+			"section": "footer",
+			"order": 3
 		}
 	],
 	"pages": [

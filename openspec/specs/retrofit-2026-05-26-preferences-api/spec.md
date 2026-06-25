@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-preferences-api Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-preferences-api. Update Purpose after archive.
+Provides a server-side REST API for reading and writing per-user preferences. Both endpoints require an authenticated user and sanitize the requested key to a safe charset within the `pref_` namespace; reads return the stored value or null, writes store a non-empty value, and supplying an empty value clears the preference.
 
 > @e2e exclude Whole-spec server-side per-user preferences REST endpoint — every scenario asserts backend controller behaviour (401 on unauthenticated read, key sanitised to the safe `pref_` charset, empty value clears the preference). No UI surface; verified by PHPUnit controller tests and the Newman integration collection (auth + key-sanitization + clear-on-empty).
 

@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-dashboard-widgets Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-dashboard-widgets. Update Purpose after archive.
+Provides the OpenCatalogi dashboard and its widgets, deriving metrics such as total, published, concept, and depublished counts, KPIs, publications-by-category data, and an activity chart from loaded publications. Offers quick actions to create and open publications, persists layout changes, and includes a side bar plus catalogs, unpublished-publications, and unpublished-attachments widgets that fetch and refresh their data on show.
 
 > @e2e exclude Whole-spec reverse-engineered dashboard-widget component-logic capability — every scenario asserts computed/derived state (published/concept/depublished counts derived from loaded publications, layout-change persistence, side-bar publication-types fetched and filtered, widget refresh on show). These are deterministic computed-property / lifecycle assertions verified by vitest over the dashboard and widget components with seeded publication data; the dashboard surface itself is already real-UI covered under dashboard::load-dashboard-data and ::load-unpublished-widgets (the latter exercising the NC /apps/dashboard widgets).
 

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # woo-transparency Specification
 
 ## Purpose

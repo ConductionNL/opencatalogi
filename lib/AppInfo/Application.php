@@ -39,8 +39,10 @@ use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
 use OCA\OpenRegister\AppHost\Controller\GenericMetricsController;
+use OCA\OpenRegister\AppHost\Controller\GenericPreferencesController;
 use OCA\OpenRegister\AppHost\IMetricsProvider;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -141,16 +143,38 @@ class Application extends App implements IBootstrap
         // AppHost observability adoption (ADR-040). The /api/health and
         // /api/metrics routes resolve to leaf-namespaced controller class names
         // (OCA\OpenCatalogi\AppHost\Controller\Generic{Health,Metrics}Controller)
-        // that do not physically exist in this app; alias them to OpenRegister's
+        // that do not physically exist in this app; bind them to OpenRegister's
         // shared AppHost generics so the engine serves both endpoints from the
         // `observability` block of src/manifest.json. URL + contract unchanged.
-        $context->registerServiceAlias(
+        //
+        // These MUST be registerService closures (not registerServiceAlias) so
+        // this app's id is injected as the controllers' $appName — exactly like
+        // the Dashboard/Preferences registrations below. A bare alias leaves
+        // $appName to be autowired, and because the target class lives in the
+        // OCA\OpenRegister namespace the cross-container fallback resolves it to
+        // `openregister`, so /api/health + /api/metrics would report the wrong
+        // app and load OpenRegister's manifest instead of this app's.
+        $context->registerService(
             'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericHealthController',
-            GenericHealthController::class
+            static function ($c) {
+                return new GenericHealthController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest'),
+                    manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+                    executor: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\HealthCheckExecutor')
+                );
+            }
         );
-        $context->registerServiceAlias(
+        $context->registerService(
             'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericMetricsController',
-            GenericMetricsController::class
+            static function ($c) {
+                return new GenericMetricsController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest'),
+                    manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+                    engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine')
+                );
+            }
         );
 
         // Register the domain-metrics escape hatch under the ADR-035 alias the
@@ -160,6 +184,54 @@ class Application extends App implements IBootstrap
         $context->registerServiceAlias(
             IMetricsProvider::class.'::opencatalogi',
             OpenCatalogiMetricsProvider::class
+        );
+
+        // AppHost boilerplate adoption (ADR-040). The Dashboard (SPA page +
+        // catch-all) and per-user Preferences controllers were byte-for-byte
+        // copies of OpenRegister's shared AppHost generics, so bind this app's
+        // conventional controller class names to the engine generics with the
+        // leaf app id injected as $appName. URLs, route names and JSON
+        // contracts are unchanged; the engine owns the (identical) auth
+        // posture so the leaf can never drift it. The bespoke
+        // DashboardController + PreferencesController classes were deleted.
+        //
+        // NOT adopted (kept bespoke — domain-entangled): SettingsController
+        // (carries getPublishingOptions/updatePublishingOptions/getVersionInfo/
+        // manualImport + a GET load() that runs the register.d fragment-merge
+        // via the bespoke SettingsService — the generic SettingsController only
+        // does index/create/load with force-reimport semantics and does not
+        // reproduce that envelope), the OpenCatalogiAdmin AdminSettings (its
+        // getAuthorizedAppConfig() declares an OpenCatalogi-specific allow-list
+        // regex that the manifest-driven GenericAdminSettings does not
+        // reproduce — required for delegated-admin gating), and the federation/
+        // DCAT/catalog domain services + listeners.
+        // The /api/preferences/{key} and / + /{path} routes resolve to
+        // leaf-namespaced AppHost controller class names
+        // (OCA\OpenCatalogi\AppHost\Controller\Generic{Dashboard,Preferences}Controller)
+        // that do not physically exist in this app — same pattern as the
+        // Health/Metrics adoption above. Register them as services that
+        // construct the OpenRegister generics with this app's id injected as
+        // $appName, so templates/index.php and the `pref_` user-value namespace
+        // are scoped to opencatalogi, never OpenRegister.
+        $context->registerService(
+            'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericDashboardController',
+            static function ($c) {
+                return new GenericDashboardController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest')
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericPreferencesController',
+            static function ($c) {
+                return new GenericPreferencesController(
+                    appName: self::APP_ID,
+                    request: $c->get('OCP\\IRequest'),
+                    config: $c->get('OCP\\IConfig'),
+                    userSession: $c->get('OCP\\IUserSession')
+                );
+            }
         );
 
     }//end register()

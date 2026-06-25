@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-app-shell-settings Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-app-shell-settings. Update Purpose after archive.
+Provides the OpenCatalogi application shell and settings configuration, letting administrators load and persist the app configuration, select a register, and auto-resolve its matching schemas. Computes the user's permission set, injecting an admin permission so manifest navigation gated on admin resolves, and presents a catalog-driven main menu built from the loaded catalog collection.
 
 > @e2e exclude Whole-spec reverse-engineered settings/app-shell component-logic capability — every scenario asserts component/config wiring (schema options follow the selected register, save-all persists the configuration, admin flag injected into navigation permissions, main-menu nav items follow the configured catalogs). These are deterministic computed-property / IAppConfig-round-trip assertions verified by vitest over the settings component plus PHPUnit for the config persistence; the settings surface is already real-UI covered under admin-settings::load-admin-settings and ::save-admin-settings.
 

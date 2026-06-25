@@ -172,7 +172,12 @@ class RetentionController extends Controller
             $decision     = (string) $this->request->getParam('decision', '');
             $rationale    = (string) $this->request->getParam('note', '');
             $extendMonths = (int) $this->request->getParam('extendMonths', 0);
-            $result       = $this->retentionService->recordHumanDecision($id, $decision, $rationale, $extendMonths);
+            $result       = $this->retentionService->recordHumanDecision(
+                publicationId: $id,
+                decision: $decision,
+                rationale: $rationale,
+                extendMonths: $extendMonths
+            );
             return new JSONResponse($result);
         } catch (\Throwable $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 400);
@@ -200,19 +205,34 @@ class RetentionController extends Controller
         try {
             $catalog = $this->request->getParam('catalog', null);
             $from    = $this->request->getParam('from', null);
-            $to       = $this->request->getParam('to', null);
+            $to      = $this->request->getParam('to', null);
+
+            $catalogSlug = null;
+            if ($catalog !== null) {
+                $catalogSlug = (string) $catalog;
+            }
+
+            $fromValue = null;
+            if ($from !== null) {
+                $fromValue = (string) $from;
+            }
+
+            $toValue = null;
+            if ($to !== null) {
+                $toValue = (string) $to;
+            }
 
             $rows = $this->retentionService->buildReport(
-                ($catalog !== null ? (string) $catalog : null),
-                ($from !== null ? (string) $from : null),
-                ($to !== null ? (string) $to : null)
+                catalogSlug: $catalogSlug,
+                from: $fromValue,
+                to: $toValue
             );
-            $csv = $this->retentionService->renderReportCsv($rows);
+            $csv  = $this->retentionService->renderReportCsv($rows);
 
             return new DataDownloadResponse($csv, 'retention-report.csv', 'text/csv');
         } catch (\Throwable $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-        }
+        }//end try
 
     }//end exportReport()
 }//end class

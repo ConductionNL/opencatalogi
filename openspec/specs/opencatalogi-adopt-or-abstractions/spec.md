@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specification: opencatalogi-adopt-or-abstractions
 
 ## Purpose

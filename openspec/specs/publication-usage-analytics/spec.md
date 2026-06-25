@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # publication-usage-analytics Specification
 
 ## Purpose

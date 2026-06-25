@@ -29,7 +29,7 @@ permissions:
 jobs:
   frontend-unit:
     name: Frontend unit (Vitest — opencatalogi)
-    runs-on: codeberg-small
+    runs-on: docker
     container:
       image: code.forgejo.org/oci/ci-node:20
     steps:
@@ -52,7 +52,7 @@ jobs:
   # ---------------------------------------------------------------------------
   phpunit-coverage-ratchet:
     name: PHPUnit coverage ratchet (opencatalogi)
-    runs-on: codeberg-small
+    runs-on: docker
     container:
       image: code.forgejo.org/oci/ci-php:8.3
     steps:
@@ -90,7 +90,7 @@ jobs:
   # ---------------------------------------------------------------------------
   frontend-coverage-ratchet:
     name: Frontend coverage ratchet (opencatalogi)
-    runs-on: codeberg-small
+    runs-on: docker
     container:
       image: code.forgejo.org/oci/ci-node:20
     steps:

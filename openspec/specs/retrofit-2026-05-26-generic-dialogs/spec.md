@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # retrofit-2026-05-26-generic-dialogs Specification
 
 ## Purpose
-TBD - created by archiving change retrofit-2026-05-26-generic-dialogs. Update Purpose after archive.
+Provides the shared confirmation and action dialogs used across OpenCatalogi. Destructive delete dialogs for objects, attachments, categories, listings, and themes require explicit confirmation before deleting the targeted entity or selection and refresh the affected list, while the copy-object dialog duplicates an object and the publish-publication dialog publishes a targeted publication.
 
 > @e2e exclude Whole-spec reverse-engineered confirmation/copy/publish dialog component-logic capability — every scenario asserts dialog internals (delete requires explicit confirm then refreshes the list, copy-object produces a copy, publish-publication transitions state). These are deterministic component-unit assertions verified by vitest over the shared dialogs with a seeded target; the user-facing equivalents are already real-UI covered under publications::publish-an-unpublished-publication / ::depublish-a-published-publication, file-management::delete-an-attachment and content-management::bulk-delete-themes.
 

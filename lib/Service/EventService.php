@@ -371,8 +371,8 @@ class EventService
             return false;
         }
 
-        $now            = time();
-        $publishedTime  = strtotime((string) $publicatiedatum);
+        $now           = time();
+        $publishedTime = strtotime((string) $publicatiedatum);
         if ($publishedTime === false || $publishedTime > $now) {
             return false;
         }
@@ -419,8 +419,8 @@ class EventService
             // read-only @self envelope) and set the publication date to now.
             $data = $objectData;
             unset($data['@self']);
-            $now                       = new \DateTime();
-            $data['publicatiedatum']   = $now->format(\DateTimeInterface::ATOM);
+            $now = new \DateTime();
+            $data['publicatiedatum'] = $now->format(\DateTimeInterface::ATOM);
             // Clearing any prior depublication date keeps the object live.
             $data['depublicatiedatum'] = null;
 

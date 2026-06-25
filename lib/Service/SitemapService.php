@@ -504,7 +504,7 @@ class SitemapService
         $formatUri  = "http://publications.europa.eu/resource/authority/file-type/";
         $formatUri .= strtoupper($file['extension']);
 
-        // diwoo:atTime — the moment the document was made public. Prefer the
+        // Diwoo:atTime — the moment the document was made public. Prefer the
         // file's own published timestamp, then the publication's publicatiedatum.
         // The removed object-level @self.published is always empty for the
         // magic-mapped publication objects, so it is no longer consulted.

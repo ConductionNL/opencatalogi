@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # publication-retention-lifecycle Specification
 
 ## Purpose

@@ -83,7 +83,6 @@ class PublicationQueryService
 
     }//end __construct()
 
-
     /**
      * Determine whether the current request is made by an anonymous (logged-out) caller.
      *
@@ -106,7 +105,6 @@ class PublicationQueryService
         return $this->userSession->getUser() === null;
 
     }//end isAnonymous()
-
 
     /**
      * Determine whether an object is publicly visible (published and not depublished).
@@ -461,9 +459,11 @@ class PublicationQueryService
         // WF4 / wave-12: iterate ALL (register × schema) pairs, not just $catalogRegisters[0].
         // Previously the code only tried the first register in the list, so objects in
         // register #2+ were unreachable via this path and returned spurious 404s.
-        $registersToTry = empty($catalogRegisters) === false
-            ? array_map('intval', $catalogRegisters)
-            : [null];
+        if (empty($catalogRegisters) === false) {
+            $registersToTry = array_map('intval', $catalogRegisters);
+        } else {
+            $registersToTry = [null];
+        }
 
         $schemasToTry = array_map('intval', $catalogSchemas);
 

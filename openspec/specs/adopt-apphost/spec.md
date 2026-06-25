@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # adopt-apphost Specification
 
 ## Purpose

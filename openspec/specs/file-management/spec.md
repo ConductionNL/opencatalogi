@@ -1,5 +1,5 @@
 ---
-status: needs-rewrite
+status: done
 or_dep: register-resolver-service
 audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
