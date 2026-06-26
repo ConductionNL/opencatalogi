@@ -27,6 +27,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -44,6 +45,7 @@ class SetupControllerTest extends TestCase
     private ContainerInterface|MockObject $container;
     private IL10N|MockObject $l10n;
     private LoggerInterface|MockObject $logger;
+    private IUserSession|MockObject $userSession;
     private SetupController $controller;
 
     /**
@@ -62,6 +64,11 @@ class SetupControllerTest extends TestCase
         $this->container        = $this->createMock(ContainerInterface::class);
         $this->l10n             = $this->createMock(IL10N::class);
         $this->logger           = $this->createMock(LoggerInterface::class);
+        $this->userSession      = $this->createMock(IUserSession::class);
+
+        // Default to a signed-in user so status()'s login guard passes; the
+        // anonymous path is asserted explicitly in its own test.
+        $this->userSession->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
 
         $this->l10n->method('t')
             ->willReturnCallback(fn(string $text, array $params = []) => $text);
@@ -90,8 +97,30 @@ class SetupControllerTest extends TestCase
             $this->directoryService,
             $this->container,
             $this->l10n,
-            $this->logger
+            $this->logger,
+            $this->userSession
         );
+    }
+
+    public function testStatusRejectsAnonymous(): void
+    {
+        $session = $this->createMock(IUserSession::class);
+        $session->method('getUser')->willReturn(null);
+        $controller = new SetupController(
+            'opencatalogi',
+            $this->request,
+            $this->config,
+            $this->settingsService,
+            $this->directoryService,
+            $this->container,
+            $this->l10n,
+            $this->logger,
+            $session
+        );
+
+        $response = $controller->status();
+
+        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
     }
 
     /**

@@ -39,6 +39,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -93,6 +94,7 @@ class SetupController extends Controller
      * @param ContainerInterface $container        Container, to resolve OpenRegister ObjectService.
      * @param IL10N              $l10n             Localization.
      * @param LoggerInterface    $logger           Logger.
+     * @param IUserSession       $userSession      Current user session (login guard).
      */
     public function __construct(
         string $appName,
@@ -103,6 +105,7 @@ class SetupController extends Controller
         private readonly ContainerInterface $container,
         private readonly IL10N $l10n,
         private readonly LoggerInterface $logger,
+        private readonly IUserSession $userSession,
     ) {
         parent::__construct($appName, $request);
 
@@ -127,6 +130,13 @@ class SetupController extends Controller
      */
     public function status(): JSONResponse
     {
+        // The wizard-boot status is for signed-in users only; reject anonymous
+        // callers explicitly (defence-in-depth alongside the @NoAdminRequired
+        // login gate — ADR-005 / no-admin-idor).
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
+        }
+
         $registersWired = $this->registersConfigured();
         $scopeChosen    = ($this->config->getValueString($this->appName, 'default_catalog_scope', '') !== '');
         $catalogReady   = $this->catalogExists();
