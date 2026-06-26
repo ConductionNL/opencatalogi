@@ -40,6 +40,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request as Psr7Request;
 use GuzzleHttp\RequestOptions;
+use OCA\OpenCatalogi\AppInfo\Application;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -135,6 +136,28 @@ class DirectoryService
     }//end __construct()
 
     /**
+     * Resolve the national OpenCatalogi directory URL.
+     *
+     * Returns the `default_directory_url` app-config override when set, otherwise
+     * the canonical Application::DEFAULT_DIRECTORY_URL constant. Single source of
+     * truth for every default-directory reference (cron sync, manual sync, the
+     * first-time-setup connect-federation action, and the Add-Directory modal).
+     *
+     * @return string The resolved default directory URL.
+     *
+     * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-default-directory-url-single-source-of-truth-onb-008
+     */
+    public function getDefaultDirectoryUrl(): string
+    {
+        return $this->config->getValueString(
+            $this->appName,
+            'default_directory_url',
+            Application::DEFAULT_DIRECTORY_URL
+        );
+
+    }//end getDefaultDirectoryUrl()
+
+    /**
      * Execute synchronization during cron job (asynchronous)
      *
      * Performs scheduled synchronization of all configured directories
@@ -155,7 +178,7 @@ class DirectoryService
         $this->uniqueDirectories = $this->getUniqueDirectories();
 
         // Add default OpenCatalogi directory if not already present.
-        $defaultDirectory = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+        $defaultDirectory = $this->getDefaultDirectoryUrl();
         if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
             $this->uniqueDirectories[] = $defaultDirectory;
         }
@@ -359,7 +382,7 @@ class DirectoryService
             $this->uniqueDirectories = $this->getUniqueDirectories();
 
             // Add default OpenCatalogi directory if not already present.
-            $defaultDirectory = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+            $defaultDirectory = $this->getDefaultDirectoryUrl();
             if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
                 $this->uniqueDirectories[] = $defaultDirectory;
             }
@@ -770,7 +793,7 @@ class DirectoryService
             // Set directory properties based on whether it's new or updated.
             // Set defaults for new listings.
             $listingData['default']          = (
-                $sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
+                $sourceDirectoryUrl === $this->getDefaultDirectoryUrl()
             );
             $listingData['statusCode']       = 200;
             $listingData['status']           = 'development';

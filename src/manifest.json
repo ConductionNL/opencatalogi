@@ -1,18 +1,20 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"dependencies": [
 		"openregister"
 	],
 	"setup": {
 		"enabled": true,
-		"version": 1,
+		"version": 2,
 		"completionConfigKey": "onboarding_completed_version",
 		"steps": [
-			{ "id": "welcome", "type": "info", "title": "Welcome to OpenCatalogi", "body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's make sure the publishing prerequisites are in place, then you can create your first catalog." },
-			{ "id": "config-check", "type": "config-fields", "title": "Publishing prerequisites", "required": true, "body": "OpenCatalogi publishes from OpenRegister. Confirm the catalog register and schema, the publication register and the listing register are configured before the app shell unlocks. These are normally set automatically on install; set them here if OpenRegister was enabled after OpenCatalogi.", "configKeys": ["catalog_register", "catalog_schema", "publication_register", "listing_register"], "schema": { "type": "object", "required": ["catalog_register", "catalog_schema", "publication_register", "listing_register"], "properties": { "catalog_register": { "type": "string", "title": "Catalog register" }, "catalog_schema": { "type": "string", "title": "Catalog schema" }, "publication_register": { "type": "string", "title": "Publication register" }, "listing_register": { "type": "string", "title": "Listing register" } } } },
-			{ "id": "catalog-scope", "type": "choice", "title": "Default catalog scope", "configKey": "default_catalog_scope", "body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for catalogs you create — you can still tighten or widen it per catalog later.", "options": [ { "value": "public", "label": "Public (anyone can discover and read)" }, { "value": "internal", "label": "Internal (signed-in users only)" }, { "value": "private", "label": "Private (explicitly granted groups only)" } ] },
-			{ "id": "done", "type": "summary", "title": "All set", "healthCheck": true, "body": "OpenCatalogi is ready. Head to Catalogs to create your first catalog, or open the Directory to see federated catalogs you can discover from." }
+			{ "id": "welcome", "type": "info", "title": "Welcome to OpenCatalogi", "body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's create your first catalog and connect you to the federated network." },
+			{ "id": "config-check", "type": "run-action", "action": "reload-settings", "title": "Publishing prerequisites", "required": true, "body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install — this just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration." },
+			{ "id": "catalog-scope", "type": "choice", "title": "Default catalog scope", "required": true, "configKey": "default_catalog_scope", "body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create — you can still tighten or widen it later.", "options": [ { "value": "public", "label": "Public (anyone can discover and read)" }, { "value": "internal", "label": "Internal (signed-in users only)" }, { "value": "private", "label": "Private (explicitly granted groups only)" } ] },
+			{ "id": "create-catalog", "type": "run-action", "action": "create-first-catalog", "title": "Create your first catalog", "required": true, "body": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose — you can rename it and add publications afterwards." },
+			{ "id": "connect-federation", "type": "run-action", "action": "connect-federation", "title": "Connect to the federated network", "body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory — or skip this and it will sync automatically later." },
+			{ "id": "done", "type": "summary", "title": "All set", "healthCheck": true, "body": "OpenCatalogi is ready. Open Catalogs to manage what you publish, or the Directory to discover federated catalogs." }
 		]
 	},
 	"walkthrough": {
