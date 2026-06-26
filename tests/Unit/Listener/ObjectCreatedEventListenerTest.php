@@ -57,8 +57,7 @@ class ObjectCreatedEventListenerTest extends TestCase
 
         $entity = $this->getMockBuilder(ObjectEntity::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getUuid', 'getRegister', 'getSchema'])
-            ->onlyMethods(['jsonSerialize'])
+            ->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])
             ->getMock();
 
         $entity->method('jsonSerialize')->willReturn($jsonData);

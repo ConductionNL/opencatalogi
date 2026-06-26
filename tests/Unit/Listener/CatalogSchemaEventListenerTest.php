@@ -291,8 +291,7 @@ class CatalogSchemaEventListenerTest extends TestCase
     {
         $entity = $this->getMockBuilder(ObjectEntity::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getRegister', 'getSchema'])
-            ->onlyMethods(['getObject'])
+            ->onlyMethods(['getRegister', 'getSchema', 'getObject'])
             ->getMock();
         $entity->method('getSchema')->willReturn($schema);
         $entity->method('getRegister')->willReturn($register);
