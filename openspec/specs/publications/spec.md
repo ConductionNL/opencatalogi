@@ -6,6 +6,12 @@ retrofit_extensions:
   - PUB-018
 ---
 
+**Status**: in-progress
+**Scope**: opencatalogi
+**OpenSpec changes**:
+
+- [add-publications-fts-engine](../../changes/add-publications-fts-engine/)
+
 # Publications
 
 ## Purpose
