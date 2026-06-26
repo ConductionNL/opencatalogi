@@ -144,20 +144,16 @@ class WooService
     /**
      * Constructor.
      *
-     * @param IAppConfig         $config             App configuration.
-     * @param ContainerInterface $container          Server container for resolving OpenRegister.
-     * @param IUserSession       $userSession        Current user session (decision attribution).
-     * @param LoggerInterface    $logger             Logger.
-     * @param PublicationService $publicationService Existing publication infrastructure (reading room).
-     * @param CatalogiService    $catalogiService    Existing catalog infrastructure (reading room).
+     * @param IAppConfig         $config      App configuration.
+     * @param ContainerInterface $container   Server container for resolving OpenRegister.
+     * @param IUserSession       $userSession Current user session (decision attribution).
+     * @param LoggerInterface    $logger      Logger.
      */
     public function __construct(
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
-        private readonly PublicationService $publicationService,
-        private readonly CatalogiService $catalogiService,
     ) {
 
     }//end __construct()
@@ -463,6 +459,8 @@ class WooService
      *
      * @return int The resolved stack id (0 = leaf default).
      *
+     * @psalm-suppress UnusedParam Stub — stack mapping delegated to the deck leaf.
+     *
      * @spec exclude deck-leaf plumbing — stack mapping is the leaf's concern.
      */
     private function resolveStackId(int $boardId, string $assessment): int
@@ -559,6 +557,8 @@ class WooService
      * @param string $assessment   The target assessment enum value.
      *
      * @return void
+     *
+     * @psalm-suppress UnusedParam $assessment reserved for future stack-routing by the leaf.
      *
      * @spec exclude deck-leaf plumbing — card move is the leaf's concern.
      */

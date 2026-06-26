@@ -20,6 +20,10 @@ parameters:
         # (rule requires excludePaths), so the file is excluded. Tracked for re-enable post
         # peer-app interface stubbing.
         - lib/Tool/CMSTool.php
+        # OpenCatalogiMetricsProvider implements OCA\OpenRegister\AppHost\IMetricsProvider,
+        # which is unavailable during static analysis. PHPStan cannot ignore "implements
+        # unknown interface" via ignoreErrors (rule requires excludePaths), same as CMSTool.
+        - lib/Observability/OpenCatalogiMetricsProvider.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false
@@ -64,3 +68,9 @@ parameters:
         - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
         # OCP\Files\Node::putContent() exists on File but not on the Node interface stub
         - '#Call to an undefined method OCP\\Files\\Node::putContent\(\)#'
+        # @throws with MissingConfigException (OpenRegister exception class) — PHPStan cannot
+        # resolve the class to verify it is Throwable since OCA\OpenRegister is excluded.
+        - '#PHPDoc tag @throws with type OCA\\OpenRegister\\.*is not subtype of Throwable#'
+        # Nextcloud's TemplateResponse stub does not include 'admin' in the renderAs union
+        # even though it is a valid NC runtime value used by admin settings pages.
+        - '#Parameter \$renderAs of class OCP\\AppFramework\\Http\\TemplateResponse constructor expects.*admin.*given#'

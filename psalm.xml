@@ -79,6 +79,14 @@
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>
                 <referencedClass name="OCA\OpenRegister\Service\CalendarEventService"/>
+                <!-- OpenRegister AppHost classes (AppHost escape hatch — loaded via DI) -->
+                <referencedClass name="OCA\OpenRegister\AppHost\IMetricsProvider"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericHealthController"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericMetricsController"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericDashboardController"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericPreferencesController"/>
+                <!-- OpenRegister events not yet in the base suppression list -->
+                <referencedClass name="OCA\OpenRegister\Event\ToolRegistrationEvent"/>
                 <!-- Additional OCP infrastructure types used across the fleet -->
                 <referencedClass name="OCP\AppFramework\Bootstrap\IBootContext"/>
                 <referencedClass name="OCP\AppFramework\Bootstrap\IRegistrationContext"/>
@@ -99,6 +107,12 @@
                 <referencedClass name="GuzzleHttp\Exception\GuzzleException"/>
             </errorLevel>
         </UndefinedClass>
+        <!-- NC's IRequest interface exposes $server as a public property in the concrete
+             implementation; Psalm cannot verify this from the interface stub alone. -->
+        <NoInterfaceProperties errorLevel="suppress"/>
+        <!-- JSONResponse uses @template T which Psalm cannot resolve through addHeader() chaining.
+             The pattern is fleet-wide and correct at runtime. -->
+        <InvalidTemplateParam errorLevel="suppress"/>
         <UndefinedMagicMethod errorLevel="suppress"/>
         <UnusedClass errorLevel="suppress"/>
         <PossiblyUnusedMethod errorLevel="suppress"/>
