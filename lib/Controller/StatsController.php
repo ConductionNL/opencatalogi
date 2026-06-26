@@ -153,11 +153,10 @@ class StatsController extends Controller
         try {
             $stats            = $this->usageCounterService->getCatalogStats(catalog: $slug, from: $from, to: $to, top: $top);
             $stats['catalog'] = $slug;
-            // Period without data still returns zeros + a counting-start marker (ANA-005).
-            if (isset($stats['countingStart']) === false) {
-                $series = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: null, to: null);
-                $stats['countingStart'] = $this->usageCounterService->aggregateSeries($series)['countingStart'];
-            }
+            // Fetch the counting-start marker from the full series (ANA-005).
+            // getCatalogStats uses aggregateCatalog which does not include countingStart.
+            $series = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: null, to: null);
+            $stats['countingStart'] = $this->usageCounterService->aggregateSeries($series)['countingStart'];
 
             return new JSONResponse($stats, 200);
         } catch (\Throwable $e) {
