@@ -12,6 +12,21 @@
 			{ "key": "password", "value": "admin", "type": "string" }
 		]
 	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// WOO-504: Nextcloud requires either OCS-APIRequest:true or a valid",
+					"// requesttoken on write requests (POST/PUT/DELETE/PATCH) when using",
+					"// basic auth. Setting the header here applies it to every request",
+					"// in the collection; harmless on GET requests.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
 	"variable": [
 		{ "key": "nc1Url", "value": "http://localhost:9081", "type": "string" },
 		{ "key": "nc2Url", "value": "http://localhost:9082", "type": "string" },
