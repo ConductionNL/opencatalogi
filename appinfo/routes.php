@@ -153,6 +153,12 @@ return [
 		['name' => 'federation#publicationUsed', 'url' => '/api/federation/publications/{id}/used', 'verb' => 'GET'],
 		['name' => 'federation#publicationAttachments', 'url' => '/api/federation/publications/{id}/attachments', 'verb' => 'GET'],
 		['name' => 'federation#publicationDownload', 'url' => '/api/federation/publications/{id}/download', 'verb' => 'GET'],
+		// First-time-setup contract (ADR-042). Specific routes — MUST be before the
+		// wildcard catalog routes below, otherwise `/api/setup/status` resolves to
+		// publications#show with catalogSlug=setup ("catalog 'setup' does not exist").
+		['name' => 'setup#status', 'url' => '/api/setup/status', 'verb' => 'GET'],
+		['name' => 'setup#config', 'url' => '/api/setup/config', 'verb' => 'POST'],
+		['name' => 'setup#action', 'url' => '/api/setup/action/{actionId}', 'verb' => 'POST', 'requirements' => ['actionId' => '[a-z-]+']],
 		// Publications (wildcard catalog-based endpoints - MUST BE ABSOLUTE LAST to avoid catching any specific routes)
 		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],

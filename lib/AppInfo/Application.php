@@ -61,6 +61,19 @@ class Application extends App implements IBootstrap
     public const APP_ID = 'opencatalogi';
 
     /**
+     * Canonical national OpenCatalogi directory URL.
+     *
+     * Single source of truth for the federated-network endpoint that
+     * DirectoryService, the Add-Directory modal and the first-time-setup
+     * `connect-federation` action all default to. An instance may override it
+     * with the `default_directory_url` app-config key (see
+     * DirectoryService::getDefaultDirectoryUrl()).
+     *
+     * @var string
+     */
+    public const DEFAULT_DIRECTORY_URL = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+
+    /**
      * Constructor.
      *
      * @psalm-suppress PossiblyUnusedMethod

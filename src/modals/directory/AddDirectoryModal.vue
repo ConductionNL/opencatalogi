@@ -104,7 +104,7 @@ import { navigationStore } from '../../store/store.js'
 				<NcTextField
 					v-model="directoryUrl"
 					:label="t('opencatalogi', 'Directory URL')"
-					placeholder="https://directory.opencatalogi.nl/apps/opencatalogi/api/directory"
+					:placeholder="defaultDirectoryUrl"
 					:disabled="loading"
 					:loading="loading"
 					:helper-text="t('opencatalogi', 'The URL of the OpenCatalogi directory API endpoint')" />
@@ -142,9 +142,24 @@ import {
 } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { loadState } from '@nextcloud/initial-state'
 
 // icons
 import Sync from 'vue-material-design-icons/Sync.vue'
+
+/**
+ * Default national OpenCatalogi directory URL.
+ *
+ * Resolved once from server-provided initial state (the `default_directory_url`
+ * override, falling back server-side to Application::DEFAULT_DIRECTORY_URL).
+ * Single source of truth — never hardcode the literal in this component.
+ * @type {string}
+ */
+const DEFAULT_DIRECTORY_URL = loadState(
+	'opencatalogi',
+	'default_directory_url',
+	'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory',
+)
 
 /**
  * Loading state for the component
@@ -168,7 +183,7 @@ const error = ref(null)
  * Directory URL to sync with
  * @type {import('vue').Ref<string>}
  */
-const directoryUrl = ref('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory')
+const directoryUrl = ref(DEFAULT_DIRECTORY_URL)
 
 /**
  * Sync results from the API
@@ -208,7 +223,7 @@ const closeModal = () => {
 	success.value = null
 	error.value = null
 	syncResults.value = null
-	directoryUrl.value = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
+	directoryUrl.value = DEFAULT_DIRECTORY_URL
 }
 
 /**
@@ -231,7 +246,8 @@ export default {
 			loading: false,
 			success: null,
 			error: null,
-			directoryUrl: 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory',
+			directoryUrl: DEFAULT_DIRECTORY_URL,
+			defaultDirectoryUrl: DEFAULT_DIRECTORY_URL,
 			syncResults: null,
 			showDetails: false,
 		}

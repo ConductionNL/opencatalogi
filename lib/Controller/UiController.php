@@ -21,7 +21,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\AppInfo\Application;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -111,6 +113,19 @@ class UiController extends Controller
                 }
             }
 
+            // Surface the resolved national-directory URL (override key, falling
+            // back to the canonical constant) so the Add-Directory modal and the
+            // first-time-setup federation step default to a single source of truth
+            // instead of a hardcoded literal.
+            $this->initialState->provideInitialState(
+                'default_directory_url',
+                $this->appConfig->getValueString(
+                    $this->appName,
+                    'default_directory_url',
+                    Application::DEFAULT_DIRECTORY_URL
+                )
+            );
+
             // Create a new TemplateResponse for the index page.
             $response = new TemplateResponse(
                 $this->appName,
@@ -126,11 +141,13 @@ class UiController extends Controller
             return $response;
         } catch (\Exception $e) {
             // Return an error template response if an exception occurs.
+            // HTTP 500 is the `status` arg, not `renderAs`: the prior positional
+            // '500' silently landed in renderAs and rendered as HTTP 200 instead.
             return new TemplateResponse(
                 $this->appName,
                 'error',
                 ['error' => $e->getMessage()],
-                '500'
+                status: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }//end try
 
