@@ -9,6 +9,10 @@
 # psalm/phpstan/phpmd/test:all are wrapped in `|| echo skipping` so they never
 # affect pass/fail (ADR-022 parks static analysis), and running them on the medium
 # runner OOMs it. lint+phpcs is the identical enforced gate, fast and deterministic.
+#
+# Hydra is cloned via `git clone` (not actions/checkout) because the checkout
+# action's `repository:` parameter resolves against github.com, not codeberg.org,
+# so Conduction/hydra would be looked up on GitHub (where it doesn't exist).
 
 name: pre-merge-check-strict
 
@@ -49,11 +53,9 @@ jobs:
           composer phpcs
 
       - name: Clone Hydra (for gate runner)
-        uses: https://github.com/actions/checkout@v4
-        with:
-          repository: Conduction/hydra
-          ref: development
-          path: .hydra
+        run: |
+          git clone --depth=1 -b development \
+            https://codeberg.org/Conduction/hydra.git .hydra
 
       - name: Run all Hydra gates (diff-scoped per ADR-020)
         run: |
