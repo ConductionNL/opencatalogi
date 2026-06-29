@@ -232,7 +232,7 @@
         "x-openregister-notifications": {
           "retention-expiring-soon": {
             "trigger": {
-              "type": "field-changed",
+              "type": "calculatedChange",
               "field": "retentionExpiresAt"
             },
             "enabled": true,
