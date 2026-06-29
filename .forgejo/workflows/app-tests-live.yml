@@ -44,6 +44,7 @@ permissions:
 jobs:
   live:
     uses: ./.forgejo/workflows/tests-live.yml
+    secrets: inherit
     with:
       app-id: opencatalogi
       is-openregister: false
