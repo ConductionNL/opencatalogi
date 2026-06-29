@@ -206,6 +206,14 @@ install_apps() {
     # Disable brute force protection for test environment
     docker exec -u www-data "$container" php occ config:system:set auth.bruteforce.protection.enabled --type=boolean --value=false 2>&1
 
+    # Allow cross-container federation in this isolated test environment.
+    # The opencatalogi/local_federation_hosts allowlist is empty by default,
+    # so the SSRF guard in DirectoryService::assertSafeOutboundUrl() rejects
+    # the internal docker-bridge addresses of nc-fed-1/nc-fed-2. Opting both
+    # hostnames into the dev allowlist here is local-only; production keeps
+    # the guard fully active.
+    docker exec -u www-data "$container" php occ config:app:set opencatalogi local_federation_hosts --value="nc-fed-1,nc-fed-2" 2>&1
+
     success "  Apps installed on $name"
 }
 
