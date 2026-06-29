@@ -326,9 +326,26 @@ class ListingsController extends Controller
         $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
         $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
 
-        // Save the updated listing object with the id as UUID for update.
+        // Load the existing listing and merge the PUT body onto it. OR's
+        // saveObject() treats its input as the full record — lifecycle hooks
+        // (e.g. "status must be a non-empty string") run against the incoming
+        // payload, not against a server-side merge with the stored object. A
+        // partial PUT therefore drops required fields like `status` and trips
+        // HookStoppedException → 500. Pre-merging here gives the endpoint
+        // real PATCH semantics: callers can send only the fields they want to
+        // change without losing the rest of the listing.
+        $existing = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+        if ($existing instanceof \OCP\AppFramework\Db\Entity) {
+            $existingData = $existing->jsonSerialize();
+        } else {
+            $existingData = (array) $existing;
+        }
+
+        $merged = array_merge($existingData, $data);
+
+        // Save the merged listing object with the id as UUID for update.
         $object = $this->getObjectService()->saveObject(
-            object: $data,
+            object: $merged,
             extend: [],
             register: $listingRegister,
             schema: $listingSchema,
