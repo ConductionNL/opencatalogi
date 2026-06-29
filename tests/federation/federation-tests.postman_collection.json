@@ -547,6 +547,13 @@
 						"        var title = r.title || (r.object && r.object.title) || 'untitled';",
 						"        console.log('   [' + i + '] ' + title);",
 						"    });",
+						"});",
+						"",
+						"pm.test('WOO-493 AC #3: _performance.federation flag set to true', function () {",
+						"    var json = pm.response.json();",
+						"    pm.expect(json._performance).to.be.an('object');",
+						"    pm.expect(json._performance.federation).to.equal(true, '_performance.federation must be true on aggregated endpoint');",
+						"    console.log('✅ _performance.federation flag: ' + json._performance.federation);",
 						"});"
 					], "type": "text/javascript" }}],
 					"request": { "method": "GET", "url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/federation/publications?_aggregate=true", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "federation", "publications"], "query": [{ "key": "_aggregate", "value": "true" }] } }
@@ -906,6 +913,118 @@
 						"});"
 					], "type": "text/javascript" }}],
 					"request": { "method": "GET", "url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/directory", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "directory"] } }
+				}
+			]
+		},
+		{
+			"name": "Phase 10: AC coverage gaps (WOO-493 regression protection)",
+			"item": [
+				{
+					"name": "10.1 SSRF guard rejects localhost (AC #6)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('SSRF guard rejects localhost', function () {",
+						"    pm.expect(pm.response.code).to.equal(400);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.error || json.message || '').to.match(/disallowed|not allowed|internal/i, 'SSRF rejection error must mention host disallowed');",
+						"    console.log('✅ Localhost rejected: ' + (json.error || json.message));",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\"url\":\"http://localhost:9999/api/directory\"}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/add", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "add"] }
+					}
+				},
+				{
+					"name": "10.2 SSRF guard rejects 127.0.0.1 (AC #6)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('SSRF guard rejects 127.0.0.1', function () {",
+						"    pm.expect(pm.response.code).to.equal(400);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.error || json.message || '').to.match(/disallowed|internal/i);",
+						"    console.log('✅ 127.0.0.1 rejected: ' + (json.error || json.message));",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\"url\":\"http://127.0.0.1/api/directory\"}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/add", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "add"] }
+					}
+				},
+				{
+					"name": "10.3 SSRF guard rejects 10.0.0.1 RFC1918 (AC #6)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('SSRF guard rejects 10.0.0.1', function () {",
+						"    pm.expect(pm.response.code).to.equal(400);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.error || json.message || '').to.match(/disallowed|internal/i);",
+						"    console.log('✅ 10.0.0.1 rejected: ' + (json.error || json.message));",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\"url\":\"http://10.0.0.1/api/directory\"}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/add", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "add"] }
+					}
+				},
+				{
+					"name": "10.4 SSRF guard rejects 169.254.169.254 cloud metadata (AC #6)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('SSRF guard rejects cloud metadata IP', function () {",
+						"    pm.expect(pm.response.code).to.equal(400);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json.error || json.message || '').to.match(/disallowed|internal/i);",
+						"    console.log('✅ 169.254.169.254 rejected: ' + (json.error || json.message));",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\"url\":\"http://169.254.169.254/api/directory\"}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/add", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "add"] }
+					}
+				},
+				{
+					"name": "10.5 Setup wizard connect-federation action contract (AC #7)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('connect-federation action responds with structured contract', function () {",
+						"    pm.expect(pm.response.code).to.equal(200);",
+						"    var json = pm.response.json();",
+						"    pm.expect(json).to.have.property('success');",
+						"    pm.expect(json.success).to.be.a('boolean');",
+						"    pm.expect(json).to.have.property('message');",
+						"    pm.expect(json.message).to.be.a('string');",
+						"    console.log('✅ connect-federation: success=' + json.success + ' message=' + json.message);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/setup/action/connect-federation", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "setup", "action", "connect-federation"] }
+					}
+				},
+				{
+					"name": "10.6 Federation response includes facets payload when requested (AC #4)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Federation endpoint returns facet payload with _facetable=true', function () {",
+						"    pm.expect(pm.response.code).to.equal(200);",
+						"    var json = pm.response.json();",
+						"    // Aggregated federation response surfaces both a `facets` field (active selection",
+						"    // or facet results, list-shaped when _facetable=true) and a `facetable` field (the",
+						"    // discoverable facet types). At minimum one of them must be present.",
+						"    pm.expect(json).to.satisfy(function (j) { return ('facets' in j) || ('facetable' in j); }, 'aggregated federation response must include facets or facetable');",
+						"    pm.expect(json._performance).to.be.an('object');",
+						"    pm.expect(json._performance.federation).to.equal(true, '_performance.federation must be true on aggregated endpoint');",
+						"    console.log('✅ Facet payload keys present:'",
+						"        + (' facets=' + (Array.isArray(json.facets) ? 'array[' + json.facets.length + ']' : typeof json.facets))",
+						"        + ' facetable=' + (Array.isArray(json.facetable) ? 'array[' + json.facetable.length + ']' : typeof json.facetable));",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": { "method": "GET", "url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/federation/publications?_aggregate=true&_facetable=true", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "federation", "publications"], "query": [{ "key": "_aggregate", "value": "true" }, { "key": "_facetable", "value": "true" }] } }
 				}
 			]
 		}
