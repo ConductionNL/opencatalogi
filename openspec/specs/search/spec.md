@@ -4,6 +4,12 @@ or_dep: zoeken-filteren
 audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
 
+**Status**: in-progress
+**Scope**: opencatalogi
+**OpenSpec changes**:
+
+- `add-public-fulltext-search` — in-progress — adds public, RBAC-filtered `GET /apps/opencatalogi/api/search` returning mixed publication/document rows (absorbs the admin-only endpoint; adds a bundled `document` schema). Existing `SCH-OR-001` / `SCH-OR-002` are untouched.
+
 # Search
 
 > **NEEDS-REWRITE notice:** This spec was rewritten as part of
