@@ -239,15 +239,43 @@ class Application extends App implements IBootstrap
     /**
      * Boot the application.
      *
+     * Registers the app-menu navigation entry via INavigationManager (see body).
+     *
      * @param IBootContext $context The boot context.
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @spec exclude Framework lifecycle hook; app-menu navigation registration is infrastructure, not a spec'd feature.
      */
     public function boot(IBootContext $context): void
     {
         // Initialization handled by the Repair step (InitializeSettings).
         // See lib/Repair/InitializeSettings.php.
+        //
+        // Register the app-menu navigation entry in PHP instead of info.xml.
+        // The dashboard SPA is served by the engine-namespaced AppHost route
+        // OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#page (see appinfo/routes.php),
+        // whose generated route name contains backslashes. info.xml's <navigations><route>
+        // is validated against the App Store's info.xsd pattern [0-9a-zA-Z_]+(\.[0-9a-zA-Z_]+){2},
+        // which rejects that name (HTTP 400 on publish). IURLGenerator::linkToRoute() carries
+        // no such constraint, so registering here keeps the app-menu href working AND lets the
+        // release pass App Store validation.
+        $server            = $context->getServerContainer();
+        $navigationManager = $server->get(\OCP\INavigationManager::class);
+        $navigationManager->add(
+            static function () use ($server) {
+                $urlGenerator = $server->get(\OCP\IURLGenerator::class);
+                $l10n         = $server->get(\OCP\L10N\IFactory::class)->get(Application::APP_ID);
+
+                return [
+                    'id'    => Application::APP_ID,
+                    'order' => 10,
+                    'href'  => $urlGenerator->linkToRoute('opencatalogi.oca\opencatalogi\apphost\controller\genericdashboard.page'),
+                    'icon'  => $urlGenerator->imagePath(Application::APP_ID, 'app.svg'),
+                    'name'  => $l10n->t('Catalogi'),
+                    'type'  => 'link',
+                ];
+            }
+        );
     }//end boot()
 }//end class
