@@ -33,6 +33,8 @@
 import DashboardView from './views/dashboard/Dashboard.vue'
 import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
+import FederationDirectory from './views/directory/FederationDirectory.vue'
+import FederationSearch from './views/search/FederationSearch.vue'
 import {
 	CnFederationStatus,
 	CnFileManager,
@@ -47,6 +49,8 @@ export default {
 	CatalogDetailPageView,
 	WooBatchDetailView,
 	CnFederationStatus,
+	FederationDirectory,
+	FederationSearch,
 
 	// --- Detail-page widgets (referenced by `widgetKey` in manifest pages). ---
 	'theme-preview': CnThemePreview,
