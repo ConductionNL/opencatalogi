@@ -322,12 +322,10 @@
 		{
 			"id": "Search",
 			"route": "/search",
-			"type": "search",
+			"type": "custom",
 			"title": "Search",
-			"config": {
-				"register": "publication",
-				"schema": "publication"
-			}
+			"component": "FederationSearch",
+			"_note": "FederationSearch (custom) wraps CnSearchPage with the federation-aware search store so /search hits /api/federation/publications. The previous type:'search' default fanned out per-schema against the local OpenRegister, bypassing federation entirely."
 		},
 		{
 			"id": "Organizations",
@@ -613,8 +611,8 @@
 			"route": "/directory",
 			"type": "custom",
 			"title": "Directory",
-			"component": "CnFederationStatus",
-			"_note": "Federated-directory list rendered by CnFederationStatus from @conduction/nextcloud-vue (federation discovery + per-node availability)."
+			"component": "FederationDirectory",
+			"_note": "FederationDirectory (custom) fetches /api/listings and renders CnFederationStatus with mapped nodes + an admin add-directory modal. The bare CnFederationStatus this replaced shipped a permanent empty-state because the manifest had no :nodes binding."
 		},
 		{
 			"id": "FeaturesRoadmap",
