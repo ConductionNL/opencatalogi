@@ -432,7 +432,13 @@
 }
 
 .viewHeaderTitleIndented {
-  padding-left: 24px;
+  /*
+   * 56px reserves room for the NcAppNavigationToggle icon. See
+   * ../nextcloud-vue/src/components/CnPageRenderer/CnPageRenderer.vue:993 —
+   * "Custom pages MUST add `padding-inline-start: 56px` to their HEADER".
+   * padding-inline-start (not padding-left) keeps this bidi-safe.
+   */
+  padding-inline-start: 56px;
 }
 
 .viewHeader p {
