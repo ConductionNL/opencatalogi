@@ -300,22 +300,9 @@ class ListingsController extends Controller
     }//end create()
 
     /**
-     * Allow-list of listing fields an admin may mutate via PUT /api/listings/{id}.
-     *
-     * Directory-identity fields (`directory`, `search`, `publications`) are
-     * intentionally excluded: they carry the cached sync-state (lastSync,
-     * statusCode, available) that pins this listing to the current peer.
-     * Rebinding those URLs on an existing listing would silently associate
-     * that cached state with a different peer — semantically a re-add, not
-     * an edit, and (worse) a mass-assignment vector back onto the federation
-     * SSRF path that WOO-513 hardened `/api/listings/add` against. Correct
-     * workflow is `DELETE /api/listings/{id}` + `POST /api/listings/add`
-     * with the new URL. Other fields not on the list (statusCode, lastSync,
-     * available, catalog, publication metadata) are server-managed and must
-     * not be settable by clients.
-     *
-     * Widening this list is a deliberate security decision — do not do it
-     * in the same PR that introduces a new UI field. See WOO-511 PR #79.
+     * PUT /api/listings/{id} allow-list. Directory-identity URLs and server-managed
+     * sync state (statusCode, lastSync, available) stay off deliberately: rebinding
+     * them would revive the federation-SSRF vector WOO-513 hardened. Widen with care.
      *
      * @var list<string>
      */
@@ -328,16 +315,8 @@ class ListingsController extends Controller
     ];
 
     /**
-     * Update an existing listing.
-     *
-     * Admin-only per SB1 / WF1 SSRF hardening (wave-12): rebinding a listing's
-     * `directory` URL would let any authenticated user redirect the cached
-     * peer identity, chaining into the same federation-SSRF class WOO-513
-     * fixed on `/api/listings/add`. Enforcement is two-layer here — a hard
-     * `#[AuthorizedAdminSetting]` gate at the middleware layer, and a
-     * field-allow-list inside the method (`UPDATABLE_LISTING_FIELDS`) so a
-     * future admin-role widening still can't smuggle URL mutations through
-     * this endpoint.
+     * Update an existing listing. Admin-only (SB1/WF1 SSRF hardening, wave-12):
+     * `#[AuthorizedAdminSetting]` gates entry, `UPDATABLE_LISTING_FIELDS` gates the payload.
      *
      * @param string|integer $id The ID of the listing to update.
      *
@@ -354,11 +333,8 @@ class ListingsController extends Controller
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
-        // Field allow-list (see UPDATABLE_LISTING_FIELDS PHPDoc for rationale).
-        // Silently drops any keys outside the allow-list; the response's
-        // updated object shows exactly what the server persisted so callers
-        // can spot the drop without an error path (mass-assignment
-        // attempts should not be leaked as validation errors).
+        // Silently drops off-list keys — the response object shows what stuck so
+        // callers see the delta without leaking mass-assignment probes as errors.
         $allowed = [];
         foreach (self::UPDATABLE_LISTING_FIELDS as $field) {
             if (array_key_exists($field, $data) === true) {
@@ -406,11 +382,9 @@ class ListingsController extends Controller
     /**
      * Delete a listing.
      *
-     * Admin-only per SB1 / WF1 SSRF hardening (wave-12): removing a peer
-     * listing is a federation-topology change, not a per-user action.
-     * Enforced via `#[AuthorizedAdminSetting]` on top of the framework's
-     * default admin-gate; the extra attribute lands us on the delegated-
-     * admin audit trail alongside the other mutating admin endpoints.
+     * Admin-only (SB1/WF1 SSRF hardening, wave-12): removing a peer is a
+     * federation-topology change; `#[AuthorizedAdminSetting]` also puts it on
+     * the delegated-admin audit trail.
      *
      * @param string|integer $id The ID of the listing to delete.
      *

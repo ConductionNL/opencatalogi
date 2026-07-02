@@ -2,26 +2,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// FederationDirectory — data layer + admin surface for the Directory page.
-// The manifest's previous `component: "CnFederationStatus"` mounted the
-// bare presentational widget with no `:nodes` prop, so it always rendered
-// the empty-state regardless of /api/listings content. This wrapper
-// fetches the peer listings and renders a compact status summary +
-// per-row table with edit / delete affordances. The Add / Edit modals
-// are separate isolated files under src/modals/directory/ so
-// hydra-gate-modal-isolation is satisfied.
-//
-// The modal-open flags use a `federation…` prefix so the manifest-v2
-// wrappers never collide with the legacy AddDirectoryModal / EditListing
-// modals (which key on `'addDirectory'` / `'editListing'`) if both shells
-// ever coexist.
-//
-// References:
-//   - WOO-493 manual walkthrough (2026-06-30) — surfaced the missing binding.
-//   - WOO-510 — Directory + Search UI binding.
-//   - WOO-511 — this change: edit + delete affordances.
-//   - src/modals/directory/FederationAddDirectoryModal.vue
-//   - src/modals/directory/FederationEditListingModal.vue
+// Data layer + admin surface for the Directory page. Replaces the
+// manifest's earlier `component: "CnFederationStatus"` binding which
+// mounted the presentational widget without a `:nodes` prop and stuck
+// on the empty state. Modal-open flags use a `federation…` prefix to
+// avoid colliding with the legacy AddDirectoryModal / EditListing keys.
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
@@ -69,20 +54,11 @@ export default {
 		},
 	},
 	watch: {
-		/**
-		 * Refresh the listing set whenever any Directory-modal closes,
-		 * so a successful add / edit / delete surfaces immediately.
-		 *
-		 * @param {string|null} next Current modal name (null when closed).
-		 * @param {string|null} prev Previous modal name.
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
+		// Refresh listings after any Directory-modal closes. Also clears the
+		// staged row so we don't pin the previously-edited listing (WOO-511 PR #79).
 		modalState(next, prev) {
 			const dirModals = ['federationAddDirectory', 'federationEditListing', 'federationDeleteListing']
 			if (dirModals.includes(prev) && next !== prev) {
-				// Also drop the reference to the row-focus object so it doesn't
-				// pin the previously-edited listing in memory (WOO-511 PR #79
-				// review: `editingListing`/`deletingListing` never cleared).
 				if (prev === 'federationEditListing') this.editingListing = null
 				if (prev === 'federationDeleteListing') this.deletingListing = null
 				this.load()
@@ -94,15 +70,6 @@ export default {
 	},
 	methods: {
 		t,
-		/**
-		 * Fetch peer listings from the OpenCatalogi listings endpoint.
-		 * `/api/listings` is a regular AppFramework route, not an OCS one —
-		 * no `OCS-APIRequest` header needed here (adding it would be
-		 * cargo-cult; the endpoint's CSRF middleware doesn't consult it).
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
 		async load() {
 			this.loading = true
 			this.error = null
@@ -121,14 +88,6 @@ export default {
 				this.loading = false
 			}
 		},
-		/**
-		 * Map a listing record to a discrete status value used for the
-		 * summary row and the per-row dot.
-		 *
-		 * @param {object} listing Listing record from /api/listings.
-		 * @return {'up'|'degraded'|'down'|'unknown'}
-		 * @spec exclude presentation-only mapper — no behaviour change on the wire
-		 */
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
@@ -138,14 +97,6 @@ export default {
 			}
 			return 'unknown'
 		},
-		/**
-		 * Localised status-message rendered under each row when the peer
-		 * is not fully healthy.
-		 *
-		 * @param {object} listing Listing record from /api/listings.
-		 * @return {string} Human-readable status message.
-		 * @spec exclude presentation-only mapper — no behaviour change on the wire
-		 */
 		messageFor(listing) {
 			if (listing.available === false) return t('opencatalogi', 'Peer is unreachable')
 			if (typeof listing.statusCode === 'number' && (listing.statusCode < 200 || listing.statusCode >= 300)) {
@@ -153,53 +104,19 @@ export default {
 			}
 			return ''
 		},
-		/**
-		 * Open the add-peer modal.
-		 *
-		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
 		openAdd() {
 			navigationStore.setModal('federationAddDirectory')
 		},
-		/**
-		 * Open the edit modal for a specific listing.
-		 *
-		 * @param {object} listing Listing to edit.
-		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
 		openEdit(listing) {
 			this.editingListing = listing
 			navigationStore.setModal('federationEditListing')
 		},
-		/**
-		 * Open the delete-confirmation modal for a listing. The modal itself
-		 * performs the DELETE request and closes on success — we react by
-		 * re-fetching the list via the modalState watcher above (no
-		 * `window.confirm` any more; that used the browser-native dialog and
-		 * didn't match NC theming, WOO-511 review feedback).
-		 *
-		 * @param {object} listing Listing to remove.
-		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
 		openDelete(listing) {
 			this.deletingListing = listing
 			navigationStore.setModal('federationDeleteListing')
 		},
-		/**
-		 * Human-readable integration level for the row column. Maps the raw
-		 * enum wire value to the same localised label the edit modal uses,
-		 * so a user seeing "Federated search" in the row and clicking Edit
-		 * finds the same option pre-selected in the dropdown. Unknown values
-		 * fall back to the raw string (surfacing peer-side drift without
-		 * silently dropping information).
-		 *
-		 * @param {object} listing Listing record from /api/listings.
-		 * @return {string}
-		 * @spec exclude presentation-only mapper — no behaviour change on the wire
-		 */
+		// Mirrors the same localised labels the edit modal shows in its dropdown,
+		// so the row value and the pre-selected option stay in sync.
 		integrationLevelFor(listing) {
 			const raw = listing.integrationLevel
 			if (raw === undefined || raw === null || raw === '') return t('opencatalogi', 'not set')

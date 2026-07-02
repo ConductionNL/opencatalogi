@@ -2,15 +2,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// FederationDeleteListingModal — Nextcloud-styled confirmation modal
-// for removing a peer listing. Replaces the earlier `window.confirm`
-// pop-up (which uses the browser's native dialog and doesn't match the
-// NC look-and-feel or theming). Modeled on
-// src/modals/menuItem/DeleteMenuItemModal.vue: same NcModal-based
-// pattern, same navigation-store flag control.
-//
-// References:
-//   - WOO-511 — Directory edit + delete affordances.
+// NC-styled confirmation modal for removing a peer listing (replaces the
+// earlier browser `window.confirm`). Same pattern as
+// src/modals/menuItem/DeleteMenuItemModal.vue.
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
@@ -80,14 +74,6 @@ export default {
 			}
 			navigationStore.setModal(null)
 		},
-		/**
-		 * DELETE /api/listings/{id} — remove the peer listing. This is a
-		 * regular AppFramework route (not OCS), so no `OCS-APIRequest`
-		 * header is needed here.
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
 		async handleDelete() {
 			if (!this.listing) {
 				return
@@ -108,9 +94,8 @@ export default {
 				}
 				this.success = true
 				this.$emit('deleted', this.listing)
-				// Close after a short beat so the success note is visible.
-				// Cancel-safe via the timer handle stored on the component
-				// (WOO-511 PR #79 review).
+				// Delay close so the success note is visible; timer handle is
+				// tracked so beforeDestroy() can cancel it (PR #79 review).
 				this.closeTimer = setTimeout(() => {
 					this.closeTimer = null
 					this.close()

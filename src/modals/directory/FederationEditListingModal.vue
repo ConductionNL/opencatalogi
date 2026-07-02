@@ -2,24 +2,17 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// FederationEditListingModal — edit a peer listing's metadata.
-// Currently exposes only the `integrationLevel` field since that's the
-// only mutable-and-user-visible one on the current listing schema; the
-// URL is set at create-time via /api/listings/add and shouldn't drift.
-//
-// References:
-//   - WOO-511 — Directory edit + delete affordances.
-//   - WOO-502 — the partial-PUT semantics this modal relies on.
+// Edit a peer listing's metadata. Only `integrationLevel` is exposed;
+// the URL is create-time-only via /api/listings/add. Uses WOO-502's
+// partial-PUT semantics.
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcModal, NcButton, NcSelect, NcNoteCard } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
 
-// Localised integration-level options. The `value` is the wire-protocol
-// enum consumed by ListingsController::UPDATABLE_LISTING_FIELDS; the
-// `label` is the human-readable rendering shown in the dropdown and in
-// the row's integrationLevel column.
+// `value` = wire enum for ListingsController::UPDATABLE_LISTING_FIELDS;
+// `label` = the rendering also shown in the row's integrationLevel column.
 function buildIntegrationLevels() {
 	return [
 		{ value: 'search', label: t('opencatalogi', 'Federated search') },
@@ -82,12 +75,6 @@ export default {
 		close() {
 			navigationStore.setModal(null)
 		},
-		/**
-		 * PATCH the listing via PUT /api/listings/{id} (partial per WOO-502).
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
 		async submit() {
 			if (!this.listing) {
 				return
