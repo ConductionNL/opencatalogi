@@ -18,6 +18,32 @@ import {
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
 
+// App-scoped global overrides. Injected as a `<style>` tag rather than
+// via webpack's style-loader — the module resolver in the base config
+// treats standalone .css/.scss imports as side-effect-free and tree-shakes
+// them out of the entry bundle even when explicitly imported. Injecting
+// manually side-steps the whole loader chain (WOO-512).
+;(function injectGlobalStyles() {
+	if (typeof document === 'undefined' || document.getElementById('opencatalogi-global-styles')) return
+	const el = document.createElement('style')
+	el.id = 'opencatalogi-global-styles'
+	el.textContent = `
+		/* WOO-512 — reserve horizontal room for the NcAppNavigationToggle icon so
+		 * it doesn't overlap the first heading on manifest-v2 pages. The toggle
+		 * sits inside .app-navigation-toggle-wrapper and is positioned to overflow
+		 * ~42px past the nav's right border; without this reservation the icon
+		 * chews off the first letter of every page title.
+		 * Guarded with :has() so mobile/fullscreen viewports without the toggle
+		 * keep their layout. Scoped to the first-child block of the page-renderer
+		 * so inner grids inside pages keep their own layout metrics untouched.
+		 */
+		.app-opencatalogi:has(.app-navigation-toggle) .cn-page-renderer > *:first-child {
+			padding-inline-start: 52px;
+		}
+	`
+	document.head.appendChild(el)
+})()
+
 import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
