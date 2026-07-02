@@ -179,6 +179,16 @@ export default {
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 16px;
+	/*
+	 * Reserve 56px on the inline-start so the NcAppNavigationToggle's icon
+	 * doesn't overlap the h2. See CnPageRenderer.vue's PR-355/PR-359 note:
+	 * custom pages that render their own heading MUST carry this padding
+	 * on the heading's container — the library rejected the abstract
+	 * `.cn-page-renderer > *` and wrapper-div variants because they either
+	 * failed against scoped-style specificity or narrowed body content
+	 * unintentionally. Per-header padding is the sanctioned pattern.
+	 */
+	padding-inline-start: 56px;
 }
 .federation-directory__title {
 	margin: 0;
