@@ -2,30 +2,27 @@
 
 This change is `kind: mixed` (per ADR-032). Tasks are ordered so the schema declaration lands before the code that consumes it, mirroring a config → code chain even though it ships as one change.
 
-- [ ] Freeze the delta spec under `openspec/changes/add-public-fulltext-search/specs/search/spec.md` (ADDED requirements SCH-PFTS-001 … SCH-PFTS-006); confirm `openspec validate add-public-fulltext-search` is green
+- [ ] Freeze the delta spec under `openspec/changes/add-public-fulltext-search/specs/search/spec.md` (ADDED requirements SCH-PFTS-001 … SCH-PFTS-007); confirm `openspec validate add-public-fulltext-search` is green
   - Spec ref: specs/search/spec.md (this change)
   - Acceptance: openspec validator reports "is valid"; SCH-OR-001/SCH-OR-002 untouched
-- [ ] Add the `document` schema to `lib/Settings/publication_register.json` as a bundled schema (alongside `publication`, `catalog`, …)
+- [ ] Add the `document` schema to `lib/Settings/publication_register.json` under `components.schemas` (alongside `publication`, `catalog`, `page`, `menu`, `theme`, `glossary`, `listing`, `organization`, `usageCounter`)
   - Spec ref: SCH-PFTS-005
-  - Acceptance: schema present under `components.schemas.document`; listed in the publication register's `schemas` array; `searchable: true`; `authorization.read` mirrors `publication`'s anonymous projection
-- [ ] Wire the `document` schema into `configuration.schemas` so the magic mapper allocates a dedicated table on first install
-  - Spec ref: SCH-PFTS-005
-  - Acceptance: `configuration.schemas.document` carries `magicMapping: true` and `autoCreateTable: true`
-- [ ] Generate seed data: at least 2 document objects (municipality scenario + consultancy scenario) linked to existing seed publications
+  - Acceptance: schema present under `components.schemas.document`; `searchable: true`; `authorization.read` mirrors `publication`'s anonymous projection; magic mapper auto-allocates `oc_openregister_table_publication_document` on first install (no `configuration.schemas` block needed — the bundle's existing schemas rely on the same auto-allocation)
+- [ ] Add seed data per ADR-001 + design.md "Seed Data": 2 seed publications (municipality + consultancy scenarios) AND 2 seed documents linking to them. The current bundle ships NO seed publications, so this step adds both surfaces together.
   - Spec ref: ADR-001 (Seed Data) + design.md "Seed Data"
-  - Acceptance: seed rows reachable on a fresh install; each row carries `@self.schema = "document"` and an embedded `publication: {id, slug, titel}`
+  - Acceptance: 4 new entries under `components.objects[]` with the bundle's canonical `@self: { register, schema, slug }` envelope (no top-level `id`); each document row carries an embedded `publication: { slug, title }` referencing one of the two new seed publications; re-import is idempotent (matches on `@self.slug`)
 - [ ] Promote `lib/Controller/SearchController::index()` to public — remove the anonymous-401 guard, annotate with `#[PublicPage]` + `#[NoCSRFRequired]`
   - Spec ref: SCH-PFTS-001
   - Acceptance: anonymous GET returns HTTP 200 with a result envelope; no path to HTTP 401 on the endpoint
 - [ ] Register the public route in `appinfo/routes.php` (or confirm the existing route is reused) so `GET /apps/opencatalogi/api/search` resolves to `SearchController::index`
   - Spec ref: SCH-PFTS-001
   - Acceptance: route present; `gate-route-reachability` and `gate-route-auth` both green
-- [ ] Extend the search assembly (a helper in `PublicationQueryService` or a sibling service) to call OR's `zoeken-filteren` across both `publication` and `document` schemas and merge candidate rows into one flat array
-  - Spec ref: SCH-PFTS-002, SCH-PFTS-006
-  - Acceptance: response envelope is a single array; each row carries `@self.schema`; no separate `publications`/`documents` sub-arrays
-- [ ] Embed `publication: {id, slug, titel}` on each document row during assembly
+- [ ] Extend the search assembly (a helper in `PublicationQueryService` or a sibling service) to call OR's `zoeken-filteren` across both `publication` and `document` schemas and merge candidate rows into one flat array; do NOT filter the OR-side search surface down to a subset of properties
+  - Spec ref: SCH-PFTS-002, SCH-PFTS-006, SCH-PFTS-007
+  - Acceptance: response envelope is a single array; each row carries `@self.schema`; no separate `publications`/`documents` sub-arrays; matches surface across every `searchable` property of both schemas (verified by a test that adds a new string property to one of the seed rows and confirms it matches without controller changes)
+- [ ] Embed `publication: {id, slug, title}` (English `title` — matches the bundled publication schema) on each document row during assembly
   - Spec ref: SCH-PFTS-003
-  - Acceptance: every document row in the response carries the embedded publication summary; rows whose linked publication is missing are dropped
+  - Acceptance: every document row in the response carries the embedded publication summary with English field names; rows whose linked publication is missing are dropped
 - [ ] Apply `isObjectPublic()` to anonymous results AFTER scoring/merge (post-filter, never folded into the OR query)
   - Spec ref: SCH-PFTS-004
   - Acceptance: PHPUnit test demonstrates that a candidate row excluded by visibility was present pre-filter and absent post-filter; ordering invariant documented in the helper's docblock

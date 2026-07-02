@@ -37,7 +37,7 @@ In scope:
 - Promote the existing admin-only `SearchController::index` to a public endpoint with anonymous reachability and RBAC filtering identical to `/publications`.
 - Add a `document` schema as a bundled schema in `lib/Settings/publication_register.json`, with seed data demonstrating realistic municipality + consultancy values.
 - Extend the search assembly to return mixed publication/document rows in a flat envelope keyed by `@self.schema`.
-- Embed a `publication: { id, slug, titel }` summary on each document row so the frontend can link back without a second lookup.
+- Embed a `publication: { id, slug, title }` summary on each document row so the frontend can link back without a second lookup. Field name is English (`title`, not Dutch `titel`) to match the publication schema's canonical property names and ADR-001's "Dutch government fields SHOULD use a mapping layer, do not hardcode Dutch field names as primary" rule.
 - Apply the same `isObjectPublic()` anonymous-visibility filter publications use, ordered AFTER scoring/merge.
 
 Explicitly **out of scope**:
@@ -49,7 +49,7 @@ Explicitly **out of scope**:
 
 ## Affected specs
 
-- **search** — ADDED requirements `SCH-PFTS-001` … `SCH-PFTS-006`. The existing `SCH-OR-001` and `SCH-OR-002` (single-catalog passthrough, federated orchestrator) are NOT modified or removed; this change adds a new public surface alongside the existing federation orchestration.
+- **search** — ADDED requirements `SCH-PFTS-001` … `SCH-PFTS-007`. The existing `SCH-OR-001` and `SCH-OR-002` (single-catalog passthrough, federated orchestrator) are NOT modified or removed; this change adds a new public surface alongside the existing federation orchestration.
 
 ## Affected code
 
@@ -67,3 +67,4 @@ Explicitly **out of scope**:
 
 - **Documents leak via the new endpoint.** Mitigation: the RBAC filter MUST apply the same `isObjectPublic()` logic to documents, and a document's effective visibility MUST also be gated by its linked publication's visibility (a document attached to an unpublished/depublished publication MUST NOT surface in anonymous results).
 - **Dual-path uncertainty.** Until Ruben confirms decision 1, the design specifies both paths; implementers MUST default to Path B (metadata-only) and treat Path A as an additive follow-on.
+- **Backwards-compat break for admin callers of the old admin `/api/search`.** The absorb is intentional (the old admin form was deprecated per WOO-506's rationale — vendors still calling it are on a very old version and expected to switch). Existing admin-side consumers will see a different response shape after this lands: mixed publication + document rows via `@self.schema` discriminator, no more auth-required 401 for anonymous, and the response now surfaces documents alongside publications. Documented here so it's explicit; not blocking merge.

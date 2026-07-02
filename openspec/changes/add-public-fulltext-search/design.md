@@ -48,63 +48,84 @@ This is borderline "thin glue" territory (ADR-032 §"Thin-glue exception"). It's
 
 ## Seed Data (ADR-001)
 
-The new `document` schema MUST ship with realistic seed objects. The data layer ADR (ADR-001) requires this so the app is functional on first install. Seed objects exercise a municipality and a consultancy scenario:
+The current `lib/Settings/publication_register.json` ships **8 seed objects** — 1 catalog (`publications`), 3 pages (`home`, `about`), 3 menus (`main-menu`, `user-menu`, `footer-menu`), 1 theme (`general`), 1 organization (`default-org`). It ships **no seed publications** and **no seed documents**. This change adds both, so the public search endpoint has something meaningful to return on a fresh install.
 
-### Seed publication (already exists in seed corpus; reused for linkage)
+Envelope shape follows the bundle's existing convention (seen on the `publications` catalog seed):
+
+```json
+{ "@self": { "register": "publication", "schema": "<schema-slug>", "slug": "<unique-slug>" }, ... }
+```
+
+Identity is `@self.slug`. No top-level `id` field on seed rows — the magic mapper assigns UUIDs at import time. Import matching is by `@self.slug` (ADR-001 idempotency rule).
+
+### Seed publications (NEW — none exist in bundle today)
+
+Two publications spanning municipality + consultancy:
 
 ```json
 {
-  "id": "pub-jaarverslag-2024",
-  "@self": { "schema": "publication" },
+  "@self": { "register": "publication", "schema": "publication", "slug": "jaarverslag-2024-gemeente-buren" },
   "title": "Jaarverslag 2024 — Gemeente Buren",
-  "slug": "jaarverslag-2024",
   "summary": "Het jaarverslag 2024 van de gemeente Buren.",
-  "organization": "gemeente-buren",
-  "publicatiedatum": "2025-03-15T00:00:00+00:00"
+  "description": "Jaarverslag met financiële cijfers, prestatie-indicatoren en beleidsevaluatie over 2024.",
+  "organization": "default-org",
+  "publicatiedatum": "2025-03-15T00:00:00+00:00",
+  "status": "published"
 }
 ```
 
-### Seed document (new — references publication above)
+```json
+{
+  "@self": { "register": "publication", "schema": "publication", "slug": "conduction-kwartaalrapport-q1-2026" },
+  "title": "Conduction Kwartaalrapport Q1 2026",
+  "summary": "Kwartaalrapport Q1 2026 van Conduction B.V. over WOO-implementaties bij Nederlandse gemeenten.",
+  "description": "Analyse van Q1-implementaties, klantstatussen en aanbevelingen voor productroadmap.",
+  "organization": "default-org",
+  "publicatiedatum": "2026-04-01T00:00:00+00:00",
+  "status": "published"
+}
+```
+
+### Seed documents (NEW — reference the seed publications above)
 
 ```json
 {
-  "id": "doc-jaarverslag-2024-pdf",
-  "@self": { "schema": "document" },
+  "@self": { "register": "publication", "schema": "document", "slug": "jaarverslag-2024-gemeente-buren-pdf" },
   "title": "Jaarverslag 2024 (PDF)",
-  "filename": "jaarverslag-2024.pdf",
+  "filename": "jaarverslag-2024-gemeente-buren.pdf",
   "mimeType": "application/pdf",
   "summary": "PDF-versie van het jaarverslag 2024 van Gemeente Buren.",
   "publication": {
-    "id": "pub-jaarverslag-2024",
-    "slug": "jaarverslag-2024",
-    "titel": "Jaarverslag 2024 — Gemeente Buren"
+    "slug": "jaarverslag-2024-gemeente-buren",
+    "title": "Jaarverslag 2024 — Gemeente Buren"
   },
-  "organization": "gemeente-buren",
+  "organization": "default-org",
   "publicatiedatum": "2025-03-15T00:00:00+00:00"
 }
 ```
 
-### Seed document — consultancy scenario
-
 ```json
 {
-  "id": "doc-conduction-rapport-q1",
-  "@self": { "schema": "document" },
-  "title": "Conduction Kwartaalrapport Q1",
+  "@self": { "register": "publication", "schema": "document", "slug": "conduction-kwartaalrapport-q1-2026-pdf" },
+  "title": "Conduction Kwartaalrapport Q1 2026 (PDF)",
   "filename": "conduction-q1-rapport.pdf",
   "mimeType": "application/pdf",
-  "summary": "Kwartaalrapport Q1 van Conduction over WOO-implementaties bij Nederlandse gemeenten.",
+  "summary": "Kwartaalrapport Q1 2026 van Conduction over WOO-implementaties bij Nederlandse gemeenten.",
   "publication": {
-    "id": "pub-conduction-q1",
-    "slug": "conduction-kwartaalrapport-q1",
-    "titel": "Conduction Kwartaalrapport Q1"
+    "slug": "conduction-kwartaalrapport-q1-2026",
+    "title": "Conduction Kwartaalrapport Q1 2026"
   },
-  "organization": "conduction",
+  "organization": "default-org",
   "publicatiedatum": "2026-04-01T00:00:00+00:00"
 }
 ```
 
-These seed rows exercise both decision-1 paths: under Path A the body text inside the PDFs becomes searchable; under Path B the surrounding metadata (`title`, `summary`, `filename`, linked publication's `titel`) provides the match surface.
+Notes on the seed shape:
+
+- **Field names are English** (`title`, `summary`, `description`, `filename`, `mimeType`, `organization`) matching the bundled publication schema's convention and ADR-001's "do not hardcode Dutch field names as primary" rule. WOO-domain date fields (`publicatiedatum`, `depublicatiedatum`) stay Dutch because that's the WOO vocabulary the whole publication family already uses.
+- **Embedded `publication` summary uses `slug` + `title` only** (no `id`) — the frontend can deeplink by slug via the same catalog-slug routing `/publications/{catalogSlug}/{slug}` uses today, and no UUID lookup is required to render the parent-link on a document card. At API-response time (not seed time) the assembly helper MAY additionally include `id` (the UUID) alongside slug + title, per the `SCH-PFTS-003` spec — the seed doesn't need it because the UUID doesn't exist until import.
+- **`organization` is a string slug** referencing the bundled `default-org` seed — matches how the publication schema declares the property (`type: string`).
+- These four seed rows exercise both decision-1 paths: under Path A the body text inside the PDFs becomes searchable via OR's `TextExtractionService` + Solr-pipeline; under Path B the surrounding metadata (`title`, `summary`, `filename`, and the embedded publication's `title`) provides the match surface.
 
 ## `document` schema shape (high-level)
 
@@ -112,10 +133,10 @@ Bundled in `lib/Settings/publication_register.json` under `components.schemas.do
 
 - `slug: "document"`, `title: "Document"`, `version: "0.1.0"`.
 - `required: ["title", "publication"]`.
-- Properties (minimal, deferring deeper fields to follow-ups): `title`, `filename`, `mimeType`, `summary`, `publication` (object: `{id, slug, titel}`), `organization`, `publicatiedatum`, `depublicatiedatum`.
+- Properties (minimal, deferring deeper fields to follow-ups): `title`, `filename`, `mimeType`, `summary`, `publication` (object: `{id, slug, title}` — English `title`, matching the bundled publication schema convention), `organization`, `publicatiedatum`, `depublicatiedatum`.
 - `searchable: true`.
 - `authorization.read` mirrors `publication`: anonymous read allowed when `publicatiedatum <= $now` AND (effectively, via the controller) linked-publication is public.
-- The schema is added to the register's `schemas` list and to `configuration.schemas` so the magic mapper allocates a dedicated table.
+- The schema is registered by adding it under `components.schemas.document` — consistent with how the 9 bundled schemas (`publication`, `catalog`, `page`, `menu`, `theme`, `glossary`, `listing`, `organization`, `usageCounter`) are wired today. The magic mapper auto-allocates `oc_openregister_table_publication_document` on first install; no separate `configuration.schemas` block is required.
 
 ADR-031 applicability is minimal here — no lifecycle transitions, aggregations, or notifications on the `document` schema in this change. Future follow-ups may add depublication transitions or retention metadata; deferred.
 

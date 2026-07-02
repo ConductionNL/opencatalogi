@@ -36,13 +36,13 @@ This shape is consistent with the existing `/publications` envelope's use of `@s
 
 ### Requirement: Document rows include an embedded publication summary (SCH-PFTS-003)
 
-Every document row in the result envelope MUST include an embedded `publication` object with at least the fields `{ id, slug, titel }` of the publication the document is linked to. This enables the frontend to render a document card with a "from publication X" backlink without a second API roundtrip. A document with no linked publication MUST NOT appear in the public result set.
+Every document row in the result envelope MUST include an embedded `publication` object with at least the fields `{ id, slug, title }` of the publication the document is linked to. Field name is English (`title`, not Dutch `titel`) to match the publication schema's canonical property names in the bundled publication register and to satisfy ADR-001's "do not hardcode Dutch field names as primary" rule. This enables the frontend to render a document card with a "from publication X" backlink without a second API roundtrip. A document with no linked publication MUST NOT appear in the public result set.
 
 #### Scenario: document row carries publication summary
 
 - **GIVEN** a document linked to a publication titled "Jaarverslag 2024" (slug `jaarverslag-2024`, id `pub-001`),
 - **WHEN** that document matches the search query,
-- **THEN** its result row MUST include `publication: { id: "pub-001", slug: "jaarverslag-2024", titel: "Jaarverslag 2024" }`.
+- **THEN** its result row MUST include `publication: { id: "pub-001", slug: "jaarverslag-2024", title: "Jaarverslag 2024" }`.
 
 #### Scenario: document with no publication link is suppressed
 
@@ -81,8 +81,8 @@ The schema MUST be discoverable through OR's standard schema-listing APIs (i.e. 
 - **GIVEN** a fresh OpenCatalogi install,
 - **WHEN** the publication register is loaded,
 - **THEN** a `document` schema MUST be present under `components.schemas.document` in `lib/Settings/publication_register.json`,
-- **AND** the schema MUST be registered against the publication register's `schemas` list,
-- **AND** the schema MUST carry `searchable: true`.
+- **AND** the schema MUST carry `searchable: true`,
+- **AND** the magic mapper MUST auto-allocate a dedicated table for the schema on first install (`oc_openregister_table_publication_document`, per the magic-mapper's `oc_openregister_table_{register}_{schema}` convention — no manual `configuration.schemas` wiring needed, consistent with how the other bundled schemas — `publication`, `catalog`, `page`, `menu`, `theme`, `glossary`, `listing`, `organization`, `usageCounter` — are wired today).
 
 #### Scenario: document objects carry their own `@self.schema`
 
@@ -109,3 +109,23 @@ When document content indexing is enabled (Path A — pending Ruben's confirmati
 - **WHEN** a document is indexed for content search,
 - **THEN** the extraction pipeline MUST be OR's `TextExtractionService` + `FileHandler` + Solr-pipeline,
 - **AND** OpenCatalogi MUST NOT add a parallel extraction pipeline.
+
+### Requirement: Search matches across all schema properties, not only pre-configured ones (SCH-PFTS-007)
+
+Matches on the public search endpoint MUST cover **every searchable property** of the target schemas (`publication`, `document`), plus the standard `@self` metadata fields OR's `zoeken-filteren` already surfaces (`_name`, `_description`, `_summary`, timestamps). Callers MUST NOT need to enumerate which properties are searched, and OpenCatalogi MUST NOT filter the OR-side search surface down to a subset of properties. This makes the behaviour explicit rather than leaving it implicit-in-`zoeken-filteren`-delegation, so a reviewer inspecting only this spec can confirm the WOO-506 requirement that the endpoint zoekt "over alle properties en metadata — niet alleen de schema-properties die wij hebben ingesteld".
+
+New properties added to a schema in future changes (e.g. a `kenmerk` field added to `document` in a later B3) MUST be automatically covered by search without any modification to `SearchController::index` or the assembly helper — they inherit `searchable: true` from the schema-level flag.
+
+#### Scenario: a new schema property is searchable without controller changes
+
+- **GIVEN** the `document` schema gains a new string property `kenmerk` in a future change,
+- **AND** the schema keeps `searchable: true`,
+- **WHEN** a search query matches the value of `kenmerk` on a document object,
+- **THEN** that document MUST appear in the result set,
+- **AND** neither `SearchController::index` nor the assembly helper MUST have been modified to expose the new property to search.
+
+#### Scenario: search covers metadata fields OR already surfaces
+
+- **GIVEN** a document whose `@self` metadata contains a match for the search query but whose declared schema properties do not,
+- **WHEN** the public search runs,
+- **THEN** the document MUST appear in the result set (matched via OR's `zoeken-filteren` on the metadata fields it already covers).
