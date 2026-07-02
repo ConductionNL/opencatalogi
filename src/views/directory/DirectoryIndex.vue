@@ -290,6 +290,16 @@ export default {
 				// @NoCSRFRequired to accept federation broadcasts, while
 				// `/api/listings/add` requires an authenticated user (SB1 / WF1
 				// SSRF hardening, wave-12).
+				//
+				// The `OCS-APIRequest: true` header is Nextcloud's CSRF
+				// bypass switch for programmatic clients. `/api/listings/add`
+				// is a regular AppFramework route (not OCS), but NC's global
+				// CSRF middleware still short-circuits the response to the
+				// login page when a plain-fetch POST hits a route that
+				// doesn't carry `@NoCSRFRequired` — Newman collections rely
+				// on this exact header to succeed, so we mirror that here.
+				// If a future round makes `/api/listings/add` accept the
+				// standard `requesttoken`, drop this header at the same time.
 				const response = await fetch(generateUrl('/apps/opencatalogi/api/listings/add'), {
 					method: 'POST',
 					headers: {

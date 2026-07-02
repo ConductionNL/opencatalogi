@@ -211,9 +211,11 @@ const handleSync = async () => {
 		})
 
 		success.value = true
-		// Legacy endpoint wrapped payload in `.data.data`; new endpoint returns
-		// the sync report directly. Handle both shapes so the sync-report UI
-		// keeps rendering fields like `listings_created` / `listings_updated`.
+		// `/api/listings/add` returns the sync report directly at the top level
+		// of `response.data` (unlike the legacy `/api/directory` endpoint, which
+		// wraps as `{message, data: $result}`). The `?? response.data` fallback
+		// is dead-code kept only to defensively handle a future response-shape
+		// regression — every current path resolves to `response.data`.
 		syncResults.value = response.data.data ?? response.data
 	} catch (err) {
 		console.error('Error synchronizing directory:', err)

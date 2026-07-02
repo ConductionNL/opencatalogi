@@ -223,10 +223,16 @@ class DirectoryController extends Controller
      * peer-registration should hit `POST /api/listings/add` instead (see
      * `ListingsController::add()`), which requires an authenticated user and CSRF
      * token — matching the SB1 / WF1 SSRF hardening from wave-12. Both endpoints
-     * funnel into `DirectoryService::syncDirectory($url)`, so their behaviour is
-     * identical on the wire; the difference is purely in auth posture. WOO-513
-     * migrated the two remaining frontend callers (`AddDirectoryModal.vue`,
-     * `DirectoryIndex.vue`) off this public route onto the auth-required one.
+     * funnel into `DirectoryService::syncDirectory($url)` at the service layer, so
+     * their `DirectoryService` side-effects are identical. The response envelopes
+     * DIFFER, however: this endpoint wraps the sync result as
+     * `{message, data: $result}` (lines 264-269), while `ListingsController::add()`
+     * returns `$result` directly (see `ListingsController::add()`). Callers
+     * migrating between the two must handle both shapes — see
+     * `AddDirectoryModal.vue`'s `response.data.data ?? response.data` fallback.
+     * WOO-513 migrated the two remaining frontend callers
+     * (`AddDirectoryModal.vue`, `DirectoryIndex.vue`) off this public route onto
+     * the auth-required one.
      *
      * @return JSONResponse The JSON response containing the synchronization result.
      *
