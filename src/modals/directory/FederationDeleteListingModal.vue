@@ -34,6 +34,7 @@ export default {
 			loading: false,
 			success: null,
 			error: null,
+			closeTimer: null,
 		}
 	},
 	computed: {
@@ -51,18 +52,38 @@ export default {
 			}
 		},
 	},
+	beforeDestroy() {
+		// Prevent a delayed `close()` from firing after the component
+		// unmounts (WOO-511 PR #79 review: setTimeout leak on early close).
+		if (this.closeTimer !== null) {
+			clearTimeout(this.closeTimer)
+			this.closeTimer = null
+		}
+	},
 	methods: {
 		t,
 		reset() {
+			// Drop any stale success-close timer from a previous open
+			// (belt + braces alongside `beforeDestroy` above).
+			if (this.closeTimer !== null) {
+				clearTimeout(this.closeTimer)
+				this.closeTimer = null
+			}
 			this.loading = false
 			this.success = null
 			this.error = null
 		},
 		close() {
+			if (this.closeTimer !== null) {
+				clearTimeout(this.closeTimer)
+				this.closeTimer = null
+			}
 			navigationStore.setModal(null)
 		},
 		/**
-		 * DELETE /api/listings/{id} — remove the peer listing.
+		 * DELETE /api/listings/{id} — remove the peer listing. This is a
+		 * regular AppFramework route (not OCS), so no `OCS-APIRequest`
+		 * header is needed here.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
@@ -78,7 +99,6 @@ export default {
 				const res = await fetch(endpoint, {
 					method: 'DELETE',
 					headers: {
-						'OCS-APIRequest': 'true',
 						Accept: 'application/json',
 					},
 				})
@@ -89,7 +109,12 @@ export default {
 				this.success = true
 				this.$emit('deleted', this.listing)
 				// Close after a short beat so the success note is visible.
-				setTimeout(() => this.close(), 800)
+				// Cancel-safe via the timer handle stored on the component
+				// (WOO-511 PR #79 review).
+				this.closeTimer = setTimeout(() => {
+					this.closeTimer = null
+					this.close()
+				}, 800)
 			} catch (e) {
 				this.success = false
 				this.error = e.message || String(e)

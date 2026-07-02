@@ -16,11 +16,17 @@ import { generateUrl } from '@nextcloud/router'
 import { NcModal, NcButton, NcSelect, NcNoteCard } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
 
-const INTEGRATION_LEVELS = [
-	{ value: 'search', label: 'search' },
-	{ value: 'sync', label: 'sync' },
-	{ value: 'none', label: 'none' },
-]
+// Localised integration-level options. The `value` is the wire-protocol
+// enum consumed by ListingsController::UPDATABLE_LISTING_FIELDS; the
+// `label` is the human-readable rendering shown in the dropdown and in
+// the row's integrationLevel column.
+function buildIntegrationLevels() {
+	return [
+		{ value: 'search', label: t('opencatalogi', 'Federated search') },
+		{ value: 'sync', label: t('opencatalogi', 'Full sync') },
+		{ value: 'none', label: t('opencatalogi', 'Disabled') },
+	]
+}
 
 export default {
 	name: 'FederationEditListingModal',
@@ -37,7 +43,7 @@ export default {
 			integrationLevel: null,
 			submitting: false,
 			error: null,
-			integrationLevels: INTEGRATION_LEVELS,
+			integrationLevels: buildIntegrationLevels(),
 		}
 	},
 	computed: {
@@ -54,13 +60,14 @@ export default {
 				this.reset()
 			}
 		},
-		listing: {
-			immediate: true,
-			handler(l) {
-				this.integrationLevel = this.integrationLevels.find(
-					(o) => o.value === (l?.integrationLevel || 'search'),
-				) || this.integrationLevels[0]
-			},
+		// Sync the local dropdown selection to whichever listing is currently
+		// being edited. Non-immediate so the `data()` initial value wins on
+		// first render — `immediate: true` here previously fought the
+		// `isOpen` handler's reset. See WOO-511 PR #79 review.
+		listing(l) {
+			this.integrationLevel = this.integrationLevels.find(
+				(o) => o.value === (l?.integrationLevel || 'search'),
+			) || this.integrationLevels[0]
 		},
 	},
 	methods: {
@@ -130,8 +137,10 @@ export default {
 				preserving the old peer's cached sync-state (lastSync,
 				statusCode, availability). That's semantically a re-add of a
 				new peer, not an edit — the correct workflow is Remove +
-				Add directory with the new URL. Displaying the URL as
-				disabled so admins can copy it or verify the peer identity.
+				Add directory with the new URL. Rendered as `readonly`
+				(not `disabled`) so admins can still select + copy the URL
+				and screen readers announce it as a normal text field with
+				a value, per WOO-511 PR #79 review.
 			-->
 			<div class="federation-edit-listing-modal__field">
 				<label :for="'federationEditListingUrl-' + (listing.id || 'x')">
@@ -140,7 +149,7 @@ export default {
 				<input :id="'federationEditListingUrl-' + (listing.id || 'x')"
 					type="url"
 					:value="listing.directory"
-					disabled
+					readonly
 					class="federation-edit-listing-modal__readonly">
 				<span class="federation-edit-listing-modal__readonly-hint">
 					{{ t('opencatalogi', 'Directory URL is read-only. To point at a different peer, remove this listing and add the new URL — the cached sync-state belongs to the current peer identity.') }}
@@ -148,12 +157,15 @@ export default {
 			</div>
 
 			<div class="federation-edit-listing-modal__field">
-				<label>{{ t('opencatalogi', 'Integration level') }}</label>
+				<label :for="'federationEditListingIntegration-' + (listing.id || 'x')">
+					{{ t('opencatalogi', 'Integration level') }}
+				</label>
 				<NcSelect
+					:id="'federationEditListingIntegration-' + (listing.id || 'x')"
 					v-model="integrationLevel"
 					:options="integrationLevels"
 					:reduce="(o) => o"
-					input-label="integrationLevel"
+					:input-label="t('opencatalogi', 'Integration level')"
 					:clearable="false" />
 			</div>
 

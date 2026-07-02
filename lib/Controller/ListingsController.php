@@ -31,10 +31,12 @@ namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IL10N;
@@ -298,42 +300,86 @@ class ListingsController extends Controller
     }//end create()
 
     /**
+     * Allow-list of listing fields an admin may mutate via PUT /api/listings/{id}.
+     *
+     * Directory-identity fields (`directory`, `search`, `publications`) are
+     * intentionally excluded: they carry the cached sync-state (lastSync,
+     * statusCode, available) that pins this listing to the current peer.
+     * Rebinding those URLs on an existing listing would silently associate
+     * that cached state with a different peer — semantically a re-add, not
+     * an edit, and (worse) a mass-assignment vector back onto the federation
+     * SSRF path that WOO-513 hardened `/api/listings/add` against. Correct
+     * workflow is `DELETE /api/listings/{id}` + `POST /api/listings/add`
+     * with the new URL. Other fields not on the list (statusCode, lastSync,
+     * available, catalog, publication metadata) are server-managed and must
+     * not be settable by clients.
+     *
+     * Widening this list is a deliberate security decision — do not do it
+     * in the same PR that introduces a new UI field. See WOO-511 PR #79.
+     *
+     * @var list<string>
+     */
+    private const UPDATABLE_LISTING_FIELDS = [
+        'title',
+        'summary',
+        'description',
+        'integrationLevel',
+        'default',
+    ];
+
+    /**
      * Update an existing listing.
+     *
+     * Admin-only per SB1 / WF1 SSRF hardening (wave-12): rebinding a listing's
+     * `directory` URL would let any authenticated user redirect the cached
+     * peer identity, chaining into the same federation-SSRF class WOO-513
+     * fixed on `/api/listings/add`. Enforcement is two-layer here — a hard
+     * `#[AuthorizedAdminSetting]` gate at the middleware layer, and a
+     * field-allow-list inside the method (`UPDATABLE_LISTING_FIELDS`) so a
+     * future admin-role widening still can't smuggle URL mutations through
+     * this endpoint.
      *
      * @param string|integer $id The ID of the listing to update.
      *
      * @return JSONResponse The response containing the updated listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function update(string | int $id): JSONResponse
     {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
-
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
-        // Remove internal framework fields.
-        unset($data['_route']);
+        // Field allow-list (see UPDATABLE_LISTING_FIELDS PHPDoc for rationale).
+        // Silently drops any keys outside the allow-list; the response's
+        // updated object shows exactly what the server persisted so callers
+        // can spot the drop without an error path (mass-assignment
+        // attempts should not be leaked as validation errors).
+        $allowed = [];
+        foreach (self::UPDATABLE_LISTING_FIELDS as $field) {
+            if (array_key_exists($field, $data) === true) {
+                $allowed[$field] = $data[$field];
+            }
+        }
 
         // Get listing schema and register from configuration.
         $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
         $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
 
-        // Load the existing listing and merge the PUT body onto it. OR's
-        // saveObject() treats its input as the full record — lifecycle hooks
-        // (e.g. "status must be a non-empty string") run against the incoming
-        // payload, not against a server-side merge with the stored object. A
-        // partial PUT therefore drops required fields like `status` and trips
-        // HookStoppedException → 500. Pre-merging here gives the endpoint
-        // real PATCH semantics: callers can send only the fields they want to
-        // change without losing the rest of the listing.
+        // Load the existing listing and merge the allow-listed PUT body onto
+        // it. OR's saveObject() treats its input as the full record —
+        // lifecycle hooks (e.g. "status must be a non-empty string") run
+        // against the incoming payload, not against a server-side merge with
+        // the stored object. A partial PUT therefore drops required fields
+        // like `status` and trips HookStoppedException → 500. Pre-merging
+        // here gives the endpoint real PATCH semantics: callers can send
+        // only the fields they want to change without losing the rest of the
+        // listing. The merge order is (existing, allowed) so allow-listed
+        // fields win over stored values.
         $existing = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
         if ($existing instanceof \OCP\AppFramework\Db\Entity) {
             $existingData = $existing->jsonSerialize();
@@ -341,7 +387,7 @@ class ListingsController extends Controller
             $existingData = (array) $existing;
         }
 
-        $merged = array_merge($existingData, $data);
+        $merged = array_merge($existingData, $allowed);
 
         // Save the merged listing object with the id as UUID for update.
         $object = $this->getObjectService()->saveObject(
@@ -360,22 +406,24 @@ class ListingsController extends Controller
     /**
      * Delete a listing.
      *
+     * Admin-only per SB1 / WF1 SSRF hardening (wave-12): removing a peer
+     * listing is a federation-topology change, not a per-user action.
+     * Enforced via `#[AuthorizedAdminSetting]` on top of the framework's
+     * default admin-gate; the extra attribute lands us on the delegated-
+     * admin audit trail alongside the other mutating admin endpoints.
+     *
      * @param string|integer $id The ID of the listing to delete.
      *
      * @return JSONResponse The response indicating the result of the deletion.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function destroy(string | int $id): JSONResponse
     {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
-
         // Delete the listing object by its UUID.
         $result = $this->getObjectService()->deleteObject((string) $id);
 
