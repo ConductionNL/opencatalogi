@@ -50,6 +50,18 @@ This is borderline "thin glue" territory (ADR-032 §"Thin-glue exception"). It's
 
 The current `lib/Settings/publication_register.json` ships **8 seed objects** — 1 catalog (`publications`), 3 pages (`home`, `about`), 3 menus (`main-menu`, `user-menu`, `footer-menu`), 1 theme (`general`), 1 organization (`default-org`). It ships **no seed publications** and **no seed documents**. This change adds both, so the public search endpoint has something meaningful to return on a fresh install.
 
+Seed data is **always loaded on install** — `SettingsService::autoConfigure()` runs `ConfigurationService::importFromApp()` on every install, importing every object under `components.objects[]`. Re-import is idempotent (matches on `@self.slug` per ADR-001). Deployers can delete or replace seed rows after install, but by default every fresh install has these four rows present.
+
+Because seed data is always present, **each seed row MUST be self-identifying as demo/example data** so real users landing on a fresh deployment (before real content is imported) understand what they're looking at. This is done in three complementary ways per seed row:
+
+1. **Slug prefix** — every seed slug starts with `example-` so it's identifiable in URLs, admin lists, and log lines.
+2. **Title prefix** — every seed title starts with `Voorbeeld:` (Dutch "Example:") so it's obvious in the card view.
+3. **Description marker** — the `description` field starts with an explicit "**Voorbeeld / seed data** — dit is …" banner explaining what it is and inviting deployers to delete or replace it.
+
+The municipality scenario uses the fictional **Gemeente Voorbeeld** (not any real municipality) so there's no risk of confusion with a real gemeente. The consultancy scenario uses **Conduction B.V.** — that's the real app maintainer; the seed row remains self-identifying via the `Voorbeeld:` prefix and description banner.
+
+### Envelope shape
+
 Envelope shape follows the bundle's existing convention (seen on the `publications` catalog seed):
 
 ```json
@@ -60,14 +72,14 @@ Identity is `@self.slug`. No top-level `id` field on seed rows — the magic map
 
 ### Seed publications (NEW — none exist in bundle today)
 
-Two publications spanning municipality + consultancy:
+Two publications spanning a municipality + consultancy scenario. Both are clearly marked as seed data:
 
 ```json
 {
-  "@self": { "register": "publication", "schema": "publication", "slug": "jaarverslag-2024-gemeente-buren" },
-  "title": "Jaarverslag 2024 — Gemeente Buren",
-  "summary": "Het jaarverslag 2024 van de gemeente Buren.",
-  "description": "Jaarverslag met financiële cijfers, prestatie-indicatoren en beleidsevaluatie over 2024.",
+  "@self": { "register": "publication", "schema": "publication", "slug": "example-municipality-annual-report" },
+  "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld",
+  "summary": "Voorbeeld-publicatie (seed data) — fictief jaarverslag van een fictieve gemeente. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
+  "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is. Gemeente Voorbeeld is een fictieve gemeente en representeert geen echte overheidsorganisatie.",
   "organization": "default-org",
   "publicatiedatum": "2025-03-15T00:00:00+00:00",
   "status": "published"
@@ -76,10 +88,10 @@ Two publications spanning municipality + consultancy:
 
 ```json
 {
-  "@self": { "register": "publication", "schema": "publication", "slug": "conduction-kwartaalrapport-q1-2026" },
-  "title": "Conduction Kwartaalrapport Q1 2026",
-  "summary": "Kwartaalrapport Q1 2026 van Conduction B.V. over WOO-implementaties bij Nederlandse gemeenten.",
-  "description": "Analyse van Q1-implementaties, klantstatussen en aanbevelingen voor productroadmap.",
+  "@self": { "register": "publication", "schema": "publication", "slug": "example-conduction-quarterly-report" },
+  "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026",
+  "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
+  "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
   "organization": "default-org",
   "publicatiedatum": "2026-04-01T00:00:00+00:00",
   "status": "published"
@@ -90,14 +102,15 @@ Two publications spanning municipality + consultancy:
 
 ```json
 {
-  "@self": { "register": "publication", "schema": "document", "slug": "jaarverslag-2024-gemeente-buren-pdf" },
-  "title": "Jaarverslag 2024 (PDF)",
-  "filename": "jaarverslag-2024-gemeente-buren.pdf",
+  "@self": { "register": "publication", "schema": "document", "slug": "example-municipality-annual-report-pdf" },
+  "title": "Voorbeeld: Jaarverslag 2024 (PDF)",
+  "filename": "voorbeeld-jaarverslag-2024.pdf",
   "mimeType": "application/pdf",
-  "summary": "PDF-versie van het jaarverslag 2024 van Gemeente Buren.",
+  "summary": "Voorbeeld-document (seed data) — fictieve PDF-bijlage bij het voorbeeld-jaarverslag. Aanwezig na fresh install.",
+  "description": "**Voorbeeld / seed data** — dit is geen echte PDF. Bij een fresh install wordt deze rij automatisch geladen om de search-response mixed-typed te maken. Vervang of verwijder deze rij zodra echte documenten geïmporteerd zijn.",
   "publication": {
-    "slug": "jaarverslag-2024-gemeente-buren",
-    "title": "Jaarverslag 2024 — Gemeente Buren"
+    "slug": "example-municipality-annual-report",
+    "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld"
   },
   "organization": "default-org",
   "publicatiedatum": "2025-03-15T00:00:00+00:00"
@@ -106,14 +119,15 @@ Two publications spanning municipality + consultancy:
 
 ```json
 {
-  "@self": { "register": "publication", "schema": "document", "slug": "conduction-kwartaalrapport-q1-2026-pdf" },
-  "title": "Conduction Kwartaalrapport Q1 2026 (PDF)",
-  "filename": "conduction-q1-rapport.pdf",
+  "@self": { "register": "publication", "schema": "document", "slug": "example-conduction-quarterly-report-pdf" },
+  "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026 (PDF)",
+  "filename": "voorbeeld-conduction-q1-rapport.pdf",
   "mimeType": "application/pdf",
-  "summary": "Kwartaalrapport Q1 2026 van Conduction over WOO-implementaties bij Nederlandse gemeenten.",
+  "summary": "Voorbeeld-document (seed data) — fictieve PDF-bijlage bij het voorbeeld-kwartaalrapport. Aanwezig na fresh install.",
+  "description": "**Voorbeeld / seed data** — dit is geen echte PDF. Bij een fresh install wordt deze rij automatisch geladen om de search-response mixed-typed te maken. Vervang of verwijder deze rij zodra echte documenten geïmporteerd zijn.",
   "publication": {
-    "slug": "conduction-kwartaalrapport-q1-2026",
-    "title": "Conduction Kwartaalrapport Q1 2026"
+    "slug": "example-conduction-quarterly-report",
+    "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026"
   },
   "organization": "default-org",
   "publicatiedatum": "2026-04-01T00:00:00+00:00"
@@ -122,10 +136,11 @@ Two publications spanning municipality + consultancy:
 
 Notes on the seed shape:
 
+- **Seed-data self-identification** — every seed row's slug starts with `example-`, title starts with `Voorbeeld:`, and description opens with a `**Voorbeeld / seed data**` banner explaining what the row is and how to replace it. A deployer's admin surface, a URL, an anonymous user's card view, and a log line all carry the marker.
 - **Field names are English** (`title`, `summary`, `description`, `filename`, `mimeType`, `organization`) matching the bundled publication schema's convention and ADR-001's "do not hardcode Dutch field names as primary" rule. WOO-domain date fields (`publicatiedatum`, `depublicatiedatum`) stay Dutch because that's the WOO vocabulary the whole publication family already uses.
 - **Embedded `publication` summary uses `slug` + `title` only** (no `id`) — the frontend can deeplink by slug via the same catalog-slug routing `/publications/{catalogSlug}/{slug}` uses today, and no UUID lookup is required to render the parent-link on a document card. At API-response time (not seed time) the assembly helper MAY additionally include `id` (the UUID) alongside slug + title, per the `SCH-PFTS-003` spec — the seed doesn't need it because the UUID doesn't exist until import.
 - **`organization` is a string slug** referencing the bundled `default-org` seed — matches how the publication schema declares the property (`type: string`).
-- These four seed rows exercise both decision-1 paths: under Path A the body text inside the PDFs becomes searchable via OR's `TextExtractionService` + Solr-pipeline; under Path B the surrounding metadata (`title`, `summary`, `filename`, and the embedded publication's `title`) provides the match surface.
+- These four seed rows exercise both decision-1 paths: under Path A the body text inside the PDFs (once real content replaces the seed) becomes searchable via OR's `TextExtractionService` + Solr-pipeline; under Path B the surrounding metadata (`title`, `summary`, `filename`, and the embedded publication's `title`) provides the match surface.
 
 ## `document` schema shape (high-level)
 
