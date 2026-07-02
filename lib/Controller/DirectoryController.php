@@ -211,28 +211,14 @@ class DirectoryController extends Controller
     }//end index()
 
     /**
-     * Synchronize with an external directory — federation broadcast-receive endpoint.
+     * Sync with an external directory — federation broadcast-receive endpoint.
      *
-     * This route is the target for cross-instance federation gossip: peer OpenCatalogi
-     * instances POST here (via `BroadcastService`) to notify us of their existence so
-     * we can pull their listings. It MUST stay `@PublicPage` + `@NoCSRFRequired` for
-     * that gossip to reach unauthenticated. Accepts a 'directory' parameter with the
-     * URL to sync from.
-     *
-     * **Do not call this endpoint from the OC admin UI.** Admin-initiated
-     * peer-registration should hit `POST /api/listings/add` instead (see
-     * `ListingsController::add()`), which requires an authenticated user and CSRF
-     * token — matching the SB1 / WF1 SSRF hardening from wave-12. Both endpoints
-     * funnel into `DirectoryService::syncDirectory($url)` at the service layer, so
-     * their `DirectoryService` side-effects are identical. The response envelopes
-     * DIFFER, however: this endpoint wraps the sync result as
-     * `{message, data: $result}` (lines 264-269), while `ListingsController::add()`
-     * returns `$result` directly (see `ListingsController::add()`). Callers
-     * migrating between the two must handle both shapes — see
-     * `AddDirectoryModal.vue`'s `response.data.data ?? response.data` fallback.
-     * WOO-513 migrated the two remaining frontend callers
-     * (`AddDirectoryModal.vue`, `DirectoryIndex.vue`) off this public route onto
-     * the auth-required one.
+     * Public + no-CSRF because peers POST here (via `BroadcastService`) to notify
+     * us of their existence. **Admin UIs must not call this** — they should hit
+     * `POST /api/listings/add` (admin-only, CSRF-protected — WOO-513 migrated the
+     * two remaining callers). Response wrap here is `{message, data: $result}`
+     * whereas `/api/listings/add` returns `$result` bare; `AddDirectoryModal.vue`
+     * handles both via `response.data.data ?? response.data`.
      *
      * @return JSONResponse The JSON response containing the synchronization result.
      *

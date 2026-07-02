@@ -282,24 +282,9 @@ export default {
 		},
 		async refreshDirectory(listing) {
 			try {
-				// Use the auth-required `/api/listings/add` endpoint for admin-
-				// initiated peer refresh instead of the public `/api/directory`
-				// broadcast-receive endpoint — see WOO-513. Both routes funnel
-				// into `DirectoryService::syncDirectory($url)` but have different
-				// security postures: `/api/directory` is @PublicPage +
-				// @NoCSRFRequired to accept federation broadcasts, while
-				// `/api/listings/add` requires an authenticated user (SB1 / WF1
-				// SSRF hardening, wave-12).
-				//
-				// The `OCS-APIRequest: true` header is Nextcloud's CSRF
-				// bypass switch for programmatic clients. `/api/listings/add`
-				// is a regular AppFramework route (not OCS), but NC's global
-				// CSRF middleware still short-circuits the response to the
-				// login page when a plain-fetch POST hits a route that
-				// doesn't carry `@NoCSRFRequired` — Newman collections rely
-				// on this exact header to succeed, so we mirror that here.
-				// If a future round makes `/api/listings/add` accept the
-				// standard `requesttoken`, drop this header at the same time.
+				// Auth-required `/api/listings/add` (WOO-513) — same syncDirectory()
+				// side-effects as the public `/api/directory` but admin-only.
+				// `OCS-APIRequest: true` is NC's CSRF bypass for programmatic clients.
 				const response = await fetch(generateUrl('/apps/opencatalogi/api/listings/add'), {
 					method: 'POST',
 					headers: {
