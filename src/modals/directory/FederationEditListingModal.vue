@@ -121,8 +121,31 @@ export default {
 		<div class="federation-edit-listing-modal">
 			<h2>{{ t('opencatalogi', 'Edit listing') }}</h2>
 			<p class="federation-edit-listing-modal__hint">
-				{{ listing.title }} — {{ listing.directory }}
+				{{ listing.title }}
 			</p>
+
+			<!--
+				The directory URL is intentionally read-only. Changing it here
+				would make this listing point at a different peer while
+				preserving the old peer's cached sync-state (lastSync,
+				statusCode, availability). That's semantically a re-add of a
+				new peer, not an edit — the correct workflow is Remove +
+				Add directory with the new URL. Displaying the URL as
+				disabled so admins can copy it or verify the peer identity.
+			-->
+			<div class="federation-edit-listing-modal__field">
+				<label :for="'federationEditListingUrl-' + (listing.id || 'x')">
+					{{ t('opencatalogi', 'Directory URL') }}
+				</label>
+				<input :id="'federationEditListingUrl-' + (listing.id || 'x')"
+					type="url"
+					:value="listing.directory"
+					disabled
+					class="federation-edit-listing-modal__readonly">
+				<span class="federation-edit-listing-modal__readonly-hint">
+					{{ t('opencatalogi', 'Directory URL is read-only. To point at a different peer, remove this listing and add the new URL — the cached sync-state belongs to the current peer identity.') }}
+				</span>
+			</div>
 
 			<div class="federation-edit-listing-modal__field">
 				<label>{{ t('opencatalogi', 'Integration level') }}</label>
@@ -171,6 +194,22 @@ export default {
 	display: block;
 	margin-bottom: 4px;
 	font-weight: 600;
+}
+.federation-edit-listing-modal__readonly {
+	width: 100%;
+	padding: 6px 10px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-background-hover);
+	color: var(--color-text-lighter);
+	font-family: monospace;
+	font-size: 13px;
+}
+.federation-edit-listing-modal__readonly-hint {
+	display: block;
+	margin-top: 6px;
+	font-size: 12px;
+	color: var(--color-text-lighter);
 }
 .federation-edit-listing-modal__actions {
 	display: flex;

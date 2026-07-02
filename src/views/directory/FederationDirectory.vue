@@ -32,6 +32,7 @@ import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import { navigationStore } from '../../store/store.js'
 import FederationAddDirectoryModal from '../../modals/directory/FederationAddDirectoryModal.vue'
 import FederationEditListingModal from '../../modals/directory/FederationEditListingModal.vue'
+import FederationDeleteListingModal from '../../modals/directory/FederationDeleteListingModal.vue'
 
 export default {
 	name: 'FederationDirectory',
@@ -44,14 +45,15 @@ export default {
 		DotsHorizontal,
 		FederationAddDirectoryModal,
 		FederationEditListingModal,
+		FederationDeleteListingModal,
 	},
 	data() {
 		return {
 			listings: [],
 			loading: false,
 			error: null,
-			deletingId: null,
 			editingListing: null,
+			deletingListing: null,
 		}
 	},
 	computed: {
@@ -76,8 +78,8 @@ export default {
 		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
 		 */
 		modalState(next, prev) {
-			if ((prev === 'federationAddDirectory' || prev === 'federationEditListing')
-				&& next !== prev) {
+			const dirModals = ['federationAddDirectory', 'federationEditListing', 'federationDeleteListing']
+			if (dirModals.includes(prev) && next !== prev) {
 				this.load()
 			}
 		},
@@ -164,35 +166,30 @@ export default {
 			navigationStore.setModal('federationEditListing')
 		},
 		/**
-		 * Delete a listing after a confirmation prompt.
+		 * Open the delete-confirmation modal for a listing. The modal itself
+		 * performs the DELETE request and closes on success — we react by
+		 * re-fetching the list via the modalState watcher above (no
+		 * `window.confirm` any more; that used the browser-native dialog and
+		 * didn't match NC theming, WOO-511 review feedback).
 		 *
-		 * @param {object} listing Listing to delete.
-		 * @return {Promise<void>}
+		 * @param {object} listing Listing to remove.
+		 * @return {void}
 		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
 		 */
-		async confirmDelete(listing) {
-			const title = listing.title || listing.directory || t('opencatalogi', 'Unnamed peer')
-			const proceed = window.confirm(t('opencatalogi', 'Remove peer listing?') + '\n\n' + title)
-			if (!proceed) {
-				return
-			}
-			this.deletingId = listing.id
-			try {
-				const url = generateUrl(`/apps/opencatalogi/api/listings/${listing.id}`)
-				const res = await fetch(url, {
-					method: 'DELETE',
-					headers: { 'OCS-APIRequest': 'true', Accept: 'application/json' },
-				})
-				if (!res.ok) {
-					const body = await res.json().catch(() => ({}))
-					throw new Error(body.message || `HTTP ${res.status}`)
-				}
-				await this.load()
-			} catch (e) {
-				this.error = e.message || String(e)
-			} finally {
-				this.deletingId = null
-			}
+		openDelete(listing) {
+			this.deletingListing = listing
+			navigationStore.setModal('federationDeleteListing')
+		},
+		/**
+		 * Human-readable integration level for the row column. Uses the raw
+		 * value when set, falls back to the localised placeholder otherwise.
+		 *
+		 * @param {object} listing Listing record from /api/listings.
+		 * @return {string}
+		 * @spec exclude presentation-only mapper — no behaviour change on the wire
+		 */
+		integrationLevelFor(listing) {
+			return listing.integrationLevel || t('opencatalogi', 'not set')
 		},
 	},
 }
@@ -256,6 +253,14 @@ export default {
 						{{ messageFor(listing) }}
 					</div>
 				</div>
+				<div class="federation-directory__node-integration">
+					<span class="federation-directory__field-label">
+						{{ t('opencatalogi', 'Integration level') }}
+					</span>
+					<span class="federation-directory__field-value">
+						{{ integrationLevelFor(listing) }}
+					</span>
+				</div>
 				<div class="federation-directory__node-actions">
 					<NcActions :force-menu="false">
 						<template #icon>
@@ -267,13 +272,11 @@ export default {
 							</template>
 							{{ t('opencatalogi', 'Edit') }}
 						</NcActionButton>
-						<NcActionButton :close-after-click="true"
-							:disabled="deletingId === listing.id"
-							@click="confirmDelete(listing)">
+						<NcActionButton :close-after-click="true" @click="openDelete(listing)">
 							<template #icon>
 								<DeleteOutline :size="20" />
 							</template>
-							{{ deletingId === listing.id ? t('opencatalogi', 'Removing…') : t('opencatalogi', 'Remove') }}
+							{{ t('opencatalogi', 'Remove') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -282,6 +285,7 @@ export default {
 
 		<FederationAddDirectoryModal />
 		<FederationEditListingModal :listing="editingListing" />
+		<FederationDeleteListingModal :listing="deletingListing" />
 	</div>
 </template>
 
@@ -361,6 +365,24 @@ export default {
 	font-size: 12px;
 	color: var(--color-warning);
 	margin-top: 2px;
+}
+.federation-directory__node-integration {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	margin-inline: 12px;
+	min-width: 100px;
+}
+.federation-directory__field-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--color-text-lighter);
+}
+.federation-directory__field-value {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
 }
 .federation-directory__node-actions {
 	flex: 0 0 auto;
