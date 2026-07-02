@@ -9,12 +9,9 @@
 //
 // References:
 //   - WOO-493 manual walkthrough (2026-06-30) — surfaced the missing fetch.
+//   - WOO-510 — this fix.
 //   - src/store/modules/search.ts — federation-aware store (uses `_search`,
 //     hits `/api/federation/publications`).
-//
-// i18n: strings on this page are English-only pending a translation pass
-// across the required European locales — tracked as the parent issue's l10n
-// follow-up.
 
 import { translate as t } from '@nextcloud/l10n'
 import { CnSearchPage } from '@conduction/nextcloud-vue'
@@ -46,10 +43,27 @@ export default {
 	},
 	methods: {
 		t,
-		onSearch(query) {
-			this.searchStore.setSearchTerm(query || '')
+		/**
+		 * CnSearchPage emits `@search` with a `{ query, facets }` payload —
+		 * destructure the query so we don't stringify the whole object into
+		 * `_search=[object Object]`.
+		 *
+		 * @param {{query: string, facets: object}} payload Event payload.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 */
+		onSearch(payload) {
+			const query = typeof payload === 'string' ? payload : (payload?.query ?? '')
+			this.searchStore.setSearchTerm(query)
 			this.searchStore.searchPublications({ _page: 1 })
 		},
+		/**
+		 * Track the query input so the controlled `:query` prop stays in sync.
+		 *
+		 * @param {string} query New query string emitted by CnSearchPage.
+		 * @return {void}
+		 * @spec exclude presentation-only input tracking
+		 */
 		onQueryChange(query) {
 			this.localQuery = query
 		},
@@ -64,23 +78,23 @@ export default {
 		:results="results"
 		:total-count="totalCount"
 		:loading="loading"
-		placeholder="Search across the federated network…"
-		search-label="Search"
-		empty-label="No matching publications across the federation."
-		idle-label="Start typing to search publications across all connected instances."
-		loading-label="Searching the federated network…"
+		:placeholder="t('opencatalogi', 'Search across the federated network…')"
+		:search-label="t('opencatalogi', 'Search')"
+		:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
+		:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
+		:loading-label="t('opencatalogi', 'Searching the federated network…')"
 		@search="onSearch"
 		@query-change="onQueryChange">
 		<template #result="{ result }">
 			<div class="federation-search-result">
 				<h4 class="federation-search-result__title">
-					{{ result.title || result['@self']?.name || 'Untitled publication' }}
+					{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
 				</h4>
 				<p v-if="result.summary" class="federation-search-result__summary">
 					{{ result.summary }}
 				</p>
 				<p v-if="result['@self']?.directory" class="federation-search-result__source">
-					{{ t('opencatalogi', 'Source') }}: {{ result['@self'].directory }}
+					{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
 				</p>
 			</div>
 		</template>

@@ -305,10 +305,8 @@ export const useSearchStore = defineStore('search', {
 		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		buildQueryParams(additionalParams = {}) {
 			const params = {
-				// `_search` is the canonical OpenCatalogi federation full-text
-				// param; the legacy `q` key here previously returned 0 hits
-				// because /api/federation/publications doesn't read it.
-				...(this.searchTerm && { _search: this.searchTerm }),
+				// Search term
+				...(this.searchTerm && { q: this.searchTerm }),
 
 				// Pagination
 				_page: this.pagination.page,
