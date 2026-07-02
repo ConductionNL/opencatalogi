@@ -263,7 +263,7 @@ export default {
 					:class="'federation-directory__dot--' + statusFor(listing)" />
 				<div class="federation-directory__node-info">
 					<div class="federation-directory__node-name">
-						{{ listing.title || listing.directory || t('opencatalogi', 'Unnamed peer') }}
+						{{ listing.title || listing.directory || t('opencatalogi', 'Unnamed instance') }}
 					</div>
 					<div class="federation-directory__node-url">
 						{{ listing.directory }}

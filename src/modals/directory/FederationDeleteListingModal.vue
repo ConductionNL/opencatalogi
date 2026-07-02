@@ -42,7 +42,7 @@ export default {
 			return navigationStore.modal === 'federationDeleteListing'
 		},
 		listingName() {
-			return this.listing?.title || this.listing?.directory || t('opencatalogi', 'Unnamed peer')
+			return this.listing?.title || this.listing?.directory || t('opencatalogi', 'Unnamed instance')
 		},
 	},
 	watch: {
@@ -129,15 +129,15 @@ export default {
 <template>
 	<NcModal v-if="isOpen && listing"
 		label-id="federationDeleteListingModal"
-		:name="t('opencatalogi', 'Remove peer listing')"
+		:name="t('opencatalogi', 'Remove from directory')"
 		@close="close">
 		<div class="federation-delete-listing-modal">
 			<div v-if="success !== null || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>{{ t('opencatalogi', 'Peer listing removed') }}</p>
+					<p>{{ t('opencatalogi', 'Removed from directory') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="success === false" type="error">
-					<p>{{ t('opencatalogi', 'Failed to remove peer listing') }}</p>
+					<p>{{ t('opencatalogi', 'Removal failed') }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
@@ -145,12 +145,12 @@ export default {
 			</div>
 
 			<p v-if="success === null && !loading">
-				{{ t('opencatalogi', 'Are you sure you want to remove the peer listing {name}? This will stop this instance from syncing publications from that peer. The remote peer itself is not affected. This action cannot be undone.', { name: listingName }) }}
+				{{ t('opencatalogi', 'Remove {name} from the directory? This instance will stop syncing publications from {name}. {name} itself is not affected. This action cannot be undone.', { name: listingName }) }}
 			</p>
 
 			<div v-if="loading" class="federation-delete-listing-modal__loading">
 				<NcLoadingIcon :size="20" />
-				<span>{{ t('opencatalogi', 'Removing peer listing…') }}</span>
+				<span>{{ t('opencatalogi', 'Removing…') }}</span>
 			</div>
 
 			<div class="federation-delete-listing-modal__actions">
