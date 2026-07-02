@@ -1,3 +1,21 @@
+## MODIFIED Requirements
+
+### Requirement: internal search endpoint delegates to `zoeken-filteren` (SCH-OR-003)
+
+The `SearchController::index` (`GET /apps/opencatalogi/api/search`) MUST delegate to OR's `zoeken-filteren`. Two facets of the prior wording are superseded by this change and are hereby MODIFIED:
+
+1. **Auth posture:** the endpoint is no longer authenticated-only — anonymous callers reach it (per `SCH-PFTS-001`). The controller carries `#[PublicPage]` + `#[NoCSRFRequired]`. `SCH-PFTS-004`'s post-scoring `isObjectPublic()` filter provides the anonymous visibility guarantee that the old authenticated-only posture used to provide implicitly.
+2. **Delegation scope:** the controller MUST delegate to `zoeken-filteren` across **both** the `publication` **and** `document` schemas, not the `publications` context alone (per `SCH-PFTS-002` / `SCH-PFTS-006`). It MUST NOT call a bespoke `buildSearchQuery()` or `searchObjectsPaginated()` method in opencatalogi itself.
+
+Everything else about SCH-OR-003 (the "no bespoke query layer" prohibition, the passthrough contract) is preserved.
+
+#### Scenario: internal endpoint delegates (updated for public + multi-schema)
+
+- **GIVEN** any request (authenticated or anonymous) to `GET /apps/opencatalogi/api/search`,
+- **WHEN** `SearchController::index` runs,
+- **THEN** it calls `zoeken-filteren` across both the `publication` and `document` schemas with the caller's query parameters,
+- **AND** returns the merged + visibility-filtered response.
+
 ## ADDED Requirements
 
 ### Requirement: Public full-text search endpoint absorbs the admin-only search (SCH-PFTS-001)

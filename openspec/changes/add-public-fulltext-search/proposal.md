@@ -43,6 +43,7 @@ In scope:
 Explicitly **out of scope**:
 
 - Any modification to `GET /publications` — it stays exactly as-is.
+- **OC-internal admin UI for this endpoint.** The anonymous consumer of `/apps/opencatalogi/api/search` is an external public-portal frontend (e.g. the Tilburg WOO portal), not an OC-internal admin surface. OC's existing federation store (`SCH-OR-004`) is unaffected. No new OC-internal Vue view, search bar, or admin surface is added by this change; the WOO-506 use case is a headless-API consumption pattern.
 - Lucene-style operator parsing (boolean OR/AND, phrase quotes, prefix wildcards) — deferred to a B3 follow-up change.
 - Per-schema field weighting and `searchConfig` blocks — deferred.
 - A `@self.relevance` field on responses — deferred unless the Solr backend is already producing it.
