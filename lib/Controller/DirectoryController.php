@@ -211,10 +211,22 @@ class DirectoryController extends Controller
     }//end index()
 
     /**
-     * Synchronize with an external directory.
+     * Synchronize with an external directory — federation broadcast-receive endpoint.
      *
-     * Synchronizes listings from a specific external directory URL.
-     * Accepts a 'directory' parameter containing the URL to sync with.
+     * This route is the target for cross-instance federation gossip: peer OpenCatalogi
+     * instances POST here (via `BroadcastService`) to notify us of their existence so
+     * we can pull their listings. It MUST stay `@PublicPage` + `@NoCSRFRequired` for
+     * that gossip to reach unauthenticated. Accepts a 'directory' parameter with the
+     * URL to sync from.
+     *
+     * **Do not call this endpoint from the OC admin UI.** Admin-initiated
+     * peer-registration should hit `POST /api/listings/add` instead (see
+     * `ListingsController::add()`), which requires an authenticated user and CSRF
+     * token — matching the SB1 / WF1 SSRF hardening from wave-12. Both endpoints
+     * funnel into `DirectoryService::syncDirectory($url)`, so their behaviour is
+     * identical on the wire; the difference is purely in auth posture. WOO-513
+     * migrated the two remaining frontend callers (`AddDirectoryModal.vue`,
+     * `DirectoryIndex.vue`) off this public route onto the auth-required one.
      *
      * @return JSONResponse The JSON response containing the synchronization result.
      *

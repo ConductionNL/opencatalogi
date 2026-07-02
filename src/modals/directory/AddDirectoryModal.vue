@@ -199,12 +199,22 @@ const handleSync = async () => {
 	loading.value = true
 	error.value = null
 	try {
-		const response = await axios.post(generateUrl('/apps/opencatalogi/api/directory'), {
-			directory: directoryUrl.value,
+		// Use the auth-required `/api/listings/add` endpoint for admin-initiated
+		// peer registration instead of the public `/api/directory` broadcast-
+		// receive endpoint — see WOO-513. The two routes both funnel into
+		// `DirectoryService::syncDirectory($url)` but have different security
+		// postures: `/api/directory` is @PublicPage + @NoCSRFRequired to accept
+		// federation broadcasts from other instances, while `/api/listings/add`
+		// requires an authenticated user (SB1 / WF1 SSRF hardening, wave-12).
+		const response = await axios.post(generateUrl('/apps/opencatalogi/api/listings/add'), {
+			url: directoryUrl.value,
 		})
 
 		success.value = true
-		syncResults.value = response.data.data
+		// Legacy endpoint wrapped payload in `.data.data`; new endpoint returns
+		// the sync report directly. Handle both shapes so the sync-report UI
+		// keeps rendering fields like `listings_created` / `listings_updated`.
+		syncResults.value = response.data.data ?? response.data
 	} catch (err) {
 		console.error('Error synchronizing directory:', err)
 		success.value = false

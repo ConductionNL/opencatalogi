@@ -282,10 +282,21 @@ export default {
 		},
 		async refreshDirectory(listing) {
 			try {
-				const response = await fetch(generateUrl('/apps/opencatalogi/api/directory'), {
+				// Use the auth-required `/api/listings/add` endpoint for admin-
+				// initiated peer refresh instead of the public `/api/directory`
+				// broadcast-receive endpoint — see WOO-513. Both routes funnel
+				// into `DirectoryService::syncDirectory($url)` but have different
+				// security postures: `/api/directory` is @PublicPage +
+				// @NoCSRFRequired to accept federation broadcasts, while
+				// `/api/listings/add` requires an authenticated user (SB1 / WF1
+				// SSRF hardening, wave-12).
+				const response = await fetch(generateUrl('/apps/opencatalogi/api/listings/add'), {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ directory: listing.directory }),
+					headers: {
+						'Content-Type': 'application/json',
+						'OCS-APIRequest': 'true',
+					},
+					body: JSON.stringify({ url: listing.directory }),
 				})
 				const result = await response.json()
 				if (response.ok) {
