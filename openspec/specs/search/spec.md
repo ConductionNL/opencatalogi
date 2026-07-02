@@ -1,5 +1,4 @@
 ---
-status: done
 or_dep: zoeken-filteren
 audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
@@ -8,7 +7,7 @@ audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 **Scope**: opencatalogi
 **OpenSpec changes**:
 
-- `add-public-fulltext-search` — in-progress — adds public, RBAC-filtered `GET /apps/opencatalogi/api/search` returning mixed publication/document rows (absorbs the admin-only endpoint; adds a bundled `document` schema). Existing `SCH-OR-001` / `SCH-OR-002` are untouched.
+- [add-public-fulltext-search](../../changes/add-public-fulltext-search/) — in-progress
 
 # Search
 
@@ -93,20 +92,26 @@ merging on `_id` equality.
 
 ### Requirement: internal search endpoint delegates to `zoeken-filteren` (SCH-OR-003)
 
-The `SearchController::index` (`GET /api/search`) MUST delegate to OR's
-`zoeken-filteren` with the `publications` context. It MUST NOT call a
-bespoke `buildSearchQuery()` or `searchObjectsPaginated()` method in
-opencatalogi itself.
+The `SearchController::index` (`GET /apps/opencatalogi/api/search`) MUST delegate to OR's
+`zoeken-filteren`. The delegation is multi-schema (`publication` + `document`) and the
+endpoint is public — see `add-public-fulltext-search` (in-progress) for the MODIFIED
+posture. Until that change lands and is archived, this requirement is worded to accommodate
+both the pre-change posture (authenticated + publications-only) and the post-change posture
+(anonymous + publication + document). It MUST NOT call a bespoke `buildSearchQuery()` or
+`searchObjectsPaginated()` method in opencatalogi itself.
 
-> @e2e exclude Backend controller-delegation contract (`SearchController::index` delegates to `zoeken-filteren` with the publications context, no bespoke buildSearchQuery/searchObjectsPaginated) — a server endpoint with no UI surface; verified by PHPUnit/Newman over `GET /api/search`.
+> @e2e exclude Backend controller-delegation contract (`SearchController::index` delegates to `zoeken-filteren`, no bespoke buildSearchQuery/searchObjectsPaginated) — a server endpoint with no UI surface; verified by PHPUnit/Newman over `GET /apps/opencatalogi/api/search`.
 
 #### Scenario: internal endpoint delegates
 
-- **GIVEN** an authenticated request to `GET /api/search`,
+- **GIVEN** a request (authenticated or, post-`add-public-fulltext-search`, anonymous)
+  to `GET /apps/opencatalogi/api/search`,
 - **WHEN** `SearchController::index` runs,
-- **THEN** it calls `zoeken-filteren` with the `publications` context
-  and the caller's query parameters,
-- **AND** returns the OR response.
+- **THEN** it calls `zoeken-filteren` with the schema context(s) declared by the
+  in-scope change (`publications` pre-change; `publication` + `document`
+  post-`add-public-fulltext-search`) and the caller's query parameters,
+- **AND** returns the OR response (with the post-scoring visibility filter applied
+  when the caller is anonymous).
 
 ### Requirement: search frontend store calls the federation endpoint (SCH-OR-004)
 
@@ -182,7 +187,7 @@ preserved; the implementation path now routes through `zoeken-filteren`.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/search` | Internal search — delegates to OR `zoeken-filteren` with the `publications` context (authenticated) |
+| GET | `/apps/opencatalogi/api/search` | Public full-text search — delegates to OR `zoeken-filteren` across the `publication` + `document` schemas; anonymous-reachable with post-scoring `isObjectPublic()` filter (per `add-public-fulltext-search`). Prior posture: authenticated + publications-only. |
 
 ## References
 

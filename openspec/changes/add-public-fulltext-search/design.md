@@ -44,7 +44,19 @@ This change is `kind: mixed`. The artifacts touch:
 
 Per ADR-032 the default is to chain config-then-code. Here, the code change is a tight pass-through: ≤ ~50 LOC across the controller and one service helper. The reason the code can't be deferred to a follow-up chain spec is **frontend renderability**: an OC build that ships the new schema but not the public endpoint produces a `document` schema citizens have no way to reach; an OC build that ships the public endpoint but not the schema returns publication-only rows from a surface the proposal explicitly justifies as mixed-typed. The two surfaces must arrive together for the WOO use case to be reachable.
 
-This is borderline "thin glue" territory (ADR-032 §"Thin-glue exception"). It's flagged as a deferred question for the user: split into a config-kind `add-document-schema-declaration` + this change as code-kind with `depends_on: [add-document-schema-declaration]`, OR keep as a single `mixed` change with this rationale documented. The implementation will work either way; the split decision is editorial.
+**Decision:** keep as `kind: mixed` per ADR-032 §"Thin-glue exception". A split into a config-kind `add-document-schema-declaration` + a code-kind change depending on it was considered and rejected because the schema-only build would ship a `document` type that citizens cannot reach — the public search endpoint (which is the only way to surface documents to anonymous callers) doesn't exist until the code-kind lands, so the intermediate state has no user-observable value. Shipping the two surfaces as one atomic change avoids that unreachable-intermediate state.
+
+## Service placement decision
+
+The mixed-type assembly (calling OR's `zoeken-filteren` across `publication` + `document`, merging candidate rows, applying `isObjectPublic()` post-filter, embedding the parent-publication summary on document rows) lives in **`PublicationQueryService`** — not a new sibling service.
+
+Rationale:
+
+- `PublicationQueryService` already owns `isObjectPublic()`, which `SCH-PFTS-004` reuses unchanged. Co-locating the mixed-type assembly with the visibility helper it depends on keeps the transitive-visibility logic in one place.
+- The current `PublicationQueryService` is small enough (~1 KLoC) that a new method (`assemblePublicSearchResults()` or similar) does not push it past a natural boundary.
+- A "sibling service" would need to re-inject `PublicationQueryService` anyway just to reuse `isObjectPublic()`, adding indirection without a coherent domain boundary.
+
+If a future change introduces a genuinely distinct multi-schema surface (e.g. cross-register federation of the document schema), a sibling service becomes justified then — not now.
 
 ## Seed Data (ADR-001)
 
