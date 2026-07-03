@@ -2,71 +2,65 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// FederationDirectory — data layer for the Directory page. The manifest's
-// previous `component: "CnFederationStatus"` mounted the bare presentational
-// widget with no `:nodes` prop, so it always rendered the empty-state
-// regardless of /api/listings content. This wrapper fetches the peer
-// listings and maps them to the shape CnFederationStatus expects. The
-// "Add directory" affordance imports the existing modal-isolated
-// AddDirectoryModal (src/modals/directory/AddDirectoryModal.vue) so we
-// honour hydra-gate-modal-isolation and reuse its sync-report UI. The
-// manifest-v2 shell does not mount src/modals/Modals.vue, so we mount
-// AddDirectoryModal directly here — the child renders only when
-// `navigationStore.modal === 'addDirectory'`.
-//
-// References:
-//   - WOO-493 manual walkthrough (2026-06-30) — surfaced the missing binding.
-//   - WOO-510 — this fix.
-//   - src/modals/directory/AddDirectoryModal.vue — the reused modal.
+// Data layer + admin surface for the Directory page. Replaces the
+// manifest's earlier `component: "CnFederationStatus"` binding which
+// mounted the presentational widget without a `:nodes` prop and stuck
+// on the empty state. Modal-open flags use a `federation…` prefix to
+// avoid colliding with the legacy AddDirectoryModal / EditListing keys.
 
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { CnFederationStatus } from '@conduction/nextcloud-vue'
-import { NcButton } from '@nextcloud/vue'
+import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue'
+import PencilOutline from 'vue-material-design-icons/PencilOutline.vue'
+import DeleteOutline from 'vue-material-design-icons/DeleteOutline.vue'
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import { navigationStore } from '../../store/store.js'
 import FederationAddDirectoryModal from '../../modals/directory/FederationAddDirectoryModal.vue'
+import FederationEditListingModal from '../../modals/directory/FederationEditListingModal.vue'
+import FederationDeleteListingModal from '../../modals/directory/FederationDeleteListingModal.vue'
 
 export default {
 	name: 'FederationDirectory',
-	components: { CnFederationStatus, NcButton, FederationAddDirectoryModal },
+	components: {
+		NcButton,
+		NcActions,
+		NcActionButton,
+		PencilOutline,
+		DeleteOutline,
+		DotsHorizontal,
+		FederationAddDirectoryModal,
+		FederationEditListingModal,
+		FederationDeleteListingModal,
+	},
 	data() {
 		return {
 			listings: [],
 			loading: false,
 			error: null,
-			previousModal: null,
+			editingListing: null,
+			deletingListing: null,
 		}
 	},
 	computed: {
-		/**
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 * @return {Array<object>} Nodes in the shape CnFederationStatus expects.
-		 */
-		nodes() {
-			return this.listings.map((l) => ({
-				id: l.id || l['@self']?.id,
-				name: l.title || l.name || l.directory || t('opencatalogi', 'Unnamed peer'),
-				url: l.directory || l.search || null,
-				status: this.statusFor(l),
-				message: this.messageFor(l),
-				lastChecked: l.lastSyncAt || l.updated || null,
-			}))
-		},
 		modalState() {
 			return navigationStore.modal
 		},
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		summary() {
+			const counts = { up: 0, degraded: 0, down: 0, unknown: 0 }
+			for (const l of this.listings) {
+				counts[this.statusFor(l)]++
+			}
+			return counts
+		},
 	},
 	watch: {
-		/**
-		 * Refresh the listing set whenever the shared AddDirectoryModal closes,
-		 * so a successful sync surfaces immediately without a manual reload.
-		 *
-		 * @param {string|null} next Current modal name (null when closed).
-		 * @param {string|null} prev Previous modal name.
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		modalState(next, prev) {
-			if (prev === 'addDirectory' && next !== 'addDirectory') {
+			const dirModals = ['federationAddDirectory', 'federationEditListing', 'federationDeleteListing']
+			if (dirModals.includes(prev) && next !== prev) {
+				if (prev === 'federationEditListing') this.editingListing = null
+				if (prev === 'federationDeleteListing') this.deletingListing = null
 				this.load()
 			}
 		},
@@ -76,18 +70,13 @@ export default {
 	},
 	methods: {
 		t,
-		/**
-		 * Fetch peer listings from the OpenCatalogi listings endpoint.
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		async load() {
 			this.loading = true
 			this.error = null
 			try {
 				const url = generateUrl('/apps/opencatalogi/api/listings')
-				const res = await fetch(url, { headers: { 'OCS-APIRequest': 'true', Accept: 'application/json' } })
+				const res = await fetch(url, { headers: { Accept: 'application/json' } })
 				if (!res.ok) {
 					throw new Error(`HTTP ${res.status}`)
 				}
@@ -100,13 +89,7 @@ export default {
 				this.loading = false
 			}
 		},
-		/**
-		 * Map a listing to a `CnFederationStatus` status value.
-		 *
-		 * @param {object} listing Listing record from /api/listings.
-		 * @return {'up'|'degraded'|'down'|'unknown'}
-		 * @spec exclude presentation-only mapper — no behaviour change on the wire
-		 */
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
@@ -116,13 +99,17 @@ export default {
 			}
 			return 'unknown'
 		},
-		/**
-		 * Localised status-message rendered next to each node.
-		 *
-		 * @param {object} listing Listing record from /api/listings.
-		 * @return {string} Human-readable status message.
-		 * @spec exclude presentation-only mapper — no behaviour change on the wire
-		 */
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		statusLabelFor(listing) {
+			const map = {
+				up: t('opencatalogi', 'available'),
+				degraded: t('opencatalogi', 'degraded'),
+				down: t('opencatalogi', 'unreachable'),
+				unknown: t('opencatalogi', 'unknown'),
+			}
+			return map[this.statusFor(listing)]
+		},
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		messageFor(listing) {
 			if (listing.available === false) return t('opencatalogi', 'Peer is unreachable')
 			if (typeof listing.statusCode === 'number' && (listing.statusCode < 200 || listing.statusCode >= 300)) {
@@ -130,15 +117,28 @@ export default {
 			}
 			return ''
 		},
-		/**
-		 * Open the shared AddDirectoryModal — the modal handles POST + sync
-		 * reporting, we react by re-fetching once it closes.
-		 *
-		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
-		 */
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		openAdd() {
-			navigationStore.setModal('addDirectory')
+			navigationStore.setModal('federationAddDirectory')
+		},
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		openEdit(listing) {
+			this.editingListing = listing
+			navigationStore.setModal('federationEditListing')
+		},
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		openDelete(listing) {
+			this.deletingListing = listing
+			navigationStore.setModal('federationDeleteListing')
+		},
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
+		integrationLevelFor(listing) {
+			const raw = listing.integrationLevel
+			if (raw === undefined || raw === null || raw === '') return t('opencatalogi', 'not set')
+			if (raw === 'search') return t('opencatalogi', 'Federated search')
+			if (raw === 'sync') return t('opencatalogi', 'Full sync')
+			if (raw === 'none') return t('opencatalogi', 'Disabled')
+			return raw
 		},
 	},
 }
@@ -155,6 +155,25 @@ export default {
 			</NcButton>
 		</header>
 
+		<div class="federation-directory__summary" data-testid="federation-directory-summary">
+			<span class="federation-directory__summary-item federation-directory__summary-item--up">
+				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--up" />
+				{{ summary.up }} {{ t('opencatalogi', 'available') }}
+			</span>
+			<span class="federation-directory__summary-item federation-directory__summary-item--degraded">
+				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--degraded" />
+				{{ summary.degraded }} {{ t('opencatalogi', 'degraded') }}
+			</span>
+			<span class="federation-directory__summary-item federation-directory__summary-item--down">
+				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--down" />
+				{{ summary.down }} {{ t('opencatalogi', 'unreachable') }}
+			</span>
+			<span v-if="summary.unknown > 0" class="federation-directory__summary-item federation-directory__summary-item--unknown">
+				<span aria-hidden="true" class="federation-directory__dot federation-directory__dot--unknown" />
+				{{ summary.unknown }} {{ t('opencatalogi', 'unknown') }}
+			</span>
+		</div>
+
 		<p v-if="loading" class="federation-directory__hint">
 			{{ t('opencatalogi', 'Loading federated peers…') }}
 		</p>
@@ -162,11 +181,65 @@ export default {
 			{{ t('opencatalogi', 'Failed to load directory:') }} {{ error }}
 		</p>
 
-		<CnFederationStatus
-			:nodes="nodes"
-			:empty-label="t('opencatalogi', 'No federation peers registered. Use \'Add directory\' to connect to a peer instance.')" />
+		<p v-else-if="listings.length === 0" class="federation-directory__hint">
+			{{ t('opencatalogi', 'No federation peers registered. Use \'Add directory\' to connect to a peer instance.') }}
+		</p>
+
+		<ul v-else class="federation-directory__list">
+			<li v-for="listing in listings"
+				:key="listing.id"
+				class="federation-directory__node"
+				:class="'federation-directory__node--' + statusFor(listing)">
+				<span aria-hidden="true"
+					class="federation-directory__dot"
+					:class="'federation-directory__dot--' + statusFor(listing)" />
+				<span class="hidden-visually">{{ statusLabelFor(listing) }}</span>
+				<div class="federation-directory__node-info">
+					<div class="federation-directory__node-name">
+						{{ listing.title || listing.directory || t('opencatalogi', 'Unnamed instance') }}
+					</div>
+					<div class="federation-directory__node-url">
+						{{ listing.directory }}
+					</div>
+					<div v-if="messageFor(listing)" class="federation-directory__node-message">
+						{{ messageFor(listing) }}
+					</div>
+				</div>
+				<div class="federation-directory__node-integration">
+					<span class="federation-directory__field-label">
+						{{ t('opencatalogi', 'Integration level') }}
+					</span>
+					<span class="federation-directory__field-value">
+						{{ integrationLevelFor(listing) }}
+					</span>
+				</div>
+				<div class="federation-directory__node-actions">
+					<NcActions :force-menu="false"
+						:menu-name="t('opencatalogi', 'Actions')"
+						:aria-label="t('opencatalogi', 'Actions for {name}', { name: listing.title || listing.directory })">
+						<template #icon>
+							<DotsHorizontal :size="20" />
+						</template>
+						<NcActionButton :close-after-click="true" @click="openEdit(listing)">
+							<template #icon>
+								<PencilOutline :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Edit') }}
+						</NcActionButton>
+						<NcActionButton :close-after-click="true" @click="openDelete(listing)">
+							<template #icon>
+								<DeleteOutline :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Remove') }}
+						</NcActionButton>
+					</NcActions>
+				</div>
+			</li>
+		</ul>
 
 		<FederationAddDirectoryModal />
+		<FederationEditListingModal :listing="editingListing" />
+		<FederationDeleteListingModal :listing="deletingListing" />
 	</div>
 </template>
 
@@ -183,10 +256,101 @@ export default {
 .federation-directory__title {
 	margin: 0;
 }
+.federation-directory__summary {
+	display: flex;
+	gap: 16px;
+	margin: 8px 0 16px;
+	font-size: 13px;
+}
+.federation-directory__summary-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--color-text-maxcontrast);
+}
+.federation-directory__dot {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--color-background-darker);
+}
+.federation-directory__dot--up { background: var(--color-success); }
+.federation-directory__dot--degraded { background: var(--color-warning); }
+.federation-directory__dot--down { background: var(--color-error); }
+.federation-directory__dot--unknown { background: var(--color-text-lighter); }
+/* WCAG 4.1.2 — pair `aria-hidden` dots with sr-only status text (F12). */
+.hidden-visually {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
 .federation-directory__hint {
 	color: var(--color-text-maxcontrast);
 }
 .federation-directory__error {
 	color: var(--color-error);
+}
+.federation-directory__list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	border-top: 1px solid var(--color-border);
+}
+.federation-directory__node {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 8px;
+	border-bottom: 1px solid var(--color-border);
+}
+.federation-directory__node-info {
+	flex: 1;
+	min-width: 0;
+}
+.federation-directory__node-name {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.federation-directory__node-url {
+	font-size: 12px;
+	color: var(--color-text-lighter);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.federation-directory__node-message {
+	font-size: 12px;
+	color: var(--color-warning);
+	margin-top: 2px;
+}
+.federation-directory__node-integration {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	margin-inline: 12px;
+	min-width: 100px;
+}
+.federation-directory__field-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--color-text-lighter);
+}
+.federation-directory__field-value {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+}
+.federation-directory__node-actions {
+	flex: 0 0 auto;
 }
 </style>

@@ -33,8 +33,11 @@ export default {
 		}
 	},
 	computed: {
+		// Manifest-v2 uses a `federation…` prefix so the flag never collides
+		// with the legacy `AddDirectoryModal` (which keys on `'addDirectory'`)
+		// if both shells ever coexist.
 		isOpen() {
-			return navigationStore.modal === 'addDirectory'
+			return navigationStore.modal === 'federationAddDirectory'
 		},
 	},
 	watch: {
