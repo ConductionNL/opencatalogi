@@ -875,11 +875,14 @@ class SettingsService
         // Get the object types that need configuration.
         // 'publication' is included so publication_register/publication_schema
         // resolve for retention evaluation (RET-005); it was previously omitted.
+        // 'document' is included so document_register/document_schema resolve for the
+        // public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002).
         $objectTypes = [
             'catalog',
             'listing',
             'organization',
             'publication',
+            'document',
             'theme',
             'page',
             'menu',

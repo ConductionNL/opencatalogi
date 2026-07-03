@@ -33,10 +33,92 @@ use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\DB\QueryBuilder\IFunctionBuilder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\DB\QueryBuilder\IQueryFunction;
+use OCP\IAppConfig;
 use OCP\IDBConnection;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+
+/**
+ * Fake OpenRegister ObjectService double for assemblePublicSearchResults() tests.
+ *
+ * Captures the query passed to searchObjectsPaginated() so scope-enforcement can be
+ * asserted, and lets searchObjects() (used for the document → publication slug lookup)
+ * return a canned row keyed by the requested slug.
+ */
+class FakeSearchObjectService
+{
+
+    /**
+     * Captured query passed to searchObjectsPaginated().
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $capturedQuery = null;
+
+    /**
+     * Rows returned by searchObjectsPaginated().
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $candidateRows = [];
+
+    /**
+     * Results of searchObjects(), keyed by slug.
+     *
+     * @var array<string, array<int, array<string, mixed>>>
+     */
+    public array $bySlug = [];
+
+    /**
+     * Mirrors OR's ObjectService::buildSearchQuery() closely enough for these tests:
+     * passes request params through unchanged so scope-override tests can prove
+     * assemblePublicSearchResults() strips/overwrites the scope-widening keys.
+     *
+     * @param array $requestParams Raw request params.
+     *
+     * @return array
+     */
+    public function buildSearchQuery(array $requestParams): array
+    {
+        return $requestParams;
+
+    }//end buildSearchQuery()
+
+    /**
+     * Records the query and returns the canned candidate rows.
+     *
+     * @param array   $query         The search query.
+     * @param boolean $_rbac         Unused (test double).
+     * @param boolean $_multitenancy Unused (test double).
+     *
+     * @return array{results: array<int, array<string, mixed>>}
+     */
+    public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array
+    {
+        $this->capturedQuery = $query;
+        return ['results' => $this->candidateRows];
+
+    }//end searchObjectsPaginated()
+
+    /**
+     * Returns the canned rows for the requested slug.
+     *
+     * @param array   $query         The search query (only `slug` is consulted).
+     * @param boolean $_rbac         Unused (test double).
+     * @param boolean $_multitenancy Unused (test double).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function searchObjects(array $query, bool $_rbac=true, bool $_multitenancy=true): array
+    {
+        $slug = ($query['slug'] ?? null);
+        return ($this->bySlug[$slug] ?? []);
+
+    }//end searchObjects()
+}//end class
 
 /**
  * Unit tests for PublicationQueryService.
@@ -62,6 +144,20 @@ class PublicationQueryServiceTest extends TestCase
     private ContainerInterface|MockObject $container;
 
     /**
+     * App config mock.
+     *
+     * @var IAppConfig|MockObject
+     */
+    private IAppConfig|MockObject $config;
+
+    /**
+     * In-memory app-config store consulted by the config mock's getValueString().
+     *
+     * @var array<string, string>
+     */
+    private array $configStore = [];
+
+    /**
      * Service under test.
      *
      * @var PublicationQueryService
@@ -77,13 +173,296 @@ class PublicationQueryServiceTest extends TestCase
     {
         $this->db        = $this->createMock(IDBConnection::class);
         $this->container = $this->createMock(ContainerInterface::class);
+        $this->config    = $this->createMock(IAppConfig::class);
+
+        $this->configStore = [];
+        $this->config->method('getValueString')
+            ->willReturnCallback(
+                fn (string $app, string $key, string $default='') => ($this->configStore[$key] ?? $default)
+            );
 
         $this->service = new PublicationQueryService(
             db: $this->db,
-            container: $this->container
+            container: $this->container,
+            config: $this->config
         );
 
     }//end setUp()
+
+    /**
+     * Build a service instance with an authenticated (non-anonymous) user session.
+     *
+     * @return PublicationQueryService
+     */
+    private function makeAuthenticatedService(): PublicationQueryService
+    {
+        $userSession = $this->createMock(IUserSession::class);
+        $userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+
+        return new PublicationQueryService(
+            db: $this->db,
+            container: $this->container,
+            userSession: $userSession,
+            config: $this->config
+        );
+
+    }//end makeAuthenticatedService()
+
+    // -------------------------------------------------------------------------
+    // assemblePublicSearchResults() tests (SCH-PFTS-002/003/004/007)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Unconfigured register/schema ids fail closed to an empty envelope rather than
+     * falling back to an unscoped, platform-wide search.
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsFailsClosedWhenUnconfigured(): void
+    {
+        $fake = new FakeSearchObjectService();
+
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(expected: ['results' => [], 'total' => 0], actual: $result);
+        $this->assertNull($fake->capturedQuery, 'searchObjectsPaginated MUST NOT run without a resolved scope.');
+
+    }//end testAssemblePublicSearchResultsFailsClosedWhenUnconfigured()
+
+    /**
+     * Security: caller-supplied `_register`/`_schemas`/`catalogSlug` MUST NOT widen the
+     * search beyond the configured publication/document schemas.
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsFixesScopeRegardlessOfCallerParams(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+
+        $this->service->assemblePublicSearchResults(
+            queryParams: [
+                '_register'   => 999,
+                '_schemas'    => [999],
+                '_schema'     => 999,
+                'catalogSlug' => 'unrelated-catalog',
+                'fq'          => 'unrelated-filter',
+            ],
+            objectService: $fake
+        );
+
+        $this->assertSame(expected: 10, actual: $fake->capturedQuery['_register']);
+        $this->assertSame(expected: [1, 2], actual: $fake->capturedQuery['_schemas']);
+        $this->assertArrayNotHasKey('_schema', $fake->capturedQuery);
+        $this->assertArrayNotHasKey('catalogSlug', $fake->capturedQuery);
+        $this->assertArrayNotHasKey('fq', $fake->capturedQuery);
+
+    }//end testAssemblePublicSearchResultsFixesScopeRegardlessOfCallerParams()
+
+    /**
+     * Mixed publication/document rows are discriminated by `@self.schema`, and every
+     * document row carries the embedded `{id, slug, title}` publication summary
+     * (SCH-PFTS-002/003).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsDiscriminatesAndEmbedsPublicationSummary(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows   = [
+            [
+                '@self'           => ['schema' => 1, 'slug' => 'pub-a'],
+                'title'           => 'Pub A',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+            [
+                '@self'           => ['schema' => 2, 'slug' => 'doc-a'],
+                'title'           => 'Doc A',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
+            ],
+        ];
+        $fake->bySlug['pub-a'] = [
+            [
+                'id'              => 'uuid-pub-a',
+                '@self'           => ['slug' => 'pub-a'],
+                'title'           => 'Pub A',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(2, $result['total']);
+        $this->assertSame('publication', $result['results'][0]['@self']['schema']);
+        $this->assertSame('document', $result['results'][1]['@self']['schema']);
+        $this->assertSame(
+            expected: ['id' => 'uuid-pub-a', 'slug' => 'pub-a', 'title' => 'Pub A'],
+            actual: $result['results'][1]['publication']
+        );
+
+    }//end testAssemblePublicSearchResultsDiscriminatesAndEmbedsPublicationSummary()
+
+    /**
+     * Anonymous callers never see a candidate row whose own visibility fails
+     * `isObjectPublic()`, even though the filter runs AFTER scoring/merge (SCH-PFTS-004).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsFiltersUnpublishedForAnonymous(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
+
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 1, 'slug' => 'pub-live'],
+                'title'           => 'Live publication',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+            [
+                '@self'           => ['schema' => 1, 'slug' => 'pub-embargoed'],
+                'title'           => 'Embargoed publication',
+                'publicatiedatum' => $future,
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(1, $result['total']);
+        $this->assertSame('pub-live', $result['results'][0]['@self']['slug']);
+
+    }//end testAssemblePublicSearchResultsFiltersUnpublishedForAnonymous()
+
+    /**
+     * A document whose OWN publicatiedatum is public but whose linked publication is
+     * depublished MUST NOT surface for anonymous callers (transitive visibility,
+     * SCH-PFTS-004).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsEnforcesTransitiveVisibilityOnDocuments(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 2, 'slug' => 'doc-orphaned-by-depublish'],
+                'title'           => 'Document of a depublished report',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publication'     => ['slug' => 'pub-depublished', 'title' => 'Depublished report'],
+            ],
+        ];
+        $fake->bySlug['pub-depublished'] = [
+            [
+                'id'                => 'uuid-pub-depublished',
+                '@self'             => ['slug' => 'pub-depublished'],
+                'title'             => 'Depublished report',
+                'publicatiedatum'   => '2024-01-01T00:00:00+00:00',
+                'depublicatiedatum' => '2024-06-01T00:00:00+00:00',
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(expected: ['results' => [], 'total' => 0], actual: $result);
+
+    }//end testAssemblePublicSearchResultsEnforcesTransitiveVisibilityOnDocuments()
+
+    /**
+     * A document with no linked publication MUST NOT appear in the result set
+     * (SCH-PFTS-003).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsDropsDocumentWithoutLinkedPublication(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 2, 'slug' => 'doc-orphan'],
+                'title'           => 'Orphan document',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(expected: ['results' => [], 'total' => 0], actual: $result);
+
+    }//end testAssemblePublicSearchResultsDropsDocumentWithoutLinkedPublication()
+
+    /**
+     * A candidate row whose schema id does not match the configured publication/document
+     * schema ids is dropped (defensive — should not occur given the fixed `_schemas`
+     * scope, but the assembly must not surface an unrecognised row type).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsSkipsRowsWithUnknownSchemaId(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 999, 'slug' => 'unexpected'],
+                'title'           => 'Unexpected schema',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(expected: ['results' => [], 'total' => 0], actual: $result);
+
+    }//end testAssemblePublicSearchResultsSkipsRowsWithUnknownSchemaId()
+
+    /**
+     * Authenticated callers absorb the old admin-only endpoint's behaviour: every
+     * candidate row is returned, including ones that would fail the anonymous
+     * visibility filter (SCH-OR-003).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsSkipsVisibilityFilterForAuthenticatedCallers(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
+
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 1, 'slug' => 'pub-embargoed'],
+                'title'           => 'Embargoed publication',
+                'publicatiedatum' => $future,
+            ],
+        ];
+
+        $service = $this->makeAuthenticatedService();
+        $result  = $service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(1, $result['total']);
+        $this->assertSame('pub-embargoed', $result['results'][0]['@self']['slug']);
+
+    }//end testAssemblePublicSearchResultsSkipsVisibilityFilterForAuthenticatedCallers()
+
+    /**
+     * Populate the register/schema app-config keys assemblePublicSearchResults() reads.
+     *
+     * @return void
+     */
+    private function configureRegisterAndSchemas(): void
+    {
+        $this->configStore = [
+            'publication_register' => '10',
+            'publication_schema'   => '1',
+            'document_schema'      => '2',
+        ];
+
+    }//end configureRegisterAndSchemas()
 
     // -------------------------------------------------------------------------
     // findObjectLocation() tests
@@ -191,7 +570,6 @@ class PublicationQueryServiceTest extends TestCase
                 // the expression builder — IExpressionBuilder has no such method, so a
                 // stub here raises MethodCannotBeConfigured. The $qb->andWhere() stub is
                 // configured below.
-
                 $qb->method('select')->willReturnSelf();
                 $qb->method('from')->willReturnSelf();
                 $qb->method('func')->willReturn($funcBuilder);
@@ -285,7 +663,7 @@ class PublicationQueryServiceTest extends TestCase
 
         $this->assertFalse(
             $this->service->isObjectPublic(
-                [
+                objectData: [
                     'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
                     'depublicatiedatum' => '2024-06-01T10:00:00+00:00',
                 ]
@@ -294,7 +672,7 @@ class PublicationQueryServiceTest extends TestCase
 
         $this->assertTrue(
             $this->service->isObjectPublic(
-                [
+                objectData: [
                     'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
                     'depublicatiedatum' => $future,
                 ]

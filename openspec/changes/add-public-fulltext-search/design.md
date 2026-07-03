@@ -1,3 +1,7 @@
+---
+status: pr-created
+---
+
 # Design: add-public-fulltext-search
 
 ## Architecture Overview
@@ -173,6 +177,30 @@ ADR-031 applicability is minimal here — no lifecycle transitions, aggregations
 
 1. **Filter runs AFTER scoring/merge.** OR's `zoeken-filteren` returns a candidate set ordered by `_score`. The controller (or an assembly helper) iterates the candidate rows and drops any whose `isObjectPublic()` returns false. The visibility decision MUST NOT be folded into the OR query, because that would bias scoring against rows the corpus considers more relevant.
 2. **Documents are transitively gated.** A document row is included only when (a) the document itself satisfies `isObjectPublic()`, and (b) its linked publication satisfies `isObjectPublic()`. The linked-publication object MAY be looked up lazily during the filter, or the linked publication's `publicatiedatum`/`depublicatiedatum` MAY be denormalised onto the document schema for filter efficiency. The denormalisation choice is left to the implementer; the spec requires only the observable transitivity.
+
+## Implementation note — register/schema id resolution
+
+`assemblePublicSearchResults()` resolves the publication register id and the
+`publication`/`document` schema ids from app config (`publication_register`,
+`publication_schema`, `document_schema`) rather than a live `SchemaMapper`/
+`RegisterMapper` lookup by slug, mirroring the existing `RetentionService`
+pattern. `SettingsService::updateObjectTypeConfiguration()` is extended to
+include `'document'` in its object-types list so these keys populate on
+install/upgrade, exactly as `publication_register`/`publication_schema`
+already do. If the config keys are not (yet) populated — e.g. a fresh
+install before the settings-load repair step has run — the assembly method
+fails closed to an empty result envelope rather than falling back to an
+unscoped, platform-wide search.
+
+## Scope reduction — CHANGELOG.md
+
+`tasks.md`'s CHANGELOG task is intentionally left unchecked. Per ADR-037
+(modular config fragments), `CHANGELOG.md` is owned by the release/apply
+step — a single version bump per merged change — and editing it from a
+builder PR guarantees a conflict against any sibling build in flight on this
+app. The backwards-compat note (mixed rows, anonymous reachability, the
+removed admin-only shape) is carried in this PR's description instead; the
+release step should fold it into the next dated `CHANGELOG.md` entry.
 
 ## Out of scope (B3 candidates)
 
