@@ -376,8 +376,30 @@ class ListingsController extends Controller
             return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        // Delete the listing object by its UUID.
-        $result = $this->getObjectService()->deleteObject((string) $id);
+        // Scope the delete to (listing_register, listing_schema) so a UUID that
+        // exists in the OpenRegister store under a DIFFERENT (register, schema)
+        // pair — e.g. a catalog row whose UUID accidentally matches a listing's
+        // UUID after a bad self-sync (see WOO-515 / WOO-516) — is NOT deleted
+        // when the frontend clicks Remove on the Directory page. deleteObject()
+        // scopes the DB delete AND the audit-trail entry to the caller's pair.
+        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+
+        $registerScope = null;
+        if ($listingRegister !== '') {
+            $registerScope = $listingRegister;
+        }
+
+        $schemaScope = null;
+        if ($listingSchema !== '') {
+            $schemaScope = $listingSchema;
+        }
+
+        $result = $this->getObjectService()->deleteObject(
+            uuid: (string) $id,
+            register: $registerScope,
+            schema: $schemaScope
+        );
 
         // Return the result as a JSON response.
         $statusCode = 404;
