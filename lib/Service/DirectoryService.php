@@ -1473,29 +1473,33 @@ class DirectoryService
      * 2. The `opencatalogi/instance_aliases` app-config CSV — extra aliases the
      *    operator has declared (entries may be `host` or `host:port`).
      *
+     * Port normalisation: an omitted port on `http://` normalises to `80`,
+     * on `https://` to `443` — so `http://cloud/dir` and `http://cloud:80/dir`
+     * both resolve to the same identity. IPv6 host literals (`[::1]`) are
+     * parsed via `parse_url` for both the target and the alias entries so
+     * the FIRST-colon `explode` never truncates a bracketed host.
+     *
      * @param string $url The URL to test.
      *
      * @return boolean True when $url resolves to this instance.
      *
-     * @spec openspec/specs/federation/spec.md#requirement-directory-self-detection
+     * @spec exclude URL-canonicalisation helper for self-detection; security
+     *       plumbing that hardens syncDirectory()'s self-check, no new domain
+     *       requirement. Enforced by DirectoryServiceTest::testIsSelfInstance*.
      */
     private function isSelfInstance(string $url): bool
     {
-        $target = parse_url(strtolower($url));
-        if ($target === false || empty($target['host']) === true) {
+        $targetPair = self::hostAndPortFromUrl(strtolower($url));
+        if ($targetPair === null) {
             return false;
         }
 
-        $targetHost = $target['host'];
-        $targetPort = ($target['port'] ?? null);
+        [$targetHost, $targetPort] = $targetPair;
 
         // 1. Canonical NC base.
-        $base = parse_url(strtolower($this->urlGenerator->getBaseUrl()));
-        if ($base !== false && ($base['host'] ?? '') === $targetHost) {
-            $basePort = ($base['port'] ?? null);
-            if ($basePort === $targetPort) {
-                return true;
-            }
+        $basePair = self::hostAndPortFromUrl(strtolower($this->urlGenerator->getBaseUrl()));
+        if ($basePair !== null && $basePair[0] === $targetHost && $basePair[1] === $targetPort) {
+            return true;
         }
 
         // 2. Operator-declared aliases (CSV of host or host:port).
@@ -1505,16 +1509,14 @@ class DirectoryService
         }
 
         foreach (array_filter(array_map('trim', explode(',', strtolower($aliases)))) as $alias) {
-            [$aliasHost, $aliasPort] = array_pad(explode(':', $alias, 2), 2, null);
-            if ($aliasHost === '' || $aliasHost !== $targetHost) {
+            $aliasPair = self::hostAndPortFromAlias($alias);
+            if ($aliasPair === null || $aliasPair[0] !== $targetHost) {
                 continue;
             }
 
-            if ($aliasPort === null) {
-                return true;
-            }
-
-            if ((string) $targetPort === $aliasPort) {
+            // Alias without a port matches ANY port on that host (operator asked for it).
+            // Alias with a port must match the target's normalised port exactly.
+            if ($aliasPair[1] === null || $aliasPair[1] === $targetPort) {
                 return true;
             }
         }
@@ -1522,6 +1524,81 @@ class DirectoryService
         return false;
 
     }//end isSelfInstance()
+
+    /**
+     * Extract (host, normalised-port) from a URL. Returns null when the URL
+     * cannot be parsed or has no host. Default ports (80 for http, 443 for
+     * https) are materialised so `http://x` and `http://x:80` compare equal.
+     *
+     * @param string $url The URL to parse (expected already lower-cased).
+     *
+     * @return array{0:string,1:?int}|null Two-element array [host, port]; null on parse failure.
+     *
+     * @spec exclude URL-normalisation helper; security plumbing, no new domain behaviour.
+     */
+    private static function hostAndPortFromUrl(string $url): ?array
+    {
+        $parts = parse_url($url);
+        if ($parts === false || empty($parts['host']) === true) {
+            return null;
+        }
+
+        $host = $parts['host'];
+        $port = ($parts['port'] ?? null);
+
+        // Materialise scheme-default so http://x compares equal to http://x:80.
+        if ($port === null && isset($parts['scheme']) === true) {
+            if ($parts['scheme'] === 'http') {
+                $port = 80;
+            } else if ($parts['scheme'] === 'https') {
+                $port = 443;
+            }
+        }
+
+        return [$host, $port];
+
+    }//end hostAndPortFromUrl()
+
+    /**
+     * Extract (host, port|null) from an `instance_aliases` CSV entry. Accepts
+     * `host`, `host:port`, `[ipv6]`, and `[ipv6]:port`. Uses `parse_url` so
+     * bracketed IPv6 literals aren't corrupted by a naive first-colon split.
+     * Returns null on malformed input (empty host, trailing colon with no port).
+     *
+     * @param string $alias The alias entry (expected already lower-cased and trimmed).
+     *
+     * @return array{0:string,1:?int}|null Two-element array [host, port]; null on parse failure.
+     *
+     * @spec exclude URL-normalisation helper; security plumbing, no new domain behaviour.
+     */
+    private static function hostAndPortFromAlias(string $alias): ?array
+    {
+        if ($alias === '') {
+            return null;
+        }
+
+        // Route through parse_url so IPv6 brackets survive. Prepend a dummy
+        // scheme when missing — `parse_url('foo:9081')` mis-parses `foo` as
+        // scheme; `parse_url('x://foo:9081')` parses the port correctly.
+        $probe = $alias;
+        if (str_contains($alias, '://') === false) {
+            $probe = 'x://'.$alias;
+        }
+
+        $parts = parse_url($probe);
+        if ($parts === false || empty($parts['host']) === true) {
+            return null;
+        }
+
+        // A trailing colon with no port (`host:`) yields `port` unset here;
+        // that's ambiguous, so reject the entry rather than treat as catchall.
+        if (str_ends_with($alias, ':') === true && isset($parts['port']) === false) {
+            return null;
+        }
+
+        return [$parts['host'], ($parts['port'] ?? null)];
+
+    }//end hostAndPortFromAlias()
 
     /**
      * Check whether a host is on the dev-only local-federation allowlist.
