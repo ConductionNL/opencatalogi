@@ -108,11 +108,11 @@ The schema MUST be discoverable through OR's standard schema-listing APIs (i.e. 
 - **WHEN** the public search endpoint returns that object,
 - **THEN** its row MUST carry `@self.schema = "document"`.
 
-### Requirement: OpenCatalogi consumes OR for search and (Path A) content extraction (SCH-PFTS-006)
+### Requirement: OpenCatalogi consumes OR for search; document body-content indexing is deferred (SCH-PFTS-006)
 
-OpenCatalogi MUST NOT re-implement search query parsing, faceting, ranking, or document content extraction. The public search endpoint orchestrates: it calls OR's `zoeken-filteren` (per ADR-022 and consistent with `SCH-OR-001` / `SCH-OR-002`) across the publication and document schemas, applies the anonymous visibility filter post-merge (per `SCH-PFTS-004`), shapes the flat envelope (per `SCH-PFTS-002` / `SCH-PFTS-003`), and returns it.
+OpenCatalogi MUST NOT re-implement search query parsing, faceting, ranking, or document body-content extraction. The public search endpoint orchestrates: it calls OR's `zoeken-filteren` (per ADR-022 and consistent with `SCH-OR-001` / `SCH-OR-002`) across the publication and document schemas, applies the anonymous visibility filter post-merge (per `SCH-PFTS-004`), shapes the flat envelope (per `SCH-PFTS-002` / `SCH-PFTS-003`), and returns it.
 
-When document content indexing is enabled (Path A — pending Ruben's confirmation per the proposal's "Pending decisions"), OpenCatalogi MUST consume OR's `TextExtractionService` + `FileHandler` + Solr-pipeline; OpenCatalogi MUST NOT add its own extraction or indexing pipeline. When Path A is not yet enabled (Path B), document rows MUST surface metadata-only matches (filename, MIME, linked-publication fields) and content-search MUST be the subject of a separate follow-up change.
+**Scope of this change is metadata-only**: document rows MUST surface matches on their declared schema properties (filename, title, summary, MIME, embedded publication fields, timestamps) plus the standard `@self` metadata `zoeken-filteren` already exposes. Document **body-content** indexing (extracting text from PDF/DOCX bodies) is **out of scope** and MUST be the subject of a separate follow-up OpenSpec change; that follow-up is tracked in [WOO-517](https://conduction.atlassian.net/browse/WOO-517). Implementers of the current change MUST NOT add any extraction pipeline, Solr wiring, or content-indexing surface in this repo.
 
 #### Scenario: search query parsing is delegated to OR
 
@@ -121,12 +121,12 @@ When document content indexing is enabled (Path A — pending Ruben's confirmati
 - **THEN** it MUST forward the query to OR's `zoeken-filteren`,
 - **AND** MUST NOT re-parse bracket notation, recompute scores, or build a bespoke search filter set.
 
-#### Scenario: document content extraction (Path A) is delegated to OR
+#### Scenario: no document body-content extraction lands in this change
 
-- **GIVEN** Path A is enabled,
-- **WHEN** a document is indexed for content search,
-- **THEN** the extraction pipeline MUST be OR's `TextExtractionService` + `FileHandler` + Solr-pipeline,
-- **AND** OpenCatalogi MUST NOT add a parallel extraction pipeline.
+- **GIVEN** the implementation of this change,
+- **WHEN** the delivered code is inspected,
+- **THEN** it MUST NOT contain any pipeline that extracts, indexes, or searches PDF/DOCX body text,
+- **AND** all matches on `document` rows MUST resolve to declared schema properties or `@self` metadata — never to file-body content.
 
 ### Requirement: Search matches across all schema properties, not only pre-configured ones (SCH-PFTS-007)
 

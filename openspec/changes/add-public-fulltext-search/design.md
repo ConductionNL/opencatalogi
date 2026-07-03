@@ -16,24 +16,18 @@ The data layer change is purely additive: a new `document` schema joins `publica
 | `GET /publications`                                   | publication objects only           | public (unchanged)  | publications                              |
 | `GET /apps/opencatalogi/api/search` (this change)     | publications + documents           | public (new)        | mixed rows, discriminated by `@self.schema` |
 
-## Dual-path design — pending Ruben's decision
+## Scope: metadata-only search (locked 2026-07-03)
 
-The proposal's "Pending decisions" block flags one open question: can OC lean on OR's `TextExtractionService` + `FileHandler` + Solr-pipeline for document **content** indexing? Until Ruben confirms, this design presents two implementation paths.
+This change ships **metadata-only** search across publications + documents. The match surface is:
 
-### Path A — OR pipeline available (Ruben confirms yes)
+- The `document` schema's declared properties (`filename`, `title`, `summary`, `mimeType`, embedded `publication.title`, etc.).
+- The `@self` metadata OR's `zoeken-filteren` already surfaces (`_name`, `_description`, `_summary`, timestamps).
 
-- Document content (full body text from PDFs, DOCX, etc.) is indexed by OR's existing pipeline.
-- This change's B2 scope includes document-content matching: a search for `"jaarverslag"` returns document rows whose extracted body text contains the term.
-- The `document` schema's authorization is wired so OR's Solr-backed query honours `isObjectPublic()` projections.
-- No new extraction code in OpenCatalogi (ADR-022).
+Content-search **inside** PDF/DOCX bodies is **not** part of this change. That capability is tracked separately in [WOO-517](https://conduction.atlassian.net/browse/WOO-517) ("Zoeken in bestandsinhoud — indexering-strategie kiezen + implementeren"), assigned to Ruben, in Refinement. Team review found that Solr is not yet production-ready for that use case; alternatives (Elasticsearch, PostgreSQL FTS with tsvector, lightweight extractor + inverted-index) are under evaluation.
 
-### Path B — OR pipeline not (yet) available (Ruben confirms no / later)
+When WOO-517 lands its architectural decision, a follow-up OpenSpec change (working title `add-document-content-search`) will additively extend `PublicationQueryService::assemblePublicSearchResults()` with body-text matching. The flat envelope + `@self.schema` discriminator this change introduces stay unchanged; only the match surface grows.
 
-- This change's B2 scope ships **metadata-only** document search. Matches are based on the document schema's own fields (filename, title, summary, MIME type, linked publication's title/summary) — not document body text.
-- Document-content search becomes a separate B3 follow-up OpenSpec change (`add-document-content-search` or similar) that introduces or consumes whatever extraction surface OR exposes when it ships.
-- The flat envelope and `@self.schema` discriminator carry over — the B3 change is purely additive matching power.
-
-**Default during implementation:** Path B. Implementers MUST NOT add new extraction code in this change; if Ruben confirms Path A before B2 lands, the integration surface is "wire OR's existing pipeline", not "build a new one".
+**Implementer contract:** MUST NOT add any extraction / indexing / Solr / TextExtractionService code in this change. The follow-up owns that surface.
 
 ## Mixed-spec rationale (ADR-032)
 
@@ -152,7 +146,7 @@ Notes on the seed shape:
 - **Field names are English** (`title`, `summary`, `description`, `filename`, `mimeType`, `organization`) matching the bundled publication schema's convention and ADR-001's "do not hardcode Dutch field names as primary" rule. WOO-domain date fields (`publicatiedatum`, `depublicatiedatum`) stay Dutch because that's the WOO vocabulary the whole publication family already uses.
 - **Embedded `publication` summary uses `slug` + `title` only** (no `id`) — the frontend can deeplink by slug via the same catalog-slug routing `/publications/{catalogSlug}/{slug}` uses today, and no UUID lookup is required to render the parent-link on a document card. At API-response time (not seed time) the assembly helper MAY additionally include `id` (the UUID) alongside slug + title, per the `SCH-PFTS-003` spec — the seed doesn't need it because the UUID doesn't exist until import.
 - **`organization` is a string slug** referencing the bundled `default-org` seed — matches how the publication schema declares the property (`type: string`).
-- These four seed rows exercise both decision-1 paths: under Path A the body text inside the PDFs (once real content replaces the seed) becomes searchable via OR's `TextExtractionService` + Solr-pipeline; under Path B the surrounding metadata (`title`, `summary`, `filename`, and the embedded publication's `title`) provides the match surface.
+- These four seed rows exercise the shipped scope: metadata (`title`, `summary`, `filename`, and the embedded publication's `title`) is the match surface. When [WOO-517](https://conduction.atlassian.net/browse/WOO-517)'s content-indexing follow-up lands, the same seed corpus will additively become searchable on body text — no seed-shape change needed then.
 
 ## `document` schema shape (high-level)
 
@@ -179,7 +173,7 @@ ADR-031 applicability is minimal here — no lifecycle transitions, aggregations
 - **Lucene-style operator parsing.** Boolean `AND`/`OR`, phrase quotes (`"foo bar"`), prefix wildcards (`jaar*`) — a closed PR #58 attempted this; defer to a dedicated change once OR's `zoeken-filteren` exposes the relevant query shape.
 - **Per-schema field weighting / `searchConfig` block.** Not needed for the WOO MVP; defer.
 - **`@self.relevance` response field.** Defer unless the Solr backend already produces it; if so, expose verbatim with no recomputation (ADR-022).
-- **Document-content search under Path B.** B3 follow-up.
+- **Document-content search (body-text indexing).** Extracted to [WOO-517](https://conduction.atlassian.net/browse/WOO-517); follow-up OpenSpec change will extend `PublicationQueryService::assemblePublicSearchResults()` additively.
 
 ## References
 

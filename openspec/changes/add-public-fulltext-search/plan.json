@@ -108,11 +108,11 @@
     },
     {
       "id": 12,
-      "title": "Document Path A vs Path B in the controller / service docblock (linking to design.md's dual-path section) so future implementers know which extraction surface to wire when Ruben's answer arrives",
+      "title": "Document the metadata-only scope in the controller / service docblock; cite [WOO-517](https://conduction.atlassian.net/browse/WOO-517) as the follow-up ticket for document-body content-search so future implementers know where to pick that up",
       "status": "pending",
-      "spec_ref": "design.md \"Dual-path design\"",
+      "spec_ref": "design.md \"Scope: metadata-only search\"",
       "acceptance_criteria": [
-        "docblock comment references the proposal's \"Pending decisions\" block; no extraction code added in this change"
+        "docblock comment names WOO-517 explicitly + notes that this file MUST NOT be modified to add extraction/indexing code \u2014 the follow-up owns that surface"
       ]
     },
     {
@@ -153,11 +153,11 @@
     },
     {
       "id": 17,
-      "title": "Confirm Ruben's answer received + (if needed) open a follow-up OpenSpec change before archiving this one",
-      "status": "pending",
+      "title": "~~Confirm Ruben's answer received + (if needed) open a follow-up OpenSpec change before archiving this one~~ \u2192 **REPLACED (2026-07-03):** content-indexing follow-up already extracted to [WOO-517](https://conduction.atlassian.net/browse/WOO-517), assigned to Ruben, in Refinement. This change is unblocked and can be archived once code + verify pass.",
+      "status": "done",
       "spec_ref": null,
       "acceptance_criteria": [
-        "Ruben's decision on document content indexing is recorded in WOO-506; if \"no/later\", a B3 change (e.g. `add-document-content-search`) is created and linked from this change's proposal before archive"
+        "WOO-517 exists in Refinement with Ruben as assignee; proposal.md + design.md + delta spec (SCH-PFTS-006) all reference WOO-517 as the follow-up; no residual Ruben-answer dependency on this change"
       ]
     }
   ]

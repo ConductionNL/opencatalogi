@@ -35,9 +35,9 @@ This change is `kind: mixed` (per ADR-032). Tasks are ordered so the schema decl
 - [ ] Add regression coverage proving `GET /publications` is unchanged (existing assertions still pass; no new fields, no removed fields, no admission-rule drift)
   - Spec ref: SCH-PFTS-001 (negative)
   - Acceptance: existing publications endpoint tests run unmodified; no diff in their fixtures
-- [ ] Document Path A vs Path B in the controller / service docblock (linking to design.md's dual-path section) so future implementers know which extraction surface to wire when Ruben's answer arrives
-  - Spec ref: design.md "Dual-path design"
-  - Acceptance: docblock comment references the proposal's "Pending decisions" block; no extraction code added in this change
+- [ ] Document the metadata-only scope in the controller / service docblock; cite [WOO-517](https://conduction.atlassian.net/browse/WOO-517) as the follow-up ticket for document-body content-search so future implementers know where to pick that up
+  - Spec ref: design.md "Scope: metadata-only search"
+  - Acceptance: docblock comment names WOO-517 explicitly + notes that this file MUST NOT be modified to add extraction/indexing code — the follow-up owns that surface
 - [x] Update `openspec/specs/search/spec.md` (the canonical capability) to list this change under an `**OpenSpec changes**` block with status `in-progress` *(done in this PR)*
   - Acceptance: spec carries a canonical `**Status**: in-progress / **Scope**: opencatalogi / **OpenSpec changes**:` block listing `add-public-fulltext-search`
 - [ ] Add a `CHANGELOG.md` entry noting the shape change on `GET /apps/opencatalogi/api/search`: (a) mixed publication + document rows discriminated by `@self.schema`, (b) anonymous reachability replacing the prior HTTP 401 posture, (c) the prior admin-only response shape is removed. Cross-reference WOO-506 and mention that any lingering admin consumer of the old shape needs to switch.
@@ -47,8 +47,8 @@ This change is `kind: mixed` (per ADR-032). Tasks are ordered so the schema decl
   - Acceptance: all 45 gates either PASS or carry a documented exclusion
 - [ ] Open the PR; confirm reviewer + security-reviewer pass; address inline review nits without scope creep
   - Acceptance: PR review verdict is APPROVE on both lanes
-- [ ] Confirm Ruben's answer received + (if needed) open a follow-up OpenSpec change before archiving this one
-  - Acceptance: Ruben's decision on document content indexing is recorded in WOO-506; if "no/later", a B3 change (e.g. `add-document-content-search`) is created and linked from this change's proposal before archive
+- [x] ~~Confirm Ruben's answer received + (if needed) open a follow-up OpenSpec change before archiving this one~~ → **REPLACED (2026-07-03):** content-indexing follow-up already extracted to [WOO-517](https://conduction.atlassian.net/browse/WOO-517), assigned to Ruben, in Refinement. This change is unblocked and can be archived once code + verify pass.
+  - Acceptance: WOO-517 exists in Refinement with Ruben as assignee; proposal.md + design.md + delta spec (SCH-PFTS-006) all reference WOO-517 as the follow-up; no residual Ruben-answer dependency on this change
 
 ## Quality checklist
 
@@ -57,4 +57,4 @@ This change is `kind: mixed` (per ADR-032). Tasks are ordered so the schema decl
 - Anonymous visibility filter (`isObjectPublic()`) runs on every result row — enforced post-scoring per SCH-PFTS-004; verified by the transitive-visibility PHPUnit tests (task 8 / task 9). Note: `gate-no-admin-idor` targets `#[NoAdminRequired]` controllers and will NOT fire on `SearchController::index` after it carries `#[PublicPage]` — the visibility guarantee is provided by the tests + the `isObjectPublic()` post-filter, not the gate.
 - regression suite against `/publications` passes unmodified
 - seed data installs on a fresh container (`clean-env` recipe)
-- Ruben's pending-decision answer is recorded before `openspec archive` runs
+- no extraction/indexing/Solr code shipped in this change (content-search is deferred to [WOO-517](https://conduction.atlassian.net/browse/WOO-517))

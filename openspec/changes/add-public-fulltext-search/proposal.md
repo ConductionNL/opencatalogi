@@ -19,16 +19,15 @@ WOO portals must let citizens search across **both** publication records and the
 - `GET /api/search` exists but is admin-only (returns 401 to anonymous callers) and only returns publications.
 - OpenRegister's `File` entity (`oc_openregister_files`) holds documents but is not schema-discoverable, so the federation/orchestrator pattern in `search` can't reach it via `zoeken-filteren` without a schema to anchor on.
 
-A single public search surface that returns mixed publication/document rows — schema-discriminated so the frontend can render distinct cards — is the smallest change that unblocks the WOO use case. By introducing a `document` schema bundled in OC's register, OR's `zoeken-filteren` and (Path A, pending Ruben) `TextExtractionService`/`FileHandler`/Solr-pipeline become reusable for document search without OC re-implementing any of them (ADR-022).
+A single public search surface that returns mixed publication/document rows — schema-discriminated so the frontend can render distinct cards — is the smallest change that unblocks the WOO use case. By introducing a `document` schema bundled in OC's register, OR's `zoeken-filteren` becomes reusable for document metadata search without OC re-implementing any of it (ADR-022).
 
-## Pending decisions (HARD blocker on archive)
+## Scope decision (locked 2026-07-03)
 
-The following decision MUST be resolved before this change can be archived:
+This change ships **metadata-only search** across publications + documents (bestandsnaam, titel, samenvatting, MIME, embedded publicatie-summary). Content-search inside PDF/DOCX bodies is **deferred** and tracked separately.
 
-- **Decision 1 — Document content indexing path:** Can OC lean on OR's existing `TextExtractionService` + `FileHandler` + Solr-pipeline to index document **content** (full body text, not just filename/metadata)?
-  - **Owner:** Ruben.
-  - **Effect on this change:** If yes → B2 scope includes content-search of documents (Path A in `design.md`). If no / later → B2 ships metadata-only document search and content-search becomes a B3 follow-up OpenSpec change (Path B in `design.md`).
-  - **Archive gate:** The final unindented task in `tasks.md` ("Confirm Ruben's answer received + open follow-up change if needed") MUST be checked before `openspec archive add-public-fulltext-search` runs.
+- **Follow-up ticket:** [WOO-517](https://conduction.atlassian.net/browse/WOO-517) — "Zoeken in bestandsinhoud (document content full-text) — indexering-strategie kiezen + implementeren". Refinement, assigned to Ruben. Contains the full architectural context (team review found Solr not production-ready; alternatives considered: Elasticsearch, PostgreSQL FTS, lightweight extractor + inverted-index).
+- **No archive gate on this change:** it can be archived as soon as the code lands + verify passes. There is no pending Ruben-answer dependency on `add-public-fulltext-search`.
+- **When WOO-517 is decided:** a separate OpenSpec change (working title `add-document-content-search`) will additively extend the same endpoint with content-search capability. The flat envelope + `@self.schema` discriminator this change introduces stay unchanged; only the match surface grows.
 
 ## Scope
 
@@ -67,5 +66,4 @@ Explicitly **out of scope**:
 ## Risks
 
 - **Documents leak via the new endpoint.** Mitigation: the RBAC filter MUST apply the same `isObjectPublic()` logic to documents, and a document's effective visibility MUST also be gated by its linked publication's visibility (a document attached to an unpublished/depublished publication MUST NOT surface in anonymous results).
-- **Dual-path uncertainty.** Until Ruben confirms decision 1, the design specifies both paths; implementers MUST default to Path B (metadata-only) and treat Path A as an additive follow-on.
 - **Backwards-compat break for admin callers of the old admin `/api/search`.** The absorb is intentional (the old admin form was deprecated per WOO-506's rationale — vendors still calling it are on a very old version and expected to switch). Existing admin-side consumers will see a different response shape after this lands: mixed publication + document rows via `@self.schema` discriminator, no more auth-required 401 for anonymous, and the response now surfaces documents alongside publications. Documented here so it's explicit; not blocking merge.
