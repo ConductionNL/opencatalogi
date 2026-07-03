@@ -397,8 +397,10 @@ class DirectoryService
             throw new InvalidArgumentException('Invalid directory URL provided');
         }
 
-        // Prevent syncing with self.
-        if (str_contains(strtolower($directoryUrl), $this->urlGenerator->getBaseUrl()) === true) {
+        // Prevent syncing with self. Host+port comparison via isSelfInstance() so
+        // alternate host-aliases (e.g. localhost:9081 vs. nc-fed-1 on a docker
+        // network) still resolve to "this instance" — WOO-516.
+        if ($this->isSelfInstance($directoryUrl) === true) {
             throw new InvalidArgumentException('Cannot sync with current directory');
         }
 
@@ -445,9 +447,13 @@ class DirectoryService
                 // Also filter out listings with localhost or .local extensions.
                 $filteredListings = array_filter(
                     $directoryData['results'],
-                    function ($listingData) use ($ourDirectoryUrl) {
-                        // Skip if listing has our directory URL (prevent self-sync).
-                        if (isset($listingData['directory']) === true && $listingData['directory'] === $ourDirectoryUrl) {
+                    function ($listingData) {
+                        // Skip if listing points at THIS instance (self-sync). Uses
+                        // host+port matching + instance_aliases config so alternate
+                        // host-aliases still resolve to self (WOO-516).
+                        if (isset($listingData['directory']) === true
+                            && $this->isSelfInstance($listingData['directory']) === true
+                        ) {
                             return false;
                         }
 
@@ -1453,6 +1459,69 @@ class DirectoryService
         return empty($userAgent) === false && str_contains($userAgent, 'OpenCatalogi-Broadcast') === true;
 
     }//end isSystemBroadcast()
+
+    /**
+     * Determine whether a URL points at THIS OpenCatalogi instance.
+     *
+     * The container is often reachable via several equivalent host-aliases
+     * (e.g. `localhost:9081` from the host, `nc-fed-1` on the docker network,
+     * or the operator's public FQDN behind a reverse proxy). All of them are
+     * legitimately "this instance". `isSelfInstance()` normalises the URL and
+     * compares host+port against:
+     *
+     * 1. `$this->urlGenerator->getBaseUrl()` — the canonical NC-configured base.
+     * 2. The `opencatalogi/instance_aliases` app-config CSV — extra aliases the
+     *    operator has declared (entries may be `host` or `host:port`).
+     *
+     * @param string $url The URL to test.
+     *
+     * @return boolean True when $url resolves to this instance.
+     *
+     * @spec openspec/specs/federation/spec.md#requirement-directory-self-detection
+     */
+    private function isSelfInstance(string $url): bool
+    {
+        $target = parse_url(strtolower($url));
+        if ($target === false || empty($target['host']) === true) {
+            return false;
+        }
+
+        $targetHost = $target['host'];
+        $targetPort = ($target['port'] ?? null);
+
+        // 1. Canonical NC base.
+        $base = parse_url(strtolower($this->urlGenerator->getBaseUrl()));
+        if ($base !== false && ($base['host'] ?? '') === $targetHost) {
+            $basePort = ($base['port'] ?? null);
+            if ($basePort === $targetPort) {
+                return true;
+            }
+        }
+
+        // 2. Operator-declared aliases (CSV of host or host:port).
+        $aliases = $this->config->getValueString($this->appName, 'instance_aliases', '');
+        if ($aliases === '') {
+            return false;
+        }
+
+        foreach (array_filter(array_map('trim', explode(',', strtolower($aliases)))) as $alias) {
+            [$aliasHost, $aliasPort] = array_pad(explode(':', $alias, 2), 2, null);
+            if ($aliasHost === '' || $aliasHost !== $targetHost) {
+                continue;
+            }
+
+            if ($aliasPort === null) {
+                return true;
+            }
+
+            if ((string) $targetPort === $aliasPort) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end isSelfInstance()
 
     /**
      * Check whether a host is on the dev-only local-federation allowlist.
