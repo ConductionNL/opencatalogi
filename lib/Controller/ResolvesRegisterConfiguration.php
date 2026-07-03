@@ -111,9 +111,9 @@ trait ResolvesRegisterConfiguration
             $appConfig = $this->container->get(\OCP\IAppConfig::class);
         } catch (\Throwable $e) {
             throw new \RuntimeException(
-                'Cannot resolve register configuration for '.$registerKey.': IAppConfig unavailable',
-                0,
-                $e
+                message: 'Cannot resolve register configuration for '.$registerKey.': IAppConfig unavailable',
+                code: 0,
+                previous: $e
             );
         }
 
