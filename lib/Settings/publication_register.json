@@ -719,6 +719,7 @@
       },
       "organization": {
         "slug": "organization",
+        "x-schema-org": "schema:Organization",
         "title": "Organization",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -786,7 +787,11 @@
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "implements": [
+            "https://openregister.app/ns#Organization",
+            "https://schema.org/Organization"
+          ]
         },
         "hardValidation": true,
         "searchable": true,
