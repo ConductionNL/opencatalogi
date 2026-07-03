@@ -418,13 +418,21 @@ class ListingsController extends Controller
             );
         }
 
-        // Return the result as a JSON response.
-        $statusCode = 404;
+        // Return the result as a JSON response. Both success and fall-through-404
+        // carry a `message` field so consumers get a consistent shape across all
+        // exit paths of destroy() (the DoesNotExistException branch above already
+        // does — PR #86 round-3 review).
         if ($result === true) {
-            $statusCode = 200;
+            return new JSONResponse(
+                data: ['success' => true, 'message' => $this->l10n->t('Listing removed')],
+                statusCode: Http::STATUS_OK
+            );
         }
 
-        return new JSONResponse(['success' => $result], $statusCode);
+        return new JSONResponse(
+            data: ['success' => false, 'message' => $this->l10n->t('Listing not found')],
+            statusCode: Http::STATUS_NOT_FOUND
+        );
 
     }//end destroy()
 
