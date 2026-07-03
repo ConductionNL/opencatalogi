@@ -4319,4 +4319,101 @@ class DirectoryServiceTest extends TestCase
         // schemas should have been expanded (though mapper returns empty, the expansion code executed)
         $this->assertIsArray($result[0]['schemas']);
     }
+
+    // =========================================================================
+    // isSelfInstance — WOO-516 host+port canonicalisation for self-detection
+    // =========================================================================
+
+    /**
+     * Invoke the private isSelfInstance() via reflection so the test can
+     * exercise the URL-normalisation logic without spinning up syncDirectory().
+     */
+    private function invokeIsSelfInstance(DirectoryService $service, string $url): bool
+    {
+        $ref = new \ReflectionMethod(DirectoryService::class, 'isSelfInstance');
+        $ref->setAccessible(true);
+        return (bool) $ref->invoke($service, $url);
+    }
+
+    public function testIsSelfInstanceMatchesCanonicalBase(): void
+    {
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://localhost:9081');
+        $this->config->method('getValueString')->willReturn('');
+
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://localhost:9081/index.php/apps/opencatalogi/api/directory'));
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, 'http://nc-fed-2/index.php/apps/opencatalogi/api/directory'));
+    }
+
+    public function testIsSelfInstanceNormalisesDefaultHttpPort(): void
+    {
+        // Base has no explicit port; target adds :80 — WOO-516 review F1.
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://cloud.example.com');
+        $this->config->method('getValueString')->willReturn('');
+
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://cloud.example.com:80/foo'));
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://cloud.example.com/foo'));
+        // A non-default port must NOT match a portless base.
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, 'http://cloud.example.com:8080/foo'));
+    }
+
+    public function testIsSelfInstanceNormalisesDefaultHttpsPort(): void
+    {
+        $this->urlGenerator->method('getBaseUrl')->willReturn('https://cloud.example.com');
+        $this->config->method('getValueString')->willReturn('');
+
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'https://cloud.example.com:443/foo'));
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'https://cloud.example.com/foo'));
+    }
+
+    public function testIsSelfInstanceMatchesConfiguredAliasHostOnly(): void
+    {
+        // fed-1 canonical baseUrl vs a docker-network alias registered via config.
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://localhost:9081');
+        $this->config->method('getValueString')
+            ->with('opencatalogi', 'instance_aliases', '')
+            ->willReturn('nc-fed-1');
+
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1/index.php/apps/opencatalogi/api/directory'));
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1:80/foo'));
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1:12345/foo'), 'alias without port matches any port');
+    }
+
+    public function testIsSelfInstanceMatchesConfiguredAliasWithPort(): void
+    {
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://localhost:9081');
+        $this->config->method('getValueString')->willReturn('nc-fed-1:8080');
+
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1:8080/foo'));
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1:9999/foo'));
+    }
+
+    public function testIsSelfInstanceHandlesIPv6BracketedAlias(): void
+    {
+        // WOO-516 review F2 — bracketed IPv6 must survive parse.
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://[::1]:9081');
+        $this->config->method('getValueString')->willReturn('[::1]');
+
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://[::1]:9081/foo'));
+        $this->assertTrue($this->invokeIsSelfInstance($this->service, 'http://[::1]:9999/foo'), 'alias without port matches any port');
+    }
+
+    public function testIsSelfInstanceRejectsMalformedTrailingColonAlias(): void
+    {
+        // WOO-516 review — `host:` (empty port) previously matched any target
+        // without a port; now rejected as malformed.
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://localhost:9081');
+        $this->config->method('getValueString')->willReturn('nc-fed-1:');
+
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1/foo'));
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, 'http://nc-fed-1:80/foo'));
+    }
+
+    public function testIsSelfInstanceReturnsFalseForInvalidUrl(): void
+    {
+        $this->urlGenerator->method('getBaseUrl')->willReturn('http://localhost:9081');
+        $this->config->method('getValueString')->willReturn('');
+
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, ''));
+        $this->assertFalse($this->invokeIsSelfInstance($this->service, 'not-a-url'));
+    }
 }
