@@ -166,11 +166,12 @@ class PublicationQueryService
      * publication/document schemas by passing its own `_register`/`_schema(s)` (mirrors
      * the constrained-scope discipline in {@see findObjectLocation()}).
      *
-     * Dual-path (design.md "Dual-path design — pending Ruben's decision"): this ships
-     * Path B today — matches are driven by OR's `zoeken-filteren` against schema
-     * properties and `@self` metadata only, no document-content extraction. When Ruben
-     * confirms Path A, document content indexing is wired via OR's
-     * TextExtractionService + FileHandler + Solr-pipeline (SCH-PFTS-006); OpenCatalogi
+     * Dual-path (design.md "Dual-path design"): this ships Path B — matches are
+     * driven by OR's `zoeken-filteren` against schema properties and `@self` metadata
+     * only, no document-content extraction. Document-content indexing (Path A) is
+     * tracked separately as WOO-517 (assigned Ruben, in Refinement) and does not gate
+     * this change; when it lands, content indexing is wired via OR's
+     * TextExtractionService + FileHandler + Solr-pipeline (SCH-PFTS-006) — OpenCatalogi
      * MUST NOT add a parallel extraction pipeline for this.
      *
      * @param array  $queryParams   Raw request query parameters from IRequest::getParams().

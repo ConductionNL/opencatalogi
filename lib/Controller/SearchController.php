@@ -105,11 +105,12 @@ class SearchController extends Controller
      * SCH-PFTS-001, SCH-PFTS-002, SCH-PFTS-006, SCH-PFTS-007) — this controller
      * performs no bespoke query building or scoring of its own.
      *
-     * Dual-path (design.md "Dual-path design — pending Ruben's decision"): this
-     * endpoint currently ships Path B — metadata-only document matching. When Ruben
-     * confirms Path A (proposal.md "Pending decisions"), document content indexing is
-     * wired via OR's TextExtractionService + FileHandler + Solr-pipeline
-     * (SCH-PFTS-006); OpenCatalogi MUST NOT add a parallel extraction pipeline here.
+     * Dual-path (design.md "Dual-path design"): this endpoint ships Path B —
+     * metadata-only document matching. Document content indexing (Path A) is tracked
+     * separately as WOO-517 (assigned Ruben, in Refinement) and does not gate this
+     * change; when it lands, content indexing is wired via OR's TextExtractionService
+     * + FileHandler + Solr-pipeline (SCH-PFTS-006) — OpenCatalogi MUST NOT add a
+     * parallel extraction pipeline here.
      *
      * @return JSONResponse JSON response containing the mixed publication/document result envelope.
      *

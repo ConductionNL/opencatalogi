@@ -37,9 +37,9 @@ This change is `kind: mixed` (per ADR-032). Tasks are ordered so the schema decl
   - Spec ref: SCH-PFTS-001 (negative)
   - Acceptance: existing publications endpoint tests run unmodified; no diff in their fixtures
   - Note: `PublicationsController.php` / `PublicationsControllerTest.php` are untouched by this change; the pre-existing suite is the regression proof.
-- [x] Document Path A vs Path B in the controller / service docblock (linking to design.md's dual-path section) so future implementers know which extraction surface to wire when Ruben's answer arrives
+- [x] Document Path A vs Path B in the controller / service docblock (linking to design.md's dual-path section) so future implementers know which extraction surface to wire when the follow-up lands
   - Spec ref: design.md "Dual-path design"
-  - Acceptance: docblock comment references the proposal's "Pending decisions" block; no extraction code added in this change
+  - Acceptance: docblock comment references the WOO-517 follow-up ticket (content-indexing, assigned Ruben, in Refinement per the issue's current task 12); no extraction code added in this change
 - [x] Update `openspec/specs/search/spec.md` (the canonical capability) to list this change under an `**OpenSpec changes**` block with status `in-progress` *(done in this PR)*
   - Acceptance: spec carries a canonical `**Status**: in-progress / **Scope**: opencatalogi / **OpenSpec changes**:` block listing `add-public-fulltext-search`
 - [ ] Add a `CHANGELOG.md` entry noting the shape change on `GET /apps/opencatalogi/api/search`: (a) mixed publication + document rows discriminated by `@self.schema`, (b) anonymous reachability replacing the prior HTTP 401 posture, (c) the prior admin-only response shape is removed. Cross-reference WOO-506 and mention that any lingering admin consumer of the old shape needs to switch.
