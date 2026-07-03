@@ -48,13 +48,13 @@ export default {
 		},
 	},
 	watch: {
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		isOpen(open) {
 			if (open) {
 				this.reset()
 			}
 		},
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		listing(l) {
 			this.integrationLevel = this.integrationLevels.find(
 				(o) => o.value === (l?.integrationLevel || 'search'),
@@ -63,7 +63,7 @@ export default {
 	},
 	methods: {
 		t,
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		reset() {
 			this.error = null
 			this.submitting = false
@@ -71,11 +71,11 @@ export default {
 				(o) => o.value === (this.listing?.integrationLevel || 'search'),
 			) || this.integrationLevels[0]
 		},
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		close() {
 			navigationStore.setModal(null)
 		},
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		async submit() {
 			if (!this.listing) {
 				return

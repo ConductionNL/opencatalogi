@@ -35,19 +35,20 @@ export default {
 		isOpen() {
 			return navigationStore.modal === 'federationDeleteListing'
 		},
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		listingName() {
 			return this.listing?.title || this.listing?.directory || t('opencatalogi', 'Unnamed instance')
 		},
 	},
 	watch: {
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		isOpen(open) {
 			if (open) {
 				this.reset()
 			}
 		},
 	},
-	// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+	/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 	beforeDestroy() {
 		// Prevent a delayed `close()` from firing after the component
 		// unmounts (WOO-511 PR #79 review: setTimeout leak on early close).
@@ -58,7 +59,7 @@ export default {
 	},
 	methods: {
 		t,
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		reset() {
 			// Drop any stale success-close timer from a previous open
 			// (belt + braces alongside `beforeDestroy` above).
@@ -70,7 +71,7 @@ export default {
 			this.success = null
 			this.error = null
 		},
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		close() {
 			if (this.closeTimer !== null) {
 				clearTimeout(this.closeTimer)
@@ -78,7 +79,7 @@ export default {
 			}
 			navigationStore.setModal(null)
 		},
-		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
+		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		async handleDelete() {
 			if (!this.listing) {
 				return
