@@ -323,8 +323,6 @@ class ListingsController extends Controller
      * @return JSONResponse The response containing the updated listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoCSRFRequired
-     *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
@@ -390,8 +388,6 @@ class ListingsController extends Controller
      *
      * @return JSONResponse The response indicating the result of the deletion.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
-     *
-     * @NoCSRFRequired
      *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
      */

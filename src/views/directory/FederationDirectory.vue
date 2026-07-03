@@ -97,6 +97,15 @@ export default {
 			}
 			return 'unknown'
 		},
+		statusLabelFor(listing) {
+			const map = {
+				up: t('opencatalogi', 'available'),
+				degraded: t('opencatalogi', 'degraded'),
+				down: t('opencatalogi', 'unreachable'),
+				unknown: t('opencatalogi', 'unknown'),
+			}
+			return map[this.statusFor(listing)]
+		},
 		messageFor(listing) {
 			if (listing.available === false) return t('opencatalogi', 'Peer is unreachable')
 			if (typeof listing.statusCode === 'number' && (listing.statusCode < 200 || listing.statusCode >= 300)) {
@@ -178,6 +187,7 @@ export default {
 				<span aria-hidden="true"
 					class="federation-directory__dot"
 					:class="'federation-directory__dot--' + statusFor(listing)" />
+				<span class="hidden-visually">{{ statusLabelFor(listing) }}</span>
 				<div class="federation-directory__node-info">
 					<div class="federation-directory__node-name">
 						{{ listing.title || listing.directory || t('opencatalogi', 'Unnamed instance') }}
@@ -199,6 +209,7 @@ export default {
 				</div>
 				<div class="federation-directory__node-actions">
 					<NcActions :force-menu="false"
+						:menu-name="t('opencatalogi', 'Actions')"
 						:aria-label="t('opencatalogi', 'Actions for {name}', { name: listing.title || listing.directory })">
 						<template #icon>
 							<DotsHorizontal :size="20" />
@@ -262,6 +273,18 @@ export default {
 .federation-directory__dot--degraded { background: var(--color-warning); }
 .federation-directory__dot--down { background: var(--color-error); }
 .federation-directory__dot--unknown { background: var(--color-text-lighter); }
+/* WCAG 4.1.2 — pair `aria-hidden` dots with sr-only status text (F12). */
+.hidden-visually {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
 .federation-directory__hint {
 	color: var(--color-text-maxcontrast);
 }

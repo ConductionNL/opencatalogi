@@ -94,7 +94,7 @@ export default {
 				})
 				const body = await res.json().catch(() => ({}))
 				if (!res.ok) {
-					throw new Error(body.message || `HTTP ${res.status}`)
+					throw new Error(body?.data?.error || body?.error || body?.message || `HTTP ${res.status}`)
 				}
 				this.$emit('saved', body)
 				this.close()

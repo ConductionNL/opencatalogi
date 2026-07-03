@@ -85,12 +85,13 @@ export default {
 				const res = await fetch(endpoint, {
 					method: 'DELETE',
 					headers: {
+						'OCS-APIRequest': 'true',
 						Accept: 'application/json',
 					},
 				})
 				if (!res.ok) {
 					const body = await res.json().catch(() => ({}))
-					throw new Error(body.message || `HTTP ${res.status}`)
+					throw new Error(body?.data?.error || body?.error || body?.message || `HTTP ${res.status}`)
 				}
 				this.success = true
 				this.$emit('deleted', this.listing)
