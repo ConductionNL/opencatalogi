@@ -437,6 +437,12 @@
    * ../nextcloud-vue/src/components/CnPageRenderer/CnPageRenderer.vue:993 —
    * "Custom pages MUST add `padding-inline-start: 56px` to their HEADER".
    * padding-inline-start (not padding-left) keeps this bidi-safe.
+   *
+   * @visual exclude 8-character CSS padding delta shared across every
+   * consumer of viewHeaderTitleIndented; regression would surface as an
+   * obvious visible overlap on the first heading of every page (same class
+   * of bug this fix closes). Playwright baseline would be manual-effort out
+   * of proportion to the change. ADR-020 diff-scoped gates cover file-level.
    */
   padding-inline-start: 56px;
 }
