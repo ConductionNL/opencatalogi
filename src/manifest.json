@@ -243,24 +243,33 @@
 			"route": "/publications/:catalogSlug/:id",
 			"type": "detail",
 			"title": "Publication",
-			"_note": "DCAT-AP publication record — the app's core artifact. Bespoke publication/document archetype: the body leads with the catalog metadata (title, summary, description, organization, themes, publish/depublish dates, retention) as the 8-wide primary block, with a compact Related panel (resolves the organization publisher + linked themes) alongside it. Below sits the full-width Attachments block — a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the DCAT distribution set. No email/calendar/talk/contacts: the publication schema declares NO linkedTypes, and a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — the schema has no geo field. Sidebar keeps read-only metadata, Activity, Shares and an Audit-trail leaf (publications are FOI/WOO records where change history matters — kept in the sidebar per HARD RULE 4). Note: photos/bookmarks/files are OpenRegister integration leaves, so they render via widgetKey:\"integration\" with props.only — the previous bare widgetKeys (maps/photos/bookmarks/file-manager) were unresolved no-ops.",
+			"_note": "DCAT-AP publication record — the app's core artifact. Bespoke publication/document archetype: the body leads with the catalog metadata (title, summary, description, organization, themes, publish/depublish dates, retention) as the 8-wide primary block, with a compact Related panel (resolves the organization publisher + linked themes) alongside it. Below sits the full-width Attachments block — a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the DCAT distribution set. No email/calendar/talk/contacts: the publication schema declares NO linkedTypes, and a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — the schema has no geo field. Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled) — Activity/Shares tabs surface automatically from the builtin integration registry, and Metadata is on-demand via the Data widget's Actions menu (config.sidebar.showMetadata) rather than a permanent card. An audit-trail body widget records change history (publications are FOI/WOO records where this matters). Photos/bookmarks/files are OpenRegister integration leaves, so they render via type:\"integration\" with integrationId — the previous bare widgetKeys (maps/photos/bookmarks/file-manager) were unresolved no-ops.",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{ "id": "pub-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "columns": 2 } },
-				{ "id": "pub-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
-				{ "id": "pub-files", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5, "props": { "only": "files", "schema": "publication", "surface": "detail-page", "title": "Attachments" } },
-				{ "id": "pub-photos", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 10, "gridWidth": 6, "gridHeight": 4, "props": { "only": "photos", "schema": "publication", "surface": "detail-page", "title": "Images" } },
-				{ "id": "pub-links", "widgetKey": "integration", "slot": "body", "gridX": 6, "gridY": 10, "gridWidth": 6, "gridHeight": 4, "props": { "only": "bookmarks", "schema": "publication", "surface": "detail-page", "title": "Links" } },
-				{ "id": "pub-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
-				{ "id": "pub-activity", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "activity", "schema": "publication", "surface": "sidebar" } },
-				{ "id": "pub-shares", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 6, "gridWidth": 1, "gridHeight": 2, "props": { "only": "shares", "schema": "publication", "surface": "sidebar" } },
-				{ "id": "pub-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 8, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "publication", "surface": "sidebar", "title": "Audit trail" } }
-			]
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{ "id": "pub-data", "type": "data", "title": "Publication", "content": { "columns": 2 } },
+					{ "id": "pub-related", "type": "related", "title": "Related" },
+					{ "id": "pub-files", "type": "integration", "integrationId": "files", "title": "Attachments" },
+					{ "id": "pub-photos", "type": "integration", "integrationId": "photos", "title": "Images" },
+					{ "id": "pub-links", "type": "integration", "integrationId": "bookmarks", "title": "Links" },
+					{ "id": "pub-audit", "type": "audit-trail", "title": "Audit trail" }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "pub-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "pub-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+					{ "id": "3", "widgetId": "pub-files", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 },
+					{ "id": "4", "widgetId": "pub-photos", "gridX": 0, "gridY": 10, "gridWidth": 6, "gridHeight": 4 },
+					{ "id": "5", "widgetId": "pub-links", "gridX": 6, "gridY": 10, "gridWidth": 6, "gridHeight": 4 },
+					{ "id": "6", "widgetId": "pub-audit", "gridX": 0, "gridY": 14, "gridWidth": 12, "gridHeight": 4, "showTitle": false }
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				}
+			}
 		},
 		{
 			"id": "Search",
@@ -298,20 +307,29 @@
 			"route": "/organizations/:id",
 			"type": "detail",
 			"title": "Organization",
-			"_note": "Publisher-organization archetype (the legal entity behind catalogs/publications: name, summary, description, and the government identifiers OIN/TOOI/RSIN/PKI). The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly) and a Related panel (4-wide) that surfaces the publications and catalogs pointing at this organization. Below, the full-width Images leaf carries the organization logo/branding (the schema's `image` field is a single logo, so Images is the right surface, not Files). NO contacts widget: the organization schema declares NO linkedTypes and has no contactpersoon relation, so a Contacts leaf would render empty (the previous widgetKey:\"contacts\" was an unresolved no-op anyway) — per HARD RULE 1 comms/contacts only when the schema declares them. Sidebar keeps read-only metadata plus an Activity tab (org records change rarely but syncs matter for federation).",
+			"_note": "Publisher-organization archetype (the legal entity behind catalogs/publications: name, summary, description, and the government identifiers OIN/TOOI/RSIN/PKI). The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly) and a Related panel (4-wide) that surfaces the publications and catalogs pointing at this organization. Below, the full-width Images leaf carries the organization logo/branding (the schema's `image` field is a single logo, so Images is the right surface, not Files). NO contacts widget: the organization schema declares NO linkedTypes and has no contactpersoon relation, so a Contacts leaf would render empty (the previous widgetKey:\"contacts\" was an unresolved no-op anyway) — per HARD RULE 1 comms/contacts only when the schema declares them. Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled) — an Activity tab surfaces automatically (org records change rarely but syncs matter for federation), and Metadata is on-demand via the Data widget's Actions menu rather than a permanent card. An audit-trail body widget records change history.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "organization",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{ "id": "org-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4, "props": { "columns": 2 } },
-				{ "id": "org-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 4 },
-				{ "id": "org-image", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 4, "props": { "only": "photos", "schema": "organization", "surface": "detail-page", "title": "Logo & images" } },
-				{ "id": "org-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
-				{ "id": "org-activity", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "activity", "schema": "organization", "surface": "sidebar" } }
-			]
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{ "id": "org-data", "type": "data", "title": "Organization", "content": { "columns": 2 } },
+					{ "id": "org-related", "type": "related", "title": "Related" },
+					{ "id": "org-image", "type": "integration", "integrationId": "photos", "title": "Logo & images" },
+					{ "id": "org-audit", "type": "audit-trail", "title": "Audit trail" }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "org-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
+					{ "id": "2", "widgetId": "org-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 4 },
+					{ "id": "3", "widgetId": "org-image", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 4 },
+					{ "id": "4", "widgetId": "org-audit", "gridX": 0, "gridY": 8, "gridWidth": 12, "gridHeight": 4, "showTitle": false }
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				}
+			}
 		},
 		{
 			"id": "Themes",
@@ -341,19 +359,27 @@
 			"route": "/themes/:id",
 			"type": "detail",
 			"title": "Theme",
-			"_note": "Catalog-theme / presentation archetype — a visual grouping used to categorise and style publications (title, summary, description, image, content, link/url, icon). This is a configuration+content record, so the body pairs the editable fields (6-wide) with the live theme-preview custom widget (6-wide) so an editor sees the rendered card/banner as they tune it — the reason theme-preview exists. Below, a full-width Related panel surfaces the publications tagged with this theme. Deliberately NO comms and NO Files/audit: a theme communicates with nobody, declares no linkedTypes, and its `image`/`content` live in the record itself — keeping it clean per HARD RULE 1/2. Sidebar keeps read-only metadata only.",
+			"_note": "Catalog-theme / presentation archetype — a visual grouping used to categorise and style publications (title, summary, description, image, content, link/url, icon). This is a configuration+content record, so the body pairs the editable fields (6-wide) with the live theme-preview custom widget (6-wide) so an editor sees the rendered card/banner as they tune it — the reason theme-preview exists. Below, a full-width Related panel surfaces the publications tagged with this theme. Deliberately NO comms and NO Files/audit: a theme communicates with nobody, declares no linkedTypes, and its `image`/`content` live in the record itself — keeping it clean per HARD RULE 1/2. Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "theme",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{ "id": "theme-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5, "props": { "columns": 1 } },
-				{ "id": "theme-preview", "widgetKey": "theme-preview", "slot": "body", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
-				{ "id": "theme-related", "widgetKey": "related", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4 },
-				{ "id": "theme-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 }
-			]
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{ "id": "theme-data", "type": "data", "title": "Theme", "content": { "columns": 1 } },
+					{ "id": "theme-preview", "type": "theme-preview", "title": "Preview" },
+					{ "id": "theme-related", "type": "related", "title": "Related" }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "theme-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "theme-preview", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "3", "widgetId": "theme-related", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4 }
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				}
+			}
 		},
 		{
 			"id": "Glossary",
@@ -383,19 +409,27 @@
 			"route": "/glossary/:id",
 			"type": "detail",
 			"title": "Glossary term",
-			"_note": "Glossary-term / reference archetype — a single defined concept (title, summary, description, externalLink, keywords) used to explain vocabulary across the catalog. A term's value is its definition plus how it connects to other terms, so the body pairs the definition fields (6-wide) with the relationship-graph custom widget (6-wide) that visualises related terms — the reason that widget exists. Below, a full-width Related panel lists publications/themes that reference this term. Intentionally the leanest detail page: NO comms, NO Files, NO extra tabs — a glossary entry declares no linkedTypes, has no attachments, and communicates with nobody (HARD RULES 1 & 2). Sidebar keeps read-only metadata only.",
+			"_note": "Glossary-term / reference archetype — a single defined concept (title, summary, description, externalLink, keywords) used to explain vocabulary across the catalog. A term's value is its definition plus how it connects to other terms, so the body pairs the definition fields (6-wide) with the relationship-graph custom widget (6-wide) that visualises related terms — the reason that widget exists. Below, a full-width Related panel lists publications/themes that reference this term. Intentionally the leanest detail page: NO comms, NO Files, NO extra tabs — a glossary entry declares no linkedTypes, has no attachments, and communicates with nobody (HARD RULES 1 & 2). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "glossary",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{ "id": "glossary-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5, "props": { "columns": 1 } },
-				{ "id": "glossary-graph", "widgetKey": "relationship-graph", "slot": "body", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
-				{ "id": "glossary-related", "widgetKey": "related", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4 },
-				{ "id": "glossary-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 }
-			]
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{ "id": "glossary-data", "type": "data", "title": "Glossary term", "content": { "columns": 1 } },
+					{ "id": "glossary-graph", "type": "relationship-graph", "title": "Related terms" },
+					{ "id": "glossary-related", "type": "related", "title": "Related" }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "glossary-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "glossary-graph", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "3", "widgetId": "glossary-related", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4 }
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				}
+			}
 		},
 		{
 			"id": "Pages",
@@ -425,18 +459,25 @@
 			"route": "/pages/:id",
 			"type": "detail",
 			"title": "Page",
-			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar keeps read-only metadata only.",
+			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "page",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{ "id": "page-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 5, "gridHeight": 5, "props": { "columns": 1 } },
-				{ "id": "page-tree", "widgetKey": "tree-view", "slot": "body", "gridX": 5, "gridY": 0, "gridWidth": 7, "gridHeight": 5, "props": { "field": "contents", "title": "Content blocks" } },
-				{ "id": "page-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 }
-			]
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{ "id": "page-data", "type": "data", "title": "Page", "content": { "columns": 1 } },
+					{ "id": "page-tree", "type": "tree-view", "title": "Content blocks", "content": { "field": "contents" } }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "page-data", "gridX": 0, "gridY": 0, "gridWidth": 5, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "page-tree", "gridX": 5, "gridY": 0, "gridWidth": 7, "gridHeight": 5 }
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				}
+			}
 		},
 		{
 			"id": "Menus",
@@ -466,18 +507,25 @@
 			"route": "/menus/:id",
 			"type": "detail",
 			"title": "Menu",
-			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose substance is its ordered, nestable `items[]` (inline objects with order/name/link, NOT a separate register schema — so no object-list child table). The body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet) with a wide tree-view (8-wide) that renders and lets an editor reorder the item hierarchy, since the tree IS the menu. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Sidebar keeps read-only metadata only. Widened the tree vs the settings block (was 6/6) because the item hierarchy is the primary content here.",
+			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose substance is its ordered, nestable `items[]` (inline objects with order/name/link, NOT a separate register schema — so no object-list child table). The body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet) with a wide tree-view (8-wide) that renders and lets an editor reorder the item hierarchy, since the tree IS the menu. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card. Widened the tree vs the settings block (was 6/6) because the item hierarchy is the primary content here.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "menu",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{ "id": "menu-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 4, "gridHeight": 5, "props": { "columns": 1 } },
-				{ "id": "menu-tree", "widgetKey": "tree-view", "slot": "body", "gridX": 4, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "field": "items", "title": "Menu items" } },
-				{ "id": "menu-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 }
-			]
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{ "id": "menu-data", "type": "data", "title": "Menu", "content": { "columns": 1 } },
+					{ "id": "menu-tree", "type": "tree-view", "title": "Menu items", "content": { "field": "items" } }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "menu-data", "gridX": 0, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "menu-tree", "gridX": 4, "gridY": 0, "gridWidth": 8, "gridHeight": 5 }
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				}
+			}
 		},
 		{
 			"id": "Directory",
