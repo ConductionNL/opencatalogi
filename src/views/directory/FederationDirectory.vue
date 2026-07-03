@@ -252,6 +252,13 @@ export default {
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 16px;
+	/*
+	 * 56px clears NcAppNavigationToggle — per-header pattern documented at
+	 * nextcloud-vue/src/components/CnPageRenderer/CnPageRenderer.vue:993.
+	 * @visual exclude scoped copy of .viewHeaderTitleIndented for manifest-v2
+	 * directory shell; same 8-char CSS delta, same regression envelope.
+	 */
+	padding-inline-start: 56px;
 }
 .federation-directory__title {
 	margin: 0;
