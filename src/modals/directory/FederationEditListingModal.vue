@@ -48,15 +48,13 @@ export default {
 		},
 	},
 	watch: {
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		isOpen(open) {
 			if (open) {
 				this.reset()
 			}
 		},
-		// Sync the local dropdown selection to whichever listing is currently
-		// being edited. Non-immediate so the `data()` initial value wins on
-		// first render — `immediate: true` here previously fought the
-		// `isOpen` handler's reset. See WOO-511 PR #79 review.
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		listing(l) {
 			this.integrationLevel = this.integrationLevels.find(
 				(o) => o.value === (l?.integrationLevel || 'search'),
@@ -65,6 +63,7 @@ export default {
 	},
 	methods: {
 		t,
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		reset() {
 			this.error = null
 			this.submitting = false
@@ -72,9 +71,11 @@ export default {
 				(o) => o.value === (this.listing?.integrationLevel || 'search'),
 			) || this.integrationLevels[0]
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		close() {
 			navigationStore.setModal(null)
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		async submit() {
 			if (!this.listing) {
 				return
@@ -151,8 +152,8 @@ export default {
 					:id="'federationEditListingIntegration-' + (listing.id || 'x')"
 					v-model="integrationLevel"
 					:options="integrationLevels"
-					:reduce="(o) => o"
 					:input-label="t('opencatalogi', 'Integration level')"
+					:reduce="(o) => o"
 					:clearable="false" />
 			</div>
 

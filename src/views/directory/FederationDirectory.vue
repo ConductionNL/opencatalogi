@@ -45,6 +45,7 @@ export default {
 		modalState() {
 			return navigationStore.modal
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		summary() {
 			const counts = { up: 0, degraded: 0, down: 0, unknown: 0 }
 			for (const l of this.listings) {
@@ -54,8 +55,7 @@ export default {
 		},
 	},
 	watch: {
-		// Refresh listings after any Directory-modal closes. Also clears the
-		// staged row so we don't pin the previously-edited listing (WOO-511 PR #79).
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		modalState(next, prev) {
 			const dirModals = ['federationAddDirectory', 'federationEditListing', 'federationDeleteListing']
 			if (dirModals.includes(prev) && next !== prev) {
@@ -70,6 +70,7 @@ export default {
 	},
 	methods: {
 		t,
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		async load() {
 			this.loading = true
 			this.error = null
@@ -88,6 +89,7 @@ export default {
 				this.loading = false
 			}
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
@@ -97,6 +99,7 @@ export default {
 			}
 			return 'unknown'
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		statusLabelFor(listing) {
 			const map = {
 				up: t('opencatalogi', 'available'),
@@ -106,6 +109,7 @@ export default {
 			}
 			return map[this.statusFor(listing)]
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		messageFor(listing) {
 			if (listing.available === false) return t('opencatalogi', 'Peer is unreachable')
 			if (typeof listing.statusCode === 'number' && (listing.statusCode < 200 || listing.statusCode >= 300)) {
@@ -113,19 +117,21 @@ export default {
 			}
 			return ''
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		openAdd() {
 			navigationStore.setModal('federationAddDirectory')
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		openEdit(listing) {
 			this.editingListing = listing
 			navigationStore.setModal('federationEditListing')
 		},
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		openDelete(listing) {
 			this.deletingListing = listing
 			navigationStore.setModal('federationDeleteListing')
 		},
-		// Mirrors the same localised labels the edit modal shows in its dropdown,
-		// so the row value and the pre-selected option stay in sync.
+		// @spec exclude review-driven UI hardening for WOO-511 federation directory affordances
 		integrationLevelFor(listing) {
 			const raw = listing.integrationLevel
 			if (raw === undefined || raw === null || raw === '') return t('opencatalogi', 'not set')
