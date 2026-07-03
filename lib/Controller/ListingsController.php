@@ -382,24 +382,41 @@ class ListingsController extends Controller
         // UUID after a bad self-sync (see WOO-515 / WOO-516) — is NOT deleted
         // when the frontend clicks Remove on the Directory page. deleteObject()
         // scopes the DB delete AND the audit-trail entry to the caller's pair.
+        //
+        // FAIL-CLOSED: if either config key is empty, OR's `$hasScope` check
+        // silently disables scoping (`register !== null && schema !== null`),
+        // which reverts to the pre-fix behaviour. So we refuse the delete
+        // outright rather than letting the defence quietly evaporate.
         $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
         $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
-
-        $registerScope = null;
-        if ($listingRegister !== '') {
-            $registerScope = $listingRegister;
+        if ($listingRegister === '' || $listingSchema === '') {
+            $this->logger?->warning(
+                '[ListingsController::destroy] Refusing scope-less delete — listing_register/listing_schema not configured',
+                ['id' => (string) $id]
+            );
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Listing register/schema is not configured. Run the setup wizard.')],
+                statusCode: Http::STATUS_CONFLICT
+            );
         }
 
-        $schemaScope = null;
-        if ($listingSchema !== '') {
-            $schemaScope = $listingSchema;
+        // OR's ObjectService re-throws DoesNotExistException on scope-mismatch
+        // to keep the "404 not in scope" contract; regular AppFramework
+        // controllers don't get an auto-translation to HTTP 404 (verified
+        // against OCS/Security/SameSiteCookie/RateLimiting middlewares), so
+        // catch it here and return 404 explicitly.
+        try {
+            $result = $this->getObjectService()->deleteObject(
+                uuid: (string) $id,
+                register: $listingRegister,
+                schema: $listingSchema
+            );
+        } catch (DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['success' => false, 'message' => $this->l10n->t('Listing not found in scope')],
+                statusCode: Http::STATUS_NOT_FOUND
+            );
         }
-
-        $result = $this->getObjectService()->deleteObject(
-            uuid: (string) $id,
-            register: $registerScope,
-            schema: $schemaScope
-        );
 
         // Return the result as a JSON response.
         $statusCode = 404;
