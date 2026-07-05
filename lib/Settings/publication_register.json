@@ -95,6 +95,7 @@
     "schemas": {
       "publication": {
         "slug": "publication",
+        "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -292,6 +293,7 @@
       },
       "catalog": {
         "slug": "catalog",
+        "x-schema-org": "schema:DataCatalog",
         "x-openregister-notifications": {
           "catalog-stable": {
             "trigger": {
@@ -499,6 +501,7 @@
       },
       "listing": {
         "slug": "listing",
+        "x-schema-org": "schema:DataFeed",
         "x-openregister-notifications": {
           "listing-sync-failed": {
             "trigger": {
@@ -803,6 +806,7 @@
       },
       "page": {
         "slug": "page",
+        "x-schema-org": "schema:WebPage",
         "title": "Page",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -913,6 +917,7 @@
       },
       "theme": {
         "slug": "theme",
+        "x-schema-org": "schema:DefinedTerm",
         "title": "Theme",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -1000,6 +1005,7 @@
       },
       "menu": {
         "slug": "menu",
+        "x-schema-org": "schema:SiteNavigationElement",
         "title": "Menu",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -1176,6 +1182,7 @@
       },
       "glossary": {
         "slug": "glossary",
+        "x-schema-org": "schema:DefinedTerm",
         "title": "Glossary",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
