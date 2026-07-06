@@ -40,6 +40,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Fake OpenRegister ObjectService double for assemblePublicSearchResults() tests.
@@ -158,6 +159,13 @@ class PublicationQueryServiceTest extends TestCase
     private array $configStore = [];
 
     /**
+     * Logger captured for assertions on the fail-closed observability signal.
+     *
+     * @var LoggerInterface&MockObject
+     */
+    private LoggerInterface $logger;
+
+    /**
      * Service under test.
      *
      * @var PublicationQueryService
@@ -174,6 +182,7 @@ class PublicationQueryServiceTest extends TestCase
         $this->db        = $this->createMock(IDBConnection::class);
         $this->container = $this->createMock(ContainerInterface::class);
         $this->config    = $this->createMock(IAppConfig::class);
+        $this->logger    = $this->createMock(LoggerInterface::class);
 
         $this->configStore = [];
         $this->config->method('getValueString')
@@ -184,7 +193,8 @@ class PublicationQueryServiceTest extends TestCase
         $this->service = new PublicationQueryService(
             db: $this->db,
             container: $this->container,
-            config: $this->config
+            config: $this->config,
+            logger: $this->logger
         );
 
     }//end setUp()
@@ -203,7 +213,8 @@ class PublicationQueryServiceTest extends TestCase
             db: $this->db,
             container: $this->container,
             userSession: $userSession,
-            config: $this->config
+            config: $this->config,
+            logger: $this->logger
         );
 
     }//end makeAuthenticatedService()
@@ -421,19 +432,27 @@ class PublicationQueryServiceTest extends TestCase
     }//end testAssemblePublicSearchResultsSkipsRowsWithUnknownSchemaId()
 
     /**
-     * Authenticated callers absorb the old admin-only endpoint's behaviour: every
-     * candidate row is returned, including ones that would fail the anonymous
-     * visibility filter (SCH-OR-003).
+     * SCH-PFTS-004 requires the visibility filter to run unconditionally. A prior
+     * `$isAnonymous === true &&` guard let any authenticated NC user enumerate the
+     * whole register through a public URL (broken authorisation / OWASP A01:2021).
+     * This test locks in the correct behaviour: an authenticated non-admin caller
+     * MUST NOT see draft/embargoed content via the public search endpoint. Admins
+     * who need drafts use the admin `/publications` endpoint instead.
      *
      * @return void
      */
-    public function testAssemblePublicSearchResultsSkipsVisibilityFilterForAuthenticatedCallers(): void
+    public function testAssemblePublicSearchResultsFiltersUnpublishedForAuthenticatedNonAdmin(): void
     {
         $this->configureRegisterAndSchemas();
         $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
 
         $fake = new FakeSearchObjectService();
         $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 1, 'slug' => 'pub-live'],
+                'title'           => 'Live publication',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
             [
                 '@self'           => ['schema' => 1, 'slug' => 'pub-embargoed'],
                 'title'           => 'Embargoed publication',
@@ -444,10 +463,77 @@ class PublicationQueryServiceTest extends TestCase
         $service = $this->makeAuthenticatedService();
         $result  = $service->assemblePublicSearchResults([], $fake);
 
+        // Authenticated non-admin gets EXACTLY the same filter treatment as anonymous —
+        // the public endpoint is one visibility surface, not two.
         $this->assertSame(1, $result['total']);
-        $this->assertSame('pub-embargoed', $result['results'][0]['@self']['slug']);
+        $this->assertSame('pub-live', $result['results'][0]['@self']['slug']);
 
-    }//end testAssemblePublicSearchResultsSkipsVisibilityFilterForAuthenticatedCallers()
+    }//end testAssemblePublicSearchResultsFiltersUnpublishedForAuthenticatedNonAdmin()
+
+    /**
+     * Transitive visibility gate also applies unconditionally. A document whose
+     * linked publication is depublished MUST NOT surface for ANY caller through
+     * the public endpoint (SCH-PFTS-004 scenario 3, post-fix wording).
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsEnforcesTransitiveVisibilityForAuthenticatedNonAdmin(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 2, 'slug' => 'doc-orphaned-by-depublish'],
+                'title'           => 'Document of a depublished report',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publication'     => ['slug' => 'pub-depublished', 'title' => 'Depublished report'],
+            ],
+        ];
+        $fake->bySlug['pub-depublished'] = [
+            [
+                'id'                => 'uuid-pub-depublished',
+                '@self'             => ['slug' => 'pub-depublished'],
+                'title'             => 'Depublished report',
+                'publicatiedatum'   => '2024-01-01T00:00:00+00:00',
+                'depublicatiedatum' => '2024-06-01T00:00:00+00:00',
+            ],
+        ];
+
+        $service = $this->makeAuthenticatedService();
+        $result  = $service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(expected: ['results' => [], 'total' => 0], actual: $result);
+
+    }//end testAssemblePublicSearchResultsEnforcesTransitiveVisibilityForAuthenticatedNonAdmin()
+
+    /**
+     * The fail-closed empty-envelope branch (register/schema config not resolved)
+     * MUST emit a warning-level log entry, so the misconfiguration is observable in
+     * production. Silent empty responses are indistinguishable from "no matches"
+     * in the envelope — operators need a signal that the deploy is broken.
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsLogsWarningWhenConfigMissing(): void
+    {
+        // configStore intentionally empty — resolveConfiguredId() returns null for every key.
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with(
+                $this->stringContains('assemblePublicSearchResults returning empty envelope'),
+                $this->callback(
+                    fn (array $ctx): bool => (($ctx['publication_register'] ?? '') === 'MISSING')
+                        && (($ctx['publication_schema'] ?? '') === 'MISSING')
+                        && (($ctx['document_schema'] ?? '') === 'MISSING')
+                )
+            );
+
+        $fake   = new FakeSearchObjectService();
+        $result = $this->service->assemblePublicSearchResults([], $fake);
+
+        $this->assertSame(expected: ['results' => [], 'total' => 0], actual: $result);
+
+    }//end testAssemblePublicSearchResultsLogsWarningWhenConfigMissing()
 
     /**
      * Populate the register/schema app-config keys assemblePublicSearchResults() reads.

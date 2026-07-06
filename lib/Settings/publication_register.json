@@ -1589,8 +1589,7 @@
         "summary": "Voorbeeld-publicatie (seed data) — fictief jaarverslag van een fictieve gemeente. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is. Gemeente Voorbeeld is een fictieve gemeente en representeert geen echte overheidsorganisatie.",
         "organization": "default-org",
-        "publicatiedatum": "2025-03-15T00:00:00+00:00",
-        "status": "published"
+        "publicatiedatum": "2024-01-01T00:00:00+00:00"
       },
       {
         "@self": {
@@ -1602,8 +1601,7 @@
         "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
         "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
         "organization": "default-org",
-        "publicatiedatum": "2026-04-01T00:00:00+00:00",
-        "status": "published"
+        "publicatiedatum": "2024-04-01T00:00:00+00:00"
       },
       {
         "@self": {
@@ -1621,7 +1619,7 @@
           "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld"
         },
         "organization": "default-org",
-        "publicatiedatum": "2025-03-15T00:00:00+00:00"
+        "publicatiedatum": "2024-01-01T00:00:00+00:00"
       },
       {
         "@self": {
@@ -1639,7 +1637,7 @@
           "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026"
         },
         "organization": "default-org",
-        "publicatiedatum": "2026-04-01T00:00:00+00:00"
+        "publicatiedatum": "2024-04-01T00:00:00+00:00"
       }
     ]
   }

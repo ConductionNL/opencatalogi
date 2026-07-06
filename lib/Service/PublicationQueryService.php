@@ -27,6 +27,7 @@ use OCP\IAppConfig;
 use OCP\IDBConnection;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Query-building and response-shaping helpers for publications.
@@ -72,16 +73,19 @@ class PublicationQueryService
     /**
      * Constructor.
      *
-     * @param IDBConnection      $db          Database connection
-     * @param ContainerInterface $container   DI container
-     * @param IUserSession|null  $userSession User session for anonymity checks (auto-wired at runtime)
-     * @param IAppConfig|null    $config      App config, resolves the publication/document register+schema ids
+     * @param IDBConnection        $db          Database connection
+     * @param ContainerInterface   $container   DI container
+     * @param IUserSession|null    $userSession User session for anonymity checks (auto-wired at runtime)
+     * @param IAppConfig|null      $config      App config, resolves the publication/document register+schema ids
+     * @param LoggerInterface|null $logger      Logger — surfaces the fail-closed empty-envelope branch so silent
+     *                                          configuration drift is observable in production (SCH-PFTS-005).
      */
     public function __construct(
         private readonly IDBConnection $db,
         private readonly ContainerInterface $container,
         private readonly ?IUserSession $userSession=null,
         private readonly ?IAppConfig $config=null,
+        private readonly ?LoggerInterface $logger=null,
     ) {
 
     }//end __construct()
@@ -192,7 +196,18 @@ class PublicationQueryService
 
         if ($registerId === null || $publicationSchemaId === null || $documentSchemaId === null) {
             // Configuration not (yet) loaded — fail closed to an empty envelope rather
-            // than falling back to an unscoped, platform-wide search.
+            // than falling back to an unscoped, platform-wide search. Emit a warning so
+            // the failure is observable in production (silent empty is indistinguishable
+            // from "no matches" in the response envelope; operators need a signal that
+            // the deploy is misconfigured).
+            $this->logger?->warning(
+                'PublicationQueryService::assemblePublicSearchResults returning empty envelope — register/schema config unresolved',
+                [
+                    'publication_register' => $registerId === null ? 'MISSING' : 'set',
+                    'publication_schema'   => $publicationSchemaId === null ? 'MISSING' : 'set',
+                    'document_schema'      => $documentSchemaId === null ? 'MISSING' : 'set',
+                ]
+            );
             return [
                 'results' => [],
                 'total'   => 0,
@@ -221,7 +236,13 @@ class PublicationQueryService
             _multitenancy: false
         );
 
-        $isAnonymous      = $this->isAnonymous();
+        // Visibility filter runs unconditionally — the endpoint is public per
+        // SCH-PFTS-001, so it MUST NOT surface draft/depublished content to ANY
+        // caller (anonymous, authenticated non-admin, or admin). The prior
+        // `$isAnonymous === true &&` guard let any logged-in user enumerate the
+        // whole register because `_rbac: false` disables OR's schema authorization —
+        // classic broken-authorisation (OWASP A01:2021). Admins who need to see
+        // drafts use the admin `/publications` endpoint, not this public surface.
         $publicationCache = [];
         $rows = [];
 
@@ -253,15 +274,16 @@ class PublicationQueryService
                     continue;
                 }
 
-                if ($isAnonymous === true && $publicationSummary['public'] !== true) {
-                    // Transitive visibility (SCH-PFTS-004): linked publication is not public.
+                if ($publicationSummary['public'] !== true) {
+                    // Transitive visibility (SCH-PFTS-004): linked publication is not
+                    // public — drop the document row regardless of caller identity.
                     continue;
                 }
 
                 $rowArray['publication'] = $publicationSummary['summary'];
             }//end if
 
-            if ($isAnonymous === true && $this->isObjectPublic($rowArray) === false) {
+            if ($this->isObjectPublic($rowArray) === false) {
                 continue;
             }
 

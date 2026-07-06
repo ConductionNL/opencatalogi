@@ -40,7 +40,19 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * Controller for handling internal search-related operations.
+ * Controller for the OpenCatalogi search surface.
+ *
+ * `index()` is the public, anonymous-reachable full-text search endpoint
+ * (WOO-506 / SCH-PFTS-001..007). It absorbs the previous admin-only
+ * `/api/search` route into a `#[PublicPage]` + `#[NoCSRFRequired]` handler
+ * that returns publications AND documents in a flat envelope discriminated
+ * by `@self.schema`. Visibility filtering is applied post-scoring by
+ * `PublicationQueryService::assemblePublicSearchResults()`; see
+ * SCH-PFTS-004 for the ordering invariant.
+ *
+ * The remaining methods on this controller are internal/admin-use only
+ * (testing + administrative introspection); they retain their original
+ * `@NoAdminRequired` posture and do not participate in the public surface.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -130,6 +142,21 @@ class SearchController extends Controller
             );
 
             return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+        } catch (RuntimeException $e) {
+            // OR isn't installed — this is a deploy issue, not a code bug. Callers
+            // (and operators) benefit from a 503 that distinguishes "backend not
+            // ready" from "backend crashed"; keep the generic 500 branch below for
+            // truly unexpected errors. Log-level `warning` because the app can't
+            // do its job right now but nothing is broken in this code path.
+            $this->logger->warning(
+                '[SearchController::index] OpenRegister not installed — public search unavailable',
+                ['error' => $e->getMessage()]
+            );
+
+            return new JSONResponse(
+                data: ['error' => $this->l10n->t('Search backend is not available.')],
+                statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+            );
         } catch (\Exception $e) {
             // Public endpoint — log exception details server-side only and return a
             // generic error body to the caller; never leak raw $e->getMessage().

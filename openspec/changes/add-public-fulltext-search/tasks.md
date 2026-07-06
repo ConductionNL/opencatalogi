@@ -23,12 +23,13 @@ This change is `kind: mixed` (per ADR-032). Tasks are ordered so the schema decl
 - [x] Embed `publication: {id, slug, title}` (English `title` — matches the bundled publication schema) on each document row during assembly
   - Spec ref: SCH-PFTS-003
   - Acceptance: every document row in the response carries the embedded publication summary with English field names; rows whose linked publication is missing are dropped. **Note the seed-vs-response asymmetry** — seed rows in `publication_register.json` carry `publication.{slug, title}` (no `id`, because the magic mapper assigns UUIDs at import time; see design.md "Seed publications"); API-response rows MUST carry `publication.{id, slug, title}`. A diligent implementer testing the seed shape should not expect `id` to be present in the seed JSON.
-- [x] Apply `isObjectPublic()` to anonymous results AFTER scoring/merge (post-filter, never folded into the OR query)
+- [x] Apply `isObjectPublic()` to results AFTER scoring/merge (post-filter, never folded into the OR query) — runs unconditionally, on every caller
   - Spec ref: SCH-PFTS-004
   - Acceptance: PHPUnit test demonstrates that a candidate row excluded by visibility was present pre-filter and absent post-filter; ordering invariant documented in the helper's docblock
-- [x] Enforce transitive visibility on documents: drop document rows whose linked publication fails `isObjectPublic()`
+  - **Post-review fix (2026-07-07):** initial impl gated the filter on `$isAnonymous === true`, which combined with `_rbac: false` let any authenticated NC user enumerate the whole register through a public URL (broken authorisation / OWASP A01:2021). Fixed by dropping the anonymity guard — filter now runs on every caller. Test `testAssemblePublicSearchResultsFiltersUnpublishedForAuthenticatedNonAdmin` locks it in.
+- [x] Enforce transitive visibility on documents: drop document rows whose linked publication fails `isObjectPublic()` — unconditional across callers
   - Spec ref: SCH-PFTS-004
-  - Acceptance: PHPUnit test with a document whose linked publication is depublished; document MUST NOT surface for anonymous callers
+  - Acceptance: PHPUnit test with a document whose linked publication is depublished; document MUST NOT surface for ANY caller. Tests `testAssemblePublicSearchResultsEnforcesTransitiveVisibilityOnDocuments` (anonymous) + `testAssemblePublicSearchResultsEnforcesTransitiveVisibilityForAuthenticatedNonAdmin` (authenticated non-admin) both pass.
 - [x] Add Newman / PHPUnit tests proving anonymous reachability + 200 status on `/apps/opencatalogi/api/search`
   - Spec ref: SCH-PFTS-001
   - Acceptance: tests run in CI; cover the no-auth-header and depublished-row cases
