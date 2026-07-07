@@ -37,6 +37,8 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
+use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
@@ -141,6 +143,18 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ToolRegistrationEvent::class,
             listener: ToolRegistrationListener::class
+        );
+
+        // Provide the manifest-config initial state on every SPA `index` render,
+        // controller-independent. After the AppHost adoption (ADR-040) the `/`
+        // index route resolves to OpenRegister's shared AppHost dashboard
+        // controller, which serves templates/index.php without OpenCatalogi's
+        // register/schema config — a clean install then rendered no SPA. Hooking
+        // the provision to BeforeTemplateRenderedEvent restores it for both the
+        // AppHost `/` page and the UiController-served deep-link routes.
+        $context->registerEventListener(
+            event: BeforeTemplateRenderedEvent::class,
+            listener: ProvideManifestConfigStateListener::class
         );
 
         // Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.

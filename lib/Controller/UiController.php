@@ -21,13 +21,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\AppInfo\Application;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Services\IInitialState;
-use OCP\IAppConfig;
 use OCP\IRequest;
 
 /**
@@ -42,50 +38,14 @@ use OCP\IRequest;
 class UiController extends Controller
 {
     /**
-     * The IAppConfig register/schema keys surfaced to the frontend so the
-     * nextcloud-vue manifest renderer can resolve its "resolve" sentinels
-     * synchronously via loadState('opencatalogi', key).
-     *
-     * A runtime fetch fallback (GET /apps/opencatalogi/api/configs/key)
-     * cannot be used because the public catch-all route /api/catalogSlug
-     * (requirement [a-z0-9-]+) shadows it and answers "Catalog not found".
-     * Provisioning these as initial-state is the zero-network path the
-     * resolver tries first.
-     *
-     * @var string[]
-     */
-    private const MANIFEST_CONFIG_KEYS = [
-        'catalog_register',
-        'catalog_schema',
-        'listing_register',
-        'listing_schema',
-        'organization_register',
-        'organization_schema',
-        'theme_register',
-        'theme_schema',
-        'page_register',
-        'page_schema',
-        'menu_register',
-        'menu_schema',
-        'glossary_register',
-        'glossary_schema',
-        'publication_register',
-        'publication_schema',
-    ];
-
-    /**
      * Constructor.
      *
-     * @param string        $appName      The application name.
-     * @param IRequest      $request      The HTTP request.
-     * @param IAppConfig    $appConfig    App configuration interface.
-     * @param IInitialState $initialState Initial-state service.
+     * @param string   $appName The application name.
+     * @param IRequest $request The HTTP request.
      */
     public function __construct(
         string $appName,
-        IRequest $request,
-        private readonly IAppConfig $appConfig,
-        private readonly IInitialState $initialState
+        IRequest $request
     ) {
         parent::__construct($appName, $request);
 
@@ -101,55 +61,23 @@ class UiController extends Controller
      */
     private function makeSpaResponse(): TemplateResponse
     {
-        try {
-            // Surface the configured register/schema ids so the manifest
-            // renderer can resolve `@resolve:<key>` sentinels synchronously
-            // (zero-network) instead of hitting the catch-all-shadowed
-            // `/api/configs/<key>` route. Only non-empty values are provided.
-            foreach (self::MANIFEST_CONFIG_KEYS as $key) {
-                $value = $this->appConfig->getValueString($this->appName, $key, '');
-                if ($value !== '') {
-                    $this->initialState->provideInitialState($key, $value);
-                }
-            }
+        // The manifest-config initial state (register/schema ids +
+        // default_directory_url) is provided controller-independently by
+        // ProvideManifestConfigStateListener on BeforeTemplateRenderedEvent, so
+        // it reaches the SPA whether this route or the AppHost dashboard route
+        // serves the index. This method only builds the template + CSP.
+        $response = new TemplateResponse(
+            $this->appName,
+            'index',
+            []
+        );
 
-            // Surface the resolved national-directory URL (override key, falling
-            // back to the canonical constant) so the Add-Directory modal and the
-            // first-time-setup federation step default to a single source of truth
-            // instead of a hardcoded literal.
-            $this->initialState->provideInitialState(
-                'default_directory_url',
-                $this->appConfig->getValueString(
-                    $this->appName,
-                    'default_directory_url',
-                    Application::DEFAULT_DIRECTORY_URL
-                )
-            );
+        // Set up Content Security Policy — permissive connect-src for API calls.
+        $csp = new ContentSecurityPolicy();
+        $csp->addAllowedConnectDomain('*');
+        $response->setContentSecurityPolicy($csp);
 
-            // Create a new TemplateResponse for the index page.
-            $response = new TemplateResponse(
-                $this->appName,
-                'index',
-                []
-            );
-
-            // Set up Content Security Policy.
-            $csp = new ContentSecurityPolicy();
-            $csp->addAllowedConnectDomain('*');
-            $response->setContentSecurityPolicy($csp);
-
-            return $response;
-        } catch (\Exception $e) {
-            // Return an error template response if an exception occurs.
-            // HTTP 500 is the `status` arg, not `renderAs`: the prior positional
-            // '500' silently landed in renderAs and rendered as HTTP 200 instead.
-            return new TemplateResponse(
-                $this->appName,
-                'error',
-                ['error' => $e->getMessage()],
-                status: Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+        return $response;
 
     }//end makeSpaResponse()
 
