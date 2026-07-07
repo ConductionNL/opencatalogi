@@ -22,6 +22,8 @@ return [
 		// Catalogi sitemap
 		['name' => 'sitemap#index', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}', 'verb' => 'GET'],
 		['name' => 'sitemap#sitemap', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/publications', 'verb' => 'GET'],
+		// DIWOO output validation (admin-only — auditable via AuthorizedAdminSetting)
+		['name' => 'sitemap#diwooReport', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/validate', 'verb' => 'GET'],
 		// DCAT-AP-NL feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'dcat#validate', 'url' => '/api/catalogs/{catalogSlug}/dcat/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Robots
