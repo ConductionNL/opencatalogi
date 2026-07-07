@@ -37,12 +37,12 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
     </documentation>
     <category>integration</category>
     <website>https://opencatalogi.conduction.nl/</website>
-	<bugs>https://github.com/OpenCatalogi/.github/issues</bugs>
-    <repository type="git">https://github.com/ConductionNL/opencatalogi.git</repository>
+	<bugs>https://codeberg.org/Conduction/opencatalogi/issues</bugs>
+    <repository type="git">https://codeberg.org/Conduction/opencatalogi.git</repository>
 
-	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/assets/logo.png</screenshot>
-	<screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/1.png</screenshot>
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/opencatalogi/master/docs/screenshots/2.png</screenshot>
+	<screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-dashboard.png</screenshot>
+	<screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-catalog.png</screenshot>
+    <screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-publications.png</screenshot>
 
    	<dependencies>
         <php min-version="8.0" min-int-size="64"/>
