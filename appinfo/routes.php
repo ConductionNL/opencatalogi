@@ -26,6 +26,7 @@ return [
 		['name' => 'sitemap#diwooReport', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/validate', 'verb' => 'GET'],
 		// DCAT-AP-NL feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'dcat#validate', 'url' => '/api/catalogs/{catalogSlug}/dcat/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'dcat#donlReport', 'url' => '/api/catalogs/{catalogSlug}/dcat/donl-validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration

@@ -59,7 +59,7 @@ class DcatServiceTest extends TestCase
         $this->service = new DcatService(
             $this->container,
             $this->appManager,
-            new DcatMappingService(),
+            new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
             new DcatSerializer(),
             $this->urlGenerator,
             $this->appConfig,
