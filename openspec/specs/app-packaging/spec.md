@@ -1,8 +1,25 @@
 # app-packaging Specification
 
+**Status**: done
+**Scope**: opencatalogi
+**OpenSpec changes**:
+
+- [product-metadata-and-readme-honesty](../../changes/archive/2026-07-07-product-metadata-and-readme-honesty/) _(archived 2026-07-07)_
+
 ## Purpose
-TBD - created by archiving change product-metadata-and-readme-honesty. Update Purpose after archive.
+
+Keep the app's packaging metadata and user-facing documentation
+consistent with what the code actually ships. The four packaging
+declarations (`appinfo/info.xml`, `LICENSE`, `composer.json`,
+`publiccode.yml`) must agree on the licence and on the supported
+Nextcloud range, and the READMEs must describe the search backend,
+document-content search state, and aggregated-publications endpoint
+that are actually implemented — no over-promising, no dead endpoint
+paths. This capability exists so store submissions, integrators, and
+downstream users see the same app.
+
 ## Requirements
+
 ### Requirement: info.xml declares the actual EUPL-1.2 licence (PKG-001)
 
 `appinfo/info.xml` `<licence>` MUST reflect the app's actual licence, which is
