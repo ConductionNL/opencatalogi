@@ -204,6 +204,19 @@ required keys before first use.
 |-----|------|---------|----------|-------------|
 | `sitemap_max_per_page` | int | `1000` | No | Maximum entries per sitemap page. Previously `SitemapService::MAX_PER_PAGE = 1000`. |
 
+### Metadata-Quality Scoring (MQA/FAIR)
+
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `quality_weight_findability` | int | `25` | No | MQA dimension weight for findability (PQM-001). |
+| `quality_weight_accessibility` | int | `25` | No | MQA dimension weight for accessibility (PQM-001). |
+| `quality_weight_interoperability` | int | `20` | No | MQA dimension weight for interoperability (PQM-001). |
+| `quality_weight_reusability` | int | `20` | No | MQA dimension weight for reusability (PQM-001). |
+| `quality_weight_contextuality` | int | `10` | No | MQA dimension weight for contextuality (PQM-001). |
+
+> The per-catalog DQV exposure toggle (PQM-002) is a `dqvExposure` field on the
+> `catalog` object (not an `IAppConfig` key), mirroring `hasDcat` — it defaults off.
+
 ### Version Tracking
 
 | Key | Type | Default | Required | Description |

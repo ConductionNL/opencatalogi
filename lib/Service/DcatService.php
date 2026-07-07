@@ -55,13 +55,16 @@ class DcatService
     /**
      * DcatService constructor.
      *
-     * @param ContainerInterface $container      Server container for OR service resolution.
-     * @param IAppManager        $appManager     App manager for OpenRegister availability checks.
-     * @param DcatMappingService $mappingService Pure publication → DCAT mapping.
-     * @param DcatSerializer     $serializer     Pure graph → JSON-LD/Turtle/RDF-XML serializer.
-     * @param IURLGenerator      $urlGenerator   Nextcloud URL generator (absolute IRIs).
-     * @param IAppConfig         $appConfig      App config (publisher defaults).
-     * @param LoggerInterface    $logger         PSR-3 logger.
+     * @param ContainerInterface  $container      Server container for OR service resolution.
+     * @param IAppManager         $appManager     App manager for OpenRegister availability checks.
+     * @param DcatMappingService  $mappingService Pure publication → DCAT
+     *                                            mapping.
+     * @param DcatSerializer      $serializer     Pure graph → JSON-LD/Turtle/RDF-XML
+     *                                            serializer.
+     * @param IURLGenerator       $urlGenerator   Nextcloud URL generator (absolute IRIs).
+     * @param IAppConfig          $appConfig      App config (publisher defaults).
+     * @param LoggerInterface     $logger         PSR-3 logger.
+     * @param QualityService|null $qualityService Optional MQA/FAIR scorer for DQV exposure (PQM-002).
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -73,6 +76,7 @@ class DcatService
         private readonly IURLGenerator $urlGenerator,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
+        private readonly ?QualityService $qualityService=null,
     ) {
 
     }//end __construct()
@@ -246,6 +250,9 @@ class DcatService
             $catalogHvdDefault = null;
         }
 
+        // PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
+        $dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
+
         $searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
         $searchQuery['@self']['register'] = $this->scalarOrList($registers);
         $searchQuery['@self']['schema']   = $this->scalarOrList($schemas);
@@ -292,7 +299,7 @@ class DcatService
                 $this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
             }
 
-            $datasets[]    = $this->mappingService->mapDataset(
+            $dataset = $this->mappingService->mapDataset(
                 publication: $publication,
                 mapping: $mapping,
                 files: $files,
@@ -302,6 +309,14 @@ class DcatService
                 catalogHvdDefault: $catalogHvdDefault,
                 violations: $violations
             );
+
+            // PQM-002: additive DQV measurements, only when the catalog opts in.
+            if ($dqvExposure === true && $this->qualityService !== null) {
+                $score = $this->qualityService->scoreDataset($dataset);
+                $dataset['dqv:hasQualityMeasurement'] = $this->qualityService->dqvMeasurements($score);
+            }
+
+            $datasets[]    = $dataset;
             $datasetRefs[] = ['@id' => $datasetIri];
 
             $modified = strtotime((string) ($publication['@self']['updated'] ?? $publication['publicatiedatum'] ?? ''));

@@ -137,6 +137,7 @@ return [
 		// Usage analytics (authenticated; specific routes - MUST be before wildcard catalog routes).
 		['name' => 'stats#publication', 'url' => '/api/publications/{id}/stats', 'verb' => 'GET'],
 		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
+		['name' => 'stats#quality', 'url' => '/api/catalogs/{slug}/quality', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		// Health check endpoint — served by the AppHost engine from the
 		// `observability.health` block (ADR-040 / ADR-006). The engine adds

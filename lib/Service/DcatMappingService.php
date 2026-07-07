@@ -80,6 +80,7 @@ class DcatMappingService
             'dcat'    => 'http://www.w3.org/ns/dcat#',
             'dcatap'  => 'http://data.europa.eu/r5r/',
             'dct'     => 'http://purl.org/dc/terms/',
+            'dqv'     => 'http://www.w3.org/ns/dqv#',
             'foaf'    => 'http://xmlns.com/foaf/0.1/',
             'vcard'   => 'http://www.w3.org/2006/vcard/ns#',
             'hydra'   => 'http://www.w3.org/ns/hydra/core#',
