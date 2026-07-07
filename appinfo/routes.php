@@ -97,6 +97,9 @@ return [
 		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
 		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
 		['name' => 'dcat#catalog', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// schema.org DataCatalog endpoint (specific route - must be before wildcard catalog routes)
+		['name' => 'schemaOrg#catalog', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'schemaOrg#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Glossary (specific route - must be before wildcard catalog routes)
 		['name' => 'glossary#index', 'url' => '/api/glossary', 'verb' => 'GET'],
 		['name' => 'glossary#show', 'url' => '/api/glossary/{id}', 'verb' => 'GET'],
