@@ -2,22 +2,28 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>opencatalogi</id>
-	<name>OpenCatalogi</name>
-	<summary>Framework for federated catalogi to work togethe</summary>
-	<description><![CDATA[📰 A OpenCatalogi App for Nextcloud
+	<name lang="en">OpenCatalogi</name>
+	<name lang="nl">OpenCatalogi</name>
+	<summary lang="en">Federated publication catalogues with DCAT-AP and Woo compliance</summary>
+	<summary lang="nl">Gefedereerde publicatiecatalogi met DCAT-AP- en Woo-ondersteuning</summary>
+	<description lang="en"><![CDATA[OpenCatalogi turns your Nextcloud into a public-facing catalogue of publications, software, and data. Publish once, get discovered everywhere: entries export as DCAT-AP metadata for data.overheid.nl, and Woo (Wet open overheid) disclosure categories get DIWOO sitemaps and robots.txt out of the box.
 
-The OpenCatalogi Nextcloud app provides a framework for federated catalogi to work together in an open data ecosystem
+**Key Features**
 
-- 📲 Synchronize your sources with multiple catalogi
-- 🔄 Automatic publications of your open data
-- 🆓 Free and open source under EUPL
+- **Catalogues & publications** — Organize publications into catalogs, each with its own scope and access rules
+- **Federated directory** — Synchronize and discover catalogues across Nextcloud instances via the directory sync cron
+- **DCAT-AP & DIWOO export** — Publications are harvested as DCAT-AP metadata and mapped to the DIWOO XML schema for all 17 mandatory Woo information categories
+- **Woo (open government) compliance** — Sitemap, robots.txt, and audit-trail support for Wet open overheid disclosure obligations
+- **Retention lifecycle** — Daily background evaluation of publication retention terms with a review-queue dashboard widget
+- **Content management** — Glossary, themes, pages, and menus for building the public-facing catalogue site
+- **Organization profiles** — Publisher organizations with government identifiers (OIN/TOOI/RSIN/PKI)
+- **AI Chat Companion integration** — MCP tools expose catalogue search and publication lookup to compatible LLM assistants
+- 🆓 Free and open source under the EUPL license
 - ⚙️ Automatically installs and enables [OpenRegister](https://apps.nextcloud.com/apps/openregister) (required dependency)
 
 **System Cron is currently required for this app to work**
 
 Requirements can be found [here](https://opencatalogi.conduction.nl/docs/Installation/)
-
-The Roadmap is available [here](https://github.com/orgs/OpenCatalogi/projects/1/views/2)
 
 Create a [bug report](https://github.com/OpenCatalogi/.github/issues/new/choose)
 
@@ -25,7 +31,32 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 
 **Support:** For support, contact support@conduction.nl. For a Service Level Agreement (SLA), contact sales@conduction.nl.
     ]]></description>
-	<version>0.7.42</version>
+	<description lang="nl"><![CDATA[OpenCatalogi maakt van je Nextcloud een publieksgerichte catalogus van publicaties, software en data. Eén keer publiceren, overal vindbaar: items worden geëxporteerd als DCAT-AP-metadata voor data.overheid.nl, en Woo-informatiecategorieën krijgen automatisch DIWOO-sitemaps en een robots.txt.
+
+**Belangrijkste functies**
+
+- **Catalogi & publicaties** — Organiseer publicaties in catalogi, elk met een eigen scope en toegangsregels
+- **Gefedereerde directory** — Synchroniseer en ontdek catalogi tussen Nextcloud-instanties via de directory-sync cron
+- **DCAT-AP- en DIWOO-export** — Publicaties worden geoogst als DCAT-AP-metadata en gemapt naar het DIWOO XML-schema voor alle 17 verplichte Woo-informatiecategorieën
+- **Woo-compliance** — Sitemap-, robots.txt- en audittrail-ondersteuning voor de verplichtingen uit de Wet open overheid
+- **Bewaartermijnen** — Dagelijkse achtergrondcontrole van bewaartermijnen van publicaties, met een review-queue-widget op het dashboard
+- **Contentbeheer** — Woordenlijst, thema's, pagina's en menu's voor het inrichten van de publieke catalogussite
+- **Organisatieprofielen** — Uitgevende organisaties met overheidsidentifiers (OIN/TOOI/RSIN/PKI)
+- **AI Chat Companion-integratie** — MCP-tools ontsluiten catalogus-zoeken en publicatie-opzoeking voor ondersteunde LLM-assistenten
+- 🆓 Vrij en open source onder de EUPL-licentie
+- ⚙️ Installeert en activeert automatisch [OpenRegister](https://apps.nextcloud.com/apps/openregister) (vereiste afhankelijkheid)
+
+**System Cron is momenteel vereist om deze app te laten werken**
+
+De vereisten vind je [hier](https://opencatalogi.conduction.nl/docs/Installation/)
+
+Meld een [bug](https://github.com/OpenCatalogi/.github/issues/new/choose)
+
+Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choose)
+
+**Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
+    ]]></description>
+	<version>0.7.46</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
