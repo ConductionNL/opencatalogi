@@ -1176,6 +1176,17 @@
             "description": "Whether to hide this menu before user login",
             "facetable": false,
             "title": "Hide Before Login"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Pick an icon (Material Design) or paste custom SVG.",
+            "widget": "icon",
+            "iconSources": [
+              "mdi"
+            ],
+            "allowCustomSvg": true,
+            "facetable": false,
+            "title": "Icon"
           }
         },
         "hardValidation": true,
