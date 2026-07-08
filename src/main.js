@@ -5,7 +5,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
+import { generateUrl, generateFilePath } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
@@ -45,6 +45,13 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 library.add(fas, fab, far)
 Vue.component('FontAwesomeIcon', FontAwesomeIcon)
+
+// Point webpack's runtime public path at the app's real asset URL so
+// dynamically-imported chunks (e.g. the lazily-loaded @mdi/js icon pack used by
+// CnIconPicker) resolve correctly whether the app is installed under /apps or
+// /custom_apps. Without this, dynamic import() chunks 404 (served as text/html).
+// eslint-disable-next-line camelcase, no-undef
+__webpack_public_path__ = generateFilePath('opencatalogi', '', 'js/')
 
 // Register detail-page widget keys into the shared dashboard widget catalog
 // so CnDetailPage's config-grid body (which resolves `config.widgets[].type`

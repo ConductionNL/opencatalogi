@@ -4,7 +4,7 @@
 		:title="t('opencatalogi', 'Menus')"
 		:description="t('opencatalogi', 'Manage your navigation menus and menu items')"
 		:show-title="true"
-		:schema="schema"
+		:schema="menuSchema"
 		:objects="currentObjects"
 		:columns="tableColumns"
 		:pagination="currentPagination"
@@ -94,6 +94,7 @@ import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { buildMenuItemIconCatalogues } from '../../modals/menuItem/menuItemIconCatalogues.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -130,6 +131,29 @@ export default {
 		}
 	},
 	computed: {
+		// Augment the OpenRegister menu schema with an `icon` property rendered
+		// by the shared CnIconPicker (via CnFormDialog's schema-driven
+		// `widget: 'icon'`). Sources: MDI (default), plus FontAwesome and an
+		// OpenGemeenten sample supplied as consumer catalogues; custom SVG enabled.
+		menuSchema() {
+			const base = this.schema || {}
+			return {
+				...base,
+				properties: {
+					...(base.properties || {}),
+					icon: {
+						type: 'string',
+						title: t('opencatalogi', 'Icon'),
+						description: t('opencatalogi', 'Pick an icon (Material / FontAwesome / OpenGemeenten) or paste custom SVG.'),
+						widget: 'icon',
+						iconSources: ['mdi', 'fontawesome', 'opengemeenten'],
+						catalogues: buildMenuItemIconCatalogues(),
+						allowCustomSvg: true,
+						order: 5,
+					},
+				},
+			}
+		},
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
