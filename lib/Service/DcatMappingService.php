@@ -57,6 +57,17 @@ class DcatMappingService
     ];
 
     /**
+     * Constructor.
+     *
+     * @param DcatVocabularyService $vocabulary The HVD-category / data-theme resolver.
+     */
+    public function __construct(
+        private readonly DcatVocabularyService $vocabulary,
+    ) {
+
+    }//end __construct()
+
+    /**
      * Build the DCAT-AP-NL JSON-LD `@context` shared by every emitted document.
      *
      * @return array<string, string> The JSON-LD context prefixes.
@@ -67,7 +78,9 @@ class DcatMappingService
     {
         return [
             'dcat'    => 'http://www.w3.org/ns/dcat#',
+            'dcatap'  => 'http://data.europa.eu/r5r/',
             'dct'     => 'http://purl.org/dc/terms/',
+            'dqv'     => 'http://www.w3.org/ns/dqv#',
             'foaf'    => 'http://xmlns.com/foaf/0.1/',
             'vcard'   => 'http://www.w3.org/2006/vcard/ns#',
             'hydra'   => 'http://www.w3.org/ns/hydra/core#',
@@ -75,6 +88,31 @@ class DcatMappingService
         ];
 
     }//end context()
+
+    /**
+     * Resolve the optional `x-dcat.hvd` block from a schema annotation.
+     *
+     * @param array<string, mixed>|null $schema The OpenRegister schema array.
+     *
+     * @return array{categoryProperty?: string, legislation?: string}|null The HVD config, or null.
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    public function resolveHvd(?array $schema): ?array
+    {
+        $annotation = ($schema['x-dcat'] ?? null);
+        if (is_array($annotation) === false) {
+            return null;
+        }
+
+        $hvd = ($annotation['hvd'] ?? null);
+        if (is_array($hvd) === false || $hvd === []) {
+            return null;
+        }
+
+        return $hvd;
+
+    }//end resolveHvd()
 
     /**
      * Resolve the effective DCAT mapping for a schema.
@@ -120,11 +158,14 @@ class DcatMappingService
      * file attachments. IRIs are taken verbatim from the supplied canonical
      * URLs so harvesters dedupe on a stable identifier across runs.
      *
-     * @param array<string, mixed>  $publication The publication object (jsonSerialize shape).
-     * @param array<string, string> $mapping     The resolved DCAT property map.
-     * @param array<int, array>     $files       Published file attachments (formatFiles shape).
-     * @param string                $datasetIri  The canonical public dataset IRI (PUB-002 URL).
-     * @param array<string, mixed>  $defaults    Catalog-level publisher/license/contactPoint defaults.
+     * @param array<string, mixed>             $publication       The publication object (jsonSerialize shape).
+     * @param array<string, string>            $mapping           The resolved DCAT property map.
+     * @param array<int, array>                $files             Published file attachments (formatFiles shape).
+     * @param string                           $datasetIri        The canonical public dataset IRI (PUB-002 URL).
+     * @param array<string, mixed>             $defaults          Catalog-level publisher/license/contactPoint defaults.
+     * @param array<string, mixed>|null        $hvd               The schema `x-dcat.hvd` block, or null (DCAT-NPF-002).
+     * @param string|null                      $catalogHvdDefault The catalog default HVD category, or null.
+     * @param array<int, array<string, mixed>> $violations        Controlled-theme violations collected here (by reference).
      *
      * @return array<string, mixed> The `dcat:Dataset` node.
      *
@@ -141,7 +182,10 @@ class DcatMappingService
         array $mapping,
         array $files,
         string $datasetIri,
-        array $defaults
+        array $defaults,
+        ?array $hvd=null,
+        ?string $catalogHvdDefault=null,
+        array &$violations=[]
     ): array {
         $dataset = [
             '@id'   => $datasetIri,
@@ -174,17 +218,36 @@ class DcatMappingService
                 continue;
             }
 
-            // Theme: emit a TOOI/overheid-thema URI when one is supplied on the object.
+            // Theme: MUST bind to a controlled authority URI or be omitted — never a
+            // free-text literal (DCAT-NPF-003). Prefer an authority URI already on the
+            // object, else resolve the source value through the MDR data-theme list.
             if ($dcatProperty === 'dcat:theme') {
-                $themeUri = ($publication['tooiThemaUri'] ?? $publication['themeUri'] ?? null);
-                if (is_string($themeUri) === true && $themeUri !== '') {
+                $themeUri = $this->resolveThemeUri($publication, $value);
+                if ($themeUri !== null) {
                     $dataset['dcat:theme'] = ['@id' => $themeUri];
-                    continue;
+                } else {
+                    $violations[] = [
+                        'iri'    => $datasetIri,
+                        'axis'   => 'dcat:theme',
+                        'reason' => 'theme does not resolve to a controlled data-theme authority URI',
+                    ];
                 }
+
+                continue;
             }
 
             $dataset[$dcatProperty] = $value;
         }//end foreach
+
+        // HVD classification (DCAT-NPF-002): opt-in, declarative. Resolve the HVD
+        // category from the object property named by the schema's x-dcat.hvd block,
+        // or the catalog default. Emit both HVD triples only when it resolves.
+        $hvdCategory = $this->resolveHvdCategory(publication: $publication, hvd: $hvd, catalogHvdDefault: $catalogHvdDefault);
+        if ($hvdCategory !== null) {
+            $dataset['dcatap:hvdCategory'] = ['@id' => $hvdCategory['uri']];
+            $legislation = ($hvd['legislation'] ?? DcatVocabularyService::HVD_LEGISLATION);
+            $dataset['dcatap:applicableLegislation'] = ['@id' => $legislation];
+        }
 
         // Mandatory: dct:modified (from @self.updated, falling back to the
         // object's own publicatiedatum — the removed @self.published is gone).
@@ -220,6 +283,72 @@ class DcatMappingService
         return $dataset;
 
     }//end mapDataset()
+
+    /**
+     * Resolve a controlled `dcat:theme` authority URI for a publication.
+     *
+     * Accepts an authority URI already carried on the object (`tooiThemaUri` /
+     * `themeUri`) verbatim, otherwise resolves the mapped source value through the
+     * EU MDR data-theme value list. Returns null when nothing resolves.
+     *
+     * @param array<string, mixed> $publication The publication object.
+     * @param mixed                $sourceValue The mapped source theme value.
+     *
+     * @return string|null The controlled authority URI, or null.
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    private function resolveThemeUri(array $publication, mixed $sourceValue): ?string
+    {
+        $onObject = ($publication['tooiThemaUri'] ?? $publication['themeUri'] ?? null);
+        if (is_string($onObject) === true
+            && (str_starts_with($onObject, 'http://') === true || str_starts_with($onObject, 'https://') === true)
+        ) {
+            return $onObject;
+        }
+
+        $candidate = null;
+        if (is_scalar($sourceValue) === true) {
+            $candidate = (string) $sourceValue;
+        }
+
+        return $this->vocabulary->resolveDataTheme($candidate);
+
+    }//end resolveThemeUri()
+
+    /**
+     * Resolve the HVD category for a publication from its schema `x-dcat.hvd` block
+     * or the catalog default.
+     *
+     * @param array<string, mixed>                  $publication       The publication object.
+     * @param array{categoryProperty?: string}|null $hvd               The schema HVD config.
+     * @param string|null                           $catalogHvdDefault The catalog default HVD category.
+     *
+     * @return array{uri: string, label: string}|null The resolved category, or null.
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    private function resolveHvdCategory(array $publication, ?array $hvd, ?string $catalogHvdDefault): ?array
+    {
+        $categoryValue = null;
+        if (is_array($hvd) === true && isset($hvd['categoryProperty']) === true) {
+            $extracted = $this->extractValue($publication, (string) $hvd['categoryProperty']);
+            if (is_scalar($extracted) === true) {
+                $categoryValue = (string) $extracted;
+            }
+        }
+
+        if (($categoryValue === null || $categoryValue === '') && $catalogHvdDefault !== null && $catalogHvdDefault !== '') {
+            $categoryValue = $catalogHvdDefault;
+        }
+
+        if ($categoryValue === null || $categoryValue === '') {
+            return null;
+        }
+
+        return $this->vocabulary->resolveHvdCategory($categoryValue);
+
+    }//end resolveHvdCategory()
 
     /**
      * Map a single published file attachment to a `dcat:Distribution`.

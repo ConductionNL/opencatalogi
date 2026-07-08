@@ -36,7 +36,7 @@ class DcatMappingServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->service = new DcatMappingService();
+        $this->service = new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService());
     }
 
     public function testResolveMappingFallsBackToDefaultWhenUnannotated(): void
@@ -126,6 +126,105 @@ class DcatMappingServiceTest extends TestCase
 
         $this->assertSame(['@id' => 'https://identifier.overheid.nl/tooi/def/thes/c_123'], $dataset['dcat:theme']);
     }
+
+    public function testUnmappedThemeIsOmittedAndReported(): void
+    {
+        $publication = [
+            'id'       => 'uuid-t',
+            'category' => 'some free text theme',
+            '@self'    => ['uuid' => 'uuid-t'],
+        ];
+
+        $violations = [];
+        $dataset    = $this->service->mapDataset(
+            publication: $publication,
+            mapping: ['dcat:theme' => 'category'],
+            files: [],
+            datasetIri: 'https://host/api/cat/uuid-t',
+            defaults: [],
+            hvd: null,
+            catalogHvdDefault: null,
+            violations: $violations
+        );
+
+        // No literal dcat:theme leaked.
+        $this->assertArrayNotHasKey('dcat:theme', $dataset);
+        $this->assertCount(1, $violations);
+        $this->assertSame('dcat:theme', $violations[0]['axis']);
+
+    }//end testUnmappedThemeIsOmittedAndReported()
+
+
+    public function testMappedThemeBecomesAuthorityUri(): void
+    {
+        $publication = [
+            'id'       => 'uuid-tt',
+            'category' => 'transport',
+            '@self'    => ['uuid' => 'uuid-tt'],
+        ];
+
+        $dataset = $this->service->mapDataset(
+            publication: $publication,
+            mapping: ['dcat:theme' => 'category'],
+            files: [],
+            datasetIri: 'https://host/api/cat/uuid-tt',
+            defaults: []
+        );
+
+        $this->assertSame(
+            ['@id' => 'http://publications.europa.eu/resource/authority/data-theme/TRAN'],
+            $dataset['dcat:theme']
+        );
+
+    }//end testMappedThemeBecomesAuthorityUri()
+
+
+    public function testHvdTriplesEmittedWhenCategoryResolves(): void
+    {
+        $publication = [
+            'id'          => 'uuid-h',
+            'hvdCategory' => 'Mobility',
+            '@self'       => ['uuid' => 'uuid-h'],
+        ];
+
+        $dataset = $this->service->mapDataset(
+            publication: $publication,
+            mapping: DcatMappingService::DEFAULT_MAPPING,
+            files: [],
+            datasetIri: 'https://host/api/cat/uuid-h',
+            defaults: [],
+            hvd: ['categoryProperty' => 'hvdCategory']
+        );
+
+        $this->assertSame(['@id' => 'http://data.europa.eu/bna/c_b79e35eb'], $dataset['dcatap:hvdCategory']);
+        $this->assertSame(
+            ['@id' => 'http://data.europa.eu/eli/reg_impl/2023/138/oj'],
+            $dataset['dcatap:applicableLegislation']
+        );
+
+    }//end testHvdTriplesEmittedWhenCategoryResolves()
+
+
+    public function testNoHvdTriplesWhenNoCategory(): void
+    {
+        $publication = [
+            'id'    => 'uuid-nh',
+            '@self' => ['uuid' => 'uuid-nh'],
+        ];
+
+        $dataset = $this->service->mapDataset(
+            publication: $publication,
+            mapping: DcatMappingService::DEFAULT_MAPPING,
+            files: [],
+            datasetIri: 'https://host/api/cat/uuid-nh',
+            defaults: []
+        );
+
+        $this->assertArrayNotHasKey('dcatap:hvdCategory', $dataset);
+        $this->assertArrayNotHasKey('dcatap:applicableLegislation', $dataset);
+
+    }//end testNoHvdTriplesWhenNoCategory()
+
 
     public function testDistributionsMappedFromAttachments(): void
     {

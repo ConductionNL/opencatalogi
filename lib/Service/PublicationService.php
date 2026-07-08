@@ -171,17 +171,17 @@ class PublicationService
     /**
      * Set register/schema context on the ObjectService for a given object UUID.
      *
-     * Searches magic tables scoped to the catalogs configured on this instance to find
-     * which register/schema an object belongs to, then sets that context on the
-     * ObjectService so subsequent operations can find the object.
+     * Locates which register/schema an object belongs to — scoped to the catalogs
+     * configured on this instance — then sets that context on the ObjectService so
+     * subsequent operations can find the object.
      *
-     * The previous implementation issued a platform-wide SELECT against
-     * information_schema.tables (no scope restriction) and was reachable from
-     * anonymous @PublicPage endpoints — a DoS vector and a cross-catalog
-     * information-disclosure risk (C-2 / wave-7). The new implementation derives the
-     * allowed (register × schema) pairs from the catalogs configured on this instance
-     * and delegates to PublicationQueryService::findObjectLocation(), which is already
-     * scoped and cached.
+     * The previous implementation issued a platform-wide DBMS-catalog probe (no scope
+     * restriction) and was reachable from anonymous @PublicPage endpoints — a DoS
+     * vector and a cross-catalog information-disclosure risk (C-2 / wave-7). The
+     * current implementation derives the allowed (register × schema) pairs from the
+     * catalogs configured on this instance and delegates to
+     * PublicationQueryService::findObjectLocation(), which routes the lookup through
+     * OpenRegister's ObjectService within that scope.
      *
      * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
      * @param string                                  $objectId      The UUID of the object to locate
@@ -203,8 +203,9 @@ class PublicationService
                 return;
             }
 
-            // Delegate to the scoped, cached helper that never touches information_schema
-            // without a constrained (register × schema) set.
+            // Delegate to the scoped helper that routes the lookup through OpenRegister's
+            // ObjectService, never a raw DBMS-catalog probe, and only within a
+            // constrained (register × schema) set.
             $location = $this->getQueryService()->findObjectLocation(
                 uuid: $objectId,
                 allowedRegisters: $allowedRegisters,

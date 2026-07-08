@@ -20,6 +20,7 @@
     "test:coverage-ratchet": "npm run test:coverage && bash tests/coverage-ratchet.sh vitest coverage-vitest/coverage-summary.json",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
     "check:l10n": "node scripts/check-l10n.js",
+    "check:manifest": "node tests/validate-manifest.js",
     "clean:l10n": "node scripts/clean-l10n.js --apply",
     "find:unwrapped": "node scripts/find-unwrapped.js",
     "test:e2e": "playwright test",

@@ -22,8 +22,11 @@ return [
 		// Catalogi sitemap
 		['name' => 'sitemap#index', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}', 'verb' => 'GET'],
 		['name' => 'sitemap#sitemap', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/publications', 'verb' => 'GET'],
+		// DIWOO output validation (admin-only — auditable via AuthorizedAdminSetting)
+		['name' => 'sitemap#diwooReport', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/validate', 'verb' => 'GET'],
 		// DCAT-AP-NL feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'dcat#validate', 'url' => '/api/catalogs/{catalogSlug}/dcat/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'dcat#donlReport', 'url' => '/api/catalogs/{catalogSlug}/dcat/donl-validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
@@ -97,6 +100,9 @@ return [
 		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
 		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
 		['name' => 'dcat#catalog', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// schema.org DataCatalog endpoint (specific route - must be before wildcard catalog routes)
+		['name' => 'schemaOrg#catalog', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'schemaOrg#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Glossary (specific route - must be before wildcard catalog routes)
 		['name' => 'glossary#index', 'url' => '/api/glossary', 'verb' => 'GET'],
 		['name' => 'glossary#show', 'url' => '/api/glossary/{id}', 'verb' => 'GET'],
@@ -131,6 +137,7 @@ return [
 		// Usage analytics (authenticated; specific routes - MUST be before wildcard catalog routes).
 		['name' => 'stats#publication', 'url' => '/api/publications/{id}/stats', 'verb' => 'GET'],
 		['name' => 'stats#catalog', 'url' => '/api/catalogs/{slug}/stats', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
+		['name' => 'stats#quality', 'url' => '/api/catalogs/{slug}/quality', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[a-z0-9-]+']],
 		// Health check endpoint — served by the AppHost engine from the
 		// `observability.health` block (ADR-040 / ADR-006). The engine adds

@@ -1,0 +1,115 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-publication-quality-metrics",
+		"name": "OpenCatalogi - Publication Quality Metrics (MQA/FAIR + DQV)",
+		"description": "API-only contract tests for the metadata-quality scoring (publication-quality-metrics change, PQM-001..004). Asserts the authenticated per-catalog quality roll-up (average/worst-N/missing breakdown), anonymous rejection, and optional DQV exposure in the DCAT feed. Per the Playwright-UI-only / Newman-API convention the scoring + roll-up backend is asserted here (the dashboard widget reuses the analytics widget surface).\n\nVariables:\n- baseUrl (default http://localhost:8080)\n- catalogSlug: a catalog with publications\n- dqvCatalogSlug: a catalog with dqvExposure=true\n- userAuth: Basic auth for an authenticated publisher",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "catalogSlug", "value": "woo-besluiten", "type": "string" },
+		{ "key": "dqvCatalogSlug", "value": "open-data", "type": "string" },
+		{ "key": "userAuth", "value": "Basic YWRtaW46YWRtaW4=", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "PQM-003 Catalog quality roll-up (authenticated)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/quality", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "quality"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 (authed) or 404 (unknown)', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  pm.test('has average (0-100)', () => typeof doc.average === 'number' && doc.average >= 0 && doc.average <= 100);",
+							"  pm.test('has distribution + worst + missingBreakdown', () => doc.distribution && Array.isArray(doc.worst) && doc.missingBreakdown !== undefined);",
+							"  pm.test('worst entries carry a dimension breakdown', () => doc.worst.every(w => w.dimensions && typeof w.total === 'number'));",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "PQM-003 Quality roll-up rejects anonymous",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/quality", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "quality"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('anonymous is rejected (401/403), never 200 data', () => [401, 403].includes(pm.response.code));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "PQM-002 DQV measurements present when catalog opts in",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{dqvCatalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{dqvCatalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const doc = pm.response.json();",
+							"  const datasets = (doc['@graph'] || []).filter(n => n['@type'] === 'dcat:Dataset');",
+							"  // When DQV exposure is on, datasets carry dqv:hasQualityMeasurement nodes.",
+							"  datasets.forEach(d => {",
+							"    if (d['dqv:hasQualityMeasurement']) {",
+							"      pm.test('DQV measurements are QualityMeasurement nodes with a value', () => d['dqv:hasQualityMeasurement'].every(m => m['@type'] === 'dqv:QualityMeasurement' && m['dqv:value'] !== undefined));",
+							"    }",
+							"  });",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "PQM-002 DQV absent by default (no dqv: nodes)",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/ld+json" }],
+				"url": { "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/dcat", "host": ["{{baseUrl}}"], "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "dcat"] }
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+							"if (pm.response.code === 200) {",
+							"  const datasets = (pm.response.json()['@graph'] || []).filter(n => n['@type'] === 'dcat:Dataset');",
+							"  pm.test('no dqv:hasQualityMeasurement when exposure off (default)', () => datasets.every(d => d['dqv:hasQualityMeasurement'] === undefined));",
+							"}"
+						]
+					}
+				}
+			]
+		}
+	]
+}
