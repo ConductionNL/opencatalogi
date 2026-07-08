@@ -243,29 +243,32 @@
 			"route": "/publications/:catalogSlug/:id",
 			"type": "detail",
 			"title": "Publication",
-			"_note": "DCAT-AP publication record — the app's core artifact and the reason OpenCatalogi exists. Publication/document archetype: someone lands here to (1) read/edit the WOO metadata, (2) manage the distributables, (3) check publish/retention state. The body leads with the metadata block (title, summary, description, organization, themes, publicatiedatum/depublicatiedatum, retention fields) as the 8-wide primary Data card, with a compact Related panel (4-wide) that resolves the OUTBOUND refs the schema actually declares — the `organization` publisher and the `themes[]` — beside it. Below sits the full-width Attachments Files leaf: a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the rest of the DCAT distribution set. schema-verified absences: there is NO publicationType schema in this register (the DCAT publication-type concept is not modelled as a linkable object here — only catalog/listing/organization/publication/theme/page/menu/glossary/usageCounter exist), so no publication-type Related row; and the publication schema declares NO linkedTypes, so NO email/calendar/talk/contacts leaves — a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — no geo field. lifecycleActions drives the schema's real status transition (published → archived, the RET-006 retention transition). summaryAggregates roll up this publication's usageCounter rows (views/downloads) — usageCounter.publication is the FK. The audit trail (publications are FOI/WOO records where change history matters legally) now lives in the sidebar as the CnAuditTrailTab, per the audit-only sidebar rule — the previous audit-trail BODY widget was removed. Metadata is on-demand via the Data widget's Actions menu (showMetadata) rather than a permanent card.",
+			"_note": "DCAT-AP publication record — the app's core artifact and the reason OpenCatalogi exists. Publication/document archetype: someone lands here to (1) read/edit the WOO metadata, (2) manage the distributables, (3) check publish/retention state. ADR-062 rev-3 rework: the primary Data card was SPLIT into two field-scoped Data widgets so neither clips — 'Publication' (identity/publishing: title, summary, description, publicatiedatum, depublicatiedatum, status) and 'Retention' (the RET-003/006 statutory-retention group: retentionCategory, retentionTermMonths, retentionAction, retentionExpiresAt, retentionNote, retentionLastEvaluatedAt) — both 8-wide, 2-column. The `organization` and `themes[]` fields are excluded from the Data cards because the compact Related panel (4-wide) resolves them; now that publication.organization carries $ref:organization and publication.themes[] items carry $ref:theme, the Related panel renders publisher + theme NAMES instead of raw uuids. The former header `summaryAggregates` KPI chips became an in-grid `stats-block` (top-right, 4-wide): Views + Downloads summed from this publication's usageCounter rows (usageCounter.publication is the FK, now $ref:publication). Below sits the full-width Attachments Files leaf: a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the rest of the DCAT distribution set. schema-verified absences: there is NO publicationType schema in this register (only catalog/listing/organization/publication/theme/page/menu/glossary/usageCounter exist), so no publication-type Related row; and the publication schema declares NO linkedTypes, so NO email/calendar/talk/contacts leaves — a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — no geo field. lifecycleActions drives the schema's real status transition (published → archived, the RET-006 retention transition — the transitions block exists, so this stays a real lifecycle, not a frozen readOnly field). The audit trail (publications are FOI/WOO records where change history matters legally) lives in the sidebar as widgets:[{type:'audit'}], per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu (showMetadata) rather than a permanent card.",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "pub-data", "type": "data", "title": "Publication", "content": { "columns": 2 } },
-					{ "id": "pub-related", "type": "related", "title": "Organization & themes" },
-					{ "id": "pub-files", "type": "integration", "integrationId": "files", "title": "Attachments" },
-					{ "id": "pub-photos", "type": "integration", "integrationId": "photos", "title": "Images" },
-					{ "id": "pub-links", "type": "integration", "integrationId": "bookmarks", "title": "Links" }
+					{ "id": "pub-data", "type": "data", "title": "Publication", "icon": "FileDocument", "content": { "columns": 2, "include": ["title", "summary", "description", "publicatiedatum", "depublicatiedatum", "status"] } },
+					{ "id": "pub-stats", "type": "stats-block", "title": "Usage", "icon": "ChartBar", "entries": [
+						{ "title": "Views", "register": "publication", "schema": "usageCounter", "metric": "sum", "field": "count", "filter": { "publication": "@objectId", "kind": "view" } },
+						{ "title": "Downloads", "register": "publication", "schema": "usageCounter", "metric": "sum", "field": "count", "filter": { "publication": "@objectId", "kind": "download" } }
+					] },
+					{ "id": "pub-retention", "type": "data", "title": "Retention", "icon": "History", "content": { "columns": 2, "include": ["retentionCategory", "retentionTermMonths", "retentionAction", "retentionExpiresAt", "retentionNote", "retentionLastEvaluatedAt"] } },
+					{ "id": "pub-related", "type": "related", "title": "Organization & themes", "icon": "OfficeBuilding" },
+					{ "id": "pub-files", "type": "integration", "integrationId": "files", "title": "Attachments", "icon": "FolderOutline" },
+					{ "id": "pub-photos", "type": "integration", "integrationId": "photos", "title": "Images", "icon": "Package" },
+					{ "id": "pub-links", "type": "integration", "integrationId": "bookmarks", "title": "Links", "icon": "LinkVariant" }
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "pub-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5 },
-					{ "id": "2", "widgetId": "pub-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
-					{ "id": "3", "widgetId": "pub-files", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 },
-					{ "id": "4", "widgetId": "pub-photos", "gridX": 0, "gridY": 10, "gridWidth": 6, "gridHeight": 4 },
-					{ "id": "5", "widgetId": "pub-links", "gridX": 6, "gridY": 10, "gridWidth": 6, "gridHeight": 4 }
-				],
-				"summaryAggregates": [
-					{ "label": "Views", "register": "publication", "schema": "usageCounter", "metric": "sum", "field": "count", "filter": { "publication": "@objectId", "kind": "view" } },
-					{ "label": "Downloads", "register": "publication", "schema": "usageCounter", "metric": "sum", "field": "count", "filter": { "publication": "@objectId", "kind": "download" } }
+					{ "id": "1", "widgetId": "pub-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
+					{ "id": "2", "widgetId": "pub-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 2 },
+					{ "id": "3", "widgetId": "pub-retention", "gridX": 0, "gridY": 4, "gridWidth": 8, "gridHeight": 4 },
+					{ "id": "4", "widgetId": "pub-related", "gridX": 8, "gridY": 2, "gridWidth": 4, "gridHeight": 6 },
+					{ "id": "5", "widgetId": "pub-files", "gridX": 0, "gridY": 8, "gridWidth": 12, "gridHeight": 5 },
+					{ "id": "6", "widgetId": "pub-photos", "gridX": 0, "gridY": 13, "gridWidth": 6, "gridHeight": 4 },
+					{ "id": "7", "widgetId": "pub-links", "gridX": 6, "gridY": 13, "gridWidth": 6, "gridHeight": 4 }
 				],
 				"lifecycleActions": { "field": "status" },
 				"sidebar": {
@@ -313,27 +316,28 @@
 			"route": "/organizations/:id",
 			"type": "detail",
 			"title": "Organization",
-			"_note": "Publisher-organization archetype — the legal entity behind catalogs/publications (name, summary, description, the government identifiers OIN/TOOI/RSIN/PKI, and a single logo `image`). A user lands here to answer 'who is this publisher and what do they publish?'. The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly) beside the Images leaf (4-wide) carrying the logo/branding (the schema's `image` is a single logo, so Images is the right surface, not Files). The 'what do they publish' half is answered with two INBOUND object-lists on the row below: the publications whose `organization` FK points at this record, and the catalogs whose `organization` FK points at it. NOTE: a `related` (outbound) widget was intentionally REMOVED — the organization schema has ZERO outbound refs (every field is a scalar), so a related panel rendered empty; the meaningful relations are inbound, which object-list expresses correctly (the petstore parent→children pattern). KPI chips count both child collections. schema-verified absences: NO contacts/comms leaves — the organization schema declares NO linkedTypes and no contactpersoon relation (HARD RULE 1); no status lifecycle field, so no lifecycleActions. The change-history audit trail (federation syncs matter) moved from a BODY widget to the sidebar CnAuditTrailTab per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu.",
+			"_note": "Publisher-organization archetype — the legal entity behind catalogs/publications (name, summary, description, the government identifiers OIN/TOOI/RSIN/PKI, and a single logo `image`). A user lands here to answer 'who is this publisher and what do they publish?'. The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly, `image` excluded because the Logo leaf renders it). The right column stacks the in-grid `stats-block` (top: Publications + Catalogs counts, formerly header summaryAggregates) over the Images leaf (4-wide) carrying the logo/branding (the schema's `image` is a single logo, so Images is the right surface, not Files). The 'what do they publish' half is answered with two INBOUND object-lists on the row below: the publications whose `organization` FK points at this record, and the catalogs whose `organization` FK points at it — both FKs now carry $ref:organization so their name display + org picker resolve. A `related` (outbound) widget stays intentionally ABSENT — the organization schema has ZERO outbound refs (every field is a scalar), so a related panel would render empty; the meaningful relations are inbound, which object-list expresses (the petstore parent→children pattern). org-catalogs gets viewAllRoute:'Catalogs' (that index takes no route param, so the deep-link resolves) + rowRoute:'CatalogDetail'; org-publications gets NO viewAllRoute/rowRoute — the Publications index/detail routes both require a :catalogSlug this page can't supply, so a broken deep-link is deliberately omitted. Both lists keep create ON (default): an organization OWNS its publications/catalogs, so creating from the list pre-links the org FK. schema-verified absences: NO contacts/comms leaves — the organization schema declares NO linkedTypes and no contactpersoon relation (HARD RULE 1); no status lifecycle field, so no lifecycleActions. The change-history audit trail (federation syncs matter) lives in the sidebar widgets:[{type:'audit'}] per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "organization",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "org-data", "type": "data", "title": "Organization", "content": { "columns": 2 } },
-					{ "id": "org-image", "type": "integration", "integrationId": "photos", "title": "Logo & images" },
-					{ "id": "org-publications", "type": "object-list", "title": "Publications", "content": { "register": "publication", "schema": "publication", "filter": { "organization": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25 } },
-					{ "id": "org-catalogs", "type": "object-list", "title": "Catalogs", "content": { "register": "@resolve:catalog_register", "schema": "@resolve:catalog_schema", "filter": { "organization": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "rowRoute": "CatalogDetail" } }
+					{ "id": "org-data", "type": "data", "title": "Organization", "icon": "OfficeBuilding", "content": { "columns": 2, "exclude": ["image"] } },
+					{ "id": "org-stats", "type": "stats-block", "title": "Publishing", "icon": "ChartBar", "entries": [
+						{ "title": "Publications", "register": "publication", "schema": "publication", "metric": "count", "filter": { "organization": "@objectId" } },
+						{ "title": "Catalogs", "register": "@resolve:catalog_register", "schema": "@resolve:catalog_schema", "metric": "count", "filter": { "organization": "@objectId" } }
+					] },
+					{ "id": "org-image", "type": "integration", "integrationId": "photos", "title": "Logo & images", "icon": "Package" },
+					{ "id": "org-publications", "type": "object-list", "title": "Publications", "icon": "FileDocument", "content": { "register": "publication", "schema": "publication", "filter": { "organization": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "emptyText": "This organization has no publications yet." } },
+					{ "id": "org-catalogs", "type": "object-list", "title": "Catalogs", "icon": "FolderOutline", "content": { "register": "@resolve:catalog_register", "schema": "@resolve:catalog_schema", "filter": { "organization": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "rowRoute": "CatalogDetail", "viewAllRoute": "Catalogs", "emptyText": "This organization has no catalogs yet." } }
 				],
 				"layout": [
 					{ "id": "1", "widgetId": "org-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
-					{ "id": "2", "widgetId": "org-image", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 4 },
-					{ "id": "3", "widgetId": "org-publications", "gridX": 0, "gridY": 4, "gridWidth": 6, "gridHeight": 5 },
-					{ "id": "4", "widgetId": "org-catalogs", "gridX": 6, "gridY": 4, "gridWidth": 6, "gridHeight": 5 }
-				],
-				"summaryAggregates": [
-					{ "label": "Publications", "register": "publication", "schema": "publication", "metric": "count", "filter": { "organization": "@objectId" } },
-					{ "label": "Catalogs", "register": "@resolve:catalog_register", "schema": "@resolve:catalog_schema", "metric": "count", "filter": { "organization": "@objectId" } }
+					{ "id": "2", "widgetId": "org-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 2 },
+					{ "id": "3", "widgetId": "org-image", "gridX": 8, "gridY": 2, "gridWidth": 4, "gridHeight": 2 },
+					{ "id": "4", "widgetId": "org-publications", "gridX": 0, "gridY": 4, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "5", "widgetId": "org-catalogs", "gridX": 6, "gridY": 4, "gridWidth": 6, "gridHeight": 5 }
 				],
 				"sidebar": {
 					"enabled": true,
@@ -372,24 +376,25 @@
 			"route": "/themes/:id",
 			"type": "detail",
 			"title": "Theme",
-			"_note": "Catalog-theme / presentation archetype — a visual grouping used to categorise and style publications (title, summary, description, image, content, link/url, icon). This is a configuration+content record, so the body pairs the editable fields (6-wide) with the live theme-preview custom widget (6-wide, app-registered via registerDashboardWidget) so an editor sees the rendered card/banner as they tune it — the reason theme-preview exists. Below, a full-width INBOUND object-list surfaces the publications tagged with this theme (publication.themes[] is a facetable array of theme refs, so the FK filter is {themes:@objectId}); a KPI chip counts them. A `related` (outbound) widget was REMOVED — the theme schema has no outbound refs, so it rendered empty; the meaningful relation (publications → theme) is inbound and object-list expresses it. Deliberately NO comms and NO Files: a theme communicates with nobody, declares no linkedTypes, and its `image`/`content` live in the record itself (HARD RULE 1/2). Audit history is the sidebar CnAuditTrailTab per the audit-only sidebar rule; Metadata is on-demand via the Data widget's Actions menu. Row navigation is intentionally omitted on the list — PublicationDetail's route needs a :catalogSlug this page can't supply, so rows display without a broken deep-link.",
+			"_note": "Catalog-theme / presentation archetype — a visual grouping used to categorise and style publications (title, summary, description, image, content, link/url, icon). This is a configuration+content record, so the body pairs the editable fields (6-wide, switched to 2-column so all ten fields fit the cell without an internal scrollbar — ADR-062 rule 1/3) with the live theme-preview custom widget (6-wide, app-registered via registerDashboardWidget) so an editor sees the rendered card/banner as they tune it — the reason theme-preview exists. The former header summaryAggregates KPI became an in-grid `stats-block` (top-right of the preview column: Publications-with-this-theme count). Below, a full-width INBOUND object-list surfaces the publications tagged with this theme (publication.themes[] is a facetable array whose items now carry $ref:theme, so the FK filter {themes:@objectId} resolves and rows show publication names); allowCreate is FALSE here — theme is a many-to-many TAG, not an owner, so creating a publication 'in' a theme (and orphaned from any catalog) is not a valid affordance. A `related` (outbound) widget stays ABSENT — the theme schema has no outbound refs, so it would render empty; the meaningful relation (publications → theme) is inbound and object-list expresses it. Deliberately NO comms and NO Files: a theme communicates with nobody, declares no linkedTypes, and its `image`/`content` live in the record itself (HARD RULE 1/2). Audit history is the sidebar widgets:[{type:'audit'}] per the audit-only sidebar rule; Metadata is on-demand via the Data widget's Actions menu. Row navigation is intentionally omitted on the list — PublicationDetail's route needs a :catalogSlug this page can't supply, so rows display without a broken deep-link.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "theme",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "theme-data", "type": "data", "title": "Theme", "content": { "columns": 1 } },
-					{ "id": "theme-preview", "type": "theme-preview", "title": "Preview" },
-					{ "id": "theme-publications", "type": "object-list", "title": "Publications with this theme", "content": { "register": "publication", "schema": "publication", "filter": { "themes": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25 } }
+					{ "id": "theme-data", "type": "data", "title": "Theme", "icon": "TagOutline", "content": { "columns": 2 } },
+					{ "id": "theme-stats", "type": "stats-block", "title": "Usage", "icon": "ChartBar", "entries": [
+						{ "title": "Publications", "register": "publication", "schema": "publication", "metric": "count", "filter": { "themes": "@objectId" } }
+					] },
+					{ "id": "theme-preview", "type": "theme-preview", "title": "Preview", "icon": "Web" },
+					{ "id": "theme-publications", "type": "object-list", "title": "Publications with this theme", "icon": "FileDocument", "content": { "register": "publication", "schema": "publication", "filter": { "themes": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "allowCreate": false, "emptyText": "No publications are tagged with this theme yet." } }
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "theme-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
-					{ "id": "2", "widgetId": "theme-preview", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
-					{ "id": "3", "widgetId": "theme-publications", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 }
-				],
-				"summaryAggregates": [
-					{ "label": "Publications", "register": "publication", "schema": "publication", "metric": "count", "filter": { "themes": "@objectId" } }
+					{ "id": "1", "widgetId": "theme-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 6 },
+					{ "id": "2", "widgetId": "theme-stats", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 2 },
+					{ "id": "3", "widgetId": "theme-preview", "gridX": 6, "gridY": 2, "gridWidth": 6, "gridHeight": 4 },
+					{ "id": "4", "widgetId": "theme-publications", "gridX": 0, "gridY": 6, "gridWidth": 12, "gridHeight": 5 }
 				],
 				"sidebar": {
 					"enabled": true,
@@ -435,8 +440,8 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "glossary-data", "type": "data", "title": "Glossary term", "content": { "columns": 1 } },
-					{ "id": "glossary-graph", "type": "relationship-graph", "title": "Related terms" }
+					{ "id": "glossary-data", "type": "data", "title": "Glossary term", "icon": "BookOpenVariant", "content": { "columns": 1 } },
+					{ "id": "glossary-graph", "type": "relationship-graph", "title": "Related terms", "icon": "Sitemap" }
 				],
 				"layout": [
 					{ "id": "1", "widgetId": "glossary-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
@@ -479,15 +484,15 @@
 			"route": "/pages/:id",
 			"type": "detail",
 			"title": "Page",
-			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
+			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet, with `contents` excluded because the tree-view owns it) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "page",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "page-data", "type": "data", "title": "Page", "content": { "columns": 1 } },
-					{ "id": "page-tree", "type": "tree-view", "title": "Content blocks", "content": { "field": "contents" } }
+					{ "id": "page-data", "type": "data", "title": "Page", "icon": "FileDocument", "content": { "columns": 1, "exclude": ["contents"] } },
+					{ "id": "page-tree", "type": "tree-view", "title": "Content blocks", "icon": "Sitemap", "content": { "field": "contents" } }
 				],
 				"layout": [
 					{ "id": "1", "widgetId": "page-data", "gridX": 0, "gridY": 0, "gridWidth": 5, "gridHeight": 5 },
@@ -530,15 +535,15 @@
 			"route": "/menus/:id",
 			"type": "detail",
 			"title": "Menu",
-			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose SUBSTANCE is its ordered, nestable sub-menu items. The user comes here to see and reorder those sub-menu items, so the body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet) with a wide tree-view (8-wide) that renders the ordered item hierarchy and lets an editor reorder it, since the tree IS the menu. IMPORTANT design constraint verified against the register: the sub-menu items live in `menu.items[]` as INLINE objects (each with order/name/link/description/icon/groups) — there is NO separate menu-item register schema and menu has NO self-FK, so the intuitively-desired FK-scoped `object-list` of child menu items ('items where parentMenu=@objectId') is NOT expressible. tree-view over the inline `items` field, sorted by each item's `order`, is the faithful representation of the ordered sub-menu items. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Audit history is the sidebar CnAuditTrailTab; Metadata is on-demand via the Data widget's Actions menu. WISH-LIST for nc-vue: an ordered-editor widget over an inline object-array (add/remove/reorder items) would be a better fit than the read-lean tree-view here.",
+			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose SUBSTANCE is its ordered, nestable sub-menu items. The user comes here to see and reorder those sub-menu items, so the body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet, with `items` excluded because the tree-view owns it) with a wide tree-view (8-wide) that renders the ordered item hierarchy and lets an editor reorder it, since the tree IS the menu. IMPORTANT design constraint verified against the register: the sub-menu items live in `menu.items[]` as INLINE objects (each with order/name/link/description/icon/groups) — there is NO separate menu-item register schema and menu has NO self-FK, so the intuitively-desired FK-scoped `object-list` of child menu items ('items where parentMenu=@objectId') is NOT expressible. tree-view over the inline `items` field, sorted by each item's `order`, is the faithful representation of the ordered sub-menu items. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Audit history is the sidebar CnAuditTrailTab; Metadata is on-demand via the Data widget's Actions menu. WISH-LIST for nc-vue: an ordered-editor widget over an inline object-array (add/remove/reorder items) would be a better fit than the read-lean tree-view here.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "menu",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "menu-data", "type": "data", "title": "Menu", "content": { "columns": 1 } },
-					{ "id": "menu-tree", "type": "tree-view", "title": "Menu items", "content": { "field": "items", "sort": { "field": "order", "dir": "asc" } } }
+					{ "id": "menu-data", "type": "data", "title": "Menu", "icon": "Cog", "content": { "columns": 1, "exclude": ["items"] } },
+					{ "id": "menu-tree", "type": "tree-view", "title": "Menu items", "icon": "Sitemap", "content": { "field": "items", "sort": { "field": "order", "dir": "asc" } } }
 				],
 				"layout": [
 					{ "id": "1", "widgetId": "menu-data", "gridX": 0, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },

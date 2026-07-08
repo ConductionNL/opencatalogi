@@ -130,13 +130,17 @@
           "organization": {
             "type": "string",
             "description": "Reference to the organization that owns this publication",
+            "format": "uuid",
+            "$ref": "organization",
             "facetable": true,
             "title": "Organization"
           },
           "themes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "theme"
             },
             "description": "List of themes associated with this publication",
             "facetable": true,
@@ -394,6 +398,8 @@
           "organization": {
             "type": "string",
             "description": "Reference to the organization that owns this catalog",
+            "format": "uuid",
+            "$ref": "organization",
             "facetable": true,
             "title": "Organization"
           },
@@ -570,6 +576,8 @@
           "catalogusId": {
             "type": "string",
             "description": "ID of the catalog this listing belongs to",
+            "format": "uuid",
+            "$ref": "catalog",
             "facetable": true,
             "title": "Catalog ID"
           },
@@ -1255,6 +1263,8 @@
           "publication": {
             "type": "string",
             "description": "Reference (UUID) of the counted publication",
+            "format": "uuid",
+            "$ref": "publication",
             "maxLength": 255,
             "facetable": true,
             "title": "Publication"
