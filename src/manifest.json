@@ -5,16 +5,68 @@
 		"openregister"
 	],
 	"setup": {
-		"enabled": true,
+		"enabled": false,
 		"version": 2,
 		"completionConfigKey": "onboarding_completed_version",
 		"steps": [
-			{ "id": "welcome", "type": "info", "title": "Welcome to OpenCatalogi", "body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's create your first catalog and connect you to the federated network." },
-			{ "id": "config-check", "type": "run-action", "action": "reload-settings", "title": "Publishing prerequisites", "required": true, "body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install — this just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration." },
-			{ "id": "catalog-scope", "type": "choice", "title": "Default catalog scope", "required": true, "configKey": "default_catalog_scope", "body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create — you can still tighten or widen it later.", "options": [ { "value": "public", "label": "Public (anyone can discover and read)" }, { "value": "internal", "label": "Internal (signed-in users only)" }, { "value": "private", "label": "Private (explicitly granted groups only)" } ] },
-			{ "id": "create-catalog", "type": "run-action", "action": "create-first-catalog", "title": "Create your first catalog", "required": true, "body": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose — you can rename it and add publications afterwards." },
-			{ "id": "connect-federation", "type": "run-action", "action": "connect-federation", "title": "Connect to the federated network", "body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory — or skip this and it will sync automatically later." },
-			{ "id": "done", "type": "summary", "title": "All set", "healthCheck": true, "body": "OpenCatalogi is ready. Open Catalogs to manage what you publish, or the Directory to discover federated catalogs." }
+			{
+				"id": "welcome",
+				"type": "info",
+				"title": "Welcome to OpenCatalogi",
+				"body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's create your first catalog and connect you to the federated network."
+			},
+			{
+				"id": "config-check",
+				"type": "run-action",
+				"action": "reload-settings",
+				"title": "Publishing prerequisites",
+				"required": true,
+				"body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install — this just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration."
+			},
+			{
+				"id": "catalog-scope",
+				"type": "choice",
+				"title": "Default catalog scope",
+				"required": true,
+				"configKey": "default_catalog_scope",
+				"body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create — you can still tighten or widen it later.",
+				"options": [
+					{
+						"value": "public",
+						"label": "Public (anyone can discover and read)"
+					},
+					{
+						"value": "internal",
+						"label": "Internal (signed-in users only)"
+					},
+					{
+						"value": "private",
+						"label": "Private (explicitly granted groups only)"
+					}
+				]
+			},
+			{
+				"id": "create-catalog",
+				"type": "run-action",
+				"action": "create-first-catalog",
+				"title": "Create your first catalog",
+				"required": true,
+				"body": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose — you can rename it and add publications afterwards."
+			},
+			{
+				"id": "connect-federation",
+				"type": "run-action",
+				"action": "connect-federation",
+				"title": "Connect to the federated network",
+				"body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory — or skip this and it will sync automatically later."
+			},
+			{
+				"id": "done",
+				"type": "summary",
+				"title": "All set",
+				"healthCheck": true,
+				"body": "OpenCatalogi is ready. Open Catalogs to manage what you publish, or the Directory to discover federated catalogs."
+			}
 		]
 	},
 	"walkthrough": {
@@ -28,14 +80,135 @@
 				"trigger": "first-visit",
 				"minAppVersion": "2.4.0",
 				"steps": [
-					{ "id": "welcome", "placement": "center", "sinceVersion": "2.4.0", "title": "Welcome to OpenCatalogi", "body": "Let's walk the publishing journey together — from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.", "target": { "kind": "page", "ref": "Catalogs" }, "advanceOn": { "type": "manual" } },
-					{ "id": "go-catalogs", "sinceVersion": "2.4.0", "placement": "right", "body": "Everything you publish lives in a catalog. Open Catalogs from the menu.", "task": "Open Catalogs", "target": { "kind": "nav-item", "ref": "Catalogs" }, "advanceOn": { "type": "route-match", "route": "Catalogs" } },
-					{ "id": "create-catalog", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "Create your first catalog — it's the container your publications will live in.", "task": "Create your first catalog", "target": { "kind": "element", "ref": "index-add" }, "advanceOn": { "type": "object-created", "register": "publication", "schema": "catalog", "capture": { "catalogId": ":id" } } },
-					{ "id": "open-catalog", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "Open the catalog you just created to manage what it publishes — its publications open inside it.", "task": "Open your catalog and view its Publications", "target": { "kind": "page", "ref": "CatalogDetail" }, "advanceOn": { "type": "route-match", "route": "Publications" } },
-					{ "id": "add-publication", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "A publication is a single thing you make open — a document, dataset or record. Add your first one.", "task": "Add a publication", "target": { "kind": "element", "ref": "index-add" }, "advanceOn": { "type": "object-created", "register": "publication", "schema": "publication", "capture": { "publicationId": ":id" } } },
-					{ "id": "publish", "sinceVersion": "2.4.0", "placement": "auto", "allowManualNext": true, "title": "Publishing is access-controlled", "body": "OpenCatalogi has no separate 'publish' switch — visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.", "target": { "kind": "page", "ref": "Publications" }, "advanceOn": { "type": "manual" } },
-					{ "id": "discover", "sinceVersion": "2.4.0", "placement": "right", "body": "Published catalogs are found through the Directory — your own and federated ones. Open it to see the discovery side.", "task": "Open the Directory", "target": { "kind": "nav-item", "ref": "Directory" }, "advanceOn": { "type": "route-match", "route": "Directory" } },
-					{ "id": "done", "sinceVersion": "2.4.0", "placement": "center", "title": "You're publishing", "body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.", "target": { "kind": "page", "ref": "Directory" }, "advanceOn": { "type": "manual" } }
+					{
+						"id": "welcome",
+						"placement": "center",
+						"sinceVersion": "2.4.0",
+						"title": "Welcome to OpenCatalogi",
+						"body": "Let's walk the publishing journey together — from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.",
+						"target": {
+							"kind": "page",
+							"ref": "Catalogs"
+						},
+						"advanceOn": {
+							"type": "manual"
+						}
+					},
+					{
+						"id": "go-catalogs",
+						"sinceVersion": "2.4.0",
+						"placement": "right",
+						"body": "Everything you publish lives in a catalog. Open Catalogs from the menu.",
+						"task": "Open Catalogs",
+						"target": {
+							"kind": "nav-item",
+							"ref": "Catalogs"
+						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Catalogs"
+						}
+					},
+					{
+						"id": "create-catalog",
+						"sinceVersion": "2.4.0",
+						"placement": "bottom",
+						"allowManualNext": true,
+						"body": "Create your first catalog — it's the container your publications will live in.",
+						"task": "Create your first catalog",
+						"target": {
+							"kind": "element",
+							"ref": "index-add"
+						},
+						"advanceOn": {
+							"type": "object-created",
+							"register": "publication",
+							"schema": "catalog",
+							"capture": {
+								"catalogId": ":id"
+							}
+						}
+					},
+					{
+						"id": "open-catalog",
+						"sinceVersion": "2.4.0",
+						"placement": "bottom",
+						"allowManualNext": true,
+						"body": "Open the catalog you just created to manage what it publishes — its publications open inside it.",
+						"task": "Open your catalog and view its Publications",
+						"target": {
+							"kind": "page",
+							"ref": "CatalogDetail"
+						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Publications"
+						}
+					},
+					{
+						"id": "add-publication",
+						"sinceVersion": "2.4.0",
+						"placement": "bottom",
+						"allowManualNext": true,
+						"body": "A publication is a single thing you make open — a document, dataset or record. Add your first one.",
+						"task": "Add a publication",
+						"target": {
+							"kind": "element",
+							"ref": "index-add"
+						},
+						"advanceOn": {
+							"type": "object-created",
+							"register": "publication",
+							"schema": "publication",
+							"capture": {
+								"publicationId": ":id"
+							}
+						}
+					},
+					{
+						"id": "publish",
+						"sinceVersion": "2.4.0",
+						"placement": "auto",
+						"allowManualNext": true,
+						"title": "Publishing is access-controlled",
+						"body": "OpenCatalogi has no separate 'publish' switch — visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.",
+						"target": {
+							"kind": "page",
+							"ref": "Publications"
+						},
+						"advanceOn": {
+							"type": "manual"
+						}
+					},
+					{
+						"id": "discover",
+						"sinceVersion": "2.4.0",
+						"placement": "right",
+						"body": "Published catalogs are found through the Directory — your own and federated ones. Open it to see the discovery side.",
+						"task": "Open the Directory",
+						"target": {
+							"kind": "nav-item",
+							"ref": "Directory"
+						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Directory"
+						}
+					},
+					{
+						"id": "done",
+						"sinceVersion": "2.4.0",
+						"placement": "center",
+						"title": "You're publishing",
+						"body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.",
+						"target": {
+							"kind": "page",
+							"ref": "Directory"
+						},
+						"advanceOn": {
+							"type": "manual"
+						}
+					}
 				]
 			}
 		]
@@ -103,12 +276,48 @@
 			"icon": "icon-files",
 			"order": 40,
 			"children": [
-				{ "id": "CatalogsMenu",  "label": "Catalogs",  "icon": "icon-files",                 "route": "Catalogs",  "order": 92 },
-				{ "id": "GlossaryMenu",  "label": "Glossary",  "icon": "icon-toggle-filelist",       "route": "Glossary",  "order": 93 },
-				{ "id": "ThemesMenu",    "label": "Themes",    "icon": "icon-category-customization","route": "Themes",    "order": 94 },
-				{ "id": "PagesMenu",     "label": "Pages",     "icon": "icon-category-files",        "route": "Pages",     "order": 95 },
-				{ "id": "MenusMenu",     "label": "Menus",     "icon": "icon-category-customization","route": "Menus",     "order": 96 },
-				{ "id": "WooBatchesMenu","label": "WOO",       "icon": "icon-toggle-filelist",       "route": "WooBatches","order": 98 }
+				{
+					"id": "CatalogsMenu",
+					"label": "Catalogs",
+					"icon": "icon-files",
+					"route": "Catalogs",
+					"order": 92
+				},
+				{
+					"id": "GlossaryMenu",
+					"label": "Glossary",
+					"icon": "icon-toggle-filelist",
+					"route": "Glossary",
+					"order": 93
+				},
+				{
+					"id": "ThemesMenu",
+					"label": "Themes",
+					"icon": "icon-category-customization",
+					"route": "Themes",
+					"order": 94
+				},
+				{
+					"id": "PagesMenu",
+					"label": "Pages",
+					"icon": "icon-category-files",
+					"route": "Pages",
+					"order": 95
+				},
+				{
+					"id": "MenusMenu",
+					"label": "Menus",
+					"icon": "icon-category-customization",
+					"route": "Menus",
+					"order": 96
+				},
+				{
+					"id": "WooBatchesMenu",
+					"label": "WOO",
+					"icon": "icon-toggle-filelist",
+					"route": "WooBatches",
+					"order": 98
+				}
 			]
 		},
 		{
@@ -117,9 +326,27 @@
 			"icon": "icon-settings",
 			"order": 80,
 			"children": [
-				{ "id": "OrganizationsMenu", "label": "Organizations", "icon": "icon-group",   "route": "Organizations",  "order": 91 },
-				{ "id": "DirectoryMenu",     "label": "Directory",     "icon": "icon-folder",  "route": "Directory",      "order": 97 },
-				{ "id": "SettingsMenu",      "label": "Settings",      "icon": "icon-settings","action": "user-settings", "order": 99 }
+				{
+					"id": "OrganizationsMenu",
+					"label": "Organizations",
+					"icon": "icon-group",
+					"route": "Organizations",
+					"order": 91
+				},
+				{
+					"id": "DirectoryMenu",
+					"label": "Directory",
+					"icon": "icon-folder",
+					"route": "Directory",
+					"order": 97
+				},
+				{
+					"id": "SettingsMenu",
+					"label": "Settings",
+					"icon": "icon-settings",
+					"action": "user-settings",
+					"order": 99
+				}
 			]
 		},
 		{
@@ -250,32 +477,175 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "pub-data", "type": "data", "title": "Publication", "icon": "FileDocument", "content": { "columns": 2, "include": ["title", "summary", "description", "publicatiedatum", "depublicatiedatum", "status"] } },
-					{ "id": "pub-stats", "type": "stats-block", "title": "Usage", "icon": "ChartBar", "entries": [
-						{ "title": "Views", "register": "publication", "schema": "usageCounter", "metric": "sum", "field": "count", "filter": { "publication": "@objectId", "kind": "view" } },
-						{ "title": "Downloads", "register": "publication", "schema": "usageCounter", "metric": "sum", "field": "count", "filter": { "publication": "@objectId", "kind": "download" } }
-					] },
-					{ "id": "pub-retention", "type": "data", "title": "Retention", "icon": "History", "content": { "columns": 2, "include": ["retentionCategory", "retentionTermMonths", "retentionAction", "retentionExpiresAt", "retentionNote", "retentionLastEvaluatedAt"] } },
-					{ "id": "pub-related", "type": "related", "title": "Organization & themes", "icon": "OfficeBuilding" },
-					{ "id": "pub-files", "type": "integration", "integrationId": "files", "title": "Attachments", "icon": "FolderOutline" },
-					{ "id": "pub-photos", "type": "integration", "integrationId": "photos", "title": "Images", "icon": "Package" },
-					{ "id": "pub-links", "type": "integration", "integrationId": "bookmarks", "title": "Links", "icon": "LinkVariant" }
+					{
+						"id": "pub-data",
+						"type": "data",
+						"title": "Publication",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"title",
+								"summary",
+								"description",
+								"publicatiedatum",
+								"depublicatiedatum",
+								"status"
+							]
+						}
+					},
+					{
+						"id": "pub-stats",
+						"type": "stats-block",
+						"title": "Usage",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Views",
+									"register": "publication",
+									"schema": "usageCounter",
+									"metric": "sum",
+									"field": "count",
+									"filter": {
+										"publication": "@objectId",
+										"kind": "view"
+									}
+								},
+								{
+									"title": "Downloads",
+									"register": "publication",
+									"schema": "usageCounter",
+									"metric": "sum",
+									"field": "count",
+									"filter": {
+										"publication": "@objectId",
+										"kind": "download"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "pub-retention",
+						"type": "data",
+						"title": "Retention",
+						"icon": "History",
+						"content": {
+							"columns": 2,
+							"include": [
+								"retentionCategory",
+								"retentionTermMonths",
+								"retentionAction",
+								"retentionExpiresAt",
+								"retentionNote",
+								"retentionLastEvaluatedAt"
+							]
+						}
+					},
+					{
+						"id": "pub-related",
+						"type": "related",
+						"title": "Organization & themes",
+						"icon": "OfficeBuilding"
+					},
+					{
+						"id": "pub-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Attachments",
+						"icon": "FolderOutline"
+					},
+					{
+						"id": "pub-photos",
+						"type": "integration",
+						"integrationId": "photos",
+						"title": "Images",
+						"icon": "Package"
+					},
+					{
+						"id": "pub-links",
+						"type": "integration",
+						"integrationId": "bookmarks",
+						"title": "Links",
+						"icon": "LinkVariant"
+					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "pub-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
-					{ "id": "2", "widgetId": "pub-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 2 },
-					{ "id": "3", "widgetId": "pub-retention", "gridX": 0, "gridY": 4, "gridWidth": 8, "gridHeight": 4 },
-					{ "id": "4", "widgetId": "pub-related", "gridX": 8, "gridY": 2, "gridWidth": 4, "gridHeight": 6 },
-					{ "id": "5", "widgetId": "pub-files", "gridX": 0, "gridY": 8, "gridWidth": 12, "gridHeight": 5 },
-					{ "id": "6", "widgetId": "pub-photos", "gridX": 0, "gridY": 13, "gridWidth": 6, "gridHeight": 4 },
-					{ "id": "7", "widgetId": "pub-links", "gridX": 6, "gridY": 13, "gridWidth": 6, "gridHeight": 4 }
+					{
+						"id": "1",
+						"widgetId": "pub-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "2",
+						"widgetId": "pub-stats",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "3",
+						"widgetId": "pub-retention",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "4",
+						"widgetId": "pub-related",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 6
+					},
+					{
+						"id": "5",
+						"widgetId": "pub-files",
+						"gridX": 0,
+						"gridY": 8,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
+						"id": "6",
+						"widgetId": "pub-photos",
+						"gridX": 0,
+						"gridY": 13,
+						"gridWidth": 6,
+						"gridHeight": 4
+					},
+					{
+						"id": "7",
+						"widgetId": "pub-links",
+						"gridX": 6,
+						"gridY": 13,
+						"gridWidth": 6,
+						"gridHeight": 4
+					}
 				],
-				"lifecycleActions": { "field": "status" },
+				"lifecycleActions": {
+					"field": "status"
+				},
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
 					]
 				}
 			}
@@ -323,27 +693,170 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "org-data", "type": "data", "title": "Organization", "icon": "OfficeBuilding", "content": { "columns": 2, "exclude": ["image"] } },
-					{ "id": "org-stats", "type": "stats-block", "title": "Publishing", "icon": "ChartBar", "entries": [
-						{ "title": "Publications", "register": "publication", "schema": "publication", "metric": "count", "filter": { "organization": "@objectId" } },
-						{ "title": "Catalogs", "register": "@resolve:catalog_register", "schema": "@resolve:catalog_schema", "metric": "count", "filter": { "organization": "@objectId" } }
-					] },
-					{ "id": "org-image", "type": "integration", "integrationId": "photos", "title": "Logo & images", "icon": "Package" },
-					{ "id": "org-publications", "type": "object-list", "title": "Publications", "icon": "FileDocument", "content": { "register": "publication", "schema": "publication", "filter": { "organization": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "emptyText": "This organization has no publications yet." } },
-					{ "id": "org-catalogs", "type": "object-list", "title": "Catalogs", "icon": "FolderOutline", "content": { "register": "@resolve:catalog_register", "schema": "@resolve:catalog_schema", "filter": { "organization": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "rowRoute": "CatalogDetail", "viewAllRoute": "Catalogs", "emptyText": "This organization has no catalogs yet." } }
+					{
+						"id": "org-data",
+						"type": "data",
+						"title": "Organization",
+						"icon": "OfficeBuilding",
+						"content": {
+							"columns": 2,
+							"exclude": [
+								"image"
+							]
+						}
+					},
+					{
+						"id": "org-stats",
+						"type": "stats-block",
+						"title": "Publishing",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Publications",
+									"register": "publication",
+									"schema": "publication",
+									"metric": "count",
+									"filter": {
+										"organization": "@objectId"
+									}
+								},
+								{
+									"title": "Catalogs",
+									"register": "@resolve:catalog_register",
+									"schema": "@resolve:catalog_schema",
+									"metric": "count",
+									"filter": {
+										"organization": "@objectId"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "org-image",
+						"type": "integration",
+						"integrationId": "photos",
+						"title": "Logo & images",
+						"icon": "Package"
+					},
+					{
+						"id": "org-publications",
+						"type": "object-list",
+						"title": "Publications",
+						"icon": "FileDocument",
+						"content": {
+							"register": "publication",
+							"schema": "publication",
+							"filter": {
+								"organization": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							],
+							"limit": 25,
+							"emptyText": "This organization has no publications yet."
+						}
+					},
+					{
+						"id": "org-catalogs",
+						"type": "object-list",
+						"title": "Catalogs",
+						"icon": "FolderOutline",
+						"content": {
+							"register": "@resolve:catalog_register",
+							"schema": "@resolve:catalog_schema",
+							"filter": {
+								"organization": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							],
+							"limit": 25,
+							"rowRoute": "CatalogDetail",
+							"viewAllRoute": "Catalogs",
+							"emptyText": "This organization has no catalogs yet."
+						}
+					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "org-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
-					{ "id": "2", "widgetId": "org-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 2 },
-					{ "id": "3", "widgetId": "org-image", "gridX": 8, "gridY": 2, "gridWidth": 4, "gridHeight": 2 },
-					{ "id": "4", "widgetId": "org-publications", "gridX": 0, "gridY": 4, "gridWidth": 6, "gridHeight": 5 },
-					{ "id": "5", "widgetId": "org-catalogs", "gridX": 6, "gridY": 4, "gridWidth": 6, "gridHeight": 5 }
+					{
+						"id": "1",
+						"widgetId": "org-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "2",
+						"widgetId": "org-stats",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "3",
+						"widgetId": "org-image",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "4",
+						"widgetId": "org-publications",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "5",
+						"widgetId": "org-catalogs",
+						"gridX": 6,
+						"gridY": 4,
+						"gridWidth": 6,
+						"gridHeight": 5
+					}
 				],
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
 					]
 				}
 			}
@@ -383,24 +896,119 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "theme-data", "type": "data", "title": "Theme", "icon": "TagOutline", "content": { "columns": 2 } },
-					{ "id": "theme-stats", "type": "stats-block", "title": "Usage", "icon": "ChartBar", "entries": [
-						{ "title": "Publications", "register": "publication", "schema": "publication", "metric": "count", "filter": { "themes": "@objectId" } }
-					] },
-					{ "id": "theme-preview", "type": "theme-preview", "title": "Preview", "icon": "Web" },
-					{ "id": "theme-publications", "type": "object-list", "title": "Publications with this theme", "icon": "FileDocument", "content": { "register": "publication", "schema": "publication", "filter": { "themes": "@objectId" }, "sort": { "field": "title", "dir": "asc" }, "columns": [{ "key": "title", "label": "Title" }, { "key": "status", "label": "Status" }], "limit": 25, "allowCreate": false, "emptyText": "No publications are tagged with this theme yet." } }
+					{
+						"id": "theme-data",
+						"type": "data",
+						"title": "Theme",
+						"icon": "TagOutline",
+						"content": {
+							"columns": 2
+						}
+					},
+					{
+						"id": "theme-stats",
+						"type": "stats-block",
+						"title": "Usage",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Publications",
+									"register": "publication",
+									"schema": "publication",
+									"metric": "count",
+									"filter": {
+										"themes": "@objectId"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "theme-preview",
+						"type": "theme-preview",
+						"title": "Preview",
+						"icon": "Web"
+					},
+					{
+						"id": "theme-publications",
+						"type": "object-list",
+						"title": "Publications with this theme",
+						"icon": "FileDocument",
+						"content": {
+							"register": "publication",
+							"schema": "publication",
+							"filter": {
+								"themes": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							],
+							"limit": 25,
+							"allowCreate": false,
+							"emptyText": "No publications are tagged with this theme yet."
+						}
+					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "theme-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 6 },
-					{ "id": "2", "widgetId": "theme-stats", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 2 },
-					{ "id": "3", "widgetId": "theme-preview", "gridX": 6, "gridY": 2, "gridWidth": 6, "gridHeight": 4 },
-					{ "id": "4", "widgetId": "theme-publications", "gridX": 0, "gridY": 6, "gridWidth": 12, "gridHeight": 5 }
+					{
+						"id": "1",
+						"widgetId": "theme-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "theme-stats",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 2
+					},
+					{
+						"id": "3",
+						"widgetId": "theme-preview",
+						"gridX": 6,
+						"gridY": 2,
+						"gridWidth": 6,
+						"gridHeight": 4
+					},
+					{
+						"id": "4",
+						"widgetId": "theme-publications",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
 				],
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
 					]
 				}
 			}
@@ -440,18 +1048,54 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "glossary-data", "type": "data", "title": "Glossary term", "icon": "BookOpenVariant", "content": { "columns": 1 } },
-					{ "id": "glossary-graph", "type": "relationship-graph", "title": "Related terms", "icon": "Sitemap" }
+					{
+						"id": "glossary-data",
+						"type": "data",
+						"title": "Glossary term",
+						"icon": "BookOpenVariant",
+						"content": {
+							"columns": 1
+						}
+					},
+					{
+						"id": "glossary-graph",
+						"type": "relationship-graph",
+						"title": "Related terms",
+						"icon": "Sitemap"
+					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "glossary-data", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 5 },
-					{ "id": "2", "widgetId": "glossary-graph", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 5 }
+					{
+						"id": "1",
+						"widgetId": "glossary-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "glossary-graph",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 5
+					}
 				],
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
 					]
 				}
 			}
@@ -491,18 +1135,60 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "page-data", "type": "data", "title": "Page", "icon": "FileDocument", "content": { "columns": 1, "exclude": ["contents"] } },
-					{ "id": "page-tree", "type": "tree-view", "title": "Content blocks", "icon": "Sitemap", "content": { "field": "contents" } }
+					{
+						"id": "page-data",
+						"type": "data",
+						"title": "Page",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 1,
+							"exclude": [
+								"contents"
+							]
+						}
+					},
+					{
+						"id": "page-tree",
+						"type": "tree-view",
+						"title": "Content blocks",
+						"icon": "Sitemap",
+						"content": {
+							"field": "contents"
+						}
+					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "page-data", "gridX": 0, "gridY": 0, "gridWidth": 5, "gridHeight": 5 },
-					{ "id": "2", "widgetId": "page-tree", "gridX": 5, "gridY": 0, "gridWidth": 7, "gridHeight": 5 }
+					{
+						"id": "1",
+						"widgetId": "page-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 5,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "page-tree",
+						"gridX": 5,
+						"gridY": 0,
+						"gridWidth": 7,
+						"gridHeight": 5
+					}
 				],
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
 					]
 				}
 			}
@@ -542,18 +1228,64 @@
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
-					{ "id": "menu-data", "type": "data", "title": "Menu", "icon": "Cog", "content": { "columns": 1, "exclude": ["items"] } },
-					{ "id": "menu-tree", "type": "tree-view", "title": "Menu items", "icon": "Sitemap", "content": { "field": "items", "sort": { "field": "order", "dir": "asc" } } }
+					{
+						"id": "menu-data",
+						"type": "data",
+						"title": "Menu",
+						"icon": "Cog",
+						"content": {
+							"columns": 1,
+							"exclude": [
+								"items"
+							]
+						}
+					},
+					{
+						"id": "menu-tree",
+						"type": "tree-view",
+						"title": "Menu items",
+						"icon": "Sitemap",
+						"content": {
+							"field": "items",
+							"sort": {
+								"field": "order",
+								"dir": "asc"
+							}
+						}
+					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "menu-data", "gridX": 0, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
-					{ "id": "2", "widgetId": "menu-tree", "gridX": 4, "gridY": 0, "gridWidth": 8, "gridHeight": 5 }
+					{
+						"id": "1",
+						"widgetId": "menu-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "menu-tree",
+						"gridX": 4,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5
+					}
 				],
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
 					]
 				}
 			}
