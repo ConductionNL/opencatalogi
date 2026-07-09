@@ -42,6 +42,8 @@ use Psr\Log\LoggerInterface;
  * Controller exposing authenticated publication usage statistics.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/publication-quality/spec.md
  */
 class StatsController extends Controller
 {
@@ -153,11 +155,10 @@ class StatsController extends Controller
         try {
             $stats            = $this->usageCounterService->getCatalogStats(catalog: $slug, from: $from, to: $to, top: $top);
             $stats['catalog'] = $slug;
-            // Period without data still returns zeros + a counting-start marker (ANA-005).
-            if (isset($stats['countingStart']) === false) {
-                $series = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: null, to: null);
-                $stats['countingStart'] = $this->usageCounterService->aggregateSeries($series)['countingStart'];
-            }
+            // Fetch the counting-start marker from the full series (ANA-005).
+            // getCatalogStats uses aggregateCatalog which does not include countingStart.
+            $series = $this->usageCounterService->getCountersForCatalog(catalog: $slug, from: null, to: null);
+            $stats['countingStart'] = $this->usageCounterService->aggregateSeries($series)['countingStart'];
 
             return new JSONResponse($stats, 200);
         } catch (\Throwable $e) {
@@ -166,6 +167,65 @@ class StatsController extends Controller
         }
 
     }//end catalog()
+
+    /**
+     * Return the per-catalog metadata-quality roll-up (MQA/FAIR).
+     *
+     * Authenticated (never anonymous), mirroring the usage-analytics stats API.
+     * Aggregates the quality score of every publicly visible dataset the DCAT
+     * layer renders for the catalog: average, distribution, worst-N with their
+     * dimension breakdowns, and the aggregate missing-property breakdown. Advisory
+     * (PQM-003/PQM-004) — the score never gates publishing.
+     *
+     * @param string $slug The catalog slug.
+     *
+     * @return JSONResponse The quality roll-up.
+     *
+     * @NoAdminRequired
+     *
+     * @spec openspec/specs/publication-quality/spec.md
+     */
+    public function quality(string $slug): JSONResponse
+    {
+        // Auth guard: quality roll-ups are officer-facing, never anonymous.
+        if ($this->requireAuthenticatedUser() === null) {
+            return new JSONResponse(
+                ['error' => $this->l10n->t('Authentication required.')],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
+        $catalog = $this->catalogiService->getCatalogBySlug($slug);
+        if ($catalog === null) {
+            return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+        }
+
+        $worst = (int) ($this->request->getParam('worst', 5));
+        if ($worst < 1) {
+            $worst = 5;
+        }
+
+        try {
+            $dcatService    = $this->container->get(\OCA\OpenCatalogi\Service\DcatService::class);
+            $qualityService = $this->container->get(\OCA\OpenCatalogi\Service\QualityService::class);
+
+            $document = $dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $slug, page: 1);
+            $nodes    = [];
+            foreach (($document['@graph'] ?? []) as $node) {
+                if (($node['@type'] ?? '') === 'dcat:Dataset') {
+                    $nodes[] = $node;
+                }
+            }
+
+            $rollup            = $qualityService->rollup($nodes, $worst);
+            $rollup['catalog'] = $slug;
+            return new JSONResponse($rollup, 200);
+        } catch (\Throwable $e) {
+            $this->logger->error('[StatsController::quality] failed', ['error' => $e->getMessage()]);
+            return new JSONResponse(['error' => $this->l10n->t('Could not compute catalog quality.')], 500);
+        }
+
+    }//end quality()
 
     /**
      * Export per-catalog usage as a UTF-8 (BOM) CSV for WOO annual reporting.

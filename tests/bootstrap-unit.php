@@ -28,16 +28,65 @@ if (class_exists('Doctrine\\DBAL\\ParameterType') === false) {
     require_once __DIR__.'/Stubs/Doctrine/ParameterType.php';
 }
 
-// Register OCP (Nextcloud public API from vendor/nextcloud/ocp).
+// Register a Doctrine\* autoloader that falls back to the local stubs tree.
+// Covers Doctrine\DBAL\Types\Types and any other Doctrine classes the OCP.bak
+// stubs reference which are not in the standalone vendor tree.
+$doctrineStubDir = __DIR__.'/Stubs/Doctrine';
 spl_autoload_register(
-        static function (string $class): void {
+        static function (string $class) use ($doctrineStubDir): void {
+            $prefix = 'Doctrine\\';
+            if (str_starts_with($class, $prefix) === false) {
+                return;
+            }
+
+            // Strip the leading 'Doctrine\' and map to the stubs directory.
+            // e.g. Doctrine\DBAL\Types\Types → Stubs/Doctrine/DBAL/Types/Types.php
+            $relative = substr($class, strlen($prefix));
+            $path     = $doctrineStubDir.'/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+            if (file_exists($path) === true) {
+                include_once $path;
+            }
+        }
+        );
+
+// Register OC\* stubs — internal Nextcloud classes referenced by OCP.bak stubs.
+// Some OCP interfaces (e.g. IRootFolder) extend OC\Hooks\Emitter, which is a
+// Nextcloud-internal class not shipped in the vendor/nextcloud/ocp package.
+// The bare stubs in tests/Stubs/OC/ cover just the surface needed for PHPUnit to
+// resolve the interface chain in a bare php:8.3-cli container.
+$ocStubDir = __DIR__.'/Stubs/OC';
+spl_autoload_register(
+        static function (string $class) use ($ocStubDir): void {
+            $prefix = 'OC\\';
+            if (str_starts_with($class, $prefix) === false) {
+                return;
+            }
+
+            $relative = substr($class, strlen($prefix));
+            $path     = $ocStubDir.'/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+            if (file_exists($path) === true) {
+                include_once $path;
+            }
+        }
+        );
+
+// Register OCP (Nextcloud public API from vendor/nextcloud/ocp).
+// The package ships `OCP/` as a symlink to `/var/www/html/lib/public` (real NC server)
+// and `OCP.bak/` as the actual PHP stubs for bare-CI / static-analysis use.
+// When the symlink is broken (bare php:8.3-cli container), fall back to OCP.bak/.
+$ocpVendorBase = __DIR__.'/../vendor/nextcloud/ocp';
+$ocpDir        = (is_dir($ocpVendorBase.'/OCP') === true)
+    ? $ocpVendorBase.'/OCP'
+    : $ocpVendorBase.'/OCP.bak';
+spl_autoload_register(
+        static function (string $class) use ($ocpDir): void {
             $prefix = 'OCP\\';
             if (str_starts_with($class, $prefix) === false) {
                 return;
             }
 
             $relative = substr($class, strlen($prefix));
-            $path     = __DIR__.'/../vendor/nextcloud/ocp/OCP/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+            $path     = $ocpDir.'/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
             if (file_exists($path) === true) {
                 include_once $path;
             }
@@ -78,23 +127,51 @@ $openRegisterRoot = (static function (): ?string {
     return null;
 })();
 
-// Register OCA\OpenRegister from the resolved app root.
+// Register OCA\OpenRegister from the resolved app root (when available).
+// In bare CI containers (php:8.3-cli) OpenRegister is not installed alongside the app;
+// the OCA\OpenRegister stub directory provides the minimal surface PHPUnit needs to mock.
+$openRegisterStubDir = __DIR__.'/Stubs/OpenRegister';
+
 if ($openRegisterRoot !== null) {
     spl_autoload_register(
-            static function (string $class) use ($openRegisterRoot): void {
+            static function (string $class) use ($openRegisterRoot, $openRegisterStubDir): void {
                 $prefix = 'OCA\\OpenRegister\\';
                 if (str_starts_with($class, $prefix) === false) {
                     return;
                 }
 
                 $relative = substr($class, strlen($prefix));
-                $path     = $openRegisterRoot.'/lib/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
-                if (file_exists($path) === true) {
-                    include_once $path;
+
+                // Prefer the real app; fall back to the CI stub directory.
+                $real = $openRegisterRoot.'/lib/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+                if (file_exists($real) === true) {
+                    include_once $real;
+                    return;
+                }
+
+                $stub = $openRegisterStubDir.'/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+                if (file_exists($stub) === true) {
+                    include_once $stub;
                 }
             }
             );
-}
+} else {
+    // No real OpenRegister found — load stubs for bare CI environment.
+    spl_autoload_register(
+            static function (string $class) use ($openRegisterStubDir): void {
+                $prefix = 'OCA\\OpenRegister\\';
+                if (str_starts_with($class, $prefix) === false) {
+                    return;
+                }
+
+                $relative = substr($class, strlen($prefix));
+                $stub     = $openRegisterStubDir.'/'.str_replace('\\', DIRECTORY_SEPARATOR, $relative).'.php';
+                if (file_exists($stub) === true) {
+                    include_once $stub;
+                }
+            }
+            );
+}//end if
 
 // Register the Nextcloud server autoloader so OC\ / Doctrine / Symfony classes referenced
 // by OpenRegister (and transitively by OpenCatalogi services) are resolvable. The server
@@ -104,6 +181,12 @@ foreach (['/var/www/html/lib/composer/autoload.php', '/var/www/html/3rdparty/aut
     if (file_exists($serverAutoload) === true) {
         require_once $serverAutoload;
     }
+}
+
+// OC_Util global stub — OCP\Util references this global class (not OC\*-namespaced),
+// so it falls outside the OC\ autoloader. Load the stub file directly.
+if (class_exists('OC_Util') === false) {
+    require_once __DIR__.'/Stubs/OC/Util.php';
 }
 
 // Minimal OC stub used by CatalogCacheEventListener tests that call \OC::$server->get().

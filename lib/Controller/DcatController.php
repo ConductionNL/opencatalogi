@@ -287,6 +287,40 @@ class DcatController extends Controller
     }//end validate()
 
     /**
+     * Validate a catalog's feed for data.overheid.nl (DONL) harvesting.
+     *
+     * Admin-only. Runs the DONL rule-set over the DCAT feed and returns the
+     * canonical harvest-source URL plus per-dataset source/theme/mandatory
+     * violations. Advisory — never alters serving (DCAT-NPF-001).
+     *
+     * @param string $catalogSlug The catalog slug.
+     *
+     * @return JSONResponse The DONL validation report (with the harvest-source URL).
+     *
+     * @NoCSRFRequired
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function donlReport(string $catalogSlug): JSONResponse
+    {
+        try {
+            $catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+            if ($catalog === null) {
+                return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+            }
+
+            $report = $this->dcatService->validateForDonl($catalog, $catalogSlug);
+            $report['catalogSlug'] = $catalogSlug;
+            return new JSONResponse($report, 200);
+        } catch (\Throwable $e) {
+            $this->logger->error('[DcatController::donlReport] Validation failed', ['catalogSlug' => $catalogSlug, 'error' => $e->getMessage()]);
+            return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+        }
+
+    }//end donlReport()
+
+    /**
      * Serialize a document and wrap it in a CORS- and cache-headed DcatResponse.
      *
      * @param array<string, mixed> $document The JSON-LD document (with `_meta`).

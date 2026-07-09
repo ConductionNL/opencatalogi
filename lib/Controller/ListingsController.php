@@ -31,10 +31,12 @@ namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IL10N;
@@ -298,37 +300,72 @@ class ListingsController extends Controller
     }//end create()
 
     /**
-     * Update an existing listing.
+     * PUT /api/listings/{id} allow-list. Directory-identity URLs and server-managed
+     * sync state (statusCode, lastSync, available) stay off deliberately: rebinding
+     * them would revive the federation-SSRF vector WOO-513 hardened. Widen with care.
+     *
+     * @var list<string>
+     */
+    private const UPDATABLE_LISTING_FIELDS = [
+        'title',
+        'summary',
+        'description',
+        'integrationLevel',
+        'default',
+    ];
+
+    /**
+     * Update an existing listing. Admin-only (SB1/WF1 SSRF hardening, wave-12):
+     * `#[AuthorizedAdminSetting]` gates entry, `UPDATABLE_LISTING_FIELDS` gates the payload.
      *
      * @param string|integer $id The ID of the listing to update.
      *
      * @return JSONResponse The response containing the updated listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function update(string | int $id): JSONResponse
     {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
-
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
-        // Remove internal framework fields.
-        unset($data['_route']);
+        // Silently drops off-list keys — the response object shows what stuck so
+        // callers see the delta without leaking mass-assignment probes as errors.
+        $allowed = [];
+        foreach (self::UPDATABLE_LISTING_FIELDS as $field) {
+            if (array_key_exists($field, $data) === true) {
+                $allowed[$field] = $data[$field];
+            }
+        }
 
         // Get listing schema and register from configuration.
         $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
         $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
 
-        // Save the updated listing object with the id as UUID for update.
+        // Load the existing listing and merge the allow-listed PUT body onto
+        // it. OR's saveObject() treats its input as the full record —
+        // lifecycle hooks (e.g. "status must be a non-empty string") run
+        // against the incoming payload, not against a server-side merge with
+        // the stored object. A partial PUT therefore drops required fields
+        // like `status` and trips HookStoppedException → 500. Pre-merging
+        // here gives the endpoint real PATCH semantics: callers can send
+        // only the fields they want to change without losing the rest of the
+        // listing. The merge order is (existing, allowed) so allow-listed
+        // fields win over stored values.
+        $existing = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+        if ($existing instanceof \OCP\AppFramework\Db\Entity) {
+            $existingData = $existing->jsonSerialize();
+        } else {
+            $existingData = (array) $existing;
+        }
+
+        $merged = array_merge($existingData, $allowed);
+
+        // Save the merged listing object with the id as UUID for update.
         $object = $this->getObjectService()->saveObject(
-            object: $data,
+            object: $merged,
             extend: [],
             register: $listingRegister,
             schema: $listingSchema,
@@ -343,32 +380,81 @@ class ListingsController extends Controller
     /**
      * Delete a listing.
      *
+     * Admin-only (SB1/WF1 SSRF hardening, wave-12): removing a peer is a
+     * federation-topology change; `#[AuthorizedAdminSetting]` also puts it on
+     * the delegated-admin audit trail.
+     *
      * @param string|integer $id The ID of the listing to delete.
      *
      * @return JSONResponse The response indicating the result of the deletion.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function destroy(string | int $id): JSONResponse
     {
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        // Delete the listing object by its UUID.
-        $result = $this->getObjectService()->deleteObject((string) $id);
-
-        // Return the result as a JSON response.
-        $statusCode = 404;
-        if ($result === true) {
-            $statusCode = 200;
+        // Scope the delete to (listing_register, listing_schema) so a UUID that
+        // exists in the OpenRegister store under a DIFFERENT (register, schema)
+        // pair — e.g. a catalog row whose UUID accidentally matches a listing's
+        // UUID after a bad self-sync (see WOO-515 / WOO-516) — is NOT deleted
+        // when the frontend clicks Remove on the Directory page. deleteObject()
+        // scopes the DB delete AND the audit-trail entry to the caller's pair.
+        //
+        // FAIL-CLOSED: if either config key is empty, OR's `$hasScope` check
+        // silently disables scoping (`register !== null && schema !== null`),
+        // which reverts to the pre-fix behaviour. So we refuse the delete
+        // outright rather than letting the defence quietly evaporate.
+        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
+        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+        if ($listingRegister === '' || $listingSchema === '') {
+            $this->logger?->warning(
+                '[ListingsController::destroy] Refusing scope-less delete — listing_register/listing_schema not configured',
+                ['id' => (string) $id]
+            );
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Listing register/schema is not configured. Run the setup wizard.')],
+                statusCode: Http::STATUS_CONFLICT
+            );
         }
 
-        return new JSONResponse(['success' => $result], $statusCode);
+        // OR's ObjectService re-throws DoesNotExistException on scope-mismatch
+        // to keep the "404 not in scope" contract; regular AppFramework
+        // controllers don't get an auto-translation to HTTP 404 (verified
+        // against OCS/Security/SameSiteCookie/RateLimiting middlewares), so
+        // catch it here and return 404 explicitly.
+        try {
+            $result = $this->getObjectService()->deleteObject(
+                uuid: (string) $id,
+                register: $listingRegister,
+                schema: $listingSchema
+            );
+        } catch (DoesNotExistException $e) {
+            return new JSONResponse(
+                data: ['success' => false, 'message' => $this->l10n->t('Listing not found in scope')],
+                statusCode: Http::STATUS_NOT_FOUND
+            );
+        }
+
+        // Return the result as a JSON response. Both success and fall-through-404
+        // carry a `message` field so consumers get a consistent shape across all
+        // exit paths of destroy() (the DoesNotExistException branch above already
+        // does — PR #86 round-3 review).
+        if ($result === true) {
+            return new JSONResponse(
+                data: ['success' => true, 'message' => $this->l10n->t('Listing removed')],
+                statusCode: Http::STATUS_OK
+            );
+        }
+
+        return new JSONResponse(
+            data: ['success' => false, 'message' => $this->l10n->t('Listing not found')],
+            statusCode: Http::STATUS_NOT_FOUND
+        );
 
     }//end destroy()
 

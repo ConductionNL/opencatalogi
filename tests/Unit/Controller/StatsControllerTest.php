@@ -213,4 +213,70 @@ class StatsControllerTest extends TestCase
         $this->assertMatchesRegularExpression('/b,Nota,2026-02-01,0,0/', $csv);
     }//end testBuildCsvBomAndColumns()
 
+    // ──────────────────────────────────────────────────────────
+    // Quality roll-up (PQM-003)
+    // ──────────────────────────────────────────────────────────
+
+    public function testQualityRejectsAnonymous(): void
+    {
+        // Rebuild the controller with an anonymous session.
+        $anon = $this->createMock(IUserSession::class);
+        $anon->method('getUser')->willReturn(null);
+
+        $controller = new StatsController(
+            'opencatalogi',
+            $this->request,
+            $this->usage,
+            $this->catalogi,
+            $this->appManager,
+            $this->container,
+            $this->l10n,
+            $anon,
+            $this->logger,
+        );
+
+        $response = $controller->quality('woo');
+        $this->assertSame(403, $response->getStatus());
+    }//end testQualityRejectsAnonymous()
+
+    public function testQualityReturnsRollup(): void
+    {
+        $this->catalogi->method('getCatalogBySlug')->willReturn(['hasDcat' => true]);
+
+        $dcat = $this->createMock(\OCA\OpenCatalogi\Service\DcatService::class);
+        $dcat->method('buildCatalogDocument')->willReturn(
+            [
+                '@graph' => [
+                    ['@type' => 'dcat:Catalog', '@id' => 'c'],
+                    ['@type' => 'dcat:Dataset', '@id' => 'd1', 'dct:title' => 'x'],
+                    ['@type' => 'dcat:Dataset', '@id' => 'd2', 'dct:title' => 'y'],
+                ],
+            ]
+        );
+
+        $quality = new \OCA\OpenCatalogi\Service\QualityService($this->createConfiguredMock(\OCP\IAppConfig::class, []));
+
+        $this->container->method('get')->willReturnCallback(
+            function (string $id) use ($dcat, $quality) {
+                if ($id === \OCA\OpenCatalogi\Service\DcatService::class) {
+                    return $dcat;
+                }
+
+                if ($id === \OCA\OpenCatalogi\Service\QualityService::class) {
+                    return $quality;
+                }
+
+                throw new \RuntimeException('unexpected: '.$id);
+            }
+        );
+
+        $response = $this->controller->quality('woo');
+        $this->assertSame(200, $response->getStatus());
+        $data = $response->getData();
+        $this->assertSame(2, $data['count']);
+        $this->assertArrayHasKey('average', $data);
+        $this->assertArrayHasKey('worst', $data);
+        $this->assertSame('woo', $data['catalog']);
+    }//end testQualityReturnsRollup()
+
 }//end class

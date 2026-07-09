@@ -240,15 +240,30 @@ The system MUST synchronize all directories via cron (every hour).
 - WHEN the hourly schedule fires
 - THEN all directories MUST be synchronized
 
-### Requirement: Add a new listing from a URL (public endpoint) (DIR-005)
-The system MUST allow adding a new listing from a URL (public endpoint).
+### Requirement: Add a new listing from a URL (admin-only) (DIR-005)
+The system MUST allow an authenticated admin to add a new listing from a URL.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: add a listing from a URL
+Anonymous / unauthenticated requests MUST be rejected with `403` — federation
+peer-registration must not be anonymous (SB1 / WF1 SSRF hardening, wave-12,
+tightened via `ListingsController::add()` dropping `@PublicPage` and adding an
+explicit auth guard). The cross-instance broadcast-receive path uses the
+separate `POST /api/directory` endpoint (see DIR-008), which is public because
+that's the federation gossip channel — do not merge the two.
+
+#### Scenario: admin adds a listing from a URL
 - GIVEN a directory or publications URL
-- WHEN an unauthenticated POST request is made to `/api/listings/add` with that URL
+- AND an authenticated admin session
+- WHEN a POST request is made to `/api/listings/add` with that URL
 - THEN a listing MUST be created from the URL
+
+#### Scenario: unauthenticated caller is rejected
+- GIVEN a directory or publications URL
+- AND no user session
+- WHEN a POST request is made to `/api/listings/add` with that URL
+- THEN the response MUST be `403 Forbidden`
+- AND no listing MUST be created
 
 ### Requirement: Anti-loop protection during broadcast sync cycles (DIR-006)
 The system MUST provide anti-loop protection during broadcast sync cycles.
@@ -414,10 +429,10 @@ a `DeleteListingDialog`.
 | GET | `/api/listings` | List all listings (authenticated) |
 | POST | `/api/listings` | Create new listing (authenticated) |
 | POST | `/api/listings/sync` | Synchronize directories (authenticated) |
-| POST | `/api/listings/add` | Add listing from URL (public) |
+| POST | `/api/listings/add` | Add listing from URL (admin-only) |
 | GET | `/api/listings/{id}` | Get listing by ID (public) |
-| PUT | `/api/listings/{id}` | Update listing (authenticated) |
-| DELETE | `/api/listings/{id}` | Delete listing (authenticated) |
+| PUT | `/api/listings/{id}` | Update listing (admin-only, allow-listed fields) |
+| DELETE | `/api/listings/{id}` | Delete listing (admin-only) |
 
 ### Directory
 

@@ -5,7 +5,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
+import { generateUrl, generateFilePath } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
@@ -13,6 +13,10 @@ import {
 	registerIcons,
 	registerTranslations,
 	buildManifest,
+	registerDashboardWidget,
+	CnFileManager,
+	CnRelationshipGraph,
+	CnTreeView,
 } from '@conduction/nextcloud-vue'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
@@ -23,6 +27,8 @@ import App from './App.vue'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import customComponents from './registry.js'
+import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
@@ -39,6 +45,77 @@ import { fab } from '@fortawesome/free-brands-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 library.add(fas, fab, far)
 Vue.component('FontAwesomeIcon', FontAwesomeIcon)
+
+// Point webpack's runtime public path at the app's real asset URL so
+// dynamically-imported chunks (e.g. the lazily-loaded @mdi/js icon pack used by
+// CnIconPicker) resolve correctly whether the app is installed under /apps or
+// /custom_apps. Without this, dynamic import() chunks 404 (served as text/html).
+// eslint-disable-next-line camelcase, no-undef
+__webpack_public_path__ = generateFilePath('opencatalogi', '', 'js/')
+
+// Register detail-page widget keys into the shared dashboard widget catalog
+// so CnDetailPage's config-grid body (which resolves `config.widgets[].type`
+// via this catalog, not the app's customComponents map) can render them.
+// CnWidgetGrid's page-level `widgetKey` path ALSO falls back to this same
+// catalog (after cnRegistry/BUILT_IN_WIDGETS), so registering here is the one
+// mechanism that works for both render paths. Note: this app never passes a
+// `registry` prop to CnAppRoot (only `customComponents`, a different inject),
+// so `theme-preview` / `tree-view` / `relationship-graph` were previously
+// unresolved on the page-level path too — this registration fixes that as
+// a side effect.
+registerDashboardWidget('audit-trail', {
+	renderer: AuditTrailWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Audit trail',
+	icon: 'History',
+	surfaces: ['detail-page'],
+})
+// `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
+// not the library's `CnThemePreview` directly: CnThemePreview requires a
+// non-empty `pickers` prop with no default, and ThemeDetail's manifest entry
+// carries no `content.pickers` (the Theme schema has no colour fields to seed
+// it from) — mounting the raw component there crashed with
+// `TypeError: this.pickers is not iterable`. The adapter guarantees a valid
+// pickers/defaults/value shape (falling back to a catalog-brand default set)
+// so the widget always renders instead of crashing silently.
+registerDashboardWidget('theme-preview', {
+	renderer: ThemePreviewWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Theme preview',
+	icon: 'Palette',
+	surfaces: ['detail-page'],
+})
+registerDashboardWidget('tree-view', {
+	renderer: CnTreeView,
+	form: null,
+	defaultContent: {},
+	displayName: 'Tree view',
+	icon: 'FileTree',
+	surfaces: ['detail-page'],
+})
+registerDashboardWidget('relationship-graph', {
+	renderer: CnRelationshipGraph,
+	form: null,
+	defaultContent: {},
+	displayName: 'Relationship graph',
+	icon: 'Graph',
+	surfaces: ['detail-page'],
+})
+// `file-manager` (CnFileManager) is imported for parity with registry.js's
+// customComponents map, though no current manifest page references it — the
+// `integration` widget type (OpenRegister files leaf) supersedes it. Kept
+// registered so any future manifest entry resolves it, without importing
+// CnFileManager twice across the two module-scope registries.
+registerDashboardWidget('file-manager', {
+	renderer: CnFileManager,
+	form: null,
+	defaultContent: {},
+	displayName: 'File manager',
+	icon: 'Folder',
+	surfaces: ['detail-page'],
+})
 
 VueMarkdownEditor.use(githubTheme, { Hljs: hljs })
 VueMarkdownEditor.lang.use('en-US', enUS)

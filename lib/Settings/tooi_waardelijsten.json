@@ -1,0 +1,39 @@
+{
+    "$comment": "Bundled TOOI/DiWoo reference value lists for OpenCatalogi DIWOO Woo-index binding (WOO-TOOI-001..004). Reference data only — the render-time resolver is lib/Service/TooiVocabularyService.php, which is the authoritative source and is guaranteed resolvable at sitemap render time. Sourced from the official waardelijsten: scw_woo_informatiecategorieen and the DiWoo documenthandelingen value list at repository.officiele-overheidspublicaties.nl.",
+    "kind": "reference-data",
+    "informatiecategorieen": {
+        "base": "https://identifier.overheid.nl/tooi/def/thes/kern/",
+        "members": {
+            "infocat001": {"id": "c_139c6280", "label": "Wetten en algemeen verbindende voorschriften"},
+            "infocat002": {"id": "c_aab6bfc7", "label": "Overige besluiten van algemene strekking"},
+            "infocat003": {"id": "c_759721e2", "label": "Ontwerpen van wet- en regelgeving met adviesaanvraag"},
+            "infocat004": {"id": "c_40a05794", "label": "Organisatie en werkwijze"},
+            "infocat005": {"id": "c_89ee6784", "label": "Bereikbaarheidsgegevens"},
+            "infocat006": {"id": "c_8c840238", "label": "Bij vertegenwoordigende organen ingekomen stukken"},
+            "infocat007": {"id": "c_c76862ab", "label": "Vergaderstukken Staten-Generaal"},
+            "infocat008": {"id": "c_db4862c3", "label": "Vergaderstukken decentrale overheden"},
+            "infocat009": {"id": "c_3a248e3a", "label": "Agenda's en besluitenlijsten bestuurscolleges"},
+            "infocat010": {"id": "c_99a836c7", "label": "Adviezen"},
+            "infocat011": {"id": "c_8fc2335c", "label": "Convenanten"},
+            "infocat012": {"id": "c_c6cd1213", "label": "Jaarplannen en jaarverslagen"},
+            "infocat013": {"id": "c_cf268088", "label": "Subsidieverplichtingen anders dan met beschikking"},
+            "infocat014": {"id": "c_3baef532", "label": "Woo-verzoeken en -besluiten"},
+            "infocat015": {"id": "c_fdaee95e", "label": "Onderzoeksrapporten"},
+            "infocat016": {"id": "c_46a81018", "label": "Beschikkingen"},
+            "infocat017": {"id": "c_a870c43d", "label": "Klachtoordelen"}
+        }
+    },
+    "soortHandeling": {
+        "base": "https://identifier.overheid.nl/tooi/def/thes/kern/",
+        "default": "ontvangst",
+        "members": {
+            "ontvangst": "c_dfcee535",
+            "vaststelling": "c_641ecd76",
+            "ondertekening": "c_e1ec050e"
+        }
+    },
+    "organisatieIdentificatoren": {
+        "base": "https://identifier.overheid.nl/tooi/id/",
+        "$comment": "Per-organisation TOOI identifiers are carried on the organization schema's tooiIdentifier property; the resolver validates the URI prefix rather than enumerating every organisation."
+    }
+}

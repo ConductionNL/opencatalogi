@@ -54,8 +54,17 @@ jobs:
     name: PHPUnit coverage ratchet (opencatalogi)
     runs-on: docker
     container:
-      image: code.forgejo.org/oci/ci-php:8.3
+      image: php:8.3-cli
     steps:
+      - name: Install base tooling
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git curl ca-certificates gnupg jq unzip zip \
+            libzip-dev libpng-dev libxslt1-dev libxml2-dev python3 nodejs
+          docker-php-ext-install -j"$(nproc)" zip gd xsl
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
       - name: Checkout
         uses: https://code.forgejo.org/actions/checkout@v4
 
@@ -69,7 +78,10 @@ jobs:
             || echo "coverage driver: ABSENT (ratchet will no-op; see TESTING-CI-ROLLOUT.md)"
 
       - name: Install composer deps
-        run: composer install --no-interaction --no-progress --prefer-dist
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GH_COMPOSER_TOKEN }}"}}'
+          COMPOSER_MAX_PARALLEL_HTTP: "1"
+        run: n=0; until composer install --no-interaction --no-progress --prefer-dist --ignore-platform-reqs; do n=$((n+1)); [ $n -ge 5 ] && { echo "composer install failed after 5 attempts"; exit 1; }; echo "transient composer download failure, retry $n/5"; sleep 15; done
 
       - name: Run unit suite WITH coverage (clover)
         run: |

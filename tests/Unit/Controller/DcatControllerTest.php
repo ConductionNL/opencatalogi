@@ -179,4 +179,30 @@ class DcatControllerTest extends TestCase
         $this->assertFalse($data['valid']);
         $this->assertCount(1, $data['violations']);
     }
+
+    public function testDonlReportUnknownCatalogReturns404(): void
+    {
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(null);
+        $response = $this->controller->donlReport('nope');
+        $this->assertSame(404, $response->getStatus());
+    }
+
+    public function testDonlReportReturnsSourceUrlAndViolations(): void
+    {
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(['hasDcat' => true]);
+        $this->dcatService->method('validateForDonl')->willReturn(
+            [
+                'sourceUrl'  => 'https://host/apps/opencatalogi/api/dcat',
+                'valid'      => false,
+                'violations' => [['iri' => 'https://host/api/woo/u1', 'axis' => 'dcat:theme', 'reason' => 'unmapped']],
+            ]
+        );
+
+        $response = $this->controller->donlReport('woo');
+        $this->assertSame(200, $response->getStatus());
+        $data = $response->getData();
+        $this->assertSame('https://host/apps/opencatalogi/api/dcat', $data['sourceUrl']);
+        $this->assertFalse($data['valid']);
+        $this->assertSame('woo', $data['catalogSlug']);
+    }
 }//end class

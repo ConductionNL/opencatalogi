@@ -211,12 +211,32 @@ class ListingsControllerTest extends TestCase
         $this->assertEquals(200, $response->getStatus());
     }
 
+    /**
+     * Wire up config mocks so the destroy() fail-closed guard on empty
+     * listing_register/listing_schema doesn't fire — the guard was added in
+     * WOO-515 to prevent silent unscoped delete when config is missing.
+     */
+    private function mockListingConfig(): void
+    {
+        $this->config->method('getValueString')
+            ->willReturnCallback(function (string $app, string $key, string $default = '') {
+                if ($app === 'opencatalogi' && $key === 'listing_register') {
+                    return '1';
+                }
+                if ($app === 'opencatalogi' && $key === 'listing_schema') {
+                    return '2';
+                }
+                return $default;
+            });
+    }
+
     public function testDestroyReturnsSuccessOnDeletion(): void
     {
+        $this->mockListingConfig();
         $mockObjService = $this->mockObjectService();
 
         $mockObjService->method('deleteObject')
-            ->with('123')
+            ->with(uuid: '123', register: '1', schema: '2')
             ->willReturn(true);
 
         $response = $this->controller->destroy('123');
@@ -227,16 +247,63 @@ class ListingsControllerTest extends TestCase
 
     public function testDestroyReturns404WhenNotFound(): void
     {
+        $this->mockListingConfig();
         $mockObjService = $this->mockObjectService();
 
         $mockObjService->method('deleteObject')
-            ->with('nonexistent')
+            ->with(uuid: 'nonexistent', register: '1', schema: '2')
             ->willReturn(false);
 
         $response = $this->controller->destroy('nonexistent');
 
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(404, $response->getStatus());
+        // Response-shape parity with the DoesNotExistException path (PR #86 R3).
+        $data = $response->getData();
+        $this->assertArrayHasKey('message', $data);
+    }
+
+    /**
+     * WOO-515: `deleteObject()` throws `DoesNotExistException` when the UUID
+     * exists in the OpenRegister store but under a DIFFERENT (register, schema)
+     * pair — e.g. a catalog row whose UUID coincides with a listing UUID after
+     * a self-sync incident. Controller catches it and returns HTTP 404 with a
+     * scope-specific message.
+     */
+    public function testDestroyReturns404OnScopeMismatch(): void
+    {
+        $this->mockListingConfig();
+        $mockObjService = $this->mockObjectService();
+
+        $mockObjService->method('deleteObject')
+            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('scope miss'));
+
+        $response = $this->controller->destroy('collided-uuid');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+        $data = $response->getData();
+        $this->assertFalse($data['success']);
+        $this->assertArrayHasKey('message', $data);
+    }
+
+    /**
+     * WOO-515 fail-closed: destroy() refuses the delete with HTTP 409 when
+     * either `listing_register` or `listing_schema` is empty (fresh /
+     * half-configured install). Prevents the scope-defence from silently
+     * evaporating.
+     */
+    public function testDestroyReturns409WhenListingRegisterConfigEmpty(): void
+    {
+        // Deliberately DON'T call mockListingConfig() — bare mock returns
+        // empty string for getValueString, which triggers the fail-closed guard.
+        // Also don't wire up the object service; the guard fires before that.
+        $response = $this->controller->destroy('anything');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(409, $response->getStatus());
+        $data = $response->getData();
+        $this->assertArrayHasKey('message', $data);
     }
 
     public function testSynchroniseAllDirectories(): void

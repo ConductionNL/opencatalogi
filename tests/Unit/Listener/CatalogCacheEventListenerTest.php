@@ -40,8 +40,7 @@ class CatalogCacheEventListenerTest extends TestCase
     ): ObjectEntity&MockObject {
         $entity = $this->getMockBuilder(ObjectEntity::class)
             ->disableOriginalConstructor()
-            ->addMethods(['getUuid', 'getRegister', 'getSchema'])
-            ->onlyMethods(['jsonSerialize'])
+            ->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])
             ->getMock();
 
         $entity->method('getSchema')->willReturn($schema);

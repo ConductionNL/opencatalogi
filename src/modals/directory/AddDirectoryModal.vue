@@ -104,7 +104,7 @@ import { navigationStore } from '../../store/store.js'
 				<NcTextField
 					v-model="directoryUrl"
 					:label="t('opencatalogi', 'Directory URL')"
-					placeholder="https://directory.opencatalogi.nl/apps/opencatalogi/api/directory"
+					:placeholder="defaultDirectoryUrl"
 					:disabled="loading"
 					:loading="loading"
 					:helper-text="t('opencatalogi', 'The URL of the OpenCatalogi directory API endpoint')" />
@@ -142,54 +142,39 @@ import {
 } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { loadState } from '@nextcloud/initial-state'
 
 // icons
 import Sync from 'vue-material-design-icons/Sync.vue'
 
-/**
- * Loading state for the component
- * @type {import('vue').Ref<boolean>}
- */
+// Loaded from initial state (`default_directory_url` override, else the
+// server-side Application::DEFAULT_DIRECTORY_URL). Don't hardcode the literal.
+const DEFAULT_DIRECTORY_URL = loadState(
+	'opencatalogi',
+	'default_directory_url',
+	'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory',
+)
+
 const loading = ref(false)
-
-/**
- * Success state for the component
- * @type {import('vue').Ref<boolean|null>}
- */
 const success = ref(null)
-
-/**
- * Error state for the component
- * @type {import('vue').Ref<string|null>}
- */
 const error = ref(null)
-
-/**
- * Directory URL to sync with
- * @type {import('vue').Ref<string>}
- */
-const directoryUrl = ref('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory')
-
-/**
- * Sync results from the API
- * @type {import('vue').Ref<object|null>}
- */
+const directoryUrl = ref(DEFAULT_DIRECTORY_URL)
 const syncResults = ref(null)
 
-/**
- * Handle directory synchronization
- * @return {Promise<void>}
- */
 const handleSync = async () => {
 	loading.value = true
 	error.value = null
 	try {
-		const response = await axios.post(generateUrl('/apps/opencatalogi/api/directory'), {
-			directory: directoryUrl.value,
+		// Admin-only `/api/listings/add` (WOO-513) — same syncDirectory() as the
+		// public `/api/directory` gossip endpoint, but requires an authed user.
+		const response = await axios.post(generateUrl('/apps/opencatalogi/api/listings/add'), {
+			url: directoryUrl.value,
 		})
 
 		success.value = true
-		syncResults.value = response.data.data
+		// `/api/listings/add` returns the sync report bare; the `?? response.data`
+		// fallback is defensive dead-code kept for future shape regressions.
+		syncResults.value = response.data.data ?? response.data
 	} catch (err) {
 		console.error('Error synchronizing directory:', err)
 		success.value = false
@@ -199,16 +184,12 @@ const handleSync = async () => {
 	}
 }
 
-/**
- * Close the modal and reset state
- */
 const closeModal = () => {
 	navigationStore.setModal(false)
-	// Reset state when closing
 	success.value = null
 	error.value = null
 	syncResults.value = null
-	directoryUrl.value = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
+	directoryUrl.value = DEFAULT_DIRECTORY_URL
 }
 
 /**
@@ -231,7 +212,8 @@ export default {
 			loading: false,
 			success: null,
 			error: null,
-			directoryUrl: 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory',
+			directoryUrl: DEFAULT_DIRECTORY_URL,
+			defaultDirectoryUrl: DEFAULT_DIRECTORY_URL,
 			syncResults: null,
 			showDetails: false,
 		}

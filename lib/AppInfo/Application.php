@@ -37,6 +37,8 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
+use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
@@ -59,6 +61,19 @@ use OCA\OpenRegister\Event\ToolRegistrationEvent;
 class Application extends App implements IBootstrap
 {
     public const APP_ID = 'opencatalogi';
+
+    /**
+     * Canonical national OpenCatalogi directory URL.
+     *
+     * Single source of truth for the federated-network endpoint that
+     * DirectoryService, the Add-Directory modal and the first-time-setup
+     * `connect-federation` action all default to. An instance may override it
+     * with the `default_directory_url` app-config key (see
+     * DirectoryService::getDefaultDirectoryUrl()).
+     *
+     * @var string
+     */
+    public const DEFAULT_DIRECTORY_URL = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
 
     /**
      * Constructor.
@@ -128,6 +143,18 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ToolRegistrationEvent::class,
             listener: ToolRegistrationListener::class
+        );
+
+        // Provide the manifest-config initial state on every SPA `index` render,
+        // controller-independent. After the AppHost adoption (ADR-040) the `/`
+        // index route resolves to OpenRegister's shared AppHost dashboard
+        // controller, which serves templates/index.php without OpenCatalogi's
+        // register/schema config — a clean install then rendered no SPA. Hooking
+        // the provision to BeforeTemplateRenderedEvent restores it for both the
+        // AppHost `/` page and the UiController-served deep-link routes.
+        $context->registerEventListener(
+            event: BeforeTemplateRenderedEvent::class,
+            listener: ProvideManifestConfigStateListener::class
         );
 
         // Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.
@@ -239,15 +266,43 @@ class Application extends App implements IBootstrap
     /**
      * Boot the application.
      *
+     * Registers the app-menu navigation entry via INavigationManager (see body).
+     *
      * @param IBootContext $context The boot context.
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @spec exclude Framework lifecycle hook; app-menu navigation registration is infrastructure, not a spec'd feature.
      */
     public function boot(IBootContext $context): void
     {
         // Initialization handled by the Repair step (InitializeSettings).
         // See lib/Repair/InitializeSettings.php.
+        //
+        // Register the app-menu navigation entry in PHP instead of info.xml.
+        // The dashboard SPA is served by the engine-namespaced AppHost route
+        // OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#page (see appinfo/routes.php),
+        // whose generated route name contains backslashes. info.xml's <navigations><route>
+        // is validated against the App Store's info.xsd pattern [0-9a-zA-Z_]+(\.[0-9a-zA-Z_]+){2},
+        // which rejects that name (HTTP 400 on publish). IURLGenerator::linkToRoute() carries
+        // no such constraint, so registering here keeps the app-menu href working AND lets the
+        // release pass App Store validation.
+        $server            = $context->getServerContainer();
+        $navigationManager = $server->get(\OCP\INavigationManager::class);
+        $navigationManager->add(
+            static function () use ($server) {
+                $urlGenerator = $server->get(\OCP\IURLGenerator::class);
+                $l10n         = $server->get(\OCP\L10N\IFactory::class)->get(Application::APP_ID);
+
+                return [
+                    'id'    => Application::APP_ID,
+                    'order' => 10,
+                    'href'  => $urlGenerator->linkToRoute('opencatalogi.oca\opencatalogi\apphost\controller\genericdashboard.page'),
+                    'icon'  => $urlGenerator->imagePath(Application::APP_ID, 'app.svg'),
+                    'name'  => $l10n->t('Catalogi'),
+                    'type'  => 'link',
+                ];
+            }
+        );
     }//end boot()
 }//end class

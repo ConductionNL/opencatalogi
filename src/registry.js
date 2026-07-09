@@ -33,11 +33,13 @@
 import DashboardView from './views/dashboard/Dashboard.vue'
 import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
+import FederationDirectory from './views/directory/FederationDirectory.vue'
+import FederationSearch from './views/search/FederationSearch.vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import {
 	CnFederationStatus,
 	CnFileManager,
 	CnRelationshipGraph,
-	CnThemePreview,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
 
@@ -47,9 +49,23 @@ export default {
 	CatalogDetailPageView,
 	WooBatchDetailView,
 	CnFederationStatus,
+	FederationDirectory,
+	FederationSearch,
 
 	// --- Detail-page widgets (referenced by `widgetKey` in manifest pages). ---
-	'theme-preview': CnThemePreview,
+	// NOTE: this map is passed to CnAppRoot as the `customComponents` prop,
+	// which provides `cnCustomComponents` — a DIFFERENT inject than
+	// `cnRegistry` (fed by a `registry` prop this app never sets). CnWidgetGrid
+	// (the page-level `widgets[]`/`widgetKey` renderer) only ever resolves a
+	// key against `cnRegistry` → BUILT_IN_WIDGETS → the shared dashboard
+	// widget catalog — never against this map. The four keys below are
+	// therefore NOT resolved by CnWidgetGrid from here; they render only
+	// because main.js also registers them into the shared catalog via
+	// `registerDashboardWidget`, which IS in CnWidgetGrid's fallback chain.
+	// This map's entries are effectively unreachable dead code for these
+	// four keys but are left in place (harmless) for any future consumer
+	// that resolves widgetKeys against `customComponents` directly.
+	'theme-preview': ThemePreviewWidget,
 	'tree-view': CnTreeView,
 	'relationship-graph': CnRelationshipGraph,
 	'file-manager': CnFileManager,

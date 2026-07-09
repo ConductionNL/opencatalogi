@@ -25,12 +25,17 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 
 /**
  * Controller for handling sitemap operations.
+ *
+ * @spec openspec/specs/woo-compliance/spec.md
  */
 class SitemapController extends Controller
 {
@@ -95,4 +100,35 @@ class SitemapController extends Controller
         );
 
     }//end sitemap()
+
+    /**
+     * Validate a catalog's DIWOO output against the TOOI/DiWoo value lists.
+     *
+     * Admin-only (AuthorizedAdminSetting). Runs the DIWOO mapping in a dry run and
+     * reports, per document, any axis (informatiecategorie / publisher / soortHandeling)
+     * that could not resolve to an official value-list URI. Advisory only — it never
+     * blocks the sitemap from being served (WOO-TOOI-004).
+     *
+     * @param string $catalogSlug  The catalog slug.
+     * @param string $categoryCode The DIWOO category code (e.g. `infocat014`).
+     *
+     * @return JSONResponse The per-document violation report.
+     *
+     * @NoCSRFRequired
+     *
+     * @spec openspec/specs/woo-compliance/spec.md
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function diwooReport(string $catalogSlug, string $categoryCode): JSONResponse
+    {
+        $page   = (int) ($this->request->getParams()['page'] ?? 1);
+        $report = $this->sitemapService->validateDiwooOutput(
+            catalogSlug: $catalogSlug,
+            categoryCode: $categoryCode,
+            page: $page
+        );
+
+        return new JSONResponse($report, 200);
+
+    }//end validateDiwoo()
 }//end class
