@@ -31,6 +31,7 @@
           "listing",
           "organization",
           "publication",
+          "document",
           "theme",
           "page",
           "menu",
@@ -274,6 +275,118 @@
               "nl": "Publicatie {{title}} gearchiveerd (bewaartermijn verlopen)",
               "en": "Publication {{title}} archived (retention term expired)"
             }
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": true,
+        "authorization": {
+          "read": [
+            {
+              "group": "public",
+              "match": {
+                "publicatiedatum": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
+          ]
+        }
+      },
+      "document": {
+        "slug": "document",
+        "title": "Document",
+        "version": "0.1.0",
+        "published": "2026-07-03T00:00:00+00:00",
+        "summary": "A document attached to a publication, discoverable via the public full-text search endpoint",
+        "description": "A document represents a file (e.g. PDF, DOCX) attached to a publication. Documents are schema-discoverable so the public full-text search endpoint (SCH-PFTS-005) can surface them alongside publications, discriminated by @self.schema.",
+        "icon": null,
+        "required": [
+          "title",
+          "publication"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the document",
+            "maxLength": 255,
+            "minLength": 1,
+            "facetable": true,
+            "title": "Title"
+          },
+          "filename": {
+            "type": "string",
+            "description": "The original filename of the document",
+            "maxLength": 255,
+            "facetable": false,
+            "title": "Filename"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "The MIME type of the document",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "MIME Type"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Brief description of the document",
+            "maxLength": 255,
+            "facetable": false,
+            "title": "Summary"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the document",
+            "maxLength": 2555,
+            "facetable": false,
+            "title": "Description"
+          },
+          "publication": {
+            "type": "object",
+            "description": "Summary of the publication this document is attached to",
+            "facetable": false,
+            "title": "Publication",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The UUID of the linked publication",
+                "title": "Publication ID"
+              },
+              "slug": {
+                "type": "string",
+                "description": "The slug of the linked publication",
+                "title": "Publication Slug"
+              },
+              "title": {
+                "type": "string",
+                "description": "The title of the linked publication",
+                "title": "Publication Title"
+              }
+            }
+          },
+          "organization": {
+            "type": "string",
+            "description": "Reference to the organization that owns this document",
+            "facetable": true,
+            "title": "Organization"
+          },
+          "publicatiedatum": {
+            "type": "string",
+            "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this document is live and publicly accessible",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Publication Date"
+          },
+          "depublicatiedatum": {
+            "type": "string",
+            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this document is withdrawn from public access",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Depublication Date"
           }
         },
         "configuration": {
@@ -1504,6 +1617,66 @@
         },
         "name": "Default Organization",
         "summary": "The default organization for this OpenCatalogi instance"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "example-municipality-annual-report"
+        },
+        "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld",
+        "summary": "Voorbeeld-publicatie (seed data) — fictief jaarverslag van een fictieve gemeente. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
+        "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is. Gemeente Voorbeeld is een fictieve gemeente en representeert geen echte overheidsorganisatie.",
+        "organization": "default-org",
+        "publicatiedatum": "2024-01-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "example-conduction-quarterly-report"
+        },
+        "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026",
+        "summary": "Voorbeeld-publicatie (seed data) — kwartaalrapport van Conduction B.V., de maintainer van OpenCatalogi. Aanwezig na fresh install om de search-functionaliteit meteen bruikbaar te maken.",
+        "description": "**Voorbeeld / seed data** — dit is geen echte publicatie. Bij een fresh install van OpenCatalogi wordt deze rij automatisch geladen zodat het publieke search-endpoint (`/apps/opencatalogi/api/search`) meteen iets terug kan geven. Vervang of verwijder deze rij zodra de echte publicatie-content geïmporteerd is.",
+        "organization": "default-org",
+        "publicatiedatum": "2024-04-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "example-municipality-annual-report-pdf"
+        },
+        "title": "Voorbeeld: Jaarverslag 2024 (PDF)",
+        "filename": "voorbeeld-jaarverslag-2024.pdf",
+        "mimeType": "application/pdf",
+        "summary": "Voorbeeld-document (seed data) — fictieve PDF-bijlage bij het voorbeeld-jaarverslag. Aanwezig na fresh install.",
+        "description": "**Voorbeeld / seed data** — dit is geen echte PDF. Bij een fresh install wordt deze rij automatisch geladen om de search-response mixed-typed te maken. Vervang of verwijder deze rij zodra echte documenten geïmporteerd zijn.",
+        "publication": {
+          "slug": "example-municipality-annual-report",
+          "title": "Voorbeeld: Jaarverslag 2024 — Gemeente Voorbeeld"
+        },
+        "organization": "default-org",
+        "publicatiedatum": "2024-01-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "document",
+          "slug": "example-conduction-quarterly-report-pdf"
+        },
+        "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026 (PDF)",
+        "filename": "voorbeeld-conduction-q1-rapport.pdf",
+        "mimeType": "application/pdf",
+        "summary": "Voorbeeld-document (seed data) — fictieve PDF-bijlage bij het voorbeeld-kwartaalrapport. Aanwezig na fresh install.",
+        "description": "**Voorbeeld / seed data** — dit is geen echte PDF. Bij een fresh install wordt deze rij automatisch geladen om de search-response mixed-typed te maken. Vervang of verwijder deze rij zodra echte documenten geïmporteerd zijn.",
+        "publication": {
+          "slug": "example-conduction-quarterly-report",
+          "title": "Voorbeeld: Conduction Kwartaalrapport Q1 2026"
+        },
+        "organization": "default-org",
+        "publicatiedatum": "2024-04-01T00:00:00+00:00"
       }
     ]
   }

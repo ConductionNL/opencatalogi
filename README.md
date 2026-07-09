@@ -104,6 +104,7 @@ graph TD
 | ------------ | ---------------------------------------------------------------------------------- | ----------------------- |
 | Publication  | Core metadata wrapper for published information — title, summary, category, status | DCAT-AP                 |
 | Attachment   | File or document linked to a publication with its own metadata                     | DCAT Distribution       |
+| Document     | Schema-discoverable summary of a publication's file (title, filename, MIME type) — surfaced alongside publications by the public search endpoint (`GET /apps/opencatalogi/api/search`) | DCAT Distribution |
 | Catalogue    | A named collection of publications with its own slug, organization, and settings   | DCAT Catalog            |
 | Organisation | The publishing organization with contact info, logo, and branding                  | Schema.org Organization |
 | Listing      | A subscription to an external catalog from the federated directory                 | —                       |
