@@ -35,11 +35,11 @@ import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
 import FederationDirectory from './views/directory/FederationDirectory.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import {
 	CnFederationStatus,
 	CnFileManager,
 	CnRelationshipGraph,
-	CnThemePreview,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
 
@@ -65,7 +65,7 @@ export default {
 	// This map's entries are effectively unreachable dead code for these
 	// four keys but are left in place (harmless) for any future consumer
 	// that resolves widgetKeys against `customComponents` directly.
-	'theme-preview': CnThemePreview,
+	'theme-preview': ThemePreviewWidget,
 	'tree-view': CnTreeView,
 	'relationship-graph': CnRelationshipGraph,
 	'file-manager': CnFileManager,

@@ -78,9 +78,62 @@ function createObjectStore(id, options = {}) {
 
 const noopPlugin = () => ({ name: 'noop', state: () => ({}), getters: {}, actions: {} })
 
+// Faithful-enough stub of the real CnThemePreview (mirrors its `pickers`
+// required-prop + `buildInitialModel`/`previewStyle` logic) so component
+// tests that mount it exercise the same crash surface the real library
+// component has — a required, non-defaulted `pickers` array iterated in
+// `buildInitialModel()`, feeding a `previewStyle` computed that runs
+// `Object.entries()` over the resulting model.
+const CnThemePreview = {
+	name: 'CnThemePreview',
+	props: {
+		pickers: {
+			type: Array,
+			required: true,
+			validator: (v) => Array.isArray(v) && v.length > 0
+				&& v.every((p) => p && typeof p.key === 'string' && typeof p.label === 'string'),
+		},
+		value: { type: Object, default: () => ({}) },
+		defaults: { type: Object, default: null },
+		sampleTitle: { type: String, default: 'My app' },
+		sampleBodyText: { type: String, default: '' },
+	},
+	data() {
+		return { model: this.buildInitialModel() }
+	},
+	computed: {
+		previewStyle() {
+			const out = {}
+			for (const [k, v] of Object.entries(this.model)) {
+				out[`--${k}`] = v
+			}
+			return out
+		},
+	},
+	methods: {
+		buildInitialModel() {
+			const out = {}
+			for (const p of this.pickers) {
+				if (this.value && this.value[p.key] !== undefined) {
+					out[p.key] = this.value[p.key]
+				} else if (p.default !== undefined) {
+					out[p.key] = p.default
+				} else {
+					out[p.key] = '#000000'
+				}
+			}
+			return out
+		},
+	},
+	render(h) {
+		return h('div', { class: 'cn-theme-preview-stub', style: this.previewStyle }, [this.sampleTitle])
+	},
+}
+
 module.exports = {
 	createObjectStore,
 	useObjectStore: createObjectStore('conduction-objects'),
+	CnThemePreview,
 	auditTrailsPlugin: noopPlugin,
 	filesPlugin: noopPlugin,
 	lifecyclePlugin: noopPlugin,
