@@ -52,6 +52,7 @@ class SitemapServiceTest extends TestCase
             $this->settingsService,
             $this->urlGenerator,
             $this->config,
+            new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
         );
     }
 
@@ -395,15 +396,19 @@ class SitemapServiceTest extends TestCase
 
     public function testMapDiwooDocument(): void
     {
+        // Fully value-list-bindable publication: category resolves to infocat014,
+        // organisation carries a valid TOOI organisatie identifier, declared
+        // handling type resolves through the DiWoo value list.
         $publication = [
-            'id'                => 'pub-1',
-            'tooiCategorieNaam' => 'Woo verzoeken',
-            'tooiCategorieUri'  => 'https://example.com/tooi/woo',
-            '@self'             => [
+            'id'             => 'pub-1',
+            'category'       => 'infocat014',
+            'soortHandeling' => 'vaststelling',
+            'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
+            '@self'          => [
                 'created'      => '2024-01-15 10:00:00',
                 'updated'      => '2024-06-20 14:30:00',
                 'owner'        => 'admin',
-                'organisation' => 'https://example.com/org/123',
+                'organisation' => 'org-uuid-123',
                 'published'    => '2024-03-01 08:00:00',
             ],
         ];
@@ -426,22 +431,23 @@ class SitemapServiceTest extends TestCase
         $this->assertEquals(date('Y-m-d H:i:s', strtotime('2024-05-10 12:00:00')), $doc['lastmod']);
         $this->assertEquals('2024-01-15', $doc['diwoo:creatiedatum']);
 
-        // Publisher.
-        $this->assertEquals('https://example.com/org/123', $doc['diwoo:publisher']['@resource']);
+        // Publisher @resource is bound to the TOOI organisatie identifier (WOO-TOOI-002).
+        $this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@resource']);
         $this->assertEquals('file-owner', $doc['diwoo:publisher']['#text']);
 
         // Format.
         $this->assertStringContainsString('PDF', $doc['diwoo:format']['@resource']);
         $this->assertEquals('pdf', $doc['diwoo:format']['#text']);
 
-        // Classification.
+        // Classification bound to the official TOOI category URI (WOO-TOOI-001).
         $classification = $doc['diwoo:classificatiecollectie']['diwoo:informatiecategorieen']['diwoo:informatiecategorie'];
-        $this->assertEquals('Woo verzoeken', $classification['#text']);
-        $this->assertEquals('https://example.com/tooi/woo', $classification['@resource']);
+        $this->assertEquals('Woo-verzoeken en -besluiten', $classification['#text']);
+        $this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532', $classification['@resource']);
 
-        // Document handling — diwoo:atTime comes from the file's published timestamp.
+        // Document handling — declared handling type resolves through the value list (WOO-TOOI-003).
         $handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
-        $this->assertEquals('ontvangst', $handling['diwoo:soortHandeling']['#text']);
+        $this->assertEquals('vaststelling', $handling['diwoo:soortHandeling']['#text']);
+        $this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76', $handling['diwoo:soortHandeling']['@resource']);
         $this->assertEquals('2024-05-10 12:00:00', $handling['diwoo:atTime']);
     }
 
@@ -475,8 +481,10 @@ class SitemapServiceTest extends TestCase
         $this->assertEquals('2024-04-02 09:30:00', $handling['diwoo:atTime']);
     }
 
-    public function testMapDiwooDocumentFallbackValues(): void
+    public function testMapDiwooDocumentOmitsUnresolvedAxesAndReports(): void
     {
+        // No organisation TOOI identifier, no resolvable category → both axes are
+        // OMITTED (never leaked as a literal @resource) and reported (WOO-TOOI-004).
         $publication = [
             'id'    => 'pub-2',
             '@self' => [],
@@ -487,20 +495,31 @@ class SitemapServiceTest extends TestCase
             'extension'   => 'docx',
         ];
 
-        $method = $this->getPrivateMethod('mapDiwooDocument');
-        $result = $method->invoke($this->service, $publication, $file);
+        $violations = [];
+        $method     = $this->getPrivateMethod('mapDiwooDocument');
+        $result     = $method->invokeArgs($this->service, [$publication, $file, &$violations]);
 
         $doc = $result['diwoo:Document']['diwoo:DiWoo'];
 
-        // Should use fallback values.
-        $this->assertEquals('PLACEHOLDER_OWNER', $doc['diwoo:publisher']['#text']);
-        $this->assertEquals('PLACEHOLDER_ORG_URI', $doc['diwoo:publisher']['@resource']);
-        $this->assertEquals('PLACEHOLDER_CATEGORY', $doc['diwoo:classificatiecollectie']['diwoo:informatiecategorieen']['diwoo:informatiecategorie']['#text']);
-        $this->assertEquals('PLACEHOLDER_CATEGORY_URI', $doc['diwoo:classificatiecollectie']['diwoo:informatiecategorieen']['diwoo:informatiecategorie']['@resource']);
+        // Publisher @resource omitted (no TOOI id); human-readable #text still present.
+        $this->assertArrayNotHasKey('@resource', $doc['diwoo:publisher']);
+
+        // Unresolved informatiecategorie omitted entirely — no free-text @resource.
+        $this->assertArrayNotHasKey('diwoo:classificatiecollectie', $doc);
+
+        // soortHandeling still binds to the default value-list member.
+        $handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
+        $this->assertEquals('ontvangst', $handling['diwoo:soortHandeling']['#text']);
+        $this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535', $handling['diwoo:soortHandeling']['@resource']);
 
         // Format should be uppercase extension in URI.
         $this->assertStringContainsString('DOCX', $doc['diwoo:format']['@resource']);
         $this->assertEquals('docx', $doc['diwoo:format']['#text']);
+
+        // Both unresolved axes reported by the validator.
+        $axes = array_column($violations, 'axis');
+        $this->assertContains('publisher', $axes);
+        $this->assertContains('informatiecategorie', $axes);
     }
 
     // ──────────────────────────────────────────────────────────
@@ -859,6 +878,7 @@ class SitemapServiceTest extends TestCase
             $this->settingsService,
             $this->urlGenerator,
             $config,
+            new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
         );
 
         $reflection = new \ReflectionClass($service);
@@ -878,6 +898,7 @@ class SitemapServiceTest extends TestCase
             $this->settingsService,
             $this->urlGenerator,
             $config,
+            new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
         );
 
         $reflection = new \ReflectionClass($service);

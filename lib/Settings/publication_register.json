@@ -96,6 +96,7 @@
     "schemas": {
       "publication": {
         "slug": "publication",
+        "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -131,13 +132,17 @@
           "organization": {
             "type": "string",
             "description": "Reference to the organization that owns this publication",
+            "format": "uuid",
+            "$ref": "organization",
             "facetable": true,
             "title": "Organization"
           },
           "themes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "theme"
             },
             "description": "List of themes associated with this publication",
             "facetable": true,
@@ -405,6 +410,7 @@
       },
       "catalog": {
         "slug": "catalog",
+        "x-schema-org": "schema:DataCatalog",
         "x-openregister-notifications": {
           "catalog-stable": {
             "trigger": {
@@ -507,6 +513,8 @@
           "organization": {
             "type": "string",
             "description": "Reference to the organization that owns this catalog",
+            "format": "uuid",
+            "$ref": "organization",
             "facetable": true,
             "title": "Organization"
           },
@@ -612,6 +620,7 @@
       },
       "listing": {
         "slug": "listing",
+        "x-schema-org": "schema:DataFeed",
         "x-openregister-notifications": {
           "listing-sync-failed": {
             "trigger": {
@@ -683,6 +692,8 @@
           "catalogusId": {
             "type": "string",
             "description": "ID of the catalog this listing belongs to",
+            "format": "uuid",
+            "$ref": "catalog",
             "facetable": true,
             "title": "Catalog ID"
           },
@@ -832,8 +843,9 @@
       },
       "organization": {
         "slug": "organization",
+        "x-schema-org": "schema:Organization",
         "title": "Organization",
-        "version": "0.0.4",
+        "version": "0.0.5",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "An organization that publishes or manages catalogs",
         "description": "Organizations represent entities that publish or manage catalogs. They can be government agencies, companies, or other institutions. Each organization can have multiple catalogs and is identified by various standardized identifiers like OIN, RSIN, and PKI certificates.",
@@ -877,6 +889,12 @@
             "facetable": true,
             "title": "TOOI"
           },
+          "tooiIdentifier": {
+            "type": "string",
+            "description": "Full TOOI organisatie identifier URI (https://identifier.overheid.nl/tooi/id/...) used as the diwoo:publisher @resource in DIWOO Woo-index feeds",
+            "facetable": false,
+            "title": "TOOI Identifier URI"
+          },
           "rsin": {
             "type": "string",
             "description": "RSIN number for tax identification",
@@ -899,7 +917,11 @@
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "implements": [
+            "https://openregister.app/ns#Organization",
+            "https://schema.org/Organization"
+          ]
         },
         "hardValidation": true,
         "searchable": true,
@@ -911,6 +933,7 @@
       },
       "page": {
         "slug": "page",
+        "x-schema-org": "schema:WebPage",
         "title": "Page",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -1021,6 +1044,7 @@
       },
       "theme": {
         "slug": "theme",
+        "x-schema-org": "schema:DefinedTerm",
         "title": "Theme",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -1108,6 +1132,7 @@
       },
       "menu": {
         "slug": "menu",
+        "x-schema-org": "schema:SiteNavigationElement",
         "title": "Menu",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -1272,6 +1297,17 @@
             "description": "Whether to hide this menu before user login",
             "facetable": false,
             "title": "Hide Before Login"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Pick an icon (Material Design) or paste custom SVG.",
+            "widget": "icon",
+            "iconSources": [
+              "mdi"
+            ],
+            "allowCustomSvg": true,
+            "facetable": false,
+            "title": "Icon"
           }
         },
         "hardValidation": true,
@@ -1284,6 +1320,7 @@
       },
       "glossary": {
         "slug": "glossary",
+        "x-schema-org": "schema:DefinedTerm",
         "title": "Glossary",
         "version": "0.0.4",
         "published": "2025-01-01T00:00:00+00:00",
@@ -1363,6 +1400,8 @@
           "publication": {
             "type": "string",
             "description": "Reference (UUID) of the counted publication",
+            "format": "uuid",
+            "$ref": "publication",
             "maxLength": 255,
             "facetable": true,
             "title": "Publication"

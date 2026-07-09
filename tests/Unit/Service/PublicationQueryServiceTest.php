@@ -28,13 +28,9 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCP\DB\IResult;
-use OCP\DB\QueryBuilder\IExpressionBuilder;
-use OCP\DB\QueryBuilder\IFunctionBuilder;
-use OCP\DB\QueryBuilder\IQueryBuilder;
-use OCP\DB\QueryBuilder\IQueryFunction;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Service\ObjectService;
 use OCP\IAppConfig;
-use OCP\IDBConnection;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -124,18 +120,13 @@ class FakeSearchObjectService
 /**
  * Unit tests for PublicationQueryService.
  *
- * Focuses on the constrained findObjectLocation query (#734). Object visibility is now
- * enforced by OpenRegister RBAC, not by an app-side published predicate.
+ * Focuses on the constrained findObjectLocation lookup (#734), which now routes
+ * through OpenRegister's ObjectService (ADR-022) instead of raw SQL against OR's
+ * internal magic-mapper tables. Object visibility is enforced by OpenRegister RBAC,
+ * not by an app-side published predicate.
  */
 class PublicationQueryServiceTest extends TestCase
 {
-
-    /**
-     * Database connection mock.
-     *
-     * @var IDBConnection|MockObject
-     */
-    private IDBConnection|MockObject $db;
 
     /**
      * DI container mock.
@@ -143,6 +134,13 @@ class PublicationQueryServiceTest extends TestCase
      * @var ContainerInterface|MockObject
      */
     private ContainerInterface|MockObject $container;
+
+    /**
+     * OpenRegister ObjectService mock resolved from the container.
+     *
+     * @var ObjectService|MockObject
+     */
+    private ObjectService|MockObject $objectService;
 
     /**
      * App config mock.
@@ -179,10 +177,10 @@ class PublicationQueryServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->db        = $this->createMock(IDBConnection::class);
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->config    = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+        $this->container     = $this->createMock(ContainerInterface::class);
+        $this->objectService = $this->createMock(ObjectService::class);
+        $this->config        = $this->createMock(IAppConfig::class);
+        $this->logger        = $this->createMock(LoggerInterface::class);
 
         $this->configStore = [];
         $this->config->method('getValueString')
@@ -191,7 +189,6 @@ class PublicationQueryServiceTest extends TestCase
             );
 
         $this->service = new PublicationQueryService(
-            db: $this->db,
             container: $this->container,
             config: $this->config,
             logger: $this->logger
@@ -210,7 +207,6 @@ class PublicationQueryServiceTest extends TestCase
         $userSession->method('getUser')->willReturn($this->createMock(IUser::class));
 
         return new PublicationQueryService(
-            db: $this->db,
             container: $this->container,
             userSession: $userSession,
             config: $this->config,
@@ -550,21 +546,39 @@ class PublicationQueryServiceTest extends TestCase
 
     }//end configureRegisterAndSchemas()
 
+    /**
+     * Wire the container so it resolves the ObjectService mock.
+     *
+     * @return void
+     */
+    private function wireObjectService(): void
+    {
+        $this->container->method('get')->willReturnCallback(
+            function (string $id) {
+                if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $this->objectService;
+                }
+
+                throw new \RuntimeException('unexpected container id: '.$id);
+            }
+        );
+
+    }//end wireObjectService()
+
     // -------------------------------------------------------------------------
     // findObjectLocation() tests
     // -------------------------------------------------------------------------
 
     /**
-     * Security (#734): findObjectLocation MUST return null without touching the
-     * database when no constraint is supplied.
+     * Security (#734): findObjectLocation MUST return null without touching
+     * OpenRegister when no constraint is supplied.
      *
      * @return void
      */
     public function testFindObjectLocationFailsClosedWithoutConstraint(): void
     {
-        // The DB must NOT be touched at all.
-        $this->db->expects($this->never())->method('executeQuery');
-        $this->db->expects($this->never())->method('getQueryBuilder');
+        // OpenRegister must NOT be resolved or queried at all.
+        $this->container->expects($this->never())->method('get');
 
         $this->assertNull($this->service->findObjectLocation('any-uuid'));
         $this->assertNull(
@@ -580,47 +594,52 @@ class PublicationQueryServiceTest extends TestCase
     }//end testFindObjectLocationFailsClosedWithoutConstraint()
 
     /**
-     * Security (#734): constrained lookup queries only the expected magic table.
+     * Constrained lookup locates the object via ObjectService::find within the
+     * allowed (register × schema) pair — no raw SQL against OR storage internals.
      *
      * @return void
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
      */
-    public function testFindObjectLocationLooksUpOnlyConstrainedTables(): void
+    public function testFindObjectLocationLocatesViaObjectService(): void
     {
-        // Stub magicTableExists to claim only one table exists.
-        $this->stubMagicTableExists(['oc_openregister_table_21_11' => true]);
+        $this->wireObjectService();
 
-        $resultRow   = ['register_id' => 21, 'schema_id' => 11];
-        $unionResult = $this->createMock(IResult::class);
-        $unionResult->method('fetch')->willReturn($resultRow);
-        $unionResult->method('closeCursor');
+        $entity = $this->createMock(ObjectEntity::class);
 
-        $this->db->method('quote')->willReturn("'uuid-found'");
-        $this->db->expects($this->once())
-            ->method('executeQuery')
-            ->with($this->stringContains('oc_openregister_table_21_11'))
-            ->willReturn($unionResult);
+        // Object lives only in register 21 / schema 11; every other pair misses.
+        $this->objectService->method('find')->willReturnCallback(
+            function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
+                if ((int) $register === 21 && (int) $schema === 11) {
+                    return $entity;
+                }
+
+                return null;
+            }
+        );
 
         $location = $this->service->findObjectLocation(
             uuid: 'uuid-found',
-            allowedRegisters: [21],
-            allowedSchemas: [11]
+            allowedRegisters: [20, 21],
+            allowedSchemas: [10, 11]
         );
 
         $this->assertSame(expected: ['register' => 21, 'schema' => 11], actual: $location);
 
-    }//end testFindObjectLocationLooksUpOnlyConstrainedTables()
+    }//end testFindObjectLocationLocatesViaObjectService()
 
     /**
-     * Security (#734): returns null when no magic tables exist for the constraints.
+     * Returns null when ObjectService finds the UUID in none of the allowed pairs.
      *
      * @return void
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
      */
-    public function testFindObjectLocationReturnsNullWhenNoTablesExist(): void
+    public function testFindObjectLocationReturnsNullWhenNotFound(): void
     {
-        $this->stubMagicTableExists([]);
+        $this->wireObjectService();
 
-        // No UNION query should ever execute — only the existence probes.
-        $this->db->expects($this->never())->method('executeQuery');
+        $this->objectService->method('find')->willReturn(null);
 
         $location = $this->service->findObjectLocation(
             uuid: 'uuid-missing',
@@ -630,62 +649,45 @@ class PublicationQueryServiceTest extends TestCase
 
         $this->assertNull($location);
 
-    }//end testFindObjectLocationReturnsNullWhenNoTablesExist()
-
-    // -------------------------------------------------------------------------
-    // Helper
-    // -------------------------------------------------------------------------
+    }//end testFindObjectLocationReturnsNullWhenNotFound()
 
     /**
-     * Stub the IQueryBuilder chain used by magicTableExists().
-     *
-     * @param array<string, bool> $tableExistence Map of table_name => exists?
+     * A DoesNotExistException from one pair is swallowed and the search continues
+     * to the next pair rather than bubbling up.
      *
      * @return void
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
      */
-    private function stubMagicTableExists(array $tableExistence): void
+    public function testFindObjectLocationContinuesPastMissingPair(): void
     {
-        $this->db->method('getQueryBuilder')->willReturnCallback(
-            function () use ($tableExistence) {
-                $qb          = $this->createMock(IQueryBuilder::class);
-                $funcBuilder = $this->createMock(IFunctionBuilder::class);
-                $funcBuilder->method('count')->willReturn($this->createMock(IQueryFunction::class));
-                $expr = $this->createMock(IExpressionBuilder::class);
-                $expr->method('eq')->willReturn('eq');
-                // NOTE: andWhere() lives on the query builder ($qb->andWhere()), not on
-                // the expression builder — IExpressionBuilder has no such method, so a
-                // stub here raises MethodCannotBeConfigured. The $qb->andWhere() stub is
-                // configured below.
-                $qb->method('select')->willReturnSelf();
-                $qb->method('from')->willReturnSelf();
-                $qb->method('func')->willReturn($funcBuilder);
-                $qb->method('expr')->willReturn($expr);
-                $qb->method('createNamedParameter')->willReturnCallback(fn($v) => $v);
-                $qb->method('createFunction')->willReturn('DATABASE()');
-                $qb->method('where')->willReturnSelf();
-                $qb->method('andWhere')->willReturnSelf();
+        $this->wireObjectService();
 
-                $qb->method('executeQuery')->willReturnCallback(
-                    function () use ($tableExistence) {
-                        $result = $this->createMock(IResult::class);
-                        // If any tableExistence entry is true return 1, else 0.
-                        $anyExists = (array_filter($tableExistence) !== []);
-                        $cntValue  = 0;
-                        if ($anyExists === true) {
-                            $cntValue = 1;
-                        }
+        $entity = $this->createMock(ObjectEntity::class);
 
-                        $result->method('fetch')->willReturn(['cnt' => $cntValue]);
-                        $result->method('closeCursor');
-                        return $result;
-                    }
-                );
+        $this->objectService->method('find')->willReturnCallback(
+            function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
+                if ((int) $register === 1 && (int) $schema === 2) {
+                    throw new \OCP\AppFramework\Db\DoesNotExistException('missing table');
+                }
 
-                return $qb;
+                if ((int) $register === 1 && (int) $schema === 3) {
+                    return $entity;
+                }
+
+                return null;
             }
         );
 
-    }//end stubMagicTableExists()
+        $location = $this->service->findObjectLocation(
+            uuid: 'uuid-found',
+            allowedRegisters: [1],
+            allowedSchemas: [2, 3]
+        );
+
+        $this->assertSame(expected: ['register' => 1, 'schema' => 3], actual: $location);
+
+    }//end testFindObjectLocationContinuesPastMissingPair()
 
     // -------------------------------------------------------------------------
     // isObjectPublic() tests — RBAC publicatiedatum model (APB-006)

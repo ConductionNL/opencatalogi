@@ -147,64 +147,34 @@ import { loadState } from '@nextcloud/initial-state'
 // icons
 import Sync from 'vue-material-design-icons/Sync.vue'
 
-/**
- * Default national OpenCatalogi directory URL.
- *
- * Resolved once from server-provided initial state (the `default_directory_url`
- * override, falling back server-side to Application::DEFAULT_DIRECTORY_URL).
- * Single source of truth — never hardcode the literal in this component.
- * @type {string}
- */
+// Loaded from initial state (`default_directory_url` override, else the
+// server-side Application::DEFAULT_DIRECTORY_URL). Don't hardcode the literal.
 const DEFAULT_DIRECTORY_URL = loadState(
 	'opencatalogi',
 	'default_directory_url',
 	'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory',
 )
 
-/**
- * Loading state for the component
- * @type {import('vue').Ref<boolean>}
- */
 const loading = ref(false)
-
-/**
- * Success state for the component
- * @type {import('vue').Ref<boolean|null>}
- */
 const success = ref(null)
-
-/**
- * Error state for the component
- * @type {import('vue').Ref<string|null>}
- */
 const error = ref(null)
-
-/**
- * Directory URL to sync with
- * @type {import('vue').Ref<string>}
- */
 const directoryUrl = ref(DEFAULT_DIRECTORY_URL)
-
-/**
- * Sync results from the API
- * @type {import('vue').Ref<object|null>}
- */
 const syncResults = ref(null)
 
-/**
- * Handle directory synchronization
- * @return {Promise<void>}
- */
 const handleSync = async () => {
 	loading.value = true
 	error.value = null
 	try {
-		const response = await axios.post(generateUrl('/apps/opencatalogi/api/directory'), {
-			directory: directoryUrl.value,
+		// Admin-only `/api/listings/add` (WOO-513) — same syncDirectory() as the
+		// public `/api/directory` gossip endpoint, but requires an authed user.
+		const response = await axios.post(generateUrl('/apps/opencatalogi/api/listings/add'), {
+			url: directoryUrl.value,
 		})
 
 		success.value = true
-		syncResults.value = response.data.data
+		// `/api/listings/add` returns the sync report bare; the `?? response.data`
+		// fallback is defensive dead-code kept for future shape regressions.
+		syncResults.value = response.data.data ?? response.data
 	} catch (err) {
 		console.error('Error synchronizing directory:', err)
 		success.value = false
@@ -214,12 +184,8 @@ const handleSync = async () => {
 	}
 }
 
-/**
- * Close the modal and reset state
- */
 const closeModal = () => {
 	navigationStore.setModal(false)
-	// Reset state when closing
 	success.value = null
 	error.value = null
 	syncResults.value = null

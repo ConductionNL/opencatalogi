@@ -55,7 +55,8 @@
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Concept Publications count widget -->
@@ -67,7 +68,8 @@
 					:icon="FileDocumentEditOutline"
 					variant="warning"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Published Publications count widget -->
@@ -79,7 +81,8 @@
 					:icon="FileDocumentCheckOutline"
 					variant="success"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Depublished Publications count widget -->
@@ -91,7 +94,8 @@
 					:icon="AlertOutline"
 					variant="error"
 					horizontal
-					:route="{ name: 'Catalogs' }" />
+					:clickable="true"
+					@click="navigateToPublications()" />
 			</template>
 
 			<!-- Concept Attachments count widget -->
@@ -445,6 +449,10 @@ export default {
 			return this.catalogs.length > 0
 				|| this.allPublications.length > 0
 		},
+		/** First catalog slug available in the store, used for Publications route navigation. */
+		firstCatalogSlug() {
+			return this.catalogs[0]?.slug || null
+		},
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		widgetDefs() {
 			return [
@@ -630,8 +638,44 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		openPublication(publication) {
-			objectStore.setActiveObject('publication', publication)
-			navigationStore.setModal('viewObject')
+			const catalogSlug = this.catalogSlugById(publication?.catalog)
+			const pubId = publication?.id || publication?.['@self']?.id
+			if (catalogSlug && pubId) {
+				this.$router.push({ name: 'PublicationDetail', params: { catalogSlug, id: String(pubId) } })
+			} else if (catalogSlug) {
+				this.$router.push({ name: 'Publications', params: { catalogSlug } })
+			} else {
+				this.$router.push({ name: 'Catalogs' })
+			}
+		},
+
+		/**
+		 * Navigate to the Publications index for the first available catalog,
+		 * or fall back to the Catalogs list if no catalog slug is known yet.
+		 * Status-based filtering is intentionally omitted: publication status is
+		 * derived from date fields (publicatiedatum / depublicatiedatum), not a
+		 * simple status query parameter.
+		 */
+		navigateToPublications() {
+			if (this.firstCatalogSlug) {
+				this.$router.push({ name: 'Publications', params: { catalogSlug: this.firstCatalogSlug } })
+			} else {
+				this.$router.push({ name: 'Catalogs' })
+			}
+		},
+
+		/**
+		 * Resolve a catalog slug from a catalog ID reference on a publication.
+		 * @param {string|number|object|null} catalogRef - catalog field value from a publication
+		 * @return {string|null}
+		 */
+		catalogSlugById(catalogRef) {
+			if (!catalogRef) return this.firstCatalogSlug
+			const refId = typeof catalogRef === 'object' ? (catalogRef?.id ?? catalogRef?.slug) : catalogRef
+			const found = this.catalogs.find(
+				(c) => String(c.id) === String(refId) || c.slug === String(refId),
+			)
+			return found?.slug || this.firstCatalogSlug
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */

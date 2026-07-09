@@ -24,7 +24,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
-use OCP\IDBConnection;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -60,20 +59,8 @@ class PublicationQueryService
     ];
 
     /**
-     * Per-instance existence cache for magic-mapper tables.
-     *
-     * Avoids repeated information_schema lookups when a request touches the same
-     * (register × schema) pair multiple times. Cleared whenever the service is
-     * reconstructed (no long-lived state across requests).
-     *
-     * @var array<string, bool>
-     */
-    private array $magicTableCache = [];
-
-    /**
      * Constructor.
      *
-     * @param IDBConnection        $db          Database connection
      * @param ContainerInterface   $container   DI container
      * @param IUserSession|null    $userSession User session for anonymity checks (auto-wired at runtime)
      * @param IAppConfig|null      $config      App config, resolves the publication/document register+schema ids
@@ -81,7 +68,6 @@ class PublicationQueryService
      *                                          configuration drift is observable in production (SCH-PFTS-005).
      */
     public function __construct(
-        private readonly IDBConnection $db,
         private readonly ContainerInterface $container,
         private readonly ?IUserSession $userSession=null,
         private readonly ?IAppConfig $config=null,
@@ -427,15 +413,17 @@ class PublicationQueryService
     /**
      * Find the register and schema IDs for an object UUID within a constrained scope.
      *
-     * OpenRegister stores objects in per-register-per-schema "magic tables" named
-     * oc_openregister_table_{register}_{schema}. This helper locates which table a
-     * UUID lives in, but it is ALWAYS scoped to the caller-supplied register/schema
-     * lists. The legacy platform-wide UNION-ALL across every magic table (with a
-     * per-request information_schema reflection) is gone (#734) — it was an
-     * anonymous-reachable DoS vector and also leaked cross-catalog objects (#733).
+     * Locates which OpenRegister (register × schema) pair holds a given UUID, always
+     * scoped to the caller-supplied register/schema lists. The lookup goes through
+     * OpenRegister's `ObjectService` (ADR-022: consume OR abstractions) rather than
+     * issuing raw SQL against OR's internal per-register/per-schema storage tables or
+     * probing the DBMS catalog for their existence. OR remains free to change its
+     * physical storage layout without breaking opencatalogi.
      *
-     * Callers MUST pass non-empty $allowedRegisters and $allowedSchemas; otherwise
-     * the method returns null without touching the database.
+     * The legacy platform-wide search across every magic table is gone (#734) — it was
+     * an anonymous-reachable DoS vector and also leaked cross-catalog objects (#733).
+     * Callers MUST pass non-empty $allowedRegisters and $allowedSchemas; otherwise the
+     * method returns null without touching OpenRegister.
      *
      * @param string                 $uuid             The UUID of the object to find.
      * @param array<int|string>|null $allowedRegisters Register IDs the search may touch.
@@ -445,8 +433,7 @@ class PublicationQueryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec exclude DB-scan helper that searches a constrained subset of magic mapper
-     *       tables to locate an object's register/schema IDs; pure framework plumbing.
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
      */
     public function findObjectLocation(
         string $uuid,
@@ -459,11 +446,16 @@ class PublicationQueryService
             return null;
         }
 
-        // Build a UNION ALL query across the catalog's (register × schema) magic
-        // tables. The table name pattern is deterministic so there is no need to
-        // reflect against information_schema on the hot path.
-        $unionParts = [];
-        $quotedUuid = $this->db->quote($uuid);
+        $objectService = $this->getObjectService();
+        if ($objectService === null) {
+            return null;
+        }
+
+        // Locate the object by asking OpenRegister to resolve it within each
+        // constrained (register × schema) pair. The location lookup is visibility-
+        // agnostic (_rbac: false) — it mirrors the previous behaviour of locating an
+        // object's home pair; callers re-apply their own RBAC/visibility filter on the
+        // subsequent read. No raw SQL and no knowledge of OR's table layout.
         foreach ($allowedRegisters as $register) {
             if (is_numeric($register) === false) {
                 continue;
@@ -476,80 +468,52 @@ class PublicationQueryService
                 }
 
                 $schemaId = (int) $schema;
-                $table    = "oc_openregister_table_{$registerId}_{$schemaId}";
-                if ($this->magicTableExists($table) === false) {
+                try {
+                    $object = $objectService->find(
+                        id: $uuid,
+                        _extend: [],
+                        files: false,
+                        register: $registerId,
+                        schema: $schemaId,
+                        _rbac: false,
+                        _multitenancy: false
+                    );
+                } catch (DoesNotExistException $e) {
+                    continue;
+                } catch (\Exception $e) {
                     continue;
                 }
 
-                $part         = "(SELECT {$registerId} AS register_id,";
-                $part        .= " {$schemaId} AS schema_id";
-                $part        .= " FROM {$table} WHERE _uuid = {$quotedUuid})";
-                $unionParts[] = $part;
-            }
+                if ($object !== null) {
+                    return [
+                        'register' => $registerId,
+                        'schema'   => $schemaId,
+                    ];
+                }
+            }//end foreach
         }//end foreach
 
-        if (empty($unionParts) === true) {
-            return null;
-        }
-
-        $sql    = implode(' UNION ALL ', $unionParts).' LIMIT 1';
-        $result = $this->db->executeQuery($sql);
-        $row    = $result->fetch();
-        $result->closeCursor();
-
-        if ($row === false) {
-            return null;
-        }
-
-        return [
-            'register' => (int) $row['register_id'],
-            'schema'   => (int) $row['schema_id'],
-        ];
+        return null;
 
     }//end findObjectLocation()
 
     /**
-     * Lightweight existence probe for a magic-mapper table.
+     * Resolve the OpenRegister ObjectService from the container.
      *
-     * Cached for the lifetime of the service instance. Lets callers safely UNION
-     * across a catalog's (register × schema) combinations even when some pairs
-     * have no backing table — without falling back to a platform-wide
-     * information_schema scan (#734).
+     * @return object|null The OpenRegister ObjectService, or null when OR is unavailable.
      *
-     * @param string $table The magic-mapper table name.
-     *
-     * @return bool True when the table exists.
-     *
-     * @spec exclude DB-existence-probe plumbing for the constrained findObjectLocation;
-     *       pure framework helper.
+     * @spec exclude Lazy dependency-injection accessor for the OR ObjectService; pure
+     *       framework plumbing, no domain behavior.
      */
-    private function magicTableExists(string $table): bool
+    private function getObjectService(): ?object
     {
-        if (isset($this->magicTableCache[$table]) === true) {
-            return $this->magicTableCache[$table];
-        }
-
-        // Use a parameterised information_schema lookup constrained to this single
-        // table name and the current database (prevents cross-schema false-positives).
-        $qb = $this->db->getQueryBuilder();
-        $qb->select($qb->func()->count('*', 'cnt'))
-            ->from('information_schema.tables')
-            ->where($qb->expr()->eq('table_name', $qb->createNamedParameter($table)))
-            ->andWhere($qb->expr()->eq('table_schema', $qb->createFunction('DATABASE()')));
-
         try {
-            $result = $qb->executeQuery();
-            $row    = $result->fetch();
-            $result->closeCursor();
-            $exists = ($row !== false && (int) ($row['cnt'] ?? 0) > 0);
-        } catch (\Exception $e) {
-            $exists = false;
+            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        } catch (\Throwable $e) {
+            return null;
         }
 
-        $this->magicTableCache[$table] = $exists;
-        return $exists;
-
-    }//end magicTableExists()
+    }//end getObjectService()
 
     /**
      * Build the ObjectService search query for a catalog index request.
