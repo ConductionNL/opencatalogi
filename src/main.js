@@ -16,7 +16,6 @@ import {
 	registerDashboardWidget,
 	CnFileManager,
 	CnRelationshipGraph,
-	CnThemePreview,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
 
@@ -29,6 +28,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import customComponents from './registry.js'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
@@ -71,8 +71,16 @@ registerDashboardWidget('audit-trail', {
 	icon: 'History',
 	surfaces: ['detail-page'],
 })
+// `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
+// not the library's `CnThemePreview` directly: CnThemePreview requires a
+// non-empty `pickers` prop with no default, and ThemeDetail's manifest entry
+// carries no `content.pickers` (the Theme schema has no colour fields to seed
+// it from) — mounting the raw component there crashed with
+// `TypeError: this.pickers is not iterable`. The adapter guarantees a valid
+// pickers/defaults/value shape (falling back to a catalog-brand default set)
+// so the widget always renders instead of crashing silently.
 registerDashboardWidget('theme-preview', {
-	renderer: CnThemePreview,
+	renderer: ThemePreviewWidget,
 	form: null,
 	defaultContent: {},
 	displayName: 'Theme preview',
