@@ -246,18 +246,19 @@ export default {
 
 .refresh {
 	margin-block-start: 11px !important;
-    margin-block-end: 11px !important;
-    margin-inline-end: 10px;
+	margin-block-end: 11px !important;
+	margin-inline-end: 10px;
 }
 
 .active.publicationDetails-actionsDelete {
-    background-color: var(--color-error) !important;
+	background-color: var(--color-error) !important;
 }
+
 .active.publicationDetails-actionsDelete button {
-    color: #EBEBEB !important;
+	color: var(--color-error-text) !important;
 }
 
 .loadingIcon {
-    margin-block-start: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
 }
 </style>

@@ -34,7 +34,7 @@
 					:labels="publicationsByCategoryData.labels"
 					:height="360"
 					:options="{
-						colors: ['#0082C9', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2', '#DB2777'],
+						colors: categoricalChartColors,
 						legend: { position: 'bottom', fontSize: '13px', itemMargin: { horizontal: 8, vertical: 4 } },
 						plotOptions: { pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: t('opencatalogi', 'Total'), fontSize: '14px', fontWeight: 600 }, value: { fontSize: '28px', fontWeight: 700 } } } } },
 						dataLabels: { enabled: false },
@@ -146,7 +146,7 @@
 					:height="280"
 					:options="{
 						stroke: { curve: 'smooth', width: 2 },
-						colors: ['#079cff'],
+						colors: accentChartColor,
 						fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } },
 						xaxis: { labels: { rotate: -30, style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
 						yaxis: { labels: { style: { fontSize: '11px' } } },
@@ -314,8 +314,17 @@ import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
 // TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 // import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 // import PaperclipOff from 'vue-material-design-icons/PaperclipOff.vue'
+import { loadState } from '@nextcloud/initial-state'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { isPublished, isDepublished, isConcept } from '../../services/publicationStatus.js'
+import { useCategoricalChartColors, useAccentChartColor } from '../../composables/useChartColors.js'
+
+// Register/schema ids for the `publication` schema, surfaced as initial state by
+// UiController::MANIFEST_CONFIG_KEYS (same zero-network resolution AddDirectoryModal.vue
+// uses for `default_directory_url`). Needed to address OR's generic ad-hoc aggregation
+// endpoint, which is scoped per (register, schema) and does not know app-specific slugs.
+const PUBLICATION_REGISTER = loadState('opencatalogi', 'publication_register', '')
+const PUBLICATION_SCHEMA = loadState('opencatalogi', 'publication_schema', '')
 
 /**
  * Default dashboard layout:
@@ -386,6 +395,21 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * Theme-aware donut-chart palette, resolved from NC CSS variables instead
+		 * of hardcoded hex literals (ADR-004 / ADR-010 NL Design).
+		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
+		 */
+		categoricalChartColors() {
+			return useCategoricalChartColors()
+		},
+		/**
+		 * Theme-aware accent color for the traffic chart.
+		 * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-1
+		 */
+		accentChartColor() {
+			return useAccentChartColor()
+		},
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		catalogs() {
 			return objectStore.getCollection('catalog').results || []
@@ -497,6 +521,7 @@ export default {
 			try {
 				await Promise.allSettled([
 					objectStore.fetchCollection('catalog'),
+					this.fetchPublicationAggregations(),
 					this.fetchAllPublications(),
 					this.fetchActivityChart(),
 					this.fetchTrafficChart(),
@@ -510,7 +535,62 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		/**
+		 * Source the total publication count from OR's generic ad-hoc aggregation
+		 * endpoint (`GET /api/objects/aggregations/{register}/{schema}/value`) instead
+		 * of the `_limit=1000`-capped `fetchAllPublications()` response (DSH-010 /
+		 * dashboard-consume-or-aggregations). This endpoint requires no schema-level
+		 * `x-openregister-aggregations` declaration — it is OR's always-available
+		 * ad-hoc count/sum/avg entry point — so it is correct for any catalog size,
+		 * unlike the previous truncated-at-1000 total.
+		 *
+		 * `conceptPublicationCount` / `publishedPublicationCount` /
+		 * `depublishedPublicationCount` remain client-computed from
+		 * `fetchAllPublications()`'s (bounded, not 1000-capped-as-a-total-source)
+		 * result: those three states are DERIVED from a date comparison against "now"
+		 * (`publicatiedatum` / `depublicatiedatum` — see `publicationStatus.js`), not a
+		 * stored field, so grouping by them via OR's field-based `groupBy` aggregation
+		 * is not possible without either (a) a materialized status field written on
+		 * save, or (b) confirmed null-safe date-range filter support in OR's ad-hoc
+		 * aggregation filter DSL (unconfirmed at authoring time — see
+		 * openspec/changes/dashboard-consume-or-aggregations/tasks.md). Tracked as a
+		 * follow-up; not silently guessed here to avoid shipping confidently-wrong
+		 * counts.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async fetchPublicationAggregations() {
+			if (!PUBLICATION_REGISTER || !PUBLICATION_SCHEMA) {
+				return
+			}
+
+			try {
+				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
+				const response = await fetch(
+					`${prefix}/apps/openregister/api/objects/aggregations/${PUBLICATION_REGISTER}/${PUBLICATION_SCHEMA}/value?metric=count`,
+					{ method: 'GET', headers: buildHeaders() },
+				)
+				if (response.ok) {
+					const data = await response.json()
+					if (typeof data.value === 'number') {
+						this.publicationTotal = data.value
+					}
+				}
+			} catch (err) {
+				console.warn('Failed to load publication count aggregation:', err)
+			}
+		},
+
+		/**
+		 * Fetch a bounded page of publication objects to power the concept /
+		 * published / depublished side-panel lists and their (client-computed)
+		 * counts. `publicationTotal` (the headline KPI) is sourced separately by
+		 * `fetchPublicationAggregations()`, so this fetch no longer needs to
+		 * masquerade as the count source — see that method's docblock for why the
+		 * three sub-status counts remain list-derived rather than aggregation-derived.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
+		 */
 		async fetchAllPublications() {
 			try {
 				const prefix = window.location.pathname.includes('/index.php') ? '/index.php' : ''
@@ -520,7 +600,12 @@ export default {
 				)
 				if (response.ok) {
 					const data = await response.json()
-					this.publicationTotal = data.total || 0
+					// Fall back to the (possibly truncated) page total only when the
+					// aggregation call above didn't resolve (e.g. register/schema not
+					// yet configured on a fresh install).
+					if (!this.publicationTotal) {
+						this.publicationTotal = data.total || 0
+					}
 					objectStore.setCollection('publication', data.results || [])
 				}
 			} catch (err) {
@@ -787,6 +872,7 @@ export default {
 .concept-item-schema {
 	font-size: 11px;
 	font-weight: 600;
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-primary-element, #0082c9);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -801,6 +887,7 @@ export default {
 	font-size: 11px;
 	font-weight: 600;
 	background: var(--color-warning-hover, rgba(233, 163, 0, 0.1));
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-warning-text, #7a5700);
 	flex-shrink: 0;
 }
@@ -812,6 +899,7 @@ export default {
 	font-size: 11px;
 	font-weight: 600;
 	background: var(--color-success-hover, rgba(233, 163, 0, 0.1));
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-success-text, #7a5700);
 	flex-shrink: 0;
 }
@@ -828,6 +916,7 @@ export default {
 	font-size: 11px;
 	font-weight: 600;
 	background: var(--color-error-hover, rgba(211, 47, 47, 0.1));
+	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-error-text, #7a1515);
 	flex-shrink: 0;
 }

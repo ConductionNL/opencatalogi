@@ -50,7 +50,9 @@
 		{ "key": "nc2PublicationId2", "value": "", "type": "string" },
 		{ "key": "nc2DefaultCatalogId", "value": "", "type": "string" },
 		{ "key": "federatedResultCount", "value": "0", "type": "string" },
-		{ "key": "nc1ListingCountBeforeSync", "value": "0", "type": "string" }
+		{ "key": "nc1ListingCountBeforeSync", "value": "0", "type": "string" },
+		{ "key": "nonAdminUsername", "value": "opencatalogi-federation-test-user", "type": "string" },
+		{ "key": "nonAdminPassword", "value": "opencatalogi-federation-test-user", "type": "string" }
 	],
 	"item": [
 		{
@@ -504,6 +506,124 @@
 						"});"
 					], "type": "text/javascript" }}],
 					"request": { "method": "GET", "url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/{{seededListingId}}", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "{{seededListingId}}"] } }
+				},
+				{
+					"name": "4.7 Non-admin update rejected (403)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Non-admin PUT is rejected (LST-004 admin gate)', function () {",
+						"    pm.expect(pm.response.code).to.equal(403, 'Expected 403 Forbidden for a non-admin PUT to listings/{id} — #[AuthorizedAdminSetting] must reject before the controller body runs');",
+						"    console.log('✅ Non-admin update rejected: ' + pm.response.code);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"auth": { "type": "basic", "basic": [
+							{ "key": "username", "value": "{{nonAdminUsername}}", "type": "string" },
+							{ "key": "password", "value": "{{nonAdminPassword}}", "type": "string" }
+						]},
+						"method": "PUT",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"title\": \"Hijacked by non-admin\"\n}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/{{seededListingId}}", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "{{seededListingId}}"] }
+					}
+				},
+				{
+					"name": "4.7b Confirm seeded listing fields unchanged after rejected non-admin update",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Seeded listing title unaffected by rejected non-admin PUT', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    var data = json.object || json;",
+						"    pm.expect(data.title).to.not.eql('Hijacked by non-admin');",
+						"    pm.expect(data.title).to.include('Federation Remote');",
+						"    console.log('✅ Seeded listing title unchanged: ' + data.title);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": { "method": "GET", "url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/{{seededListingId}}", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "{{seededListingId}}"] } }
+				},
+				{
+					"name": "4.8 Non-admin delete rejected (403)",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Non-admin DELETE is rejected (LST-005 admin gate)', function () {",
+						"    pm.expect(pm.response.code).to.equal(403, 'Expected 403 Forbidden for a non-admin DELETE to listings/{id} — #[AuthorizedAdminSetting] must reject before the controller body runs');",
+						"    console.log('✅ Non-admin delete rejected: ' + pm.response.code);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"auth": { "type": "basic", "basic": [
+							{ "key": "username", "value": "{{nonAdminUsername}}", "type": "string" },
+							{ "key": "password", "value": "{{nonAdminPassword}}", "type": "string" }
+						]},
+						"method": "DELETE",
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/{{seededListingId}}", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "{{seededListingId}}"] }
+					}
+				},
+				{
+					"name": "4.8b Confirm seeded listing still exists after rejected non-admin delete",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Seeded listing still exists after rejected non-admin DELETE', function () {",
+						"    pm.response.to.have.status(200);",
+						"    var json = pm.response.json();",
+						"    var data = json.object || json;",
+						"    pm.expect(data.title).to.include('Federation Remote');",
+						"    console.log('✅ Seeded listing survives rejected non-admin delete: ' + data.title);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": { "method": "GET", "url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/{{seededListingId}}", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "{{seededListingId}}"] } }
+				},
+				{
+					"name": "4.9 Non-admin create rejected (403) [harden-listings-admin-write-surface]",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Non-admin POST /api/listings is rejected (LST-003 admin gate)', function () {",
+						"    pm.expect(pm.response.code).to.equal(403, 'Expected 403 Forbidden for a non-admin POST to listings — #[AuthorizedAdminSetting] must reject before the controller body runs');",
+						"    console.log('✅ Non-admin create rejected: ' + pm.response.code);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"auth": { "type": "basic", "basic": [
+							{ "key": "username", "value": "{{nonAdminUsername}}", "type": "string" },
+							{ "key": "password", "value": "{{nonAdminPassword}}", "type": "string" }
+						]},
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"title\": \"Non-admin should not be able to create this\",\n    \"directory\": \"https://example.com/api/directory\"\n}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings"] }
+					}
+				},
+				{
+					"name": "4.10 Non-admin add-directory rejected (403) [harden-listings-admin-write-surface]",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Non-admin POST /api/listings/add is rejected (DIR-005 admin gate)', function () {",
+						"    pm.expect(pm.response.code).to.equal(403, 'Expected 403 Forbidden for a non-admin POST to listings/add — #[AuthorizedAdminSetting] must reject before the controller body runs');",
+						"    console.log('✅ Non-admin add-directory rejected: ' + pm.response.code);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"auth": { "type": "basic", "basic": [
+							{ "key": "username", "value": "{{nonAdminUsername}}", "type": "string" },
+							{ "key": "password", "value": "{{nonAdminPassword}}", "type": "string" }
+						]},
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n    \"url\": \"{{nc2Url}}/index.php/apps/opencatalogi/api/directory\"\n}" },
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/add", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "add"] }
+					}
+				},
+				{
+					"name": "4.11 Non-admin sync rejected (403) [harden-listings-admin-write-surface]",
+					"event": [{ "listen": "test", "script": { "exec": [
+						"pm.test('Non-admin POST /api/listings/sync is rejected (DIR-003 admin gate)', function () {",
+						"    pm.expect(pm.response.code).to.equal(403, 'Expected 403 Forbidden for a non-admin POST to listings/sync — #[AuthorizedAdminSetting] must reject before the controller body runs');",
+						"    console.log('✅ Non-admin sync rejected: ' + pm.response.code);",
+						"});"
+					], "type": "text/javascript" }}],
+					"request": {
+						"auth": { "type": "basic", "basic": [
+							{ "key": "username", "value": "{{nonAdminUsername}}", "type": "string" },
+							{ "key": "password", "value": "{{nonAdminPassword}}", "type": "string" }
+						]},
+						"method": "POST",
+						"url": { "raw": "{{nc1Url}}/index.php/apps/opencatalogi/api/listings/sync", "host": ["{{nc1Url}}"], "path": ["index.php", "apps", "opencatalogi", "api", "listings", "sync"] }
+					}
 				}
 			]
 		},

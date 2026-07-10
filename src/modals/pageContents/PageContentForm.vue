@@ -7,7 +7,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <template>
 	<NcDialog
-		:name="isEdit ? t('opencatalogi', 'Content edit of {type}', { type: _.upperFirst(contentsItem.type) }) : t('opencatalogi', 'Add Content to {title}', { title: pageItem.title })"
+		:name="isEdit ? t('opencatalogi', 'Content edit of {type}', { type: upperFirst(contentsItem.type) }) : t('opencatalogi', 'Add Content to {title}', { title: pageItem.title })"
 		size="large"
 		:can-close="true"
 		@update:open="handleDialogClose">
@@ -90,9 +90,33 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<!-- Faq -->
 							<div v-if="contentsItem.type === 'Faq'">
 								<VueDraggable v-model="contentsItem.faqData" easing="ease-in-out" draggable="div:not(:last-child)">
-									<div v-for="item in contentsItem.faqData" :key="item.id" class="draggable-item-container">
+									<div v-for="(item, index) in contentsItem.faqData" :key="item.id" class="draggable-item-container">
 										<div :class="`draggable-form-item ${getTheme()}`">
-											<Drag class="drag-handle" :size="40" />
+											<Drag class="drag-handle"
+												:size="40"
+												tabindex="0"
+												role="button"
+												:aria-label="t('opencatalogi', 'Drag to reorder, or use the move up/down buttons')"
+												@keydown.enter.prevent
+												@keydown.space.prevent />
+											<div class="reorder-buttons">
+												<NcButton type="tertiary"
+													:aria-label="moveButtonLabel('up', item.question, index)"
+													:disabled="index === 0"
+													@click="moveFaqItem(index, -1)">
+													<template #icon>
+														<ArrowUp :size="20" />
+													</template>
+												</NcButton>
+												<NcButton type="tertiary"
+													:aria-label="moveButtonLabel('down', item.question, index)"
+													:disabled="index === contentsItem.faqData.length - 1"
+													@click="moveFaqItem(index, 1)">
+													<template #icon>
+														<ArrowDown :size="20" />
+													</template>
+												</NcButton>
+											</div>
 											<NcTextField :label="t('opencatalogi', 'Question')" :value.sync="item.question" />
 											<NcTextField :label="t('opencatalogi', 'Answer')" :value.sync="item.answer" />
 										</div>
@@ -120,10 +144,34 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									{{ t('opencatalogi', 'Add up to 3 content blocks. Each block has an icon, title, description, and link.') }}
 								</p>
 								<VueDraggable v-model="contentsItem.contentBlocksData" easing="ease-in-out" draggable="div:not(:last-child)">
-									<div v-for="item in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
+									<div v-for="(item, index) in contentsItem.contentBlocksData" :key="item.id" class="draggable-item-container">
 										<div :class="`draggable-form-item draggable-form-item--vertical ${getTheme()}`">
 											<div class="draggable-form-item__header">
-												<Drag class="drag-handle" :size="40" />
+												<Drag class="drag-handle"
+													:size="40"
+													tabindex="0"
+													role="button"
+													:aria-label="t('opencatalogi', 'Drag to reorder, or use the move up/down buttons')"
+													@keydown.enter.prevent
+													@keydown.space.prevent />
+												<div class="reorder-buttons">
+													<NcButton type="tertiary"
+														:aria-label="moveButtonLabel('up', item.title, index)"
+														:disabled="index === 0"
+														@click="moveContentBlock(index, -1)">
+														<template #icon>
+															<ArrowUp :size="20" />
+														</template>
+													</NcButton>
+													<NcButton type="tertiary"
+														:aria-label="moveButtonLabel('down', item.title, index)"
+														:disabled="index === contentsItem.contentBlocksData.length - 1"
+														@click="moveContentBlock(index, 1)">
+														<template #icon>
+															<ArrowDown :size="20" />
+														</template>
+													</NcButton>
+												</div>
 												<NcSelect
 													v-bind="iconOptions"
 													v-model="item.icon"
@@ -206,7 +254,8 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import { VueDraggable } from 'vue-draggable-plus'
-import _ from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import upperFirst from 'lodash/upperFirst'
 import DOMPurify from 'dompurify'
 import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
@@ -214,6 +263,8 @@ import '@toast-ui/editor/dist/toastui-editor.css'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Drag from 'vue-material-design-icons/Drag.vue'
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
+import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
 
 import { Page } from '../../entities/index.js'
 
@@ -240,6 +291,8 @@ export default {
 		Plus,
 		ContentSave,
 		Drag,
+		ArrowUp,
+		ArrowDown,
 	},
 	data() {
 		return {
@@ -440,11 +493,65 @@ export default {
 			objectStore.clearActiveObject('pageContent')
 			objectStore.setState('page', { success: null, error: null })
 		},
+		/**
+		 * Build an accessible name for a move button that identifies both the
+		 * action and the target item (WCAG 2.1 AA 4.1.2 — screen-reader users
+		 * tabbing between several rows' move buttons need to distinguish them).
+		 * Falls back to a 1-based position when the item has no title/question
+		 * text yet (e.g. a freshly-added empty row).
+		 * @param {'up'|'down'} direction - Which direction the button moves the item.
+		 * @param {string} itemLabel - The item's own text (question / block title), if any.
+		 * @param {number} index - The item's zero-based index, used as a fallback label.
+		 * @return {string} The composed aria-label.
+		 * @spec openspec/changes/keyboard-operable-reorder-controls/tasks.md#task-1
+		 */
+		moveButtonLabel(direction, itemLabel, index) {
+			const action = direction === 'up' ? t('opencatalogi', 'Move up') : t('opencatalogi', 'Move down')
+			const target = itemLabel || t('opencatalogi', 'item {position}', { position: index + 1 })
+			return `${action}: ${target}`
+		},
+		/**
+		 * Keyboard- and screen-reader-operable alternative to the pointer-only
+		 * drag handle for reordering FAQ items (WCAG 2.1 AA 2.1.1 — CMS-036).
+		 * Swaps `contentsItem.faqData[index]` with its neighbor at `index + direction`.
+		 * @param {number} index - The index of the item to move.
+		 * @param {number} direction - `-1` to move up, `1` to move down.
+		 * @return {void}
+		 * @spec openspec/changes/keyboard-operable-reorder-controls/tasks.md#task-1
+		 */
+		moveFaqItem(index, direction) {
+			const target = index + direction
+			if (target < 0 || target >= this.contentsItem.faqData.length) {
+				return
+			}
+			const items = this.contentsItem.faqData
+			const [moved] = items.splice(index, 1)
+			items.splice(target, 0, moved)
+		},
+		/**
+		 * Keyboard- and screen-reader-operable alternative to the pointer-only
+		 * drag handle for reordering content blocks (WCAG 2.1 AA 2.1.1 — CMS-036).
+		 * Swaps `contentsItem.contentBlocksData[index]` with its neighbor at
+		 * `index + direction`.
+		 * @param {number} index - The index of the item to move.
+		 * @param {number} direction - `-1` to move up, `1` to move down.
+		 * @return {void}
+		 * @spec openspec/changes/keyboard-operable-reorder-controls/tasks.md#task-2
+		 */
+		moveContentBlock(index, direction) {
+			const target = index + direction
+			if (target < 0 || target >= this.contentsItem.contentBlocksData.length) {
+				return
+			}
+			const items = this.contentsItem.contentBlocksData
+			const [moved] = items.splice(index, 1)
+			items.splice(target, 0, moved)
+		},
 		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		addPageContent() {
 			objectStore.setState('page', { success: null, error: null, loading: true })
 
-			const pageItemClone = _.cloneDeep(this.pageItem)
+			const pageItemClone = cloneDeep(this.pageItem)
 
 			// Read content from editor instances (Toast UI editor uses initial-value, not v-model).
 			const textContent = this.textEditor ? this.textEditor.getHTML() : this.contentsItem.textData
@@ -667,6 +774,13 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.reorder-buttons {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
 }
 
 .content-blocks-help {

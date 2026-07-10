@@ -50,7 +50,6 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
-import _ from 'lodash'
 import { Page } from '../../entities/index.js'
 
 /**
@@ -99,7 +98,7 @@ export default {
 			this.error = null
 
 			try {
-				const clone = _.cloneDeep(this.pageItem)
+				const clone = structuredClone(this.pageItem)
 				clone.contents = (clone.contents || []).filter(c => c.id !== this.contentItem.id)
 
 				const newPage = new Page(clone)

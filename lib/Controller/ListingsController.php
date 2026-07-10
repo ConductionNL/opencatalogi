@@ -260,27 +260,58 @@ class ListingsController extends Controller
     }//end show()
 
     /**
-     * Create a new listing.
+     * Create a new listing. Admin-only, allow-listed (LST-003 / harden-listings-admin-write-surface):
+     * mirrors update()'s posture — `#[AuthorizedAdminSetting]` gates entry and
+     * `CREATABLE_LISTING_FIELDS` gates the payload, so a non-admin cannot do via POST
+     * what the PUT hardening already forbids (registering a listing with an arbitrary
+     * `directory` URL is a federation-topology change).
      *
      * @return JSONResponse The response containing the created listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-18
+     * @spec openspec/changes/harden-listings-admin-write-surface/tasks.md#task-1
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function create(): JSONResponse
     {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
-
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
-        // Remove internal framework fields.
-        unset($data['id'], $data['_route']);
+        // Allow-list: only CREATABLE_LISTING_FIELDS may be persisted (mirrors update()'s
+        // UPDATABLE_LISTING_FIELDS posture) — off-list fields are silently dropped so the
+        // response shows what stuck without leaking mass-assignment probes as errors.
+        $allowed = [];
+        foreach (self::CREATABLE_LISTING_FIELDS as $field) {
+            if (array_key_exists($field, $data) === true) {
+                $allowed[$field] = $data[$field];
+            }
+        }
+
+        // A listing must never be persisted with an outbound target that fails the
+        // same SSRF guard syncDirectory() applies before fetching it (WOO-513).
+        if (array_key_exists('directory', $allowed) === true) {
+            $directoryUrl = $allowed['directory'];
+            if (empty($directoryUrl) === true || filter_var($directoryUrl, FILTER_VALIDATE_URL) === false) {
+                return new JSONResponse(
+                    data: ['message' => $this->l10n->t('Invalid directory URL provided')],
+                    statusCode: 400
+                );
+            }
+
+            try {
+                $this->directoryService->validateOutboundUrl($directoryUrl);
+            } catch (\InvalidArgumentException $exception) {
+                return new JSONResponse(
+                    data: [
+                        'message' => $this->l10n->t('Invalid directory URL'),
+                        'error'   => $exception->getMessage(),
+                    ],
+                    statusCode: 400
+                );
+            }
+        }//end if
 
         // Get listing schema and register from configuration.
         $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
@@ -288,7 +319,7 @@ class ListingsController extends Controller
 
         // Save the new listing object.
         $object = $this->getObjectService()->saveObject(
-            object: $data,
+            object: $allowed,
             extend: [],
             register: $listingRegister,
             schema: $listingSchema
@@ -312,6 +343,25 @@ class ListingsController extends Controller
         'description',
         'integrationLevel',
         'default',
+    ];
+
+    /**
+     * POST /api/listings allow-list (harden-listings-admin-write-surface). The
+     * UPDATABLE set plus the identity fields legitimately set at registration time:
+     * `directory` (validated against the SSRF guard below), `catalog`, `slug`, `status`.
+     *
+     * @var list<string>
+     */
+    private const CREATABLE_LISTING_FIELDS = [
+        'title',
+        'summary',
+        'description',
+        'integrationLevel',
+        'default',
+        'directory',
+        'catalog',
+        'slug',
+        'status',
     ];
 
     /**
@@ -459,7 +509,11 @@ class ListingsController extends Controller
     }//end destroy()
 
     /**
-     * Synchronize a specific directory or all directories.
+     * Synchronize a specific directory or all directories. Admin-only
+     * (harden-listings-admin-write-surface): on-demand outbound fetches against a
+     * caller-controllable URL are an admin operation; the hourly cron
+     * (`DirectoryService::doCronSync()`) covers everyone else and does not pass
+     * through this controller.
      *
      * When an ID is provided, the corresponding listing is looked up and its
      * directory URL is synced. When no ID is provided, all known directories
@@ -469,11 +523,11 @@ class ListingsController extends Controller
      *
      * @return JSONResponse The response containing synchronization results.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-21
+     * @spec openspec/changes/harden-listings-admin-write-surface/tasks.md#task-3
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function synchronise(?string $id=null): JSONResponse
     {
         if ($this->userSession->getUser() === null) {
@@ -520,24 +574,26 @@ class ListingsController extends Controller
     }//end synchronise()
 
     /**
-     * Add a new listing from a URL.
-     *
-     * Requires authentication and CSRF protection. Federation peer-registration must
-     * not be anonymous — an unauthenticated caller could otherwise register a hostile
-     * directory pointing to attacker-controlled URLs and chain it into the federation
-     * SSRF path (SB1 / WF1, wave-12). Dropped @PublicPage and @NoCSRFRequired.
+     * Add a new listing from a URL. Admin-only (DIR-005 /
+     * harden-listings-admin-write-surface): `#[AuthorizedAdminSetting]` gates entry —
+     * the spec already declares this surface admin-only, and federation
+     * peer-registration must not be reachable by non-admins either, since an
+     * authenticated non-admin could otherwise register a hostile directory pointing
+     * to attacker-controlled URLs and chain it into the federation SSRF path (SB1 /
+     * WF1, wave-12). The explicit session guard below is kept as defence-in-depth.
+     * Dropped @PublicPage and @NoCSRFRequired.
      *
      * @return JSONResponse The response indicating the result of adding the listing.
      *
-     * @NoAdminRequired
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-22
+     * @spec openspec/changes/harden-listings-admin-write-surface/tasks.md#task-2
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function add(): JSONResponse
     {
-        // Auth guard (SB1/WF1): this endpoint registers a federation directory and
-        // must never be anonymous — an unauthenticated caller could otherwise point
-        // it at an attacker-controlled URL and chain it into the federation SSRF path.
+        // Auth guard (SB1/WF1), kept as defence-in-depth alongside the admin gate
+        // above: this endpoint registers a federation directory and must never be
+        // anonymous — an unauthenticated caller could otherwise point it at an
+        // attacker-controlled URL and chain it into the federation SSRF path.
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(
                 data: ['message' => $this->l10n->t('Authentication required.')],
