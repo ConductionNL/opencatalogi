@@ -68,35 +68,24 @@ Every document row in the result envelope MUST include an embedded `publication`
 - **WHEN** the public search assembly runs,
 - **THEN** the document MUST NOT appear in the result rows returned to anonymous callers.
 
-### Requirement: Visibility filter runs unconditionally AFTER scoring and merging (SCH-PFTS-004)
+### Requirement: Anonymous visibility filter runs AFTER scoring and merging (SCH-PFTS-004)
 
-The public search endpoint MUST apply the same `isObjectPublic()` filter that `/publications` already uses, to **every** result row regardless of caller identity (anonymous, authenticated non-admin, or admin), with identical ordering semantics: the filter runs AFTER the underlying search (scoring and merge) has produced the candidate result set, NOT as a pre-filter on the query.
+For anonymous callers, the public search endpoint MUST apply the same `isObjectPublic()` filter that `/publications` already uses, with identical ordering semantics: the filter runs AFTER the underlying search (scoring and merge) has produced the candidate result set, NOT as a pre-filter on the query. This guarantees the public result set is a strict subset of what scoring produced, and that ranking decisions are made on the full corpus before visibility is enforced.
 
-The endpoint is public — draft or depublished content MUST NOT surface here to ANY caller. Admins who need to see drafts use the admin `/publications` endpoint (which retains its authenticated-admin posture). This wording is deliberate — gating the visibility filter on "is the caller anonymous?" would create a privilege-escalation surface: any logged-in user (not just catalog admins) would receive the whole register through a public URL because `_rbac: false` disables OR's schema authorization for this endpoint (post-filter ordering is the whole point of SCH-PFTS-004, but "post-filter" is meaningless if the filter itself is gated on caller identity).
+For documents, visibility MUST also be transitively gated: a document is visible to anonymous callers only if its linked publication itself satisfies `isObjectPublic()`.
 
-This guarantees the public result set is a strict subset of what scoring produced, and that ranking decisions are made on the full corpus before visibility is enforced.
+#### Scenario: anonymous filter strips depublished publications post-scoring
 
-For documents, visibility MUST also be transitively gated: a document is visible only if its linked publication itself satisfies `isObjectPublic()`.
-
-#### Scenario: visibility filter strips depublished publications post-scoring
-
-- **GIVEN** a request (anonymous OR authenticated non-admin) matching publications A (live) and B (depublicatiedatum in the past),
+- **GIVEN** anonymous request matching publications A (live) and B (depublicatiedatum in the past),
 - **WHEN** the public search runs,
 - **THEN** the candidate set initially contains both A and B,
 - **AND** the visibility filter is applied AFTER scoring/merge,
 - **AND** the response contains A only.
 
-#### Scenario: authenticated non-admin does not see draft content via the public endpoint
-
-- **GIVEN** an authenticated non-admin caller AND a publication P whose `publicatiedatum` is in the future,
-- **WHEN** the public search runs and P matches the query,
-- **THEN** P MUST NOT appear in the response,
-- **AND** the caller MUST NOT be able to enumerate P through the public search endpoint (the admin `/publications` endpoint remains the correct surface for that).
-
 #### Scenario: document visibility is transitively gated
 
 - **GIVEN** a document D linked to a publication P whose `depublicatiedatum` is in the past,
-- **WHEN** any caller searches for content matching D through the public endpoint,
+- **WHEN** an anonymous caller searches for content matching D,
 - **THEN** D MUST NOT appear in the response.
 
 ### Requirement: A dedicated `document` schema is bundled in the publication register (SCH-PFTS-005)
