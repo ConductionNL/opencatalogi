@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\BroadcastService;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -91,6 +92,7 @@ class SetupController extends Controller
      * @param IAppConfig         $config           App configuration.
      * @param SettingsService    $settingsService  Settings service (register import).
      * @param DirectoryService   $directoryService Directory service (federation sync).
+     * @param BroadcastService   $broadcastService Broadcast service (announce self to a directory).
      * @param ContainerInterface $container        Container, to resolve OpenRegister ObjectService.
      * @param IL10N              $l10n             Localization.
      * @param LoggerInterface    $logger           Logger.
@@ -102,6 +104,7 @@ class SetupController extends Controller
         private readonly IAppConfig $config,
         private readonly SettingsService $settingsService,
         private readonly DirectoryService $directoryService,
+        private readonly BroadcastService $broadcastService,
         private readonly ContainerInterface $container,
         private readonly IL10N $l10n,
         private readonly LoggerInterface $logger,
@@ -318,9 +321,27 @@ class SetupController extends Controller
     }//end createFirstCatalog()
 
     /**
-     * Sync the national OpenCatalogi directory now (federation connect).
+     * Connect to the federated network — pull peer listings AND announce this instance.
      *
-     * @return JSONResponse The result.
+     * Federation is pull-based: a fresh instance only sees peers whose URLs are
+     * already stored on the remote directory. Without a matching push, a brand-
+     * new install always reports "0 new, 0 updated" and admins have no signal
+     * whether their instance is discoverable to others. This step therefore does
+     * two things in sequence and reports both outcomes in the response:
+     *
+     * 1. Pull: sync listings FROM the directory into this instance. Existing
+     *    behaviour.
+     * 2. Push: broadcast this instance's directory URL to the remote directory
+     *    so it can sync back and add us to its catalog. `syncDirectory` already
+     *    triggers an internal broadcast when the remote does not yet know us,
+     *    but the outcome is silently swallowed — this explicit call captures it
+     *    and lets the admin see whether self-registration succeeded.
+     *
+     * Both sub-steps are non-fatal: the wizard reports success as long as the
+     * pull HTTP call itself did not throw. `doCronSync` will keep the state
+     * fresh over time regardless of this step's outcome.
+     *
+     * @return JSONResponse The result envelope (success, message, details).
      */
     private function connectFederation(): JSONResponse
     {
@@ -329,7 +350,6 @@ class SetupController extends Controller
         try {
             $result = $this->directoryService->syncDirectory($directoryUrl);
         } catch (\Exception $e) {
-            // Non-fatal: the step is optional, and doCronSync still federates later.
             $this->logger->warning('Setup connect-federation sync failed: '.$e->getMessage(), ['app' => $this->appName]);
             return new JSONResponse(
                 [
@@ -342,14 +362,70 @@ class SetupController extends Controller
         $created = (int) ($result['listings_created'] ?? 0);
         $updated = (int) ($result['listings_updated'] ?? 0);
 
-        $message = $this->l10n->t(
-            text: 'Connected to the federated network (%1$d new, %2$d updated listings).',
-            parameters: [$created, $updated]
+        $advertised = false;
+        try {
+            $broadcastResults = $this->broadcastService->broadcast($directoryUrl);
+            $advertised       = (isset($broadcastResults[$directoryUrl]) === true && $broadcastResults[$directoryUrl] === true);
+        } catch (\Exception $e) {
+            $this->logger->warning('Setup connect-federation advertise failed: '.$e->getMessage(), ['app' => $this->appName]);
+        }
+
+        return new JSONResponse(
+            [
+                'success' => true,
+                'message' => $this->buildFederationMessage($created, $updated, $advertised),
+                'details' => [
+                    'listings_created' => $created,
+                    'listings_updated' => $updated,
+                    'advertised'       => $advertised,
+                    'directory_url'    => $directoryUrl,
+                ],
+            ]
         );
 
-        return new JSONResponse(['success' => true, 'message' => $message]);
-
     }//end connectFederation()
+
+    /**
+     * Compose the admin-facing message describing the pull + push outcome.
+     *
+     * Kept separate so message-shape unit tests can exercise every combination
+     * (zero-listings + advertise-ok / zero-listings + advertise-fail / non-zero +
+     * both) without wiring up the full DirectoryService + BroadcastService flow.
+     *
+     * @param integer $created    New listings pulled from the directory.
+     * @param integer $updated    Existing listings updated during the pull.
+     * @param boolean $advertised True when the broadcast to the directory succeeded.
+     *
+     * @return string The composed message.
+     */
+    private function buildFederationMessage(int $created, int $updated, bool $advertised): string
+    {
+        $parts = [];
+
+        if ($created > 0 || $updated > 0) {
+            $parts[] = $this->l10n->t(
+                text: 'Fetched %1$d new and %2$d updated listing(s) from the directory.',
+                parameters: [$created, $updated]
+            );
+        } else {
+            $parts[] = $this->l10n->t(
+                'The directory has no other peer instances registered yet — federation activates automatically once other instances join.'
+            );
+        }
+
+        if ($advertised === true) {
+            $parts[] = $this->l10n->t(
+                'This instance was announced to the directory and is now discoverable to other peers.'
+            );
+        } else {
+            $parts[] = $this->l10n->t(
+                'This instance could not be announced to the directory (it may not be reachable from the directory host). Federation still works one-way; retry later or announce it manually.'
+            );
+        }
+
+        return implode(' ', $parts);
+
+    }//end buildFederationMessage()
 
     /**
      * Whether all required publishing registers/schemas are configured.

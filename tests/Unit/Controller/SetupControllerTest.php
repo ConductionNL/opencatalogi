@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\SetupController;
+use OCA\OpenCatalogi\Service\BroadcastService;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\AppFramework\Http;
@@ -42,6 +43,7 @@ class SetupControllerTest extends TestCase
     private IAppConfig|MockObject $config;
     private SettingsService|MockObject $settingsService;
     private DirectoryService|MockObject $directoryService;
+    private BroadcastService|MockObject $broadcastService;
     private ContainerInterface|MockObject $container;
     private IL10N|MockObject $l10n;
     private LoggerInterface|MockObject $logger;
@@ -61,6 +63,7 @@ class SetupControllerTest extends TestCase
         $this->config           = $this->createMock(IAppConfig::class);
         $this->settingsService  = $this->createMock(SettingsService::class);
         $this->directoryService = $this->createMock(DirectoryService::class);
+        $this->broadcastService = $this->createMock(BroadcastService::class);
         $this->container        = $this->createMock(ContainerInterface::class);
         $this->l10n             = $this->createMock(IL10N::class);
         $this->logger           = $this->createMock(LoggerInterface::class);
@@ -71,7 +74,9 @@ class SetupControllerTest extends TestCase
         $this->userSession->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
 
         $this->l10n->method('t')
-            ->willReturnCallback(fn(string $text, array $params = []) => $text);
+            ->willReturnCallback(
+                fn(string $text, array $params = []) => $params === [] ? $text : vsprintf($text, $params)
+            );
 
         // A stateful IAppConfig backed by $this->configValues.
         $this->config->method('getValueString')
@@ -95,6 +100,7 @@ class SetupControllerTest extends TestCase
             $this->config,
             $this->settingsService,
             $this->directoryService,
+            $this->broadcastService,
             $this->container,
             $this->l10n,
             $this->logger,
@@ -112,6 +118,7 @@ class SetupControllerTest extends TestCase
             $this->config,
             $this->settingsService,
             $this->directoryService,
+            $this->broadcastService,
             $this->container,
             $this->l10n,
             $this->logger,
@@ -279,14 +286,64 @@ class SetupControllerTest extends TestCase
 
     public function testConnectFederationSyncsTheNationalDirectory(): void
     {
+        $url = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+
         $this->directoryService->expects($this->once())
             ->method('syncDirectory')
-            ->with('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory')
+            ->with($url)
             ->willReturn(['listings_created' => 3, 'listings_updated' => 1]);
+
+        $this->broadcastService->expects($this->once())
+            ->method('broadcast')
+            ->with($url)
+            ->willReturn([$url => true]);
 
         $body = $this->controller->action('connect-federation')->getData();
 
         $this->assertTrue($body['success']);
+        $this->assertSame(3, $body['details']['listings_created']);
+        $this->assertSame(1, $body['details']['listings_updated']);
+        $this->assertTrue($body['details']['advertised']);
+        $this->assertStringContainsString('Fetched 3 new and 1 updated', $body['message']);
+        $this->assertStringContainsString('announced to the directory', $body['message']);
+    }
+
+    public function testConnectFederationZeroListingsReportsEmptyDirectoryAndAdvertise(): void
+    {
+        $url = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+
+        $this->directoryService->method('syncDirectory')
+            ->willReturn(['listings_created' => 0, 'listings_updated' => 0]);
+
+        $this->broadcastService->method('broadcast')
+            ->willReturn([$url => true]);
+
+        $body = $this->controller->action('connect-federation')->getData();
+
+        $this->assertTrue($body['success']);
+        $this->assertSame(0, $body['details']['listings_created']);
+        $this->assertSame(0, $body['details']['listings_updated']);
+        $this->assertTrue($body['details']['advertised']);
+        // No misleading "connected" — instead explain what 0/0 actually means.
+        $this->assertStringContainsString('no other peer instances registered yet', $body['message']);
+        $this->assertStringContainsString('announced to the directory', $body['message']);
+    }
+
+    public function testConnectFederationBroadcastFailureIsReportedButStepSucceeds(): void
+    {
+        $this->directoryService->method('syncDirectory')
+            ->willReturn(['listings_created' => 0, 'listings_updated' => 0]);
+
+        $this->broadcastService->method('broadcast')
+            ->willThrowException(new \RuntimeException('remote unreachable'));
+
+        $body = $this->controller->action('connect-federation')->getData();
+
+        // Pull succeeded → step is still success:true, but advertise=false surfaces
+        // in the details and the message tells the admin explicitly.
+        $this->assertTrue($body['success']);
+        $this->assertFalse($body['details']['advertised']);
+        $this->assertStringContainsString('could not be announced', $body['message']);
     }
 
     public function testConnectFederationFailureIsNonFatal(): void
