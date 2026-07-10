@@ -390,6 +390,13 @@ class SettingsService
     public function getSettings(): array
     {
         // Initialize the data array.
+        //
+        // WOO-519: `document` is included so `document_source`, `document_schema`
+        // and `document_register` receive proper defaults + a getValueString read
+        // in the configuration payload. Without it, the frontend's manifest
+        // renderer resolves `@resolve:document_schema` to the empty string and
+        // the public full-text search endpoint (SCH-PFTS) surfaces zero rows
+        // even when the schema is correctly imported into OpenRegister.
         $data = [];
         $data['objectTypes']        = [
             'catalog',
@@ -399,6 +406,7 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            'document',
             'usageCounter',
         ];
         $data['openRegisters']      = false;
@@ -557,6 +565,10 @@ class SettingsService
         try {
             // Build the canonical allowlist from the same object-type enumeration
             // used by getSettings() so the two methods stay in sync automatically.
+            //
+            // WOO-519: `document` is included so `document_*` keys are accepted
+            // through the settings-save endpoint. Without it, an admin cannot
+            // hand-correct a misprovisioned `document_schema` from the UI.
             $allowedTypes = [
                 'catalog',
                 'listing',
@@ -565,6 +577,7 @@ class SettingsService
                 'page',
                 'menu',
                 'glossary',
+                'document',
             ];
 
             $allowedKeys = [];
