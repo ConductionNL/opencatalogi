@@ -36,6 +36,13 @@ DB_CONTAINER="federation-db"
 ADMIN_USER="admin"
 ADMIN_PASS="admin"
 
+# Non-admin user for the LST-004/LST-005 negative-auth assertions (4.7/4.8):
+# proves ListingsController::update()/destroy()'s #[AuthorizedAdminSetting]
+# rejects an authenticated-but-non-admin caller with 403, over a real HTTP
+# request through the AppFramework middleware boundary (e2e-verify-listings-admin-gates).
+NON_ADMIN_USER="opencatalogi-federation-test-user"
+NON_ADMIN_PASS="opencatalogi-federation-test-user"
+
 MAX_WAIT=300  # Max seconds to wait for containers to be healthy
 INSTALL_WAIT=30  # Seconds to wait after app install for initialization
 
@@ -217,8 +224,25 @@ install_apps() {
     success "  Apps installed on $name"
 }
 
+# Provision the non-admin test user used by 4.7/4.8's negative-auth requests.
+# `admin` group membership is intentionally NOT granted — the whole point of
+# the assertion is that this session is authenticated but not an admin.
+provision_non_admin_user() {
+    local container=$1
+    local name=$2
+
+    if docker exec -u www-data -e "OC_PASS=$NON_ADMIN_PASS" "$container" php occ user:add \
+        --password-from-env --display-name="OpenCatalogi Federation Test User" \
+        "$NON_ADMIN_USER" 2>&1; then
+        success "  Non-admin test user provisioned on $name"
+    else
+        warn "  Non-admin test user may already exist on $name"
+    fi
+}
+
 install_apps "$NC1_CONTAINER" "Instance 1"
 install_apps "$NC2_CONTAINER" "Instance 2"
+provision_non_admin_user "$NC1_CONTAINER" "Instance 1"
 
 # Restart Apache to clear OPcache and pick up any code changes
 log "Restarting Apache on both instances..."
@@ -271,6 +295,8 @@ npx newman run "$COLLECTION" \
     --env-var "nc1Url=$NC1_URL" \
     --env-var "nc2Url=$NC2_URL" \
     --env-var "nc2Internal=$NC2_INTERNAL" \
+    --env-var "nonAdminUsername=$NON_ADMIN_USER" \
+    --env-var "nonAdminPassword=$NON_ADMIN_PASS" \
     --reporters cli \
     --color on \
     --timeout-request 30000 \

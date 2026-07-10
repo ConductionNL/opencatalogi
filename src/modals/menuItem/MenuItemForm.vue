@@ -3,6 +3,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 import { createZodErrorHandler } from '../../services/formatZodErrors.js'
 import { EventBus } from '../../eventBus.js'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
+import '../../css/json-highlight.css'
 </script>
 
 <template>
@@ -306,7 +307,6 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 </template>
 
 <script>
-import _ from 'lodash'
 import { Menu } from '../../entities/menu/menu.ts'
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcTextField, NcTextArea, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
@@ -900,7 +900,7 @@ export default {
 			this.loading = true
 			objectStore.setState('menu', { success: null, error: null, loading: true })
 
-			const menuClone = _.cloneDeep(this.menuObject)
+			const menuClone = structuredClone(this.menuObject)
 			// Ensure items array exists to prevent undefined errors
 			if (!menuClone.items) {
 				menuClone.items = []
@@ -1126,116 +1126,5 @@ export default {
 	color: var(--color-text-light);
 }
 
-/* CodeMirror */
-.codeMirrorContainer {
-	margin-block-start: 6px;
-}
-
-.codeMirrorContainer :deep(.cm-content) {
-	border-radius: 0 !important;
-	border: none !important;
-}
-
-.codeMirrorContainer :deep(.cm-editor) {
-	outline: none !important;
-}
-
-.codeMirrorContainer.light > .vue-codemirror {
-	border: 1px dotted silver;
-}
-
-.codeMirrorContainer.dark > .vue-codemirror {
-	border: 1px dotted grey;
-}
-
-/* value text color */
-/* string */
-.codeMirrorContainer.light :deep(.ͼe) {
-	color: #448c27;
-}
-
-.codeMirrorContainer.dark :deep(.ͼe) {
-	color: #88c379;
-}
-
-/* boolean */
-.codeMirrorContainer.light :deep(.ͼc) {
-	color: #221199;
-}
-
-.codeMirrorContainer.dark :deep(.ͼc) {
-	color: #8d64f7;
-}
-
-/* null */
-.codeMirrorContainer.light :deep(.ͼb) {
-	color: #770088;
-}
-
-.codeMirrorContainer.dark :deep(.ͼb) {
-	color: #be55cd;
-}
-
-/* number */
-.codeMirrorContainer.light :deep(.ͼd) {
-	color: #d19a66;
-}
-
-.codeMirrorContainer.dark :deep(.ͼd) {
-	color: #9d6c3a;
-}
-
-/* text cursor */
-.codeMirrorContainer :deep(.cm-content) * {
-	cursor: text !important;
-}
-
-/* selection color */
-.codeMirrorContainer.light :deep(.cm-line)::selection,
-.codeMirrorContainer.light :deep(.cm-line) ::selection {
-	background-color: #d7eaff !important;
-	color: black;
-}
-
-.codeMirrorContainer.dark :deep(.cm-line)::selection,
-.codeMirrorContainer.dark :deep(.cm-line) ::selection {
-	background-color: #8fb3e6 !important;
-	color: black;
-}
-
-/* string */
-.codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-	color: #2d770f;
-}
-
-.codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-	color: #104e0c;
-}
-
-/* boolean */
-.codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
-	color: #221199;
-}
-
-.codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
-	color: #4026af;
-}
-
-/* null */
-.codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
-	color: #770088;
-}
-
-.codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
-	color: #770088;
-}
-
-/* number */
-.codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
-	color: #8c5c2c;
-}
-
-.codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
-	color: #623907;
-}
+/* CodeMirror JSON syntax-highlight colors — see src/css/json-highlight.css (imported in <script setup>). */
 </style>

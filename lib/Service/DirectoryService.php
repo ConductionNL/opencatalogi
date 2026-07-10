@@ -1730,6 +1730,28 @@ class DirectoryService
     }//end assertSafeOutboundUrl()
 
     /**
+     * Validate that a URL is safe for outbound use (SSRF guard) without fetching it.
+     *
+     * Public wrapper around {@see assertSafeOutboundUrl()} for callers that need to
+     * validate an attacker-controllable URL before persisting it (e.g.
+     * `ListingsController::create()` validating the `directory` field at
+     * registration time), as opposed to callers that are about to fetch it.
+     *
+     * @param string $url The URL to validate.
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     *
+     * @spec openspec/changes/harden-listings-admin-write-surface/tasks.md#task-1
+     */
+    public function validateOutboundUrl(string $url): void
+    {
+        $this->assertSafeOutboundUrl($url);
+
+    }//end validateOutboundUrl()
+
+    /**
      * Determine whether an IP address falls in a blocked range.
      *
      * Blocks loopback (127.0.0.0/8, ::1), private RFC1918 ranges, link-local

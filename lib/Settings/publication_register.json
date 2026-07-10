@@ -271,6 +271,15 @@
             }
           }
         },
+        "x-openregister-aggregations": {
+          "countByStatus": {
+            "metric": "count",
+            "groupBy": {
+              "field": "status"
+            },
+            "description": "Publication count grouped by lifecycle status (published/archived) for RET-006 retention reporting (LST-003/DSH-010)."
+          }
+        },
         "configuration": {
           "autoPublish": false
         },

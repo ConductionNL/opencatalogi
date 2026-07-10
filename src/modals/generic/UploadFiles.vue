@@ -1034,7 +1034,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .files-table-name-wrong > span {
-	color: #ff0000 !important;
+	color: var(--color-error) !important;
 }
 
 .files-table {
