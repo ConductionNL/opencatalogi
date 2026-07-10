@@ -468,7 +468,17 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'usageCounter'];
+        $expectedTypes = [
+            'catalog',
+            'listing',
+            'organization',
+            'theme',
+            'page',
+            'menu',
+            'glossary',
+            'document',
+            'usageCounter',
+        ];
         $this->assertSame($expectedTypes, $result['objectTypes']);
 
     }//end testGetSettingsObjectTypesContainAllExpectedTypes()
@@ -487,7 +497,9 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+        // WOO-519: `document` must appear in the defaults payload so the
+        // frontend can read document_source/document_schema/document_register.
+        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
         foreach ($types as $type) {
             $this->assertArrayHasKey("{$type}_source", $result['configuration']);
             $this->assertArrayHasKey("{$type}_schema", $result['configuration']);
@@ -514,7 +526,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+        // WOO-519: document_source must default to 'openregister' like the other bundled types.
+        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
         foreach ($types as $type) {
             $this->assertSame('openregister', $result['configuration']["{$type}_source"]);
         }
@@ -2013,4 +2026,104 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($result);
 
     }//end testShouldLoadSettingsReturnsFalseWhenOlderVersion()
+
+    // ---------------------------------------------------------------
+    // WOO-519 regression: document_* config keys must be provisioned
+    // ---------------------------------------------------------------
+
+    /**
+     * WOO-519: assert `document_source`, `document_schema` and `document_register`
+     * are all persisted to app-config when `updateObjectTypeConfiguration()` runs
+     * against a normal import result that includes the bundled `document` schema
+     * on the shared `publication` register.
+     *
+     * Before this regression fix the private list in `updateObjectTypeConfiguration`
+     * omitted `document`, so `PublicationQueryService::resolveConfiguredId('document_schema')`
+     * returned null on a fresh install and the SCH-PFTS endpoint fail-closed to an
+     * empty envelope.
+     *
+     * @return void
+     */
+    public function testUpdateObjectTypeConfigurationPopulatesDocumentKeysWOO519(): void
+    {
+        $importResult = [
+            'schemas'   => [
+                ['slug' => 'publication', 'id' => 42],
+                ['slug' => 'document', 'id' => 43],
+            ],
+            'registers' => [
+                ['slug' => 'publication', 'id' => 7],
+            ],
+        ];
+
+        $storedValues = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$storedValues) {
+                    $storedValues[$key] = $value;
+                    return true;
+                }
+            );
+
+        $this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
+
+        // All three document_* keys MUST be present after provisioning.
+        $this->assertArrayHasKey('document_source', $storedValues, 'document_source was not persisted');
+        $this->assertArrayHasKey('document_schema', $storedValues, 'document_schema was not persisted');
+        $this->assertArrayHasKey('document_register', $storedValues, 'document_register was not persisted');
+
+        // document_source is a fixed literal.
+        $this->assertSame('openregister', $storedValues['document_source']);
+
+        // document_schema and document_register are stringified numeric IDs.
+        $this->assertSame('43', $storedValues['document_schema']);
+        $this->assertSame('7', $storedValues['document_register']);
+        $this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_schema']);
+        $this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_register']);
+
+        // And the publication_* keys must ALSO be there (co-tenant of the same register).
+        $this->assertSame('42', $storedValues['publication_schema']);
+        $this->assertSame('7', $storedValues['publication_register']);
+
+    }//end testUpdateObjectTypeConfigurationPopulatesDocumentKeysWOO519()
+
+    /**
+     * WOO-519 defense-in-depth: `updateSettings()` must accept `document_*` keys.
+     *
+     * Before this fix the allowlist omitted `document`, silently dropping any
+     * admin attempt to hand-correct a misprovisioned document_schema from the UI.
+     *
+     * @return void
+     */
+    public function testUpdateSettingsAcceptsDocumentKeysWOO519(): void
+    {
+        $inputData = [
+            'document_source'   => 'openregister',
+            'document_schema'   => '43',
+            'document_register' => '7',
+        ];
+
+        $stored = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$stored) {
+                    $stored[$key] = $value;
+                    return true;
+                }
+            );
+
+        $this->config->method('getValueString')
+            ->willReturnCallback(
+                function (string $app, string $key) use (&$stored) {
+                    return $stored[$key] ?? '';
+                }
+            );
+
+        $result = $this->service->updateSettings($inputData);
+
+        $this->assertSame('openregister', $result['document_source']);
+        $this->assertSame('43', $result['document_schema']);
+        $this->assertSame('7', $result['document_register']);
+
+    }//end testUpdateSettingsAcceptsDocumentKeysWOO519()
 }//end class
