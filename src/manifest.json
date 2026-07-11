@@ -495,9 +495,9 @@
 						}
 					},
 					{
-						"id": "pub-stats",
+						"id": "pub-stats-views",
 						"type": "stats-block",
-						"title": "Usage",
+						"title": "Views",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -511,7 +511,17 @@
 										"publication": "@objectId",
 										"kind": "view"
 									}
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "pub-stats-downloads",
+						"type": "stats-block",
+						"title": "Downloads",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Downloads",
 									"register": "publication",
@@ -581,10 +591,18 @@
 						"gridHeight": 4
 					},
 					{
-						"id": "2",
-						"widgetId": "pub-stats",
+						"id": "8",
+						"widgetId": "pub-stats-views",
 						"gridX": 8,
 						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "9",
+						"widgetId": "pub-stats-downloads",
+						"gridX": 8,
+						"gridY": 2,
 						"gridWidth": 4,
 						"gridHeight": 2
 					},
@@ -592,7 +610,7 @@
 						"id": "3",
 						"widgetId": "pub-retention",
 						"gridX": 0,
-						"gridY": 4,
+						"gridY": 6,
 						"gridWidth": 8,
 						"gridHeight": 4
 					},
@@ -600,7 +618,7 @@
 						"id": "4",
 						"widgetId": "pub-related",
 						"gridX": 8,
-						"gridY": 2,
+						"gridY": 4,
 						"gridWidth": 4,
 						"gridHeight": 6
 					},
@@ -608,7 +626,7 @@
 						"id": "5",
 						"widgetId": "pub-files",
 						"gridX": 0,
-						"gridY": 8,
+						"gridY": 10,
 						"gridWidth": 12,
 						"gridHeight": 5
 					},
@@ -616,7 +634,7 @@
 						"id": "6",
 						"widgetId": "pub-photos",
 						"gridX": 0,
-						"gridY": 13,
+						"gridY": 15,
 						"gridWidth": 6,
 						"gridHeight": 4
 					},
@@ -624,7 +642,7 @@
 						"id": "7",
 						"widgetId": "pub-links",
 						"gridX": 6,
-						"gridY": 13,
+						"gridY": 15,
 						"gridWidth": 6,
 						"gridHeight": 4
 					}
@@ -706,9 +724,9 @@
 						}
 					},
 					{
-						"id": "org-stats",
+						"id": "org-stats-publications",
 						"type": "stats-block",
-						"title": "Publishing",
+						"title": "Publications",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -720,7 +738,17 @@
 									"filter": {
 										"organization": "@objectId"
 									}
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "org-stats-catalogs",
+						"type": "stats-block",
+						"title": "Catalogs",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Catalogs",
 									"register": "@resolve:catalog_register",
@@ -811,10 +839,18 @@
 						"gridHeight": 4
 					},
 					{
-						"id": "2",
-						"widgetId": "org-stats",
+						"id": "6",
+						"widgetId": "org-stats-publications",
 						"gridX": 8,
 						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7",
+						"widgetId": "org-stats-catalogs",
+						"gridX": 8,
+						"gridY": 2,
 						"gridWidth": 4,
 						"gridHeight": 2
 					},
@@ -822,7 +858,7 @@
 						"id": "3",
 						"widgetId": "org-image",
 						"gridX": 8,
-						"gridY": 2,
+						"gridY": 4,
 						"gridWidth": 4,
 						"gridHeight": 2
 					},
@@ -830,7 +866,7 @@
 						"id": "4",
 						"widgetId": "org-publications",
 						"gridX": 0,
-						"gridY": 4,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5
 					},
@@ -838,7 +874,7 @@
 						"id": "5",
 						"widgetId": "org-catalogs",
 						"gridX": 6,
-						"gridY": 4,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5
 					}
