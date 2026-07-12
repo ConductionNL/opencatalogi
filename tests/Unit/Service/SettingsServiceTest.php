@@ -478,6 +478,10 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
             'glossary',
             'document',
             'usageCounter',
+            // ooapi-catalog-publication (OOAPI-010): materialized course/program/offering scope.
+            'ooapi_courses',
+            'ooapi_programs',
+            'ooapi_offerings',
         ];
         $this->assertSame($expectedTypes, $result['objectTypes']);
 

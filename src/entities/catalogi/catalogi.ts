@@ -32,6 +32,7 @@ export class Catalogi implements TCatalogi {
 	public filters!: Record<string, unknown>
 	public slug!: string
 	public hasWooSitemap!: boolean
+	public hasOoapi!: boolean
 
 	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
 	constructor(data: TCatalogi) {
@@ -53,6 +54,7 @@ export class Catalogi implements TCatalogi {
 		this.filters = data.filters || {}
 		this.slug = data?.slug || ''
 		this.hasWooSitemap = data?.hasWooSitemap || false
+		this.hasOoapi = data?.hasOoapi || false
 	}
 
 	/* istanbul ignore next */
@@ -76,6 +78,7 @@ export class Catalogi implements TCatalogi {
 				.max(255, 'kan niet langer dan 255 zijn')
 				.regex(/^[a-z0-9-]+$/, 'moet alleen kleine letters, cijfers en koppeltekens bevatten'),
 			hasWooSitemap: z.boolean(),
+			hasOoapi: z.boolean(),
 		})
 
 		const result = schema.safeParse({

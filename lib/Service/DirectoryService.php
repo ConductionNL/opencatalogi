@@ -2517,6 +2517,17 @@ class DirectoryService
             $listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
         }
 
+        // Federation discovery (OOAPI-009): advertise the per-catalog OOAPI 5.0 base
+        // endpoint when the catalog has OOAPI publication enabled, so remote instances
+        // and the national directory discover where to reach an institution's course
+        // catalog. Rides the same listing-projection helper as dcatEndpoint above — no
+        // new broadcast channel or cron (FED-OR-001/002).
+        $hasOoapi = filter_var(($catalog['hasOoapi'] ?? false), FILTER_VALIDATE_BOOLEAN);
+        if ($hasOoapi === true && $catalogSlug !== '') {
+            $base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+            $listing['ooapiEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/ooapi/v5";
+        }
+
         return $listing;
 
     }//end convertCatalogToListing()

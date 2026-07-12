@@ -150,6 +150,7 @@ export default {
 				{ label: t('opencatalogi', 'Registers'), value: (this.catalog.registers || []).length },
 				{ label: t('opencatalogi', 'Schemas'), value: (this.catalog.schemas || []).length },
 				{ label: t('opencatalogi', 'WOO Sitemap'), value: this.catalog.hasWooSitemap ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') },
+				{ label: t('opencatalogi', 'OOAPI 5.0 Publication'), value: this.catalog.hasOoapi ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') },
 			]
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */

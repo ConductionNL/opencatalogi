@@ -27,6 +27,8 @@ return [
 		// DCAT-AP-NL feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'dcat#validate', 'url' => '/api/catalogs/{catalogSlug}/dcat/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'dcat#donlReport', 'url' => '/api/catalogs/{catalogSlug}/dcat/donl-validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// OOAPI 5.0 feed validation (admin-only — auditable via AuthorizedAdminSetting)
+		['name' => 'ooapi#validate', 'url' => '/api/catalogs/{catalogSlug}/ooapi/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
@@ -69,6 +71,15 @@ return [
 		// DCAT-AP-NL CORS (public harvest endpoints)
 		['name' => 'dcat#preflightedCors', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
 		['name' => 'dcat#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// OOAPI 5.0 CORS (consumer-credential authenticated endpoints — OOAPI-001/COR-001)
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Catalogi CORS
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi', 'verb' => 'OPTIONS'],
 		['name' => 'catalogi#preflightedCors', 'url' => '/api/catalogi/{id}', 'verb' => 'OPTIONS'],
@@ -103,6 +114,17 @@ return [
 		// schema.org DataCatalog endpoint (specific route - must be before wildcard catalog routes)
 		['name' => 'schemaOrg#catalog', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		['name' => 'schemaOrg#preflightedCors', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		// OOAPI 5.0 catalog-publication endpoints (specific routes - MUST be before wildcard
+		// catalog routes; consumer-credential authenticated, OOAPI-001/OOAPI-008). The
+		// courses/{courseId}/offerings route MUST precede courses/{id} (more specific first).
+		['name' => 'ooapi#organizations', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#organization', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#programs', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#program', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/programs/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#courseOfferings', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#courses', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#course', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/courses/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
+		['name' => 'ooapi#offering', 'url' => '/api/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],
 		// Glossary (specific route - must be before wildcard catalog routes)
 		['name' => 'glossary#index', 'url' => '/api/glossary', 'verb' => 'GET'],
 		['name' => 'glossary#show', 'url' => '/api/glossary/{id}', 'verb' => 'GET'],

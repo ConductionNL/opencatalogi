@@ -24,4 +24,5 @@ export type TCatalogi = {
     status: CatalogStatus
     slug: string
     hasWooSitemap: boolean
+    hasOoapi: boolean
 }
