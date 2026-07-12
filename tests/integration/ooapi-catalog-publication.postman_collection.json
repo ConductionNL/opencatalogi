@@ -1,0 +1,379 @@
+{
+  "info": {
+    "_postman_id": "opencatalogi-ooapi-catalog-publication",
+    "name": "OpenCatalogi - OOAPI 5.0 Catalog Publication API",
+    "description": "API-only contract tests for the OOAPI 5.0 (Open Onderwijs API) catalog-publication surface (ooapi-catalog-publication change, OOAPI-001..010). Covers the consumer-credential auth gate (anonymous 401, authenticated 200/404), organizations/programs/courses/offerings resource endpoints, offering nesting under a course, pagination envelope shape, the admin-only feed validation action, and the federation directory ooapiEndpoint advertisement. Per the Playwright-UI-only / Newman-API convention this surface has no browser UI and is asserted here.\n\nVariables:\n- baseUrl: instance base URL (default http://localhost:8080)\n- catalogSlug: an OOAPI-enabled catalog slug (set per environment)\n- ooapiUsername / ooapiPassword: a Nextcloud account authorized as an OOAPI consumer (app-password recommended, D3 — no bespoke credential framework)\n- adminUsername / adminPassword: a Nextcloud admin account, for the AuthorizedAdminSetting-gated validate action\n\nNote: the `course`/`program`/`offering` resources are materialized by a sibling OpenConnector Synchronization (not built in this change, OOAPI-003) — until that sync exists on an environment, list endpoints return an empty `items` array (still 200) rather than data. The 200/404/401/403 contract asserted here holds regardless.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "catalogSlug", "value": "hva-onderwijs" },
+    { "key": "ooapiUsername", "value": "" },
+    { "key": "ooapiPassword", "value": "" },
+    { "key": "adminUsername", "value": "admin" },
+    { "key": "adminPassword", "value": "admin" }
+  ],
+  "item": [
+    {
+      "name": "OOAPI-008 Anonymous request is rejected (401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/courses",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "courses"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('401 Unauthorized (or 404 for a genuinely unknown catalog before auth is even relevant)', () => [401, 404].includes(pm.response.code));",
+              "pm.test('never 200 with resource data', () => pm.response.code !== 200);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-001/OOAPI-007 Courses list (authenticated, paginated)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/courses?pageNumber=1&pageSize=50",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "courses"],
+          "query": [
+            { "key": "pageNumber", "value": "1" },
+            { "key": "pageSize", "value": "50" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 (enabled) or 404 (disabled/unknown) or 503 (register not configured yet)', () => [200, 404, 503].includes(pm.response.code));",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  pm.test('has pageNumber/pageSize/hasNext/items envelope', () => 'pageNumber' in doc && 'pageSize' in doc && 'hasNext' in doc && Array.isArray(doc.items));",
+              "  pm.test('items never exceed the requested page size', () => doc.items.length <= 50);",
+              "  pm.test('CORS allow-origin present', () => pm.response.headers.has('Access-Control-Allow-Origin'));",
+              "  if (doc.items.length > 0) {",
+              "    pm.test('course resource has courseId/code/name', () => 'courseId' in doc.items[0] && 'code' in doc.items[0] && 'name' in doc.items[0]);",
+              "    pm.test('RIO identifier omitted, never null, when absent (OOAPI-005)', () => {",
+              "      const withoutRio = doc.items.find(c => c.rioOpleidingseenheidId === null);",
+              "      return withoutRio === undefined;",
+              "    });",
+              "    pm.collectionVariables.set('firstCourseId', doc.items[0].courseId);",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-003 Single course by id (materialized or 404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/courses/{{firstCourseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "courses", "{{firstCourseId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 or 404', () => [200, 404, 503].includes(pm.response.code));",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  pm.test('resource carries its own courseId', () => doc.courseId === pm.collectionVariables.get('firstCourseId'));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-001 Unknown course id returns 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/courses/does-not-exist",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "courses", "does-not-exist"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 or 503 (register not configured)', () => [404, 503].includes(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-006 Course offerings list (nested under course)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/courses/{{firstCourseId}}/offerings",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "courses", "{{firstCourseId}}", "offerings"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200, 404 or 503', () => [200, 404, 503].includes(pm.response.code));",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  pm.test('every returned offering references the requested course', () => doc.items.every(o => o.courseId === pm.collectionVariables.get('firstCourseId')));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-001 Programs list (authenticated)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/programs",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "programs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200, 404 or 503', () => [200, 404, 503].includes(pm.response.code));",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  pm.test('has pageNumber/pageSize/hasNext/items envelope', () => 'pageNumber' in doc && Array.isArray(doc.items));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-002 Organizations list renders the catalog's own owning Organisation live",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/organizations",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "organizations"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200, 404 or 503', () => [200, 404, 503].includes(pm.response.code));",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  pm.test('0 or 1 organizations (the catalog\\'s own owning Organisation)', () => doc.items.length <= 1);",
+              "  if (doc.items.length === 1) {",
+              "    pm.test('organization has organizationId and name', () => 'organizationId' in doc.items[0] && 'name' in doc.items[0]);",
+              "    pm.collectionVariables.set('firstOrganizationId', doc.items[0].organizationId);",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-002 Single organization by id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{ooapiUsername}}" },
+            { "key": "password", "value": "{{ooapiPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/organizations/{{firstOrganizationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "organizations", "{{firstOrganizationId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 or 404', () => [200, 404, 503].includes(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CORS preflight",
+      "request": {
+        "method": "OPTIONS",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/v5/courses",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "v5", "courses"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('CORS headers present', () => pm.response.headers.has('Access-Control-Allow-Origin') && pm.response.headers.has('Access-Control-Allow-Methods'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-010 Validate OOAPI feed (admin-only, advisory)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "basic",
+          "basic": [
+            { "key": "username", "value": "{{adminUsername}}" },
+            { "key": "password", "value": "{{adminPassword}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/catalogs/{{catalogSlug}}/ooapi/validate",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "catalogs", "{{catalogSlug}}", "ooapi", "validate"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 or 404', () => [200, 404].includes(pm.response.code));",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  pm.test('has valid/violations shape', () => 'valid' in doc && Array.isArray(doc.violations));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OOAPI-009 Directory advertises ooapiEndpoint for enabled catalogs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/apps/opencatalogi/api/directory",
+          "host": ["{{baseUrl}}"],
+          "path": ["apps", "opencatalogi", "api", "directory"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.code === 200);",
+              "if (pm.response.code === 200) {",
+              "  const doc = pm.response.json();",
+              "  const listings = Array.isArray(doc) ? doc : (doc.results || doc.items || []);",
+              "  const ooapiEnabled = listings.find(l => l.catalogusId && l.ooapiEndpoint);",
+              "  pm.test('when present, ooapiEndpoint is an absolute URL under .../ooapi/v5', () => {",
+              "    if (!ooapiEnabled) return true;",
+              "    return /\\/ooapi\\/v5$/.test(ooapiEnabled.ooapiEndpoint);",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -408,6 +408,12 @@ class SettingsService
             'glossary',
             'document',
             'usageCounter',
+            // ooapi-catalog-publication (OOAPI-010): materialized course/program/offering
+            // scope. Included here so the generic Settings.vue schema selector renders
+            // them like every other object type — no bespoke frontend needed.
+            'ooapi_courses',
+            'ooapi_programs',
+            'ooapi_offerings',
         ];
         $data['openRegisters']      = false;
         $data['availableRegisters'] = [];
@@ -451,6 +457,16 @@ class SettingsService
         $defaults['dcat_publisher_uri']   = '';
         $defaults['dcat_default_license'] = 'http://creativecommons.org/publicdomain/zero/1.0/';
         $defaults['dcat_contact_point']   = '';
+
+        // Add OOAPI 5.0 catalog-publication defaults (OOAPI-008/OOAPI-010). MVP
+        // consumer-credential gate (design.md D3): any authenticated Nextcloud user
+        // may read an OOAPI-enabled catalog's feed when the allowlist is empty
+        // (the default); a comma-separated list of Nextcloud usernames restricts
+        // access to exactly those accounts. Reuses Nextcloud's own user + app-password
+        // mechanism as the "credential" — no bespoke token store (D3: "no new auth
+        // framework"). Per-catalog credential scoping (design.md open question 3) is
+        // NOT implemented in this MVP; the allowlist is instance-wide.
+        $defaults['ooapi_consumers'] = '';
 
         // Get the current values for the object types from the configuration.
         try {
@@ -578,6 +594,10 @@ class SettingsService
                 'menu',
                 'glossary',
                 'document',
+                // ooapi-catalog-publication (OOAPI-010).
+                'ooapi_courses',
+                'ooapi_programs',
+                'ooapi_offerings',
             ];
 
             $allowedKeys = [];
@@ -598,6 +618,9 @@ class SettingsService
             $allowedKeys[] = 'dcat_publisher_uri';
             $allowedKeys[] = 'dcat_default_license';
             $allowedKeys[] = 'dcat_contact_point';
+
+            // OOAPI 5.0 consumer-credential allowlist (OOAPI-008/OOAPI-010).
+            $allowedKeys[] = 'ooapi_consumers';
 
             $updated = [];
 
@@ -902,6 +925,21 @@ class SettingsService
             'glossary',
         ];
 
+        // ooapi-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
+        // schemas are added to the SAME shared 'publication' register via a register.d
+        // fragment (ADR-037) — this app's loadSettings()/importFromApp() pipeline only
+        // ever creates one OpenRegister register, so a genuinely separate "dedicated"
+        // register (design.md D6) is not achievable without a larger SettingsService
+        // rearchitecture; the config-key prefix (`ooapi_courses` etc.) intentionally
+        // differs from the schema slug (`course` etc.) to match the OOAPI-010 config
+        // key names, so it is resolved via this explicit map rather than the direct
+        // type === slug convention used by $objectTypes above.
+        $ooapiTypeMap = [
+            'ooapi_courses'   => 'course',
+            'ooapi_programs'  => 'program',
+            'ooapi_offerings' => 'offering',
+        ];
+
         // Build a map of schema slugs to schema IDs.
         $schemaMap = [];
         foreach (($importResult['schemas'] ?? []) as $schema) {
@@ -962,6 +1000,20 @@ class SettingsService
             // Set register ID if found.
             if ($registerId !== null) {
                 $this->config->setValueString($this->appName, "{$type}_register", (string) $registerId);
+            }
+        }
+
+        // ooapi-catalog-publication: same two steps, keyed by the OOAPI-010 config
+        // prefix rather than the schema slug (see $ooapiTypeMap comment above).
+        foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
+            $this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
+
+            if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+                $this->config->setValueString($this->appName, "{$configPrefix}_schema", (string) $schemaMap[$schemaSlug]);
+            }
+
+            if ($registerId !== null) {
+                $this->config->setValueString($this->appName, "{$configPrefix}_register", (string) $registerId);
             }
         }
 

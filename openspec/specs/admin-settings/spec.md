@@ -182,6 +182,21 @@ required keys before first use.
 | `glossary_schema` | string | `""` | Yes | OpenRegister schema ID for glossary objects |
 | `publications_register` | string | `""` | Yes | OpenRegister register ID for publication objects |
 | `publications_schema` | string | `""` | Yes | OpenRegister schema ID for publication objects |
+| `ooapi_courses_source` | string | `"openregister"` | Yes | Always "openregister". See [ooapi-catalog-publication spec](../../changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md) (OOAPI-010). |
+| `ooapi_courses_register` | string | `""` | Yes | OpenRegister register ID for materialized `course` objects (OOAPI-003). |
+| `ooapi_courses_schema` | string | `""` | Yes | OpenRegister schema ID for materialized `course` objects. |
+| `ooapi_programs_source` | string | `"openregister"` | Yes | Always "openregister". |
+| `ooapi_programs_register` | string | `""` | Yes | OpenRegister register ID for materialized `program` objects. |
+| `ooapi_programs_schema` | string | `""` | Yes | OpenRegister schema ID for materialized `program` objects. |
+| `ooapi_offerings_source` | string | `"openregister"` | Yes | Always "openregister". |
+| `ooapi_offerings_register` | string | `""` | Yes | OpenRegister register ID for materialized `offering` objects. |
+| `ooapi_offerings_schema` | string | `""` | Yes | OpenRegister schema ID for materialized `offering` objects. |
+
+### OOAPI 5.0 Catalog Publication
+
+| Key | Type | Default | Required | Description |
+|-----|------|---------|----------|-------------|
+| `ooapi_consumers` | string | `""` | No | Comma-separated Nextcloud usernames allowed to read OOAPI 5.0 feeds (OOAPI-008). Empty (default) allows any authenticated Nextcloud user — the underlying "credential" is that account's own Nextcloud app-password, no bespoke token store. Per-catalog scoping is NOT implemented; the allowlist is instance-wide. |
 
 ### Publishing Options
 

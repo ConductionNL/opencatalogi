@@ -77,6 +77,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:checked.sync="catalogi.hasWooSitemap">
 					{{ t('opencatalogi', 'Requires Woo sitemap') }}
 				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
+					:disabled="objectStore.isLoading('catalog')"
+					:label="t('opencatalogi', 'Has OOAPI 5.0 publication')"
+					:checked.sync="catalogi.hasOoapi">
+					{{ t('opencatalogi', 'Publish this catalog\'s course/program/offering data via the Open Onderwijs API (OOAPI 5.0)') }}
+				</NcCheckboxRadioSwitch>
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -137,6 +143,7 @@ export default {
 				filters: {},
 				status: { id: 'development', label: 'Development' },
 				hasWooSitemap: false,
+				hasOoapi: false,
 			},
 			selectedOrganization: null,
 			selectedRegisters: [],
@@ -277,6 +284,7 @@ export default {
 				filters: {},
 				status: { id: 'development', label: 'Development' },
 				hasWooSitemap: false,
+				hasOoapi: false,
 			}
 			this.selectedOrganization = null
 			this.selectedRegisters = []
