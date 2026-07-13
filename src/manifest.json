@@ -415,7 +415,8 @@
 		{
 			"id": "Catalogs",
 			"route": "/catalogi",
-			"type": "index",
+			"type": "custom",
+			"component": "CatalogsIndexView",
 			"title": "Catalogs",
 			"config": {
 				"register": "@resolve:catalog_register",
