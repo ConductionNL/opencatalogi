@@ -116,4 +116,19 @@ export default {
 	font-size: 12px;
 	color: var(--color-text-lighter);
 }
+
+/*
+ * WOO-523 — local overlap fix. The pinned library version
+ * (@conduction/nextcloud-vue beta.141) does not yet ship the WOO-518
+ * header padding fix (nextcloud-vue PR #109), so the app-navigation
+ * toggle overlaps the "Publicaties zoeken" title. Reserve the 56px
+ * inline-start room here via :deep() so the toggle icon does not
+ * cover the heading.
+ *
+ * REMOVE THIS BLOCK once @conduction/nextcloud-vue is bumped to a
+ * beta that includes the WOO-518 fix.
+ */
+:deep(.cn-search-page__header) {
+	padding-inline-start: 56px;
+}
 </style>
