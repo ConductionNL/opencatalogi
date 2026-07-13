@@ -14,12 +14,12 @@
 //     hits `/api/federation/publications`).
 
 import { translate as t } from '@nextcloud/l10n'
-import { CnSearchPage } from '@conduction/nextcloud-vue'
+import { CnSearchPage, CnPagination } from '@conduction/nextcloud-vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 
 export default {
 	name: 'FederationSearch',
-	components: { CnSearchPage },
+	components: { CnSearchPage, CnPagination },
 	data() {
 		return {
 			searchStore: useSearchStore(),
@@ -35,6 +35,21 @@ export default {
 		},
 		loading() {
 			return this.searchStore.loading
+		},
+		/**
+		 * Pagination state passed to CnPagination. Falls back to safe
+		 * defaults when the search-store hasn't populated pagination yet.
+		 *
+		 * @spec exclude presentation-only view-model
+		 */
+		paginationState() {
+			const p = this.searchStore.pagination || {}
+			return {
+				page: p.page || 1,
+				pages: p.pages || 1,
+				total: p.total || 0,
+				limit: p.limit || 20,
+			}
 		},
 	},
 	mounted() {
@@ -100,39 +115,71 @@ export default {
 				})
 			}
 		},
+		/**
+		 * Refetch results for the newly-selected page. CnPagination emits
+		 * a 1-based page number.
+		 *
+		 * @param {number} newPage The page number selected by the user.
+		 * @return {void}
+		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 */
+		onPageChange(newPage) {
+			this.searchStore.searchPublications({ _page: newPage })
+		},
+		/**
+		 * Refetch results with a new items-per-page value, resetting to
+		 * page 1 so the user doesn't land on an out-of-bounds page when
+		 * enlarging the page size mid-navigation.
+		 *
+		 * @param {number} newSize The page size selected by the user.
+		 * @return {void}
+		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 */
+		onPageSizeChange(newSize) {
+			this.searchStore.searchPublications({ _limit: newSize, _page: 1 })
+		},
 	},
 }
 </script>
 
 <template>
-	<CnSearchPage
-		:title="t('opencatalogi', 'Search publications')"
-		:query="localQuery"
-		:results="results"
-		:total-count="totalCount"
-		:loading="loading"
-		:placeholder="t('opencatalogi', 'Search across the federated network…')"
-		:search-label="t('opencatalogi', 'Search')"
-		:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
-		:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
-		:loading-label="t('opencatalogi', 'Searching the federated network…')"
-		@search="onSearch"
-		@query-change="onQueryChange"
-		@result-click="onResultClick">
-		<template #result="{ result }">
-			<div class="federation-search-result">
-				<h4 class="federation-search-result__title">
-					{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
-				</h4>
-				<p v-if="result.summary" class="federation-search-result__summary">
-					{{ result.summary }}
-				</p>
-				<p v-if="result['@self']?.directory" class="federation-search-result__source">
-					{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
-				</p>
-			</div>
-		</template>
-	</CnSearchPage>
+	<div class="federation-search-container">
+		<CnSearchPage
+			:title="t('opencatalogi', 'Search publications')"
+			:query="localQuery"
+			:results="results"
+			:total-count="totalCount"
+			:loading="loading"
+			:placeholder="t('opencatalogi', 'Search across the federated network…')"
+			:search-label="t('opencatalogi', 'Search')"
+			:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
+			:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
+			:loading-label="t('opencatalogi', 'Searching the federated network…')"
+			@search="onSearch"
+			@query-change="onQueryChange"
+			@result-click="onResultClick">
+			<template #result="{ result }">
+				<div class="federation-search-result">
+					<h4 class="federation-search-result__title">
+						{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
+					</h4>
+					<p v-if="result.summary" class="federation-search-result__summary">
+						{{ result.summary }}
+					</p>
+					<p v-if="result['@self']?.directory" class="federation-search-result__source">
+						{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
+					</p>
+				</div>
+			</template>
+		</CnSearchPage>
+		<CnPagination
+			:current-page="paginationState.page"
+			:total-pages="paginationState.pages"
+			:total-items="paginationState.total"
+			:current-page-size="paginationState.limit"
+			@page-changed="onPageChange"
+			@page-size-changed="onPageSizeChange" />
+	</div>
 </template>
 
 <style scoped>
