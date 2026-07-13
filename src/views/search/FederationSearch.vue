@@ -90,24 +90,52 @@ export default {
 		 *
 		 * @param {object} result Result payload emitted by CnSearchPage.
 		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 * @spec exclude presentation-only click-through
 		 */
 		onResultClick(result) {
-			const directory = result?.['@self']?.directory
-			const catalogSlug = result?.catalog || result?.['@self']?.catalog
+			const rawDirectory = result?.['@self']?.directory
+			// The publication's catalog can arrive in three shapes depending
+			// on backend extension: a full TCatalogi object (when the store
+			// extends `@self.catalog`), a bare slug string, or a raw catalog
+			// ID that would need mapping. Prefer the object's `.slug`, fall
+			// back to a string-shaped catalog, else leave null and skip
+			// navigation (avoids `/publications/<numeric-id>/...` which the
+			// slug-based detail resolver cannot find).
+			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
+			const catalogSlug = typeof catalogSource === 'string'
+				? catalogSource
+				: (catalogSource?.slug || null)
 			const publicationId = result?.id || result?.['@self']?.id
-			if (directory) {
-				// Federated result — open the source instance in a new tab.
-				// Strip the trailing "/api/directory" (or any api suffix) from
-				// the peer's directory URL to get the app root.
-				const appRoot = directory.replace(/\/api\/directory\/?$/, '').replace(/\/api\/?$/, '')
-				const target = (catalogSlug && publicationId)
-					? `${appRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
-					: `${appRoot}/`
+			// Local publications carry directory === 'local' (see
+			// PublicationService::getLocalPublicationsFast); anything else is
+			// a federated peer identifier.
+			const isFederated = rawDirectory && rawDirectory !== 'local'
+			if (isFederated) {
+				// Federation payloads currently carry `@self.directory` as a
+				// bare hostname (e.g. `canary.commonground.nu`), not a full
+				// URL. Strip any accidental protocol / path / port if present,
+				// then compose the peer's OpenCatalogi app-root explicitly.
+				const bareHost = String(rawDirectory)
+					.replace(/^https?:\/\//i, '')
+					.replace(/\/.*$/, '')
+					.replace(/:$/, '')
+				if (!bareHost) return
+				const peerRoot = `https://${bareHost}/index.php/apps/opencatalogi`
+				// Federation result payloads do not currently carry the peer's
+				// catalog slug on individual results, so a deep-link to
+				// PublicationDetail (`/#/publications/<slug>/<id>`) would 404
+				// on the peer. Fall back to the peer's search page pre-filled
+				// with the publication id — the user lands on the peer's
+				// OpenCatalogi with the specific result surfaced.
+				const target = publicationId
+					? `${peerRoot}/#/search?_search=${encodeURIComponent(publicationId)}`
+					: `${peerRoot}/`
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
-			// Local result — route inside the app.
+			// Local result — route inside the app. Requires a resolved slug;
+			// silently skip if the catalog shape wasn't recognised so the
+			// user isn't sent to a broken detail URL.
 			if (catalogSlug && publicationId) {
 				this.$router.push({
 					name: 'PublicationDetail',
