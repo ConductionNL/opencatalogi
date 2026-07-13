@@ -14,6 +14,7 @@ jobs:
     uses: Conduction/.github/.forgejo/workflows/documentation-build.yml@main
     with:
       source-folder: docs
+      runner-label: con-ci-oci
     secrets: inherit
 
   deploy:
@@ -22,4 +23,5 @@ jobs:
     uses: Conduction/.github/.forgejo/workflows/documentation-deploy.yml@main
     with:
       cf-project-name: opencatalogi-docs
+      runner-label: con-ci-oci
     secrets: inherit
