@@ -149,7 +149,7 @@ export default {
 		 *
 		 * @param {number} newPage The page number selected by the user.
 		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 * @spec exclude presentation-only pagination
 		 */
 		onPageChange(newPage) {
 			this.searchStore.searchPublications({ _page: newPage })
@@ -161,7 +161,7 @@ export default {
 		 *
 		 * @param {number} newSize The page size selected by the user.
 		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 * @spec exclude presentation-only pagination
 		 */
 		onPageSizeChange(newSize) {
 			this.searchStore.searchPublications({ _limit: newSize, _page: 1 })
