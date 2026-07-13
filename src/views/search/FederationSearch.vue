@@ -67,6 +67,39 @@ export default {
 		onQueryChange(query) {
 			this.localQuery = query
 		},
+		/**
+		 * Navigate to a search result's detail. Federated results (carrying
+		 * `@self.directory`) open the source instance in a new tab so the
+		 * publication is viewed on the authoritative peer; local results
+		 * route internally to PublicationDetail.
+		 *
+		 * @param {object} result Result payload emitted by CnSearchPage.
+		 * @return {void}
+		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 */
+		onResultClick(result) {
+			const directory = result?.['@self']?.directory
+			const catalogSlug = result?.catalog || result?.['@self']?.catalog
+			const publicationId = result?.id || result?.['@self']?.id
+			if (directory) {
+				// Federated result — open the source instance in a new tab.
+				// Strip the trailing "/api/directory" (or any api suffix) from
+				// the peer's directory URL to get the app root.
+				const appRoot = directory.replace(/\/api\/directory\/?$/, '').replace(/\/api\/?$/, '')
+				const target = (catalogSlug && publicationId)
+					? `${appRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
+					: `${appRoot}/`
+				window.open(target, '_blank', 'noopener,noreferrer')
+				return
+			}
+			// Local result — route inside the app.
+			if (catalogSlug && publicationId) {
+				this.$router.push({
+					name: 'PublicationDetail',
+					params: { catalogSlug: String(catalogSlug), id: String(publicationId) },
+				})
+			}
+		},
 	},
 }
 </script>
@@ -84,7 +117,8 @@ export default {
 		:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
 		:loading-label="t('opencatalogi', 'Searching the federated network…')"
 		@search="onSearch"
-		@query-change="onQueryChange">
+		@query-change="onQueryChange"
+		@result-click="onResultClick">
 		<template #result="{ result }">
 			<div class="federation-search-result">
 				<h4 class="federation-search-result__title">
