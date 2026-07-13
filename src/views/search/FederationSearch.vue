@@ -106,15 +106,19 @@ export default {
 					.replace(/:$/, '')
 				if (!bareHost) return
 				const peerRoot = `https://${bareHost}/index.php/apps/opencatalogi`
-				// Federation result payloads do not currently carry the peer's
-				// catalog slug on individual results, so a deep-link to
-				// PublicationDetail (`/#/publications/<slug>/<id>`) would 404
-				// on the peer. Fall back to the peer's search page pre-filled
-				// with the publication id — the user lands on the peer's
-				// OpenCatalogi with the specific result surfaced.
-				const target = publicationId
-					? `${peerRoot}/#/search?_search=${encodeURIComponent(publicationId)}`
-					: `${peerRoot}/`
+				// Prefer a direct deep-link to PublicationDetail on the peer.
+				// If the payload carries a catalog slug, use it; otherwise use
+				// `publications` (the default OC catalog slug shipped by every
+				// install). If neither works on the peer we open the app-root
+				// as a last resort so the user is at least on the correct
+				// instance and can navigate from there. `_search=` is NOT a
+				// valid fallback: the store's search targets publication
+				// content, not id, so searching for a uuid returns zero hits.
+				let target = `${peerRoot}/`
+				if (publicationId) {
+					const peerCatalogSlug = catalogSlug || 'publications'
+					target = `${peerRoot}/#/publications/${encodeURIComponent(peerCatalogSlug)}/${encodeURIComponent(publicationId)}`
+				}
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
