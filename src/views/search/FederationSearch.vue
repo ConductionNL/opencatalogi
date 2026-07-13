@@ -75,11 +75,21 @@ export default {
 		 *
 		 * @param {object} result Result payload emitted by CnSearchPage.
 		 * @return {void}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 * @spec exclude presentation-only click-through
 		 */
 		onResultClick(result) {
 			const directory = result?.['@self']?.directory
-			const catalogSlug = result?.catalog || result?.['@self']?.catalog
+			// The publication's catalog can arrive in three shapes depending
+			// on backend extension: a full TCatalogi object (when the store
+			// extends `@self.catalog`), a bare slug string, or a raw catalog
+			// ID that would need mapping. Prefer the object's `.slug`, fall
+			// back to a string-shaped catalog, else leave null and skip
+			// navigation (avoids `/publications/<numeric-id>/...` which the
+			// slug-based detail resolver cannot find).
+			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
+			const catalogSlug = typeof catalogSource === 'string'
+				? catalogSource
+				: (catalogSource?.slug || null)
 			const publicationId = result?.id || result?.['@self']?.id
 			if (directory) {
 				// Federated result — open the source instance in a new tab.
@@ -92,7 +102,9 @@ export default {
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
-			// Local result — route inside the app.
+			// Local result — route inside the app. Requires a resolved slug;
+			// silently skip if the catalog shape wasn't recognised so the
+			// user isn't sent to a broken detail URL.
 			if (catalogSlug && publicationId) {
 				this.$router.push({
 					name: 'PublicationDetail',
