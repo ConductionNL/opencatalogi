@@ -184,17 +184,41 @@ export default {
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+		/**
+		 * Extract a routable id from a catalog row. CnIndexPage passes the
+		 * full object; the id can live at `@self.id` (canonical), `id`
+		 * (top-level projection), `uuid`, or as a fallback on `@self.uuid`.
+		 * Returns the first non-empty value found so downstream router
+		 * pushes work regardless of which shape the library variant
+		 * currently uses.
+		 *
+		 * @spec exclude row-shape plumbing; no domain behavior of its own.
+		 * @param {object} catalog Catalog row from CnIndexPage.
+		 * @return {string|null} Catalog id or null when unresolvable.
+		 */
+		resolveCatalogId(catalog) {
+			return catalog?.['@self']?.id
+				|| catalog?.id
+				|| catalog?.uuid
+				|| catalog?.['@self']?.uuid
+				|| null
+		},
 		onRowClick(row) {
-			const id = row?.['@self']?.id || row?.id
+			const id = this.resolveCatalogId(row)
 			if (id) {
-				this.$router.push({ name: 'CatalogDetail', params: { id } })
+				this.$router.push({ name: 'CatalogDetail', params: { id: String(id) } })
 			}
 		},
 		viewCatalog(catalog) {
-			const id = catalog?.['@self']?.id || catalog?.id
+			const id = this.resolveCatalogId(catalog)
 			if (id) {
-				this.$router.push({ name: 'CatalogDetail', params: { id } })
+				this.$router.push({ name: 'CatalogDetail', params: { id: String(id) } })
+				return
 			}
+			// No id resolvable — log the row so misshapen payloads surface
+			// in the browser console instead of silently doing nothing.
+			// eslint-disable-next-line no-console
+			console.warn('[opencatalogi] viewCatalog: no id resolvable from row', catalog)
 		},
 		editCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)
