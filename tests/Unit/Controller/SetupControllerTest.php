@@ -272,6 +272,66 @@ class SetupControllerTest extends TestCase
         $this->assertSame('2', $this->configValues['onboarding_completed_version']);
     }
 
+    /**
+     * The seeded catalog must include `registers` + `schemas` so
+     * `PublicationService::getCatalogFilters()` has a scope to union.
+     * Regression coverage for WOO-529: without these arrays the /search
+     * endpoint returns 0 local rows on a fresh install and the create-
+     * publication modal falls into the WOO-527 "not configured" state.
+     */
+    public function testCreateFirstCatalogSeedsRegistersAndSchemasFromPublicationConfig(): void
+    {
+        $this->wireRegisters();
+        $this->configValues['publication_schema']    = '77';
+        $this->configValues['default_catalog_scope'] = 'public';
+        $objectService = $this->mockObjectService([]);
+
+        $capturedObject = null;
+        $objectService->expects($this->once())
+            ->method('saveObject')
+            ->willReturnCallback(function ($object) use (&$capturedObject) {
+                $capturedObject = $object;
+                return null;
+            });
+
+        $body = $this->controller->action('create-first-catalog')->getData();
+
+        $this->assertTrue($body['success']);
+        $this->assertIsArray($capturedObject, 'saveObject received a payload');
+        $this->assertArrayHasKey('registers', $capturedObject, 'catalog has registers scope');
+        $this->assertArrayHasKey('schemas', $capturedObject, 'catalog has schemas scope');
+        $this->assertSame(['14'], $capturedObject['registers']);
+        $this->assertSame(['77'], $capturedObject['schemas']);
+    }
+
+    /**
+     * Absent publication_register / publication_schema keys must not abort
+     * catalog creation — the wizard still produces a catalog that an admin
+     * can retro-fit later. Only the corresponding array is omitted.
+     */
+    public function testCreateFirstCatalogOmitsScopeArraysWhenPublicationKeysMissing(): void
+    {
+        $this->wireRegisters();
+        unset($this->configValues['publication_register']);
+        // publication_schema was never set in wireRegisters; make it explicit.
+        $this->configValues['default_catalog_scope'] = 'public';
+        $objectService = $this->mockObjectService([]);
+
+        $capturedObject = null;
+        $objectService->expects($this->once())
+            ->method('saveObject')
+            ->willReturnCallback(function ($object) use (&$capturedObject) {
+                $capturedObject = $object;
+                return null;
+            });
+
+        $body = $this->controller->action('create-first-catalog')->getData();
+
+        $this->assertTrue($body['success']);
+        $this->assertArrayNotHasKey('registers', $capturedObject);
+        $this->assertArrayNotHasKey('schemas', $capturedObject);
+    }
+
     public function testCreateFirstCatalogIsIdempotentWhenCatalogExists(): void
     {
         $this->wireRegisters();

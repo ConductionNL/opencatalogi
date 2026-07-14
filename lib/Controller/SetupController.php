@@ -270,6 +270,16 @@ class SetupController extends Controller
     /**
      * Create the user's first catalog (idempotent — no-op when one exists).
      *
+     * A catalog scopes what publications are visible in the federated /search
+     * and the local Publications list: `PublicationService::getCatalogFilters()`
+     * unions each catalog's `registers` and `schemas` arrays and only rows in
+     * that scope are returned. A catalog seeded with both arrays empty
+     * therefore renders the entire install unusable — federation returns 0
+     * local rows, and the WOO-527 diagnostic "Catalog is not configured for
+     * publications" fires in every create-publication modal. Seed the arrays
+     * with the same publication_register / publication_schema values the app
+     * is already configured against (WOO-529).
+     *
      * @return JSONResponse The result.
      */
     private function createFirstCatalog(): JSONResponse
@@ -291,18 +301,35 @@ class SetupController extends Controller
             return new JSONResponse(['success' => false, 'message' => $this->l10n->t('Configure the catalog register and schema first.')]);
         }
 
+        // Resolve the publication register/schema that this catalog should
+        // scope. Both values are already required for a working install (the
+        // publish flow depends on them), so a missing value here is a config
+        // problem that reload-settings is expected to surface — we still fall
+        // back to an unscoped catalog rather than aborting, so an admin can
+        // recover by attaching the register/schema later.
+        $publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
+        $publicationSchema   = $this->config->getValueString($this->appName, 'publication_schema', '');
+
         $scope = $this->config->getValueString($this->appName, 'default_catalog_scope', 'public');
+
+        $catalogObject = [
+            'title'       => $this->l10n->t('My first catalog'),
+            'summary'     => $this->l10n->t('Your first OpenCatalogi catalog — add publications to start sharing them openly.'),
+            'description' => $this->l10n->t('Created during first-time setup. Rename it and adjust its access to suit your organisation.'),
+            // A public default scope makes the catalog discoverable in the federated directory.
+            'listed'      => ($scope === 'public'),
+            'status'      => 'development',
+        ];
+        if ($publicationRegister !== '') {
+            $catalogObject['registers'] = [$publicationRegister];
+        }
+        if ($publicationSchema !== '') {
+            $catalogObject['schemas'] = [$publicationSchema];
+        }
 
         try {
             $objectService->saveObject(
-                object: [
-                    'title'       => $this->l10n->t('My first catalog'),
-                    'summary'     => $this->l10n->t('Your first OpenCatalogi catalog — add publications to start sharing them openly.'),
-                    'description' => $this->l10n->t('Created during first-time setup. Rename it and adjust its access to suit your organisation.'),
-                    // A public default scope makes the catalog discoverable in the federated directory.
-                    'listed'      => ($scope === 'public'),
-                    'status'      => 'development',
-                ],
+                object: $catalogObject,
                 register: $register,
                 schema: $schema,
                 _rbac: false,

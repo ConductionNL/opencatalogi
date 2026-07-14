@@ -759,9 +759,24 @@ export default {
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
 			const validSchemaIds = registerSchemaIds.filter(id => catalogSchemaIds.includes(id))
 
+			// `objectStore.availableSchemas` is a `.flatMap()` across every
+			// register in settings — the SAME schema id appears once per
+			// register it is attached to. Without a dedupe step the dropdown
+			// renders duplicate entries for schemas that live in multiple
+			// registers (WOO-529: on a fresh install `Publication` showed up
+			// twice because schema #1 is bound to both the `publication`
+			// register AND the `opencatalogi` magic-mapper register). Keep
+			// the first match per id.
+			const seenIds = new Set()
 			return objectStore.availableSchemas
 				.filter(schema => validSchemaIds.includes(String(schema.id)))
 				.filter(schema => this.hasSchemaReadRight(schema))
+				.filter(schema => {
+					const key = String(schema.id)
+					if (seenIds.has(key)) return false
+					seenIds.add(key)
+					return true
+				})
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
