@@ -14,12 +14,12 @@
 //     hits `/api/federation/publications`).
 
 import { translate as t } from '@nextcloud/l10n'
-import { CnSearchPage } from '@conduction/nextcloud-vue'
+import { CnSearchPage, CnPagination } from '@conduction/nextcloud-vue'
 import { useSearchStore } from '../../store/modules/search.ts'
 
 export default {
 	name: 'FederationSearch',
-	components: { CnSearchPage },
+	components: { CnSearchPage, CnPagination },
 	data() {
 		return {
 			searchStore: useSearchStore(),
@@ -35,6 +35,21 @@ export default {
 		},
 		loading() {
 			return this.searchStore.loading
+		},
+		/**
+		 * Pagination state passed to CnPagination. Falls back to safe
+		 * defaults when the search-store hasn't populated pagination yet.
+		 *
+		 * @spec exclude presentation-only view-model
+		 */
+		paginationState() {
+			const p = this.searchStore.pagination || {}
+			return {
+				page: p.page || 1,
+				pages: p.pages || 1,
+				total: p.total || 0,
+				limit: p.limit || 20,
+			}
 		},
 	},
 	mounted() {
@@ -66,6 +81,29 @@ export default {
 		 */
 		onQueryChange(query) {
 			this.localQuery = query
+		},
+		/**
+		 * Refetch results for the newly-selected page. CnPagination emits
+		 * a 1-based page number.
+		 *
+		 * @param {number} newPage The page number selected by the user.
+		 * @return {void}
+		 * @spec exclude presentation-only pagination
+		 */
+		onPageChange(newPage) {
+			this.searchStore.searchPublications({ _page: newPage })
+		},
+		/**
+		 * Refetch results with a new items-per-page value, resetting to
+		 * page 1 so the user doesn't land on an out-of-bounds page when
+		 * enlarging the page size mid-navigation.
+		 *
+		 * @param {number} newSize The page size selected by the user.
+		 * @return {void}
+		 * @spec exclude presentation-only pagination
+		 */
+		onPageSizeChange(newSize) {
+			this.searchStore.searchPublications({ _limit: newSize, _page: 1 })
 		},
 		/**
 		 * Navigate to a search result's detail. Federated results (carrying
@@ -128,19 +166,17 @@ export default {
 					peerOrigin = `https://${bareHost}`
 				}
 				const peerRoot = `${peerOrigin}/index.php/apps/opencatalogi`
-				// Prefer a direct deep-link to PublicationDetail on the peer.
-				// If the payload carries a catalog slug, use it; otherwise use
-				// `publications` (the default OC catalog slug shipped by every
-				// install). If neither works on the peer we open the app-root
-				// as a last resort so the user is at least on the correct
-				// instance and can navigate from there. `_search=` is NOT a
-				// valid fallback: the store's search targets publication
-				// content, not id, so searching for a uuid returns zero hits.
-				let target = `${peerRoot}/`
-				if (publicationId) {
-					const peerCatalogSlug = catalogSlug || 'publications'
-					target = `${peerRoot}/#/publications/${encodeURIComponent(peerCatalogSlug)}/${encodeURIComponent(publicationId)}`
-				}
+				// Deep-link to PublicationDetail only when we can actually
+				// build a valid URL: BOTH the catalog slug (present on the
+				// individual result payload) AND the publication id must be
+				// resolvable. Otherwise fall back to the peer's app-root so
+				// the user lands on the correct instance and can navigate —
+				// guessing a catalog slug (`publications`) would 404 on any
+				// peer that uses a different default and there is no way to
+				// verify the assumption from the payload alone.
+				const target = (catalogSlug && publicationId)
+					? `${peerRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
+					: `${peerRoot}/`
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
@@ -159,34 +195,43 @@ export default {
 </script>
 
 <template>
-	<CnSearchPage
-		:title="t('opencatalogi', 'Search publications')"
-		:query="localQuery"
-		:results="results"
-		:total-count="totalCount"
-		:loading="loading"
-		:placeholder="t('opencatalogi', 'Search across the federated network…')"
-		:search-label="t('opencatalogi', 'Search')"
-		:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
-		:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
-		:loading-label="t('opencatalogi', 'Searching the federated network…')"
-		@search="onSearch"
-		@query-change="onQueryChange"
-		@result-click="onResultClick">
-		<template #result="{ result }">
-			<div class="federation-search-result">
-				<h4 class="federation-search-result__title">
-					{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
-				</h4>
-				<p v-if="result.summary" class="federation-search-result__summary">
-					{{ result.summary }}
-				</p>
-				<p v-if="result['@self']?.directory" class="federation-search-result__source">
-					{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
-				</p>
-			</div>
-		</template>
-	</CnSearchPage>
+	<div class="federation-search-container">
+		<CnSearchPage
+			:title="t('opencatalogi', 'Search publications')"
+			:query="localQuery"
+			:results="results"
+			:total-count="totalCount"
+			:loading="loading"
+			:placeholder="t('opencatalogi', 'Search across the federated network…')"
+			:search-label="t('opencatalogi', 'Search')"
+			:empty-label="t('opencatalogi', 'No matching publications across the federation.')"
+			:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
+			:loading-label="t('opencatalogi', 'Searching the federated network…')"
+			@search="onSearch"
+			@query-change="onQueryChange"
+			@result-click="onResultClick">
+			<template #result="{ result }">
+				<div class="federation-search-result">
+					<h4 class="federation-search-result__title">
+						{{ result.title || result['@self']?.name || t('opencatalogi', 'Untitled publication') }}
+					</h4>
+					<p v-if="result.summary" class="federation-search-result__summary">
+						{{ result.summary }}
+					</p>
+					<p v-if="result['@self']?.directory" class="federation-search-result__source">
+						{{ t('opencatalogi', 'Source:') }} {{ result['@self'].directory }}
+					</p>
+				</div>
+			</template>
+		</CnSearchPage>
+		<CnPagination
+			:current-page="paginationState.page"
+			:total-pages="paginationState.pages"
+			:total-items="paginationState.total"
+			:current-page-size="paginationState.limit"
+			@page-changed="onPageChange"
+			@page-size-changed="onPageSizeChange" />
+	</div>
 </template>
 
 <style scoped>
@@ -203,5 +248,20 @@ export default {
 	margin: 0;
 	font-size: 12px;
 	color: var(--color-text-lighter);
+}
+
+/*
+ * WOO-523 — local overlap fix. The pinned library version
+ * (@conduction/nextcloud-vue beta.141) does not yet ship the WOO-518
+ * header padding fix (nextcloud-vue PR #109), so the app-navigation
+ * toggle overlaps the "Publicaties zoeken" title. Reserve the 56px
+ * inline-start room here via :deep() so the toggle icon does not
+ * cover the heading.
+ *
+ * REMOVE THIS BLOCK once @conduction/nextcloud-vue is bumped to a
+ * beta that includes the WOO-518 fix.
+ */
+:deep(.cn-search-page__header) {
+	padding-inline-start: 56px;
 }
 </style>
