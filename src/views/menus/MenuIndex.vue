@@ -94,6 +94,7 @@ import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { resolveObjectId } from '../../services/resolveObjectId.js'
 import { buildMenuItemIconCatalogues } from '../../modals/menuItem/menuItemIconCatalogues.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -181,15 +182,18 @@ export default {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			const id = row?.['@self']?.id || row?.id
+			const id = resolveObjectId(row)
 			if (id) {
-				this.$router.push({ name: 'MenuDetail', params: { id } })
+				this.$router.push({ name: 'MenuDetail', params: { id: String(id) } })
+				return
 			}
+			// eslint-disable-next-line no-console
+			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
 		editMenu(menu) {
-			const id = menu?.['@self']?.id || menu?.id
+			const id = resolveObjectId(menu)
 			if (id) {
-				this.$router.push({ name: 'MenuDetail', params: { id } })
+				this.$router.push({ name: 'MenuDetail', params: { id: String(id) } })
 			}
 		},
 		addMenuItem(menu) {

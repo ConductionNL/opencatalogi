@@ -94,6 +94,7 @@ import { useListView, CnIndexPage } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { resolveObjectId } from '../../services/resolveObjectId.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -157,15 +158,26 @@ export default {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			const id = row?.slug || row?.['@self']?.id || row?.id
+			// PageDetail route params.id is a slug when available so the URL
+			// stays human-readable; fall back to the OpenRegister object id
+			// (4-way resolution) when the row payload predates the slug
+			// projection.
+			const id = row?.slug || resolveObjectId(row)
 			if (id) {
-				this.$router.push({ name: 'PageDetail', params: { id } })
+				this.$router.push({ name: 'PageDetail', params: { id: String(id) } })
+				return
 			}
+			// eslint-disable-next-line no-console
+			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
 		viewPage(page) {
-			const id = page?.slug || page?.['@self']?.id || page?.id
+			// PageDetail route params.id is a slug when available so the URL
+			// stays human-readable; fall back to the OpenRegister object id
+			// (4-way resolution) when the row payload predates the slug
+			// projection.
+			const id = page?.slug || resolveObjectId(page)
 			if (id) {
-				this.$router.push({ name: 'PageDetail', params: { id } })
+				this.$router.push({ name: 'PageDetail', params: { id: String(id) } })
 			}
 		},
 		editPage(page) {
