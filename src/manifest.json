@@ -448,12 +448,10 @@
 			"route": "/publications/:catalogSlug",
 			"type": "index",
 			"title": "Publications",
+			"_note_woo_527_followup": "The `filter: { catalog: @route.catalogSlug }` clause used to sit here, but the publication schema declares NO `catalog` property (see openregister schemas/1) — publications are catalog-scoped structurally via the catalog's own `registers`/`schemas` arrays, exactly like the /api/federation/publications endpoint resolves them. With the filter active every publication was dropped by the OpenRegister query and the page rendered empty even after successful create. Removed until the schema grows an explicit catalog FK (or until this page rehosts on the bespoke `/api/{catalogSlug}` endpoint, which already resolves the same scope correctly).",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
-				"filter": {
-					"catalog": "@route.catalogSlug"
-				},
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": true,

@@ -720,15 +720,19 @@ export default {
 				return []
 			}
 
-			const fullCatalog = objectStore.getCollection('catalog').results.find(catalog => catalog.id === this.selectedCatalog.id)
+			const fullCatalog = objectStore.getCollection('catalog').results.find(catalog => String(catalog.id) === String(this.selectedCatalog.id))
 			if (!fullCatalog) {
 				return []
 			}
 
-			const selectedCatalogRegisterIds = fullCatalog.registers || []
+			// Catalog.registers arrives as a string array (`["1"]`) while
+			// `register.id` from OpenRegister is numeric — `.includes` uses
+			// strict equality so the raw check would drop every match and
+			// leave the modal stalled on the empty-state (WOO-527 followup).
+			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(String)
 
 			return objectStore.availableRegisters
-				.filter(register => selectedCatalogRegisterIds.includes(register.id))
+				.filter(register => selectedCatalogRegisterIds.includes(String(register.id)))
 				.map(register => ({
 					id: register.id,
 					label: register.title,
@@ -740,21 +744,23 @@ export default {
 				return []
 			}
 
-			const register = objectStore.availableRegisters.find(register => register.id === this.selectedRegister.id)
-			const catalog = objectStore.getCollection('catalog').results.find(catalog => catalog.id === this.selectedCatalog.id)
+			const register = objectStore.availableRegisters.find(register => String(register.id) === String(this.selectedRegister.id))
+			const catalog = objectStore.getCollection('catalog').results.find(catalog => String(catalog.id) === String(this.selectedCatalog.id))
 
 			if (!register || !catalog) {
 				return []
 			}
 
-			const registerSchemaIds = register.schemas?.map(schema => schema.id) || []
-			const catalogSchemaIds = catalog.schemas || []
+			// Same numeric/string-id mismatch guard as registerOptions above:
+			// register.schemas[].id is int, catalog.schemas is string[].
+			const registerSchemaIds = (register.schemas || []).map(schema => String(schema.id))
+			const catalogSchemaIds = (catalog.schemas || []).map(String)
 
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
 			const validSchemaIds = registerSchemaIds.filter(id => catalogSchemaIds.includes(id))
 
 			return objectStore.availableSchemas
-				.filter(schema => validSchemaIds.includes(schema.id))
+				.filter(schema => validSchemaIds.includes(String(schema.id)))
 				.filter(schema => this.hasSchemaReadRight(schema))
 				.map(schema => ({
 					id: schema.id,
