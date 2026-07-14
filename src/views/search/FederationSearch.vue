@@ -16,6 +16,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { CnSearchPage, CnPagination } from '@conduction/nextcloud-vue'
 import { useSearchStore } from '../../store/modules/search.ts'
+import { objectStore } from '../../store/store.js'
 
 export default {
 	name: 'FederationSearch',
@@ -123,14 +124,34 @@ export default {
 			// while the `const` declaration lived below the local branch was
 			// a TDZ ReferenceError that silently swallowed every federated
 			// click — the handler threw before window.open ran. The catalog
-			// field can arrive in three shapes depending on backend extend:
-			// a full TCatalogi object, a bare slug string, or a raw catalog
-			// ID (which we can't map to a slug here, so we fall through to
-			// null and let the caller decide the fallback).
+			// field arrives in different shapes on different code paths:
+			//   - a bare slug string on some legacy extend paths,
+			//   - a full TCatalogi object when the backend inlines it,
+			//   - `@self.catalogs[]` (an array of catalog objects with
+			//     `{id, title}` and no slug) on the fast-path federation
+			//     endpoint (PublicationService::getLocalPublicationsFast) —
+			//     that's what LOCAL results currently carry, and it's why
+			//     local click-through was silently no-oping.
+			// When we only have the catalog ID, resolve it against the
+			// preloaded catalog collection to recover the slug.
 			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
-			const catalogSlug = typeof catalogSource === 'string'
-				? catalogSource
-				: (catalogSource?.slug || null)
+			let catalogSlug = null
+			if (typeof catalogSource === 'string') {
+				catalogSlug = catalogSource
+			} else if (catalogSource?.slug) {
+				catalogSlug = catalogSource.slug
+			} else {
+				// Fast-path shape: pluck the first catalog id off
+				// `@self.catalogs[]` and look up the slug in the store.
+				const catalogsList = result?.['@self']?.catalogs
+				const firstCatalogId = Array.isArray(catalogsList) && catalogsList[0]?.id
+				if (firstCatalogId) {
+					const collection = objectStore.getCollection('catalog')
+					const catalogs = Array.isArray(collection) ? collection : (collection?.results || [])
+					const match = catalogs.find(c => String(c.id) === String(firstCatalogId) || String(c?.['@self']?.id) === String(firstCatalogId))
+					catalogSlug = match?.slug || match?.['@self']?.slug || null
+				}
+			}
 			// Local publications carry directory === 'local' (see
 			// PublicationService::getLocalPublicationsFast); anything else is
 			// a federated peer identifier.
