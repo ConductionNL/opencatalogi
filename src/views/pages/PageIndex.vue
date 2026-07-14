@@ -171,9 +171,13 @@ export default {
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
 		viewPage(page) {
-			const id = page?.slug || page?.['@self']?.id || page?.id
+			// PageDetail route params.id is a slug when available so the URL
+			// stays human-readable; fall back to the OpenRegister object id
+			// (4-way resolution) when the row payload predates the slug
+			// projection.
+			const id = page?.slug || resolveObjectId(page)
 			if (id) {
-				this.$router.push({ name: 'PageDetail', params: { id } })
+				this.$router.push({ name: 'PageDetail', params: { id: String(id) } })
 			}
 		},
 		editPage(page) {

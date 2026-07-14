@@ -156,9 +156,9 @@ export default {
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
 		viewTheme(theme) {
-			const id = theme?.['@self']?.id || theme?.id
+			const id = resolveObjectId(theme)
 			if (id) {
-				this.$router.push({ name: 'ThemeDetail', params: { id } })
+				this.$router.push({ name: 'ThemeDetail', params: { id: String(id) } })
 			}
 		},
 		editTheme(theme) {

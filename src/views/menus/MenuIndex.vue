@@ -191,9 +191,9 @@ export default {
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
 		editMenu(menu) {
-			const id = menu?.['@self']?.id || menu?.id
+			const id = resolveObjectId(menu)
 			if (id) {
-				this.$router.push({ name: 'MenuDetail', params: { id } })
+				this.$router.push({ name: 'MenuDetail', params: { id: String(id) } })
 			}
 		},
 		addMenuItem(menu) {
