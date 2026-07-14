@@ -98,16 +98,36 @@ export default {
 			// a federated peer identifier.
 			const isFederated = rawDirectory && rawDirectory !== 'local'
 			if (isFederated) {
-				// Federation payloads currently carry `@self.directory` as a
-				// bare hostname (e.g. `canary.commonground.nu`), not a full
-				// URL. Strip any accidental protocol / path / port if present,
-				// then compose the peer's OpenCatalogi app-root explicitly.
-				const bareHost = String(rawDirectory)
-					.replace(/^https?:\/\//i, '')
-					.replace(/\/.*$/, '')
-					.replace(/:$/, '')
-				if (!bareHost) return
-				const peerRoot = `https://${bareHost}/index.php/apps/opencatalogi`
+				// `@self.directory` is a peer *identifier* (bare hostname —
+				// often the docker-network name like `nc-fed-2`, which is
+				// not reachable from the user's browser). `@self.uri`, on
+				// the other hand, is the peer's authoritative object URL
+				// (`https://canary.…/apps/openregister/api/objects/…` or
+				// `http://localhost:9082/apps/openregister/…`) — the only
+				// origin we know the current viewer can actually load. Use
+				// its origin (scheme+host+port) as the base for the peer
+				// deep-link. Fall back to the bare-hostname derivation for
+				// legacy payloads that pre-date the `uri` field, so we
+				// don't regress on any older peer.
+				let peerOrigin = null
+				const peerUri = result?.['@self']?.uri
+				if (peerUri) {
+					try {
+						peerOrigin = new URL(peerUri).origin
+					} catch {
+						// URL parse failed — leave peerOrigin null so we
+						// fall through to the bare-hostname branch.
+					}
+				}
+				if (!peerOrigin) {
+					const bareHost = String(rawDirectory)
+						.replace(/^https?:\/\//i, '')
+						.replace(/\/.*$/, '')
+						.replace(/:$/, '')
+					if (!bareHost) return
+					peerOrigin = `https://${bareHost}`
+				}
+				const peerRoot = `${peerOrigin}/index.php/apps/opencatalogi`
 				// Prefer a direct deep-link to PublicationDetail on the peer.
 				// If the payload carries a catalog slug, use it; otherwise use
 				// `publications` (the default OC catalog slug shipped by every
