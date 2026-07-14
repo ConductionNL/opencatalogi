@@ -16,6 +16,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { CnSearchPage, CnPagination } from '@conduction/nextcloud-vue'
 import { useSearchStore } from '../../store/modules/search.ts'
+import { objectStore } from '../../store/store.js'
 
 export default {
 	name: 'FederationSearch',
@@ -105,6 +106,111 @@ export default {
 		onPageSizeChange(newSize) {
 			this.searchStore.searchPublications({ _limit: newSize, _page: 1 })
 		},
+		/**
+		 * Navigate to a search result's detail. Federated results (carrying
+		 * `@self.directory`) open the source instance in a new tab so the
+		 * publication is viewed on the authoritative peer; local results
+		 * route internally to PublicationDetail.
+		 *
+		 * @param {object} result Result payload emitted by CnSearchPage.
+		 * @return {void}
+		 * @spec exclude presentation-only click-through
+		 */
+		onResultClick(result) {
+			const rawDirectory = result?.['@self']?.directory
+			const publicationId = result?.id || result?.['@self']?.id
+			// Derive the catalog slug once, up front, so BOTH branches can
+			// reach it. Reading `catalogSlug` inside the federated branch
+			// while the `const` declaration lived below the local branch was
+			// a TDZ ReferenceError that silently swallowed every federated
+			// click — the handler threw before window.open ran. The catalog
+			// field arrives in different shapes on different code paths:
+			//   - a bare slug string on some legacy extend paths,
+			//   - a full TCatalogi object when the backend inlines it,
+			//   - `@self.catalogs[]` (an array of catalog objects with
+			//     `{id, title}` and no slug) on the fast-path federation
+			//     endpoint (PublicationService::getLocalPublicationsFast) —
+			//     that's what LOCAL results currently carry, and it's why
+			//     local click-through was silently no-oping.
+			// When we only have the catalog ID, resolve it against the
+			// preloaded catalog collection to recover the slug.
+			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
+			let catalogSlug = null
+			if (typeof catalogSource === 'string') {
+				catalogSlug = catalogSource
+			} else if (catalogSource?.slug) {
+				catalogSlug = catalogSource.slug
+			} else {
+				// Fast-path shape: pluck the first catalog id off
+				// `@self.catalogs[]` and look up the slug in the store.
+				const catalogsList = result?.['@self']?.catalogs
+				const firstCatalogId = Array.isArray(catalogsList) && catalogsList[0]?.id
+				if (firstCatalogId) {
+					const collection = objectStore.getCollection('catalog')
+					const catalogs = Array.isArray(collection) ? collection : (collection?.results || [])
+					const match = catalogs.find(c => String(c.id) === String(firstCatalogId) || String(c?.['@self']?.id) === String(firstCatalogId))
+					catalogSlug = match?.slug || match?.['@self']?.slug || null
+				}
+			}
+			// Local publications carry directory === 'local' (see
+			// PublicationService::getLocalPublicationsFast); anything else is
+			// a federated peer identifier.
+			const isFederated = rawDirectory && rawDirectory !== 'local'
+			if (isFederated) {
+				// `@self.directory` is a peer *identifier* (bare hostname —
+				// often the docker-network name like `nc-fed-2`, which is
+				// not reachable from the user's browser). `@self.uri`, on
+				// the other hand, is the peer's authoritative object URL
+				// (`https://canary.…/apps/openregister/api/objects/…` or
+				// `http://localhost:9082/apps/openregister/…`) — the only
+				// origin we know the current viewer can actually load. Use
+				// its origin (scheme+host+port) as the base for the peer
+				// deep-link. Fall back to the bare-hostname derivation for
+				// legacy payloads that pre-date the `uri` field, so we
+				// don't regress on any older peer.
+				let peerOrigin = null
+				const peerUri = result?.['@self']?.uri
+				if (peerUri) {
+					try {
+						peerOrigin = new URL(peerUri).origin
+					} catch {
+						// URL parse failed — leave peerOrigin null so we
+						// fall through to the bare-hostname branch.
+					}
+				}
+				if (!peerOrigin) {
+					const bareHost = String(rawDirectory)
+						.replace(/^https?:\/\//i, '')
+						.replace(/\/.*$/, '')
+						.replace(/:$/, '')
+					if (!bareHost) return
+					peerOrigin = `https://${bareHost}`
+				}
+				const peerRoot = `${peerOrigin}/index.php/apps/opencatalogi`
+				// Deep-link to PublicationDetail only when we can actually
+				// build a valid URL: BOTH the catalog slug (present on the
+				// individual result payload) AND the publication id must be
+				// resolvable. Otherwise fall back to the peer's app-root so
+				// the user lands on the correct instance and can navigate —
+				// guessing a catalog slug (`publications`) would 404 on any
+				// peer that uses a different default and there is no way to
+				// verify the assumption from the payload alone.
+				const target = (catalogSlug && publicationId)
+					? `${peerRoot}/#/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
+					: `${peerRoot}/`
+				window.open(target, '_blank', 'noopener,noreferrer')
+				return
+			}
+			// Local result — route inside the app. Skip navigation when the
+			// slug is unresolvable (avoids `/publications/<numeric-id>/…`
+			// which the slug-based detail resolver cannot find).
+			if (catalogSlug && publicationId) {
+				this.$router.push({
+					name: 'PublicationDetail',
+					params: { catalogSlug: String(catalogSlug), id: String(publicationId) },
+				})
+			}
+		},
 	},
 }
 </script>
@@ -123,7 +229,8 @@ export default {
 			:idle-label="t('opencatalogi', 'Start typing to search publications across all connected instances.')"
 			:loading-label="t('opencatalogi', 'Searching the federated network…')"
 			@search="onSearch"
-			@query-change="onQueryChange">
+			@query-change="onQueryChange"
+			@result-click="onResultClick">
 			<template #result="{ result }">
 				<div class="federation-search-result">
 					<h4 class="federation-search-result__title">
