@@ -94,17 +94,6 @@ export default {
 		 */
 		onResultClick(result) {
 			const rawDirectory = result?.['@self']?.directory
-			// The publication's catalog can arrive in three shapes depending
-			// on backend extension: a full TCatalogi object (when the store
-			// extends `@self.catalog`), a bare slug string, or a raw catalog
-			// ID that would need mapping. Prefer the object's `.slug`, fall
-			// back to a string-shaped catalog, else leave null and skip
-			// navigation (avoids `/publications/<numeric-id>/...` which the
-			// slug-based detail resolver cannot find).
-			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
-			const catalogSlug = typeof catalogSource === 'string'
-				? catalogSource
-				: (catalogSource?.slug || null)
 			const publicationId = result?.id || result?.['@self']?.id
 			// Local publications carry directory === 'local' (see
 			// PublicationService::getLocalPublicationsFast); anything else is
@@ -137,9 +126,17 @@ export default {
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
-			// Local result — route inside the app. Requires a resolved slug;
-			// silently skip if the catalog shape wasn't recognised so the
-			// user isn't sent to a broken detail URL.
+			// Local result — route inside the app. The publication's catalog
+			// can arrive in three shapes depending on backend extension: a
+			// full TCatalogi object, a bare slug string, or a raw catalog ID
+			// that would need mapping. Prefer the object's `.slug`, fall
+			// back to a string-shaped catalog, else skip navigation (avoids
+			// `/publications/<numeric-id>/...` which the slug-based detail
+			// resolver cannot find).
+			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
+			const catalogSlug = typeof catalogSource === 'string'
+				? catalogSource
+				: (catalogSource?.slug || null)
 			if (catalogSlug && publicationId) {
 				this.$router.push({
 					name: 'PublicationDetail',

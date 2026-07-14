@@ -124,9 +124,17 @@ export default {
 		catalogId() {
 			return this.$route.params.id
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
+		/**
+		 * Prefer the id-keyed cache populated by `fetchObject` (route-driven
+		 * loads never set active, so `getActiveObject` returns null on a
+		 * fresh detail load), fall back to the active-object slot for
+		 * flows that set active before navigating (edit modal → detail).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3
+		 */
 		catalog() {
-			return objectStore.getActiveObject('catalog')
+			return objectStore.getObject('catalog', this.catalogId)
+				|| objectStore.getActiveObject('catalog')
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
