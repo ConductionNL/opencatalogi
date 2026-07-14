@@ -34,6 +34,17 @@ import { EventBus } from '../../eventBus.js'
 							<FolderOutline :size="64" />
 						</template>
 					</NcEmptyContent>
+					<!-- Single catalog auto-selected but no register/schema reachable — this
+					     happens when the catalog has no `registers`/`schemas` configured,
+					     which otherwise leaves the modal body completely blank. -->
+					<NcEmptyContent
+						v-else-if="selectionStalled"
+						:name="t('opencatalogi', 'Catalog is not configured for publications')"
+						:description="selectionStalledReason">
+						<template #icon>
+							<FolderOutline :size="64" />
+						</template>
+					</NcEmptyContent>
 					<div v-if="catalogOptions.length > 1 && !isLockedCatalog" class="selectionStep">
 						<h3>{{ t('opencatalogi', 'Select Catalog') }}</h3>
 						<p>{{ t('opencatalogi', 'Choose the catalog where this publication will be stored.') }}</p>
@@ -757,6 +768,35 @@ export default {
 		allSelectionsComplete() {
 			return this.selectedCatalog && this.selectedRegister && this.selectedSchema
 		},
+		/**
+		 * True when we cannot progress past the selection stage: a catalog is
+		 * available and (auto-)selected, but the derived register / schema
+		 * options are empty. Without this guard the template renders nothing
+		 * because every selection block is gated on `.length > 1` (the auto-
+		 * select case hides the widget) — the observable result is a blank
+		 * modal body (WOO-527).
+		 */
+		selectionStalled() {
+			if (this.isLockedCatalog) return false
+			if (this.catalogOptions.length === 0) return false
+			if (!this.isNewObject) return false
+			if (this.hasSelectedSchema || this.allSelectionsComplete) return false
+			// One catalog auto-selected but no compatible register.
+			if (this.selectedCatalog && this.registerOptions.length === 0) return true
+			// Register selected but no schema in scope.
+			if (this.selectedRegister && this.schemaOptions.length === 0) return true
+			return false
+		},
+		/** Human-readable reason for the stalled state — surfaced in the empty-content card. */
+		selectionStalledReason() {
+			if (this.selectedCatalog && this.registerOptions.length === 0) {
+				return t('opencatalogi', 'This catalog has no registers configured. Ask an administrator to attach a register that contains a publication schema to it.')
+			}
+			if (this.selectedRegister && this.schemaOptions.length === 0) {
+				return t('opencatalogi', 'The selected register does not expose any schema you can create in this catalog.')
+			}
+			return ''
+		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		shouldShowPublishedIcon() {
@@ -945,6 +985,23 @@ export default {
 				if (this.selectedRegister && newOptions.length === 1 && !this.selectedSchema) {
 					this.selectedSchema = newOptions[0]
 				}
+			},
+		},
+		catalogOptions: {
+			/**
+			 * The catalog collection loads asynchronously via
+			 * `objectStore.preloadCollections()` in App.vue's `created()`. If
+			 * that promise has not resolved when the modal opens, the initial
+			 * `initializeData()` runs against an empty list and never
+			 * auto-selects the sole catalog — leaving the modal blank until
+			 * the user closes and re-opens it. Re-run the seed step as soon
+			 * as catalogs arrive (WOO-527).
+			 */
+			handler(newOptions) {
+				if (!this.isNewObject) return
+				if (this.selectedCatalog) return
+				if (newOptions.length === 0) return
+				this.initializeData()
 			},
 		},
 		selectedSchema: {
