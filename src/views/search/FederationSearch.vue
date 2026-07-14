@@ -95,6 +95,19 @@ export default {
 		onResultClick(result) {
 			const rawDirectory = result?.['@self']?.directory
 			const publicationId = result?.id || result?.['@self']?.id
+			// Derive the catalog slug once, up front, so BOTH branches can
+			// reach it. Reading `catalogSlug` inside the federated branch
+			// while the `const` declaration lived below the local branch was
+			// a TDZ ReferenceError that silently swallowed every federated
+			// click — the handler threw before window.open ran. The catalog
+			// field can arrive in three shapes depending on backend extend:
+			// a full TCatalogi object, a bare slug string, or a raw catalog
+			// ID (which we can't map to a slug here, so we fall through to
+			// null and let the caller decide the fallback).
+			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
+			const catalogSlug = typeof catalogSource === 'string'
+				? catalogSource
+				: (catalogSource?.slug || null)
 			// Local publications carry directory === 'local' (see
 			// PublicationService::getLocalPublicationsFast); anything else is
 			// a federated peer identifier.
@@ -126,17 +139,9 @@ export default {
 				window.open(target, '_blank', 'noopener,noreferrer')
 				return
 			}
-			// Local result — route inside the app. The publication's catalog
-			// can arrive in three shapes depending on backend extension: a
-			// full TCatalogi object, a bare slug string, or a raw catalog ID
-			// that would need mapping. Prefer the object's `.slug`, fall
-			// back to a string-shaped catalog, else skip navigation (avoids
-			// `/publications/<numeric-id>/...` which the slug-based detail
-			// resolver cannot find).
-			const catalogSource = result?.['@self']?.catalog ?? result?.catalog
-			const catalogSlug = typeof catalogSource === 'string'
-				? catalogSource
-				: (catalogSource?.slug || null)
+			// Local result — route inside the app. Skip navigation when the
+			// slug is unresolvable (avoids `/publications/<numeric-id>/…`
+			// which the slug-based detail resolver cannot find).
 			if (catalogSlug && publicationId) {
 				this.$router.push({
 					name: 'PublicationDetail',
