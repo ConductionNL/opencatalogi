@@ -837,6 +837,16 @@ class SettingsService
             // Update app configuration with imported schema and register IDs.
             $this->updateObjectTypeConfiguration($result);
 
+            // WOO-529: the seed data in publication_register.json creates the
+            // default "Publications" catalog with unset `registers`/`schemas`
+            // because the numeric IDs are only known AFTER importFromApp() has
+            // returned. Without those arrays PublicationService::getCatalogFilters()
+            // has no scope to union and every publish flow (federation search,
+            // create-publication modal) sees zero rows. Backfill now that the
+            // IDs are resolved, so a fresh install lands directly in a working
+            // state instead of the WOO-527 "not configured" empty state.
+            $this->backfillCatalogScopes();
+
             return $result;
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to load settings: '.$e->getMessage());
@@ -1007,6 +1017,133 @@ class SettingsService
         }
 
     }//end updateObjectTypeConfiguration()
+
+
+    /**
+     * Ensure every local catalog has a non-empty registers/schemas scope.
+     *
+     * `PublicationService::getCatalogFilters()` derives its visibility scope by
+     * iterating every local catalog and unioning their `registers` + `schemas`
+     * arrays. A catalog with both arrays unset contributes nothing, and with
+     * only one such catalog the entire union is empty — no publications are
+     * ever visible to /search or the create-publication modal (surfaces as the
+     * WOO-527 "not configured" empty state).
+     *
+     * The default "Publications" catalog seeded via publication_register.json
+     * (see WOO-529) exhibits this because the numeric register/schema IDs are
+     * only resolved AFTER importFromApp() completes, so the seed cannot
+     * hard-code them. This method runs after updateObjectTypeConfiguration()
+     * has stored the resolved IDs, walks the catalog collection, and patches
+     * any catalog missing a scope with `[publication_register]` / `[publication_schema]`.
+     *
+     * Idempotent — a catalog that already has a non-empty array is skipped so
+     * admin-configured multi-register catalogs are never touched.
+     *
+     * @return void
+     */
+    private function backfillCatalogScopes(): void
+    {
+        try {
+            $publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
+            $publicationSchema   = $this->config->getValueString($this->appName, 'publication_schema', '');
+            $catalogRegister     = $this->config->getValueString($this->appName, 'catalog_register', '');
+            $catalogSchema       = $this->config->getValueString($this->appName, 'catalog_schema', '');
+
+            if ($publicationRegister === '' || $publicationSchema === ''
+                || $catalogRegister === '' || $catalogSchema === ''
+            ) {
+                // Nothing to backfill against — the caller will surface the
+                // config gap via the setup wizard's reload-settings step.
+                return;
+            }
+
+            if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
+                return;
+            }
+
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $catalogs      = $objectService->searchObjects([
+                '@self' => [
+                    'register' => $catalogRegister,
+                    'schema'   => $catalogSchema,
+                ],
+            ]);
+
+            foreach ($catalogs as $catalog) {
+                $catalogData = $catalog;
+                if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+                    $catalogData = $catalog->jsonSerialize();
+                }
+
+                if (is_array($catalogData) === false) {
+                    continue;
+                }
+
+                $registers = ($catalogData['registers'] ?? null);
+                $schemas   = ($catalogData['schemas'] ?? null);
+                $needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
+                $needsSchemas   = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
+
+                if ($needsRegisters === false && $needsSchemas === false) {
+                    // Admin has already configured a scope; leave it alone.
+                    continue;
+                }
+
+                $catalogId = ($catalogData['@self']['id'] ?? ($catalogData['id'] ?? null));
+                if ($catalogId === null) {
+                    continue;
+                }
+
+                // OpenRegister's saveObject re-validates against the full schema,
+                // so we can't send a partial diff — start from the current object
+                // (minus `@self`, which is server-owned) and merge the missing
+                // scope arrays on top.
+                $merged = $catalogData;
+                unset($merged['@self']);
+                if ($needsRegisters === true) {
+                    $merged['registers'] = [$publicationRegister];
+                }
+
+                if ($needsSchemas === true) {
+                    $merged['schemas'] = [$publicationSchema];
+                }
+
+                // Persisted date-time fields can come back in the SQL-style
+                // "YYYY-MM-DD HH:MM:SS" shape (no `T`, no timezone) that fails
+                // the schema's ISO 8601 format validator on re-save. Normalise
+                // any string field looking like that back to full ISO 8601 so
+                // the update passes validation without touching the intent of
+                // the value. Non-string / already-ISO values are left alone.
+                foreach ($merged as $key => $value) {
+                    if (is_string($value) === true
+                        && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
+                    ) {
+                        $merged[$key] = str_replace(' ', 'T', $value).'+00:00';
+                    }
+                }
+
+                try {
+                    $objectService->saveObject(
+                        object: $merged,
+                        register: $catalogRegister,
+                        schema: $catalogSchema,
+                        uuid: (string) $catalogId,
+                        _rbac: false,
+                        _multitenancy: false,
+                    );
+                } catch (\Exception) {
+                    // Per-catalog failure must not abort the whole settings
+                    // import; the admin can retro-fit via the catalog edit view.
+                    continue;
+                }
+            }//end foreach
+        } catch (\Exception) {
+            // Never let backfill failure sink the settings import — the wizard
+            // still needs to declare success so the app is at least usable.
+            return;
+        }//end try
+
+    }//end backfillCatalogScopes()
 
     /**
      * Check if settings should be loaded based on version comparison.
