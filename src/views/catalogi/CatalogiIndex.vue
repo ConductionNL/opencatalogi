@@ -35,7 +35,8 @@
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
-		@row-click="onRowClick">
+		@row-click="onRowClick"
+		@view="viewCatalog">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
 				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
