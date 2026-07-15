@@ -17,8 +17,6 @@ import { EventBus } from '../../eventBus.js'
 <script>
 import _ from 'lodash'
 import { CnFormDialog } from '@conduction/nextcloud-vue'
-import { objectStore, navigationStore } from '../../store/store.js'
-import { EventBus } from '../../eventBus.js'
 import { Menu } from '../../entities/menu/menu.ts'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 import { buildMenuItemIconCatalogues } from './menuItemIconCatalogues.js'
