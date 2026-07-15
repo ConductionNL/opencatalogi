@@ -54,6 +54,15 @@ const useInnerObjectStore = createObjectStore('opencatalogi-objects-inner', {
 		relationsPlugin(),
 		lifecyclePlugin(),
 		selectionPlugin(),
+		// Live updates: as of nextcloud-vue beta.212 this plugin is default-on
+		// in createObjectStore (lazy until the first subscribe(); the explicit
+		// instance below wins the by-name dedupe). NOTE: no opencatalogi view
+		// subscribes yet — views read the OUTER 'object' store, and the
+		// plugin's refetch hints re-run fetchCollection/fetchObject on THIS
+		// inner store only. Wiring subscribe() in a view therefore needs an
+		// outer↔inner refetch bridge first; without it the subscription would
+		// refresh state no view reads. Until that bridge exists the plugin
+		// stays inert (zero transport activity — laziness guarantee).
 		liveUpdatesPlugin(),
 	],
 })
