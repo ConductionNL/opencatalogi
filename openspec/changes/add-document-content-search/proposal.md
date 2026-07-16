@@ -12,6 +12,12 @@ Extend the public full-text search endpoint (`GET /apps/opencatalogi/api/search`
 
 Companion `GET /publications` (endpoint 1) is explicitly out of scope — its behaviour remains "publication-scoped, no document body indexed".
 
+## Preconditions
+
+**Blocked until:** an OR-side openspec change shipping `_content_search` (working name) on `ObjectService::searchObjectsPaginated()` — routed to `ChunkMapper::searchByKeyword()` — is filed AND merged on `Conduction/openregister`. The `depends_on` frontmatter above (`openregister:expose-content-search-in-object-service`) is a **working slug** for that not-yet-filed change; update it to the actual slug once the OR-side proposal lands.
+
+Impl of this WOO-517 change MUST NOT start until the OR-side flag ships. Running `/opsx-ff` on this proposal today will fail to resolve the dependency — that is intentional and the gate to prevent premature impl work.
+
 ## Motivation
 
 Ruben's 2026-07-16 architecture decision on [WOO-517](https://conduction.atlassian.net/browse/WOO-517):
