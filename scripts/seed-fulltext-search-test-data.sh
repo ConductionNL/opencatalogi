@@ -132,13 +132,17 @@ fi
 
 seed_pub() {
     local slug="$1" title="$2" summary="$3" description="$4"
-    local existing
-    existing=$(curl -sf "${AUTH[@]}" "$OR_API/objects/$PUB_REGISTER/$PUB_SCHEMA?_limit=200" 2>/dev/null | python3 -c "
-import sys, json
+    # Server-side search on the slug narrows the candidate set to a handful
+    # of rows even at scale; the client-side loop then confirms exact match
+    # (the API's _search is substring, not equality).
+    local existing slug_q
+    slug_q=$(SLUG="$slug" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['SLUG']))" 2>/dev/null || printf '%s' "$slug")
+    existing=$(SLUG="$slug" curl -sf "${AUTH[@]}" "$OR_API/objects/$PUB_REGISTER/$PUB_SCHEMA?_search=${slug_q}&_limit=25" 2>/dev/null | SLUG="$slug" python3 -c "
+import sys, json, os
 try:
     d = json.load(sys.stdin)
     for r in d.get('results', []):
-        if (r.get('@self') or {}).get('slug') == '$slug':
+        if (r.get('@self') or {}).get('slug') == os.environ['SLUG']:
             print(f\"{r['@self']['id']}\t{r['@self'].get('slug','')}\t{r.get('title','?')}\")
             break
 except: pass
@@ -200,8 +204,13 @@ ok "pub2: $PUB2_ID slug=$PUB2_SLUG"
 
 seed_doc() {
     local title="$1" filename="$2" summary="$3" pub_id="$4" pub_slug="$5" pub_title="$6"
-    local existing
-    existing=$(TITLE="$title" curl -sf "${AUTH[@]}" "$OR_API/objects/$PUB_REGISTER/$DOC_SCHEMA?_limit=200" 2>/dev/null | python3 -c "
+    # Server-side search on a distinctive substring of the title narrows the
+    # candidate set; the client-side loop then confirms exact-title match.
+    # (Env-var must be exported for BOTH curl (URL builder) and python
+    # (result filter) since bash inline assignments don't cross pipes.)
+    local existing title_q
+    title_q=$(TITLE="$title" python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['TITLE']))" 2>/dev/null || printf '%s' "$title")
+    existing=$(curl -sf "${AUTH[@]}" "$OR_API/objects/$PUB_REGISTER/$DOC_SCHEMA?_search=${title_q}&_limit=25" 2>/dev/null | TITLE="$title" python3 -c "
 import sys, json, os
 try:
     d = json.load(sys.stdin)
