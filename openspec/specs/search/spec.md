@@ -3,11 +3,11 @@ or_dep: zoeken-filteren
 audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 ---
 
-**Status**: in-progress
+**Status**: done
 **Scope**: opencatalogi
 **OpenSpec changes**:
 
-- [add-public-fulltext-search](../../changes/add-public-fulltext-search/) — in-progress
+- [add-public-fulltext-search](../../changes/archive/2026-07-16-add-public-fulltext-search/) — done _(archived 2026-07-16)_
 
 # Search
 
