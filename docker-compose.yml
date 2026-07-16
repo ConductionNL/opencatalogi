@@ -1,4 +1,3 @@
-version: "3.5"
 volumes:
   nextcloud:
   apps:
@@ -21,18 +20,81 @@ services:
     ports:
     - "8083:8080"
 
+  # ---------------------------------------------------------------------------
+  # Databases — pick one:
+  #
+  #   docker compose up                        →  PostgreSQL (default)
+  #   docker compose --profile mariadb up      →  MariaDB (compatibility testing)
+  #
+  # Only one DB service runs at a time; both share volume + port so they don't
+  # conflict when profiles switch. The matching Nextcloud service is picked up
+  # automatically by the same profile flag.
+  # ---------------------------------------------------------------------------
+
+  # PostgreSQL Database (default).
+  #
+  # Uses the pgvector image so pg_trgm + vector extensions are pre-installed;
+  # the init script enables them on first boot. Required for OpenRegister's
+  # _fuzzy=true trigram-similarity path and its vector / semantic-search work.
   db:
-    image: mariadb:10.6
+    # No profiles: starts by default.
+    image: pgvector/pgvector:pg16
     restart: always
-    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    container_name: opencatalogi-postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./docker/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/01-init-extensions.sql:ro
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=!ChangeMe!
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MariaDB Database (compatibility testing).
+  # Start with: docker compose --profile mariadb up
+  db-mariadb:
+    profiles:
+      - mariadb
+    image: mariadb:11.2
+    restart: always
+    container_name: opencatalogi-mariadb
+    command: >
+      --transaction-isolation=READ-COMMITTED
+      --log-bin=binlog
+      --binlog-format=ROW
+      --innodb-file-per-table=1
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
     volumes:
       - db:/var/lib/mysql
     environment:
-      - MYSQL_ROOT_PASSWORD='!ChangeMe!'
-      - MYSQL_PASSWORD='!ChangeMe!'
+      - MYSQL_ROOT_PASSWORD=!ChangeMe!
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      
+      - MYSQL_PASSWORD=!ChangeMe!
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Nextcloud — two variants, one per DB profile.
+  # Both mount the same nextcloud volume and expose port 8080, so switching
+  # profile switches which service is active.
+  # ---------------------------------------------------------------------------
+
+  # Nextcloud on PostgreSQL (default).
+  # NOTE: When using --profile mariadb, this service will NOT start
+  # (nextcloud-mariadb starts instead).
   nextcloud:
     user: root
     container_name: nextcloud
@@ -40,16 +102,43 @@ services:
     restart: always
     ports:
       - 8080:80
-    links:
-      - db
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - nextcloud:/var/www/html:rw
       - ./custom-apps:/var/www/html/custom_apps
     environment:
-      - MYSQL_PASSWORD='!ChangeMe!'
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=!ChangeMe!
+      - POSTGRES_HOST=db
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      - TZ=Europe/Amsterdam
+
+  # Nextcloud on MariaDB (compatibility testing).
+  # Start with: docker compose --profile mariadb up
+  nextcloud-mariadb:
+    profiles:
+      - mariadb
+    user: root
+    container_name: nextcloud-mariadb
+    image: nextcloud:34.0.0-apache
+    restart: always
+    ports:
+      - 8080:80
+    depends_on:
+      db-mariadb:
+        condition: service_healthy
+    volumes:
+      - nextcloud:/var/www/html:rw
+      - ./custom-apps:/var/www/html/custom_apps
+    environment:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_HOST=db
+      - MYSQL_PASSWORD=!ChangeMe!
+      - MYSQL_HOST=db-mariadb
       - NEXTCLOUD_ADMIN_USER=admin
       - NEXTCLOUD_ADMIN_PASSWORD=admin
       - TZ=Europe/Amsterdam
