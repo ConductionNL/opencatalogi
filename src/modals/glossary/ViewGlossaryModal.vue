@@ -114,7 +114,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 /**
  * ViewGlossaryModal — read-only view of a glossary term.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-4
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'ViewGlossaryModal',

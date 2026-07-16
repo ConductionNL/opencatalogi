@@ -32,7 +32,7 @@ import Dialogs from './dialogs/Dialogs.vue'
 /**
  * App — manifest-driven CnAppRoot SPA shell for opencatalogi.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'App',

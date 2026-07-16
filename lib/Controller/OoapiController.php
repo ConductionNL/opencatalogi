@@ -131,7 +131,7 @@ class OoapiController extends Controller
      *
      * @return array<string, string> The header map.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     private function corsHeaders(): array
     {
@@ -174,7 +174,7 @@ class OoapiController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     public function preflightedCors(): Response
     {
@@ -194,7 +194,7 @@ class OoapiController extends Controller
      *
      * @return JSONResponse|null A 401/403 error response, or null when the caller is allowed to proceed.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-consumer-credential-authenticated-access-ooapi-008
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-consumer-credential-authenticated-access-ooapi-008
      */
     private function requireAuthenticatedConsumer(): ?JSONResponse
     {
@@ -218,7 +218,7 @@ class OoapiController extends Controller
      *
      * @return array{catalog: array<string, mixed>|null, error: JSONResponse|null} The resolved catalog, or an error response.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     private function resolveEnabledCatalog(string $catalogSlug): array
     {
@@ -243,7 +243,7 @@ class OoapiController extends Controller
      *
      * @return array{pair: array{register: string, schema: string}|null, error: JSONResponse|null} The resolved pair, or an error response.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
      */
     private function resolveContext(string $registerKey, string $schemaKey): array
     {
@@ -276,7 +276,7 @@ class OoapiController extends Controller
      *
      * @return JSONResponse The envelope response.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
      */
     private function collectionResponse(array $result): JSONResponse
     {
@@ -324,7 +324,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
      */
     public function organizations(string $catalogSlug): JSONResponse
     {
@@ -363,7 +363,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
      */
     public function organization(string $catalogSlug, string $id): JSONResponse
     {
@@ -403,7 +403,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     public function courses(string $catalogSlug): JSONResponse
     {
@@ -442,7 +442,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
      */
     public function course(string $catalogSlug, string $id): JSONResponse
     {
@@ -482,7 +482,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     public function programs(string $catalogSlug): JSONResponse
     {
@@ -521,7 +521,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
      */
     public function program(string $catalogSlug, string $id): JSONResponse
     {
@@ -562,7 +562,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
      */
     public function courseOfferings(string $catalogSlug, string $courseId): JSONResponse
     {
@@ -601,7 +601,7 @@ class OoapiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
      */
     public function offering(string $catalogSlug, string $id): JSONResponse
     {
@@ -643,7 +643,7 @@ class OoapiController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function validate(string $catalogSlug): JSONResponse

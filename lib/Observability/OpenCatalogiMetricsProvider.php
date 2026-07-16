@@ -319,7 +319,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider
      *
      * @return MetricSample[] The provider's samples.
      *
-     * @spec openspec/changes/adopt-apphost/specs/adopt-apphost/spec.md
+     * @spec openspec/specs/adopt-apphost/spec.md
      */
     public function metrics(): array
     {

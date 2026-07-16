@@ -52,7 +52,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-4
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'ViewLogDialog',

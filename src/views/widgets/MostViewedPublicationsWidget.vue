@@ -45,7 +45,7 @@ import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
  * the fetch; the list itself renders the universal CnDataTable list-widget
  * pattern (ADR-049). Clicking an entry deep links to that publication.
  *
- * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export default {
 	name: 'MostViewedPublicationsWidget',

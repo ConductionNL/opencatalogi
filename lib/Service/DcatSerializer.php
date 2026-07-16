@@ -61,7 +61,7 @@ class DcatSerializer
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
      */
     public function negotiate(?string $formatParam, ?string $acceptHeader): ?string
     {
@@ -115,7 +115,7 @@ class DcatSerializer
      *
      * @return string The serialized document.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
      */
     public function serialize(array $document, string $format): string
     {

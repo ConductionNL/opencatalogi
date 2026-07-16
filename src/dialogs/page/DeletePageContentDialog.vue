@@ -55,7 +55,7 @@ import { Page } from '../../entities/index.js'
 /**
  * DeletePageContentDialog — remove a content block by updating the parent page.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'DeletePageContentDialog',

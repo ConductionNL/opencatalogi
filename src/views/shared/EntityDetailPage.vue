@@ -95,7 +95,7 @@ const DETAIL_LAYOUT = [
 ]
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-5
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'EntityDetailPage',

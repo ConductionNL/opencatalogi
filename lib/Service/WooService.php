@@ -34,7 +34,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md
+ * @spec openspec/specs/woo-transparency/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -264,7 +264,7 @@ class WooService
      *
      * @return array<int, array{article: string, description: string}> The grounds.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
      */
     public function getWeigeringsgronden(?string $search=null): array
     {
@@ -307,7 +307,7 @@ class WooService
      *
      * @throws RuntimeException When OpenRegister or required configuration is unavailable.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
      */
     public function createBatch(string $caseReference, array $documents, ?int $boardId=null): array
     {
@@ -432,7 +432,7 @@ class WooService
      *
      * @return bool True when the Deck app is enabled.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
      */
     public function isDeckAvailable(): bool
     {
@@ -485,7 +485,7 @@ class WooService
      *
      * @throws RuntimeException When inputs are invalid or OpenRegister is unavailable.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
      */
     public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden=[]): array
     {
@@ -588,7 +588,7 @@ class WooService
      *
      * @throws RuntimeException When OpenRegister is unavailable or the batch is missing.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
      */
     public function getBatch(string $batchId): array
     {
@@ -665,7 +665,7 @@ class WooService
      *
      * @throws RuntimeException When the batch cannot be loaded.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
      */
     public function buildInventarislijst(string $batchId): array
     {
@@ -701,7 +701,7 @@ class WooService
      *
      * @return string The CSV payload.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
      */
     public function renderInventarislijstCsv(array $rows): string
     {
@@ -743,7 +743,7 @@ class WooService
      *
      * @return string The HTML payload.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
      */
     public function renderInventarislijstHtml(string $batchId, array $rows): string
     {
@@ -781,7 +781,7 @@ class WooService
      *
      * @return bool True when all documents are assessed.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
      */
     public function canMarkReadyForReview(string $batchId): bool
     {
@@ -804,7 +804,7 @@ class WooService
      *
      * @throws RuntimeException When not all documents are assessed.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
      */
     public function markReadyForReview(string $batchId): array
     {
@@ -833,7 +833,7 @@ class WooService
      *
      * @return string|null The configured chain id, or null when unconfigured.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
      */
     public function getPublishApprovalChain(): ?string
     {
@@ -862,7 +862,7 @@ class WooService
      *
      * @throws RuntimeException When the batch is not ready or OpenRegister is unavailable.
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-reading-room-publication
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
      */
     public function publishBatch(string $batchId): array
     {

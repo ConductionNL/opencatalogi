@@ -241,7 +241,7 @@ import { Menu } from '../../entities/index.js'
 /**
  * ViewMenuModal — read a menu and its embedded items.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'ViewMenuModal',

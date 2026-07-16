@@ -2,7 +2,7 @@
 /**
  * SearchSideBar — facet filter controls for the search view.
  *
- * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
+ * @spec openspec/specs/search/spec.md
  */
 import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import { useSearchStore } from '../../store/modules/search.ts'

@@ -18,8 +18,8 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-45
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-46
+ * @spec openspec/specs/content-management/spec.md
+ * @spec openspec/specs/content-management/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -200,7 +200,7 @@ class ThemesController extends Controller
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-45
+     * @spec openspec/specs/content-management/spec.md
      */
     public function index(): JSONResponse
     {
@@ -296,7 +296,7 @@ class ThemesController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-46
+     * @spec openspec/specs/content-management/spec.md
      */
     public function show(string|int $id): JSONResponse
     {

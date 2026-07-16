@@ -205,7 +205,7 @@ const { files, reset } = useFileSelection({ allowMultiple: false, dropzone: drop
 /**
  * DashboardSideBar — sidebar accompanying the dashboard overview.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'DashboardSideBar',

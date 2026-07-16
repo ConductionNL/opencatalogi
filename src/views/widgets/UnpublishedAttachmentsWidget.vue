@@ -43,7 +43,7 @@ registerIcons({ FileOutline })
  * is non-interactive (no row navigation), matching the previous
  * NcDashboardWidget behaviour with its empty item menu.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-3
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'UnpublishedAttachmentsWidget',

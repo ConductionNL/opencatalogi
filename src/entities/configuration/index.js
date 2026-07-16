@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-4
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export * from './configuration.ts'
 export * from './configuration.types.ts'

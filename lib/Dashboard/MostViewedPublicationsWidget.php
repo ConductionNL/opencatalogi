@@ -103,7 +103,7 @@ class MostViewedPublicationsWidget implements IWidget
      *
      * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function load(): void
     {

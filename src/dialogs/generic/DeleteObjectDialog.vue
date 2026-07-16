@@ -72,7 +72,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-4
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'DeleteObjectDialog',

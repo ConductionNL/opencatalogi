@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+ * @spec openspec/specs/catalogs/spec.md
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -71,7 +71,7 @@ class CatalogSchemaEventListener implements IEventListener
      *
      * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function handle(Event $event): void
     {
@@ -127,7 +127,7 @@ class CatalogSchemaEventListener implements IEventListener
      *
      * @psalm-suppress TypeDoesNotContainType OpenRegister events extend OCP Event.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     * @spec openspec/specs/catalogs/spec.md
      */
     private function getEntityFromEvent(Event $event): ?ObjectEntity
     {

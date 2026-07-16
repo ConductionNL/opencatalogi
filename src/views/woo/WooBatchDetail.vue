@@ -37,23 +37,23 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		batchId() {
 			return this.$route?.params?.id || ''
 		},
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf */
 		deckUnavailable() {
 			return this.batch && this.batch.deckAvailable === false
 		},
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		summary() {
 			return this.batch?.documentSummary || { counts: {}, total: 0, assessed: 0, progressLabel: '0/0' }
 		},
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model */
 		canReview() {
 			return this.batch?.status === 'in_progress' && canMarkReadyForReview(this.summary)
 		},
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-reading-room-publication */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication */
 		canPublish() {
 			return this.batch?.status === 'ready_for_review'
 		},
@@ -61,7 +61,7 @@ export default {
 	watch: {
 		batchId: {
 			immediate: true,
-			/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
+			/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 			handler() {
 				if (this.batchId) {
 					this.loadBatch()
@@ -73,7 +73,7 @@ export default {
 		/**
 		 * Load the batch + derived document summary.
 		 *
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
 		 * @return {Promise<void>}
 		 */
 		async loadBatch() {
@@ -91,7 +91,7 @@ export default {
 		/**
 		 * Mark the batch ready for review (opens the approval gate).
 		 *
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 		 * @return {Promise<void>}
 		 */
 		async markReadyForReview() {
@@ -105,7 +105,7 @@ export default {
 		/**
 		 * Publish the batch to the public reading room.
 		 *
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-reading-room-publication
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
 		 * @return {Promise<void>}
 		 */
 		async publish() {
@@ -120,7 +120,7 @@ export default {
 		 * Build the inventarislijst download URL (CSV by default).
 		 *
 		 * @param {string} format The export format (csv|html).
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 		 * @return {string} The download URL.
 		 */
 		inventarislijstUrl(format) {

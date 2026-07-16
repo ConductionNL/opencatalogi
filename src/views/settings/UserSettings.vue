@@ -18,7 +18,7 @@ import CogIcon from 'vue-material-design-icons/Cog.vue'
 /**
  * UserSettings — placeholder user-preferences dialog.
  *
- * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-3
+ * @spec openspec/specs/admin-settings/spec.md
  */
 export default {
 	name: 'UserSettings',

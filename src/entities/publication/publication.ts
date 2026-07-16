@@ -6,9 +6,9 @@ import { SafeParseReturnType, z } from 'zod'
 type TStatus = 'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Publication implements TPublication {
 
@@ -55,7 +55,7 @@ export class Publication implements TPublication {
 	public register!: number | null
 	public schema!: number | null
 
-	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
+	/** @spec openspec/specs/entity-typescript-models/spec.md */
 	constructor(data: TPublication) {
 		this.hydrate(data)
 	}

@@ -9,7 +9,7 @@
  * @version 1.0.0
  * @link https://github.com/opencatalogi/opencatalogi
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-5
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 <script setup>

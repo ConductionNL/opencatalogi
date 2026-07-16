@@ -295,7 +295,7 @@ export default {
 		/**
 		 * Create or update the catalog via the object store.
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-2
+		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		saveCatalog() {
 			// Map selected objects to their IDs for saving

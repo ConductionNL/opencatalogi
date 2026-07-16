@@ -46,7 +46,7 @@ import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
  * so the blocks are composed directly). Each entry deep-links into the
  * publications listing pre-filtered to that retention status.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
 export default {
 	name: 'RetentionWidget',
@@ -69,7 +69,7 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
+		/** @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
 		entries() {
 			const rows = []
 			if (this.summary.expiringSoon > 0) {
@@ -105,7 +105,7 @@ export default {
 		 * @param {object} entry - The clicked summary entry.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
 		onEntryClick(entry) {
 			window.open(generateUrl('/apps/opencatalogi/?retention=' + encodeURIComponent(entry.id)), '_self')
@@ -114,7 +114,7 @@ export default {
 		 * Fetch the retention queue summary.
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
 		async fetchData() {
 			this.loading = true

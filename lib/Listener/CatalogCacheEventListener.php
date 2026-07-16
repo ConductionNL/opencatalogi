@@ -19,8 +19,8 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-50
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-51
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -61,7 +61,7 @@ class CatalogCacheEventListener implements IEventListener
      *
      * @psalm-suppress TypeDoesNotContainType — OpenRegister events extend Event
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-50
+     * @spec openspec/specs/catalogs/spec.md
      */
     private function extractObjectFromEvent(Event $event): ?object
     {
@@ -94,7 +94,7 @@ class CatalogCacheEventListener implements IEventListener
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-51
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function handle(Event $event): void
     {

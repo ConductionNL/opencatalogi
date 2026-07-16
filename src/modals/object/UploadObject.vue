@@ -129,7 +129,7 @@ import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'UploadObject',

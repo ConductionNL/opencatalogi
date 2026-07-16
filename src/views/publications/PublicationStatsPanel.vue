@@ -58,7 +58,7 @@ import {
  * series, and the counting-start note. Pure presentation; all aggregation is
  * server-side. Counts are requests, not unique visitors — stated in the panel.
  *
- * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export default {
 	name: 'PublicationStatsPanel',

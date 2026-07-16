@@ -19,10 +19,10 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
+ * @spec openspec/specs/woo-compliance/spec.md
+ * @spec openspec/specs/woo-compliance/spec.md
+ * @spec openspec/specs/woo-compliance/spec.md
+ * @spec openspec/specs/woo-compliance/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -180,7 +180,7 @@ class SitemapService
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
+     * @spec openspec/specs/woo-compliance/spec.md
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -299,7 +299,7 @@ class SitemapService
      *
      * @return XMLResponse The publications sitemap XML response.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
+     * @spec openspec/specs/woo-compliance/spec.md
      */
     public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
@@ -404,7 +404,7 @@ class SitemapService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
+     * @spec openspec/specs/woo-compliance/spec.md
      */
     private function isValidSitemapRequest(
         string $catalogSlug,

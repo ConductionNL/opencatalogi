@@ -52,7 +52,7 @@ class OoapiMappingService
      *
      * @return boolean True when the schema declares a (non-empty, array-shaped) `x-ooapi` annotation.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
      */
     public function isAnnotated(?array $schema): bool
     {
@@ -69,7 +69,7 @@ class OoapiMappingService
      *
      * @return string|null The declared resource type, or null when unannotated.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
      */
     public function resolveResourceType(?array $schema): ?string
     {
@@ -95,7 +95,7 @@ class OoapiMappingService
      *
      * @return array<string, string>|null The output-path => source-path map, or null (identity).
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
      */
     public function resolveMapping(?array $schema): ?array
     {
@@ -130,8 +130,8 @@ class OoapiMappingService
      *
      * @return array<string, mixed> The OOAPI 5.0 resource.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-rio-identifier-passthrough-when-present-ooapi-005
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-rio-identifier-passthrough-when-present-ooapi-005
      */
     public function buildResource(array $object, ?array $mapping, string $idField): array
     {

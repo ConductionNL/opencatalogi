@@ -271,7 +271,7 @@ import { Page } from '../../entities/index.js'
 /**
  * PageContentForm — add/edit a page content block (persists the parent page).
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'PageContentForm',

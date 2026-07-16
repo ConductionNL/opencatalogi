@@ -30,7 +30,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md
+ * @spec openspec/specs/woo-transparency/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -82,7 +82,7 @@ class WooController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
      */
     public function weigeringsgronden(): JSONResponse
     {
@@ -110,7 +110,7 @@ class WooController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function createBatch(): JSONResponse
@@ -150,7 +150,7 @@ class WooController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function getBatch(string $batchId): JSONResponse
@@ -178,7 +178,7 @@ class WooController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function updateAssessment(string $batchId, string $docId): JSONResponse
@@ -211,7 +211,7 @@ class WooController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function markReadyForReview(string $batchId): JSONResponse
@@ -237,7 +237,7 @@ class WooController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function inventarislijst(string $batchId): DataDownloadResponse|JSONResponse
@@ -272,7 +272,7 @@ class WooController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-reading-room-publication
+     * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function publishBatch(string $batchId): JSONResponse

@@ -18,14 +18,14 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-28
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-29
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-30
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-31
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-32
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-33
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-34
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -203,7 +203,7 @@ class PublicationsController extends Controller
      *
      * @return void
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     private function countReach(string $publicationId, string $kind, string $catalogSlug): void
     {
@@ -442,7 +442,7 @@ class PublicationsController extends Controller
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-28
+     * @spec openspec/specs/publications/spec.md
      */
     public function index(string $catalogSlug): JSONResponse
     {
@@ -574,7 +574,7 @@ class PublicationsController extends Controller
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-29
+     * @spec openspec/specs/publications/spec.md
      */
     public function show(string $catalogSlug, string $id): JSONResponse
     {
@@ -858,7 +858,7 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-30
+     * @spec openspec/specs/publications/spec.md
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
@@ -943,7 +943,7 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-31
+     * @spec openspec/specs/publications/spec.md
      */
     public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse
     {
@@ -1040,7 +1040,7 @@ class PublicationsController extends Controller
      * @PublicPage
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-32
+     * @spec openspec/specs/publications/spec.md
      */
     public function uses(string $catalogSlug, string $id): JSONResponse
     {
@@ -1136,7 +1136,7 @@ class PublicationsController extends Controller
      * @PublicPage
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-33
+     * @spec openspec/specs/publications/spec.md
      */
     public function used(string $catalogSlug, string $id): JSONResponse
     {

@@ -27,7 +27,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -161,7 +161,7 @@ class RetentionService
      *
      * @return int The warning window in days.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
      */
     public function getWarningWindowDays(): int
     {
@@ -182,7 +182,7 @@ class RetentionService
      *
      * @return array<string, mixed> The decoded defaults map (possibly empty).
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
      */
     public function getRetentionDefaults(): array
     {
@@ -207,7 +207,7 @@ class RetentionService
      *
      * @return array<string, mixed> The stored defaults.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
      */
     public function setRetentionDefaults(array $defaults): array
     {
@@ -243,7 +243,7 @@ class RetentionService
      *
      * @return string|null The computed expiry as ISO-8601, or null when not computable.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-metadata-on-the-publication-schema-ret-003
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-metadata-on-the-publication-schema-ret-003
      */
     public function computeExpiry(?string $publicationDate, ?int $termMonths): ?string
     {
@@ -274,7 +274,7 @@ class RetentionService
      *
      * @return array<string, mixed> The publication with defaults applied.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
      */
     public function applyDefaults(array $publication, string $catalogSlug): array
     {
@@ -341,7 +341,7 @@ class RetentionService
      *
      * @return array<string, int> Counts: expiringSoon, reviewRequired, depublished, archived.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
      */
     public function evaluate(): array
     {
@@ -443,7 +443,7 @@ class RetentionService
      *
      * @return array<string, int> Counts keyed expiringSoon, reviewRequired, archived.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
      */
     public function getQueueSummary(): array
     {
@@ -521,7 +521,7 @@ class RetentionService
      *
      * @throws RuntimeException When inputs are invalid or OpenRegister is unavailable.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
      */
     public function recordHumanDecision(string $publicationId, string $decision, string $rationale, int $extendMonths=0): array
     {
@@ -596,7 +596,7 @@ class RetentionService
      *
      * @return array<int, array<string, mixed>> Report rows.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
      */
     public function buildReport(?string $catalogSlug=null, ?string $from=null, ?string $to=null): array
     {
@@ -681,7 +681,7 @@ class RetentionService
      *
      * @return string The CSV document.
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
      */
     public function renderReportCsv(array $rows): string
     {

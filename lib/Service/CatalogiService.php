@@ -19,13 +19,13 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-61
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-62
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-65
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/specs/catalogs/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -219,7 +219,7 @@ class CatalogiService
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     * @spec openspec/specs/catalogs/spec.md
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
@@ -283,7 +283,7 @@ class CatalogiService
      *
      * @return bool True when the value consists entirely of digits.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     * @spec openspec/specs/catalogs/spec.md
      */
     private function isNumericId($value): bool
     {
@@ -307,7 +307,7 @@ class CatalogiService
      *             {@see self::computeRewrittenRegistersAndSchemas()} together with
      *             `$event->setModifiedData(...)` instead.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-52
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function rewriteSchemasAndRegisters(ObjectEntity $objectEntity): bool
     {
@@ -338,7 +338,7 @@ class CatalogiService
      *
      * @SuppressWarnings(PHPMD.StaticAccess)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-60
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -432,7 +432,7 @@ class CatalogiService
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-61
+     * @spec openspec/specs/catalogs/spec.md
      */
     private function getConfig(?string $register=null, ?string $schema=null, ?array $ids=null): array
     {
@@ -494,7 +494,7 @@ class CatalogiService
      * @return array|null The catalog data as an array, or null if not found
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-62
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function getCatalogBySlug(string $slug): ?array
     {
@@ -580,7 +580,7 @@ class CatalogiService
      *
      * @return void
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function invalidateCatalogCache(string $slug): void
     {
@@ -600,7 +600,7 @@ class CatalogiService
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-63
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function invalidateCatalogCacheById(int|string $catalogId): void
     {
@@ -642,7 +642,7 @@ class CatalogiService
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function warmupCatalogCache(string $slug): void
     {
@@ -661,7 +661,7 @@ class CatalogiService
      * @return void
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-64
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function warmupCatalogCacheById(int|string $catalogId): void
     {
@@ -709,7 +709,7 @@ class CatalogiService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-65
+     * @spec openspec/specs/catalogs/spec.md
      */
     public function index(null|string|int $catalogId=null): JSONResponse
     {

@@ -35,7 +35,7 @@ use RuntimeException;
 /**
  * Aggregate-only usage counting and statistics for publications.
  *
- * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -155,7 +155,7 @@ class UsageCounterService
      *
      * @return boolean True when the request should NOT be counted.
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function isCrawler(?string $userAgent): bool
     {
@@ -220,7 +220,7 @@ class UsageCounterService
      *
      * @return boolean True when a count was recorded; false when skipped/failed.
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function increment(
         string $publicationId,
@@ -361,7 +361,7 @@ class UsageCounterService
      *
      * @return array<int, array<string, mixed>> Normalised counter rows.
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function getCountersForPublication(string $publicationId, ?string $from=null, ?string $to=null): array
     {
@@ -402,7 +402,7 @@ class UsageCounterService
      *
      * @return array<int, array<string, mixed>> Normalised counter rows.
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function getCountersForCatalog(string $catalog, ?string $from=null, ?string $to=null): array
     {
@@ -448,7 +448,7 @@ class UsageCounterService
      *
      * @return array{views:int,downloads:int,series:array<int,array{date:string,views:int,downloads:int}>,countingStart:?string}
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function getPublicationStats(string $publicationId, ?string $from=null, ?string $to=null): array
     {
@@ -467,7 +467,7 @@ class UsageCounterService
      *
      * @return array{views:int,downloads:int,topViewed:array<int,array{publication:string,views:int,downloads:int}>,topDownloaded:array<int,array{publication:string,views:int,downloads:int}>}
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function getCatalogStats(string $catalog, ?string $from=null, ?string $to=null, int $top=10): array
     {
@@ -486,7 +486,7 @@ class UsageCounterService
      *
      * @return array{views:int,downloads:int,series:array<int,array{date:string,views:int,downloads:int}>,countingStart:?string}
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function aggregateSeries(array $rows): array
     {
@@ -543,7 +543,7 @@ class UsageCounterService
      *
      * @return array{views:int,downloads:int,topViewed:array<int,array{publication:string,views:int,downloads:int}>,topDownloaded:array<int,array{publication:string,views:int,downloads:int}>}
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function aggregateCatalog(array $rows, int $top=10): array
     {

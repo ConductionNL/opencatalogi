@@ -15,17 +15,17 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
+ * @spec openspec/specs/file-management/spec.md
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
@@ -104,7 +104,7 @@ class FileService
      *
      * @return string The name the folder for this publication should have.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
+     * @spec openspec/specs/file-management/spec.md
      */
     public function getPublicationFolderName(string $publicationId, string $publicationTitle): string
     {
@@ -185,7 +185,7 @@ class FileService
      *                            or the updated data array containing info about the created file.
      * @throws Exception In case creating a folder or new file fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
+     * @spec openspec/specs/file-management/spec.md
      */
     public function handleFile(IRequest $request, array $data): JSONResponse|array
     {
@@ -240,7 +240,7 @@ class FileService
      *
      * @return JSONResponse|array An error response or an array containing the info about the uploaded file.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
+     * @spec openspec/specs/file-management/spec.md
      */
     private function checkUploadedFile(IRequest $request): JSONResponse|array
     {
@@ -274,7 +274,7 @@ class FileService
      * @return boolean True if successfully created a new folder.
      * @throws Exception In case we can't create the folder because it is not permitted.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
+     * @spec openspec/specs/file-management/spec.md
      */
     public function createFolder(string $folderPath): bool
     {
@@ -325,7 +325,7 @@ class FileService
      * @return array The updated $data array
      * @throws Exception In case creating the share(link) fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
+     * @spec openspec/specs/file-management/spec.md
      */
     public function addFileInfoToData(array $data, array $uploadedFile, string $filePath): array
     {
@@ -373,7 +373,7 @@ class FileService
      *
      * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
+     * @spec openspec/specs/file-management/spec.md
      */
     public function uploadFile(mixed $content, string $filePath): bool
     {
@@ -427,7 +427,7 @@ class FileService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
+     * @spec openspec/specs/file-management/spec.md
      */
     public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
     {
@@ -479,7 +479,7 @@ class FileService
      * @return boolean True if successful.
      * @throws Exception In case deleting the file is not permitted.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
+     * @spec openspec/specs/file-management/spec.md
      */
     public function deleteFile(string $filePath): bool
     {
@@ -528,7 +528,7 @@ class FileService
      * Please use the "rmdir(directory: '/tmp/mpdf');" function after this to clean up temporary files.
      * @throws MpdfException|LoaderError|RuntimeError|SyntaxError
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
+     * @spec openspec/specs/file-management/spec.md
      */
     public function createPdf(string $twigTemplate, array $context): Mpdf
     {
@@ -571,7 +571,7 @@ class FileService
      *
      * @return string|null Returns null if created successfully and a string in case of an error.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
+     * @spec openspec/specs/file-management/spec.md
      */
     public function createZip(string $inputFolder, string $tempZip): ?string
     {
@@ -619,7 +619,7 @@ class FileService
      *
      * @return void
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
+     * @spec openspec/specs/file-management/spec.md
      */
     public function downloadZip(string $tempZip, ?string $inputFolder=null): void
     {

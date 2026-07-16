@@ -8,9 +8,9 @@ import { TPage, TPageContent } from './page.types'
 /**
  * Page class representing a page entity with validation
  * Implements the TPage interface for type safety
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Page implements TPage {
 
@@ -27,7 +27,7 @@ export class Page implements TPage {
 	 * Creates a new Page instance
 	 * @param data Initial page data conforming to TPage interface
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+	 * @spec openspec/specs/entity-typescript-models/spec.md
 	 */
 	constructor(data: TPage) {
 		this.hydrate(data)
