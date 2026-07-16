@@ -1,29 +1,30 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------
-# seed-woo506-test-data.sh — seed a local Nextcloud/OpenCatalogi/OpenRegister
-# install with a small WOO-inspired test set for full-text search work:
+# Seed a local Nextcloud + OpenCatalogi + OpenRegister install with a
+# small WOO-inspired test set for full-text search work:
 #
 #   - 1 catalog (slug "publications", scoped to publication + document schemas)
 #   - 2 publications with publicatiedatum in the past + a @self.slug
 #   - 3 documents linked to those publications via
-#     publication: { id, slug, title } (WOO-530 shape)
+#     publication: { id, slug, title } (both id AND slug set — the linkage
+#     shape the publication-query service uses to resolve the embedded summary)
 #   - 1 real 1-page PDF attached to every document, each carrying a
-#     different recognizable search term in its body — so once
-#     content-search lands (WOO-517) there's actually text to hit
+#     different recognizable search term in its body — so once the
+#     document-content search path is live there's actually text to hit
 #
 # After the script finishes it self-verifies against both endpoints:
 #
 #   - GET /apps/opencatalogi/api/publications?_search=…
 #   - GET /apps/opencatalogi/api/search?_search=…
 #
-# The verification step needs the WOO-530 fix
-# (fix/pubquery-slug-metadata-lookup) merged into the OpenCatalogi
-# version under test — otherwise /api/search returns publications only
-# and the mixed-envelope check fails. The script prints a clear
-# diagnostic in that case.
+# The verification step needs the OpenCatalogi build under test to include
+# the publication-slug lookup fix in resolveDocumentPublicationSummary()
+# (address the slug via @self.slug, not as a bare schema property) —
+# otherwise /api/search returns publications only and the mixed-envelope
+# check fails. The script prints a clear diagnostic in that case.
 #
 # Usage:
-#   ./scripts/seed-woo506-test-data.sh
+#   ./scripts/seed-fulltext-search-test-data.sh
 #     [--base-url http://localhost:9091]
 #     [--user admin] [--pass admin]
 #
@@ -357,7 +358,7 @@ print(f\"total={d.get('total','?')} pubs={len(pubs)} docs={len(docs)}\")
 ")
 ok "endpoint 2: $DOC_ROWS"
 if echo "$DOC_ROWS" | grep -q "docs=0"; then
-    warn "endpoint 2 returned 0 documents — the WOO-530 fix (fix/pubquery-slug-metadata-lookup) is required for documents to appear here. Once it lands, re-run the search to confirm mixed rows."
+    warn "endpoint 2 returned 0 documents — the publication-slug lookup fix in resolveDocumentPublicationSummary() (address the slug via @self.slug, not as a bare schema property) is required for documents to appear in the mixed envelope. Once that fix is present, re-run the search to confirm mixed rows."
 fi
 
 log "Verifying — files attached to each document…"
