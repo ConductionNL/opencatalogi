@@ -375,11 +375,17 @@ class PublicationQueryService
             return $cache[$slug];
         }
 
+        // Slug lives on the magic metadata column `_slug` and is addressed via
+        // the nested `@self` block (equivalent to `@self.slug` in URL query form).
+        // A bare `slug` key becomes a schema-property filter — publications have
+        // no `slug` property, so the search matches nothing and every document
+        // row is silently dropped by the assembler with a null publication
+        // summary.
         $matches = $objectService->searchObjects(
             query: [
                 '_register' => $registerId,
                 '_schema'   => $publicationSchemaId,
-                'slug'      => $slug,
+                '@self'     => ['slug' => $slug],
                 '_limit'    => 1,
             ],
             _rbac: false,
