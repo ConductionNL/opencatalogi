@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -79,7 +79,7 @@ class RetentionController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
      */
     public function queueSummary(): JSONResponse
     {
@@ -105,7 +105,7 @@ class RetentionController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function getDefaults(): JSONResponse
@@ -133,7 +133,7 @@ class RetentionController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function setDefaults(): JSONResponse
@@ -163,7 +163,7 @@ class RetentionController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function decide(string $id): JSONResponse
@@ -197,7 +197,7 @@ class RetentionController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function exportReport(): DataDownloadResponse|JSONResponse

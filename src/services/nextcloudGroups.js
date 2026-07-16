@@ -58,7 +58,7 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @return {Promise<Array<{label: string, value: string}>>} Array of group objects with label and value
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export async function fetchNextcloudGroups() {
 	try {
@@ -107,7 +107,7 @@ let cachedGroups = null
 let cacheTimestamp = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-/** @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1 */
+/** @spec openspec/specs/content-management/spec.md */
 export async function getNextcloudGroups() {
 	const now = Date.now()
 
@@ -171,7 +171,7 @@ export async function getNextcloudGroups() {
  *
  * @return {void}
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export function clearGroupsCache() {
 	cachedGroups = null
@@ -183,7 +183,7 @@ export function clearGroupsCache() {
  *
  * @return {boolean} True if user is logged in, false otherwise
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export function isUserLoggedIn() {
 	// Check if we have user information in the Nextcloud context
@@ -213,7 +213,7 @@ export function isUserLoggedIn() {
  *
  * @return {Promise<Array<string>>} Array of group names the current user belongs to
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export async function getCurrentUserGroups() {
 	try {

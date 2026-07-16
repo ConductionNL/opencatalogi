@@ -44,7 +44,7 @@ registerIcons({ DatabaseOutline })
  * Renders the universal CnDataTable list-widget pattern (ADR-049); a row
  * click opens the catalog's publications listing in the same tab.
  *
- * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-4
+ * @spec openspec/specs/catalogs/spec.md
  */
 export default {
 	name: 'CatalogiWidget',

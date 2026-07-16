@@ -139,7 +139,7 @@ class DcatService
      *
      * @return boolean True when the catalog's `hasDcat` flag is set.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     public function isDcatEnabled(array $catalog): bool
     {
@@ -158,7 +158,7 @@ class DcatService
      * @return array<string, mixed> The resolved defaults (publisherName/publisherUri/
      *                              license/contactPoint/organisation).
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
      */
     public function resolveDefaults(array $catalog): array
     {
@@ -186,7 +186,7 @@ class DcatService
      *
      * @return string The absolute DCAT endpoint URL.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-federation-directory-advertises-the-dcat-endpoint-dcat-009
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-federation-directory-advertises-the-dcat-endpoint-dcat-009
      */
     public function catalogEndpointUrl(string $catalogSlug): string
     {
@@ -203,7 +203,7 @@ class DcatService
      *
      * @return string The stable dataset IRI.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
      */
     public function datasetIri(string $catalogSlug, string $uuid): string
     {
@@ -231,9 +231,9 @@ class DcatService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
      */
     public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page=1, array &$violations=[]): array
     {
@@ -388,7 +388,7 @@ class DcatService
      *
      * @return array<string, mixed> The JSON-LD document plus `_meta`.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
      */
     public function buildInstanceDocument(): array
     {
@@ -479,7 +479,7 @@ class DcatService
      *
      * @return array<int, array<string, mixed>> One entry per violating dataset.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     public function validateCatalog(array $catalog, string $catalogSlug): array
     {
@@ -573,7 +573,7 @@ class DcatService
      *
      * @return array<int, string> The missing mandatory property CURIEs.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     public function mandatoryViolations(array $node): array
     {
@@ -594,7 +594,7 @@ class DcatService
      *
      * @return array<int, array<string, mixed>> The DCAT-enabled catalog objects.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
      */
     public function getDcatEnabledCatalogs(): array
     {
@@ -633,7 +633,7 @@ class DcatService
      *
      * @return array<int, array<string, string>|null> Map schemaId => mapping|null.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
      */
     private function resolveSchemaMappings(array $schemaIds): array
     {

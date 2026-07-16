@@ -354,7 +354,7 @@ const DEFAULT_LAYOUT = [
 /**
  * Dashboard — overview view: catalogs, publication totals, activity chart.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-2
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'Dashboard',

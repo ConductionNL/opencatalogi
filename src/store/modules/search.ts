@@ -177,7 +177,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param searchTerm The search term to set
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		setSearchTerm(searchTerm: string) {
 			this.searchTerm = searchTerm
 			console.log('Search term set to:', searchTerm)
@@ -188,7 +188,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param filters Object containing filter key-value pairs
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		setFilters(filters: object) {
 			this.filters = { ...this.filters, ...filters }
 			console.log('Search filters updated:', this.filters)
@@ -199,7 +199,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param filterKey The key of the filter to clear
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		clearFilter(filterKey: string) {
 			const remainingFilters = { ...this.filters }
 			delete remainingFilters[filterKey]
@@ -210,7 +210,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all filters
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		clearAllFilters() {
 			this.filters = {}
 			console.log('All filters cleared')
@@ -222,7 +222,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param field The field to order by
 		 * @param direction ASC or DESC
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		setOrdering(field: string, direction: 'ASC' | 'DESC') {
 			this.ordering = { ...this.ordering, [field]: direction }
 			console.log('Ordering updated:', this.ordering)
@@ -233,7 +233,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param field The field to remove ordering from
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		removeOrdering(field: string) {
 			const remainingOrdering = { ...this.ordering }
 			delete remainingOrdering[field]
@@ -244,7 +244,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all ordering
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		clearOrdering() {
 			this.ordering = {}
 			console.log('All ordering cleared')
@@ -255,7 +255,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param mode The view mode to set
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		setViewMode(mode: 'cards' | 'table') {
 			this.viewMode = mode
 			console.log('View mode set to:', mode)
@@ -267,7 +267,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication to toggle
 		 * @param selected Whether the publication should be selected
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		togglePublicationSelection(publicationId: string, selected: boolean) {
 			if (selected) {
 				if (!this.selectedPublications.includes(publicationId)) {
@@ -281,7 +281,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Select all publications
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		selectAllPublications() {
 			this.selectedPublications = this.searchResults.map((pub: TPublication) => pub.id)
 		},
@@ -289,7 +289,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all selections
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		clearAllSelections() {
 			this.selectedPublications = []
 		},
@@ -298,7 +298,7 @@ export const useSearchStore = defineStore('search', {
 		 * Discover facetable fields
 		 *
 		 * @param params Optional parameters for facetable discovery
-		 * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async discoverFacetableFields(params: Record<string, string | number | boolean> = {}) {
 			this.facetsLoading = true
@@ -360,7 +360,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param enabled Whether to enable or disable the facet
 		 * @param config Optional configuration for the facet
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		toggleActiveFacet(fieldName: string, facetType: string, enabled: boolean, config: Record<string, string | number | boolean> = {}) {
 			console.log('🔧 toggleActiveFacet called with:', {
 				fieldName: typeof fieldName === 'string' ? `"${fieldName}"` : fieldName,
@@ -396,7 +396,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all active facets
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		clearAllActiveFacets() {
 			this.activeFacets = {}
 			console.log('All active facets cleared')
@@ -407,7 +407,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @return {Record<string, Record<string, ActiveFacetConfig> | ActiveFacetConfig>} Facet query configuration object
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		buildFacetQuery() {
 			console.log('🏗️ buildFacetQuery() - Building from active facets:', this.activeFacets)
 
@@ -443,7 +443,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Load initial search results with facetable discovery
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		async loadInitialResults() {
 			console.log('Loading initial search results with facets...')
 
@@ -458,7 +458,7 @@ export const useSearchStore = defineStore('search', {
 		 * Perform a search using the SearchController API
 		 *
 		 * @param params Optional search parameters
-		 * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-1
+		 * @spec openspec/specs/search/spec.md
 		 */
 		async searchPublications(params: Record<string, string | number | boolean> = {}) {
 			this.loading = true
@@ -631,7 +631,7 @@ export const useSearchStore = defineStore('search', {
 		 *
 		 * @param publicationId The ID of the publication to fetch
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		async getPublication(publicationId: string) {
 			try {
 				const response = await fetch(`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}`, {
@@ -661,7 +661,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication
 		 * @param params Optional search parameters
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		async getPublicationUses(publicationId: string, params: Record<string, string | number | boolean> = {}) {
 			try {
 				const searchParams = new URLSearchParams(params as Record<string, string>)
@@ -692,7 +692,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param publicationId The ID of the publication
 		 * @param params Optional search parameters
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		async getPublicationUsed(publicationId: string, params: Record<string, string | number | boolean> = {}) {
 			try {
 				const searchParams = new URLSearchParams(params as Record<string, string>)
@@ -720,7 +720,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear search results and reset state
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3 */
+		/** @spec openspec/specs/search/spec.md */
 		clearSearch() {
 			this.searchTerm = ''
 			this.filters = {}

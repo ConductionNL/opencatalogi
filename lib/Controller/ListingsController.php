@@ -18,13 +18,13 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-16
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-17
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-18
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-21
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-22
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -170,7 +170,7 @@ class ListingsController extends Controller
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-16
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function index(): JSONResponse
     {
@@ -237,7 +237,7 @@ class ListingsController extends Controller
      * @PublicPage
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-17
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function show(string | int $id): JSONResponse
     {
@@ -373,7 +373,7 @@ class ListingsController extends Controller
      * @return JSONResponse The response containing the updated listing object.
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
+     * @spec openspec/specs/dashboard/spec.md
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function update(string | int $id): JSONResponse
@@ -439,7 +439,7 @@ class ListingsController extends Controller
      * @return JSONResponse The response indicating the result of the deletion.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
+     * @spec openspec/specs/dashboard/spec.md
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function destroy(string | int $id): JSONResponse

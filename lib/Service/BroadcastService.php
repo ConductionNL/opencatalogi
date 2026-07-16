@@ -19,8 +19,8 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -49,7 +49,7 @@ use InvalidArgumentException;
  * It allows for broadcasting to a specific URL or to all known directories.
  * The service uses dynamic versioning in User-Agent headers for proper identification.
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
+ * @spec openspec/specs/dashboard/spec.md
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
@@ -241,7 +241,7 @@ class BroadcastService
      *
      * @return string The absolute URL of this directory
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function getCurrentDirectoryUrl(): string
     {
@@ -265,7 +265,7 @@ class BroadcastService
      * @throws ContainerExceptionInterface        When container access fails
      * @throws NotFoundExceptionInterface         When service is not found in container
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function getDirectoryUrls(): array
     {
@@ -326,7 +326,7 @@ class BroadcastService
      *
      * @return boolean True if broadcast was successful, false otherwise
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function sendBroadcastRequest(string $url, string $directoryUrl): bool
     {
@@ -415,7 +415,7 @@ class BroadcastService
      * @throws ContainerExceptionInterface        When container access fails
      * @throws NotFoundExceptionInterface         When service is not found in container
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function broadcast(?string $url=null): array
     {

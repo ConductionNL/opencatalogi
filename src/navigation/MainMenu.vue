@@ -130,7 +130,7 @@ import Cog from 'vue-material-design-icons/Cog.vue'
 /**
  * MainMenu — in-app navigation menu.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'MainMenu',

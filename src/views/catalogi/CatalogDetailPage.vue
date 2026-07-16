@@ -98,7 +98,7 @@ const DETAIL_LAYOUT = [
 /**
  * CatalogDetailPage — route view for a single catalog, resolved by route id.
  *
- * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-3
+ * @spec openspec/specs/catalogs/spec.md
  */
 export default {
 	name: 'CatalogDetailPage',

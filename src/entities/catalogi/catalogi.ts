@@ -13,9 +13,9 @@ import { SafeParseReturnType, z } from 'zod'
 import { CatalogStatus, TCatalogi } from './catalogi.types'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Catalogi implements TCatalogi {
 
@@ -34,7 +34,7 @@ export class Catalogi implements TCatalogi {
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
 
-	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
+	/** @spec openspec/specs/entity-typescript-models/spec.md */
 	constructor(data: TCatalogi) {
 		this.hydrate(data)
 	}

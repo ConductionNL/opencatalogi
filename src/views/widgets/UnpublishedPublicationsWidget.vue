@@ -46,7 +46,7 @@ registerIcons({ DatabaseEyeOutline })
  * (`/publications/{catalogSlug}/{id}`, served by `ui#publicationsPage`),
  * resolving the catalog slug the same way DashboardSideBar does.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-3
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'UnpublishedPublicationsWidget',

@@ -90,7 +90,7 @@ class StatsController extends Controller
      *
      * @NoAdminRequired
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function publication(string $id): JSONResponse
     {
@@ -129,7 +129,7 @@ class StatsController extends Controller
      *
      * @NoAdminRequired
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function catalog(string $slug): JSONResponse
     {
@@ -241,7 +241,7 @@ class StatsController extends Controller
      *
      * @NoAdminRequired
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function export(string $slug): DataDownloadResponse|JSONResponse
     {
@@ -281,7 +281,7 @@ class StatsController extends Controller
      *
      * @return string The CSV document including a UTF-8 BOM.
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     public function buildCsv(array $rows): string
     {

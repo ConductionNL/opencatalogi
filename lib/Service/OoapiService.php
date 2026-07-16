@@ -126,7 +126,7 @@ class OoapiService
      *
      * @return boolean True when the catalog's `hasOoapi` flag is set.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     public function isOoapiEnabled(array $catalog): bool
     {
@@ -141,7 +141,7 @@ class OoapiService
      *
      * @return string The absolute OOAPI v5 base URL.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-federation-directory-advertises-the-ooapi-endpoint-ooapi-009
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-federation-directory-advertises-the-ooapi-endpoint-ooapi-009
      */
     public function endpointUrl(string $catalogSlug): string
     {
@@ -171,7 +171,7 @@ class OoapiService
      *
      * @return boolean True when the user is allowed to read OOAPI feeds.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-consumer-credential-authenticated-access-ooapi-008
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-consumer-credential-authenticated-access-ooapi-008
      */
     public function isConsumerAllowed(string $username): bool
     {
@@ -218,7 +218,7 @@ class OoapiService
      *
      * @return array<string, mixed>|null The rendered `organization` resource, or null when the catalog has none.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
      */
     public function renderOrganization(array $catalog, string $organizationRegister, string $organizationSchema): ?array
     {
@@ -243,7 +243,7 @@ class OoapiService
      *
      * @return array<string, mixed>|null The rendered `organization` resource, or null when unresolvable.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
      */
     public function organizationById(array $catalog, string $id, string $organizationRegister, string $organizationSchema): ?array
     {
@@ -307,8 +307,8 @@ class OoapiService
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated OOAPI collection.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
      */
     private function searchCollection(
         string $catalogId,
@@ -453,7 +453,7 @@ class OoapiService
      *
      * @return array<string, mixed>|null The rendered resource, or null.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
      */
     public function getResource(array $catalog, string $register, string $schema, string $id, string $idField): ?array
     {
@@ -500,7 +500,7 @@ class OoapiService
      *
      * @return array<int, array<string, mixed>> One entry per violating course resource.
      *
-     * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
      */
     public function validateCatalog(array $catalog, string $courseRegister, string $courseSchema): array
     {

@@ -18,16 +18,16 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-127
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-128
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-129
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-130
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-131
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-132
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-133
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-134
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-135
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-136
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
+ * @spec openspec/specs/cms-tool/spec.md
  */
 
 namespace OCA\OpenCatalogi\Tool;
@@ -171,7 +171,7 @@ class CMSTool implements ToolInterface
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-127
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function getFunctions(): array
     {
@@ -349,7 +349,7 @@ class CMSTool implements ToolInterface
      *
      * @throws \Exception If function execution fails
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-128
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function executeFunction(string $functionName, array $parameters, ?string $userId=null): array
     {
@@ -393,7 +393,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Result
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-129
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function createPage(array $parameters): array
     {
@@ -443,7 +443,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Result
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-130
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function listPages(array $parameters): array
     {
@@ -492,7 +492,7 @@ class CMSTool implements ToolInterface
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-131
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function createMenu(array $parameters): array
     {
@@ -569,7 +569,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Result
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-132
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function listMenus(): array
     {
@@ -613,7 +613,7 @@ class CMSTool implements ToolInterface
      *
      * @return array Result
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-133
+     * @spec openspec/specs/cms-tool/spec.md
      */
     public function addMenuItem(array $parameters): array
     {
@@ -669,7 +669,7 @@ class CMSTool implements ToolInterface
      *
      * @return string Slug
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-134
+     * @spec openspec/specs/cms-tool/spec.md
      */
     private function generateSlug(string $title): string
     {
@@ -694,7 +694,7 @@ class CMSTool implements ToolInterface
      *
      * @return mixed The resolved value.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-135
+     * @spec openspec/specs/cms-tool/spec.md
      */
     private function resolveParameterValue(\ReflectionParameter $param, mixed $value): mixed
     {
@@ -723,7 +723,7 @@ class CMSTool implements ToolInterface
      *
      * @return mixed The cast value.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-136
+     * @spec openspec/specs/cms-tool/spec.md
      */
     private function castParameterValue(\ReflectionParameter $param, mixed $value): mixed
     {
@@ -750,7 +750,7 @@ class CMSTool implements ToolInterface
      *
      * @return array The resulting array.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-136
+     * @spec openspec/specs/cms-tool/spec.md
      */
     private function castToArray(mixed $value): array
     {

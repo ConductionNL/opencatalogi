@@ -465,7 +465,7 @@ import PublishedIcon from '../../components/PublishedIcon.vue'
 import PropertiesPanel from '../../components/PropertiesPanel.vue'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'ViewObject',
