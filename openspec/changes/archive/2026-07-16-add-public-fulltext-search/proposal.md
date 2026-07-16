@@ -21,14 +21,13 @@ WOO portals must let citizens search across **both** publication records and the
 
 A single public search surface that returns mixed publication/document rows — schema-discriminated so the frontend can render distinct cards — is the smallest change that unblocks the WOO use case. By introducing a `document` schema bundled in OC's register, OR's `zoeken-filteren` and (Path A, pending Ruben) `TextExtractionService`/`FileHandler`/Solr-pipeline become reusable for document search without OC re-implementing any of them (ADR-022).
 
-## Pending decisions (HARD blocker on archive)
+## Resolved decisions (archive-gate cleared)
 
-The following decision MUST be resolved before this change can be archived:
+The following decision was flagged as an archive-blocker at proposal time and is now resolved:
 
-- **Decision 1 — Document content indexing path:** Can OC lean on OR's existing `TextExtractionService` + `FileHandler` + Solr-pipeline to index document **content** (full body text, not just filename/metadata)?
-  - **Owner:** Ruben.
-  - **Effect on this change:** If yes → B2 scope includes content-search of documents (Path A in `design.md`). If no / later → B2 ships metadata-only document search and content-search becomes a B3 follow-up OpenSpec change (Path B in `design.md`).
-  - **Archive gate:** The final unindented task in `tasks.md` ("Confirm Ruben's answer received + open follow-up change if needed") MUST be checked before `openspec archive add-public-fulltext-search` runs.
+- **Decision 1 — Document content indexing path (RESOLVED 2026-07-16):** Ruben on WOO-517 (verbatim): *"Solr is deprecated hè, dus we doen sowieso geen Solr. Maar ja, leunen op OR. OR heeft al een pipeline voor text extraction, dus daar hoeven we niks meer mee te doen als het goed is."* → **No Solr; lean on OR's existing `TextExtractionService` + `FileHandler` + chunk store (`openregister_chunks`) with its already-shipped PostgreSQL `tsvector` GIN.**
+  - **Effect on this change:** WOO-506 committed to **Path B (metadata-only)** back on 2026-07-03 and shipped that. Content-search of document bodies is a follow-up OpenSpec change (`add-document-content-search`, [opencatalogi #136](https://codeberg.org/Conduction/opencatalogi/pulls/136), refs WOO-517) that layers on top of the same endpoint + envelope defined here — no envelope-break.
+  - **Archive gate cleared:** the final task in `tasks.md` ("Confirm Ruben's answer received + open follow-up") is checked; the follow-up change is filed.
 
 ## Scope
 
