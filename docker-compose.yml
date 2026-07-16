@@ -21,23 +21,33 @@ services:
     - "8083:8080"
 
   # ---------------------------------------------------------------------------
-  # Databases — pick one:
+  # Databases — pick one via profile:
   #
-  #   docker compose up                        →  PostgreSQL (default)
+  #   docker compose up                        →  PostgreSQL (default via .env)
+  #   docker compose --profile postgres up     →  PostgreSQL (explicit)
   #   docker compose --profile mariadb up      →  MariaDB (compatibility testing)
   #
-  # Only one DB service runs at a time; both share volume + port so they don't
-  # conflict when profiles switch. The matching Nextcloud service is picked up
-  # automatically by the same profile flag.
+  # The two DB paths are mutually exclusive named profiles — the postgres and
+  # mariadb `db` + `nextcloud` services never start together, so there is no
+  # host-port collision on 8080 between the two Nextcloud variants.
+  #
+  # `docker compose up` (no explicit flag) defaults to the `postgres` profile
+  # via `COMPOSE_PROFILES=postgres` in the repo's `.env` file.
+  #
+  # Both DB services attach the same named `db` volume at different in-container
+  # paths (`/var/lib/postgresql/data` vs `/var/lib/mysql`). Switching profile
+  # therefore requires `docker compose down -v` to wipe the previous DB's files
+  # before the new DB can initialize on a clean volume.
   # ---------------------------------------------------------------------------
 
-  # PostgreSQL Database (default).
+  # PostgreSQL Database (default via .env — COMPOSE_PROFILES=postgres).
   #
   # Uses the pgvector image so pg_trgm + vector extensions are pre-installed;
   # the init script enables them on first boot. Required for OpenRegister's
   # _fuzzy=true trigram-similarity path and its vector / semantic-search work.
   db:
-    # No profiles: starts by default.
+    profiles:
+      - postgres
     image: pgvector/pgvector:pg16
     restart: always
     container_name: opencatalogi-postgres
@@ -92,10 +102,12 @@ services:
   # profile switches which service is active.
   # ---------------------------------------------------------------------------
 
-  # Nextcloud on PostgreSQL (default).
-  # NOTE: When using --profile mariadb, this service will NOT start
-  # (nextcloud-mariadb starts instead).
+  # Nextcloud on PostgreSQL (default via .env — COMPOSE_PROFILES=postgres).
+  # When using --profile mariadb, this service will NOT start
+  # (nextcloud-mariadb starts instead), so host port 8080 has one owner.
   nextcloud:
+    profiles:
+      - postgres
     user: root
     container_name: nextcloud
     image: nextcloud:34.0.0-apache
