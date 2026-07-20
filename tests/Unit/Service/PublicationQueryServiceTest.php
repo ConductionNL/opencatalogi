@@ -751,6 +751,175 @@ class PublicationQueryServiceTest extends TestCase
     }//end testAssemblePublicSearchResultsDropsContentMatchedDocumentWithDepublishedParent()
 
     /**
+     * Raw chunk-search fields (`_snippet`, `chunk`, `score` etc.) attached to a
+     * candidate row by OR MUST be stripped before the row surfaces on the anonymous
+     * response — SCH-PFTS-CONTENT-002 requires the endpoint return documents, not
+     * chunks. Defence-in-depth: OR resolves chunk hits to their owning ObjectEntity
+     * before returning, so these fields should never be present; strip regardless
+     * so any future regression cannot leak them.
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsStripsRawChunkFieldsFromContentMatchedRow(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows = [
+            [
+                '@self'           => ['schema' => 2, 'id' => 'uuid-doc-with-chunk-fields'],
+                'title'           => 'Doc with rogue chunk fields',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
+                // OR-side regression / debug leak — these MUST be stripped.
+                '_snippet'        => 'lorem ipsum ... marker ...',
+                'snippet'         => 'lorem ipsum ... marker ...',
+                'chunk'           => ['id' => 42, 'text' => 'body-text snippet'],
+                'chunk_id'        => 42,
+                'chunkId'         => 42,
+                'score'           => 0.87,
+                '_score'          => 0.87,
+            ],
+        ];
+        $fake->bySlug['pub-a'] = [
+            [
+                'id'              => 'uuid-pub-a',
+                '@self'           => ['slug' => 'pub-a'],
+                'title'           => 'Pub A',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults(['_content' => 'true'], $fake);
+
+        $this->assertSame(1, $result['total']);
+        $row = $result['results'][0];
+        $this->assertArrayNotHasKey('_snippet', $row);
+        $this->assertArrayNotHasKey('snippet', $row);
+        $this->assertArrayNotHasKey('chunk', $row);
+        $this->assertArrayNotHasKey('chunk_id', $row);
+        $this->assertArrayNotHasKey('chunkId', $row);
+        $this->assertArrayNotHasKey('score', $row);
+        $this->assertArrayNotHasKey('_score', $row);
+
+    }//end testAssemblePublicSearchResultsStripsRawChunkFieldsFromContentMatchedRow()
+
+    /**
+     * When OR returns two rows with the same `@self.id` but the first row fails
+     * per-row validation (e.g. carries a stale `publication.slug` whose lookup
+     * returns null — SCH-PFTS-003 drops the row), the second row that would have
+     * passed MUST NOT be silently swallowed by the dedup — the seen-set is
+     * stamped only on emission, not on candidate encounter. Regression test for
+     * the review finding on `PublicationQueryService::assemblePublicSearchResults()`
+     * dedup ordering.
+     *
+     * @return void
+     */
+    public function testAssemblePublicSearchResultsDedupIsStampedOnEmissionNotOnCandidateEncounter(): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+        $fake->candidateRows   = [
+            [
+                // First candidate: same id, stale slug — resolveDocumentPublicationSummary()
+                // returns null → row is dropped, MUST NOT claim the seen slot.
+                '@self'           => ['schema' => 2, 'id' => 'uuid-doc-shared'],
+                'title'           => 'Stale denormalised summary path',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publication'     => ['slug' => 'pub-stale-slug-not-in-bySlug', 'title' => 'Ghost'],
+            ],
+            [
+                // Second candidate: same id, fresh slug — MUST be emitted.
+                '@self'           => ['schema' => 2, 'id' => 'uuid-doc-shared'],
+                'title'           => 'Fresh denormalised summary path',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publication'     => ['slug' => 'pub-a', 'title' => 'Fresh'],
+            ],
+        ];
+        $fake->bySlug['pub-a'] = [
+            [
+                'id'              => 'uuid-pub-a',
+                '@self'           => ['slug' => 'pub-a'],
+                'title'           => 'Pub A',
+                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+            ],
+        ];
+
+        $result = $this->service->assemblePublicSearchResults(['_content' => 'true'], $fake);
+
+        $this->assertSame(1, $result['total']);
+        $this->assertSame('uuid-doc-shared', $result['results'][0]['@self']['id']);
+        $this->assertSame('Fresh denormalised summary path', $result['results'][0]['title']);
+
+    }//end testAssemblePublicSearchResultsDedupIsStampedOnEmissionNotOnCandidateEncounter()
+
+    /**
+     * `filter_var(FILTER_VALIDATE_BOOLEAN)` correctly interprets the full range of
+     * boolean-like inputs on `_content`. This data-provider test locks the contract
+     * against any future refactor that swaps out `filter_var` for a hand-rolled
+     * `=== 'true'` check that would mishandle `'yes'` / `'on'` / etc.
+     *
+     * @param mixed   $input     Value assigned to `_content`.
+     * @param boolean $expectFwd Whether `_content_search` MUST be forwarded to OR.
+     *
+     * @dataProvider contentFlagEdgeCasesProvider
+     * @return       void
+     */
+    public function testAssemblePublicSearchResultsHandlesContentFlagEdgeCases(mixed $input, bool $expectFwd): void
+    {
+        $this->configureRegisterAndSchemas();
+        $fake = new FakeSearchObjectService();
+
+        $this->service->assemblePublicSearchResults(['_content' => $input], $fake);
+
+        if ($expectFwd === true) {
+            $this->assertTrue(
+                $fake->capturedQuery['_content_search'] ?? false,
+                sprintf('_content=%s MUST forward _content_search=true', var_export($input, true))
+            );
+        } else {
+            $this->assertArrayNotHasKey(
+                key: '_content_search',
+                array: $fake->capturedQuery,
+                message: sprintf('_content=%s MUST NOT forward _content_search', var_export($input, true))
+            );
+        }
+
+    }//end testAssemblePublicSearchResultsHandlesContentFlagEdgeCases()
+
+    /**
+     * Boolean edge cases exercised by
+     * {@see testAssemblePublicSearchResultsHandlesContentFlagEdgeCases()}.
+     *
+     * @return array<string, array{0: mixed, 1: bool}>
+     */
+    public static function contentFlagEdgeCasesProvider(): array
+    {
+        return [
+            'true string'      => ['true', true],
+            'TRUE string'      => ['TRUE', true],
+            'yes string'       => ['yes', true],
+            'on string'        => ['on', true],
+            '1 string'         => ['1', true],
+            '1 int'            => [1, true],
+            'true bool'        => [true, true],
+            'false string'     => ['false', false],
+            'FALSE string'     => ['FALSE', false],
+            'no string'        => ['no', false],
+            'off string'       => ['off', false],
+            '0 string'         => ['0', false],
+            '0 int'            => [0, false],
+            'empty string'     => ['', false],
+            'malformed string' => ['maybe', false],
+            'other numeric'    => ['2', false],
+            'negative numeric' => ['-1', false],
+            'array wrapper'    => [['true'], false],
+            'null'             => [null, false],
+            'false bool'       => [false, false],
+        ];
+
+    }//end contentFlagEdgeCasesProvider()
+
+    /**
      * Populate the register/schema app-config keys assemblePublicSearchResults() reads.
      *
      * @return void

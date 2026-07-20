@@ -284,14 +284,16 @@ class PublicationQueryService
             // Dedup on @self.id (SCH-PFTS-CONTENT-002 / MODIFIED SCH-PFTS-002): a
             // document matching on BOTH metadata and body text must appear exactly
             // once. Rows without a resolvable id (defensive — should not occur) are
-            // never deduped against each other.
+            // never deduped against each other. Marker is stamped AFTER all per-row
+            // validation (schema known + publication summary resolved + isObjectPublic
+            // check) so a first candidate that fails validation cannot silently
+            // suppress a later same-id candidate that would have passed — the metadata
+            // arm and the chunk arm can carry differently-stale denormalised
+            // `publication` fields, and only the emit-ready row should claim the seen
+            // slot.
             $objectId = ($rowArray['@self']['id'] ?? ($rowArray['id'] ?? null));
-            if ($objectId !== null) {
-                if (isset($seenObjectIds[$objectId]) === true) {
-                    continue;
-                }
-
-                $seenObjectIds[$objectId] = true;
+            if ($objectId !== null && isset($seenObjectIds[$objectId]) === true) {
+                continue;
             }
 
             $schemaId   = $this->extractSchemaId($rowArray);
@@ -301,6 +303,23 @@ class PublicationQueryService
             }
 
             $rowArray['@self']['schema'] = $schemaSlug;
+
+            // Strip any raw chunk-search fields OR might have attached to the row
+            // (SCH-PFTS-CONTENT-002 — the public response returns documents, never
+            // chunks). Defence-in-depth: OR already resolves each chunk hit to its
+            // owning ObjectEntity, so these fields should never be present; strip
+            // regardless so any future regression cannot leak them to the anonymous
+            // surface. Mirrors the scope-strip pattern used on the delegated query
+            // above.
+            unset(
+                $rowArray['_snippet'],
+                $rowArray['snippet'],
+                $rowArray['chunk'],
+                $rowArray['chunk_id'],
+                $rowArray['chunkId'],
+                $rowArray['score'],
+                $rowArray['_score']
+            );
 
             if ($schemaSlug === 'document') {
                 $publicationSummary = $this->resolveDocumentPublicationSummary(
@@ -327,6 +346,10 @@ class PublicationQueryService
 
             if ($this->isObjectPublic($rowArray) === false) {
                 continue;
+            }
+
+            if ($objectId !== null) {
+                $seenObjectIds[$objectId] = true;
             }
 
             $rows[] = $rowArray;

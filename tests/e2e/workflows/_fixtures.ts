@@ -315,16 +315,42 @@ export class Fixtures {
 	/**
 	 * Force-trigger OR's text-extraction for one file rather than waiting for the
 	 * lazy `FileTextExtractionJob` cron (`POST /apps/openregister/api/files/{id}/extract`).
-	 * Best-effort: swallows failures so a transient extraction hiccup surfaces as
-	 * a clear "content not found" assertion downstream, not a fixture crash.
+	 *
+	 * Distinguishes hard failures (404 endpoint moved, 401/403 auth broken) from
+	 * transient hiccups. On a hard failure the fixture throws immediately so the
+	 * test fails fast with the real root cause, not a misleading "marker did not
+	 * surface" 10-second poll timeout. Transient statuses (409 already-running,
+	 * 5xx) are logged and swallowed so the poll loop downstream can still succeed
+	 * if the extraction was already scheduled.
 	 * @param fileId
 	 */
 	async extractFile(fileId: number): Promise<void> {
-		await this.ctx
-			.post(`/index.php/apps/openregister/api/files/${fileId}/extract`, {
-				data: { forceReExtract: true },
-			})
-			.catch(() => {})
+		let res
+		try {
+			res = await this.ctx.post(
+				`/index.php/apps/openregister/api/files/${fileId}/extract`,
+				{ data: { forceReExtract: true } },
+			)
+		} catch (err) {
+			throw new Error(
+				`extractFile ${fileId}: network failure — ${(err as Error).message}`,
+			)
+		}
+		if (res.ok()) {
+			return
+		}
+		const status = res.status()
+		if (status === 404 || status === 401 || status === 403) {
+			const body = await res.text().catch(() => '')
+			throw new Error(
+				`extractFile ${fileId}: hard failure (${status}) — endpoint moved or auth broken. Body: ${body.slice(0, 200)}`,
+			)
+		}
+		// 409 (already running), 5xx (transient) — log and let the poll loop decide.
+		const body = await res.text().catch(() => '')
+		console.warn(
+			`[fixtures] extractFile ${fileId}: transient status ${status}, continuing. Body: ${body.slice(0, 200)}`,
+		)
 	}
 
 	/**
