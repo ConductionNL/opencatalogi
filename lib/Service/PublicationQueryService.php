@@ -157,19 +157,25 @@ class PublicationQueryService
      * the constrained-scope discipline in {@see findObjectLocation()}).
      *
      * Dual-path (design.md "Dual-path design"): this ships Path B — matches are
-     * driven by OR's `zoeken-filteren` against schema properties and `@self` metadata
-     * only, no document-content extraction. Document-content indexing (Path A) is
-     * tracked separately as WOO-517 (assigned Ruben, in Refinement) and does not gate
-     * this change; when it lands, content indexing is wired via OR's
-     * TextExtractionService + FileHandler + Solr-pipeline (SCH-PFTS-006) — OpenCatalogi
-     * MUST NOT add a parallel extraction pipeline for this.
+     * driven by OR's `zoeken-filteren` against schema properties and `@self` metadata.
+     * Path A (document-content matching, WOO-517) is layered on top via the opt-in
+     * `_content` query parameter: when set, the OR-side `_content_search` flag
+     * (shipped in `openregister:expose-content-search-in-object-service`, PR #473) is
+     * forwarded on `searchObjectsPaginated()`'s query array, widening the candidate
+     * set to documents whose OR-extracted body text matches the query. OpenCatalogi
+     * does not run its own text-extraction pipeline — OR's TextExtractionService +
+     * ChunkMapper own that entirely (SCH-PFTS-CONTENT-001).
      *
      * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
+     *                              Recognised keys include the opt-in `_content` boolean
+     *                              (SCH-PFTS-CONTENT-001) — when true, forwarded to OR as
+     *                              `_content_search` to widen matching to document body text.
      * @param object $objectService OpenRegister ObjectService instance (already resolved from container).
      *
      * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
      *
      * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-5
+     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
@@ -186,32 +192,68 @@ class PublicationQueryService
             // the failure is observable in production (silent empty is indistinguishable
             // from "no matches" in the response envelope; operators need a signal that
             // the deploy is misconfigured).
+            $registerStatus          = 'set';
+            $publicationSchemaStatus = 'set';
+            $documentSchemaStatus    = 'set';
+            if ($registerId === null) {
+                $registerStatus = 'MISSING';
+            }
+
+            if ($publicationSchemaId === null) {
+                $publicationSchemaStatus = 'MISSING';
+            }
+
+            if ($documentSchemaId === null) {
+                $documentSchemaStatus = 'MISSING';
+            }
+
             $this->logger?->warning(
                 'PublicationQueryService::assemblePublicSearchResults returning empty envelope — register/schema config unresolved',
                 [
-                    'publication_register' => $registerId === null ? 'MISSING' : 'set',
-                    'publication_schema'   => $publicationSchemaId === null ? 'MISSING' : 'set',
-                    'document_schema'      => $documentSchemaId === null ? 'MISSING' : 'set',
+                    'publication_register' => $registerStatus,
+                    'publication_schema'   => $publicationSchemaStatus,
+                    'document_schema'      => $documentSchemaStatus,
                 ]
             );
             return [
                 'results' => [],
                 'total'   => 0,
             ];
-        }
+        }//end if
 
         $schemaSlugById = [
             $publicationSchemaId => 'publication',
             $documentSchemaId    => 'document',
         ];
 
+        // Opt-in content-search (SCH-PFTS-CONTENT-001): widen matching to include
+        // OR-extracted document body text. Default false — omitted/false is
+        // byte-identical to the WOO-506 baseline, so existing consumers see zero
+        // drift. Read before buildSearchQuery() so the raw `_content` key can be
+        // stripped from the forwarded query below (it is OC's own flag name, not
+        // OR's — OR's equivalent is `_content_search`).
+        $contentSearchRequested = filter_var(
+            value: ($queryParams['_content'] ?? false),
+            filter: FILTER_VALIDATE_BOOLEAN
+        );
+
         $searchQuery = $objectService->buildSearchQuery($queryParams);
         // The scope is fixed above — strip any caller-supplied scope keys so a request
         // parameter can never widen the search outside the publication/document schemas.
         unset($searchQuery['_schema'], $searchQuery['_registers'], $searchQuery['catalogSlug'], $searchQuery['fq']);
+        unset($searchQuery['_content']);
         $searchQuery['_register']       = $registerId;
         $searchQuery['_schemas']        = [$publicationSchemaId, $documentSchemaId];
         $searchQuery['_includeDeleted'] = false;
+
+        if ($contentSearchRequested === true) {
+            // Forward to OR's opt-in chunk-search fan-out (expose-content-search-in
+            // -object-service, PR #473). OR already dedupes its own metadata-match +
+            // chunk-match union on object id before returning; the `@self.id` dedup
+            // below is an additional guarantee at the OC assembly layer per
+            // SCH-PFTS-CONTENT-002 / MODIFIED SCH-PFTS-002.
+            $searchQuery['_content_search'] = true;
+        }
 
         // _rbac: false — visibility is enforced below via isObjectPublic() AFTER
         // scoring/merge (SCH-PFTS-004); folding it into the OR query would bias ranking
@@ -230,12 +272,26 @@ class PublicationQueryService
         // classic broken-authorisation (OWASP A01:2021). Admins who need to see
         // drafts use the admin `/publications` endpoint, not this public surface.
         $publicationCache = [];
+        $seenObjectIds    = [];
         $rows = [];
 
         foreach (($candidateResult['results'] ?? []) as $candidate) {
             $rowArray = $candidate;
             if (is_array($rowArray) === false) {
                 $rowArray = $rowArray->jsonSerialize();
+            }
+
+            // Dedup on @self.id (SCH-PFTS-CONTENT-002 / MODIFIED SCH-PFTS-002): a
+            // document matching on BOTH metadata and body text must appear exactly
+            // once. Rows without a resolvable id (defensive — should not occur) are
+            // never deduped against each other.
+            $objectId = ($rowArray['@self']['id'] ?? ($rowArray['id'] ?? null));
+            if ($objectId !== null) {
+                if (isset($seenObjectIds[$objectId]) === true) {
+                    continue;
+                }
+
+                $seenObjectIds[$objectId] = true;
             }
 
             $schemaId   = $this->extractSchemaId($rowArray);

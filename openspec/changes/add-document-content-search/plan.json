@@ -11,7 +11,7 @@
       "id": 1,
       "title": "Freeze the delta spec under `openspec/changes/add-document-content-search/specs/search/spec.md` (MODIFIED SCH-PFTS-002 + ADDED SCH-PFTS-CONTENT-001 / -002 / -003); confirm `openspec validate add-document-content-search` is green",
       "description": "",
-      "status": "pending",
+      "status": "done",
       "spec_ref": "specs/search/spec.md (this change)",
       "acceptance_criteria": [
         "openspec validator reports \"is valid\"; SCH-PFTS-001 / -003 / -004 / -005 / -006 / -007 untouched"
@@ -22,7 +22,7 @@
       "id": 2,
       "title": "Verify OR-side prerequisite has shipped in `Conduction/openregister:development`: `ObjectService::searchObjectsPaginated()` accepts a `_content_search` (or agreed final name) flag and routes to `ChunkMapper::searchByKeyword()` when set; document the exact flag name + return shape in this task before impl starts",
       "description": "",
-      "status": "pending",
+      "status": "done",
       "spec_ref": "(external) openregister/openspec/changes/expose-content-search-in-object-service/",
       "acceptance_criteria": [
         "OR release notes or merge commit link recorded here; smoke curl against a seeded OR install returns chunk-matched document rows"
@@ -33,7 +33,7 @@
       "id": 3,
       "title": "Extend `PublicationQueryService::assemblePublicSearchResults()` to accept a `_content` boolean flag from `$queryParams` (default false) and forward the corresponding OR flag when true",
       "description": "",
-      "status": "pending",
+      "status": "done",
       "spec_ref": "SCH-PFTS-CONTENT-001",
       "acceptance_criteria": [
         "PHPUnit test with `_content=false` (default) proves current behaviour is byte-identical to WOO-506; separate test with `_content=true` proves the OR flag is set on the delegated query"
@@ -44,7 +44,7 @@
       "id": 4,
       "title": "When `_content=true`, execute two searches under the same query scope and deduplicate on `@self.id`: metadata-search (existing WOO-506 path) UNION content-search (chunks routed via the OR flag). Preserve the WOO-506 flat envelope; each document row is indistinguishable in shape whether it matched on metadata or content",
       "description": "",
-      "status": "pending",
+      "status": "done",
       "spec_ref": "SCH-PFTS-CONTENT-002, MODIFIED SCH-PFTS-002",
       "acceptance_criteria": [
         "a document that matches BOTH via title AND body text appears exactly once in the response; a document that matches ONLY via body text is present when `_content=true` and absent when `_content=false`"
@@ -55,7 +55,7 @@
       "id": 5,
       "title": "Apply the existing `isObjectPublic()` filter + transitive publication-visibility gate (SCH-PFTS-004) to content-matched document rows before returning",
       "description": "",
-      "status": "pending",
+      "status": "done",
       "spec_ref": "SCH-PFTS-CONTENT-003",
       "acceptance_criteria": [
         "PHPUnit test proves a body-text match on a depublished document (`depublicatiedatum` in the past) is dropped from the anonymous response; separate test proves a body-text match on a document whose linked publication is depublished is also dropped"
@@ -66,18 +66,18 @@
       "id": 6,
       "title": "E2E test: seed a publication + a document with an attached PDF (or DOCX) carrying a distinctive phrase like `\"lorem-ipsum-woo517-marker\"`; poll the OR extraction job until chunks are indexed; assert `GET /apps/opencatalogi/api/search?_search=lorem-ipsum-woo517-marker&_content=true` returns the document row with correct `@self.schema=document` + embedded publication summary",
       "description": "",
-      "status": "pending",
+      "status": "done",
       "spec_ref": "SCH-PFTS-CONTENT-001, -002, -003",
       "acceptance_criteria": [
-        "E2E green on both fresh MariaDB and fresh PostgreSQL dev envs (MariaDB may return unranked results \u2014 see deferred MariaDB-parity note in proposal.md)"
+        "E2E green on both fresh MariaDB and fresh PostgreSQL dev envs (MariaDB may return unranked results — see deferred MariaDB-parity note in proposal.md)"
       ],
       "files_likely_affected": []
     },
     {
       "id": 7,
-      "title": "Update `docs/Integrations/fulltext-search.md` on `Conduction/openwoo-app-website` (twin PRs against `development` and `documentation` branches, matching the WOO-506 docs-branch pattern) \u2014 add a section describing the `_content=true` opt-in on Endpoint 2, its default OFF, and the fact that content matches share the same envelope + visibility rules as metadata matches",
+      "title": "Update `docs/Integrations/fulltext-search.md` on `Conduction/openwoo-app-website` (twin PRs against `development` and `documentation` branches, matching the WOO-506 docs-branch pattern) — add a section describing the `_content=true` opt-in on Endpoint 2, its default OFF, and the fact that content matches share the same envelope + visibility rules as metadata matches",
       "description": "",
-      "status": "pending",
+      "status": "blocked",
       "spec_ref": "SCH-PFTS-CONTENT-001, -002, -003",
       "acceptance_criteria": [
         "both openwoo PRs open, both diffs identical"
@@ -88,8 +88,8 @@
       "id": 8,
       "title": "Confirm archive gate: after impl + E2E green + docs merged, run `openspec archive add-document-content-search`",
       "description": "",
-      "status": "pending",
-      "spec_ref": "\u2014",
+      "status": "blocked",
+      "spec_ref": "—",
       "acceptance_criteria": [
         "change moved under `openspec/changes/archive/YYYY-MM-DD-add-document-content-search`"
       ],

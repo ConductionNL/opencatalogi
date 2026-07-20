@@ -1,5 +1,7 @@
 # Design: add-document-content-search
 
+status: pr-created
+
 ## Architecture Overview
 
 WOO-517 layers content-search onto the WOO-506 public search endpoint (`GET /apps/opencatalogi/api/search`) without breaking the envelope. Two mechanics compose:
