@@ -34,7 +34,8 @@
           "theme",
           "page",
           "menu",
-          "glossary"
+          "glossary",
+          "document"
         ],
         "tablePrefix": "",
         "folder": "Open Registers/Publication Register",
@@ -47,7 +48,12 @@
               "autoCreateTable": true,
               "comment": "High-volume content schema - main content type with frequent queries for search, filtering, and display"
             },
-            "catalog": {
+"document": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "FTS content-search target (WOO-517) — chunk-store attaches to objects here"
+            },
+                        "catalog": {
               "magicMapping": true,
               "autoCreateTable": true,
               "comment": "Frequently queried for navigation and organization - benefits from SQL indexing and joins"
