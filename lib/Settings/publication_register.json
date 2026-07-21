@@ -130,6 +130,30 @@
             },
             "description": "List of themes associated with this publication",
             "facetable": true
+          },
+          "publicatiedatum": {
+            "type": "string",
+            "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this publication is live and publicly accessible",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Publication Date"
+          },
+          "depublicatiedatum": {
+            "type": "string",
+            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access. A future value schedules automatic depublication via the OpenRegister published-predicate.",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Depublication Date"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status of the publication; the archived state retains the object internally while removing it from every public surface (RET-006).",
+            "enum": [
+              "published",
+              "archived"
+            ],
+            "facetable": true,
+            "title": "Status"
           }
         },
         "configuration": {
@@ -139,7 +163,127 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {
+              "group": "public",
+              "match": {
+                "publicatiedatum": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
+          ]
+        }
+      },
+      "document": {
+        "slug": "document",
+        "title": "Document",
+        "version": "0.1.0",
+        "published": "2026-07-03T00:00:00+00:00",
+        "summary": "A document attached to a publication, discoverable via the public full-text search endpoint",
+        "description": "A document represents a file (e.g. PDF, DOCX) attached to a publication. Documents are schema-discoverable so the public full-text search endpoint (SCH-PFTS-005) can surface them alongside publications, discriminated by @self.schema.",
+        "icon": null,
+        "required": [
+          "title",
+          "publication"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the document",
+            "maxLength": 255,
+            "minLength": 1,
+            "facetable": true,
+            "title": "Title"
+          },
+          "filename": {
+            "type": "string",
+            "description": "The original filename of the document",
+            "maxLength": 255,
+            "facetable": false,
+            "title": "Filename"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "The MIME type of the document",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "MIME Type"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Brief description of the document",
+            "maxLength": 255,
+            "facetable": false,
+            "title": "Summary"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the document",
+            "maxLength": 2555,
+            "facetable": false,
+            "title": "Description"
+          },
+          "publication": {
+            "type": "object",
+            "description": "Summary of the publication this document is attached to",
+            "facetable": false,
+            "title": "Publication",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The UUID of the linked publication",
+                "title": "Publication ID"
+              },
+              "slug": {
+                "type": "string",
+                "description": "The slug of the linked publication",
+                "title": "Publication Slug"
+              },
+              "title": {
+                "type": "string",
+                "description": "The title of the linked publication",
+                "title": "Publication Title"
+              }
+            }
+          },
+          "organization": {
+            "type": "string",
+            "description": "Reference to the organization that owns this document",
+            "facetable": true,
+            "title": "Organization"
+          },
+          "publicatiedatum": {
+            "type": "string",
+            "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this document is live and publicly accessible",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Publication Date"
+          },
+          "depublicatiedatum": {
+            "type": "string",
+            "description": "Depublication date (WOO/DIWOO) — when set and in the past, this document is withdrawn from public access",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Depublication Date"
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": true,
+        "authorization": {
+          "read": [
+            {
+              "group": "public",
+              "match": {
+                "publicatiedatum": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
           ]
         }
       },
