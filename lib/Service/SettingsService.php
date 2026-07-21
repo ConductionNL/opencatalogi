@@ -11,9 +11,25 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-117
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-118
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-119
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-120
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-121
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-122
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -86,6 +102,8 @@ class SettingsService
      * @param string|null $minVersion Minimum required version (e.g. '1.0.0').
      *
      * @return boolean True if OpenRegister is installed and meets version requirements.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
      */
     public function isOpenRegisterInstalled(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
@@ -106,6 +124,8 @@ class SettingsService
      * Checks if OpenRegister is enabled.
      *
      * @return boolean True if OpenRegister is enabled.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
      */
     public function isOpenRegisterEnabled(): bool
     {
@@ -127,6 +147,8 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
      */
     public function installOrUpdateOpenRegister(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
@@ -177,6 +199,8 @@ class SettingsService
      * @throws \RuntimeException If auto-configuration fails.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-117
      */
     public function autoConfigure(): array
     {
@@ -239,6 +263,8 @@ class SettingsService
      * @param string|null $minORVersion Minimum required OpenRegister version.
      *
      * @return array The initialization results.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-118
      */
     public function initialize(?string $minORVersion=self::MIN_OPENREGISTER_VERSION): array
     {
@@ -282,6 +308,9 @@ class SettingsService
      *
      * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -298,6 +327,9 @@ class SettingsService
      *
      * @return \OCA\OpenRegister\Db\RegisterMapper|null The RegisterMapper if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       RegisterMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getRegisterMapper(): ?\OCA\OpenRegister\Db\RegisterMapper
     {
@@ -314,6 +346,9 @@ class SettingsService
      *
      * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
      * @throws \RuntimeException If the mapper is not available.
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       SchemaMapper from the container; pure framework plumbing, no domain behavior.
      */
     public function getSchemaMapper(): ?\OCA\OpenRegister\Db\SchemaMapper
     {
@@ -330,6 +365,9 @@ class SettingsService
      *
      * @return \OCA\OpenRegister\Service\ConfigurationService|null The Configuration service if available, null otherwise.
      * @throws \RuntimeException If the service is not available.
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ConfigurationService from the container; pure framework plumbing, no domain behavior.
      */
     public function getConfigurationService(): ?\OCA\OpenRegister\Service\ConfigurationService
     {
@@ -346,6 +384,8 @@ class SettingsService
      *
      * @return array The current settings configuration.
      * @throws \RuntimeException If settings retrieval fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-119
      */
     public function getSettings(): array
     {
@@ -418,6 +458,8 @@ class SettingsService
      * @return array Array of registers with enriched schema data.
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-120
      */
     private function enrichRegistersWithSchemas(array $registers): array
     {
@@ -489,22 +531,56 @@ class SettingsService
     /**
      * Update the settings configuration.
      *
+     * Only keys that belong to the canonical settings allowlist (the same set
+     * enumerated in getSettings()) are accepted.  Any unrecognised key in $data
+     * is silently ignored, preventing arbitrary app-config key injection.
+     *
      * @param array $data The settings data to update.
      *
      * @return array The updated settings configuration.
      * @throws \RuntimeException If settings update fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
      */
     public function updateSettings(array $data): array
     {
         try {
-            // Update each setting in the configuration.
-            foreach ($data as $key => $value) {
-                $this->config->setValueString($this->appName, $key, $value);
-                // Retrieve the updated value to confirm the change.
-                $data[$key] = $this->config->getValueString($this->appName, $key);
+            // Build the canonical allowlist from the same object-type enumeration
+            // used by getSettings() so the two methods stay in sync automatically.
+            $allowedTypes = [
+                'catalog',
+                'listing',
+                'organization',
+                'theme',
+                'page',
+                'menu',
+                'glossary',
+            ];
+
+            $allowedKeys = [];
+            foreach ($allowedTypes as $type) {
+                $allowedKeys[] = "{$type}_source";
+                $allowedKeys[] = "{$type}_schema";
+                $allowedKeys[] = "{$type}_register";
             }
 
-            return $data;
+            // Publishing-option keys are also settable via this endpoint.
+            $allowedKeys[] = 'auto_publish_attachments';
+            $allowedKeys[] = 'auto_publish_objects';
+            $allowedKeys[] = 'use_old_style_publishing_view';
+
+            $updated = [];
+
+            // Only persist keys that are explicitly allowed.
+            foreach ($allowedKeys as $key) {
+                if (array_key_exists($key, $data) === true) {
+                    $this->config->setValueString($this->appName, $key, (string) $data[$key]);
+                    // Retrieve the persisted value to confirm the change.
+                    $updated[$key] = $this->config->getValueString($this->appName, $key);
+                }
+            }
+
+            return $updated;
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to update settings: '.$e->getMessage());
         }//end try
@@ -516,6 +592,8 @@ class SettingsService
      *
      * @return array The current publishing options configuration.
      * @throws \RuntimeException If publishing options retrieval fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
      */
     public function getPublishingOptions(): array
     {
@@ -556,6 +634,8 @@ class SettingsService
      *
      * @return array The updated publishing options configuration.
      * @throws \RuntimeException If publishing options update fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
      */
     public function updatePublishingOptions(array $options): array
     {
@@ -607,6 +687,8 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-121
      */
     public function loadSettings(bool $force=false): array
     {
@@ -633,6 +715,33 @@ class SettingsService
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new RuntimeException("Invalid JSON in configuration file: ".json_last_error_msg());
             }
+
+            // ADR-037: merge modular register fragments from Settings/register.d/*.json.
+            // Each OpenSpec change drops its own fragment file instead of editing this
+            // monolith, so concurrent builds touch disjoint files (no merge conflicts).
+            // OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
+            // fragments union cleanly by key.
+            $fragmentDir = $appPath.'/lib/Settings/register.d';
+            $fragmentSig = '';
+            if (is_dir($fragmentDir) === true) {
+                $fragmentFiles = glob($fragmentDir.'/*.json');
+                sort($fragmentFiles);
+                foreach ($fragmentFiles as $fragmentFile) {
+                    $fragmentContent = file_get_contents($fragmentFile);
+                    if ($fragmentContent === false) {
+                        continue;
+                    }
+
+                    $fragmentData = json_decode($fragmentContent, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        // Skip malformed fragment; the monolith import still succeeds.
+                        continue;
+                    }
+
+                    $data         = self::deepMergeConfig($data, $fragmentData);
+                    $fragmentSig .= basename($fragmentFile).':'.md5($fragmentContent).';';
+                }
+            }//end if
 
             // Calculate relative path from Nextcloud root for sourceUrl tracking.
             // appPath is something like /var/www/html/apps-extra/opencatalogi
@@ -668,6 +777,12 @@ class SettingsService
             // Get the current app version. dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
+            // ADR-037: fold the fragment signature into the version so OpenRegister's
+            // version-gated importFromApp re-imports whenever register.d fragments change.
+            if ($fragmentSig !== '') {
+                $currentAppVersion .= '+frag.'.substr(md5($fragmentSig), 0, 8);
+            }
+
             // Use importFromApp to import the configuration data directly.
             // This avoids the file path resolution issue in importFromFilePath.
             $result = $configurationService->importFromApp(
@@ -688,6 +803,41 @@ class SettingsService
     }//end loadSettings()
 
     /**
+     * Deep-merge a register fragment onto the base config (ADR-037).
+     *
+     * Associative arrays (OpenAPI objects like `components.schemas`, `paths`) are
+     * merged by key union (recursing on shared keys); list arrays are concatenated;
+     * scalars in the fragment overwrite the base. Disjoint fragments never collide.
+     *
+     * @param array<mixed> $base    The accumulated config.
+     * @param array<mixed> $overlay The fragment to merge in.
+     *
+     * @return array<mixed> The merged config.
+     */
+    private static function deepMergeConfig(array $base, array $overlay): array
+    {
+        foreach ($overlay as $key => $value) {
+            if (is_array($value) === true
+                && isset($base[$key]) === true
+                && is_array($base[$key]) === true
+            ) {
+                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+                if ($baseIsList === true && $overlayIsList === true) {
+                    $base[$key] = array_merge($base[$key], $value);
+                } else {
+                    $base[$key] = self::deepMergeConfig($base[$key], $value);
+                }
+            } else {
+                $base[$key] = $value;
+            }
+        }
+
+        return $base;
+
+    }//end deepMergeConfig()
+
+    /**
      * Update the app configuration with imported schema and register IDs.
      *
      * After importing the configuration from OpenRegister, this method updates
@@ -700,6 +850,8 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
      */
     private function updateObjectTypeConfiguration(array $importResult): void
     {
@@ -787,6 +939,8 @@ class SettingsService
      *
      * @return boolean True if settings should be loaded, false otherwise.
      * @throws \RuntimeException If version checking fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-122
      */
     private function shouldLoadSettings(): bool
     {
@@ -821,6 +975,8 @@ class SettingsService
      *
      * @return array Version information with app and configuration versions.
      * @throws \RuntimeException If version retrieval fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
      */
     public function getVersionInfo(): array
     {
@@ -861,6 +1017,8 @@ class SettingsService
      * @return array The import results with success/error information.
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
      */
     public function manualImport(bool $forceImport=false): array
     {

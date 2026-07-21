@@ -2,8 +2,9 @@
 /**
  * Service for handling file operations in OpenCatalogi.
  *
- * Provides functionalities for managing files and folders in NextCloud, creating and managing
- * share links, handling uploaded files, generating PDF and ZIP files, and managing temporary files.
+ * Provides functionalities for managing files and folders in NextCloud, handling
+ * uploaded files, generating PDF and ZIP files, managing temporary files, and
+ * requesting public share links via the OpenRegister shares leaf (ADR-022).
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -12,18 +13,31 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * @version GIT: <git_id>
- *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
  */
 
 namespace OCA\OpenCatalogi\Service;
 ini_set('memory_limit', '2048M');
 
-use DateTime;
 use Exception;
 use Mpdf\Mpdf;
 use Mpdf\MpdfException;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\File;
 use OCP\Files\GenericFileException;
@@ -34,11 +48,11 @@ use OCP\Files\NotPermittedException;
 use OCP\IRequest;
 use OCP\IUserSession;
 use OCP\Lock\LockedException;
-use OCP\Share\IManager;
-use OCP\Share\IShare;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use RuntimeException;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
@@ -55,6 +69,10 @@ use ZipArchive;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
+ * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
  */
 
 class FileService
@@ -62,16 +80,18 @@ class FileService
     /**
      * Constructor for FileService
      *
-     * @param IUserSession    $userSession  The user session
-     * @param LoggerInterface $logger       The logger interface
-     * @param IRootFolder     $rootFolder   The root folder interface
-     * @param IManager        $shareManager The share manager interface
+     * @param IUserSession       $userSession The user session
+     * @param LoggerInterface    $logger      The logger interface
+     * @param IRootFolder        $rootFolder  The root folder interface
+     * @param IAppManager        $appManager  The app manager interface
+     * @param ContainerInterface $container   The DI container
      */
     public function __construct(
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
         private readonly IRootFolder $rootFolder,
-        private readonly IManager $shareManager
+        private readonly IAppManager $appManager,
+        private readonly ContainerInterface $container
     ) {
 
     }//end __construct()
@@ -83,6 +103,8 @@ class FileService
      * @param string $publicationTitle The title of the Publication.
      *
      * @return string The name the folder for this publication should have.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-88
      */
     public function getPublicationFolderName(string $publicationId, string $publicationTitle): string
     {
@@ -91,55 +113,43 @@ class FileService
     }//end getPublicationFolderName()
 
     /**
-     * Returns a share link for the given IShare object.
+     * Retrieves the OpenRegister FileService from the DI container.
      *
-     * @param IShare $share An IShare object we are getting the share link for.
+     * @return \OCA\OpenRegister\Service\FileService The OR FileService.
+     * @throws RuntimeException When OpenRegister is not installed.
      *
-     * @return string The share link needed to get the file or folder for the given IShare object.
+     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
      */
-    public function getShareLink(IShare $share): string
+    private function getOrFileService(): \OCA\OpenRegister\Service\FileService
     {
-        return $this->getCurrentDomain().'/index.php/s/'.$share->getToken();
-
-    }//end getShareLink()
-
-    /**
-     * Gets and returns the current host / domain with correct protocol.
-     *
-     * @return string The current http/https domain url.
-     *
-     * @SuppressWarnings(PHPMD.Superglobals) — $_SERVER access needed for domain detection
-     */
-    private function getCurrentDomain(): string
-    {
-        // Check if the request is over HTTPS.
-        $isHttps  = (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off');
-        $protocol = 'http://';
-        if ($isHttps === true) {
-            $protocol = 'https://';
+        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+            return $this->container->get('OCA\OpenRegister\Service\FileService');
         }
 
-        // Get the host (domain).
-        $host = $_SERVER['HTTP_HOST'];
+        throw new RuntimeException('Sharing integration required: OpenRegister is not available.');
 
-        // Construct the full URL.
-        return $protocol.$host;
-
-    }//end getCurrentDomain()
+    }//end getOrFileService()
 
     /**
-     * Try to find a IShare object with given $path & $shareType.
+     * Creates a public share link for an attachment file via the OpenRegister shares leaf.
      *
-     * @param string       $path      The path to a file we are trying to find a IShare object for.
-     * @param integer|null $shareType The shareType of the share we are trying to find.
+     * Thin adapter (ADR-022): resolves the user-relative path to an absolute NC path,
+     * then delegates to the OR FileService — the single owner of share creation, lookup,
+     * and URL resolution for files attached to OR objects (FIL-005 / FIL-006 / FIL-007).
+     * Degrades gracefully when OR is not installed.
      *
-     * @return IShare|null An IShare object or null.
+     * @param string $relativePath User-relative path to the file (e.g. Publicaties/folder/file.pdf).
+     *
+     * @return string The public share URL, or an empty string when the leaf is unavailable.
+     *
+     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
+     * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
      */
-    public function findShare(string $path, ?int $shareType=3): ?IShare
+    public function createPublicShareLink(string $relativePath): string
     {
-        $path = trim(string: $path, characters: '/');
+        $relativePath = trim(string: $relativePath, characters: '/');
 
-        // Get the current user.
         $currentUser = $this->userSession->getUser();
         $userId      = 'Guest';
         if ($currentUser !== null) {
@@ -147,134 +157,23 @@ class FileService
         }
 
         try {
-            $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-        } catch (NotPermittedException) {
-            $this->logger->error("Can't find share for $path because user (folder) for user $userId couldn't be found");
+            $userFolder   = $this->rootFolder->getUserFolder(userId: $userId);
+            $node         = $userFolder->get($relativePath);
+            $absolutePath = $node->getPath();
 
-            return null;
-        }
-
-        try {
-            // Note: if we ever want to find shares for folders instead of files, this should work for folders as well.
-            $file = $userFolder->get(path: $path);
+            return $this->getOrFileService()->createShareLink(path: $absolutePath);
         } catch (NotFoundException $e) {
-            $this->logger->error("Can't find share for $path because file doesn't exist");
-
-            return null;
+            $this->logger->warning("File not found for sharing at $relativePath: ".$e->getMessage());
+            return '';
+        } catch (RuntimeException $e) {
+            $this->logger->warning('Sharing integration required: '.$e->getMessage());
+            return '';
+        } catch (NotPermittedException $e) {
+            $this->logger->error("Can't create share link for $relativePath: ".$e->getMessage());
+            return "User folder couldn't be found";
         }
 
-        if ($file instanceof File) {
-            $shares = $this->shareManager->getSharesBy(userId: $userId, shareType: $shareType, path: $file);
-            if (count($shares) > 0) {
-                return $shares[0];
-            }
-        }
-
-        return null;
-
-    }//end findShare()
-
-    /**
-     * Creates a IShare object using the $shareData array data.
-     *
-     * @param array $shareData The data to create a IShare with, should contain
-     *                         'path', 'file', 'shareType', 'permissions'
-     *                         and 'userid'.
-     *
-     * @return IShare The Created IShare object.
-     * @throws Exception
-     */
-    private function createShare(array $shareData): IShare
-    {
-        // Create a new share.
-        $share = $this->shareManager->newShare();
-        $share->setTarget(target: '/'.$shareData['path']);
-        $share->setNodeId(fileId: $shareData['file']->getId());
-        $share->setNodeType(type: 'file');
-        $share->setShareType(shareType: $shareData['shareType']);
-        if ($shareData['permissions'] !== null) {
-            $share->setPermissions(permissions: $shareData['permissions']);
-        }
-
-        $share->setSharedBy(sharedBy: $shareData['userId']);
-        $share->setShareOwner(shareOwner: $shareData['userId']);
-        $share->setShareTime(shareTime: new DateTime());
-        $share->setStatus(status: $share::STATUS_ACCEPTED);
-
-        return $this->shareManager->createShare(share: $share);
-
-    }//end createShare()
-
-    /**
-     * Creates and returns a share link for a file (or folder).
-     * (https://docs.nextcloud.com/server/latest/developer_manual/client_apis/OCS/ocs-share-api.html#create-a-new-share)
-     *
-     * @param string       $path        Path (from root) to the file/folder which should be shared.
-     * @param integer|null $shareType   0 = user; 1 = group; 3 = public link;
-     *                                  4 = email; 6 = federated cloud share;
-     *                                  7 = circle; 10 = Talk conversation
-     * @param integer|null $permissions 1 = read; 2 = update; 4 = create;
-     *                                  8 = delete; 16 = share;
-     *                                  31 = all (default: 31, for public shares: 1)
-     *
-     * @return string The share link.
-     * @throws Exception In case creating the share(link) fails.
-     */
-    public function createShareLink(string $path, ?int $shareType=3, ?int $permissions=null): string
-    {
-        $path = trim(string: $path, characters: '/');
-        if ($permissions === null) {
-            $permissions = 31;
-            if ($shareType === 3) {
-                $permissions = 1;
-            }
-        }
-
-        // Get the current user.
-        $currentUser = $this->userSession->getUser();
-        $userId      = 'Guest';
-        if ($currentUser !== null) {
-            $userId = $currentUser->getUID();
-        }
-
-        try {
-            $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
-        } catch (NotPermittedException) {
-            $this->logger->error(
-                "Can't create share link for $path because user (folder) for user $userId couldn't be found"
-            );
-
-            return "User (folder) couldn't be found";
-        }
-
-        try {
-            // Remove this try catch and only use setTarget to create share links for folders.
-            $file = $userFolder->get(path: $path);
-        } catch (NotFoundException $e) {
-            $this->logger->error("Can't create share link for $path because file doesn't exist");
-
-            return 'File not found at '.$path;
-        }
-
-        try {
-            $share = $this->createShare(
-                shareData: [
-                    'path'        => $path,
-                    'file'        => $file,
-                    'shareType'   => $shareType,
-                    'permissions' => $permissions,
-                    'userId'      => $userId,
-                ]
-            );
-
-            return $this->getShareLink($share);
-        } catch (Exception $exception) {
-            $this->logger->error("Can't create share link for $path: ".$exception->getMessage());
-
-            throw new Exception('Can\'t create share link');
-        }
-
-    }//end createShareLink()
+    }//end createPublicShareLink()
 
     /**
      * Handles file upload and creates the necessary folder structure in NextCloud.
@@ -285,6 +184,8 @@ class FileService
      * @return JSONResponse|array An error response if creating the file in NextCloud failed
      *                            or the updated data array containing info about the created file.
      * @throws Exception In case creating a folder or new file fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-92
      */
     public function handleFile(IRequest $request, array $data): JSONResponse|array
     {
@@ -338,6 +239,8 @@ class FileService
      * @param IRequest $request The request object containing the uploaded file.
      *
      * @return JSONResponse|array An error response or an array containing the info about the uploaded file.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-93
      */
     private function checkUploadedFile(IRequest $request): JSONResponse|array
     {
@@ -370,6 +273,8 @@ class FileService
      *
      * @return boolean True if successfully created a new folder.
      * @throws Exception In case we can't create the folder because it is not permitted.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-94
      */
     public function createFolder(string $folderPath): bool
     {
@@ -419,6 +324,8 @@ class FileService
      *
      * @return array The updated $data array
      * @throws Exception In case creating the share(link) fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-95
      */
     public function addFileInfoToData(array $data, array $uploadedFile, string $filePath): array
     {
@@ -437,8 +344,8 @@ class FileService
         $data['title']     = $explodedName[0];
         $data['extension'] = end(array: $explodedName);
 
-        // Create ShareLink.
-        $shareLink = $this->createShareLink(path: $filePath);
+        // Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
+        $shareLink = $this->createPublicShareLink(relativePath: $filePath);
 
         // Set accessUrl if not already set.
         if (empty($data['accessUrl']) === true) {
@@ -465,6 +372,8 @@ class FileService
      * @throws Exception In case we can't write to file because it is not permitted.
      *
      * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-96
      */
     public function uploadFile(mixed $content, string $filePath): bool
     {
@@ -517,6 +426,8 @@ class FileService
      * @psalm-suppress UndefinedInterfaceMethod Node is actually a File here.
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-97
      */
     public function updateFile(mixed $content, string $filePath, bool $createNew=false): bool
     {
@@ -567,6 +478,8 @@ class FileService
      *
      * @return boolean True if successful.
      * @throws Exception In case deleting the file is not permitted.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-98
      */
     public function deleteFile(string $filePath): bool
     {
@@ -614,6 +527,8 @@ class FileService
      * Destination::X options.
      * Please use the "rmdir(directory: '/tmp/mpdf');" function after this to clean up temporary files.
      * @throws MpdfException|LoaderError|RuntimeError|SyntaxError
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-99
      */
     public function createPdf(string $twigTemplate, array $context): Mpdf
     {
@@ -655,6 +570,8 @@ class FileService
      *                            '../zipName.zip'.
      *
      * @return string|null Returns null if created successfully and a string in case of an error.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-100
      */
     public function createZip(string $inputFolder, string $tempZip): ?string
     {
@@ -701,6 +618,8 @@ class FileService
      *                                 the end of this function.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-101
      */
     public function downloadZip(string $tempZip, ?string $inputFolder=null): void
     {

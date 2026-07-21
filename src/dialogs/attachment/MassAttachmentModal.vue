@@ -71,6 +71,11 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import SelectAttachmentsList from '../../components/SelectAttachmentsList.vue'
 
+/**
+ * MassAttachmentModal — bulk attachment operations built on useFileSelection.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-4
+ */
 export default {
 	name: 'MassAttachmentModal',
 	components: {
@@ -107,6 +112,7 @@ export default {
 		 * Get the objects to operate on from selected objects
 		 * @return {Array<object>} Array of objects to publish
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		objectsToPublish() {
 			return objectStore.selectedAttachments || []
 		},
@@ -114,6 +120,7 @@ export default {
 		/**
 		 * IDs filtered by operation and current file states
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		filteredAttachmentIds() {
 			const ids = Array.isArray(this.attachments) ? this.attachments : []
 			const filesData = objectStore.getRelatedData('publication', 'files')
@@ -132,6 +139,7 @@ export default {
 			})
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		filteredCount() {
 			return this.filteredAttachmentIds.length
 		},
@@ -140,6 +148,7 @@ export default {
 		 * Get the dialog title based on number of objects
 		 * @return {string} Dialog title
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		dialogTitle() {
 			const count = this.filteredCount
 			if (count === 1) {
@@ -152,6 +161,7 @@ export default {
 		this.initializeSelection()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		initializeSelection() {
 			// Pick data from navigationStore dialog properties
 			const props = navigationStore.dialogProperties || {}
@@ -160,6 +170,7 @@ export default {
 			this.attachments = ids
 			this.originalSelectedCount = this.filteredAttachmentIds.length
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		closeDialog() {
 			// Clear any pending timeout that might reopen the dialog
 			if (this.closeModalTimeout) {
@@ -168,11 +179,13 @@ export default {
 			}
 			navigationStore.setDialog(false)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeDialog()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-6 */
 		async process() {
 			this.loading = true
 

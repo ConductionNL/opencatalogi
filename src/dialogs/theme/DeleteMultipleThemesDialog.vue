@@ -75,6 +75,11 @@ import Delete from 'vue-material-design-icons/Delete.vue'
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
+/**
+ * DeleteMultipleThemesDialog — bulk-delete selected themes via deleteObject.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ */
 export default {
 	name: 'DeleteMultipleThemesDialog',
 	components: {
@@ -92,6 +97,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		deleteThemes() {
 			const selectedThemes = objectStore.getSelectedObjects('theme')
 			if (!selectedThemes?.length) return
@@ -113,21 +119,21 @@ export default {
 
 <style>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 
 .loading-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    color: var(--color-text-lighter);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	color: var(--color-text-lighter);
 }
 </style>

@@ -58,6 +58,12 @@
 				<template #icon>
 					<DotsHorizontal :size="20" />
 				</template>
+				<NcActionButton close-after-click @click="viewPage(row)">
+					<template #icon>
+						<Eye :size="20" />
+					</template>
+					{{ t('opencatalogi', 'View') }}
+				</NcActionButton>
 				<NcActionButton v-if="isAdmin" close-after-click @click="editPage(row)">
 					<template #icon>
 						<Pencil :size="20" />
@@ -89,6 +95,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
@@ -101,6 +108,7 @@ export default {
 		NcActionButton,
 		NcNoteCard,
 		DotsHorizontal,
+		Eye,
 		Pencil,
 		ContentCopy,
 		TrashCanOutline,
@@ -149,16 +157,20 @@ export default {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			const id = row?.['@self']?.id || row?.id
+			const id = row?.slug || row?.['@self']?.id || row?.id
+			if (id) {
+				this.$router.push({ name: 'PageDetail', params: { id } })
+			}
+		},
+		viewPage(page) {
+			const id = page?.slug || page?.['@self']?.id || page?.id
 			if (id) {
 				this.$router.push({ name: 'PageDetail', params: { id } })
 			}
 		},
 		editPage(page) {
-			const id = page?.['@self']?.id || page?.id
-			if (id) {
-				this.$router.push({ name: 'PageDetail', params: { id } })
-			}
+			objectStore.setActiveObject('page', page)
+			navigationStore.setModal('viewPage')
 		},
 		copyPage(page) {
 			objectStore.setActiveObject('page', page)

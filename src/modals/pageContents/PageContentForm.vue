@@ -207,6 +207,7 @@ import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, N
 import { BTabs, BTab } from 'bootstrap-vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import _ from 'lodash'
+import DOMPurify from 'dompurify'
 import { Editor as vMdEditor } from '@toast-ui/vue-editor'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -216,6 +217,11 @@ import Drag from 'vue-material-design-icons/Drag.vue'
 
 import { Page } from '../../entities/index.js'
 
+/**
+ * PageContentForm — add/edit a page content block (persists the parent page).
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ */
 export default {
 	name: 'PageContentForm',
 	components: {
@@ -301,12 +307,14 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		pageItem() {
 			return objectStore.getActiveObject('page')
 		},
 	},
 	watch: {
 		'contentsItem.faqData': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 			handler(newVal) {
 				const currentFaqLength = newVal.length
 
@@ -331,6 +339,7 @@ export default {
 			deep: true,
 		},
 		'contentsItem.contentBlocksData': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 			handler(newVal) {
 				const len = newVal.length
 				const last = newVal[len - 1]
@@ -359,6 +368,7 @@ export default {
 			deep: true,
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 	mounted() {
 		// Fetch groups for the dropdown.
 		this.fetchGroups()
@@ -418,16 +428,19 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('pageContent')
 			objectStore.setState('page', { success: null, error: null })
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		addPageContent() {
 			objectStore.setState('page', { success: null, error: null, loading: true })
 
@@ -447,7 +460,7 @@ export default {
 					id: this.contentsItem.id || Math.random().toString(36).substring(2, 12),
 					data: {
 						html: textContent,
-						text: textContent.replace(/<[^>]*>/g, ''), // Strip HTML tags for text field.
+						text: DOMPurify.sanitize(textContent, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }),
 					},
 					groups: this.normalizeGroups(this.contentsItem.groups),
 					hideAfterLogin: this.contentsItem.hideAfterLogin,
@@ -564,6 +577,7 @@ export default {
 					objectStore.setState('page', { loading: false })
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			getNextcloudGroups()
@@ -582,6 +596,7 @@ export default {
 		 * @param {Array} selected - Selected groups from NcSelect
 		 * @return {Array} Normalized groups array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-4 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) return []
 			return selected.map(item => {
@@ -596,13 +611,13 @@ export default {
 
 <style>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 </style>
 
@@ -612,59 +627,63 @@ export default {
 }
 
 .draggable-form-item {
-    display: flex;
-    align-items: center;
-    gap: 3px;
+	display: flex;
+	align-items: center;
+	gap: 3px;
 
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 4px;
-    border-radius: 12px;
+	background-color: rgba(255, 255, 255, 0.05);
+	padding: 4px;
+	border-radius: 12px;
 
-    margin-block: 8px;
+	margin-block: 8px;
 }
+
 .draggable-form-item.light {
-    background-color: rgba(0, 0, 0, 0.05);
+	background-color: rgba(0, 0, 0, 0.05);
 }
+
 .draggable-form-item :deep(.v-select) {
-    min-width: 150px;
+	min-width: 150px;
 }
+
 .draggable-form-item :deep(.input-field__label) {
-    margin-block-start: 0 !important;
+	margin-block-start: 0 !important;
 }
+
 .draggable-form-item .input-field {
-    margin-block-start: 0 !important;
+	margin-block-start: 0 !important;
 }
 
 .draggable-item-container:last-child .drag-handle {
-    cursor: not-allowed;
+	cursor: not-allowed;
 }
 
 .draggable-form-item--vertical {
-    flex-direction: column;
-    align-items: stretch;
+	flex-direction: column;
+	align-items: stretch;
 }
 
 .draggable-form-item__header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .content-blocks-help {
-    font-size: 13px;
-    color: var(--color-text-maxcontrast);
-    margin-block-end: 8px;
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	margin-block-end: 8px;
 }
 
 .groups-section {
-    margin-block-start: var(--OC-margin-20);
-    margin-block-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-block-end: var(--OC-margin-20);
 }
 
 .groups-label {
-    display: block;
-    margin-block-end: var(--OC-margin-10);
-    font-weight: bold;
+	display: block;
+	margin-block-end: var(--OC-margin-10);
+	font-weight: bold;
 }
 
 .groups-loading {

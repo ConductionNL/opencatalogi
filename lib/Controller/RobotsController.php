@@ -11,15 +11,22 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
  */
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Http\TextResponse;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\AppFramework\Controller;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -28,13 +35,13 @@ use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use OCA\OpenCatalogi\Service\SitemapService;
 use RuntimeException;
 
 /**
  * Controller for generating robots.txt content.
  *
- * @psalm-suppress UnusedClass
+ * @psalm-suppress                                 UnusedClass
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class RobotsController extends Controller
 {
@@ -49,13 +56,14 @@ class RobotsController extends Controller
     /**
      * RobotsController constructor.
      *
-     * @param string             $appName         The name of the app.
-     * @param IRequest           $request         The request object.
-     * @param SettingsService    $settingsService The settings service.
-     * @param ContainerInterface $container       The container for DI.
-     * @param IAppManager        $appManager      The app manager.
-     * @param IURLGenerator      $urlGenerator    The URL generator.
-     * @param IL10N              $l10n            The localization service.
+     * @param string                  $appName         The name of the app.
+     * @param IRequest                $request         The request object.
+     * @param SettingsService         $settingsService The settings service.
+     * @param ContainerInterface      $container       The container for DI.
+     * @param IAppManager             $appManager      The app manager.
+     * @param IURLGenerator           $urlGenerator    The URL generator.
+     * @param IL10N                   $l10n            The localization service.
+     * @param PublicationQueryService $queryService    Publication query/visibility helper.
      */
     public function __construct(
         $appName,
@@ -65,6 +73,7 @@ class RobotsController extends Controller
         private readonly IAppManager $appManager,
         private readonly IURLGenerator $urlGenerator,
         private readonly IL10N $l10n,
+        private readonly PublicationQueryService $queryService,
     ) {
         parent::__construct(appName: $appName, request: $request);
 
@@ -75,9 +84,10 @@ class RobotsController extends Controller
      *
      * @return TextResponse The robots.txt response.
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-36
      */
     public function index(): TextResponse
     {
@@ -96,12 +106,17 @@ class RobotsController extends Controller
         $searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
         $searchQuery['@self']['schema']   = $settings['configuration']['catalog_schema'];
 
-        $catalogs = ($this->getObjectService()->searchObjectsPaginated(
+        // Rbac=true enforces schema authorization; multi=false for public robots.txt.
+        $catalogResult = $this->getObjectService()->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
-        )['results'] ?? []);
+        );
+
+        // Enforce published predicate: robots.txt should only reference public catalogs.
+        $catalogResult = $this->queryService->enforcePublishedForAnonymous($catalogResult);
+        $catalogs      = ($catalogResult['results'] ?? []);
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
@@ -130,9 +145,12 @@ class RobotsController extends Controller
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {

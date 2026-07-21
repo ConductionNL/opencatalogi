@@ -46,6 +46,11 @@ import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 
+/**
+ * DeleteAttachmentDialog — delete an attachment via the OpenRegister files endpoint.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-2
+ */
 export default {
 	name: 'DeleteAttachmentDialog',
 	components: {
@@ -65,6 +70,7 @@ export default {
 		}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		DeleteAttachment() {
 			this.loading = true
 
@@ -90,12 +96,12 @@ export default {
 
 <style>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 </style>

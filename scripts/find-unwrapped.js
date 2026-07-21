@@ -753,7 +753,7 @@ function main() {
 			}
 		}
 		if (includeScript) {
-			const scriptMatches = [...text.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)]
+			const scriptMatches = [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi)]
 			for (const sm of scriptMatches) {
 				const open = sm[0].indexOf('>') + 1
 				const start = sm.index + open

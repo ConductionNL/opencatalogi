@@ -543,6 +543,25 @@ change is archived in its source repository.
 `auto-publishing`, `federation` — declare their own REMOVED
 requirements in their respective spec deltas.)
 
+## Breaking Changes
+
+The following API surfaces change from silent fallthrough to hard errors when this
+change is implemented. Operators MUST set the required configuration before upgrading.
+
+| Breaking change | Old behaviour | New behaviour | Phase | Config key to set |
+|---|---|---|---|---|
+| `getValueString('publications_register', '')` returns `''` | Controller silently fails or queries the wrong register | Controller throws `RegisterNotConfiguredException`; HTTP 503 returned with operator-actionable detail | 1 | `publications_register`, `publications_schema` |
+| `getValueString('listings_register', '')` returns `''` | As above | As above | 1 | `listings_register`, `listings_schema` |
+| `getValueString('catalogi_register', '')` returns `''` | As above | As above | 1 | `catalogi_register`, `catalogi_schema` |
+| `getValueString('themes_register', '')` returns `''` | As above | As above | 1 | `themes_register`, `themes_schema` |
+| `getValueString('pages_register', '')` returns `''` | As above | As above | 1 | `pages_register`, `pages_schema` |
+| `getValueString('glossary_register', '')` returns `''` | As above | As above | 1 | `glossary_register`, `glossary_schema` |
+| `getValueString('menus_register', '')` returns `''` | As above | As above | 1 | `menus_register`, `menus_schema` |
+| `getValueString('organisations_register', '')` returns `''` | As above | As above | 1 | `organisations_register`, `organisations_schema` |
+| `SettingsService::MIN_OPENREGISTER_VERSION` constant removed | PHP constant available for runtime check | Constant no longer exists; install-time dependency check in `appinfo/info.xml` enforces minimum OR version | 8 | N/A — enforced by `appinfo/info.xml` |
+| `BroadcastService::MAX_RETRIES` / `REQUEST_TIMEOUT` promoted | Class constants 3 / 30 | Admin-config keys `broadcast_max_retries` / `broadcast_request_timeout` with same defaults | 8 | `broadcast_max_retries`, `broadcast_request_timeout` |
+| `SitemapService::MAX_PER_PAGE` promoted | Class constant 1000 | Admin-config key `sitemap_max_per_page` with same default | 8 | `sitemap_max_per_page` |
+
 ## Glossary
 
 - **Tier 2-3 (manifest tiering)** — per ADR-024: an app whose admin

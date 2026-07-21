@@ -1,0 +1,218 @@
+[
+  {
+    "slug": "admin-settings",
+    "title": "Admin Settings",
+    "summary": "@e2e exclude OR-abstraction-consumer spec — admin-config conventions delegated to OpenRegister's IAppConfig and verified by unit/Newman tests, not browser-UI observable.",
+    "docsUrl": "openspec/specs/admin-settings/spec.md"
+  },
+  {
+    "slug": "adopt-apphost",
+    "title": "adopt-apphost",
+    "summary": "@e2e exclude pure backend/observability spec — `/api/health` returns JSON and `/api/metrics` returns Prometheus text; both are machine endpoints with no browser-observable UI surface, covered by API/parity checks rather than browser tests.",
+    "docsUrl": "openspec/specs/adopt-apphost/spec.md"
+  },
+  {
+    "slug": "auto-publishing",
+    "title": "Auto-Publishing",
+    "summary": "@e2e exclude retrofit spec — auto-publishing is event-driven backend behaviour (OR ObjectCreated/Updated listeners, catalog-membership evaluation, share-link side effects, lifecycle state-machine consumption) with no browser-UI surface; covered by PHPUnit and Newman API tests.",
+    "docsUrl": "openspec/specs/auto-publishing/spec.md"
+  },
+  {
+    "slug": "catalogs",
+    "title": "Catalogs",
+    "summary": "@e2e exclude retrofit spec — public catalog HTTP API contract and backend caching/event behaviour verified by Newman API tests and PHPUnit, not browser-UI observable.",
+    "docsUrl": "openspec/specs/catalogs/spec.md"
+  },
+  {
+    "slug": "cms-tool",
+    "title": "CMS Tool (AI Agent Integration)",
+    "summary": "@e2e exclude pure AI-agent tool spec — all scenarios test the ToolInterface PHP implementation (getFunctions, executeFunction, snake_case __call mapping) with no browser-observable surface; covered by PHPUnit instead.",
+    "docsUrl": "openspec/specs/cms-tool/spec.md"
+  },
+  {
+    "slug": "content-management",
+    "title": "Content Management",
+    "summary": "@e2e exclude retrofit spec — public CMS HTTP API contract (pages, menus, themes, glossary) verified by Newman API tests, not browser-UI observable.",
+    "docsUrl": "openspec/specs/content-management/spec.md"
+  },
+  {
+    "slug": "cross-origin-api-access",
+    "title": "Cross-Origin API Access",
+    "summary": "@e2e exclude HTTP-contract spec — CORS header behaviour is verified by Newman API tests (OPTIONS preflight + Access-Control-Allow-Origin echo checks); not browser-UI observable in Playwright.",
+    "docsUrl": "openspec/specs/cross-origin-api-access/spec.md"
+  },
+  {
+    "slug": "dashboard",
+    "title": "Dashboard and Directory",
+    "summary": "@e2e exclude retrofit spec — listing/directory CRUD, SPA-serving, CSP, bootstrap registration, and aggregation data-sourcing are backend/HTTP-contract behaviours covered by Newman API tests and PHPUnit, not browser-UI observable; the frontend shell/views named here are already real-UI covered by the dedicated dashboard SPA e2e scenarios.",
+    "docsUrl": "openspec/specs/dashboard/spec.md"
+  },
+  {
+    "slug": "dcat-ap-harvest",
+    "title": "dcat-ap-harvest",
+    "summary": "@e2e exclude pure backend/API spec — all scenarios test server-side DCAT-AP-NL document generation (JSON-LD / Turtle / RDF-XML over HTTP), content negotiation, mapping, and catalog-scoped OR object queries; no browser-observable UI surface; covered by Newman API tests instead.",
+    "docsUrl": "openspec/specs/dcat-ap-harvest/spec.md"
+  },
+  {
+    "slug": "entity-typescript-models",
+    "title": "Entity TypeScript Models",
+    "summary": "@e2e exclude unit-test-only spec — all scenarios test TypeScript entity class construction, hydration defaults, Zod validation, and barrel imports; covered by Jest unit tests in src/entities/**; no browser-observable behaviour.",
+    "docsUrl": "openspec/specs/entity-typescript-models/spec.md"
+  },
+  {
+    "slug": "federation",
+    "title": "Federation",
+    "summary": "@e2e exclude pure API/backend spec — all scenarios test server-side federation aggregation logic (async Guzzle HTTP, facet merging, result sorting) with no browser-observable UI surface; covered by Newman API tests instead.",
+    "docsUrl": "openspec/specs/federation/spec.md"
+  },
+  {
+    "slug": "file-management",
+    "title": "File Management",
+    "summary": "@e2e exclude OR-abstraction-consumer spec — file storage/sharing delegated to OpenRegister's File Attachments and `IShareManager`, verified by PHPUnit/vitest/Newman; the upload UI flow is separately real-UI covered.",
+    "docsUrl": "openspec/specs/file-management/spec.md"
+  },
+  {
+    "slug": "generic-object-modals",
+    "title": "Generic Object Modals",
+    "summary": "OpenCatalogi ships a set of type-agnostic frontend modals, dialogs and presentation components under `src/modals/object/`, `src/dialogs/` and `src/components/` that operate on whatever OpenRegister object the user has selected — independent of which capability (publications, catalogs, pages, themes, etc.) the object belongs to. They are orchestrated through the navigation/object Pinia stores (`navigationStore.modal`, `navigationStore.dialog`, `objectStore.objectItem`, `objectStore.selectedObjects`) and delegate all persistence and authorization to the object store / OpenRegister. This spec was reverse-engineered from observed code (retrofit). Frontend conventions follow ADR-004; authorization delegation follows ADR-022.",
+    "docsUrl": "openspec/specs/generic-object-modals/spec.md"
+  },
+  {
+    "slug": "notifications",
+    "title": "notifications",
+    "summary": "Schema-declared notifications for OpenCatalogi domain schemas. The `catalog` and `listing` schemas in `lib/Settings/publication_register.json` carry the `x-openregister-notifications` key, so the OpenRegister notification engine dispatches `nc-notification` on a catalogue reaching `stable` and on a listing sync failing — with no per-app notification code.",
+    "docsUrl": "openspec/specs/notifications/spec.md"
+  },
+  {
+    "slug": "opencatalogi-adopt-or-abstractions",
+    "title": "Specification: opencatalogi-adopt-or-abstractions",
+    "summary": "Define the contract by which opencatalogi adopts the shared OpenRegister, nextcloud-vue, and Hydra abstractions identified in the OR-abstraction audit (`.claude/audit-2026-05-03/`). This spec is the per-app capability that consumes — and never re-implements — the upstream specs:",
+    "docsUrl": "openspec/specs/opencatalogi-adopt-or-abstractions/spec.md"
+  },
+  {
+    "slug": "opencatalogi-store-migration",
+    "title": "Capability: opencatalogi-store-migration",
+    "summary": "Migrate the opencatalogi `useObjectStore` onto the canonical `createObjectStore` factory from `@conduction/nextcloud-vue` while preserving the existing public API so that no Vue file requires modification.",
+    "docsUrl": "openspec/specs/opencatalogi-store-migration/spec.md"
+  },
+  {
+    "slug": "prometheus-metrics",
+    "title": "Prometheus Metrics Endpoint",
+    "summary": "Expose application metrics in Prometheus text exposition format at `GET /api/metrics` and a health check at `GET /api/health` for monitoring, alerting, and operational dashboards. These endpoints enable integration with standard observability stacks (Prometheus + Grafana) used by Dutch municipalities and hosting providers.",
+    "docsUrl": "openspec/specs/prometheus-metrics/spec.md"
+  },
+  {
+    "slug": "publication-attachment-defaults",
+    "title": "publication-attachment-defaults",
+    "summary": "Define how the publication-attachment upload dialog seeds its \"Automatically publish\" toggle from per-schema configuration (`configuration.defaultAutoShare`), so publication types can opt into a default-on toggle without changing the per-upload override behaviour. Implemented in `src/modals/generic/UploadFiles.vue`.",
+    "docsUrl": "openspec/specs/publication-attachment-defaults/spec.md"
+  },
+  {
+    "slug": "publication-retention-lifecycle",
+    "title": "publication-retention-lifecycle",
+    "summary": "Give publications an explicit, auditable time dimension: scheduled (embargoed) publication, scheduled depublication, statutory retention metadata per WOO information category (Archiefwet / selectielijst), automatic action on retention expiry, and an `archived` end state with a disposal decision trail. Built entirely on mechanisms OpenCatalogi already consumes (hydra ADR-022): the `publicatiedatum` / `depublicatiedatum` timestamps that the OR published-predicate evaluates, the `archived` state declared in `x-openregister-lifecycle`, schema-declared notifications (ADR-031), and the OR immutable audit-trail abstraction. The only new moving part is one daily retention-evaluation background job (`Cron\\RetentionEvaluation`).",
+    "docsUrl": "openspec/specs/publication-retention-lifecycle/spec.md"
+  },
+  {
+    "slug": "publication-usage-analytics",
+    "title": "publication-usage-analytics",
+    "summary": "Provide publication officers with privacy-safe, per-publication reach statistics — daily aggregate view and download counts, catalog roll-ups, top-N lists, and a CSV export suitable for WOO annual reporting — counted at the public API read paths where every frontend, federated peer, and direct download converges. Counters hold `(publication, date, kind, count)` and nothing else: no IP addresses, user agents, cookies, sessions, or any personal data are ever stored. Storage, RBAC, and querying are OpenRegister (counter objects in a `usageCounter` schema — no bespoke tables, hydra ADR-022); operational totals extend the existing `prometheus-metrics` endpoint rather than adding a second one.",
+    "docsUrl": "openspec/specs/publication-usage-analytics/spec.md"
+  },
+  {
+    "slug": "publications",
+    "title": "Publications",
+    "summary": "@e2e exclude retrofit spec — public publications HTTP API contract (catalog-scoped lists, detail, attachments, downloads, relations) verified by Newman API tests, not browser-UI observable.",
+    "docsUrl": "openspec/specs/publications/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-app-shell-settings",
+    "title": "retrofit-2026-05-26-app-shell-settings",
+    "summary": "Provides the OpenCatalogi application shell and settings configuration, letting administrators load and persist the app configuration, select a register, and auto-resolve its matching schemas. Computes the user's permission set, injecting an admin permission so manifest navigation gated on admin resolves, and presents a catalog-driven main menu built from the loaded catalog collection.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-app-shell-settings/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-catalog-management",
+    "title": "retrofit-2026-05-26-catalog-management",
+    "summary": "Provides the create, edit, view, and detail surfaces for catalogs and their shared entities. A modal lets users create or edit a catalog with organization, register, and schema options and validates required input before saving, a view modal resolves a catalog's register and schema by id, and detail pages load a catalog or entity by route id to present its metadata, configuration, and widget definitions and link through to publications.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-catalog-management/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-dashboard-widgets",
+    "title": "retrofit-2026-05-26-dashboard-widgets",
+    "summary": "Provides the OpenCatalogi dashboard and its widgets, deriving metrics such as total, published, concept, and depublished counts, KPIs, publications-by-category data, and an activity chart from loaded publications. Offers quick actions to create and open publications, persists layout changes, and includes a side bar plus catalogs, unpublished-publications, and unpublished-attachments widgets that fetch and refresh their data on show.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-directory-federation",
+    "title": "retrofit-2026-05-26-directory-federation",
+    "summary": "Provides the directory federation side bar for managing and synchronizing publication types across federated sources. Lets users create, copy, delete, and toggle the enablement of publication types, synchronize the directory and individual types with their source, and view listings through add-directory and view-directory modals with formatted dates and action labels.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-directory-federation/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-generic-dialogs",
+    "title": "retrofit-2026-05-26-generic-dialogs",
+    "summary": "Provides the shared confirmation and action dialogs used across OpenCatalogi. Destructive delete dialogs for objects, attachments, categories, listings, and themes require explicit confirmation before deleting the targeted entity or selection and refresh the affected list, while the copy-object dialog duplicates an object and the publish-publication dialog publishes a targeted publication.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-generic-dialogs/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-mass-object-actions",
+    "title": "retrofit-2026-05-26-mass-object-actions",
+    "summary": "Provides bulk actions over a selection of objects, including mass publish, depublish, delete, lock, unlock, validate, and attachment publish/depublish. The dialogs validate publish/depublish dates against a minimum, distinguish immediate from scheduled changes, surface counts and warnings for objects already in the target state or unsupported, confirm operation counts, and present selection-list components that show each item with its details and allow removing it from the selection.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-mass-object-actions/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-menu-page-management",
+    "title": "retrofit-2026-05-26-menu-page-management",
+    "summary": "Provides the CMS menu and page management modals for the published catalog front end. Lets users view and edit menus, add, edit, delete, and reorder menu items with icon selection, group scoping, value modes, and footer positioning, manage ordered page content blocks, validate input and save, and duplicate a menu through a copy-menu dialog.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-menu-page-management/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-object-modals",
+    "title": "retrofit-2026-05-26-object-modals",
+    "summary": "Provides the object view, edit, upload, merge, and migration modals for working with register objects. Renders a schema-driven form kept in two-way sync with a raw JSON view, enforces required, constant, and immutable field rules, manages file attachments with size validation and per-file publication actions, supports tags, creating objects from pasted JSON, merging objects, and migrating an object to a different register and schema via property mapping.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-object-modals/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-object-table-listing",
+    "title": "retrofit-2026-05-26-object-table-listing",
+    "summary": "Provides the generic object table, card, pagination, and markdown components used to list objects of any type. The table derives its columns from the active schema's properties in the configured order, supports per-row and select-all selection, offers per-object and mass actions that respect disabled state, and paginates with page and page-size controls, while the publication card renders a publication's title, truncated summary, status, date, and file count.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-preferences-api",
+    "title": "retrofit-2026-05-26-preferences-api",
+    "summary": "Provides a server-side REST API for reading and writing per-user preferences. Both endpoints require an authenticated user and sanitize the requested key to a safe charset within the `pref_` namespace; reads return the stored value or null, writes store a non-empty value, and supplying an empty value clears the preference.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-preferences-api/spec.md"
+  },
+  {
+    "slug": "retrofit-2026-05-26-theme-glossary",
+    "title": "retrofit-2026-05-26-theme-glossary",
+    "summary": "Provides the theme and glossary modals for managing publication presentation and terminology. The add-publication-theme and view-theme modals offer theme options, list existing themes, and persist a theme, while the glossary view modal displays a selected term and opens it for editing.",
+    "docsUrl": "openspec/specs/retrofit-2026-05-26-theme-glossary/spec.md"
+  },
+  {
+    "slug": "search",
+    "title": "Search",
+    "summary": "@e2e exclude OR-abstraction-consumer spec — query parsing/faceting/ranking delegated to OpenRegister's `zoeken-filteren`, verified by PHPUnit/vitest/Newman; the search UI is separately real-UI covered.",
+    "docsUrl": "openspec/specs/search/spec.md"
+  },
+  {
+    "slug": "spa-deep-link-routing",
+    "title": "SPA Deep-Link Routing",
+    "summary": "The OpenCatalogi front-end is a single-page application that uses HTML5 history-mode routing (clean URLs without a `#` fragment). When a user opens or refreshes a deep link such as `/dashboard`, `/catalogi`, `/publications/123`, `/search` or `/directory`, the browser issues a full page request to the server for that path. The server must answer each of those paths by serving the SPA shell so the front-end router can take over and resolve the route client-side. `UiController` provides one action per top-level route that renders the SPA `index` template; without these actions the deep links would 404.",
+    "docsUrl": "openspec/specs/spa-deep-link-routing/spec.md"
+  },
+  {
+    "slug": "woo-compliance",
+    "title": "WOO Compliance (Sitemaps, Robots, DIWOO)",
+    "summary": "@e2e exclude pure backend/API spec — all scenarios test server-side PHP XML sitemap generation, DIWOO metadata mapping, robots.txt rendering, and catalog schema queries; no browser-observable UI surface; covered by Newman API tests instead.",
+    "docsUrl": "openspec/specs/woo-compliance/spec.md"
+  },
+  {
+    "slug": "woo-transparency",
+    "title": "woo-transparency",
+    "summary": "WOO (Wet open overheid) transparency in OpenCatalogi: a disclosure-batch workflow from document inventory through assessment, redaction coordination, inventarislijst generation, and publication to a public reading room. Per hydra ADR-022 the document queue/board is the OpenRegister deck leaf, the publication review/sign-off gate is an OpenRegister approval-workflow chain, notifications/deadlines are workflow-integration triggers, and audit immutability is OpenRegister's audit trail; only the WOO-specific domain (weigeringsgronden, redaction metadata, inventarislijst, reading-room rendering) lives in OpenCatalogi.",
+    "docsUrl": "openspec/specs/woo-transparency/spec.md"
+  }
+]

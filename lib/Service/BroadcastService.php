@@ -12,9 +12,15 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -42,6 +48,7 @@ use InvalidArgumentException;
  * The service uses dynamic versioning in User-Agent headers for proper identification.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
 class BroadcastService
 {
@@ -73,6 +80,16 @@ class BroadcastService
      * @var int Timeout for HTTP requests in seconds
      */
     private const REQUEST_TIMEOUT = 30;
+
+    /**
+     * Maximum wall-clock seconds allowed for all retries to a single URL.
+     *
+     * Caps total blocking time per target so that a slow/hung upstream cannot
+     * stall the entire broadcast loop indefinitely.
+     *
+     * @var int Maximum wall-clock seconds for all retries to a single broadcast target
+     */
+    private const MAX_RETRY_WALL_SECONDS = 90;
 
     /**
      * Constructor for BroadcastService.
@@ -161,6 +178,8 @@ class BroadcastService
      * which will be sent to other instances during broadcast.
      *
      * @return string The absolute URL of this directory
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-47
      */
     private function getCurrentDirectoryUrl(): string
     {
@@ -183,6 +202,8 @@ class BroadcastService
      * @throws MultipleObjectsReturnedException   When duplicate objects are found
      * @throws ContainerExceptionInterface        When container access fails
      * @throws NotFoundExceptionInterface         When service is not found in container
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
      */
     private function getDirectoryUrls(): array
     {
@@ -219,13 +240,24 @@ class BroadcastService
      * @param string $directoryUrl The URL of this directory to include in broadcast
      *
      * @return boolean True if broadcast was successful, false otherwise
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
      */
     private function sendBroadcastRequest(string $url, string $directoryUrl): bool
     {
-        $attempt = 0;
+        $attempt   = 0;
+        $startTime = time();
 
-        // Retry logic for handling temporary failures.
+        // Retry loop with wall-clock cap to prevent indefinite blocking.
         while ($attempt < self::MAX_RETRIES) {
+            // Abort if we have exceeded the per-target wall-time budget.
+            if ((time() - $startTime) >= self::MAX_RETRY_WALL_SECONDS) {
+                $this->logger->warning(
+                    "[BroadcastService] Wall-time cap reached for {$url}; aborting retries after {$attempt} attempt(s)"
+                );
+                return false;
+            }
+
             $attempt++;
 
             try {
@@ -259,12 +291,12 @@ class BroadcastService
                 // Log the attempt failure.
                 $this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: ".$e->getMessage());
 
-                // If this was the last attempt, log as error.
+                // If this was the last attempt, log as error and stop.
                 if ($attempt === self::MAX_RETRIES) {
                     $this->logger->error(
                         "All {$attempt} broadcast attempts to {$url} failed. Final error: ".$e->getMessage()
                     );
-                    continue;
+                    return false;
                 }
 
                 // Wait before retrying (exponential backoff).
@@ -291,6 +323,8 @@ class BroadcastService
      * @throws MultipleObjectsReturnedException   When duplicate objects are found
      * @throws ContainerExceptionInterface        When container access fails
      * @throws NotFoundExceptionInterface         When service is not found in container
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-59
      */
     public function broadcast(?string $url=null): array
     {
@@ -328,6 +362,15 @@ class BroadcastService
                 continue;
             }
 
+            // Validate outbound URL before broadcasting — rejects private/internal addresses.
+            try {
+                $this->assertSafeOutboundUrl($targetUrl);
+            } catch (InvalidArgumentException $e) {
+                $this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
+                $results[$targetUrl] = false;
+                continue;
+            }
+
             // Attempt to send broadcast request.
             $success = $this->sendBroadcastRequest($targetUrl, $directoryUrl);
             $results[$targetUrl] = $success;
@@ -341,4 +384,162 @@ class BroadcastService
         return $results;
 
     }//end broadcast()
+
+    /**
+     * Assert that a URL is safe for outbound HTTP requests.
+     *
+     * Performs DNS resolution and rejects URLs that resolve to private/loopback
+     * address ranges to prevent SSRF attacks.
+     *
+     * @param string $url The URL to validate.
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     */
+    private function assertSafeOutboundUrl(string $url): void
+    {
+        $parsed = parse_url($url);
+        if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
+            throw new InvalidArgumentException('Invalid broadcast URL provided');
+        }
+
+        $scheme = strtolower($parsed['scheme']);
+        if (in_array($scheme, ['http', 'https'], true) === false) {
+            throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
+        }
+
+        $host = strtolower($parsed['host']);
+
+        // Reject obvious local hostnames outright.
+        if ($host === 'localhost' || str_ends_with($host, '.local') === true
+            || str_ends_with($host, '.localhost') === true
+        ) {
+            throw new InvalidArgumentException('Broadcast URL host is not allowed');
+        }
+
+        // Collect IPs to check: literal IP or DNS-resolved addresses.
+        $ipsToCheck = [];
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            $ipsToCheck[] = $host;
+        }
+
+        if (empty($ipsToCheck) === true) {
+            $lookupHost = trim($host, '[]');
+            if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
+                $ipsToCheck[] = $lookupHost;
+            }
+
+            if (empty($ipsToCheck) === true) {
+                $records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+                if ($records !== false) {
+                    foreach ($records as $record) {
+                        if (isset($record['ip']) === true) {
+                            $ipsToCheck[] = $record['ip'];
+                        }
+
+                        if (isset($record['ipv6']) === true) {
+                            $ipsToCheck[] = $record['ipv6'];
+                        }
+                    }
+                }
+
+                if (empty($ipsToCheck) === true) {
+                    $resolved = gethostbyname($lookupHost);
+                    if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+                        $ipsToCheck[] = $resolved;
+                    }
+                }
+            }//end if
+        }//end if
+
+        if (empty($ipsToCheck) === true) {
+            throw new InvalidArgumentException('Broadcast URL host could not be resolved');
+        }
+
+        foreach ($ipsToCheck as $ipAddress) {
+            if ($this->isBlockedIp($ipAddress) === true) {
+                throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
+            }
+        }
+
+    }//end assertSafeOutboundUrl()
+
+    /**
+     * Determine whether an IP address falls in a blocked range.
+     *
+     * Checks private, loopback, link-local, and reserved ranges.
+     *
+     * @param string $ipAddress The IP address to check.
+     *
+     * @return boolean True if the IP is blocked, false if it is safe.
+     */
+    private function isBlockedIp(string $ipAddress): bool
+    {
+        $blockedRanges = [
+            '10.0.0.0/8',
+            '172.16.0.0/12',
+            '192.168.0.0/16',
+            '127.0.0.0/8',
+            '169.254.0.0/16',
+            '::1/128',
+            'fc00::/7',
+            'fe80::/10',
+        ];
+
+        foreach ($blockedRanges as $range) {
+            if ($this->ipInRange($ipAddress, $range) === true) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end isBlockedIp()
+
+    /**
+     * Check if an IP address falls within a CIDR range.
+     *
+     * @param string $ipAddress The IP address to check.
+     * @param string $range     The CIDR range (e.g. 10.0.0.0/8).
+     *
+     * @return boolean True if the IP is in the range, false otherwise.
+     */
+    private function ipInRange(string $ipAddress, string $range): bool
+    {
+        [$subnet, $bits] = explode('/', $range);
+
+        if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+            && filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+        ) {
+            $ipBin     = inet_pton($ipAddress);
+            $subnetBin = inet_pton($subnet);
+            if ($ipBin === false || $subnetBin === false) {
+                return false;
+            }
+
+            $mask = str_repeat("\xff", intdiv((int) $bits, 8));
+            if (((int) $bits % 8) !== 0) {
+                $mask .= chr(0xff & (0xff << (8 - ((int) $bits % 8))));
+            }
+
+            $mask = str_pad($mask, 16, "\x00");
+            return (($ipBin & $mask) === ($subnetBin & $mask));
+        }//end if
+
+        if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+            && filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+        ) {
+            $ipLong     = ip2long($ipAddress);
+            $subnetLong = ip2long($subnet);
+            $maskLong   = (~0 << (32 - (int) $bits));
+            return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
+        }
+
+        return false;
+
+    }//end ipInRange()
 }//end class

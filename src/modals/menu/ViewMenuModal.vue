@@ -239,6 +239,11 @@ import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import { Menu } from '../../entities/index.js'
 import _ from 'lodash'
 
+/**
+ * ViewMenuModal — read a menu and its embedded items.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ */
 export default {
 	name: 'ViewMenuModal',
 	components: {
@@ -283,6 +288,7 @@ export default {
 		 * Get the currently active menu from the store
 		 * @return {object|null} The active menu object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menu() {
 			return objectStore.getActiveObject('menu')
 		},
@@ -304,6 +310,7 @@ export default {
 		 * Get the menu state from the store
 		 * @return {object} The menu state object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		menuState() {
 			return objectStore.getState('menu')
 		},
@@ -311,6 +318,7 @@ export default {
 		 * Validate the input form
 		 * @return {object} Validation result
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		inputValidation() {
 			const menuItem = new Menu(this.editForm)
 			const result = menuItem.validate()
@@ -335,6 +343,7 @@ export default {
 		 * @param {object} newMenu - The new menu data
 		 */
 		menu: {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 			handler(newMenu) {
 				if (newMenu && !this.isAddMode) {
 					this.editForm = {
@@ -351,6 +360,7 @@ export default {
 
 		// Add watcher for modal state to handle cleanup
 		'navigationStore.modal': {
+			/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 			handler(newModal, oldModal) {
 				if (oldModal === 'viewMenu' && newModal !== 'viewMenu') {
 					// Modal was closed, ensure cleanup
@@ -362,11 +372,13 @@ export default {
 			},
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	mounted() {
 		// Initialize form when component mounts
 		// Fetch groups for the dropdown
 		this.fetchGroups && this.fetchGroups()
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 	beforeUnmount() {
 		// Clean up any pending timeouts or intervals
 		// Reset component state
@@ -390,6 +402,7 @@ export default {
 		 * @param {boolean} isOpen - Whether the dialog is open
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		handleDialogClose(isOpen) {
 			if (!isOpen) {
 				this.closeModal()
@@ -399,6 +412,7 @@ export default {
 		 * Open the edit modal for the current menu
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		openEditModal() {
 			navigationStore.setModal('viewMenu')
 		},
@@ -406,6 +420,7 @@ export default {
 		 * Open the add menu item modal
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		openAddItemModal() {
 			objectStore.setState('menu', { success: null, error: null })
 			navigationStore.setModal('menuItemForm')
@@ -415,6 +430,7 @@ export default {
 		 * @param {object} item - The menu item to edit
 		 * @param {number} index - The index of the menu item
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		editItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('menuItemForm')
@@ -424,6 +440,7 @@ export default {
 		 * @param {object} item - The menu item to delete
 		 * @param {number} index - The index of the menu item in the items array
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		deleteItem(item, index) {
 			objectStore.setActiveObject('menuItem', { ...item, index })
 			navigationStore.setModal('deleteMenuItem')
@@ -432,6 +449,7 @@ export default {
 		 * Handle position update
 		 * @param {number} value - The new position value
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		handlePositionUpdate(value) {
 			this.editForm.position = parseInt(value, 10) || 0
 		},
@@ -439,6 +457,7 @@ export default {
 		 * Reset all component data to initial state
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		resetComponentState() {
 			this.editForm = {
 				title: '',
@@ -464,6 +483,7 @@ export default {
 		 * Close the modal and clear all state
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		closeModal() {
 			// Clear store state
 			navigationStore.setModal(false)
@@ -477,6 +497,7 @@ export default {
 		/**
 		 * Save the menu with proper state management
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		saveMenu() {
 			const menuItem = new Menu({
 				...this.editForm,
@@ -503,6 +524,7 @@ export default {
 		 * Delete the current menu
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		deleteMenu() {
 			if (this.menu && this.menu.id) {
 				objectStore.deleteObject('menu', this.menu.id)
@@ -514,6 +536,7 @@ export default {
 					})
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-menu-page-management/tasks.md#task-1 */
 		fetchGroups() {
 			this.groupsOptions.loading = true
 			import('../../services/nextcloudGroups.js').then(({ getNextcloudGroups }) => {
@@ -767,16 +790,19 @@ export default {
 .menuItemsSection {
 	margin-bottom: var(--OC-margin-20);
 }
+
 .section-title {
 	margin: 0 0 8px 0;
 	color: var(--color-primary);
 	font-weight: bold;
 }
+
 .attached-list {
 	border: 1px solid var(--color-border);
 	border-radius: 4px;
 	overflow: hidden;
 }
+
 .attached-list-item {
 	display: flex;
 	justify-content: space-between;
@@ -785,20 +811,24 @@ export default {
 	border-bottom: 1px solid var(--color-border);
 	background-color: var(--color-background-hover);
 }
+
 .attached-list-item:last-child {
 	border-bottom: none;
 }
+
 .object-info strong {
 	display: block;
 	margin-bottom: 4px;
 	color: var(--color-main-text);
 }
+
 .object-order, .object-groups, .object-hide-after-login {
 	display: inline-block;
 	margin-right: 12px;
 	color: var(--color-text-lighter);
 	font-size: 0.9em;
 }
+
 .object-actions {
 	display: flex;
 	gap: var(--OC-margin-10);
@@ -808,11 +838,13 @@ export default {
 	margin-block-start: var(--OC-margin-20);
 	margin-block-end: var(--OC-margin-20);
 }
+
 .groups-label {
 	display: block;
 	margin-block-end: var(--OC-margin-10);
 	font-weight: bold;
 }
+
 .groups-loading {
 	text-align: center;
 	color: var(--color-text-lighter);

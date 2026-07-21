@@ -20,7 +20,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</template>
 					{{ t('opencatalogi', 'Read directory') }}
 				</NcButton>
-				<NcButton @click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders/directory', '_blank')">
+				<NcButton @click="openLink('https://opencatalogi.conduction.nl/docs/Administrator/directory/', '_blank')">
 					<template #icon>
 						<HelpCircleOutline :size="20" />
 					</template>
@@ -138,6 +138,11 @@ import InformationSlabSymbol from 'vue-material-design-icons/InformationSlabSymb
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import Check from 'vue-material-design-icons/Check.vue'
 
+/**
+ * DirectorySideBar — sidebar for directory management.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ */
 export default {
 	name: 'DirectorySideBar',
 	components: {
@@ -159,15 +164,18 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		listingItem() {
 			return objectStore.getActiveObject('listing')
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		checkedPublicationType() {
 			return Object.assign({}, this.checkedPublicationTypeObject)
 		},
 	},
 	watch: {
 		checkedPublicationType: {
+			/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 			handler(newValue, oldValue) {
 				// Set new and old values to objects
 				const newValueObject = Object.entries(newValue)
@@ -204,6 +212,7 @@ export default {
 			deep: true,
 		},
 		listingItem: {
+			/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 			handler(newValue) {
 				if (newValue !== false && objectStore.getCollection('publication_type').results) {
 					this.loading = true
@@ -215,14 +224,17 @@ export default {
 			immediate: true, // Run the handler immediately on initialization
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 	created() {
 		objectStore.fetchCollection('publication_type')
 		this.checkPublicationTypeSwitches()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		openLink(url, type = '') {
 			window.open(url, type)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		getPublicationTypeId(publicationTypeUrl) {
 			let publicationTypeId
 			objectStore.getCollection('publication_type').results.forEach((publicationTypeItem) => {
@@ -232,6 +244,7 @@ export default {
 			})
 			return publicationTypeId
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		checkPublicationTypeSwitches() {
 			if (Array.isArray(objectStore.getActiveObject('listing')?.publicationType)) {
 				objectStore.getActiveObject('listing').publicationType.forEach((publicationTypeUrl) => {
@@ -243,6 +256,7 @@ export default {
 			}
 			this.loading = false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		copyPublicationType(publicationTypeUrl) {
 			this.loading = true
 
@@ -267,6 +281,7 @@ export default {
 
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		createPublicationType(data) {
 			this.loading = true
 
@@ -291,6 +306,7 @@ export default {
 
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		deletePublicationType(publicationTypeUrl) {
 			this.loading = true
 
@@ -309,6 +325,7 @@ export default {
 
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		synDirectroy() {
 			this.syncLoading = true
 			fetch(
@@ -326,10 +343,12 @@ export default {
 					this.syncLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		togglePublicationType(publicationType) {
 			publicationType.listed = !publicationType.listed
 			this.synchronizePublicationType(publicationType)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-1 */
 		synchronizePublicationType(publicationType) {
 			this.publicationTypeLoading = true
 			fetch(
@@ -364,8 +383,8 @@ export default {
 }
 
 .orgCertIcon {
-    float: left;
-    margin-block-start: 4px;
-    margin-inline-end: 10px;
+	float: left;
+	margin-block-start: 4px;
+	margin-inline-end: 10px;
 }
 </style>

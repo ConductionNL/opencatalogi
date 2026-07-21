@@ -1,0 +1,36 @@
+name: Weekly Quality Smoke Test
+
+# Runs composer check:strict on the development branch weekly.
+# Catches regressions that slipped through per-PR gating (e.g. direct pushes,
+# dependency updates). Mirrors the gate contract defined in composer.json.
+#
+# Related to openspec/changes/opencatalogi-legacy-quality-cleanup task 12.
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  quality-strict:
+    name: check:strict (development)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+        with:
+          ref: development
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run composer check:strict
+        run: composer check:strict

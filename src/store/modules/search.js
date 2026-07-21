@@ -176,6 +176,7 @@ export const useSearchStore = defineStore('search', {
 		 * Set pagination data
 		 * @param {object} paginationData - Pagination information
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		setPagination(paginationData) {
 			this.pagination = {
 				...this.pagination,
@@ -195,6 +196,7 @@ export const useSearchStore = defineStore('search', {
 		 * Clear a specific filter
 		 * @param {string} key - Filter key to clear
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		clearFilter(key) {
 			const newFilters = { ...this.filters }
 			delete newFilters[key]
@@ -204,6 +206,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all filters
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		clearAllFilters() {
 			this.filters = {}
 		},
@@ -237,6 +240,7 @@ export const useSearchStore = defineStore('search', {
 		 * Remove ordering for a field
 		 * @param {string} field - Field to remove ordering for
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		removeOrdering(field) {
 			const newOrdering = { ...this.ordering }
 			delete newOrdering[field]
@@ -246,6 +250,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all ordering
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		clearOrdering() {
 			this.ordering = {}
 		},
@@ -254,6 +259,7 @@ export const useSearchStore = defineStore('search', {
 		 * Set view mode
 		 * @param {string} mode - View mode ('cards' or 'table')
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		setViewMode(mode) {
 			if (['cards', 'table'].includes(mode)) {
 				this.viewMode = mode
@@ -265,6 +271,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {string} id - Publication ID
 		 * @param {boolean} selected - Whether to select or deselect
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		togglePublicationSelection(id, selected) {
 			if (selected && !this.selectedPublications.includes(id)) {
 				this.selectedPublications.push(id)
@@ -276,6 +283,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Select all current publications
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		selectAllPublications() {
 			const currentIds = this.searchResults.map(pub => pub.id).filter(id => id)
 			this.selectedPublications = [...new Set([...this.selectedPublications, ...currentIds])]
@@ -284,6 +292,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear all publication selections
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		clearAllSelections() {
 			this.selectedPublications = []
 		},
@@ -293,6 +302,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {object} additionalParams - Additional parameters to include
 		 * @return {object} Query parameters object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		buildQueryParams(additionalParams = {}) {
 			const params = {
 				// Search term
@@ -335,6 +345,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {object} params - Query parameters
 		 * @return {string} Complete API URL
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		buildApiUrl(endpoint, params = {}) {
 			const queryString = new URLSearchParams()
 
@@ -359,6 +370,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {object} additionalParams - Additional search parameters
 		 * @return {Promise} Search promise
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async searchPublications(additionalParams = {}) {
 			this.setLoading(true)
 			this.setError(null)
@@ -428,6 +440,7 @@ export const useSearchStore = defineStore('search', {
 		 * Load initial results without search term
 		 * @return {Promise} Load promise
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async loadInitialResults() {
 			console.info('Loading initial search results')
 			return this.searchPublications({ _page: 1 })
@@ -436,6 +449,7 @@ export const useSearchStore = defineStore('search', {
 		/**
 		 * Clear search and reset to initial state
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async clearSearch() {
 			this.setSearchTerm('')
 			this.clearAllFilters()
@@ -452,6 +466,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publication data
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async getPublication(id) {
 			if (!id) {
 				throw new Error('Publication ID is required')
@@ -485,6 +500,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publications that this publication uses
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async getPublicationUses(id) {
 			if (!id) {
 				throw new Error('Publication ID is required')
@@ -518,6 +534,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publications that use this publication
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async getPublicationUsed(id) {
 			if (!id) {
 				throw new Error('Publication ID is required')
@@ -551,6 +568,7 @@ export const useSearchStore = defineStore('search', {
 		 * @param {string} id - Publication ID
 		 * @return {Promise<object>} Publication attachments
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-2 */
 		async getPublicationAttachments(id) {
 			if (!id) {
 				throw new Error('Publication ID is required')

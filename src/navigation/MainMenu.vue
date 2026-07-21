@@ -34,7 +34,7 @@
 			</NcAppNavigationItem>
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Documentation')"
-				@click="openLink('https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers', '_blank')">
+				@click="openLink('https://opencatalogi.conduction.nl/', '_blank')">
 				<template #icon>
 					<BookOpenVariantOutline :size="20" />
 				</template>
@@ -127,6 +127,11 @@ import MenuClose from 'vue-material-design-icons/MenuClose.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import Cog from 'vue-material-design-icons/Cog.vue'
 
+/**
+ * MainMenu — in-app navigation menu.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ */
 export default {
 	name: 'MainMenu',
 	components: {
@@ -149,9 +154,11 @@ export default {
 		Cog,
 	},
 	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		navigationStore() {
 			return navigationStore
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		catalogs() {
 			const collection = objectStore.getCollection('catalog')
 			const results = Array.isArray(collection) ? collection : collection?.results || []
@@ -160,6 +167,7 @@ export default {
 	},
 	methods: {
 		t,
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		openLink(url, target) {
 			window.open(url, target)
 		},

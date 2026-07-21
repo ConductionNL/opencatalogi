@@ -15,7 +15,7 @@ The OpenCatalogi Nextcloud app provides a framework for federated catalogi to wo
 
 **System Cron is currently required for this app to work**
 
-Requirements can be found [here](https://conduction.gitbook.io/opencatalogi-nextcloud/installatie)
+Requirements can be found [here](https://opencatalogi.conduction.nl/docs/Installation/)
 
 The Roadmap is available [here](https://github.com/orgs/OpenCatalogi/projects/1/views/2)
 
@@ -31,12 +31,12 @@ Create a [feature request](https://github.com/OpenCatalogi/.github/issues/new/ch
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
 	<namespace>OpenCatalogi</namespace>
     <documentation>
-        <user>https://conduction.gitbook.io/opencatalogi-nextcloud/gebruikers</user>
-        <admin>https://conduction.gitbook.io/opencatalogi-nextcloud/beheerders</admin>
-        <developer>https://conduction.gitbook.io/opencatalogi-nextcloud/developers</developer>
+        <user>https://opencatalogi.conduction.nl/docs/Users/</user>
+        <admin>https://opencatalogi.conduction.nl/docs/Administrator/</admin>
+        <developer>https://opencatalogi.conduction.nl/docs/Developers/</developer>
     </documentation>
     <category>integration</category>
-    <website>https://documentatie.opencatalogi.nl/</website>
+    <website>https://opencatalogi.conduction.nl/</website>
 	<bugs>https://github.com/OpenCatalogi/.github/issues</bugs>
     <repository type="git">https://github.com/ConductionNL/opencatalogi.git</repository>
 

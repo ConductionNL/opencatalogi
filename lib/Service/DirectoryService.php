@@ -9,8 +9,25 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- * @version   GIT: <git_id>
- * @link      https://www.OpenCatalogi.nl
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ * @link    https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-67
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-68
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-69
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-70
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-72
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-74
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -126,6 +143,8 @@ class DirectoryService
      * @throws GuzzleException
      *
      * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
      */
     public function doCronSync(): array
     {
@@ -215,6 +234,8 @@ class DirectoryService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
      */
     public function getUniqueDirectories(bool $availableOnly=false, bool $defaultOnly=false): array
     {
@@ -250,8 +271,10 @@ class DirectoryService
                 ];
 
                 // Directory data is public by design — listings/catalogs have authorization.read=["public"].
-                // Disable RBAC and multitenancy so public directory discovery works without user context.
-                $listings = $objectService->searchObjects($query, _rbac: false, _multitenancy: false);
+                // RBAC is disabled so public directory discovery works without user context (see ADR-002).
+                // Multitenancy is NOT bypassed: each tenant sees only its own listing objects.
+                // Cross-instance federation uses the explicit URL-based remote-fetch path instead.
+                $listings = $objectService->searchObjects($query, _rbac: false);
 
                 // Build unique directory URLs using URL as key to automatically handle duplicates.
                 foreach ($listings as $listing) {
@@ -323,6 +346,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-67
      */
     public function syncDirectory(string $directoryUrl): array
     {
@@ -365,10 +390,18 @@ class DirectoryService
             'listing_details'    => [],
         ];
 
+        // SSRF guard: validate the attacker-controllable directory URL BEFORE fetching.
+        // Restricts the scheme to http/https and rejects any host that resolves to a
+        // private, loopback, link-local, or cloud-metadata address. Throws
+        // InvalidArgumentException (mapped to HTTP 400) when the target is not safe.
+        $this->assertSafeOutboundUrl($directoryUrl);
+
         try {
             // Fetch directory data with limit to get all listings.
+            // Redirects are validated per-hop and bounded by safeGet() so a redirect
+            // cannot be used to pivot to an internal address.
             $dirUrlWithLimit = $directoryUrl.'?_limit=10000';
-            $response        = $this->client->get($dirUrlWithLimit);
+            $response        = $this->safeGet($dirUrlWithLimit);
             $directoryData   = json_decode($response->getBody()->getContents(), true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -552,6 +585,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-68
      */
     public function syncListing(array $listingData, string $sourceDirectoryUrl): array
     {
@@ -685,11 +720,11 @@ class DirectoryService
 
             // Set published from source if available, otherwise default to now for backwards compatibility.
             // Normalize to ISO 8601 format (date-time validation requires 'T' separator and timezone).
-            if (empty($listingData['published']) === true) {
-                $listingData['published'] = (new DateTime())->format('c');
-            } else {
+            $originalPublished        = ($listingData['published'] ?? null);
+            $listingData['published'] = (new DateTime())->format('c');
+            if (empty($originalPublished) === false) {
                 try {
-                    $listingData['published'] = (new DateTime($listingData['published']))->format('c');
+                    $listingData['published'] = (new DateTime((string) $originalPublished))->format('c');
                 } catch (\Exception $e) {
                     $listingData['published'] = (new DateTime())->format('c');
                 }
@@ -851,6 +886,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-69
      */
     public function getPublications(array $guzzleConfig=[], bool $includeDefault=false): array
     {
@@ -897,14 +934,15 @@ class DirectoryService
 
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
-            // Skip our own directory and local URLs.
+            // Skip our own directory.
             if ($directoryUrl === $ourDirectoryUrl) {
-                // Removed redundant logging.
                 continue;
             }
 
-            if ($this->isLocalUrl($directoryUrl) === true) {
-                // Removed redundant logging.
+            // Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+            try {
+                $this->assertSafeOutboundUrl($directoryUrl);
+            } catch (InvalidArgumentException $e) {
                 continue;
             }
 
@@ -1048,6 +1086,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-70
      */
     private function detectPublicationEndpoint(array $listingData): ?string
     {
@@ -1184,6 +1224,8 @@ class DirectoryService
      * @param array $existingData The existing listing data from database
      *
      * @return boolean True if incoming data is outdated and should be skipped
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
      */
     private function isListingDataOutdated(array $incomingData, array $existingData): bool
     {
@@ -1231,6 +1273,8 @@ class DirectoryService
      * @return \DateTime|null The extracted timestamp or null if not found
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
      */
     private function extractTimestamp(array $data): ?\DateTime
     {
@@ -1363,6 +1407,8 @@ class DirectoryService
      * sending a broadcast notification, to prevent infinite broadcast loops.
      *
      * @return boolean True if request is from a system broadcast, false otherwise
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
      */
     private function isSystemBroadcast(): bool
     {
@@ -1374,6 +1420,246 @@ class DirectoryService
     }//end isSystemBroadcast()
 
     /**
+     * Assert that an outbound URL is safe to fetch (SSRF guard).
+     *
+     * Restricts the scheme to http/https and rejects any URL whose host resolves
+     * to a private, loopback, link-local, unique-local, or cloud-metadata address.
+     * The host is resolved via DNS so a public hostname that maps to an internal IP
+     * (DNS-rebinding-style payload) is also rejected.
+     *
+     * @param string $url The URL to validate.
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec exclude SSRF input-validation guard for outbound directory fetches; security
+     *       plumbing that hardens an existing fetch, no new domain behavior.
+     */
+    private function assertSafeOutboundUrl(string $url): void
+    {
+        $parsed = parse_url($url);
+        if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
+            throw new InvalidArgumentException('Invalid directory URL provided');
+        }
+
+        $scheme = strtolower($parsed['scheme']);
+        if (in_array($scheme, ['http', 'https'], true) === false) {
+            throw new InvalidArgumentException('Directory URL scheme must be http or https');
+        }
+
+        $host = strtolower($parsed['host']);
+
+        // Reject obvious local hostnames outright.
+        if ($host === 'localhost' || str_ends_with($host, '.local') === true
+            || str_ends_with($host, '.localhost') === true
+        ) {
+            throw new InvalidArgumentException('Directory URL host is not allowed');
+        }
+
+        // Collect the IPs to check: the literal host if it is already an IP,
+        // otherwise every address the host resolves to via DNS.
+        $ipsToCheck = [];
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            $ipsToCheck[] = $host;
+        }
+
+        if (empty($ipsToCheck) === true) {
+            // Strip IPv6 brackets if present.
+            $lookupHost = trim($host, '[]');
+            if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
+                $ipsToCheck[] = $lookupHost;
+            }
+
+            if (empty($ipsToCheck) === true) {
+                $records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+                if ($records !== false) {
+                    foreach ($records as $record) {
+                        if (isset($record['ip']) === true) {
+                            $ipsToCheck[] = $record['ip'];
+                        }
+
+                        if (isset($record['ipv6']) === true) {
+                            $ipsToCheck[] = $record['ipv6'];
+                        }
+                    }
+                }
+
+                // Fallback to gethostbyname for A records when dns_get_record is empty.
+                if (empty($ipsToCheck) === true) {
+                    $resolved = gethostbyname($lookupHost);
+                    if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+                        $ipsToCheck[] = $resolved;
+                    }
+                }
+            }//end if
+        }//end if
+
+        if (empty($ipsToCheck) === true) {
+            throw new InvalidArgumentException('Directory URL host could not be resolved');
+        }
+
+        foreach ($ipsToCheck as $ipAddress) {
+            if ($this->isBlockedIp($ipAddress) === true) {
+                throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
+            }
+        }
+
+    }//end assertSafeOutboundUrl()
+
+    /**
+     * Determine whether an IP address falls in a blocked range.
+     *
+     * Blocks loopback (127.0.0.0/8, ::1), private RFC1918 ranges, link-local
+     * (169.254.0.0/16 incl. the 169.254.169.254 metadata endpoint, fe80::/10),
+     * unique-local IPv6 (fc00::/7), and other reserved ranges via PHP's range flags.
+     *
+     * @param string $ipAddress The IP address to evaluate.
+     *
+     * @return boolean True when the IP must not be contacted.
+     *
+     * @spec exclude SSRF range check supporting assertSafeOutboundUrl(); security plumbing.
+     */
+    private function isBlockedIp(string $ipAddress): bool
+    {
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
+            // Unparseable address — treat as blocked to fail safe.
+            return true;
+        }
+
+        // FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
+        // private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
+        $isPublic = filter_var(
+            value: $ipAddress,
+            filter: FILTER_VALIDATE_IP,
+            options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
+        );
+
+        if ($isPublic === false) {
+            return true;
+        }
+
+        // Explicit belt-and-braces checks for the cloud-metadata endpoint and
+        // IPv6 forms that some PHP builds do not flag via the range flags above.
+        $blockedExact = [
+            '169.254.169.254',
+            '::1',
+            '0.0.0.0',
+            '::',
+        ];
+        if (in_array($ipAddress, $blockedExact, true) === true) {
+            return true;
+        }
+
+        if ($this->isBlockedIpv6Prefix($ipAddress) === true) {
+            return true;
+        }
+
+        return false;
+
+    }//end isBlockedIp()
+
+    /**
+     * Determine whether an IPv6 address matches a blocked prefix range.
+     *
+     * Checks fc00::/7 (unique-local) and fe80::/10 (link-local) by inspecting
+     * the lower-cased string prefix. Extracted from isBlockedIp() to reduce
+     * cyclomatic complexity.
+     *
+     * @param string $ipAddress The IP address string to check.
+     *
+     * @return boolean True when the address has a blocked IPv6 prefix.
+     *
+     * @spec exclude SSRF range-check helper extracted from isBlockedIp(); security plumbing.
+     */
+    private function isBlockedIpv6Prefix(string $ipAddress): bool
+    {
+        $lower = strtolower($ipAddress);
+        // Match fc00::/7 (unique-local) and fe80::/10 (link-local) IPv6 prefixes.
+        if (str_starts_with($lower, 'fc') === true || str_starts_with($lower, 'fd') === true
+            || str_starts_with($lower, 'fe8') === true || str_starts_with($lower, 'fe9') === true
+            || str_starts_with($lower, 'fea') === true || str_starts_with($lower, 'feb') === true
+        ) {
+            return true;
+        }
+
+        return false;
+
+    }//end isBlockedIpv6Prefix()
+
+    /**
+     * Perform a GET request with SSRF-safe, per-hop-validated bounded redirects.
+     *
+     * Guzzle's automatic redirect following is disabled so that each redirect target
+     * can be re-validated by {@see self::assertSafeOutboundUrl()} before it is fetched,
+     * preventing a public URL from redirecting into an internal address.
+     *
+     * @param string $url The (already validated) initial URL to fetch.
+     *
+     * @return \Psr\Http\Message\ResponseInterface The final HTTP response.
+     *
+     * @throws InvalidArgumentException When a redirect points to a disallowed address
+     *                                  or the redirect limit is exceeded.
+     * @throws GuzzleException          On transport errors.
+     *
+     * @spec exclude SSRF-safe fetch helper with bounded, per-hop-validated redirects;
+     *       security plumbing wrapping the existing Guzzle client.
+     */
+    private function safeGet(string $url): \Psr\Http\Message\ResponseInterface
+    {
+        $maxRedirects = 5;
+        $current      = $url;
+
+        for ($hop = 0; $hop <= $maxRedirects; $hop++) {
+            $response = $this->client->get(
+                $current,
+                [
+                    RequestOptions::ALLOW_REDIRECTS => false,
+                    RequestOptions::TIMEOUT         => 10,
+                    RequestOptions::CONNECT_TIMEOUT => 5,
+                ]
+            );
+
+            $status = $response->getStatusCode();
+            if ($status < 300 || $status >= 400) {
+                return $response;
+            }
+
+            // Redirect: resolve, validate, and follow manually.
+            $location = $response->getHeaderLine('Location');
+            if ($location === '') {
+                return $response;
+            }
+
+            // Resolve relative redirects against the current URL.
+            if (parse_url($location, PHP_URL_HOST) === null) {
+                $base     = parse_url($current);
+                $scheme   = ($base['scheme'] ?? 'https');
+                $hostPart = ($base['host'] ?? '');
+                if (isset($base['port']) === true) {
+                    $hostPart .= ':'.$base['port'];
+                }
+
+                $path = $location;
+                if (str_starts_with($location, '/') === false) {
+                    $path = '/'.$location;
+                }
+
+                $location = $scheme.'://'.$hostPart.$path;
+            }
+
+            $this->assertSafeOutboundUrl($location);
+            $current = $location;
+        }//end for
+
+        throw new InvalidArgumentException('Too many redirects while fetching directory');
+
+    }//end safeGet()
+
+    /**
      * Check if a URL is considered local
      *
      * Determines if a URL represents a local address that should not be
@@ -1382,6 +1668,8 @@ class DirectoryService
      * @param string $url The URL to check
      *
      * @return boolean True if the URL is local, false otherwise
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
      */
     private function isLocalUrl(string $url): bool
     {
@@ -1446,6 +1734,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-72
      */
     public function getUsed(string $uuid, array $guzzleConfig=[]): array
     {
@@ -1490,8 +1780,15 @@ class DirectoryService
 
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
-            // Skip our own directory and local URLs.
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl) === true) {
+            // Skip our own directory.
+            if ($directoryUrl === $ourDirectoryUrl) {
+                continue;
+            }
+
+            // Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+            try {
+                $this->assertSafeOutboundUrl($directoryUrl);
+            } catch (InvalidArgumentException $e) {
                 continue;
             }
 
@@ -1602,6 +1899,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
      */
     public function getPublication(string $publicationId, array $guzzleConfig=[]): ?array
     {
@@ -1643,8 +1942,15 @@ class DirectoryService
 
         // Create promises for each directory.
         foreach ($directories as $index => $directoryUrl) {
-            // Skip our own directory and local URLs.
-            if ($directoryUrl === $ourDirectoryUrl || $this->isLocalUrl($directoryUrl) === true) {
+            // Skip our own directory.
+            if ($directoryUrl === $ourDirectoryUrl) {
+                continue;
+            }
+
+            // Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+            try {
+                $this->assertSafeOutboundUrl($directoryUrl);
+            } catch (InvalidArgumentException $e) {
                 continue;
             }
 
@@ -1726,6 +2032,8 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-74
      */
     public function getDirectory(array $requestParams=[]): array
     {
@@ -1793,8 +2101,8 @@ class DirectoryService
 
             try {
                 // RBAC handles public visibility via conditional published date rule.
-                // Disable multitenancy so listings from all orgs are visible.
-                $listingResult = $objectService->searchObjects($query, _multitenancy: false);
+                // ADR-002: each tenant queries only its own listings; multitenancy must stay enabled.
+                $listingResult = $objectService->searchObjects($query);
 
                 // Get our directory URL to identify locally-created listings.
                 $ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
@@ -1806,10 +2114,9 @@ class DirectoryService
                 // NOT be re-broadcast — that would create infinite sync loops between instances.
                 $listings = [];
                 foreach ($listingResult as $object) {
+                    $listingData = $object;
                     if ($object instanceof \OCP\AppFramework\Db\Entity) {
                         $listingData = $object->jsonSerialize();
-                    } else {
-                        $listingData = $object;
                     }
 
                     $objectData = ($listingData['object'] ?? $listingData);
@@ -1858,8 +2165,8 @@ class DirectoryService
 
             try {
                 // RBAC handles public visibility via conditional published date rule.
-                // Disable multitenancy so catalogs from all orgs are visible.
-                $catalogResult = $objectService->searchObjects($query, _multitenancy: false);
+                // ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
+                $catalogResult = $objectService->searchObjects($query);
 
                 // Convert catalog objects to listing format and expand schemas.
                 $catalogsAsListings = array_map(
@@ -1895,6 +2202,8 @@ class DirectoryService
      * @param mixed $catalogObject The catalog object to convert
      *
      * @return array The catalog formatted as a listing object
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
      */
     private function convertCatalogToListing($catalogObject): array
     {
@@ -1959,6 +2268,8 @@ class DirectoryService
      * @param array $listing The listing object to filter
      *
      * @return array The filtered listing object with only public properties
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
      */
     private function filterListingProperties(array $listing): array
     {
@@ -2005,6 +2316,8 @@ class DirectoryService
      * @param array $catalogs Array of catalog objects to convert
      *
      * @return array Array of catalogs converted to listing format with expanded schemas
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
      */
     public function convertCatalogiToListings(array $catalogs): array
     {
@@ -2110,6 +2423,8 @@ class DirectoryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
      */
     private function aggregateFacets(array $existingFacets, array $newFacets): array
     {

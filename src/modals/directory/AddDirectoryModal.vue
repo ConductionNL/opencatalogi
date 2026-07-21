@@ -211,6 +211,11 @@ const closeModal = () => {
 	directoryUrl.value = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
 }
 
+/**
+ * AddDirectoryModal — register an external directory by POSTing its URL.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-4
+ */
 export default {
 	name: 'AddDirectoryModal',
 	components: {
@@ -240,6 +245,7 @@ export default {
 		 * @param {string|object} dateTime The date/time to format
 		 * @return {string} Formatted date/time string
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
 		formatDateTime(dateTime) {
 			if (!dateTime) return 'Unknown'
 
@@ -265,6 +271,7 @@ export default {
 		 * @param {string} action The action type
 		 * @return {string} Human-readable label
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-directory-federation/tasks.md#task-2 */
 		getActionLabel(action) {
 			const labels = {
 				created: 'New',

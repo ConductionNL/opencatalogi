@@ -11,25 +11,41 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-16
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-17
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-18
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-21
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-22
  */
 
 namespace OCA\OpenCatalogi\Controller;
 
+use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
 use OCP\IL10N;
 use OCP\IAppConfig;
 use OCP\IRequest;
+use OCP\IUserSession;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -49,6 +65,8 @@ class ListingsController extends Controller
      * @param IAppManager        $appManager       App manager for checking installed apps
      * @param DirectoryService   $directoryService The directory service
      * @param IL10N              $l10n             Localization service
+     * @param IUserSession       $userSession      The user session
+     * @param LoggerInterface    $logger           PSR-3 logger
      */
     public function __construct(
         $appName,
@@ -57,7 +75,9 @@ class ListingsController extends Controller
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
-        private readonly IL10N $l10n
+        private readonly IL10N $l10n,
+        private readonly IUserSession $userSession,
+        private readonly ?LoggerInterface $logger=null
     ) {
         parent::__construct($appName, $request);
 
@@ -80,6 +100,64 @@ class ListingsController extends Controller
     }//end getObjectService()
 
     /**
+     * Resolve the Access-Control-Allow-Origin header value for the current request.
+     *
+     * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
+     * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
+     * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
+     *
+     * @return string The header value to use for Access-Control-Allow-Origin.
+     */
+    private function resolveAllowedOrigin(): string
+    {
+        $configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
+        if ($configured === '' || $configured === '*') {
+            return '*';
+        }
+
+        $allowlist = array_filter(
+            array_map('trim', explode(',', $configured)),
+            static fn(string $entry): bool => $entry !== ''
+        );
+
+        $callerOrigin = $this->request->getHeader('Origin');
+        if ($callerOrigin === '') {
+            $callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
+        }
+
+        if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
+            return $callerOrigin;
+        }
+
+        return ($allowlist[0] ?? '*');
+
+    }//end resolveAllowedOrigin()
+
+    /**
+     * Implements a preflighted CORS response for OPTIONS requests.
+     *
+     * @return Response The CORS response.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     *
+     * @spec openspec/specs/cross-origin-api-access/spec.md
+     */
+    public function preflightedCors(): Response
+    {
+        $response = new Response();
+        $response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+        $response->addHeader('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, PATCH');
+        $response->addHeader('Access-Control-Max-Age', '1728000');
+        $response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+        return $response;
+
+    }//end preflightedCors()
+
+    /**
      * Retrieve a list of listings based on provided filters and parameters.
      *
      * @return JSONResponse JSON response containing the list of listings and total count
@@ -89,9 +167,15 @@ class ListingsController extends Controller
      * @NoCSRFRequired
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-16
      */
     public function index(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Retrieve all request parameters.
         $requestParams = $this->request->getParams();
 
@@ -149,8 +233,9 @@ class ListingsController extends Controller
      * @throws DoesNotExistException|MultipleObjectsReturnedException|ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @PublicPage
-     * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-17
      */
     public function show(string | int $id): JSONResponse
     {
@@ -180,9 +265,15 @@ class ListingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-18
      */
     public function create(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
@@ -216,9 +307,15 @@ class ListingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-19
      */
     public function update(string | int $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Get all parameters from the request.
         $data = $this->request->getParams();
 
@@ -253,9 +350,15 @@ class ListingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-20
      */
     public function destroy(string | int $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         // Delete the listing object by its UUID.
         $result = $this->getObjectService()->deleteObject((string) $id);
 
@@ -282,9 +385,15 @@ class ListingsController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-21
      */
     public function synchronise(?string $id=null): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             if ($id !== null) {
                 // Look up the listing to get its directory URL.
@@ -330,8 +439,9 @@ class ListingsController extends Controller
      * @return JSONResponse The response indicating the result of adding the listing.
      *
      * @PublicPage
-     * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-22
      */
     public function add(): JSONResponse
     {
@@ -346,10 +456,39 @@ class ListingsController extends Controller
         try {
             $result = $this->directoryService->syncDirectory($url);
         } catch (\InvalidArgumentException $exception) {
-            return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 400);
+            // Validation errors: echo the caller's own input back as a safe message.
+            return new JSONResponse(
+                data: [
+                    'message' => $this->l10n->t('Invalid directory URL'),
+                    'error'   => $exception->getMessage(),
+                ],
+                statusCode: 400
+            );
+        } catch (GuzzleException $exception) {
+            // Network/HTTP error: log server-side, return generic 502 — do not reflect
+            // upstream response body (SSRF oracle risk).
+            $this->logger?->warning(
+                '[ListingsController::add] Upstream directory fetch failed',
+                ['error' => $exception->getMessage()]
+            );
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Failed to fetch directory data')],
+                statusCode: 502
+            );
         } catch (\Exception $exception) {
-            return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: 500);
-        }
+            // Unexpected error: log server-side with trace, return generic 500.
+            $this->logger?->error(
+                '[ListingsController::add] Directory sync failed',
+                [
+                    'error' => $exception->getMessage(),
+                    'trace' => $exception->getTraceAsString(),
+                ]
+            );
+            return new JSONResponse(
+                data: ['message' => $this->l10n->t('Internal server error')],
+                statusCode: 500
+            );
+        }//end try
 
         // Return the result as a JSON response.
         return new JSONResponse($result);

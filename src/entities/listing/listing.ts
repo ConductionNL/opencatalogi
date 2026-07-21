@@ -19,29 +19,34 @@ import { SafeParseReturnType, z } from 'zod'
 
 /**
  * Listing class representing a catalog listing in the system
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
  */
 export class Listing implements TListing {
 
-	public id: string
-	public catalogusId: string
-	public title: string
-	public summary: string
-	public description: string
-	public search: string
-	public publications: string
-	public directory: string
-	public metadata: string[]
-	public status: string
-	public statusCode: number
-	public lastSync: string | Date
-	public available: boolean
-	public default: boolean
-	public organization: string | TOrganization
-	public publicationTypes: any[]
+	public id!: string
+	public catalogusId!: string
+	public title!: string
+	public summary!: string
+	public description!: string
+	public search!: string
+	public publications!: string
+	public directory!: string
+	public metadata!: string[]
+	public status!: string
+	public statusCode!: number
+	public lastSync!: string | Date
+	public available!: boolean
+	public default!: boolean
+	public organization!: string | TOrganization
+	public publicationTypes!: any[]
 
 	/**
 	 * Creates a new Listing instance
 	 * @param data - Listing data
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
 	 */
 	constructor(data: TListing) {
 		this.hydrate(data)

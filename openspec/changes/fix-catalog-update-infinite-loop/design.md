@@ -1,3 +1,8 @@
+---
+status: pr-created
+pr: https://codeberg.org/Conduction/opencatalogi/pulls/19
+---
+
 # Design: fix-catalog-update-infinite-loop
 
 ## Problem

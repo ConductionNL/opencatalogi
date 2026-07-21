@@ -127,6 +127,9 @@ import Upload from 'vue-material-design-icons/Upload.vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
 
+/**
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ */
 export default {
 	name: 'UploadObject',
 	components: {
@@ -154,12 +157,14 @@ export default {
 			hasUpdated: false,
 		}
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 	mounted() {
 		this.initializeMappings()
 		this.initializeSchemas()
 		this.initializeRegisters()
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeMappings() {
 			this.mappingsLoading = true
 
@@ -179,6 +184,7 @@ export default {
 					this.mappingsLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeSchemas() {
 			this.schemasLoading = true
 
@@ -198,6 +204,7 @@ export default {
 					this.schemasLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		initializeRegisters() {
 			this.registersLoading = true
 
@@ -217,6 +224,7 @@ export default {
 					this.registersLoading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.success = null
@@ -228,6 +236,7 @@ export default {
 				url: '',
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		async uploadObject() {
 			this.loading = true
 
@@ -251,9 +260,11 @@ export default {
 					this.loading = false
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		prettifyJson() {
 			this.object = JSON.stringify(JSON.parse(this.object), null, 2)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */
 		validateJson(json) {
 			try {
 				JSON.parse(json)
@@ -291,12 +302,15 @@ export default {
 	border-radius: 0 !important;
 	border: none !important;
 }
+
 .codeMirrorContainer :deep(.cm-editor) {
 	outline: none !important;
 }
+
 .codeMirrorContainer.light > .vue-codemirror {
 	border: 1px dotted silver;
 }
+
 .codeMirrorContainer.dark > .vue-codemirror {
 	border: 1px dotted grey;
 }
@@ -306,6 +320,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼe) {
 	color: #448c27;
 }
+
 .codeMirrorContainer.dark :deep(.ͼe) {
 	color: #88c379;
 }
@@ -314,6 +329,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼc) {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.ͼc) {
 	color: #8d64f7;
 }
@@ -322,6 +338,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼb) {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.ͼb) {
 	color: #be55cd;
 }
@@ -330,6 +347,7 @@ export default {
 .codeMirrorContainer.light :deep(.ͼd) {
 	color: #d19a66;
 }
+
 .codeMirrorContainer.dark :deep(.ͼd) {
 	color: #9d6c3a;
 }
@@ -343,26 +361,29 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line)::selection,
 .codeMirrorContainer.light :deep(.cm-line) ::selection {
 	background-color: #d7eaff !important;
-    color: black;
+	color: black;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line)::selection,
 .codeMirrorContainer.dark :deep(.cm-line) ::selection {
 	background-color: #8fb3e6 !important;
-    color: black;
+	color: black;
 }
 
 /* string */
 .codeMirrorContainer.light :deep(.cm-line .ͼe)::selection {
-    color: #2d770f;
+	color: #2d770f;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼe)::selection {
-    color: #104e0c;
+	color: #104e0c;
 }
 
 /* boolean */
 .codeMirrorContainer.light :deep(.cm-line .ͼc)::selection {
 	color: #221199;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼc)::selection {
 	color: #4026af;
 }
@@ -371,6 +392,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼb)::selection {
 	color: #770088;
 }
@@ -379,6 +401,7 @@ export default {
 .codeMirrorContainer.light :deep(.cm-line .ͼd)::selection {
 	color: #8c5c2c;
 }
+
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
 }

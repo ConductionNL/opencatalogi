@@ -12,15 +12,24 @@
  * @copyright 2025 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
  */
 
 namespace OCA\OpenCatalogi\Service;
 
 use OCP\App\IAppManager;
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\PublicationQueryService;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -62,16 +71,18 @@ class SitemapService
     /**
      * Constructor for SitemapService.
      *
-     * @param ContainerInterface $container       Server container for dependency injection
-     * @param IAppManager        $appManager      App manager for checking installed apps
-     * @param SettingsService    $settingsService The settings service
-     * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
+     * @param ContainerInterface      $container       Server container for dependency injection
+     * @param IAppManager             $appManager      App manager for checking installed apps
+     * @param SettingsService         $settingsService The settings service
+     * @param IURLGenerator           $urlGenerator    The Nextcloud URL generator
+     * @param PublicationQueryService $queryService    Publication query/visibility helper
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly SettingsService $settingsService,
         private readonly IURLGenerator $urlGenerator,
+        private readonly PublicationQueryService $queryService,
     ) {
 
     }//end __construct()
@@ -117,6 +128,8 @@ class SitemapService
      * @return XMLResponse The sitemap index XML response.
      *
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-123
      */
     public function buildSitemapIndex(string $catalogSlug, string $categoryCode): XMLResponse
     {
@@ -149,10 +162,13 @@ class SitemapService
         // First call: only to retrieve total publications count.
         $firstPage = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
         );
+
+        // Enforce published predicate: sitemaps expose only public publications.
+        $firstPage = $this->queryService->enforcePublishedForAnonymous($firstPage);
 
         $baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
 
@@ -189,11 +205,13 @@ class SitemapService
 
             $batch = $objectService->searchObjectsPaginated(
                 query: $searchQuery,
-                _rbac: false,
+                _rbac: true,
                 _multitenancy: false,
                 deleted: false
             );
 
+            // Enforce published predicate for each paginated batch.
+            $batch   = $this->queryService->enforcePublishedForAnonymous($batch);
             $next    = $batch['next'] ?? null;
             $results = ($batch['results'] ?? []);
 
@@ -231,6 +249,8 @@ class SitemapService
      * @param integer $page         The page number to retrieve.
      *
      * @return XMLResponse The publications sitemap XML response.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-124
      */
     public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse
     {
@@ -256,12 +276,16 @@ class SitemapService
         $searchQuery['_limit']            = $this::MAX_PER_PAGE;
         $searchQuery['_page'] = $page;
 
-        $publications = ($objectService->searchObjectsPaginated(
+        $publicationResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
-        )['results'] ?? []);
+        );
+
+        // Enforce published predicate: sitemaps expose only public publications.
+        $publicationResult = $this->queryService->enforcePublishedForAnonymous($publicationResult);
+        $publications      = ($publicationResult['results'] ?? []);
 
         $fileService = $this->getFileService();
 
@@ -328,6 +352,11 @@ class SitemapService
      * @return boolean|XMLResponse Returns true if the request is valid, otherwise an XMLResponse error.
      *
      * @psalm-suppress InvalidArrayOffset Array offset types are runtime-determined.
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-125
      */
     private function isValidSitemapRequest(
         string $catalogSlug,
@@ -392,12 +421,16 @@ class SitemapService
             'hasWooSitemap' => true,
         ];
 
-        $catalog = ($objectService->searchObjectsPaginated(
+        $catalogResult = $objectService->searchObjectsPaginated(
             query: $searchQuery,
-            _rbac: false,
+            _rbac: true,
             _multitenancy: false,
             deleted: false
-        )['results'][0] ?? []);
+        );
+
+        // Enforce published predicate: sitemap catalog must be public.
+        $catalogResult = $this->queryService->enforcePublishedForAnonymous($catalogResult);
+        $catalog       = ($catalogResult['results'][0] ?? []);
 
         if (empty($catalog) === true) {
             return new XMLResponse('Invalid Woo catalog', 400);
@@ -421,6 +454,8 @@ class SitemapService
      * @param array $file        The file metadata belonging to that publication
      *
      * @return array A DIWOO metadata array ready for XMLResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-126
      */
     private function mapDiwooDocument(array $publication, array $file): array
     {

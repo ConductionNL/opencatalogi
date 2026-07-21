@@ -111,6 +111,11 @@ import { NcButton, NcModal } from '@nextcloud/vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 
+/**
+ * ViewGlossaryModal — read-only view of a glossary term.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-4
+ */
 export default {
 	name: 'ViewGlossaryModal',
 	components: {
@@ -124,6 +129,7 @@ export default {
 		 * Get the currently active glossary term from the store
 		 * @return {object|null} The active glossary term object
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		term() {
 			return objectStore.getActiveObject('glossary')
 		},
@@ -133,6 +139,7 @@ export default {
 		 * Close the modal and clear the active object
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		closeModal() {
 			navigationStore.setModal(false)
 			objectStore.clearActiveObject('glossary')
@@ -141,6 +148,7 @@ export default {
 		 * Open the edit modal for the current term
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		openEditModal() {
 			navigationStore.setModal('glossary')
 		},
@@ -149,6 +157,7 @@ export default {
 		 * @param {object} term - The term to select
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-theme-glossary/tasks.md#task-2 */
 		selectTerm(term) {
 			objectStore.setActiveObject('glossary', term)
 		},

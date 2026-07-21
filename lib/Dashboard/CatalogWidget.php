@@ -9,9 +9,14 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-49
  */
 
 namespace OCA\OpenCatalogi\Dashboard;
@@ -99,9 +104,14 @@ class CatalogWidget implements IWidget
      * @return void
      *
      * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-49
      */
     public function load(): void
     {
+        // Shared vendor chunks emitted by webpack splitChunks (see webpack.config.js).
+        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-shared-vendor');
+        Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-shared-nc-vue');
         Util::addScript(application: Application::APP_ID, file: Application::APP_ID.'-catalogiWidget');
         Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
 

@@ -4,7 +4,9 @@ on:
   push:
     branches: [development]
 
+permissions: {}
+
 jobs:
   sync-to-beta:
-    uses: ConductionNL/.github/.github/workflows/sync-to-beta.yml@main
+    uses: Conduction/.github/.github/workflows/sync-to-beta.yml@main
     secrets: inherit

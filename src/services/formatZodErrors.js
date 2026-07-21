@@ -1,3 +1,4 @@
+/** @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1 */
 export function createZodErrorHandler(result) {
 	const issues = result?.error?.issues || []
 

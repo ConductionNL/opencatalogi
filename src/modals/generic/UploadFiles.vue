@@ -13,6 +13,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 			<div class="labelAndShareContainer">
 				<NcSelect v-bind="labelOptions"
 					v-model="labelOptions.value"
+					:input-label="t('opencatalogi', 'Labels')"
 					:disabled="loading || retryLoading || tagsLoading"
 					:loading="tagsLoading"
 					:taggable="true"
@@ -314,6 +315,11 @@ const { openFileUpload, files, reset, setTags, rejectedDuplicates } = useFileSel
 	dropzone: dropZoneRef,
 })
 
+/**
+ * UploadFiles — upload files to a publication's OpenRegister files endpoint.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-1
+ */
 export default {
 	name: 'UploadFiles',
 	components: {
@@ -359,13 +365,16 @@ export default {
 	},
 	computed: {
 		// only used for watching
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		files() {
 			return files
 		},
 		// only used for watching
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		rejectedDuplicatesList() {
 			return rejectedDuplicates
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		inputValidation() {
 			const catalogiItem = new Attachment({
 				...objectStore.getActiveObject('attachment'),
@@ -382,6 +391,7 @@ export default {
 	},
 	watch: {
 		files: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 			handler(newFiles, oldFiles) {
 				if (newFiles.value?.length) {
 					this.addAttachments()
@@ -390,18 +400,22 @@ export default {
 			deep: true,
 		},
 		labelOptions: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 			handler() {
 				setTags(this.getLabels())
 			},
 			deep: true,
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		success() {
 			this.updateUploadCounts()
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		error() {
 			this.updateUploadCounts()
 		},
 		rejectedDuplicatesList: {
+			/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 			handler(newRef) {
 				const newRejected = newRef?.value?.names
 				if (!Array.isArray(newRejected) || newRejected.length === 0) return
@@ -416,6 +430,7 @@ export default {
 			deep: true,
 		},
 	},
+	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 	mounted() {
 		objectStore.setActiveObject('attachment', [])
 		this.getAllTags()
@@ -435,6 +450,7 @@ export default {
 		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
 	},
 	methods: {
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		closeDialog() {
 			// mark internal close to avoid duplicate external watcher emission
 			this.__uploadFilesClosingInternally = true
@@ -467,6 +483,7 @@ export default {
 			this.newTags = []
 			setTimeout(() => { this.__uploadFilesClosingInternally = false }, 0)
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		bytesToSize(bytes) {
 			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 			if (bytes === 0) return 'n/a'
@@ -476,6 +493,7 @@ export default {
 			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		getFileNameAndExtension(fullname) {
 			const lastDot = fullname.lastIndexOf('.')
 			const name = fullname.slice(0, lastDot)
@@ -483,6 +501,7 @@ export default {
 			return { name, extension }
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		checkForTooBigFiles(files) {
 			if (!files) return false
 			const wrongFiles = files.filter(file => {
@@ -500,6 +519,7 @@ export default {
 			return size > 536870480 // 512MB
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		isSelectable(option) {
 			if (this.labelOptions.value?.includes('No label') && option !== 'No label') {
 				return false
@@ -510,6 +530,7 @@ export default {
 			return true
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		getLabels() {
 			if (this.labelOptions.value?.includes('No label')) {
 				return null
@@ -517,6 +538,7 @@ export default {
 				return this.labelOptions.value
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async getAllTags() {
 			this.tagsLoading = true
 			try {
@@ -571,13 +593,55 @@ export default {
 				this.tagsLoading = false
 			}
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		onOpenModal() {
 			this.initialTags = []
 			this.latestTags = []
 			this.newTags = []
 			EventBus.$emit('upload-files:opened')
 			this.getAllTags()
+			this.applySchemaDefaults()
 		},
+		/**
+		 * Seed the `share` toggle from the active publication's schema
+		 * (`configuration.defaultAutoShare`). Falls back to `false`
+		 * when the schema, the key or the lookup itself is missing —
+		 * existing behaviour for schemas that don't opt in.
+		 *
+		 * @spec openspec/changes/feature-2026-05-26-default-auto-share/tasks.md#task-1
+		 * @return {Promise<void>}
+		 */
+		async applySchemaDefaults() {
+			this.share = false
+			try {
+				const publication = objectStore.getActiveObject('publication')
+				const schemaRef = publication?.['@self']?.schema
+				if (!schemaRef) return
+
+				let configuration = (typeof schemaRef === 'object' && schemaRef !== null)
+					? schemaRef.configuration
+					: null
+
+				if (!configuration) {
+					const schemaId = typeof schemaRef === 'object'
+						? (schemaRef.id || schemaRef.uuid || schemaRef.slug)
+						: schemaRef
+					if (!schemaId) return
+					const response = await fetch(`/index.php/apps/openregister/api/schemas/${schemaId}`)
+					if (!response.ok) return
+					const schema = await response.json().catch(() => null)
+					configuration = schema?.configuration || null
+				}
+
+				if (configuration?.defaultAutoShare === true) {
+					this.share = true
+				}
+			} catch (e) {
+				// Non-fatal — keep the safe default (off) so a network
+				// hiccup never silently flips publications to "share on upload".
+			}
+		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		onExternalClose() {
 			if (this.__uploadFilesClosingInternally) {
 				this.__uploadFilesClosingInternally = false
@@ -603,6 +667,7 @@ export default {
 		 * Opens the folder URL in a new tab after parsing the encoded URL and converting to Nextcloud format
 		 * @param {string} url - The encoded folder URL to open (e.g. "Open Registers\/Publicatie Register\/Publicatie\/123")
 		 */
+		 /** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		 openFolder(url) {
 			// Parse the encoded URL by replacing escaped characters
 			const decodedUrl = url.replace(/\\\//g, '/')
@@ -618,6 +683,7 @@ export default {
 			window.open(nextcloudUrl, '_blank')
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async saveTags(file, editedTags) {
 			try {
 				if (file && file.id) {
@@ -661,11 +727,13 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		cancelFileLabelEditing() {
 			this.editingTags = null
 			this.editedTags = []
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		removeFile(fileName) {
 			reset(fileName)
 			if (this.editingTags === fileName) {
@@ -673,11 +741,13 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		checkIfDisabled() {
 			if (objectStore.getActiveObject('attachment').downloadUrl || objectStore.getActiveObject('attachment').title) return true
 			return false
 		},
 
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async addAttachments(specificFile = null) {
 			this.loading = true
 			this.error = null
@@ -766,6 +836,7 @@ export default {
 		},
 
 		// Utility method to get register and schema IDs from publication object
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		getRegisterSchemaIds(publication) {
 			const registerId = typeof publication['@self'].register === 'object'
 				? publication['@self'].register?.id || publication['@self'].register?.uuid
@@ -775,6 +846,7 @@ export default {
 				: publication['@self'].schema
 			return { registerId, schemaId }
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async createPublicationAttachment(files, reset, share = false) {
 			if (!files) {
 				throw Error('No files to import')
@@ -823,6 +895,7 @@ export default {
 					throw err
 				})
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async retryAllFailed() {
 			this.retryLoading = true
 			const uploadPromises = this.files.value.filter(file => file.status === 'failed').map(file => {
@@ -868,6 +941,7 @@ export default {
 			this.updateUploadCounts()
 			this.retryLoading = false
 		},
+		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		updateUploadCounts() {
 			if (!this.files || !this.files.value) {
 				this.uploadedCount = 0
@@ -884,31 +958,35 @@ export default {
 
 <style>
 div[class='modal-container']:has(.TestMappingMainModal) {
-    width: clamp(1000px, 100%, 1200px) !important;
-    z-index: 13000 !important;
+	width: clamp(1000px, 100%, 1200px) !important;
+	z-index: 13000 !important;
 }
+
 div[class='modal-container']:has(.TestMappingMainModal) .modal-mask {
-    z-index: 12999 !important;
+	z-index: 12999 !important;
 }
+
 div[class='modal-container']:has(.TestMappingMainModal) .modal,
 div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
-    z-index: 13000 !important;
+	z-index: 13000 !important;
 }
+
 .modal-mask[aria-labelledby='AddAttachmentModal'] {
-    z-index: 13020 !important;
+	z-index: 13020 !important;
 }
+
 .modal-mask[aria-labelledby='AddAttachmentModal'] .modal-container,
 .modal-mask[aria-labelledby='AddAttachmentModal'] .modal,
 .modal-mask[aria-labelledby='AddAttachmentModal'] .modal__content {
-    z-index: 13021 !important;
+	z-index: 13021 !important;
 }
 </style>
 
 <style scoped>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .filesListDragDropNoticeWrapper--disabled{
@@ -916,7 +994,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .success {
-    color: green;
+	color: var(--color-element-success);
 }
 
 .folderLink {
@@ -972,59 +1050,60 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .files-table-td-name span {
-  float: left;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  max-width: calc(100% - 15%);
+	float: left;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: calc(100% - 15%);
 }
 
 .files-table-td-status {
-    width: 40px;
+	width: 40px;
 }
 
 .files-table-name {
-  color: var(--color-main-text);
+	color: var(--color-main-text);
 }
+
 .files-table-extension {
-  color: var(--color-text-maxcontrast);
+	color: var(--color-text-maxcontrast);
 }
 
 .files-table-tr {
-  color: var(--color-text-maxcontrast);
-  border-bottom: 1px solid var(--color-border);
+	color: var(--color-text-maxcontrast);
+	border-bottom: 1px solid var(--color-border);
 }
 
 .files-table-tr:hover {
-    background-color: var(--color-background-hover);
-    --color-text-maxcontrast: var(--color-main-text);
+	background-color: var(--color-background-hover);
+	--color-text-maxcontrast: var(--color-main-text);
 	--color-border: var(--color-border-dark);
 }
 
 .files-table-tr > td {
-  height: 55px;
+	height: 55px;
 }
 
 .files-table-remove-button {
-  text-align: -webkit-right;
+	text-align: -webkit-right;
 }
 
 .files-list__row-icon {
-  position: relative;
-  display: flex;
-  overflow: visible;
-  align-items: center;
-  flex: 0 0 32px;
-  justify-content: center;
-  width: 32px;
-  height: 100%;
-  margin-right: var(--checkbox-padding);
-  color: var(--color-primary-element);
+	position: relative;
+	display: flex;
+	overflow: visible;
+	align-items: center;
+	flex: 0 0 32px;
+	justify-content: center;
+	width: 32px;
+	height: 100%;
+	margin-right: var(--checkbox-padding);
+	color: var(--color-primary-element);
 }
 
 .files-list__row-action-system-tags {
-  margin-right: 7px;
-  display: flex;
+	margin-right: 7px;
+	display: flex;
 }
 
 .files-list__system-tags {
@@ -1032,7 +1111,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	min-width: calc(var(--min-size)* 2);
+	min-width: calc(var(--min-size) * 2);
 	max-width: 300px;
 }
 
@@ -1077,17 +1156,13 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	gap: 10px;
 }
 
-.success {
-    color: var(--color-element-success);
-}
-
 .failed {
-    color: var(--color-element-error);
+	color: var(--color-element-error);
 }
 
 .buttonContainer {
-    display: flex;
-    gap: 10px;
+	display: flex;
+	gap: 10px;
 }
 
 .uploadSummaryContainer{

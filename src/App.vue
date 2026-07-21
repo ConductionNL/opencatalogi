@@ -1,89 +1,62 @@
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
 <template>
-	<NcContent app-name="opencatalogi">
-		<MainMenu @open-settings="settingsOpen = true" />
-		<NcAppContent>
-			<template #default>
-				<router-view />
-			</template>
-		</NcAppContent>
-		<router-view name="sidebar" />
-
-		<!-- Index sidebar (search/filter/columns — controlled by useListView via sidebarState) -->
-		<CnIndexSidebar
-			v-if="sidebarState.active && !objectSidebarState.active"
-			:schema="sidebarState.schema"
-			:visible-columns="sidebarState.visibleColumns"
-			:search-value="sidebarState.searchValue"
-			:active-filters="sidebarState.activeFilters"
-			:facet-data="sidebarState.facetData"
-			:open="sidebarState.open"
-			@update:open="sidebarState.open = $event"
-			@search="onSidebarSearch"
-			@columns-change="onSidebarColumnsChange"
-			@filter-change="onSidebarFilterChange" />
-
-		<!-- Object sidebar (files/notes/tags/tasks/audit trail — controlled by CnDetailPage) -->
-		<CnObjectSidebar
-			v-if="objectSidebarState.active"
-			:object-type="objectSidebarState.objectType"
-			:object-id="objectSidebarState.objectId"
-			:title="objectSidebarState.title"
-			:subtitle="objectSidebarState.subtitle"
-			:register="objectSidebarState.register"
-			:schema="objectSidebarState.schema"
-			:hidden-tabs="objectSidebarState.hiddenTabs"
-			:open.sync="objectSidebarState.open" />
-
-		<Modals />
-		<Dialogs />
-		<UserSettings :open="settingsOpen" @update:open="settingsOpen = $event" />
-	</NcContent>
+	<CnAppRoot
+		:manifest="manifest"
+		:custom-components="customComponents"
+		:page-types="pageTypes"
+		app-id="opencatalogi"
+		:translate="translateForApp"
+		:permissions="permissions" />
 </template>
 
 <script>
-
 import Vue from 'vue'
-import { NcContent, NcAppContent } from '@nextcloud/vue'
-import { CnObjectSidebar, CnIndexSidebar } from '@conduction/nextcloud-vue'
-import MainMenu from './navigation/MainMenu.vue'
-import Modals from './modals/Modals.vue'
-import Dialogs from './dialogs/Dialogs.vue'
-import UserSettings from './views/settings/UserSettings.vue'
+import { translate as ncT } from '@nextcloud/l10n'
+import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { objectStore } from './store/store.js'
 
+/**
+ * App — manifest-driven CnAppRoot SPA shell for opencatalogi.
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-1
+ */
 export default {
 	name: 'App',
 	components: {
-		NcContent,
-		NcAppContent,
-		CnObjectSidebar,
-		CnIndexSidebar,
-		MainMenu,
-		Modals,
-		Dialogs,
-		UserSettings,
+		CnAppRoot,
 	},
+
+	/** @spec exclude Vue provide()/inject() DI channel wiring, no business logic */
 	provide() {
 		return {
+			// Provide/inject channel for custom components that use the object
+			// sidebar (CnDetailPage). Mirrors the procest pattern.
 			objectSidebarState: this.objectSidebarState,
-			sidebarState: this.sidebarState,
+			// Legacy alias kept for any remaining custom components (the
+			// stay-custom Dashboard / CatalogDetail wrappers) that still
+			// inject `sidebarState` rather than `objectSidebarState`.
+			sidebarState: this.objectSidebarState,
 		}
 	},
+
+	props: {
+		manifest: {
+			type: Object,
+			required: true,
+		},
+		customComponents: {
+			type: Object,
+			default: () => ({}),
+		},
+		pageTypes: {
+			type: Object,
+			default: () => ({}),
+		},
+	},
+
 	data() {
 		return {
-			settingsOpen: false,
-			objectSidebarState: {
-				active: false,
-				open: true,
-				objectType: '',
-				objectId: '',
-				title: '',
-				subtitle: '',
-				register: '',
-				schema: '',
-				hiddenTabs: [],
-			},
-			sidebarState: Vue.observable({
+			objectSidebarState: Vue.observable({
 				active: false,
 				open: true,
 				schema: null,
@@ -97,27 +70,51 @@ export default {
 			}),
 		}
 	},
-	async mounted() {
+
+	computed: {
+		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-2 */
+		permissions() {
+			const base = window.OC?.currentUser?.permissions ?? []
+			// CnAppNav's permission filter is an array-includes check; Nextcloud
+			// does not put the boolean admin flag into the permissions array, so
+			// we inject it here for manifest entries gated on permission: "admin".
+			const isAdmin = typeof window.OC?.isUserAdmin === 'function'
+				? window.OC.isUserAdmin()
+				: false
+			return isAdmin ? [...base, 'admin'] : base
+		},
+	},
+
+	/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-2 */
+	async created() {
+		// Pre-load catalog collection so the MainMenu nav items and
+		// the Publications route (publications/:catalogSlug) can resolve
+		// the active catalog slug on first render.
 		await objectStore.preloadCollections()
 	},
+
 	methods: {
-		onSidebarSearch(value) {
-			this.sidebarState.searchValue = value
-			if (typeof this.sidebarState.onSearch === 'function') {
-				this.sidebarState.onSearch(value)
-			}
-		},
-		onSidebarColumnsChange(columns) {
-			this.sidebarState.visibleColumns = columns
-			if (typeof this.sidebarState.onColumnsChange === 'function') {
-				this.sidebarState.onColumnsChange(columns)
-			}
-		},
-		onSidebarFilterChange(filter) {
-			if (typeof this.sidebarState.onFilterChange === 'function') {
-				this.sidebarState.onFilterChange(filter)
-			}
+		/**
+		 * Translate function passed down to CnAppRoot / CnAppNav /
+		 * CnPageRenderer. Closes over the Nextcloud `translate` import so
+		 * the lib never has to know our app id.
+		 *
+		 * @param {string} key Translation key.
+		 * @return {string} Translated string (or the key on miss).
+		 */
+		/** @spec exclude i18n wrapper delegating to Nextcloud translate() */
+		translateForApp(key) {
+			return ncT('opencatalogi', key)
 		},
 	},
 }
 </script>
+
+<style>
+/* CnContextMenu renders an NcActions trigger button that is only meant to be
+   opened programmatically via right-click. Hide it without relying on the
+   dist CSS file being imported. */
+.cn-context-menu-root .cn-context-menu {
+	display: none !important;
+}
+</style>

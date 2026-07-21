@@ -12,9 +12,15 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-50
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-51
  */
 
 namespace OCA\OpenCatalogi\Listener;
@@ -54,6 +60,8 @@ class CatalogCacheEventListener implements IEventListener
      * @return object|null The object entity or null if event type is unsupported.
      *
      * @psalm-suppress TypeDoesNotContainType — OpenRegister events extend Event
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-50
      */
     private function extractObjectFromEvent(Event $event): ?object
     {
@@ -85,6 +93,8 @@ class CatalogCacheEventListener implements IEventListener
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-51
      */
     public function handle(Event $event): void
     {

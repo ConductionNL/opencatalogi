@@ -12,9 +12,30 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-102
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-103
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-104
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-105
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-106
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-107
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-109
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-110
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-111
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-114
+ * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-115
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -113,9 +134,12 @@ class PublicationService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\ObjectService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       ObjectService from the container; pure framework plumbing, no domain behavior.
      */
     public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService
     {
@@ -130,10 +154,34 @@ class PublicationService
     }//end getObjectService()
 
     /**
+     * Resolve the PublicationQueryService for shared visibility enforcement.
+     *
+     * @return PublicationQueryService The query/visibility helper service.
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the shared
+     *       PublicationQueryService from the container; pure framework plumbing.
+     */
+    private function getQueryService(): PublicationQueryService
+    {
+        return $this->container->get(PublicationQueryService::class);
+
+    }//end getQueryService()
+
+    /**
      * Set register/schema context on the ObjectService for a given object UUID.
      *
-     * Searches all magic tables to find which register/schema an object belongs to,
-     * then sets that context on the ObjectService so subsequent operations can find the object.
+     * Searches magic tables scoped to the catalogs configured on this instance to find
+     * which register/schema an object belongs to, then sets that context on the
+     * ObjectService so subsequent operations can find the object.
+     *
+     * The previous implementation issued a platform-wide SELECT against
+     * information_schema.tables (no scope restriction) and was reachable from
+     * anonymous @PublicPage endpoints — a DoS vector and a cross-catalog
+     * information-disclosure risk (C-2 / wave-7). The new implementation derives the
+     * allowed (register × schema) pairs from the catalogs configured on this instance
+     * and delegates to PublicationQueryService::findObjectLocation(), which is already
+     * scoped and cached.
      *
      * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
      * @param string                                  $objectId      The UUID of the object to locate
@@ -143,55 +191,29 @@ class PublicationService
     private function setObjectServiceContext($objectService, string $objectId): void
     {
         try {
-            $db = $this->container->get(\OCP\IDBConnection::class);
+            // Derive allowed registers/schemas from the catalogs configured on this
+            // instance. getCatalogFilters() returns the union of all catalog scopes,
+            // which is the safe upper-bound for any request that reaches this path.
+            $context          = $this->getCatalogFilters();
+            $allowedRegisters = array_map('intval', $context['registers']);
+            $allowedSchemas   = array_map('intval', $context['schemas']);
 
-            $result = $db->executeQuery(
-                <<<'SQL'
-                SELECT table_name FROM information_schema.tables
-                WHERE table_name LIKE 'oc_openregister_table_%'
-                ORDER BY table_name
-                SQL
-            );
-
-            $unionParts = [];
-            $quotedUuid = $db->quote($objectId);
-            $row        = $result->fetch();
-            while ($row !== false) {
-                $match = preg_match(
-                    pattern: '/^oc_openregister_table_(\d+)_(\d+)$/',
-                    subject: $row['table_name'],
-                    matches: $matches
-                );
-                if ($match === 1) {
-                    $register     = (int) $matches[1];
-                    $schema       = (int) $matches[2];
-                    $tableName    = $row['table_name'];
-                    $unionParts[] = sprintf(
-                        '(SELECT %d AS register_id, %d AS schema_id FROM %s WHERE _uuid = %s)',
-                        $register,
-                        $schema,
-                        $tableName,
-                        $quotedUuid
-                    );
-                }
-
-                $row = $result->fetch();
-            }//end while
-
-            $result->closeCursor();
-
-            if (empty($unionParts) === true) {
+            if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+                // No catalog scope configured — refuse to do a platform-wide scan.
                 return;
             }
 
-            $sql    = implode(' UNION ALL ', $unionParts).' LIMIT 1';
-            $result = $db->executeQuery($sql);
-            $row    = $result->fetch();
-            $result->closeCursor();
+            // Delegate to the scoped, cached helper that never touches information_schema
+            // without a constrained (register × schema) set.
+            $location = $this->getQueryService()->findObjectLocation(
+                uuid: $objectId,
+                allowedRegisters: $allowedRegisters,
+                allowedSchemas: $allowedSchemas
+            );
 
-            if ($row !== false) {
-                $objectService->setRegister(register: (string) $row['register_id']);
-                $objectService->setSchema(schema: (string) $row['schema_id']);
+            if ($location !== null) {
+                $objectService->setRegister(register: (string) $location['register']);
+                $objectService->setSchema(schema: (string) $location['schema']);
             }
         } catch (\Exception $e) {
             // Silently fail — worst case we fall back to the old behavior.
@@ -201,9 +223,12 @@ class PublicationService
     /**
      * Attempts to retrieve the OpenRegister service from the container.
      *
-     * @return mixed|null The OpenRegister service if available, null otherwise.
+     * @return \OCA\OpenRegister\Service\FileService|null The OpenRegister service if available, null otherwise.
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
+     *       FileService from the container; pure framework plumbing, no domain behavior.
      */
     public function getFileService(): ?\OCA\OpenRegister\Service\FileService
     {
@@ -228,6 +253,8 @@ class PublicationService
      * @return array<string, array<string>> Array containing available registers and schemas
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-102
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -343,6 +370,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-103
      */
     private function searchPublications(null|string|int $catalogId=null, ?array $ids=null, ?array $customParams=null): array
     {
@@ -461,10 +490,14 @@ class PublicationService
             $objectService->searchObjectsPaginated(
                 query: $searchQuery,
                 _rbac: true,
-                _multitenancy: false,
-                published: false
+                _multitenancy: false
             )
         );
+
+        // Enforce server-side published predicate for anonymous callers. Authenticated
+        // callers keep RBAC-scoped behavior; anonymous callers only see published
+        // (non-depublished) objects. Anon-vs-auth is derived from the user session.
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
 
         // Filter unwanted properties from results.
         $result['results'] = $this->filterUnwantedProperties($result['results']);
@@ -491,6 +524,8 @@ class PublicationService
      * @return array Array of catalog objects with 'key' and 'label' fields
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-104
      */
     private function getExternalCatalogsFromListings(): array
     {
@@ -677,6 +712,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-105
      */
     public function index(null|string|int $catalogId=null, ?array $customParams=null): JSONResponse
     {
@@ -702,6 +739,8 @@ class PublicationService
      * @NoAdminRequired
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-106
      */
     public function show(string $id): JSONResponse
     {
@@ -709,27 +748,89 @@ class PublicationService
         // Get request parameters for filtering and searching.
         $requestParams = $this->request->getParams();
 
-        // @todo validate if it in the calaogue etc etc (this is a bit dangerues now).
-        $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? null);
+        // Catalog membership is enforced by the catalog-scoped show() in
+        // PublicationsController; this generic /api/objects/{id} entry point trusts OR
+        // RBAC + the '@self.'-prefix extend allowlist below. The previous "@todo this
+        // is a bit dangerous now" comment referred to the missing catalog check, which
+        // is now applied at the controller layer (#733).
+        $extend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
         // Normalize to array.
         if (is_array($extend) === false) {
             $extend = [$extend];
         }
 
-        // Filter only values that start with '@self.'.
-        $extend = array_filter($extend, fn($val) => is_string($val) === true && str_starts_with($val, '@self.') === true);
+        // Filter only values that start with '@self.' and cap breadth (#732).
+        $filtered = array_filter(
+            $extend,
+            static fn($val) => is_string($val) === true && str_starts_with($val, '@self.') === true
+        );
+        // Deduplicate before capping so duplicate entries cannot inflate the cap.
+        $extend = array_values(array_unique($filtered));
+        if (count($extend) > 5) {
+            $extend = array_slice($extend, 0, 5);
+        }
 
         try {
             // Render the object with requested extensions and filters.
             // Use positional parameters for compatibility with different ObjectService versions.
-            return new JSONResponse(
-                $this->getObjectService()->find($id, $extend)
-            );
+            $object = $this->getObjectService()->find($id, $extend);
+
+            // Enforce published predicate: anonymous callers must not see unpublished objects.
+            $objectArray = $object->jsonSerialize();
+            if (is_array($object) === true) {
+                $objectArray = $object;
+            }
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($objectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
+            return new JSONResponse($object);
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Not Found'], 404);
         }//end try
 
     }//end show()
+
+    /**
+     * Determine whether an object (by ID) belongs to any catalog scope configured on
+     * this instance.
+     *
+     * Objects that are not in the register/schema of any configured catalog must not be
+     * served via the public-facing publication endpoints (C-1 / wave-7). When no catalog
+     * scope is configured (empty registers/schemas), the method returns false — an
+     * unconfigured instance may not serve arbitrary objects.
+     *
+     * @param string $objectId UUID of the object to check.
+     *
+     * @return bool True when the object's register/schema is covered by a local catalog.
+     */
+    private function isObjectInCatalogScope(string $objectId): bool
+    {
+        try {
+            $context          = $this->getCatalogFilters();
+            $allowedRegisters = array_map('intval', $context['registers']);
+            $allowedSchemas   = array_map('intval', $context['schemas']);
+
+            if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+                return false;
+            }
+
+            $location = $this->getQueryService()->findObjectLocation(
+                uuid: $objectId,
+                allowedRegisters: $allowedRegisters,
+                allowedSchemas: $allowedSchemas
+            );
+
+            return $location !== null;
+        } catch (\Exception $e) {
+            // Fail closed — if we cannot verify scope, deny.
+            return false;
+        }//end try
+
+    }//end isObjectInCatalogScope()
 
     /**
      * Shows attachments of a publication
@@ -743,11 +844,36 @@ class PublicationService
      * @NoAdminRequired
      *
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-107
      */
     public function attachments(string $id): JSONResponse
     {
-        // Validate that the object exists (throws if not found).
-        $this->getObjectService()->find(id: $id, _extend: []);
+        // Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
+        // of the catalogs configured on this instance before serving any file list.
+        // This prevents anonymous callers from retrieving attachments of objects that are
+        // outside this OpenCatalogi installation's configured namespace.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
+        // Set register/schema context so find() can locate the object in its magic table.
+        $objectService = $this->getObjectService();
+        $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
+        // Validate that the object exists (throws if not found) and enforce
+        // published predicate for anonymous callers.
+        $object      = $objectService->find(id: $id, _extend: []);
+        $objectArray = $object->jsonSerialize();
+        if (is_array($object) === true) {
+            $objectArray = $object;
+        }
+
+        if ($this->getQueryService()->isAnonymous() === true
+            && $this->getQueryService()->isObjectPublic($objectArray) === false
+        ) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
 
         $fileService = $this->getFileService();
 
@@ -785,11 +911,41 @@ class PublicationService
       *
       * @NoAdminRequired
       * @NoCSRFRequired
+      *
+      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+      *
+      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
       */
     public function download(
         string $id
     ): DataDownloadResponse | JSONResponse {
+        // Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
+        // of the catalogs configured on this instance before serving any file content.
+        // This prevents anonymous callers from downloading files for objects outside
+        // this OpenCatalogi installation's configured namespace.
+        if ($this->isObjectInCatalogScope(objectId: $id) === false) {
+            return new JSONResponse(['error' => 'Not Found'], 404);
+        }
+
         try {
+            // Set register/schema context so find() can locate the object in its magic table.
+            $objectService = $this->getObjectService();
+            $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
+            // Validate that the object exists and enforce published predicate for
+            // anonymous callers before serving any file content.
+            $object      = $objectService->find(id: $id, _extend: []);
+            $objectArray = $object->jsonSerialize();
+            if (is_array($object) === true) {
+                $objectArray = $object;
+            }
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($objectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
             // Create the ZIP archive.
             $fileService = $this->getFileService();
             $zipInfo     = $fileService->createObjectFilesZip($id);
@@ -819,10 +975,10 @@ class PublicationService
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Object not found'], 404);
         } catch (\Exception $exception) {
+            // Log the exception server-side but return a generic body to the caller
+            // so that internal stack traces and file paths are never exposed (#735, H3).
             return new JSONResponse(
-                [
-                    'error' => 'Failed to create ZIP file: '.$exception->getMessage(),
-                ],
+                ['error' => 'Failed to create download archive'],
                 500
             );
         }//end try
@@ -840,6 +996,8 @@ class PublicationService
      * @param array $objects Array of objects to filter
      *
      * @return array Filtered array of objects
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
      */
     private function filterUnwantedProperties(array $objects): array
     {
@@ -860,8 +1018,15 @@ class PublicationService
         // Filter each object.
         return array_map(
             function ($object) use ($unwantedProperties) {
-                // Use jsonSerialize to get an array representation of the object.
+                // The OR SOLR backend returns array shapes (not ObjectEntity instances)
+                // from searchObjectsPaginated; the magic-mapper backend returns entities.
+                // Guard so we do not fatal with "Call to a member function jsonSerialize()
+                // on array" under SOLR (#736), mirroring the dual-shape handling that
+                // already exists in PublicationsController::index.
                 $objectArray = $object->jsonSerialize();
+                if (is_array($object) === true) {
+                    $objectArray = $object;
+                }
 
                 // Remove unwanted properties from the '@self' array.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
@@ -904,6 +1069,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-109
      */
     public function uses(string $id): JSONResponse
     {
@@ -914,9 +1081,37 @@ class PublicationService
             // Set register/schema context so the object can be found in magic tables.
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
 
+            // Enforce published predicate on the root object for anonymous callers (C-3 /
+            // wave-7). Without this guard an anonymous caller can probe the relation graph
+            // of any object — including unpublished ones — simply by knowing its UUID.
+            // Mirror the guard that show() (line 803) and attachments() (line 842) use.
+            $rootObject = $objectService->find(id: $id, _extend: []);
+
+            // Object not found — return 404 before any relation traversal.
+            if ($rootObject === null) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
+            $rootObjectArray = $rootObject->jsonSerialize();
+            if (is_array($rootObject) === true) {
+                $rootObjectArray = $rootObject;
+            }
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
             // Get the relations for the object.
-            $relationsArray = $objectService->find(id: $id)->getRelations();
-            $relations      = array_values($relationsArray);
+            // $rootObject may be an array (SOLR backend) or an entity (magic-mapper).
+            // getRelations() is only available on entity objects.
+            $relationsArray = $rootObject->getRelations();
+            if (is_array($rootObject) === true) {
+                $relationsArray = $rootObject['@self']['relations'] ?? $rootObject['relations'] ?? [];
+            }
+
+            $relations = array_values($relationsArray);
 
             // Check if relations array is empty.
             if (empty($relations) === true) {
@@ -959,6 +1154,8 @@ class PublicationService
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-110
      */
     public function used(string $id): JSONResponse
     {
@@ -968,6 +1165,28 @@ class PublicationService
 
             // Set register/schema context so the object can be found in magic tables.
             $this->setObjectServiceContext(objectService: $objectService, objectId: $id);
+
+            // Enforce published predicate on the root object for anonymous callers (C-3 /
+            // wave-7). Without this guard an anonymous caller can probe the relation graph
+            // of any object — including unpublished ones — simply by knowing its UUID.
+            // Mirror the guard that show() (line 803) and attachments() (line 842) use.
+            $rootObject = $objectService->find(id: $id, _extend: []);
+
+            // Object not found — return 404 before any relation traversal.
+            if ($rootObject === null) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
+
+            $rootObjectArray = $rootObject->jsonSerialize();
+            if (is_array($rootObject) === true) {
+                $rootObjectArray = $rootObject;
+            }
+
+            if ($this->getQueryService()->isAnonymous() === true
+                && $this->getQueryService()->isObjectPublic($rootObjectArray) === false
+            ) {
+                return new JSONResponse(['error' => 'Not Found'], 404);
+            }
 
             // Get the relations for the object.
             $relationsArray = $objectService->findByRelations($id);
@@ -1012,7 +1231,7 @@ class PublicationService
      * AGGREGATION FEATURES:
      * - Proper pagination: Collects sufficient data from all sources, merges and deduplicates,
      *   then applies pagination to ensure consistent totals and page counts
-     * - Ordering: Supports _order parameters like _order[@self.published]=DESC to sort the
+     * - Ordering: Supports _order parameters like _order[@self.created]=DESC to sort the
      *   combined dataset from all sources according to specified criteria
      * - Deduplication: Removes duplicate entries based on object ID across all sources
      * - Faceting: Merges facet data from multiple sources when _facetable=true
@@ -1028,6 +1247,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-111
      */
     public function getAggregatedPublications(array $queryParams=[], array $requestParams=[], string $baseUrl=''): array
     {
@@ -1379,7 +1600,7 @@ class PublicationService
             // Apply ordering to the merged and deduplicated results
             // This is crucial for aggregation because each source may have different ordering,
             // so we need to re-sort the combined dataset according to the requested criteria
-            // Supports formats like: _order[@self.published]=DESC, _order[title]=ASC, etc.
+            // Supports formats like: _order[@self.created]=DESC, _order[title]=ASC, etc.
             $uniqueResults = $this->applyCumulativeOrdering($uniqueResults, $queryParams);
 
             // Apply pagination to the merged results.
@@ -1516,6 +1737,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
      */
     private function getLocalPublicationsFast(
         array $queryParams,
@@ -1701,6 +1924,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
      */
     private function getLocalPublicationsUltraFast(
         array $queryParams,
@@ -1825,6 +2050,11 @@ class PublicationService
         $objectService = $this->getObjectService();
         $result        = $objectService->searchObjectsPaginated($searchQuery);
 
+        // Enforce server-side published predicate for anonymous callers. The ultra-fast
+        // path bypasses searchPublications() which already applies this guard, so it must
+        // be applied here as well to close the gap (C1).
+        $result = $this->getQueryService()->enforcePublishedForAnonymous($result);
+
         $timings['objectservice'] = ((microtime(true) - $objectServiceStart) * 1000);
 
         // Response building timing.
@@ -1939,6 +2169,8 @@ class PublicationService
      *
      * @return array Array of catalog objects with id, title, summary, description, etc.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
      */
     private function getLocalCatalogs(): array
     {
@@ -2010,6 +2242,8 @@ class PublicationService
      * @param array $federatedFacets Facets from federated sources
      *
      * @return array Merged facets data
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
      */
     private function mergeFacetsData(array $localFacets, array $federatedFacets): array
     {
@@ -2030,6 +2264,8 @@ class PublicationService
      * @param array $federatedFacetable Facetable metadata from federated sources
      *
      * @return array Merged facetable metadata
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
      */
     private function mergeFacetableData(array $localFacetable, array $federatedFacetable): array
     {
@@ -2106,6 +2342,10 @@ class PublicationService
      * @param array $queryParams The query parameters containing ordering instructions
      *
      * @return array The ordered results
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
      */
     private function applyCumulativeOrdering(array $results, array $queryParams): array
     {
@@ -2128,7 +2368,7 @@ class PublicationService
                 foreach ($orderParams as $field => $direction) {
                     // Handle both associative array format: ['field' => 'direction']
                     // and indexed array format: [0 => ['field' => 'direction']]
-                    // Format: ['@self.published' => 'DESC'].
+                    // Format: ['@self.created' => 'DESC'].
                     $fieldName     = $field;
                     $sortDirection = 'ASC';
                     if (is_string($direction) === true) {
@@ -2136,7 +2376,7 @@ class PublicationService
                     }
 
                     if (is_numeric($field) === true && is_array($direction) === true) {
-                        // Format: [0 => ['@self.published' => 'DESC']].
+                        // Format: [0 => ['@self.created' => 'DESC']].
                         $fieldName     = array_key_first($direction);
                         $sortDirection = strtoupper(($direction[$fieldName] ?? 'ASC'));
                     }
@@ -2172,7 +2412,7 @@ class PublicationService
     /**
      * Extract field value from a result object using dot notation
      *
-     * Supports nested field access like '@self.published' or 'data.title'
+     * Supports nested field access like '@self.created' or 'data.title'
      *
      * @param array  $result    The result object to extract value from
      * @param string $fieldPath The field path in dot notation
@@ -2260,6 +2500,8 @@ class PublicationService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
      */
     public function getFederatedPublication(string $id, array $queryParams=[]): array
     {
@@ -2384,6 +2626,8 @@ class PublicationService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-114
      */
     public function getFederatedUsed(string $id, array $queryParams=[]): array
     {
@@ -2477,6 +2721,8 @@ class PublicationService
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-115
      */
     public function getFederatedUses(string $id, array $queryParams=[]): array
     {

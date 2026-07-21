@@ -17,6 +17,7 @@ function toDate(value) {
 	return isNaN(d.getTime()) ? null : d
 }
 
+/** @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1 */
 export function isPublished(obj) {
 	const pub = toDate(obj?.publicatiedatum)
 	if (!pub) return false
@@ -26,6 +27,7 @@ export function isPublished(obj) {
 	return !depub || depub > now
 }
 
+/** @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1 */
 export function isDepublished(obj) {
 	const pub = toDate(obj?.publicatiedatum)
 	if (!pub) return false
@@ -35,6 +37,7 @@ export function isDepublished(obj) {
 	return !!(depub && depub <= now)
 }
 
+/** @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1 */
 export function isConcept(obj) {
 	const pub = toDate(obj?.publicatiedatum)
 	return !pub || pub > new Date()
@@ -44,6 +47,8 @@ export function isConcept(obj) {
  * Returns 'published', 'depublished', or 'concept'.
  *
  * @param {object} obj Publication object
+ *
+ * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-1
  */
 export function getPublicationStatus(obj) {
 	if (isDepublished(obj)) return 'depublished'

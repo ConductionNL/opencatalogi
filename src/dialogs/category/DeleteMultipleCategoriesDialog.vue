@@ -74,6 +74,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
  * @license AGPL-3.0-or-later
  * @version 1.0.0
  * @see {@link https://github.com/opencatalogi/opencatalogi}
+ * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-4
  */
 export default {
 	name: 'DeleteMultipleCategoriesDialog',
@@ -92,6 +93,7 @@ export default {
 		 *
 		 * @return {void}
 		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-2 */
 		deleteCategories() {
 			const selectedCategories = objectStore.getSelectedObjects('category')
 			if (!selectedCategories?.length) return
@@ -113,21 +115,21 @@ export default {
 
 <style>
 .zaakDetailsContainer {
-    margin-block-start: var(--OC-margin-20);
-    margin-inline-start: var(--OC-margin-20);
-    margin-inline-end: var(--OC-margin-20);
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
 }
 
 .success {
-    color: green;
+	color: green;
 }
 
 .loading-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    color: var(--color-text-lighter);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	color: var(--color-text-lighter);
 }
 </style>

@@ -120,6 +120,7 @@ import { CnIndexPage, CnRowActions } from '@conduction/nextcloud-vue'
 import getValidISOstring from '../../services/getValidISOstring.js'
 import { isPublished, getPublicationStatus } from '../../services/publicationStatus.js'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
+import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
@@ -196,7 +197,7 @@ export default {
 
 			return catalogSchemaIds.some(schemaId => {
 				const schema = objectStore.availableSchemas.find(s => s.id === schemaId)
-				return schema ? this.hasSchemaReadRight(schema) : false
+				return schema ? this.hasSchemaActionRight(schema, 'create') : false
 			})
 		},
 		selectedPublicationIds() {
@@ -210,7 +211,13 @@ export default {
 					label: t('opencatalogi', 'Edit'),
 					icon: Pencil,
 					handler: (row) => this.viewPublication(row),
-					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
+					visible: (row) => this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
+				},
+				{
+					label: t('opencatalogi', 'View'),
+					icon: Eye,
+					handler: (row) => this.viewPublication(row),
+					visible: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
 				},
 				{
 					label: t('opencatalogi', 'Copy'),
@@ -242,7 +249,7 @@ export default {
 					label: t('opencatalogi', 'Add Attachment'),
 					icon: FilePlusOutline,
 					handler: (row) => this.addAttachment(row),
-					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'create'),
+					disabled: (row) => !this.hasSchemaActionRight(this.getSchemaForRow(row), 'update'),
 				},
 				{
 					label: t('opencatalogi', 'Delete'),
@@ -300,7 +307,16 @@ export default {
 			if (this.currentUserGroups === null) return true
 			if (!schema) return true
 			const auth = schema.authorization
-			if (!auth || !auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) return true
+			if (!auth) return true
+			if (!auth[action] || !Array.isArray(auth[action]) || auth[action].length === 0) {
+				// For write actions: if the schema has any auth rules, deny by default so that
+				// a user with only 'read' access cannot create/update/delete.
+				if (action !== 'read') {
+					const hasAnyRules = Object.values(auth).some(v => Array.isArray(v) && v.length > 0)
+					if (hasAnyRules) return this.currentUserGroups.includes('admin')
+				}
+				return true
+			}
 			if (this.currentUserGroups.includes('admin')) return true
 			return auth[action].some(entry => {
 				if (typeof entry === 'string') return this.currentUserGroups.includes(entry)
