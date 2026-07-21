@@ -163,7 +163,15 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {
+              "group": "public",
+              "match": {
+                "publicatiedatum": {
+                  "$lte": "$now"
+                }
+              }
+            },
+            "authenticated"
           ]
         }
       },

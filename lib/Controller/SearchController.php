@@ -81,6 +81,7 @@ class SearchController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      * @PublicPage
+     * @BruteForceProtection(action=publicSearch)
      */
     public function index(?string $catalogId=null): JSONResponse
     {

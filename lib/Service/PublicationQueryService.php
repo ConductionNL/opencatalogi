@@ -104,9 +104,11 @@ class PublicationQueryService
      *
      * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
      * the public publications API and the frontend `publicationStatus` helpers use:
-     * an object is public when its own `publicatiedatum` field is set and is at or
-     * before "now", and either carries no `depublicatiedatum` or one still in the
-     * future. The removed object-level `@self.published` predicate is not consulted.
+     * an object is public when its `status` is not a terminal-hidden state (e.g.
+     * `archived`, RET-006), its own `publicatiedatum` field is set and is at or
+     * before "now", and it either carries no `depublicatiedatum` or one still in
+     * the future. The removed object-level `@self.published` predicate is not
+     * consulted.
      *
      * @param array $objectData The serialized object data (own fields + `@self` envelope).
      *
@@ -116,6 +118,13 @@ class PublicationQueryService
      */
     public function isObjectPublic(array $objectData): bool
     {
+        // RET-006: `archived` is a terminal-hidden state that must never appear
+        // on a public surface, regardless of publish/depublish dates. Enforced
+        // here as belt-and-braces alongside the OR schema authorization contract.
+        if (($objectData['status'] ?? null) === 'archived') {
+            return false;
+        }
+
         $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
         $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
 
@@ -355,21 +364,39 @@ class PublicationQueryService
             $rows[] = $rowArray;
         }//end foreach
 
+        // Forward OR's pre-filter `total` so client-side pagination sees an
+        // accurate (or slightly-over) dataset size, not the current-page-post-filter
+        // count. OR now filters drafts via publication.authorization; the remaining
+        // gap between OR total and post-filter count is archived rows removed by
+        // `isObjectPublic()` — an upper-bound total is acceptable for pagination.
+        $envelope = [
+            'results' => $rows,
+            'total'   => (int) ($candidateResult['total'] ?? count($rows)),
+        ];
+
         // Propagate the facets + facetable blocks from OR's response so consumers can
         // build faceted-search UIs on this endpoint (docs claim, endpoint 2). OR only
         // populates these when the caller asked for them (`_facetable=true` +
         // `_facets[...]`); when absent, the keys are simply omitted from the response.
-        // The facet counts reflect OR's pre-filter view of the candidate set — visibility
-        // filtering below happens per-row in application code and does not adjust facets.
-        $envelope = [
-            'results' => $rows,
-            'total'   => count($rows),
-        ];
+        //
+        // Facet counts on public surfaces MUST NOT leak lifecycle-state population
+        // to anonymous callers: `status` is app-level filtered (RET-006 archived
+        // removal happens in `isObjectPublic()`, not in OR), so the raw OR facet
+        // counts for the `status` bucket would enumerate archived + any future
+        // hidden-state populations. Strip that bucket before forwarding.
         if (isset($candidateResult['facets']) === true) {
-            $envelope['facets'] = $candidateResult['facets'];
+            $facets = $candidateResult['facets'];
+            if (is_array($facets) === true && $this->isAnonymous() === true) {
+                unset($facets['status'], $facets['@self']['status']);
+            }
+            $envelope['facets'] = $facets;
         }
         if (isset($candidateResult['facetable']) === true) {
-            $envelope['facetable'] = $candidateResult['facetable'];
+            $facetable = $candidateResult['facetable'];
+            if (is_array($facetable) === true && $this->isAnonymous() === true) {
+                unset($facetable['status'], $facetable['@self']['status']);
+            }
+            $envelope['facetable'] = $facetable;
         }
         return $envelope;
 
