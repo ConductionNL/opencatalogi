@@ -16,6 +16,8 @@ This shape is consistent with the existing `/publications` envelope's use of `@s
 - AND each row MUST carry `@self.schema` set to the row's schema slug,
 - AND the response MUST NOT contain separate `publications` / `documents` sub-arrays.
 
+> @e2e exclude Unchanged carried-over scenario from the merged WOO-506 baseline (`add-public-fulltext-search`) — this delta only adds prose about content-vs-metadata matches above it, the scenario itself is not modified. Already real-UI covered under `tests/e2e/spec-coverage/search-page.spec.ts`.
+
 #### Scenario: content-matched and metadata-matched document rows share the same shape
 
 - GIVEN two documents seeded with `_content=true` enabled: `doc-A` whose title contains the query and `doc-B` whose body text contains the query but title does not,
@@ -24,11 +26,15 @@ This shape is consistent with the existing `/publications` envelope's use of `@s
 - AND both rows MUST carry the same `publication: { id, slug, title }` envelope,
 - AND no field on either row MUST reveal which surface matched.
 
+> @e2e exclude Backend row-shape contract (content-matched vs metadata-matched document rows are byte-shape-identical) — server-side assembly detail with no distinct UI surface (same search page/card rendering either way); verified by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsContentMatchedDocumentRowShapeMatchesMetadataMatch`.
+
 #### Scenario: document matching both surfaces appears once
 
 - GIVEN a document whose title AND body text both contain the query, and `_content=true`,
 - WHEN the response is inspected,
 - THEN the document row MUST appear exactly once in the results array.
+
+> @e2e exclude Backend dedup contract (`@self.id` dedup across the metadata/content union) — server-side assembly detail with no distinct UI surface; verified by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsDedupesDocumentMatchingBothSurfaces`.
 
 ## ADDED Requirements
 
@@ -44,6 +50,8 @@ The `_content` flag MUST default to false — no request without an explicit opt
 - WHEN the response is compared to the WOO-506 baseline,
 - THEN the response envelope MUST be byte-identical to the pre-WOO-517 baseline for that query.
 
+@e2e tests/e2e/spec-coverage/content-search-endpoint.spec.ts
+
 #### Scenario: opt-in adds content-matched documents
 
 - GIVEN a document seeded with body text containing the phrase `"lorem-ipsum-woo517-marker"` and no metadata field containing that phrase,
@@ -51,12 +59,16 @@ The `_content` flag MUST default to false — no request without an explicit opt
 - WHEN the caller issues `GET /apps/opencatalogi/api/search?_search=lorem-ipsum-woo517-marker&_content=true`,
 - THEN the response MUST include a row for that document with `@self.schema = "document"` and the embedded `publication: { id, slug, title }` summary.
 
+@e2e tests/e2e/spec-coverage/content-search-endpoint.spec.ts
+
 #### Scenario: opt-in cost is opt-in
 
 - GIVEN two identical requests differing only in `_content` (one omitted, one true),
 - WHEN OR-side query logs are compared,
 - THEN the `_content=true` request MUST fan out to a chunk-search query,
 - AND the omitted-flag request MUST NOT fan out to a chunk-search query.
+
+> @e2e exclude Backend query-fan-out contract asserted against OR-side query logs, not an HTTP-observable UI surface; verified by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsForwardsContentSearchFlagWhenTrue` / `...OmitsContentSearchFlagByDefault` asserting the forwarded query array directly.
 
 ### Requirement: Content-matched results are documents, not chunks (SCH-PFTS-CONTENT-002)
 
@@ -72,11 +84,15 @@ Documents whose linked publication is invalid (per SCH-PFTS-003 — no linked pu
 - AND MUST include `publication: { id: pub-Y.id, slug: pub-Y.slug, title: pub-Y.title }`,
 - AND MUST NOT include the chunk's raw text snippet, chunk id, or score field.
 
+> @e2e exclude Chunk-to-object resolution (source_type/source_id join, no chunk-field leakage) is owned and already covered by OpenRegister's own merged test suite (`ContentSearchHandlerTest`, `expose-content-search-in-object-service`); on the OC side the "returns a document, never a chunk" shape is verified by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsContentMatchedDocumentRowShapeMatchesMetadataMatch` (asserts no `chunk`/`_snippet` fields).
+
 #### Scenario: chunk-matched document with no linked publication is suppressed
 
 - GIVEN a chunk whose owning document has no linked publication,
 - WHEN the content-search assembler runs,
 - THEN the document MUST NOT appear in the anonymous response.
+
+> @e2e exclude Same code path as the pre-existing SCH-PFTS-003 "document with no linked publication" gate (unconditional, not content-search-specific) — covered by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsDropsDocumentWithoutLinkedPublication`.
 
 ### Requirement: Content matches inherit the anonymous visibility filter (SCH-PFTS-CONTENT-003)
 
@@ -90,9 +106,13 @@ Content-matched document rows MUST pass through the identical `isObjectPublic()`
 - THEN the depublished document MUST NOT appear in the response envelope,
 - AND the chunk MUST NOT be represented in any other row shape either.
 
+> @e2e exclude Backend visibility-gate contract (content-matched rows pass through the same `isObjectPublic()` gate as metadata-matched rows, no separate code path to bypass) — verified by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsDropsContentMatchedDepublishedDocument`.
+
 #### Scenario: content match with depublished parent publication is dropped
 
 - GIVEN a document whose own `publicatiedatum <= now` but whose linked publication has `depublicatiedatum` in the past,
 - AND a chunk from that document whose body text matches the query,
 - WHEN an anonymous `GET /apps/opencatalogi/api/search?_search=<query>&_content=true` runs,
 - THEN the document MUST NOT appear in the response envelope (transitive visibility per SCH-PFTS-004).
+
+> @e2e exclude Backend transitive-visibility contract, same code path as SCH-PFTS-004 (unconditional, not content-search-specific) — verified by PHPUnit `PublicationQueryServiceTest::testAssemblePublicSearchResultsDropsContentMatchedDocumentWithDepublishedParent`.

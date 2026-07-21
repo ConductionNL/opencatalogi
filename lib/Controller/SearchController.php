@@ -117,12 +117,14 @@ class SearchController extends Controller
      * SCH-PFTS-001, SCH-PFTS-002, SCH-PFTS-006, SCH-PFTS-007) — this controller
      * performs no bespoke query building or scoring of its own.
      *
-     * Dual-path (design.md "Dual-path design"): this endpoint ships Path B —
-     * metadata-only document matching. Document content indexing (Path A) is tracked
-     * separately as WOO-517 (assigned Ruben, in Refinement) and does not gate this
-     * change; when it lands, content indexing is wired via OR's TextExtractionService
-     * + FileHandler + Solr-pipeline (SCH-PFTS-006) — OpenCatalogi MUST NOT add a
-     * parallel extraction pipeline here.
+     * Dual-path (design.md "Dual-path design"): metadata-only matching (Path B) plus
+     * the opt-in `_content` query parameter (Path A, WOO-517,
+     * {@see PublicationQueryService::assemblePublicSearchResults()}), which widens
+     * matching to OR-extracted document body text via OR's TextExtractionService +
+     * ChunkMapper pipeline (SCH-PFTS-006, SCH-PFTS-CONTENT-001). This controller
+     * itself performs no bespoke handling of `_content` — it flows through via the
+     * existing `IRequest::getParams()` passthrough like every other query parameter;
+     * OpenCatalogi does not add a parallel extraction pipeline here.
      *
      * @return JSONResponse JSON response containing the mixed publication/document result envelope.
      *
@@ -130,6 +132,7 @@ class SearchController extends Controller
      * @NoCSRFRequired
      *
      * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
+     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
      */
     public function index(): JSONResponse
     {
