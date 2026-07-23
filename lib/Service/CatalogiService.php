@@ -44,6 +44,7 @@ use Exception;
 use OCP\Common\Exception\NotFoundException;
 use OCP\ICache;
 use OCP\ICacheFactory;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Uid\Uuid;
@@ -56,9 +57,39 @@ use Symfony\Component\Uid\Uuid;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/catalogs/spec.md
+ * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
 class CatalogiService
 {
+
+    /**
+     * Properties stripped from the `@self` envelope for anonymous (logged-out)
+     * callers on public read endpoints.
+     *
+     * Single source of truth for the anonymous strip list (authenticated-read-parity,
+     * CAT-AUTH-001): OpenRegister RBAC (`_rbac: true`) already decides WHICH objects
+     * a caller may read; this list only governs envelope metadata richness for
+     * callers with no authenticated Nextcloud session. Authenticated callers OR RBAC
+     * already lets read the object receive every one of these properties unmodified.
+     * Referenced by {@see PublicationService::filterUnwantedProperties()} so the
+     * anonymous envelope cannot fork between the catalogs and publications endpoints.
+     *
+     * @var array<int, string>
+     */
+    public const UNWANTED_SELF_PROPERTIES = [
+        'schemaVersion',
+        'relations',
+        'locked',
+        'owner',
+        'folder',
+        'application',
+        'validation',
+        'retention',
+        'size',
+        'deleted',
+    ];
 
     /**
      * The cached object service instance.
@@ -104,6 +135,14 @@ class CatalogiService
      * @param IAppManager        $appManager   App manager for checking installed apps
      * @param ICacheFactory      $cacheFactory Cache factory for creating cache instances
      * @param LoggerInterface    $logger       Logger for logging errors and debug information
+     * @param IUserSession|null  $userSession  User session used to decide whether the
+     *                                         anonymous `@self` strip list applies
+     *                                         (authenticated-read-parity, CAT-AUTH-001).
+     *                                         Nullable/optional so existing call sites and
+     *                                         tests keep working unmodified; a null session
+     *                                         fails closed to the anonymous (stripped) envelope.
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -112,6 +151,7 @@ class CatalogiService
         private readonly IAppManager $appManager,
         ICacheFactory $cacheFactory,
         private readonly LoggerInterface $logger,
+        private readonly ?IUserSession $userSession=null,
     ) {
         $this->appName = 'opencatalogi';
         $this->cache   = $cacheFactory->createDistributed('opencatalogi_catalogs');
@@ -710,6 +750,7 @@ class CatalogiService
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
      * @spec openspec/specs/catalogs/spec.md
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
      */
     public function index(null|string|int $catalogId=null): JSONResponse
     {
@@ -782,9 +823,16 @@ class CatalogiService
             _multitenancy: false
         );
 
+        // Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
+        // (via _rbac: true above) that this caller may read every object in $result;
+        // this only governs how much `@self` metadata the envelope carries. Anonymous
+        // callers keep today's minimal envelope; authenticated callers see the full
+        // `@self` metadata OR already lets them read.
+        $isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+
         // Filter out unwanted properties from the @self array in each object.
         $filteredResults = array_map(
-            function ($object) {
+            function ($object) use ($isAnonymous) {
                 // The OR SOLR backend returns array shapes (not ObjectEntity instances)
                 // from searchObjectsPaginated; the magic-mapper backend returns entities.
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
@@ -796,22 +844,15 @@ class CatalogiService
                     $objectArray = $object->jsonSerialize();
                 }
 
-                // @todo: a logged-in user should be able to see the full object.
-                if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
-                    $unwantedProperties = [
-                        'schemaVersion',
-                        'relations',
-                        'locked',
-                        'owner',
-                        'folder',
-                        'application',
-                        'validation',
-                        'retention',
-                        'size',
-                        'deleted',
-                    ];
+                if ($isAnonymous === true
+                    && isset($objectArray['@self']) === true
+                    && is_array($objectArray['@self']) === true
+                ) {
                     // Remove unwanted properties from the @self array.
-                    $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                    $objectArray['@self'] = array_diff_key(
+                        $objectArray['@self'],
+                        array_flip(self::UNWANTED_SELF_PROPERTIES)
+                    );
                 }
 
                 return $objectArray;

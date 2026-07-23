@@ -13,6 +13,8 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -26,6 +28,7 @@ class PublicationServiceTest extends TestCase
     private IAppManager|MockObject $appManager;
     private DirectoryService|MockObject $directoryService;
     private IURLGenerator|MockObject $urlGenerator;
+    private IUserSession|MockObject $userSession;
     private PublicationService $service;
 
     protected function setUp(): void
@@ -36,6 +39,11 @@ class PublicationServiceTest extends TestCase
         $this->appManager       = $this->createMock(IAppManager::class);
         $this->directoryService = $this->createMock(DirectoryService::class);
         $this->urlGenerator     = $this->createMock(IURLGenerator::class);
+        $this->userSession      = $this->createMock(IUserSession::class);
+
+        // Default to an anonymous (logged-out) session so every pre-existing test in
+        // this file keeps asserting the historical stripped envelope without change.
+        $this->userSession->method('getUser')->willReturn(null);
 
         $this->service = new PublicationService(
             $this->config,
@@ -43,7 +51,7 @@ class PublicationServiceTest extends TestCase
             $this->container,
             $this->appManager,
             $this->directoryService,
-            $this->urlGenerator,
+            $this->userSession,
         );
     }
 
@@ -1630,6 +1638,145 @@ class PublicationServiceTest extends TestCase
         $this->assertSame('Keep', $self['title']);
         $this->assertArrayNotHasKey('schemaVersion', $self);
         $this->assertSame('kept', $result[0]['extra']);
+    }
+
+    // =======================================================================
+    // authenticated-read-parity (CAT-AUTH-001)
+    // =======================================================================
+
+    /**
+     * Golden fixture: the full set of properties `filterUnwantedProperties()` may
+     * see on an object's `@self` envelope, covering every stripped property plus a
+     * few kept ones. Frozen here so the anonymous-envelope assertion below is a
+     * byte-parity guard, not just a "some keys are missing" check (design.md D3).
+     *
+     * @return array<string, mixed>
+     */
+    private function goldenSelfFixture(): array
+    {
+        return [
+            'id'            => 'golden-1',
+            'register'      => 'reg-1',
+            'schema'        => 'sch-1',
+            'schemaVersion' => '1.2.3',
+            'relations'     => ['related-1'],
+            'locked'        => true,
+            'owner'         => 'admin',
+            'folder'        => '/files/golden',
+            'application'   => 'opencatalogi',
+            'validation'    => ['valid' => true],
+            'retention'     => ['period' => 'P1Y'],
+            'size'          => 1024,
+            'deleted'       => false,
+        ];
+    }
+
+    /**
+     * Build a PublicationService instance wired to the given (mocked) user session,
+     * reusing the shared config/request/container/appManager/directoryService mocks.
+     */
+    private function serviceWithSession(IUserSession|MockObject $userSession): PublicationService
+    {
+        return new PublicationService(
+            $this->config,
+            $this->request,
+            $this->container,
+            $this->appManager,
+            $this->directoryService,
+            $userSession,
+        );
+    }
+
+    /**
+     * Scenario: anonymous envelope is unchanged (CAT-AUTH-001).
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+     */
+    public function testFilterUnwantedPropertiesAnonymousEnvelopeIsByteIdenticalToGoldenFixture(): void
+    {
+        $anonymousSession = $this->createMock(IUserSession::class);
+        $anonymousSession->method('getUser')->willReturn(null);
+        $service = $this->serviceWithSession($anonymousSession);
+
+        $method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+        $method->setAccessible(true);
+
+        $obj    = $this->createSerializableObject(['@self' => $this->goldenSelfFixture()]);
+        $result = $method->invoke($service, [$obj]);
+
+        $this->assertSame(
+                [
+                    'id'       => 'golden-1',
+                    'register' => 'reg-1',
+                    'schema'   => 'sch-1',
+                ],
+                $result[0]['@self']
+                );
+    }
+
+    /**
+     * Scenario: authenticated caller sees full metadata (CAT-AUTH-001).
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+     */
+    public function testFilterUnwantedPropertiesAuthenticatedEnvelopeCarriesFullMetadata(): void
+    {
+        $user = $this->createMock(IUser::class);
+        $authenticatedSession = $this->createMock(IUserSession::class);
+        $authenticatedSession->method('getUser')->willReturn($user);
+        $service = $this->serviceWithSession($authenticatedSession);
+
+        $method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+        $method->setAccessible(true);
+
+        $goldenSelf = $this->goldenSelfFixture();
+        $obj        = $this->createSerializableObject(['@self' => $goldenSelf]);
+        $result     = $method->invoke($service, [$obj]);
+
+        // Every previously stripped property is present, unmodified.
+        $this->assertSame($goldenSelf, $result[0]['@self']);
+        $this->assertArrayHasKey('owner', $result[0]['@self']);
+        $this->assertArrayHasKey('locked', $result[0]['@self']);
+        $this->assertArrayHasKey('retention', $result[0]['@self']);
+        $this->assertSame('admin', $result[0]['@self']['owner']);
+    }
+
+    /**
+     * Scenario: session changes metadata richness, never the object set (CAT-AUTH-001).
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+     */
+    public function testFilterUnwantedPropertiesObjectSetParityBetweenAudiences(): void
+    {
+        $method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+        $method->setAccessible(true);
+
+        // Identical RBAC-governed result set for both audiences — the object set
+        // (ids + order) MUST be identical regardless of session.
+        $objects = [
+            $this->createSerializableObject(['@self' => ['id' => 'obj-a'] + $this->goldenSelfFixture()]),
+            $this->createSerializableObject(['@self' => ['id' => 'obj-b'] + $this->goldenSelfFixture()]),
+        ];
+
+        $anonymousSession = $this->createMock(IUserSession::class);
+        $anonymousSession->method('getUser')->willReturn(null);
+        $anonymousResult = $method->invoke($this->serviceWithSession($anonymousSession), $objects);
+
+        $user = $this->createMock(IUser::class);
+        $authenticatedSession = $this->createMock(IUserSession::class);
+        $authenticatedSession->method('getUser')->willReturn($user);
+        $authenticatedResult = $method->invoke($this->serviceWithSession($authenticatedSession), $objects);
+
+        $anonymousIds     = array_column(array_column($anonymousResult, '@self'), 'id');
+        $authenticatedIds = array_column(array_column($authenticatedResult, '@self'), 'id');
+
+        $this->assertSame(['obj-a', 'obj-b'], $anonymousIds);
+        $this->assertSame(['obj-a', 'obj-b'], $authenticatedIds);
+        $this->assertSame($anonymousIds, $authenticatedIds);
+
+        // Only the metadata richness differs.
+        $this->assertArrayNotHasKey('owner', $anonymousResult[0]['@self']);
+        $this->assertArrayHasKey('owner', $authenticatedResult[0]['@self']);
     }
 
     // =======================================================================

@@ -54,6 +54,7 @@ use Exception;
 use InvalidArgumentException;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IServerContainer;
+use OCP\IUserSession;
 use RuntimeException;
 
 /**
@@ -65,6 +66,9 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
 class PublicationService
 {
@@ -114,11 +118,19 @@ class PublicationService
     /**
      * Constructor for PublicationService.
      *
-     * @param IAppConfig       $config           App configuration interface
-     * @param IRequest         $request          Request interface
-     * @param IServerContainer $container        Server container for dependency injection
-     * @param IAppManager      $appManager       App manager for checking installed apps
-     * @param DirectoryService $directoryService Directory service for federation
+     * @param IAppConfig        $config           App configuration interface
+     * @param IRequest          $request          Request interface
+     * @param IServerContainer  $container        Server container for dependency injection
+     * @param IAppManager       $appManager       App manager for checking installed apps
+     * @param DirectoryService  $directoryService Directory service for federation
+     * @param IUserSession|null $userSession      User session used to decide whether the
+     *                                            anonymous `@self` strip list applies
+     *                                            (authenticated-read-parity, CAT-AUTH-001).
+     *                                            Nullable/optional so existing call sites and
+     *                                            tests keep working unmodified; a null session
+     *                                            fails closed to the anonymous (stripped) envelope.
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -126,6 +138,7 @@ class PublicationService
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
+        private readonly ?IUserSession $userSession=null,
     ) {
         $this->appName = 'opencatalogi';
 
@@ -967,31 +980,29 @@ class PublicationService
      * for a 'files' property within '@self' and ensures each file has a 'published' property.
      * Files without a 'published' property are removed.
      *
+     * Authenticated-read-parity (CAT-AUTH-001): the strip only applies to anonymous
+     * (logged-out) callers. OpenRegister RBAC already decided which objects the caller
+     * may read (via `_rbac: true` on the delegated search); this method only governs
+     * envelope metadata richness. Authenticated callers receive every `@self` property
+     * OpenRegister provides, unmodified.
+     *
      * @param array $objects Array of objects to filter
      *
      * @return array Filtered array of objects
      *
      * @spec openspec/specs/publications/spec.md
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
      */
     private function filterUnwantedProperties(array $objects): array
     {
-        // List of properties to remove from @self.
-        $unwantedProperties = [
-            'schemaVersion',
-            'relations',
-            'locked',
-            'owner',
-            'folder',
-            'application',
-            'validation',
-            'retention',
-            'size',
-            'deleted',
-        ];
+        // Single source of truth for the anonymous strip list (authenticated-read-parity,
+        // CAT-AUTH-001) — see CatalogiService::UNWANTED_SELF_PROPERTIES.
+        $unwantedProperties = CatalogiService::UNWANTED_SELF_PROPERTIES;
+        $isAnonymous        = ($this->userSession === null || $this->userSession->getUser() === null);
 
         // Filter each object.
         return array_map(
-            function ($object) use ($unwantedProperties) {
+            function ($object) use ($unwantedProperties, $isAnonymous) {
                 // The OR SOLR backend returns array shapes (not ObjectEntity instances)
                 // from searchObjectsPaginated; the magic-mapper backend returns entities.
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
@@ -1002,11 +1013,17 @@ class PublicationService
                     $objectArray = $object->jsonSerialize();
                 }
 
-                // Remove unwanted properties from the '@self' array.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
-                    $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                    // Remove unwanted properties from the '@self' array — anonymous callers
+                    // only (authenticated-read-parity, CAT-AUTH-001). This governs envelope
+                    // metadata richness only.
+                    if ($isAnonymous === true) {
+                        $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                    }
 
                     // Check for 'files' property and filter files without 'published'.
+                    // Unrelated to session/metadata richness — unchanged, applies to both
+                    // audiences, same as before this change.
                     if (isset($objectArray['@self']['files']) === true
                         && is_array($objectArray['@self']['files']) === true
                     ) {
@@ -1017,7 +1034,7 @@ class PublicationService
                             }
                         );
                     }
-                }
+                }//end if
 
                 return $objectArray;
             },
