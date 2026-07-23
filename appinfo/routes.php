@@ -108,6 +108,8 @@ return [
 		 * IMPORTANT: Routes are matched in order from top to bottom.
 		 * Specific routes MUST come BEFORE wildcard routes to avoid incorrect matching.
 		 */
+		// OpenAPI 3.1 self-documentation (public-api-openapi-document)
+		['name' => 'apiDocumentation#index', 'url' => '/api/openapi.json', 'verb' => 'GET'],
 		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
 		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
 		['name' => 'dcat#catalog', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[a-z0-9-]+']],

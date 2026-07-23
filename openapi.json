@@ -1,121 +1,2237 @@
 {
-    "openapi": "3.0.3",
-    "info": {
-        "title": "Open Catalogi",
-        "version": "0.0.1",
-        "description": "Open Catalogi Nextcloud",
-        "license": {
-            "name": "agpl"
-        }
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenCatalogi",
+    "version": "0.7.54",
+    "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.",
+    "license": {
+      "name": "EUPL-1.2",
+      "url": "https://eupl.eu/1.2/en/"
     },
-    "components": {
-        "securitySchemes": {
-            "basic_auth": {
-                "type": "http",
-                "scheme": "basic"
-            },
-            "bearer_auth": {
-                "type": "http",
-                "scheme": "bearer"
-            }
+    "contact": {
+      "name": "Conduction",
+      "url": "https://www.conduction.nl/",
+      "email": "info@conduction.nl"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}/index.php/apps/opencatalogi",
+      "description": "OpenCatalogi app base path on a Nextcloud instance.",
+      "variables": {
+        "host": {
+          "default": "your-nextcloud.example.org",
+          "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+        }
+      }
+    }
+  ],
+  "security": [],
+  "tags": [
+    {
+      "name": "Meta",
+      "description": "API self-documentation."
+    },
+    {
+      "name": "Search",
+      "description": "Public full-text search across publications and documents."
+    },
+    {
+      "name": "Catalogi",
+      "description": "Catalog listing and detail."
+    },
+    {
+      "name": "Publications",
+      "description": "Catalog-scoped publication read surface (wildcard `/api/{catalogSlug}` routes)."
+    },
+    {
+      "name": "DCAT",
+      "description": "DCAT-AP-NL harvest feeds with content negotiation."
+    },
+    {
+      "name": "Schema.org",
+      "description": "schema.org DataCatalog JSON-LD."
+    },
+    {
+      "name": "Sitemaps",
+      "description": "DIWOO sitemap XML output."
+    },
+    {
+      "name": "Robots",
+      "description": "robots.txt generation."
+    },
+    {
+      "name": "Federation",
+      "description": "Aggregated local + federated publication reads."
+    },
+    {
+      "name": "Directory",
+      "description": "Federated directory listing and peer sync."
+    },
+    {
+      "name": "Listings",
+      "description": "Individual directory listing lookup."
+    },
+    {
+      "name": "Glossary",
+      "description": "Public glossary terms."
+    },
+    {
+      "name": "Themes",
+      "description": "Public themes."
+    },
+    {
+      "name": "Menus",
+      "description": "Public menus."
+    },
+    {
+      "name": "Pages",
+      "description": "Public CMS pages."
+    },
+    {
+      "name": "OOAPI",
+      "description": "OOAPI 5.0 CORS preflight — the resource endpoints themselves require consumer-credential authentication and are out of scope for this document."
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "description": "Standard error envelope. Some endpoints use `error`, some `message`, a few both.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
         },
-        "schemas": {
-            "OCSMeta": {
+        "additionalProperties": true
+      },
+      "SelfMeta": {
+        "type": "object",
+        "description": "OpenRegister object metadata. The exact property set is register/schema dependent and MUST NOT be frozen here — additionalProperties covers it.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "register": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "schema": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "published": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ObjectRecord": {
+        "type": "object",
+        "description": "A single register-defined object (publication, document, catalog, page, menu, theme, glossary term, listing, …). Properties beyond `@self` are defined by the instance's configured schema and are intentionally NOT frozen in this document (design decision D3) — additionalProperties: true.",
+        "properties": {
+          "@self": {
+            "$ref": "#/components/schemas/SelfMeta"
+          }
+        },
+        "additionalProperties": true
+      },
+      "PaginatedEnvelope": {
+        "type": "object",
+        "description": "Standard OpenRegister `searchObjectsPaginated` list envelope.",
+        "required": [
+          "results",
+          "total"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjectRecord"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total matching objects across all pages."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current 1-based page number."
+          },
+          "pages": {
+            "type": "integer",
+            "description": "Total number of pages."
+          },
+          "facets": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Facet counts, present when `_facets` was requested.",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchEnvelope": {
+        "type": "object",
+        "description": "Public full-text search result envelope (WOO-506). Flat mix of publication and document rows, discriminated by `@self.schema`.",
+        "required": [
+          "results",
+          "total"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ObjectRecord"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "CatalogPublicationsEnvelope": {
+        "description": "PaginatedEnvelope plus catalog-scoping metadata added by PublicationsController::index — `@catalog` (slug/title/schemas/registers) and resolved schema/register objects merged into `@self`.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "@catalog": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "schemas": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "registers": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        ]
+      },
+      "FederationEnvelope": {
+        "description": "Aggregated local + federated publication list with pagination links.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer"
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "prev": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "facetable": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        ]
+      },
+      "DirectoryListEnvelope": {
+        "type": "object",
+        "description": "Combined local + known-peer directory listing data.",
+        "additionalProperties": true
+      },
+      "DirectorySyncResult": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "SchemaOrgDataCatalog": {
+        "type": "object",
+        "description": "A schema.org `DataCatalog` JSON-LD node (single document, no result envelope).",
+        "properties": {
+          "@context": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string",
+            "enum": [
+              "DataCatalog"
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "DcatDocument": {
+        "description": "DCAT-AP-NL RDF document. Serialization is content-negotiated via `?format=` (authoritative) or the `Accept` header; body shape depends on the negotiated media type (JSON-LD object, or a Turtle/RDF-XML string)."
+      }
+    },
+    "parameters": {
+      "LimitParam": {
+        "name": "_limit",
+        "in": "query",
+        "description": "Page size.",
+        "schema": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 0
+        }
+      },
+      "PageParam": {
+        "name": "_page",
+        "in": "query",
+        "description": "1-based page number.",
+        "schema": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        }
+      },
+      "SearchParam": {
+        "name": "_search",
+        "in": "query",
+        "description": "Free-text search term applied across the scoped schema(s).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ExtendParam": {
+        "name": "_extend",
+        "in": "query",
+        "description": "Comma-separated list (or repeated param) of relations to expand inline. Sanitised server-side on the public surface — anonymous callers cannot traverse to unrelated objects via arbitrary extend targets.",
+        "schema": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "FacetsParam": {
+        "name": "_facets",
+        "in": "query",
+        "description": "Facet request, e.g. `_facets[@self][register]=true`. Object shape mirrors OpenRegister's facet-query dialect; additionalProperties covers the nested keys.",
+        "style": "deepObject",
+        "explode": true,
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "ContentParam": {
+        "name": "_content",
+        "in": "query",
+        "description": "Opt-in (default false): widen full-text search to OR-extracted document body text in addition to metadata (WOO-517).",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "EmptyParam": {
+        "name": "_empty",
+        "in": "query",
+        "description": "When true, keep empty-valued properties in results instead of stripping them.",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "FormatParam": {
+        "name": "format",
+        "in": "query",
+        "description": "Explicit DCAT serialization format; overrides `Accept` header negotiation.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "jsonld",
+            "turtle",
+            "rdfxml"
+          ]
+        }
+      },
+      "DcatPageParam": {
+        "name": "page",
+        "in": "query",
+        "description": "1-based page number for harvester-grade pagination of the per-catalog DCAT feed.",
+        "schema": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        }
+      },
+      "SitemapPageParam": {
+        "name": "page",
+        "in": "query",
+        "description": "1-based page number for the sitemap page document.",
+        "schema": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1
+        }
+      },
+      "CatalogSlugPath": {
+        "name": "catalogSlug",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        }
+      },
+      "IdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SlugPath": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "CategoryCodePath": {
+        "name": "categoryCode",
+        "in": "path",
+        "required": true,
+        "description": "DIWOO information-category code (e.g. `infocat014`).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "CourseIdPath": {
+        "name": "courseId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "headers": {
+      "AccessControlAllowOrigin": {
+        "description": "CORS allowed origin (`*` unless an allowlist is configured).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AccessControlAllowMethods": {
+        "description": "CORS allowed HTTP methods.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "AccessControlAllowHeaders": {
+        "description": "CORS allowed request headers.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "The requested resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Unexpected server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "The search/data backend (OpenRegister) is not installed or not configured.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "CorsPreflight": {
+        "description": "Preflight answered; no body.",
+        "headers": {
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AccessControlAllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AccessControlAllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AccessControlAllowHeaders"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/catalogi": {
+      "get": {
+        "operationId": "catalogi-index",
+        "summary": "List catalogs",
+        "description": "List all catalogs the caller may see (RBAC-filtered).",
+        "tags": [
+          "Catalogi"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          },
+          {
+            "$ref": "#/components/parameters/FacetsParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "catalogi-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/catalogi`.",
+        "tags": [
+          "Catalogi"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogi/{id}": {
+      "get": {
+        "operationId": "catalogi-show",
+        "summary": "Get a catalog",
+        "description": "Retrieve a single catalog by id, plus the objects filtered by the catalog's registers/schemas.",
+        "tags": [
+          "Catalogi"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "catalogi-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/catalogi/{id}`.",
+        "tags": [
+          "Catalogi"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/dcat": {
+      "get": {
+        "operationId": "dcat-catalog",
+        "summary": "Per-catalog DCAT-AP-NL document",
+        "description": "DCAT-AP-NL document for one catalog. Only publicly-visible objects appear (DCAT-003). Supports conditional GET via ETag (304) and harvester-grade pagination via `page` (DCAT-008).",
+        "tags": [
+          "DCAT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/FormatParam"
+          },
+          {
+            "$ref": "#/components/parameters/DcatPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcatDocument"
+                }
+              },
+              "text/turtle": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcatDocument"
+                }
+              },
+              "application/rdf+xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcatDocument"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified (ETag matched `If-None-Match`)."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "description": "Unsupported format requested."
+          }
+        }
+      },
+      "options": {
+        "operationId": "dcat-catalog-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for the per-catalog DCAT document.",
+        "tags": [
+          "DCAT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/courses": {
+      "options": {
+        "operationId": "ooapi-preflight-4",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings": {
+      "options": {
+        "operationId": "ooapi-preflight-6",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/CourseIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/courses/{id}": {
+      "options": {
+        "operationId": "ooapi-preflight-5",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}": {
+      "options": {
+        "operationId": "ooapi-preflight-7",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/organizations": {
+      "options": {
+        "operationId": "ooapi-preflight-0",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}": {
+      "options": {
+        "operationId": "ooapi-preflight-1",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/programs": {
+      "options": {
+        "operationId": "ooapi-preflight-2",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/ooapi/v5/programs/{id}": {
+      "options": {
+        "operationId": "ooapi-preflight-3",
+        "summary": "CORS preflight",
+        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "tags": [
+          "OOAPI"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/catalogs/{catalogSlug}/schema": {
+      "get": {
+        "operationId": "schemaorg-catalog",
+        "summary": "schema.org DataCatalog document",
+        "description": "A single schema.org `DataCatalog` JSON-LD node for the given catalog. Only publicly-visible publications are listed.",
+        "tags": [
+          "Schema.org"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaOrgDataCatalog"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "schemaorg-catalog-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Schema.org"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/dcat": {
+      "get": {
+        "operationId": "dcat-instance",
+        "summary": "Instance-level DCAT-AP-NL catalog document",
+        "description": "DCAT-AP-NL document listing every DCAT-enabled catalog on this instance.",
+        "tags": [
+          "DCAT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FormatParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcatDocument"
+                }
+              },
+              "text/turtle": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcatDocument"
+                }
+              },
+              "application/rdf+xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DcatDocument"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Unsupported format requested."
+          }
+        }
+      },
+      "options": {
+        "operationId": "dcat-instance-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/dcat`.",
+        "tags": [
+          "DCAT"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/directory": {
+      "get": {
+        "operationId": "directory-index",
+        "summary": "List directory entries",
+        "description": "Combined local + known-peer federated directory listing.",
+        "tags": [
+          "Directory"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectoryListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "directory-update",
+        "summary": "Sync a federated directory",
+        "description": "Peer broadcast-receive endpoint — federated instances POST here (via BroadcastService) to announce themselves. Not for admin UI use; admin-initiated syncs go through `POST /api/listings/add`.",
+        "tags": [
+          "Directory"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
                 "type": "object",
                 "required": [
-                    "status",
-                    "statuscode"
+                  "directory"
                 ],
                 "properties": {
-                    "status": {
-                        "type": "string"
-                    },
-                    "statuscode": {
-                        "type": "integer"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "totalitems": {
-                        "type": "string"
-                    },
-                    "itemsperpage": {
-                        "type": "string"
-                    }
+                  "directory": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL of the peer's directory endpoint."
+                  }
                 }
+              }
             }
-        }
-    },
-    "paths": {
-        "/ocs/v2.php/apps/dsonextcloud/api": {
-            "get": {
-                "operationId": "api-index",
-                "summary": "An example API endpoint",
-                "tags": [
-                    "api"
-                ],
-                "security": [
-                    {
-                        "bearer_auth": []
-                    },
-                    {
-                        "basic_auth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "OCS-APIRequest",
-                        "in": "header",
-                        "description": "Required to be true for the API request to pass",
-                        "required": true,
-                        "schema": {
-                            "type": "boolean",
-                            "default": true
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Data returned",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "ocs"
-                                    ],
-                                    "properties": {
-                                        "ocs": {
-                                            "type": "object",
-                                            "required": [
-                                                "meta",
-                                                "data"
-                                            ],
-                                            "properties": {
-                                                "meta": {
-                                                    "$ref": "#/components/schemas/OCSMeta"
-                                                },
-                                                "data": {
-                                                    "type": "object",
-                                                    "required": [
-                                                        "message"
-                                                    ],
-                                                    "properties": {
-                                                        "message": {
-                                                            "type": "string"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Synchronized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectorySyncResult"
                 }
+              }
             }
+          },
+          "400": {
+            "description": "Missing or invalid `directory` URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
+      },
+      "options": {
+        "operationId": "directory-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/directory`.",
+        "tags": [
+          "Directory"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
     },
-    "tags": []
+    "/api/federation/publications": {
+      "get": {
+        "operationId": "federation-publications",
+        "summary": "List aggregated publications",
+        "description": "Local + federated publications, aggregated and paginated across sources.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/FacetsParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/federation/publications/{id}": {
+      "get": {
+        "operationId": "federation-publication",
+        "summary": "Get an aggregated publication",
+        "description": "Retrieve one publication by id from local or federated sources.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/federation/publications/{id}/attachments": {
+      "get": {
+        "operationId": "federation-publication-attachments",
+        "summary": "Federated publication attachments",
+        "description": "List a federated publication's attachments.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/federation/publications/{id}/download": {
+      "get": {
+        "operationId": "federation-publication-download",
+        "summary": "Download a federated publication attachment",
+        "description": "Stream a federated publication's file content.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file content.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/federation/publications/{id}/used": {
+      "get": {
+        "operationId": "federation-publication-used",
+        "summary": "Federated publication relations (used by)",
+        "description": "Objects that reference this publication.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/federation/publications/{id}/uses": {
+      "get": {
+        "operationId": "federation-publication-uses",
+        "summary": "Federated publication relations (uses)",
+        "description": "Objects this publication references.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/glossary": {
+      "get": {
+        "operationId": "glossary-index",
+        "summary": "List glossary",
+        "description": "Public list of glossary.",
+        "tags": [
+          "Glossary"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "glossary-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/glossary`.",
+        "tags": [
+          "Glossary"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/glossary/{id}": {
+      "get": {
+        "operationId": "glossary-show",
+        "summary": "Get a glossary term",
+        "description": "Retrieve a single glossary entry.",
+        "tags": [
+          "Glossary"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "glossary-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/glossary/{id}`.",
+        "tags": [
+          "Glossary"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/listings": {
+      "options": {
+        "operationId": "listings-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/listings`. `GET`/`POST` on this exact path require an authenticated (non-admin) session — out of scope for this anonymous-public document.",
+        "tags": [
+          "Listings"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/listings/add": {
+      "options": {
+        "operationId": "listings-add-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/listings/add`. The `POST` action is admin-authenticated — out of scope here.",
+        "tags": [
+          "Listings"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/listings/sync": {
+      "options": {
+        "operationId": "listings-sync-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/listings/sync`. The `POST` action is admin-authenticated — out of scope here.",
+        "tags": [
+          "Listings"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/listings/{id}": {
+      "get": {
+        "operationId": "listings-show",
+        "summary": "Get a listing",
+        "description": "Retrieve a single directory listing by id.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "listings-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Listings"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/menus": {
+      "get": {
+        "operationId": "menus-index",
+        "summary": "List menus",
+        "description": "Public list of menus.",
+        "tags": [
+          "Menus"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "menus-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/menus`.",
+        "tags": [
+          "Menus"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/menus/{id}": {
+      "get": {
+        "operationId": "menus-show",
+        "summary": "Get a menu",
+        "description": "Retrieve a single menus entry.",
+        "tags": [
+          "Menus"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "menus-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/menus/{id}`.",
+        "tags": [
+          "Menus"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/openapi.json": {
+      "get": {
+        "operationId": "openapi-document",
+        "summary": "Fetch this OpenAPI document",
+        "description": "Serves this static document with `info.version` substituted at serve time from the installed app version (`IAppManager::getAppVersion('opencatalogi')`) and CORS headers, same posture as the rest of the public surface.",
+        "tags": [
+          "Meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "The OpenAPI 3.1 document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages": {
+      "get": {
+        "operationId": "pages-index",
+        "summary": "List pages",
+        "description": "Public list of pages.",
+        "tags": [
+          "Pages"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "pages-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/pages`.",
+        "tags": [
+          "Pages"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/pages/{slug}": {
+      "get": {
+        "operationId": "pages-show",
+        "summary": "Get a page",
+        "description": "Retrieve a single pages entry.",
+        "tags": [
+          "Pages"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "pages-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/pages/{slug}`.",
+        "tags": [
+          "Pages"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/robots.txt": {
+      "get": {
+        "operationId": "robots-index",
+        "summary": "robots.txt",
+        "description": "Generated robots.txt referencing every catalog/category sitemap.",
+        "tags": [
+          "Robots"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "operationId": "search-index",
+        "summary": "Public full-text search",
+        "description": "Anonymous-reachable full-text search across publications and documents (WOO-506). Metadata matching always runs; pass `_content=true` to also match OR-extracted document body text (WOO-517). Only publicly-visible rows are ever returned, regardless of caller identity.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ContentParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          },
+          {
+            "$ref": "#/components/parameters/FacetsParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/themes": {
+      "get": {
+        "operationId": "themes-index",
+        "summary": "List themes",
+        "description": "Public list of themes.",
+        "tags": [
+          "Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "themes-index-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/themes`.",
+        "tags": [
+          "Themes"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/themes/{id}": {
+      "get": {
+        "operationId": "themes-show",
+        "summary": "Get a theme",
+        "description": "Retrieve a single themes entry.",
+        "tags": [
+          "Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "themes-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/themes/{id}`.",
+        "tags": [
+          "Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}": {
+      "get": {
+        "operationId": "publications-index",
+        "summary": "List publications in a catalog",
+        "description": "Catalog-scoped publication list. Matched LAST among the public routes (routes.php ordering) so specific paths like `/api/search` or `/api/catalogi` are never shadowed by this wildcard.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          },
+          {
+            "$ref": "#/components/parameters/FacetsParam"
+          },
+          {
+            "$ref": "#/components/parameters/EmptyParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogPublicationsEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for the catalog-scoped publications surface.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/sitemaps/{categoryCode}": {
+      "get": {
+        "operationId": "sitemap-index",
+        "summary": "DIWOO sitemap index",
+        "description": "Sitemap index (list of sitemap page URLs) for a catalog and Woo information category.",
+        "tags": [
+          "Sitemaps"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/CategoryCodePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/sitemaps/{categoryCode}/publications": {
+      "get": {
+        "operationId": "sitemap-page",
+        "summary": "DIWOO sitemap page",
+        "description": "One page of the DIWOO sitemap for a catalog and Woo information category.",
+        "tags": [
+          "Sitemaps"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/CategoryCodePath"
+          },
+          {
+            "$ref": "#/components/parameters/SitemapPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/{id}": {
+      "get": {
+        "operationId": "publications-show",
+        "summary": "Get a publication",
+        "description": "Retrieve a single publication by id, validated to belong to the given catalog's schemas/registers.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "$ref": "#/components/parameters/ExtendParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/{id}/attachments": {
+      "get": {
+        "operationId": "publications-attachments",
+        "summary": "Publication attachments",
+        "description": "List a publication's file attachments.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-attachments-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/{id}/download": {
+      "get": {
+        "operationId": "publications-download",
+        "summary": "Download a publication attachment",
+        "description": "Stream a publication's file content.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file content.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-download-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/{id}/used": {
+      "get": {
+        "operationId": "publications-used",
+        "summary": "Publication relations (used by)",
+        "description": "Objects that reference (use) this publication (B → A).",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-used-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/api/{catalogSlug}/{id}/uses": {
+      "get": {
+        "operationId": "publications-uses",
+        "summary": "Publication relations (uses)",
+        "description": "Objects this publication references (A → B).",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-uses-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    }
+  }
 }
