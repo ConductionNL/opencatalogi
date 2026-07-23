@@ -1,0 +1,8 @@
+{
+  "spec_slug": "public-api-openapi-document",
+  "title": "Accurate public OpenAPI document + anti-rot parity test",
+  "app": "opencatalogi",
+  "repo": "https://github.com/ConductionNL/opencatalogi",
+  "depends_on": [],
+  "issue": null
+}
