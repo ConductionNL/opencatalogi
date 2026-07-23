@@ -2116,4 +2116,82 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('7', $result['document_register']);
 
     }//end testUpdateSettingsAcceptsDocumentKeys()
+
+    // ---------------------------------------------------------------
+    // updateObjectTypeConfiguration() — WOO key map
+    // (fix-woo-capability-provisioning / WOO-PROV-002)
+    // ---------------------------------------------------------------
+
+    /**
+     * A mocked import result containing the `publication` register and both
+     * `wooBatch`/`wooAssessment` schemas must set all three WOO config keys:
+     * `woo_register` (the register id), `woo_batch_schema` and
+     * `woo_assessment_schema` (the respective schema ids).
+     *
+     * @return void
+     */
+    public function testUpdateObjectTypeConfigurationSetsAllThreeWooKeys(): void
+    {
+        $stored = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$stored) {
+                    $stored[$key] = $value;
+                    return true;
+                }
+            );
+
+        $importResult = [
+            'registers' => [
+                ['id' => 99, 'slug' => 'publication'],
+            ],
+            'schemas'   => [
+                ['id' => 101, 'slug' => 'wooBatch'],
+                ['id' => 102, 'slug' => 'wooAssessment'],
+            ],
+        ];
+
+        $this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
+
+        $this->assertSame('99', $stored['woo_register']);
+        $this->assertSame('101', $stored['woo_batch_schema']);
+        $this->assertSame('102', $stored['woo_assessment_schema']);
+
+    }//end testUpdateObjectTypeConfigurationSetsAllThreeWooKeys()
+
+    /**
+     * When the import result does not contain a `wooAssessment` schema,
+     * `woo_assessment_schema` must be left untouched (never overwritten with
+     * an empty value) — while `woo_register` and `woo_batch_schema` are still
+     * set from the data that IS present.
+     *
+     * @return void
+     */
+    public function testUpdateObjectTypeConfigurationLeavesMissingWooAssessmentSchemaUntouched(): void
+    {
+        $stored = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$stored) {
+                    $stored[$key] = $value;
+                    return true;
+                }
+            );
+
+        $importResult = [
+            'registers' => [
+                ['id' => 99, 'slug' => 'publication'],
+            ],
+            'schemas'   => [
+                ['id' => 101, 'slug' => 'wooBatch'],
+            ],
+        ];
+
+        $this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
+
+        $this->assertSame('99', $stored['woo_register']);
+        $this->assertSame('101', $stored['woo_batch_schema']);
+        $this->assertArrayNotHasKey('woo_assessment_schema', $stored);
+
+    }//end testUpdateObjectTypeConfigurationLeavesMissingWooAssessmentSchemaUntouched()
 }//end class

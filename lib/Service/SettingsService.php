@@ -916,6 +916,7 @@ class SettingsService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
      * @spec openspec/specs/admin-settings/spec.md
+     * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-woo-config-keys-are-auto-configured-on-install-and-repair-woo-prov-002
      */
     private function updateObjectTypeConfiguration(array $importResult): void
     {
@@ -949,6 +950,17 @@ class SettingsService
             'ooapi_courses'   => 'course',
             'ooapi_programs'  => 'program',
             'ooapi_offerings' => 'offering',
+        ];
+
+        // WOO transparency (fix-woo-capability-provisioning / WOO-PROV-002): the WOO
+        // config-key prefixes deliberately differ from their schema slugs (`woo_batch_schema`
+        // for `wooBatch`, `woo_assessment_schema` for `wooAssessment`) — same rationale as
+        // $ooapiTypeMap above. `woo_register` has no matching schema slug at all (both
+        // wooBatch and wooAssessment live in the SAME shared publication register, D1), so
+        // it is set directly from $registerId alongside this map rather than inside it.
+        $wooSchemaMap = [
+            'woo_batch_schema'      => 'wooBatch',
+            'woo_assessment_schema' => 'wooAssessment',
         ];
 
         // Build a map of schema slugs to schema IDs.
@@ -1025,6 +1037,19 @@ class SettingsService
 
             if ($registerId !== null) {
                 $this->config->setValueString($this->appName, "{$configPrefix}_register", (string) $registerId);
+            }
+        }
+
+        // WOO transparency: the shared publication register id, plus the two
+        // explicitly-mapped schema ids. Idempotent + never overwrite an existing
+        // value with an empty one — mirrors the conditional writes above (D5).
+        if ($registerId !== null) {
+            $this->config->setValueString($this->appName, 'woo_register', (string) $registerId);
+        }
+
+        foreach ($wooSchemaMap as $configKey => $schemaSlug) {
+            if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+                $this->config->setValueString($this->appName, $configKey, (string) $schemaMap[$schemaSlug]);
             }
         }
 

@@ -82,6 +82,9 @@ class ProvideManifestConfigStateListener implements IEventListener
         'glossary_schema',
         'publication_register',
         'publication_schema',
+        'woo_register',
+        'woo_batch_schema',
+        'woo_assessment_schema',
     ];
 
     /**
@@ -107,6 +110,7 @@ class ProvideManifestConfigStateListener implements IEventListener
      * @return void
      *
      * @spec exclude ADR-040 AppHost gap fix; relocates UiController's specced initial-state provision, controller-independent.
+     * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-every-manifest-resolve-sentinel-is-backed-by-provided-initial-state-woo-prov-003
      */
     public function handle(Event $event): void
     {
