@@ -401,7 +401,7 @@ class SettingsService
             'glossary',
             'document',
             'usageCounter',
-            // ooapi-catalog-publication (OOAPI-010): materialized course/program/offering
+            // OOAPI-catalog-publication (OOAPI-010): materialized course/program/offering
             // scope. Included here so the generic Settings.vue schema selector renders
             // them like every other object type — no bespoke frontend needed.
             'ooapi_courses',
@@ -460,6 +460,13 @@ class SettingsService
         // framework"). Per-catalog credential scoping (design.md open question 3) is
         // NOT implemented in this MVP; the allowlist is instance-wide.
         $defaults['ooapi_consumers'] = '';
+
+        // Woo-index registration status (WOO-HR-003, woo-index-harvester-readiness
+        // design D3): tracks this instance's relationship to the national Woo-index /
+        // Register van Overheidsorganisaties. Operational config, not a publication.
+        $defaults['woo_index_registration_status'] = 'not_registered';
+        $defaults['woo_index_registration_url']    = '';
+        $defaults['woo_index_registration_at']     = '';
 
         // Get the current values for the object types from the configuration.
         try {
@@ -583,7 +590,7 @@ class SettingsService
                 'menu',
                 'glossary',
                 'document',
-                // ooapi-catalog-publication (OOAPI-010).
+                // OOAPI-catalog-publication (OOAPI-010).
                 'ooapi_courses',
                 'ooapi_programs',
                 'ooapi_offerings',
@@ -610,6 +617,11 @@ class SettingsService
 
             // OOAPI 5.0 consumer-credential allowlist (OOAPI-008/OOAPI-010).
             $allowedKeys[] = 'ooapi_consumers';
+
+            // Woo-index registration status (WOO-HR-003).
+            $allowedKeys[] = 'woo_index_registration_status';
+            $allowedKeys[] = 'woo_index_registration_url';
+            $allowedKeys[] = 'woo_index_registration_at';
 
             $updated = [];
 
@@ -924,7 +936,7 @@ class SettingsService
             'glossary',
         ];
 
-        // ooapi-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
+        // OOAPI-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
         // schemas are added to the SAME shared 'publication' register via a register.d
         // fragment (ADR-037) — this app's loadSettings()/importFromApp() pipeline only
         // ever creates one OpenRegister register, so a genuinely separate "dedicated"
@@ -1002,7 +1014,7 @@ class SettingsService
             }
         }
 
-        // ooapi-catalog-publication: same two steps, keyed by the OOAPI-010 config
+        // OOAPI-catalog-publication: same two steps, keyed by the OOAPI-010 config
         // prefix rather than the schema slug (see $ooapiTypeMap comment above).
         foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
             $this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
@@ -1017,7 +1029,6 @@ class SettingsService
         }
 
     }//end updateObjectTypeConfiguration()
-
 
     /**
      * Ensure every local catalog has a non-empty registers/schemas scope.
@@ -1062,12 +1073,14 @@ class SettingsService
             }
 
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $catalogs      = $objectService->searchObjects([
-                '@self' => [
-                    'register' => $catalogRegister,
-                    'schema'   => $catalogSchema,
-                ],
-            ]);
+            $catalogs      = $objectService->searchObjects(
+                query: [
+                    '@self' => [
+                        'register' => $catalogRegister,
+                        'schema'   => $catalogSchema,
+                    ],
+                ]
+            );
 
             foreach ($catalogs as $catalog) {
                 $catalogData = $catalog;
@@ -1079,8 +1092,8 @@ class SettingsService
                     continue;
                 }
 
-                $registers = ($catalogData['registers'] ?? null);
-                $schemas   = ($catalogData['schemas'] ?? null);
+                $registers      = ($catalogData['registers'] ?? null);
+                $schemas        = ($catalogData['schemas'] ?? null);
                 $needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
                 $needsSchemas   = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
 
