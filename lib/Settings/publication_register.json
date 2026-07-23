@@ -36,7 +36,9 @@
           "page",
           "menu",
           "glossary",
-          "usageCounter"
+          "usageCounter",
+          "wooBatch",
+          "wooAssessment"
         ],
         "tablePrefix": "",
         "folder": "Open Registers/Publication Register",
@@ -88,6 +90,16 @@
               "magicMapping": true,
               "autoCreateTable": true,
               "comment": "Internal aggregate usage counters (publication, date, kind, count) - high write volume, dedicated table; never published, excluded from public surfaces (ANA-002)"
+            },
+            "wooBatch": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "Woo disclosure batch (case, status, deck board, document assessment refs) - admin-only workflow storage, provisioned so /woo has a real register/schema to resolve against"
+            },
+            "wooAssessment": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "Per-document Woo openbaarheid assessment (weigeringsgronden, redaction, anonymized document) - admin-only workflow storage"
             }
           }
         }
@@ -1445,6 +1457,249 @@
             "minimum": 0,
             "facetable": false,
             "title": "Count"
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": false,
+        "authorization": {
+          "read": [
+            "admin"
+          ],
+          "create": [
+            "admin"
+          ],
+          "update": [
+            "admin"
+          ],
+          "delete": [
+            "admin"
+          ]
+        }
+      },
+      "wooBatch": {
+        "slug": "wooBatch",
+        "title": "WooBatch",
+        "version": "0.1.0",
+        "published": null,
+        "summary": "A Woo disclosure batch grouping the documents released for one Woo-verzoek case",
+        "description": "A Woo disclosure batch represents one Woo-verzoek (Wet open overheid request) case moving through document collection, per-document assessment, review and publication to the public reading room. It is the OpenRegister-backed storage WooService reads and writes; the document queue itself is provisioned as a Deck board via the consumed deck leaf (ADR-022) rather than a bespoke queue table.",
+        "icon": null,
+        "required": [
+          "caseReference",
+          "status"
+        ],
+        "properties": {
+          "caseReference": {
+            "type": "string",
+            "description": "The Procest Woo-verzoek case reference this batch belongs to",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "Case Reference"
+          },
+          "status": {
+            "type": "string",
+            "description": "Overall batch lifecycle status",
+            "enum": [
+              "in_progress",
+              "ready_for_review",
+              "published"
+            ],
+            "facetable": true,
+            "title": "Status"
+          },
+          "deckBoardId": {
+            "type": "integer",
+            "description": "The Deck board id provisioned (or re-used) for this batch's document queue",
+            "facetable": false,
+            "title": "Deck Board ID"
+          },
+          "deckAvailable": {
+            "type": "boolean",
+            "description": "Whether the Deck app was available when this batch was created; false means the document queue/board could not be provisioned",
+            "facetable": true,
+            "title": "Deck Available"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "wooAssessment"
+            },
+            "description": "References to the document-assessment objects collected in this batch",
+            "facetable": false,
+            "title": "Documents"
+          },
+          "besluit": {
+            "type": "string",
+            "description": "The Woo decision letter (besluit) content or reference for this batch",
+            "facetable": false,
+            "title": "Besluit"
+          },
+          "inventarislijst": {
+            "type": "string",
+            "description": "The generated inventarislijst (document inventory list) content or reference for this batch",
+            "facetable": false,
+            "title": "Inventarislijst"
+          },
+          "documentSummary": {
+            "type": "object",
+            "description": "Derived per-status document assessment progress (counts, total, assessed, progress label); computed on read from the linked assessment objects, not independently authoritative storage",
+            "additionalProperties": true,
+            "facetable": false,
+            "title": "Document Summary"
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "Timestamp the batch was published to the public reading room",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Published At"
+          },
+          "publishedCount": {
+            "type": "integer",
+            "description": "Number of documents published to the reading room (openbaar + deels_openbaar assessments)",
+            "minimum": 0,
+            "facetable": false,
+            "title": "Published Count"
+          },
+          "wooPublication": {
+            "type": "object",
+            "description": "The publication metadata recorded when this batch was published: decision date, request reference, category, document/published counts, besluit, inventarislijst, per-document listings and the reading-room URL",
+            "additionalProperties": true,
+            "facetable": false,
+            "title": "Woo Publication"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp the batch was created",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Created At"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp the batch was last updated",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Updated At"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "The user id that created this batch, or \"system\" when created without an active user session",
+            "facetable": true,
+            "title": "Created By"
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": false,
+        "authorization": {
+          "read": [
+            "admin"
+          ],
+          "create": [
+            "admin"
+          ],
+          "update": [
+            "admin"
+          ],
+          "delete": [
+            "admin"
+          ]
+        }
+      },
+      "wooAssessment": {
+        "slug": "wooAssessment",
+        "title": "WooAssessment",
+        "version": "0.1.0",
+        "published": null,
+        "summary": "A per-document openbaarheid assessment within a Woo disclosure batch",
+        "description": "A document-assessment object represents the openbaarheid (public disclosure) decision for a single document collected in a Woo disclosure batch: which weigeringsgronden (WOO Art. 5.1/5.2 refusal grounds) apply, any redaction instructions, and the resulting anonymized document when partially disclosed. Each assessment is linked to a Deck card via the consumed deck leaf so its status is reflected on the document queue board.",
+        "icon": null,
+        "required": [
+          "documentReference",
+          "assessment"
+        ],
+        "properties": {
+          "documentReference": {
+            "type": "string",
+            "description": "Reference to the source document being assessed (id or path from the originating case system)",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "Document Reference"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "The file name of the document being assessed",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "File Name"
+          },
+          "fileType": {
+            "type": "string",
+            "description": "The file type (MIME type or extension) of the document being assessed",
+            "maxLength": 255,
+            "facetable": false,
+            "title": "File Type"
+          },
+          "assessment": {
+            "type": "string",
+            "description": "The openbaarheid assessment decision for this document",
+            "enum": [
+              "te_beoordelen",
+              "openbaar",
+              "niet_openbaar",
+              "deels_openbaar"
+            ],
+            "facetable": true,
+            "title": "Assessment"
+          },
+          "weigeringsgronden": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Selected WOO Art. 5.1/5.2 refusal ground article references (required when the assessment is \"niet_openbaar\")",
+            "facetable": true,
+            "title": "Weigeringsgronden"
+          },
+          "redactionInstructions": {
+            "type": "string",
+            "description": "Free-text redaction instructions for a partially-disclosed (deels_openbaar) document",
+            "facetable": false,
+            "title": "Redaction Instructions"
+          },
+          "anonymizedDocument": {
+            "type": "string",
+            "description": "Reference to the anonymized/redacted version of the document, used for deels_openbaar publication",
+            "facetable": false,
+            "title": "Anonymized Document"
+          },
+          "caseReference": {
+            "type": "string",
+            "description": "The Procest Woo-verzoek case reference this assessment belongs to",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "Case Reference"
+          },
+          "assessedBy": {
+            "type": "string",
+            "description": "The user id that made this assessment decision, or \"system\" when assessed without an active user session",
+            "facetable": true,
+            "title": "Assessed By"
+          },
+          "assessedAt": {
+            "type": "string",
+            "description": "Timestamp this assessment decision was made",
+            "format": "date-time",
+            "facetable": true,
+            "title": "Assessed At"
           }
         },
         "configuration": {
