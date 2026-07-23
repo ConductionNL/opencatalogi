@@ -19,6 +19,8 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\ICache;
 use OCP\ICacheFactory;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -45,6 +47,8 @@ class CatalogiServiceTest extends TestCase
 
     private ICache|MockObject $cache;
 
+    private IUserSession|MockObject $userSession;
+
     private CatalogiService $service;
 
     protected function setUp(): void
@@ -56,10 +60,15 @@ class CatalogiServiceTest extends TestCase
         $this->cacheFactory = $this->createMock(ICacheFactory::class);
         $this->logger       = $this->createMock(LoggerInterface::class);
         $this->cache        = $this->createMock(ICache::class);
+        $this->userSession  = $this->createMock(IUserSession::class);
 
         $this->cacheFactory->method('createDistributed')
             ->with('opencatalogi_catalogs')
             ->willReturn($this->cache);
+
+        // Default to an anonymous (logged-out) session so every pre-existing test in
+        // this file keeps asserting the historical stripped envelope without change.
+        $this->userSession->method('getUser')->willReturn(null);
 
         $this->service = new CatalogiService(
             $this->config,
@@ -68,6 +77,7 @@ class CatalogiServiceTest extends TestCase
             $this->appManager,
             $this->cacheFactory,
             $this->logger,
+            $this->userSession,
         );
     }//end setUp()
 
@@ -928,6 +938,249 @@ class CatalogiServiceTest extends TestCase
 
         $this->assertInstanceOf(JSONResponse::class, $response);
     }//end testIndexPagination()
+
+    // ──────────────────────────────────────────────────────────
+    // authenticated-read-parity (CAT-AUTH-001)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Golden fixture: the full set of properties `index()` may see on an object's
+     * `@self` envelope, covering every stripped property plus a few kept ones.
+     * Frozen here so the anonymous-envelope assertion below is a byte-parity guard,
+     * not just a "some keys are missing" check (design.md D3).
+     *
+     * @return array<string, mixed>
+     */
+    private function goldenSelfFixture(): array
+    {
+        return [
+            'id'            => 'golden-1',
+            'register'      => 'reg-1',
+            'schema'        => 'sch-1',
+            'schemaVersion' => '1.2.3',
+            'relations'     => ['related-1'],
+            'locked'        => true,
+            'owner'         => 'admin',
+            'folder'        => '/files/golden',
+            'application'   => 'opencatalogi',
+            'validation'    => ['valid' => true],
+            'retention'     => ['period' => 'P1Y'],
+            'size'          => 1024,
+            'deleted'       => false,
+        ];
+    }//end goldenSelfFixture()
+
+    /**
+     * Scenario: anonymous envelope is unchanged (CAT-AUTH-001).
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+     */
+    public function testIndexAnonymousEnvelopeIsByteIdenticalToGoldenFixture(): void
+    {
+        $this->request->method('getParams')->willReturn([]);
+        $this->config->method('getValueString')
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
+
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1'],
+                    'schemas'   => ['sch-1'],
+                ]
+                );
+
+        $resultObject = $this->createMockResultObject(['@self' => $this->goldenSelfFixture()]);
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->method('searchObjects')->willReturn([$catalogObject]);
+        $objectService->method('searchObjectsPaginated')
+            ->willReturn(
+                    [
+                        'results' => [$resultObject],
+                        'total'   => 1,
+                    ]
+                    );
+
+        $this->injectObjectService($objectService);
+
+        // Explicit anonymous session (no user on it).
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->userSession->method('getUser')->willReturn(null);
+        $this->service = new CatalogiService(
+            $this->config,
+            $this->request,
+            $this->container,
+            $this->appManager,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userSession,
+        );
+
+        $response = $this->service->index();
+        $data     = $response->getData();
+
+        // Byte-identical golden envelope: exactly the pre-change stripped shape,
+        // same keys, same order, same values.
+        $this->assertSame(
+                [
+                    'id'       => 'golden-1',
+                    'register' => 'reg-1',
+                    'schema'   => 'sch-1',
+                ],
+                $data['results'][0]['@self']
+                );
+    }//end testIndexAnonymousEnvelopeIsByteIdenticalToGoldenFixture()
+
+    /**
+     * Scenario: authenticated caller sees full metadata (CAT-AUTH-001).
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+     */
+    public function testIndexAuthenticatedEnvelopeCarriesFullMetadata(): void
+    {
+        $this->request->method('getParams')->willReturn([]);
+        $this->config->method('getValueString')
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
+
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1'],
+                    'schemas'   => ['sch-1'],
+                ]
+                );
+
+        $goldenSelf   = $this->goldenSelfFixture();
+        $resultObject = $this->createMockResultObject(['@self' => $goldenSelf]);
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->method('searchObjects')->willReturn([$catalogObject]);
+        $objectService->method('searchObjectsPaginated')
+            ->willReturn(
+                    [
+                        'results' => [$resultObject],
+                        'total'   => 1,
+                    ]
+                    );
+
+        $this->injectObjectService($objectService);
+
+        // Authenticated session: OR RBAC already decided this caller may read the object.
+        $user = $this->createMock(IUser::class);
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->service = new CatalogiService(
+            $this->config,
+            $this->request,
+            $this->container,
+            $this->appManager,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userSession,
+        );
+
+        $response = $this->service->index();
+        $data     = $response->getData();
+
+        // Every previously stripped property is present, unmodified.
+        $this->assertSame($goldenSelf, $data['results'][0]['@self']);
+        $this->assertArrayHasKey('owner', $data['results'][0]['@self']);
+        $this->assertArrayHasKey('locked', $data['results'][0]['@self']);
+        $this->assertArrayHasKey('retention', $data['results'][0]['@self']);
+        $this->assertSame('admin', $data['results'][0]['@self']['owner']);
+    }//end testIndexAuthenticatedEnvelopeCarriesFullMetadata()
+
+    /**
+     * Scenario: session changes metadata richness, never the object set (CAT-AUTH-001).
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+     */
+    public function testIndexObjectSetParityBetweenAnonymousAndAuthenticated(): void
+    {
+        $this->request->method('getParams')->willReturn([]);
+        $this->config->method('getValueString')
+            ->willReturnMap(
+                    [
+                        ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                        ['opencatalogi', 'catalog_register', '', 'register-1'],
+                    ]
+                    );
+
+        $catalogObject = $this->createMockCatalogObject(
+                [
+                    'registers' => ['reg-1'],
+                    'schemas'   => ['sch-1'],
+                ]
+                );
+
+        // Identical RBAC-governed result set for both audiences — the object set
+        // (ids + order) MUST be identical regardless of session.
+        $rbacResults = [
+            $this->createMockResultObject(['@self' => ['id' => 'obj-a'] + $this->goldenSelfFixture()]),
+            $this->createMockResultObject(['@self' => ['id' => 'obj-b'] + $this->goldenSelfFixture()]),
+        ];
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->method('searchObjects')->willReturn([$catalogObject]);
+        $objectService->method('searchObjectsPaginated')
+            ->willReturn(
+                    [
+                        'results' => $rbacResults,
+                        'total'   => 2,
+                    ]
+                    );
+
+        $this->injectObjectService($objectService);
+
+        // Anonymous run.
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->userSession->method('getUser')->willReturn(null);
+        $this->service = new CatalogiService(
+            $this->config,
+            $this->request,
+            $this->container,
+            $this->appManager,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userSession,
+        );
+        $anonymousData = $this->service->index()->getData();
+
+        // Authenticated run — same mocked RBAC context (same $objectService, same results).
+        $user = $this->createMock(IUser::class);
+        $this->userSession = $this->createMock(IUserSession::class);
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->service = new CatalogiService(
+            $this->config,
+            $this->request,
+            $this->container,
+            $this->appManager,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userSession,
+        );
+        $authenticatedData = $this->service->index()->getData();
+
+        $anonymousIds      = array_column(array_column($anonymousData['results'], '@self'), 'id');
+        $authenticatedIds  = array_column(array_column($authenticatedData['results'], '@self'), 'id');
+
+        // Same ids, same order, both audiences.
+        $this->assertSame(['obj-a', 'obj-b'], $anonymousIds);
+        $this->assertSame(['obj-a', 'obj-b'], $authenticatedIds);
+        $this->assertSame($anonymousIds, $authenticatedIds);
+
+        // Only the metadata richness differs.
+        $this->assertArrayNotHasKey('owner', $anonymousData['results'][0]['@self']);
+        $this->assertArrayHasKey('owner', $authenticatedData['results'][0]['@self']);
+    }//end testIndexObjectSetParityBetweenAnonymousAndAuthenticated()
 
     // ──────────────────────────────────────────────────────────
     // computeRewrittenRegistersAndSchemas
