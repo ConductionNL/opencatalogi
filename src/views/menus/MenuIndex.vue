@@ -132,9 +132,14 @@ export default {
 	},
 	computed: {
 		// Augment the OpenRegister menu schema with an `icon` property rendered
-		// by the shared CnIconPicker (via CnFormDialog's schema-driven
-		// `widget: 'icon'`). Sources: MDI (default), plus FontAwesome and an
-		// OpenGemeenten sample supplied as consumer catalogues; custom SVG enabled.
+		// by the shared CnIconBrowser (via CnFormDialog's schema-driven
+		// `widget: 'icon'`). Sources: MDI (default) + FontAwesome as a consumer
+		// catalogue; custom SVG enabled.
+		//
+		// The OpenGemeenten sample source is gone: CnIconBrowser now ships the FULL
+		// Gemeente set (plus Den Haag and RVO) on its own tabs, so keeping the
+		// hand-made sample here would render a second, poorer tab under the same
+		// name.
 		menuSchema() {
 			const base = this.schema || {}
 			return {
@@ -146,7 +151,7 @@ export default {
 						title: t('opencatalogi', 'Icon'),
 						description: t('opencatalogi', 'Pick an icon (Material / FontAwesome / OpenGemeenten) or paste custom SVG.'),
 						widget: 'icon',
-						iconSources: ['mdi', 'fontawesome', 'opengemeenten'],
+						iconSources: ['mdi', 'fontawesome'],
 						catalogues: buildMenuItemIconCatalogues(),
 						allowCustomSvg: true,
 						order: 5,

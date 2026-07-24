@@ -49,12 +49,14 @@ export default {
 				{ key: 'description', label: t('opencatalogi', 'Description'), widget: 'text' },
 				{ key: 'ariaLabel', label: t('opencatalogi', 'Aria Label'), widget: 'text', description: t('opencatalogi', 'Accessible name announced by screen readers.') },
 				{
+					// CnIconBrowser ships the full Gemeente / Den Haag / RVO sets on
+					// their own tabs, so the hand-made OpenGemeenten sample source is
+					// dropped. (`searchable` is gone — the browser always searches.)
 					key: 'icon',
 					label: t('opencatalogi', 'Icon'),
 					widget: 'icon',
-					iconSources: ['mdi', 'fontawesome', 'opengemeenten'],
+					iconSources: ['mdi', 'fontawesome'],
 					catalogues: buildMenuItemIconCatalogues(),
-					searchable: true,
 					allowCustomSvg: true,
 				},
 				{ key: 'groups', label: t('opencatalogi', 'Groups Access'), widget: 'multiselect', enum: async () => (await getNextcloudGroups()).map(g => ({ label: g.label, value: g.value, id: g.value })), description: t('opencatalogi', 'When set, the item only shows for users in one of these groups.') },
