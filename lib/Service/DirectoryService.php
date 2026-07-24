@@ -16,18 +16,18 @@
  * @version GIT: <git_id>
  * @link    https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-67
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-68
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-69
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-70
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-72
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-74
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/federation/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -40,6 +40,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request as Psr7Request;
 use GuzzleHttp\RequestOptions;
+use OCA\OpenCatalogi\AppInfo\Application;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -64,7 +65,7 @@ use React\Promise\PromiseInterface;
  * @category Service
  * @package  OCA\OpenCatalogi\Service
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
+ * @spec openspec/specs/dashboard/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
@@ -135,6 +136,28 @@ class DirectoryService
     }//end __construct()
 
     /**
+     * Resolve the national OpenCatalogi directory URL.
+     *
+     * Returns the `default_directory_url` app-config override when set, otherwise
+     * the canonical Application::DEFAULT_DIRECTORY_URL constant. Single source of
+     * truth for every default-directory reference (cron sync, manual sync, the
+     * first-time-setup connect-federation action, and the Add-Directory modal).
+     *
+     * @return string The resolved default directory URL.
+     *
+     * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md#requirement-default-directory-url-single-source-of-truth-onb-008
+     */
+    public function getDefaultDirectoryUrl(): string
+    {
+        return $this->config->getValueString(
+            $this->appName,
+            'default_directory_url',
+            Application::DEFAULT_DIRECTORY_URL
+        );
+
+    }//end getDefaultDirectoryUrl()
+
+    /**
      * Execute synchronization during cron job (asynchronous)
      *
      * Performs scheduled synchronization of all configured directories
@@ -147,7 +170,7 @@ class DirectoryService
      *
      * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-48
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function doCronSync(): array
     {
@@ -155,7 +178,7 @@ class DirectoryService
         $this->uniqueDirectories = $this->getUniqueDirectories();
 
         // Add default OpenCatalogi directory if not already present.
-        $defaultDirectory = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+        $defaultDirectory = $this->getDefaultDirectoryUrl();
         if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
             $this->uniqueDirectories[] = $defaultDirectory;
         }
@@ -238,7 +261,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function getUniqueDirectories(bool $availableOnly=false, bool $defaultOnly=false): array
     {
@@ -350,7 +373,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-67
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function syncDirectory(string $directoryUrl): array
     {
@@ -359,7 +382,7 @@ class DirectoryService
             $this->uniqueDirectories = $this->getUniqueDirectories();
 
             // Add default OpenCatalogi directory if not already present.
-            $defaultDirectory = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+            $defaultDirectory = $this->getDefaultDirectoryUrl();
             if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
                 $this->uniqueDirectories[] = $defaultDirectory;
             }
@@ -374,8 +397,10 @@ class DirectoryService
             throw new InvalidArgumentException('Invalid directory URL provided');
         }
 
-        // Prevent syncing with self.
-        if (str_contains(strtolower($directoryUrl), $this->urlGenerator->getBaseUrl()) === true) {
+        // Prevent syncing with self. Host+port comparison via isSelfInstance() so
+        // alternate host-aliases (e.g. localhost:9081 vs. nc-fed-1 on a docker
+        // network) still resolve to "this instance" — WOO-516.
+        if ($this->isSelfInstance($directoryUrl) === true) {
             throw new InvalidArgumentException('Cannot sync with current directory');
         }
 
@@ -422,9 +447,13 @@ class DirectoryService
                 // Also filter out listings with localhost or .local extensions.
                 $filteredListings = array_filter(
                     $directoryData['results'],
-                    function ($listingData) use ($ourDirectoryUrl) {
-                        // Skip if listing has our directory URL (prevent self-sync).
-                        if (isset($listingData['directory']) === true && $listingData['directory'] === $ourDirectoryUrl) {
+                    function ($listingData) {
+                        // Skip if listing points at THIS instance (self-sync). Uses
+                        // host+port matching + instance_aliases config so alternate
+                        // host-aliases still resolve to self (WOO-516).
+                        if (isset($listingData['directory']) === true
+                            && $this->isSelfInstance($listingData['directory']) === true
+                        ) {
                             return false;
                         }
 
@@ -594,7 +623,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-68
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function syncListing(array $listingData, string $sourceDirectoryUrl): array
     {
@@ -770,7 +799,7 @@ class DirectoryService
             // Set directory properties based on whether it's new or updated.
             // Set defaults for new listings.
             $listingData['default']          = (
-                $sourceDirectoryUrl === 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'
+                $sourceDirectoryUrl === $this->getDefaultDirectoryUrl()
             );
             $listingData['statusCode']       = 200;
             $listingData['status']           = 'development';
@@ -895,7 +924,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-69
+     * @spec openspec/specs/federation/spec.md
      */
     public function getPublications(array $guzzleConfig=[], bool $includeDefault=false): array
     {
@@ -1099,7 +1128,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-70
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function detectPublicationEndpoint(array $listingData): ?string
     {
@@ -1237,7 +1266,7 @@ class DirectoryService
      *
      * @return boolean True if incoming data is outdated and should be skipped
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function isListingDataOutdated(array $incomingData, array $existingData): bool
     {
@@ -1286,7 +1315,7 @@ class DirectoryService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-71
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function extractTimestamp(array $data): ?\DateTime
     {
@@ -1420,7 +1449,7 @@ class DirectoryService
      *
      * @return boolean True if request is from a system broadcast, false otherwise
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function isSystemBroadcast(): bool
     {
@@ -1430,6 +1459,146 @@ class DirectoryService
         return empty($userAgent) === false && str_contains($userAgent, 'OpenCatalogi-Broadcast') === true;
 
     }//end isSystemBroadcast()
+
+    /**
+     * Determine whether a URL points at THIS OpenCatalogi instance.
+     *
+     * The container is often reachable via several equivalent host-aliases
+     * (e.g. `localhost:9081` from the host, `nc-fed-1` on the docker network,
+     * or the operator's public FQDN behind a reverse proxy). All of them are
+     * legitimately "this instance". `isSelfInstance()` normalises the URL and
+     * compares host+port against:
+     *
+     * 1. `$this->urlGenerator->getBaseUrl()` — the canonical NC-configured base.
+     * 2. The `opencatalogi/instance_aliases` app-config CSV — extra aliases the
+     *    operator has declared (entries may be `host` or `host:port`).
+     *
+     * Port normalisation: an omitted port on `http://` normalises to `80`,
+     * on `https://` to `443` — so `http://cloud/dir` and `http://cloud:80/dir`
+     * both resolve to the same identity. IPv6 host literals (`[::1]`) are
+     * parsed via `parse_url` for both the target and the alias entries so
+     * the FIRST-colon `explode` never truncates a bracketed host.
+     *
+     * @param string $url The URL to test.
+     *
+     * @return boolean True when $url resolves to this instance.
+     *
+     * @spec exclude URL-canonicalisation helper for self-detection; security
+     *       plumbing that hardens syncDirectory()'s self-check, no new domain
+     *       requirement. Enforced by DirectoryServiceTest::testIsSelfInstance*.
+     */
+    private function isSelfInstance(string $url): bool
+    {
+        $targetPair = self::hostAndPortFromUrl(strtolower($url));
+        if ($targetPair === null) {
+            return false;
+        }
+
+        [$targetHost, $targetPort] = $targetPair;
+
+        // 1. Canonical NC base.
+        $basePair = self::hostAndPortFromUrl(strtolower($this->urlGenerator->getBaseUrl()));
+        if ($basePair !== null && $basePair[0] === $targetHost && $basePair[1] === $targetPort) {
+            return true;
+        }
+
+        // 2. Operator-declared aliases (CSV of host or host:port).
+        $aliases = $this->config->getValueString($this->appName, 'instance_aliases', '');
+        if ($aliases === '') {
+            return false;
+        }
+
+        foreach (array_filter(array_map('trim', explode(',', strtolower($aliases)))) as $alias) {
+            $aliasPair = self::hostAndPortFromAlias($alias);
+            if ($aliasPair === null || $aliasPair[0] !== $targetHost) {
+                continue;
+            }
+
+            // Alias without a port matches ANY port on that host (operator asked for it).
+            // Alias with a port must match the target's normalised port exactly.
+            if ($aliasPair[1] === null || $aliasPair[1] === $targetPort) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end isSelfInstance()
+
+    /**
+     * Extract (host, normalised-port) from a URL. Returns null when the URL
+     * cannot be parsed or has no host. Default ports (80 for http, 443 for
+     * https) are materialised so `http://x` and `http://x:80` compare equal.
+     *
+     * @param string $url The URL to parse (expected already lower-cased).
+     *
+     * @return array{0:string,1:?int}|null Two-element array [host, port]; null on parse failure.
+     *
+     * @spec exclude URL-normalisation helper; security plumbing, no new domain behaviour.
+     */
+    private static function hostAndPortFromUrl(string $url): ?array
+    {
+        $parts = parse_url($url);
+        if ($parts === false || empty($parts['host']) === true) {
+            return null;
+        }
+
+        $host = $parts['host'];
+        $port = ($parts['port'] ?? null);
+
+        // Materialise scheme-default so http://x compares equal to http://x:80.
+        if ($port === null && isset($parts['scheme']) === true) {
+            if ($parts['scheme'] === 'http') {
+                $port = 80;
+            } else if ($parts['scheme'] === 'https') {
+                $port = 443;
+            }
+        }
+
+        return [$host, $port];
+
+    }//end hostAndPortFromUrl()
+
+    /**
+     * Extract (host, port|null) from an `instance_aliases` CSV entry. Accepts
+     * `host`, `host:port`, `[ipv6]`, and `[ipv6]:port`. Uses `parse_url` so
+     * bracketed IPv6 literals aren't corrupted by a naive first-colon split.
+     * Returns null on malformed input (empty host, trailing colon with no port).
+     *
+     * @param string $alias The alias entry (expected already lower-cased and trimmed).
+     *
+     * @return array{0:string,1:?int}|null Two-element array [host, port]; null on parse failure.
+     *
+     * @spec exclude URL-normalisation helper; security plumbing, no new domain behaviour.
+     */
+    private static function hostAndPortFromAlias(string $alias): ?array
+    {
+        if ($alias === '') {
+            return null;
+        }
+
+        // Route through parse_url so IPv6 brackets survive. Prepend a dummy
+        // scheme when missing — `parse_url('foo:9081')` mis-parses `foo` as
+        // scheme; `parse_url('x://foo:9081')` parses the port correctly.
+        $probe = $alias;
+        if (str_contains($alias, '://') === false) {
+            $probe = 'x://'.$alias;
+        }
+
+        $parts = parse_url($probe);
+        if ($parts === false || empty($parts['host']) === true) {
+            return null;
+        }
+
+        // A trailing colon with no port (`host:`) yields `port` unset here;
+        // that's ambiguous, so reject the entry rather than treat as catchall.
+        if (str_ends_with($alias, ':') === true && isset($parts['port']) === false) {
+            return null;
+        }
+
+        return [$parts['host'], ($parts['port'] ?? null)];
+
+    }//end hostAndPortFromAlias()
 
     /**
      * Check whether a host is on the dev-only local-federation allowlist.
@@ -1559,6 +1728,28 @@ class DirectoryService
         }
 
     }//end assertSafeOutboundUrl()
+
+    /**
+     * Validate that a URL is safe for outbound use (SSRF guard) without fetching it.
+     *
+     * Public wrapper around {@see assertSafeOutboundUrl()} for callers that need to
+     * validate an attacker-controllable URL before persisting it (e.g.
+     * `ListingsController::create()` validating the `directory` field at
+     * registration time), as opposed to callers that are about to fetch it.
+     *
+     * @param string $url The URL to validate.
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+     *
+     * @spec openspec/changes/harden-listings-admin-write-surface/tasks.md#task-1
+     */
+    public function validateOutboundUrl(string $url): void
+    {
+        $this->assertSafeOutboundUrl($url);
+
+    }//end validateOutboundUrl()
 
     /**
      * Determine whether an IP address falls in a blocked range.
@@ -1719,7 +1910,7 @@ class DirectoryService
      *
      * @return boolean True if the URL is local, false otherwise
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-66
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function isLocalUrl(string $url): bool
     {
@@ -1791,7 +1982,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-72
+     * @spec openspec/specs/federation/spec.md
      */
     public function getUsed(string $uuid, array $guzzleConfig=[]): array
     {
@@ -1958,7 +2149,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
+     * @spec openspec/specs/federation/spec.md
      */
     public function getPublication(string $publicationId, array $guzzleConfig=[]): ?array
     {
@@ -2093,7 +2284,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-74
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function getDirectory(array $requestParams=[]): array
     {
@@ -2263,7 +2454,7 @@ class DirectoryService
      *
      * @return array The catalog formatted as a listing object
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function convertCatalogToListing($catalogObject): array
     {
@@ -2326,6 +2517,17 @@ class DirectoryService
             $listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
         }
 
+        // Federation discovery (OOAPI-009): advertise the per-catalog OOAPI 5.0 base
+        // endpoint when the catalog has OOAPI publication enabled, so remote instances
+        // and the national directory discover where to reach an institution's course
+        // catalog. Rides the same listing-projection helper as dcatEndpoint above — no
+        // new broadcast channel or cron (FED-OR-001/002).
+        $hasOoapi = filter_var(($catalog['hasOoapi'] ?? false), FILTER_VALIDATE_BOOLEAN);
+        if ($hasOoapi === true && $catalogSlug !== '') {
+            $base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+            $listing['ooapiEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/ooapi/v5";
+        }
+
         return $listing;
 
     }//end convertCatalogToListing()
@@ -2340,7 +2542,7 @@ class DirectoryService
      *
      * @return array The filtered listing object with only public properties
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
+     * @spec openspec/specs/dashboard/spec.md
      */
     private function filterListingProperties(array $listing): array
     {
@@ -2388,7 +2590,7 @@ class DirectoryService
      *
      * @return array Array of catalogs converted to listing format with expanded schemas
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-75
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function convertCatalogiToListings(array $catalogs): array
     {
@@ -2495,7 +2697,7 @@ class DirectoryService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
+     * @spec openspec/specs/federation/spec.md
      */
     private function aggregateFacets(array $existingFacets, array $newFacets): array
     {

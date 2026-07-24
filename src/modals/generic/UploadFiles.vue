@@ -318,7 +318,7 @@ const { openFileUpload, files, reset, setTags, rejectedDuplicates } = useFileSel
 /**
  * UploadFiles — upload files to a publication's OpenRegister files endpoint.
  *
- * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-1
+ * @spec openspec/specs/file-management/spec.md
  */
 export default {
 	name: 'UploadFiles',
@@ -1034,7 +1034,7 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 }
 
 .files-table-name-wrong > span {
-	color: #ff0000 !important;
+	color: var(--color-error) !important;
 }
 
 .files-table {

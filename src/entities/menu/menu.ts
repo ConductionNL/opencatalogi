@@ -7,9 +7,9 @@ import { TMenu, TMenuItem } from './menu.types'
 /**
  * Menu class representing a navigation menu entity with validation
  * Implements the TMenu interface for type safety
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Menu implements TMenu {
 
@@ -29,7 +29,7 @@ export class Menu implements TMenu {
 	 * Creates a new Menu instance
 	 * @param data Initial menu data conforming to TMenu interface
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
+	 * @spec openspec/specs/entity-typescript-models/spec.md
 	 */
 	constructor(data: TMenu) {
 		this.hydrate(data)

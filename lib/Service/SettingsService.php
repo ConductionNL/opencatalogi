@@ -18,18 +18,18 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-117
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-118
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-119
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-120
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-121
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-122
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -103,7 +103,7 @@ class SettingsService
      *
      * @return boolean True if OpenRegister is installed and meets version requirements.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function isOpenRegisterInstalled(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
@@ -125,7 +125,7 @@ class SettingsService
      *
      * @return boolean True if OpenRegister is enabled.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function isOpenRegisterEnabled(): bool
     {
@@ -148,7 +148,7 @@ class SettingsService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.StaticAccess)         — OC_App is Nextcloud's legacy static API
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-116
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function installOrUpdateOpenRegister(?string $minVersion=self::MIN_OPENREGISTER_VERSION): bool
     {
@@ -200,7 +200,7 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-117
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function autoConfigure(): array
     {
@@ -264,7 +264,7 @@ class SettingsService
      *
      * @return array The initialization results.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-118
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function initialize(?string $minORVersion=self::MIN_OPENREGISTER_VERSION): array
     {
@@ -385,7 +385,7 @@ class SettingsService
      * @return array The current settings configuration.
      * @throws \RuntimeException If settings retrieval fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-119
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function getSettings(): array
     {
@@ -399,7 +399,14 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            'document',
             'usageCounter',
+            // OOAPI-catalog-publication (OOAPI-010): materialized course/program/offering
+            // scope. Included here so the generic Settings.vue schema selector renders
+            // them like every other object type — no bespoke frontend needed.
+            'ooapi_courses',
+            'ooapi_programs',
+            'ooapi_offerings',
         ];
         $data['openRegisters']      = false;
         $data['availableRegisters'] = [];
@@ -444,6 +451,23 @@ class SettingsService
         $defaults['dcat_default_license'] = 'http://creativecommons.org/publicdomain/zero/1.0/';
         $defaults['dcat_contact_point']   = '';
 
+        // Add OOAPI 5.0 catalog-publication defaults (OOAPI-008/OOAPI-010). MVP
+        // consumer-credential gate (design.md D3): any authenticated Nextcloud user
+        // may read an OOAPI-enabled catalog's feed when the allowlist is empty
+        // (the default); a comma-separated list of Nextcloud usernames restricts
+        // access to exactly those accounts. Reuses Nextcloud's own user + app-password
+        // mechanism as the "credential" — no bespoke token store (D3: "no new auth
+        // framework"). Per-catalog credential scoping (design.md open question 3) is
+        // NOT implemented in this MVP; the allowlist is instance-wide.
+        $defaults['ooapi_consumers'] = '';
+
+        // Woo-index registration status (WOO-HR-003, woo-index-harvester-readiness
+        // design D3): tracks this instance's relationship to the national Woo-index /
+        // Register van Overheidsorganisaties. Operational config, not a publication.
+        $defaults['woo_index_registration_status'] = 'not_registered';
+        $defaults['woo_index_registration_url']    = '';
+        $defaults['woo_index_registration_at']     = '';
+
         // Get the current values for the object types from the configuration.
         try {
             foreach ($defaults as $key => $defaultValue) {
@@ -469,7 +493,7 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-120
+     * @spec openspec/specs/admin-settings/spec.md
      */
     private function enrichRegistersWithSchemas(array $registers): array
     {
@@ -550,7 +574,7 @@ class SettingsService
      * @return array The updated settings configuration.
      * @throws \RuntimeException If settings update fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function updateSettings(array $data): array
     {
@@ -565,6 +589,11 @@ class SettingsService
                 'page',
                 'menu',
                 'glossary',
+                'document',
+                // OOAPI-catalog-publication (OOAPI-010).
+                'ooapi_courses',
+                'ooapi_programs',
+                'ooapi_offerings',
             ];
 
             $allowedKeys = [];
@@ -585,6 +614,14 @@ class SettingsService
             $allowedKeys[] = 'dcat_publisher_uri';
             $allowedKeys[] = 'dcat_default_license';
             $allowedKeys[] = 'dcat_contact_point';
+
+            // OOAPI 5.0 consumer-credential allowlist (OOAPI-008/OOAPI-010).
+            $allowedKeys[] = 'ooapi_consumers';
+
+            // Woo-index registration status (WOO-HR-003).
+            $allowedKeys[] = 'woo_index_registration_status';
+            $allowedKeys[] = 'woo_index_registration_url';
+            $allowedKeys[] = 'woo_index_registration_at';
 
             $updated = [];
 
@@ -610,7 +647,7 @@ class SettingsService
      * @return array The current publishing options configuration.
      * @throws \RuntimeException If publishing options retrieval fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function getPublishingOptions(): array
     {
@@ -652,7 +689,7 @@ class SettingsService
      * @return array The updated publishing options configuration.
      * @throws \RuntimeException If publishing options update fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function updatePublishingOptions(array $options): array
     {
@@ -705,7 +742,7 @@ class SettingsService
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-121
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function loadSettings(bool $force=false): array
     {
@@ -812,6 +849,16 @@ class SettingsService
             // Update app configuration with imported schema and register IDs.
             $this->updateObjectTypeConfiguration($result);
 
+            // WOO-529: the seed data in publication_register.json creates the
+            // default "Publications" catalog with unset `registers`/`schemas`
+            // because the numeric IDs are only known AFTER importFromApp() has
+            // returned. Without those arrays PublicationService::getCatalogFilters()
+            // has no scope to union and every publish flow (federation search,
+            // create-publication modal) sees zero rows. Backfill now that the
+            // IDs are resolved, so a fresh install lands directly in a working
+            // state instead of the WOO-527 "not configured" empty state.
+            $this->backfillCatalogScopes();
+
             return $result;
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to load settings: '.$e->getMessage());
@@ -868,22 +915,52 @@ class SettingsService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
+     * @spec openspec/specs/admin-settings/spec.md
+     * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-woo-config-keys-are-auto-configured-on-install-and-repair-woo-prov-002
      */
     private function updateObjectTypeConfiguration(array $importResult): void
     {
         // Get the object types that need configuration.
         // 'publication' is included so publication_register/publication_schema
         // resolve for retention evaluation (RET-005); it was previously omitted.
+        // 'document' is included so document_register/document_schema resolve for the
+        // public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002).
         $objectTypes = [
             'catalog',
             'listing',
             'organization',
             'publication',
+            'document',
             'theme',
             'page',
             'menu',
             'glossary',
+        ];
+
+        // OOAPI-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
+        // schemas are added to the SAME shared 'publication' register via a register.d
+        // fragment (ADR-037) — this app's loadSettings()/importFromApp() pipeline only
+        // ever creates one OpenRegister register, so a genuinely separate "dedicated"
+        // register (design.md D6) is not achievable without a larger SettingsService
+        // rearchitecture; the config-key prefix (`ooapi_courses` etc.) intentionally
+        // differs from the schema slug (`course` etc.) to match the OOAPI-010 config
+        // key names, so it is resolved via this explicit map rather than the direct
+        // type === slug convention used by $objectTypes above.
+        $ooapiTypeMap = [
+            'ooapi_courses'   => 'course',
+            'ooapi_programs'  => 'program',
+            'ooapi_offerings' => 'offering',
+        ];
+
+        // WOO transparency (fix-woo-capability-provisioning / WOO-PROV-002): the WOO
+        // config-key prefixes deliberately differ from their schema slugs (`woo_batch_schema`
+        // for `wooBatch`, `woo_assessment_schema` for `wooAssessment`) — same rationale as
+        // $ooapiTypeMap above. `woo_register` has no matching schema slug at all (both
+        // wooBatch and wooAssessment live in the SAME shared publication register, D1), so
+        // it is set directly from $registerId alongside this map rather than inside it.
+        $wooSchemaMap = [
+            'woo_batch_schema'      => 'wooBatch',
+            'woo_assessment_schema' => 'wooAssessment',
         ];
 
         // Build a map of schema slugs to schema IDs.
@@ -949,7 +1026,162 @@ class SettingsService
             }
         }
 
+        // OOAPI-catalog-publication: same two steps, keyed by the OOAPI-010 config
+        // prefix rather than the schema slug (see $ooapiTypeMap comment above).
+        foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
+            $this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
+
+            if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+                $this->config->setValueString($this->appName, "{$configPrefix}_schema", (string) $schemaMap[$schemaSlug]);
+            }
+
+            if ($registerId !== null) {
+                $this->config->setValueString($this->appName, "{$configPrefix}_register", (string) $registerId);
+            }
+        }
+
+        // WOO transparency: the shared publication register id, plus the two
+        // explicitly-mapped schema ids. Idempotent + never overwrite an existing
+        // value with an empty one — mirrors the conditional writes above (D5).
+        if ($registerId !== null) {
+            $this->config->setValueString($this->appName, 'woo_register', (string) $registerId);
+        }
+
+        foreach ($wooSchemaMap as $configKey => $schemaSlug) {
+            if (isset($schemaMap[$schemaSlug]) === true && $schemaMap[$schemaSlug] !== null) {
+                $this->config->setValueString($this->appName, $configKey, (string) $schemaMap[$schemaSlug]);
+            }
+        }
+
     }//end updateObjectTypeConfiguration()
+
+    /**
+     * Ensure every local catalog has a non-empty registers/schemas scope.
+     *
+     * `PublicationService::getCatalogFilters()` derives its visibility scope by
+     * iterating every local catalog and unioning their `registers` + `schemas`
+     * arrays. A catalog with both arrays unset contributes nothing, and with
+     * only one such catalog the entire union is empty — no publications are
+     * ever visible to /search or the create-publication modal (surfaces as the
+     * WOO-527 "not configured" empty state).
+     *
+     * The default "Publications" catalog seeded via publication_register.json
+     * (see WOO-529) exhibits this because the numeric register/schema IDs are
+     * only resolved AFTER importFromApp() completes, so the seed cannot
+     * hard-code them. This method runs after updateObjectTypeConfiguration()
+     * has stored the resolved IDs, walks the catalog collection, and patches
+     * any catalog missing a scope with `[publication_register]` / `[publication_schema]`.
+     *
+     * Idempotent — a catalog that already has a non-empty array is skipped so
+     * admin-configured multi-register catalogs are never touched.
+     *
+     * @return void
+     */
+    private function backfillCatalogScopes(): void
+    {
+        try {
+            $publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
+            $publicationSchema   = $this->config->getValueString($this->appName, 'publication_schema', '');
+            $catalogRegister     = $this->config->getValueString($this->appName, 'catalog_register', '');
+            $catalogSchema       = $this->config->getValueString($this->appName, 'catalog_schema', '');
+
+            if ($publicationRegister === '' || $publicationSchema === ''
+                || $catalogRegister === '' || $catalogSchema === ''
+            ) {
+                // Nothing to backfill against — the caller will surface the
+                // config gap via the setup wizard's reload-settings step.
+                return;
+            }
+
+            if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
+                return;
+            }
+
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $catalogs      = $objectService->searchObjects(
+                query: [
+                    '@self' => [
+                        'register' => $catalogRegister,
+                        'schema'   => $catalogSchema,
+                    ],
+                ]
+            );
+
+            foreach ($catalogs as $catalog) {
+                $catalogData = $catalog;
+                if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+                    $catalogData = $catalog->jsonSerialize();
+                }
+
+                if (is_array($catalogData) === false) {
+                    continue;
+                }
+
+                $registers      = ($catalogData['registers'] ?? null);
+                $schemas        = ($catalogData['schemas'] ?? null);
+                $needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
+                $needsSchemas   = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
+
+                if ($needsRegisters === false && $needsSchemas === false) {
+                    // Admin has already configured a scope; leave it alone.
+                    continue;
+                }
+
+                $catalogId = ($catalogData['@self']['id'] ?? ($catalogData['id'] ?? null));
+                if ($catalogId === null) {
+                    continue;
+                }
+
+                // OpenRegister's saveObject re-validates against the full schema,
+                // so we can't send a partial diff — start from the current object
+                // (minus `@self`, which is server-owned) and merge the missing
+                // scope arrays on top.
+                $merged = $catalogData;
+                unset($merged['@self']);
+                if ($needsRegisters === true) {
+                    $merged['registers'] = [$publicationRegister];
+                }
+
+                if ($needsSchemas === true) {
+                    $merged['schemas'] = [$publicationSchema];
+                }
+
+                // Persisted date-time fields can come back in the SQL-style
+                // "YYYY-MM-DD HH:MM:SS" shape (no `T`, no timezone) that fails
+                // the schema's ISO 8601 format validator on re-save. Normalise
+                // any string field looking like that back to full ISO 8601 so
+                // the update passes validation without touching the intent of
+                // the value. Non-string / already-ISO values are left alone.
+                foreach ($merged as $key => $value) {
+                    if (is_string($value) === true
+                        && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
+                    ) {
+                        $merged[$key] = str_replace(' ', 'T', $value).'+00:00';
+                    }
+                }
+
+                try {
+                    $objectService->saveObject(
+                        object: $merged,
+                        register: $catalogRegister,
+                        schema: $catalogSchema,
+                        uuid: (string) $catalogId,
+                        _rbac: false,
+                        _multitenancy: false,
+                    );
+                } catch (\Exception) {
+                    // Per-catalog failure must not abort the whole settings
+                    // import; the admin can retro-fit via the catalog edit view.
+                    continue;
+                }
+            }//end foreach
+        } catch (\Exception) {
+            // Never let backfill failure sink the settings import — the wizard
+            // still needs to declare success so the app is at least usable.
+            return;
+        }//end try
+
+    }//end backfillCatalogScopes()
 
     /**
      * Check if settings should be loaded based on version comparison.
@@ -960,7 +1192,7 @@ class SettingsService
      * @return boolean True if settings should be loaded, false otherwise.
      * @throws \RuntimeException If version checking fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-122
+     * @spec openspec/specs/admin-settings/spec.md
      */
     private function shouldLoadSettings(): bool
     {
@@ -996,7 +1228,7 @@ class SettingsService
      * @return array Version information with app and configuration versions.
      * @throws \RuntimeException If version retrieval fails.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function getVersionInfo(): array
     {
@@ -1038,7 +1270,7 @@ class SettingsService
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function manualImport(bool $forceImport=false): array
     {

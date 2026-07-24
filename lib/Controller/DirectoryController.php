@@ -18,8 +18,8 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-5
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-6
+ * @spec openspec/specs/dashboard/spec.md
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -170,7 +170,7 @@ class DirectoryController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-5
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function index(): JSONResponse
     {
@@ -211,10 +211,14 @@ class DirectoryController extends Controller
     }//end index()
 
     /**
-     * Synchronize with an external directory.
+     * Sync with an external directory — federation broadcast-receive endpoint.
      *
-     * Synchronizes listings from a specific external directory URL.
-     * Accepts a 'directory' parameter containing the URL to sync with.
+     * Public + no-CSRF because peers POST here (via `BroadcastService`) to notify
+     * us of their existence. **Admin UIs must not call this** — they should hit
+     * `POST /api/listings/add` (admin-only, CSRF-protected — WOO-513 migrated the
+     * two remaining callers). Response wrap here is `{message, data: $result}`
+     * whereas `/api/listings/add` returns `$result` bare; `AddDirectoryModal.vue`
+     * handles both via `response.data.data ?? response.data`.
      *
      * @return JSONResponse The JSON response containing the synchronization result.
      *
@@ -224,7 +228,7 @@ class DirectoryController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-6
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function update(): JSONResponse
     {

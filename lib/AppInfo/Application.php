@@ -16,7 +16,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-1
+ * @spec openspec/specs/dashboard/spec.md
  */
 
 declare(strict_types=1);
@@ -37,6 +37,8 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
+use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
+use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
@@ -61,6 +63,19 @@ class Application extends App implements IBootstrap
     public const APP_ID = 'opencatalogi';
 
     /**
+     * Canonical national OpenCatalogi directory URL.
+     *
+     * Single source of truth for the federated-network endpoint that
+     * DirectoryService, the Add-Directory modal and the first-time-setup
+     * `connect-federation` action all default to. An instance may override it
+     * with the `default_directory_url` app-config key (see
+     * DirectoryService::getDefaultDirectoryUrl()).
+     *
+     * @var string
+     */
+    public const DEFAULT_DIRECTORY_URL = 'https://directory.opencatalogi.nl/apps/opencatalogi/api/directory';
+
+    /**
      * Constructor.
      *
      * @psalm-suppress PossiblyUnusedMethod
@@ -80,7 +95,7 @@ class Application extends App implements IBootstrap
      *
      * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-1
+     * @spec openspec/specs/dashboard/spec.md
      */
     public function register(IRegistrationContext $context): void
     {
@@ -128,6 +143,18 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ToolRegistrationEvent::class,
             listener: ToolRegistrationListener::class
+        );
+
+        // Provide the manifest-config initial state on every SPA `index` render,
+        // controller-independent. After the AppHost adoption (ADR-040) the `/`
+        // index route resolves to OpenRegister's shared AppHost dashboard
+        // controller, which serves templates/index.php without OpenCatalogi's
+        // register/schema config — a clean install then rendered no SPA. Hooking
+        // the provision to BeforeTemplateRenderedEvent restores it for both the
+        // AppHost `/` page and the UiController-served deep-link routes.
+        $context->registerEventListener(
+            event: BeforeTemplateRenderedEvent::class,
+            listener: ProvideManifestConfigStateListener::class
         );
 
         // Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.

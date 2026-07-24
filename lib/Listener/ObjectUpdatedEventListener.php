@@ -18,9 +18,9 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-56
+ * @spec openspec/specs/auto-publishing/spec.md
+ * @spec openspec/specs/auto-publishing/spec.md
+ * @spec openspec/specs/auto-publishing/spec.md
  * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -71,7 +71,7 @@ class ObjectUpdatedEventListener implements IEventListener
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-55
+     * @spec openspec/specs/auto-publishing/spec.md
      * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
      */
     public function handle(Event $event): void
@@ -168,7 +168,7 @@ class ObjectUpdatedEventListener implements IEventListener
      *
      * @return boolean True if the update should be processed, false otherwise.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-56
+     * @spec openspec/specs/auto-publishing/spec.md
      */
     private function shouldProcessUpdate(
         array $newObjectData,
@@ -212,7 +212,7 @@ class ObjectUpdatedEventListener implements IEventListener
      *
      * @return boolean True if the object is published, false otherwise.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+     * @spec openspec/specs/auto-publishing/spec.md
      */
     private function isObjectEntityPublished(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): bool
     {
@@ -235,7 +235,7 @@ class ObjectUpdatedEventListener implements IEventListener
      *
      * @return boolean True if the object is published, false otherwise.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+     * @spec openspec/specs/auto-publishing/spec.md
      */
     private function isObjectPublished(array $objectData): bool
     {
@@ -272,7 +272,7 @@ class ObjectUpdatedEventListener implements IEventListener
      *
      * @return array The object data in array format.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+     * @spec openspec/specs/auto-publishing/spec.md
      */
     private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array
     {

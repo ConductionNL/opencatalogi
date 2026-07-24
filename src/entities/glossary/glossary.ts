@@ -13,9 +13,9 @@ import { SafeParseReturnType, z } from 'zod'
 import { TGlossary } from './glossary.types'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-2
- * @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-3
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
+ * @spec openspec/specs/entity-typescript-models/spec.md
  */
 export class Glossary implements TGlossary {
 
@@ -26,7 +26,7 @@ export class Glossary implements TGlossary {
 	public externalLink!: string
 	public keywords!: string[]
 
-	/** @spec openspec/changes/retrofit-2026-05-25-entity-typescript-models/tasks.md#task-1 */
+	/** @spec openspec/specs/entity-typescript-models/spec.md */
 	constructor(data: TGlossary) {
 		this.hydrate(data)
 	}

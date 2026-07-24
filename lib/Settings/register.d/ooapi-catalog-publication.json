@@ -1,0 +1,247 @@
+{
+  "components": {
+    "schemas": {
+      "organization": {
+        "x-ooapi": {
+          "resource": "organization",
+          "mapping": {
+            "name": "name",
+            "description": "description",
+            "shortName": "tooi"
+          }
+        }
+      },
+      "course": {
+        "slug": "course",
+        "x-ooapi": {
+          "resource": "course"
+        },
+        "title": "Course",
+        "version": "0.1.0",
+        "published": "2026-07-12T00:00:00+00:00",
+        "summary": "An OOAPI 5.0 course, materialized from a scholiq Course by the OpenConnector ooapi-catalog Synchronization",
+        "description": "A course represents an educational offering published by an institution via the Open Onderwijs API (OOAPI 5.0). Course objects are written by OpenConnector's ooapi-catalog Synchronization target, consuming scholiq's DataExchangeJob (target: ooapi-catalog); OpenCatalogi never calls scholiq directly to produce this object. Once materialized, the object is rendered as an OOAPI 5.0 course resource via the x-ooapi schema annotation.",
+        "icon": null,
+        "required": [
+          "code",
+          "name",
+          "catalog"
+        ],
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "catalog",
+            "description": "The OpenCatalogi catalog this materialized course belongs to. Set by the OpenConnector ooapi-catalog Synchronization target when writing the object, so a single shared course/program/offering schema (design.md D6) can still be scoped per institution's catalog the way DCAT scopes publications via catalog.registers/catalog.schemas.",
+            "facetable": true,
+            "title": "Catalog"
+          },
+          "code": {
+            "type": "string",
+            "description": "The institution-internal course code (OOAPI primaryCode.code)",
+            "minLength": 1,
+            "facetable": true,
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "description": "The course name",
+            "minLength": 1,
+            "facetable": true,
+            "title": "Name"
+          },
+          "level": {
+            "type": "string",
+            "description": "The education level of the course (e.g. bachelor, master)",
+            "facetable": true,
+            "title": "Level"
+          },
+          "language": {
+            "type": "string",
+            "description": "The primary language of instruction (ISO 639-1)",
+            "facetable": true,
+            "title": "Language"
+          },
+          "rioOpleidingseenheidId": {
+            "type": "string",
+            "description": "The RIO (Register Instellingen en Opleidingen) opleidingseenheid identifier, when the source institution has one. Omitted from the rendered OOAPI resource when empty (OOAPI-005) rather than emitted as null.",
+            "facetable": true,
+            "title": "RIO Opleidingseenheid ID"
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": true,
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        }
+      },
+      "program": {
+        "slug": "program",
+        "x-ooapi": {
+          "resource": "program"
+        },
+        "title": "Program",
+        "version": "0.1.0",
+        "published": "2026-07-12T00:00:00+00:00",
+        "summary": "An OOAPI 5.0 program, materialized from a scholiq Programme by the OpenConnector ooapi-catalog Synchronization",
+        "description": "A program represents an institution's study programme published via the Open Onderwijs API (OOAPI 5.0). Program objects are written by OpenConnector's ooapi-catalog Synchronization target, consuming scholiq's DataExchangeJob (target: ooapi-catalog); OpenCatalogi never calls scholiq directly to produce this object.",
+        "icon": null,
+        "required": [
+          "code",
+          "name",
+          "catalog"
+        ],
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "catalog",
+            "description": "The OpenCatalogi catalog this materialized programme belongs to. Set by the OpenConnector ooapi-catalog Synchronization target when writing the object (see the `course` schema's `catalog` field for the scoping rationale).",
+            "facetable": true,
+            "title": "Catalog"
+          },
+          "code": {
+            "type": "string",
+            "description": "The institution-internal programme code",
+            "minLength": 1,
+            "facetable": true,
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "description": "The programme name",
+            "minLength": 1,
+            "facetable": true,
+            "title": "Name"
+          },
+          "level": {
+            "type": "string",
+            "description": "The education level of the programme (e.g. bachelor, master)",
+            "facetable": true,
+            "title": "Level"
+          },
+          "courseIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "course"
+            },
+            "description": "The courses that make up this programme",
+            "facetable": true,
+            "title": "Course IDs"
+          },
+          "rioOpleidingseenheidId": {
+            "type": "string",
+            "description": "The RIO opleidingseenheid identifier, when the source institution has one. Omitted from the rendered OOAPI resource when empty (OOAPI-005) rather than emitted as null.",
+            "facetable": true,
+            "title": "RIO Opleidingseenheid ID"
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": true,
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        }
+      },
+      "offering": {
+        "slug": "offering",
+        "x-ooapi": {
+          "resource": "offering"
+        },
+        "title": "Offering",
+        "version": "0.1.0",
+        "published": "2026-07-12T00:00:00+00:00",
+        "summary": "An OOAPI 5.0 offering (a course/programme run), materialized from a scholiq Cohort by the OpenConnector ooapi-catalog Synchronization",
+        "description": "An offering represents a single run (cohort) of a course or programme, published via the Open Onderwijs API (OOAPI 5.0). Offering objects are written by OpenConnector's ooapi-catalog Synchronization target, consuming scholiq's DataExchangeJob (target: ooapi-catalog); OpenCatalogi never calls scholiq directly to produce this object. An offering always references its parent course (OOAPI-006).",
+        "icon": null,
+        "required": [
+          "courseId",
+          "catalog"
+        ],
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "catalog",
+            "description": "The OpenCatalogi catalog this materialized offering belongs to. Set by the OpenConnector ooapi-catalog Synchronization target when writing the object (see the `course` schema's `catalog` field for the scoping rationale).",
+            "facetable": true,
+            "title": "Catalog"
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "course",
+            "description": "Reference to the parent course this offering belongs to",
+            "facetable": true,
+            "title": "Course ID"
+          },
+          "programmeId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "program",
+            "description": "Reference to the parent programme this offering belongs to, when applicable",
+            "facetable": true,
+            "title": "Programme ID"
+          },
+          "period": {
+            "type": "string",
+            "description": "The academic period of this offering (e.g. semester 1)",
+            "facetable": true,
+            "title": "Period"
+          },
+          "academicYear": {
+            "type": "string",
+            "description": "The academic year of this offering (e.g. 2026-2027)",
+            "facetable": true,
+            "title": "Academic Year"
+          },
+          "teacherIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Identifiers of the teachers assigned to this offering",
+            "facetable": false,
+            "title": "Teacher IDs"
+          },
+          "learnerIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Identifiers of the learners enrolled in this offering",
+            "facetable": false,
+            "title": "Learner IDs"
+          },
+          "rioAangebodenOpleidingId": {
+            "type": "string",
+            "description": "The RIO aangeboden opleiding identifier, when the source institution has one. Omitted from the rendered OOAPI resource when empty (OOAPI-005) rather than emitted as null.",
+            "facetable": true,
+            "title": "RIO Aangeboden Opleiding ID"
+          }
+        },
+        "configuration": {
+          "autoPublish": false
+        },
+        "hardValidation": false,
+        "searchable": true,
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -98,7 +98,7 @@ const DETAIL_LAYOUT = [
 /**
  * CatalogDetailPage — route view for a single catalog, resolved by route id.
  *
- * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-3
+ * @spec openspec/specs/catalogs/spec.md
  */
 export default {
 	name: 'CatalogDetailPage',
@@ -124,9 +124,17 @@ export default {
 		catalogId() {
 			return this.$route.params.id
 		},
-		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
+		/**
+		 * Prefer the id-keyed cache populated by `fetchObject` (route-driven
+		 * loads never set active, so `getActiveObject` returns null on a
+		 * fresh detail load), fall back to the active-object slot for
+		 * flows that set active before navigating (edit modal → detail).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3
+		 */
 		catalog() {
-			return objectStore.getActiveObject('catalog')
+			return objectStore.getObject('catalog', this.catalogId)
+				|| objectStore.getActiveObject('catalog')
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
@@ -150,6 +158,7 @@ export default {
 				{ label: t('opencatalogi', 'Registers'), value: (this.catalog.registers || []).length },
 				{ label: t('opencatalogi', 'Schemas'), value: (this.catalog.schemas || []).length },
 				{ label: t('opencatalogi', 'WOO Sitemap'), value: this.catalog.hasWooSitemap ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') },
+				{ label: t('opencatalogi', 'OOAPI 5.0 Publication'), value: this.catalog.hasOoapi ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') },
 			]
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */

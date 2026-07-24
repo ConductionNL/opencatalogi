@@ -35,7 +35,8 @@
 		@page-size-changed="onPageSizeChange"
 		@view-mode-change="viewMode = $event"
 		@select="onSelect"
-		@row-click="onRowClick">
+		@row-click="onRowClick"
+		@view="viewCatalog">
 		<template #below-header>
 			<NcNoteCard v-if="loaded && !isAdmin" type="info">
 				{{ t('opencatalogi', 'This page is read-only. Only administrators can create, edit, or delete entries here.') }}
@@ -112,6 +113,7 @@ import { useListView, CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-v
 import { objectStore, navigationStore } from '../../store/store.js'
 import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
+import { resolveObjectId } from '../../services/resolveObjectId.js'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -185,16 +187,24 @@ export default {
 			this.selectedIds = ids
 		},
 		onRowClick(row) {
-			const id = row?.['@self']?.id || row?.id
+			const id = resolveObjectId(row)
 			if (id) {
-				this.$router.push({ name: 'CatalogDetail', params: { id } })
+				this.$router.push({ name: 'CatalogDetail', params: { id: String(id) } })
+				return
 			}
+			// No id resolvable — log the row so misshapen payloads surface
+			// in the browser console instead of silently doing nothing.
+			// eslint-disable-next-line no-console
+			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
 		viewCatalog(catalog) {
-			const id = catalog?.['@self']?.id || catalog?.id
+			const id = resolveObjectId(catalog)
 			if (id) {
-				this.$router.push({ name: 'CatalogDetail', params: { id } })
+				this.$router.push({ name: 'CatalogDetail', params: { id: String(id) } })
+				return
 			}
+			// eslint-disable-next-line no-console
+			console.warn('[opencatalogi] viewCatalog: no id resolvable from row', catalog)
 		},
 		editCatalog(catalog) {
 			objectStore.setActiveObject('catalog', catalog)

@@ -137,7 +137,7 @@ class DcatController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
      */
     public function preflightedCors(): Response
     {
@@ -160,7 +160,7 @@ class DcatController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
      */
     public function instance(): Response
     {
@@ -196,10 +196,10 @@ class DcatController extends Controller
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
      */
     public function catalog(string $catalogSlug): Response
     {
@@ -259,7 +259,7 @@ class DcatController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function validate(string $catalogSlug): JSONResponse
@@ -285,6 +285,40 @@ class DcatController extends Controller
         }
 
     }//end validate()
+
+    /**
+     * Validate a catalog's feed for data.overheid.nl (DONL) harvesting.
+     *
+     * Admin-only. Runs the DONL rule-set over the DCAT feed and returns the
+     * canonical harvest-source URL plus per-dataset source/theme/mandatory
+     * violations. Advisory — never alters serving (DCAT-NPF-001).
+     *
+     * @param string $catalogSlug The catalog slug.
+     *
+     * @return JSONResponse The DONL validation report (with the harvest-source URL).
+     *
+     * @NoCSRFRequired
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function donlReport(string $catalogSlug): JSONResponse
+    {
+        try {
+            $catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+            if ($catalog === null) {
+                return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+            }
+
+            $report = $this->dcatService->validateForDonl($catalog, $catalogSlug);
+            $report['catalogSlug'] = $catalogSlug;
+            return new JSONResponse($report, 200);
+        } catch (\Throwable $e) {
+            $this->logger->error('[DcatController::donlReport] Validation failed', ['catalogSlug' => $catalogSlug, 'error' => $e->getMessage()]);
+            return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+        }
+
+    }//end donlReport()
 
     /**
      * Serialize a document and wrap it in a CORS- and cache-headed DcatResponse.
@@ -339,7 +373,7 @@ class DcatController extends Controller
      *
      * @return JSONResponse The 406 response.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
      */
     private function unsupportedFormat(): JSONResponse
     {

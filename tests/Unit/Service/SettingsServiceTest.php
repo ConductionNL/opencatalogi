@@ -468,7 +468,21 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $expectedTypes = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'usageCounter'];
+        $expectedTypes = [
+            'catalog',
+            'listing',
+            'organization',
+            'theme',
+            'page',
+            'menu',
+            'glossary',
+            'document',
+            'usageCounter',
+            // ooapi-catalog-publication (OOAPI-010): materialized course/program/offering scope.
+            'ooapi_courses',
+            'ooapi_programs',
+            'ooapi_offerings',
+        ];
         $this->assertSame($expectedTypes, $result['objectTypes']);
 
     }//end testGetSettingsObjectTypesContainAllExpectedTypes()
@@ -487,7 +501,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
         foreach ($types as $type) {
             $this->assertArrayHasKey("{$type}_source", $result['configuration']);
             $this->assertArrayHasKey("{$type}_schema", $result['configuration']);
@@ -514,7 +528,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
 
         $result = $this->service->getSettings();
 
-        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary'];
+        $types = ['catalog', 'listing', 'organization', 'theme', 'page', 'menu', 'glossary', 'document'];
         foreach ($types as $type) {
             $this->assertSame('openregister', $result['configuration']["{$type}_source"]);
         }
@@ -2013,4 +2027,171 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($result);
 
     }//end testShouldLoadSettingsReturnsFalseWhenOlderVersion()
+
+    /**
+     * Assert `document_source`, `document_schema` and `document_register` are
+     * all persisted to app-config when `updateObjectTypeConfiguration()` runs
+     * against a normal import result that includes the bundled `document`
+     * schema on the shared `publication` register.
+     *
+     * @return void
+     */
+    public function testUpdateObjectTypeConfigurationPopulatesDocumentKeys(): void
+    {
+        $importResult = [
+            'schemas'   => [
+                ['slug' => 'publication', 'id' => 42],
+                ['slug' => 'document', 'id' => 43],
+            ],
+            'registers' => [
+                ['slug' => 'publication', 'id' => 7],
+            ],
+        ];
+
+        $storedValues = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$storedValues) {
+                    $storedValues[$key] = $value;
+                    return true;
+                }
+            );
+
+        $this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
+
+        // All three document_* keys MUST be present after provisioning.
+        $this->assertArrayHasKey('document_source', $storedValues, 'document_source was not persisted');
+        $this->assertArrayHasKey('document_schema', $storedValues, 'document_schema was not persisted');
+        $this->assertArrayHasKey('document_register', $storedValues, 'document_register was not persisted');
+
+        // document_source is a fixed literal.
+        $this->assertSame('openregister', $storedValues['document_source']);
+
+        // document_schema and document_register are stringified numeric IDs.
+        $this->assertSame('43', $storedValues['document_schema']);
+        $this->assertSame('7', $storedValues['document_register']);
+        $this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_schema']);
+        $this->assertMatchesRegularExpression('/^\d+$/', $storedValues['document_register']);
+
+        // And the publication_* keys must ALSO be there (co-tenant of the same register).
+        $this->assertSame('42', $storedValues['publication_schema']);
+        $this->assertSame('7', $storedValues['publication_register']);
+
+    }//end testUpdateObjectTypeConfigurationPopulatesDocumentKeys()
+
+    /**
+     * Assert `updateSettings()` accepts `document_*` keys — the C1 allowlist
+     * must include `document` alongside the other bundled object types.
+     *
+     * @return void
+     */
+    public function testUpdateSettingsAcceptsDocumentKeys(): void
+    {
+        $inputData = [
+            'document_source'   => 'openregister',
+            'document_schema'   => '43',
+            'document_register' => '7',
+        ];
+
+        $stored = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$stored) {
+                    $stored[$key] = $value;
+                    return true;
+                }
+            );
+
+        $this->config->method('getValueString')
+            ->willReturnCallback(
+                function (string $app, string $key) use (&$stored) {
+                    return $stored[$key] ?? '';
+                }
+            );
+
+        $result = $this->service->updateSettings($inputData);
+
+        $this->assertSame('openregister', $result['document_source']);
+        $this->assertSame('43', $result['document_schema']);
+        $this->assertSame('7', $result['document_register']);
+
+    }//end testUpdateSettingsAcceptsDocumentKeys()
+
+    // ---------------------------------------------------------------
+    // updateObjectTypeConfiguration() — WOO key map
+    // (fix-woo-capability-provisioning / WOO-PROV-002)
+    // ---------------------------------------------------------------
+
+    /**
+     * A mocked import result containing the `publication` register and both
+     * `wooBatch`/`wooAssessment` schemas must set all three WOO config keys:
+     * `woo_register` (the register id), `woo_batch_schema` and
+     * `woo_assessment_schema` (the respective schema ids).
+     *
+     * @return void
+     */
+    public function testUpdateObjectTypeConfigurationSetsAllThreeWooKeys(): void
+    {
+        $stored = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$stored) {
+                    $stored[$key] = $value;
+                    return true;
+                }
+            );
+
+        $importResult = [
+            'registers' => [
+                ['id' => 99, 'slug' => 'publication'],
+            ],
+            'schemas'   => [
+                ['id' => 101, 'slug' => 'wooBatch'],
+                ['id' => 102, 'slug' => 'wooAssessment'],
+            ],
+        ];
+
+        $this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
+
+        $this->assertSame('99', $stored['woo_register']);
+        $this->assertSame('101', $stored['woo_batch_schema']);
+        $this->assertSame('102', $stored['woo_assessment_schema']);
+
+    }//end testUpdateObjectTypeConfigurationSetsAllThreeWooKeys()
+
+    /**
+     * When the import result does not contain a `wooAssessment` schema,
+     * `woo_assessment_schema` must be left untouched (never overwritten with
+     * an empty value) — while `woo_register` and `woo_batch_schema` are still
+     * set from the data that IS present.
+     *
+     * @return void
+     */
+    public function testUpdateObjectTypeConfigurationLeavesMissingWooAssessmentSchemaUntouched(): void
+    {
+        $stored = [];
+        $this->config->method('setValueString')
+            ->willReturnCallback(
+                function (string $app, string $key, string $value) use (&$stored) {
+                    $stored[$key] = $value;
+                    return true;
+                }
+            );
+
+        $importResult = [
+            'registers' => [
+                ['id' => 99, 'slug' => 'publication'],
+            ],
+            'schemas'   => [
+                ['id' => 101, 'slug' => 'wooBatch'],
+            ],
+        ];
+
+        $this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [$importResult]);
+
+        $this->assertSame('99', $stored['woo_register']);
+        $this->assertSame('101', $stored['woo_batch_schema']);
+        $this->assertArrayNotHasKey('woo_assessment_schema', $stored);
+
+    }//end testUpdateObjectTypeConfigurationLeavesMissingWooAssessmentSchemaUntouched()
 }//end class

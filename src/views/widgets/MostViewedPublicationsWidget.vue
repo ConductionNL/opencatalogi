@@ -13,38 +13,44 @@
 				label="label"
 				@input="load" />
 		</div>
-		<NcDashboardWidget :items="items"
+		<CnDataTable :rows="items"
+			:columns="columns"
 			:loading="loading"
-			@show="onShow">
-			<template #empty-content>
+			hide-header
+			borderless
+			@row-click="onRowClick">
+			<template #empty>
 				<NcEmptyContent :title="t('opencatalogi', 'No usage measured yet')">
 					<template #icon>
 						<ChartLine />
 					</template>
 				</NcEmptyContent>
 			</template>
-		</NcDashboardWidget>
+		</CnDataTable>
 	</div>
 </template>
 
 <script>
-import { NcDashboardWidget, NcEmptyContent, NcSelect } from '@nextcloud/vue'
+import { CnDataTable } from '@conduction/nextcloud-vue'
+import { NcEmptyContent, NcSelect } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 import ChartLine from 'vue-material-design-icons/ChartLine.vue'
 import { fetchCatalogStats, formatCount } from '../../services/usageStats.js'
+import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
 
 /**
  * MostViewedPublicationsWidget — top-N most-viewed publications for a period.
  *
- * Built on the existing NcDashboardWidget surface. Lists the top publications
- * by privacy-safe view counts for the selected period; clicking an entry deep
- * links to that publication.
+ * The NcSelect period picker (7/30/90 days) sits above the list and drives
+ * the fetch; the list itself renders the universal CnDataTable list-widget
+ * pattern (ADR-049). Clicking an entry deep links to that publication.
  *
- * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 export default {
 	name: 'MostViewedPublicationsWidget',
 	components: {
-		NcDashboardWidget,
+		CnDataTable,
 		NcEmptyContent,
 		NcSelect,
 		ChartLine,
@@ -64,6 +70,7 @@ export default {
 			loading: true,
 			period: 30,
 			topViewed: [],
+			columns: LIST_COLUMNS,
 		}
 	},
 	computed: {
@@ -107,8 +114,8 @@ export default {
 			}
 		},
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
-		onShow(item) {
-			window.location.href = `/index.php/apps/opencatalogi/publications/${item.id}`
+		onRowClick(row) {
+			navigateTo(generateUrl(`/apps/opencatalogi/publications/${row.id}`))
 		},
 	},
 }

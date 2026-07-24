@@ -2,7 +2,7 @@
  * Resolve the active Nextcloud theme ('light' | 'dark') from body data-theme attributes.
  *
  * @return {string} 'light' or 'dark'
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-5
+ * @spec openspec/specs/content-management/spec.md
  */
 export const getTheme = () => {
 	if (document.body.hasAttribute('data-theme-light')) {

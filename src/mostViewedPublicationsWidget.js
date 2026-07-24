@@ -4,7 +4,7 @@
  *
  * Dashboard bundle entry-point registering the most-viewed-publications widget.
  *
- * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+ * @spec openspec/specs/publication-usage-analytics/spec.md
  */
 import Vue from 'vue'
 import { translate as t, translatePlural as n } from '@nextcloud/l10n'

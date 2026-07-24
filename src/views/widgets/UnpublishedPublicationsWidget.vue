@@ -4,38 +4,54 @@ import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDashboardWidget :items="items"
+	<CnDataTable :rows="items"
+		:columns="columns"
 		:loading="loading"
-		:item-menu="itemMenu"
-		@show="onShow">
-		<template #empty-content>
+		hide-header
+		borderless
+		row-icon="DatabaseEyeOutline"
+		@row-click="onRowClick">
+		<template #empty>
 			<NcEmptyContent :title="t('opencatalogi', 'No concept publications found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
 			</NcEmptyContent>
 		</template>
-	</NcDashboardWidget>
+	</CnDataTable>
 </template>
 
 <script>
 // Components
-import { NcDashboardWidget, NcEmptyContent } from '@nextcloud/vue'
+import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
+import { NcEmptyContent } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
+import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 
-import { getTheme } from '../../services/getTheme.js'
+import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
+
+// The row's leading icon renders through CnDataTable's shared CnIcon
+// registry; MDI icons use currentColor, so light/dark theming is automatic
+// (replacing the old getTheme() light/dark SVG-url swap).
+registerIcons({ DatabaseEyeOutline })
 
 /**
  * UnpublishedPublicationsWidget — dashboard widget listing unpublished publications.
  *
- * @spec openspec/changes/retrofit-2026-05-25-dashboard/tasks.md#task-3
+ * Renders the universal CnDataTable list-widget pattern (ADR-049); a row
+ * click deep-links to the publication's detail page
+ * (`/publications/{catalogSlug}/{id}`, served by `ui#publicationsPage`),
+ * resolving the catalog slug the same way DashboardSideBar does.
+ *
+ * @spec openspec/specs/dashboard/spec.md
  */
 export default {
 	name: 'UnpublishedPublicationsWidget',
 	components: {
-		NcDashboardWidget,
+		CnDataTable,
 		NcEmptyContent,
 	},
 	props: {
@@ -47,12 +63,7 @@ export default {
 	data() {
 		return {
 			loading: false,
-			itemMenu: {
-				show: {
-					text: 'Publicatie bekijken',
-					icon: 'icon-open-in-app',
-				},
-			},
+			columns: LIST_COLUMNS,
 		}
 	},
 	computed: {
@@ -64,7 +75,9 @@ export default {
 					id: publication.id,
 					mainText: publication.title,
 					subText: publication.summary,
-					avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/database-eye-outline.svg' : '/apps-extra/opencatalogi/img/database-eye-outline_light.svg',
+					// Keep the source object on the row so a click can
+					// resolve the owning catalog's slug for the deep link.
+					publication,
 				}))
 		},
 	},
@@ -73,24 +86,38 @@ export default {
 	},
 	methods: {
 		/**
-		 * Handle showing a publication
-		 * @param {object} item - The publication item to show
+		 * Open the clicked publication's detail page in the same tab.
+		 *
+		 * Resolves the publication's catalog (id or embedded object) against
+		 * the fetched catalog collection to obtain the slug required by the
+		 * `/publications/{catalogSlug}/{id}` route. When no slug can be
+		 * resolved the click is a no-op.
+		 *
+		 * @param {object} row - The clicked row (a shaped publication item).
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
-		onShow(item) {
-			// navigationStore.setSelected('publication')
-			// navigationStore.setSelectedCatalogus(item.id)
-			// window.open('/index.php/apps/opencatalogi', '_self')
+		onRowClick(row) {
+			const publication = row.publication
+			const catalogId = publication?.catalog?.id || publication?.catalog
+			const catalogs = objectStore.getCollection('catalog')?.results || []
+			const matchedCatalog = catalogs.find((c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''))
+			const slug = matchedCatalog?.slug || publication?.catalog?.slug
+			if (!slug || !publication?.id) return
+			navigateTo(generateUrl(`/apps/opencatalogi/publications/${slug}/${publication.id}`))
 		},
 		/**
-		 * Fetch the publication data
+		 * Fetch the publication data (and the catalog collection used to
+		 * resolve catalog slugs for row-click deep links).
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData() {
 			this.loading = true
-			await objectStore.fetchCollection('publication')
+			await Promise.all([
+				objectStore.fetchCollection('publication'),
+				objectStore.fetchCollection('catalog'),
+			])
 			this.loading = false
 		},
 	},

@@ -199,7 +199,7 @@ import { Page } from '../../entities/index.js'
 /**
  * ViewPageModal — read a page and its embedded content blocks.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'ViewPageModal',

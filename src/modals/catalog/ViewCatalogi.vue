@@ -183,7 +183,7 @@ import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 /**
  * ViewCatalogi — read-only tabbed view of a catalog's details.
  *
- * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-3
+ * @spec openspec/specs/catalogs/spec.md
  */
 export default {
 	name: 'ViewCatalogi',

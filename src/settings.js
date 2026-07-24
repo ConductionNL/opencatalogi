@@ -2,7 +2,7 @@
  * Admin settings bundle entry-point — mounts Settings.vue on #settings and
  * registers the markdown editor + FontAwesome library.
  *
- * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-2
+ * @spec openspec/specs/admin-settings/spec.md
  */
 import Vue from 'vue'
 import { translate as t, translatePlural as n } from '@nextcloud/l10n'

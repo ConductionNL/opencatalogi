@@ -1156,7 +1156,7 @@ h4 {
 }
 
 .active.publicationDetails-actionsDelete button {
-	color: #EBEBEB !important;
+	color: var(--color-error-text) !important;
 }
 
 .PublicationDetail-clickable {
@@ -1206,14 +1206,16 @@ h4 {
 	align-self: center;
 	margin-inline-start: 3px;
 }
+
 .linksParameters {
 	margin-top: 25px;
 }
+
 .emptyStateMessage {
-    margin-block-start: 15px;
-    text-align: center;
-    display: flex;
-    justify-content: center;
+	margin-block-start: 15px;
+	text-align: center;
+	display: flex;
+	justify-content: center;
 }
 
 .paginationContainer {
@@ -1234,6 +1236,7 @@ h4 {
 .checkboxListActionButton {
 	margin-inline-start: auto;
 }
+
 .checkedItem {
 	display: flex;
 	align-items: center;

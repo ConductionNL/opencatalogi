@@ -18,14 +18,14 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-28
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-29
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-30
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-31
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-32
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-33
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-34
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -137,6 +138,42 @@ class PublicationsController extends Controller
     }//end __construct()
 
     /**
+     * Whether the caller requested a schema.org JSON-LD representation.
+     *
+     * True when `?format=schema` / `?format=jsonld` / `?format=schema.org` is set,
+     * the requested id carries a `.jsonld` suffix, or the `Accept` header prefers
+     * `application/ld+json` (SDD-001/SDD-004 content negotiation).
+     *
+     * @return boolean True when schema.org JSON-LD is requested.
+     *
+     * @spec openspec/specs/structured-data-discoverability/spec.md
+     */
+    private function wantsSchemaOrg(): bool
+    {
+        $format = strtolower((string) $this->request->getParam('format', ''));
+        if (in_array($format, ['schema', 'jsonld', 'schema.org', 'schemaorg'], true) === true) {
+            return true;
+        }
+
+        $accept = strtolower((string) $this->request->getHeader('Accept'));
+        return str_contains($accept, 'application/ld+json');
+
+    }//end wantsSchemaOrg()
+
+    /**
+     * Resolve the schema.org rendering service from the container.
+     *
+     * @return SchemaOrgService The schema.org JSON-LD service.
+     *
+     * @spec exclude Lazy DI accessor for the schema.org renderer; pure plumbing.
+     */
+    private function getSchemaOrgService(): SchemaOrgService
+    {
+        return $this->container->get(SchemaOrgService::class);
+
+    }//end getSchemaOrgService()
+
+    /**
      * Attempts to retrieve the OpenRegister ObjectService from the container.
      *
      * @return object|null The OpenRegister ObjectService if available, null otherwise.
@@ -166,7 +203,7 @@ class PublicationsController extends Controller
      *
      * @return void
      *
-     * @spec openspec/changes/publication-usage-analytics/specs/publication-usage-analytics/spec.md
+     * @spec openspec/specs/publication-usage-analytics/spec.md
      */
     private function countReach(string $publicationId, string $kind, string $catalogSlug): void
     {
@@ -405,7 +442,7 @@ class PublicationsController extends Controller
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-28
+     * @spec openspec/specs/publications/spec.md
      */
     public function index(string $catalogSlug): JSONResponse
     {
@@ -537,7 +574,7 @@ class PublicationsController extends Controller
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-29
+     * @spec openspec/specs/publications/spec.md
      */
     public function show(string $catalogSlug, string $id): JSONResponse
     {
@@ -744,6 +781,24 @@ class PublicationsController extends Controller
                 _multitenancy: false,
             );
 
+            // Content-negotiate a schema.org JSON-LD representation (SDD-001/SDD-003):
+            // when the caller asks for application/ld+json (or ?format=schema / a
+            // .jsonld suffix) return the crawler-facing schema.org node instead of the
+            // internal object envelope. Visibility has already been enforced above, so
+            // a non-visible publication never reaches this branch.
+            if ($this->wantsSchemaOrg() === true) {
+                $node     = $this->getSchemaOrgService()->buildPublicationNode(
+                    object: $result,
+                    catalog: $catalog,
+                    catalogSlug: $catalogSlug
+                );
+                $response = new JSONResponse($node, 200);
+                $response->addHeader('Content-Type', 'application/ld+json');
+                $this->addCorsHeaders($response);
+                $this->countReach(publicationId: $id, kind: UsageCounterService::KIND_VIEW, catalogSlug: $catalogSlug);
+                return $response;
+            }
+
             // Add CORS headers for public API access.
             $response = new JSONResponse($result, 200);
             $this->addCorsHeaders($response);
@@ -803,7 +858,7 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-30
+     * @spec openspec/specs/publications/spec.md
      */
     public function attachments(string $catalogSlug, string $id): JSONResponse
     {
@@ -888,7 +943,7 @@ class PublicationsController extends Controller
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-31
+     * @spec openspec/specs/publications/spec.md
      */
     public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse
     {
@@ -985,7 +1040,7 @@ class PublicationsController extends Controller
      * @PublicPage
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-32
+     * @spec openspec/specs/publications/spec.md
      */
     public function uses(string $catalogSlug, string $id): JSONResponse
     {
@@ -1081,7 +1136,7 @@ class PublicationsController extends Controller
      * @PublicPage
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) catalogSlug required by route pattern.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-33
+     * @spec openspec/specs/publications/spec.md
      */
     public function used(string $catalogSlug, string $id): JSONResponse
     {

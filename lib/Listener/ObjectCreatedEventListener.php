@@ -18,8 +18,8 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-53
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+ * @spec openspec/specs/auto-publishing/spec.md
+ * @spec openspec/specs/auto-publishing/spec.md
  * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -68,7 +68,7 @@ class ObjectCreatedEventListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-53
+     * @spec openspec/specs/auto-publishing/spec.md
      * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-3
      */
     public function handle(Event $event): void
@@ -156,7 +156,7 @@ class ObjectCreatedEventListener implements IEventListener
      *
      * @return array The object data in array format.
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-54
+     * @spec openspec/specs/auto-publishing/spec.md
      */
     private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array
     {

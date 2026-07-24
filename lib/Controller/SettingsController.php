@@ -18,12 +18,12 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-37
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/specs/admin-settings/spec.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -71,7 +71,7 @@ class SettingsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-37
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function index(): JSONResponse
     {
@@ -100,7 +100,7 @@ class SettingsController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-38
+     * @spec openspec/specs/admin-settings/spec.md
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function create(): JSONResponse
@@ -122,7 +122,7 @@ class SettingsController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-39
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function load(): JSONResponse
     {
@@ -143,7 +143,7 @@ class SettingsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function getPublishingOptions(): JSONResponse
     {
@@ -167,7 +167,7 @@ class SettingsController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-40
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function updatePublishingOptions(): JSONResponse
     {
@@ -189,7 +189,7 @@ class SettingsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-41
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function getVersionInfo(): JSONResponse
     {
@@ -213,7 +213,7 @@ class SettingsController extends Controller
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-42
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function manualImport(): JSONResponse
     {

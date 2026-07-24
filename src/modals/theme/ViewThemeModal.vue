@@ -157,7 +157,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 /**
  * ViewThemeModal — read a theme.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'ViewThemeModal',

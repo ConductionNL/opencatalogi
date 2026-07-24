@@ -19,23 +19,23 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-102
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-103
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-104
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-105
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-106
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-107
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-109
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-110
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-111
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-114
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-115
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/federation/spec.md
+ * @spec openspec/specs/federation/spec.md
  */
 
 namespace OCA\OpenCatalogi\Service;
@@ -54,6 +54,7 @@ use Exception;
 use InvalidArgumentException;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IServerContainer;
+use OCP\IUserSession;
 use RuntimeException;
 
 /**
@@ -65,6 +66,9 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/publications/spec.md
+ * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
 class PublicationService
 {
@@ -114,11 +118,19 @@ class PublicationService
     /**
      * Constructor for PublicationService.
      *
-     * @param IAppConfig       $config           App configuration interface
-     * @param IRequest         $request          Request interface
-     * @param IServerContainer $container        Server container for dependency injection
-     * @param IAppManager      $appManager       App manager for checking installed apps
-     * @param DirectoryService $directoryService Directory service for federation
+     * @param IAppConfig        $config           App configuration interface
+     * @param IRequest          $request          Request interface
+     * @param IServerContainer  $container        Server container for dependency injection
+     * @param IAppManager       $appManager       App manager for checking installed apps
+     * @param DirectoryService  $directoryService Directory service for federation
+     * @param IUserSession|null $userSession      User session used to decide whether the
+     *                                            anonymous `@self` strip list applies
+     *                                            (authenticated-read-parity, CAT-AUTH-001).
+     *                                            Nullable/optional so existing call sites and
+     *                                            tests keep working unmodified; a null session
+     *                                            fails closed to the anonymous (stripped) envelope.
+     *
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
      */
     public function __construct(
         private readonly IAppConfig $config,
@@ -126,6 +138,7 @@ class PublicationService
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
+        private readonly ?IUserSession $userSession=null,
     ) {
         $this->appName = 'opencatalogi';
 
@@ -171,17 +184,17 @@ class PublicationService
     /**
      * Set register/schema context on the ObjectService for a given object UUID.
      *
-     * Searches magic tables scoped to the catalogs configured on this instance to find
-     * which register/schema an object belongs to, then sets that context on the
-     * ObjectService so subsequent operations can find the object.
+     * Locates which register/schema an object belongs to — scoped to the catalogs
+     * configured on this instance — then sets that context on the ObjectService so
+     * subsequent operations can find the object.
      *
-     * The previous implementation issued a platform-wide SELECT against
-     * information_schema.tables (no scope restriction) and was reachable from
-     * anonymous @PublicPage endpoints — a DoS vector and a cross-catalog
-     * information-disclosure risk (C-2 / wave-7). The new implementation derives the
-     * allowed (register × schema) pairs from the catalogs configured on this instance
-     * and delegates to PublicationQueryService::findObjectLocation(), which is already
-     * scoped and cached.
+     * The previous implementation issued a platform-wide DBMS-catalog probe (no scope
+     * restriction) and was reachable from anonymous @PublicPage endpoints — a DoS
+     * vector and a cross-catalog information-disclosure risk (C-2 / wave-7). The
+     * current implementation derives the allowed (register × schema) pairs from the
+     * catalogs configured on this instance and delegates to
+     * PublicationQueryService::findObjectLocation(), which routes the lookup through
+     * OpenRegister's ObjectService within that scope.
      *
      * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service instance
      * @param string                                  $objectId      The UUID of the object to locate
@@ -203,8 +216,9 @@ class PublicationService
                 return;
             }
 
-            // Delegate to the scoped, cached helper that never touches information_schema
-            // without a constrained (register × schema) set.
+            // Delegate to the scoped helper that routes the lookup through OpenRegister's
+            // ObjectService, never a raw DBMS-catalog probe, and only within a
+            // constrained (register × schema) set.
             $location = $this->getQueryService()->findObjectLocation(
                 uuid: $objectId,
                 allowedRegisters: $allowedRegisters,
@@ -254,7 +268,7 @@ class PublicationService
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-102
+     * @spec openspec/specs/publications/spec.md
      */
     public function getCatalogFilters(null|string|int $catalogId=null): array
     {
@@ -371,7 +385,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-103
+     * @spec openspec/specs/publications/spec.md
      */
     private function searchPublications(null|string|int $catalogId=null, ?array $ids=null, ?array $customParams=null): array
     {
@@ -522,7 +536,7 @@ class PublicationService
      *
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-104
+     * @spec openspec/specs/federation/spec.md
      */
     private function getExternalCatalogsFromListings(): array
     {
@@ -710,7 +724,7 @@ class PublicationService
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-105
+     * @spec openspec/specs/publications/spec.md
      */
     public function index(null|string|int $catalogId=null, ?array $customParams=null): JSONResponse
     {
@@ -737,7 +751,7 @@ class PublicationService
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-106
+     * @spec openspec/specs/publications/spec.md
      */
     public function show(string $id): JSONResponse
     {
@@ -832,7 +846,7 @@ class PublicationService
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-107
+     * @spec openspec/specs/publications/spec.md
      */
     public function attachments(string $id): JSONResponse
     {
@@ -894,7 +908,7 @@ class PublicationService
       *
       * @SuppressWarnings(PHPMD.CyclomaticComplexity)
       *
-      * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-108
+      * @spec openspec/specs/publications/spec.md
       */
     public function download(
         string $id
@@ -966,31 +980,29 @@ class PublicationService
      * for a 'files' property within '@self' and ensures each file has a 'published' property.
      * Files without a 'published' property are removed.
      *
+     * Authenticated-read-parity (CAT-AUTH-001): the strip only applies to anonymous
+     * (logged-out) callers. OpenRegister RBAC already decided which objects the caller
+     * may read (via `_rbac: true` on the delegated search); this method only governs
+     * envelope metadata richness. Authenticated callers receive every `@self` property
+     * OpenRegister provides, unmodified.
+     *
      * @param array $objects Array of objects to filter
      *
      * @return array Filtered array of objects
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-35
+     * @spec openspec/specs/publications/spec.md
+     * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
      */
     private function filterUnwantedProperties(array $objects): array
     {
-        // List of properties to remove from @self.
-        $unwantedProperties = [
-            'schemaVersion',
-            'relations',
-            'locked',
-            'owner',
-            'folder',
-            'application',
-            'validation',
-            'retention',
-            'size',
-            'deleted',
-        ];
+        // Single source of truth for the anonymous strip list (authenticated-read-parity,
+        // CAT-AUTH-001) — see CatalogiService::UNWANTED_SELF_PROPERTIES.
+        $unwantedProperties = CatalogiService::UNWANTED_SELF_PROPERTIES;
+        $isAnonymous        = ($this->userSession === null || $this->userSession->getUser() === null);
 
         // Filter each object.
         return array_map(
-            function ($object) use ($unwantedProperties) {
+            function ($object) use ($unwantedProperties, $isAnonymous) {
                 // The OR SOLR backend returns array shapes (not ObjectEntity instances)
                 // from searchObjectsPaginated; the magic-mapper backend returns entities.
                 // Guard so we do not fatal with "Call to a member function jsonSerialize()
@@ -1001,11 +1013,17 @@ class PublicationService
                     $objectArray = $object->jsonSerialize();
                 }
 
-                // Remove unwanted properties from the '@self' array.
                 if (isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
-                    $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                    // Remove unwanted properties from the '@self' array — anonymous callers
+                    // only (authenticated-read-parity, CAT-AUTH-001). This governs envelope
+                    // metadata richness only.
+                    if ($isAnonymous === true) {
+                        $objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip($unwantedProperties));
+                    }
 
                     // Check for 'files' property and filter files without 'published'.
+                    // Unrelated to session/metadata richness — unchanged, applies to both
+                    // audiences, same as before this change.
                     if (isset($objectArray['@self']['files']) === true
                         && is_array($objectArray['@self']['files']) === true
                     ) {
@@ -1016,7 +1034,7 @@ class PublicationService
                             }
                         );
                     }
-                }
+                }//end if
 
                 return $objectArray;
             },
@@ -1043,7 +1061,7 @@ class PublicationService
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-109
+     * @spec openspec/specs/publications/spec.md
      */
     public function uses(string $id): JSONResponse
     {
@@ -1115,7 +1133,7 @@ class PublicationService
      * @NoCSRFRequired
      * @PublicPage
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-110
+     * @spec openspec/specs/publications/spec.md
      */
     public function used(string $id): JSONResponse
     {
@@ -1195,7 +1213,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-111
+     * @spec openspec/specs/federation/spec.md
      */
     public function getAggregatedPublications(array $queryParams=[], array $requestParams=[], string $baseUrl=''): array
     {
@@ -1685,7 +1703,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
+     * @spec openspec/specs/federation/spec.md
      */
     private function getLocalPublicationsFast(
         array $queryParams,
@@ -1872,7 +1890,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
+     * @spec openspec/specs/federation/spec.md
      */
     private function getLocalPublicationsUltraFast(
         array $queryParams,
@@ -2119,7 +2137,7 @@ class PublicationService
      * @return array Array of catalog objects with id, title, summary, description, etc.
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-112
+     * @spec openspec/specs/federation/spec.md
      */
     private function getLocalCatalogs(): array
     {
@@ -2192,7 +2210,7 @@ class PublicationService
      *
      * @return array Merged facets data
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
+     * @spec openspec/specs/federation/spec.md
      */
     private function mergeFacetsData(array $localFacets, array $federatedFacets): array
     {
@@ -2214,7 +2232,7 @@ class PublicationService
      *
      * @return array Merged facetable metadata
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-76
+     * @spec openspec/specs/federation/spec.md
      */
     private function mergeFacetableData(array $localFacetable, array $federatedFacetable): array
     {
@@ -2294,7 +2312,7 @@ class PublicationService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-113
+     * @spec openspec/specs/federation/spec.md
      */
     private function applyCumulativeOrdering(array $results, array $queryParams): array
     {
@@ -2450,7 +2468,7 @@ class PublicationService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-73
+     * @spec openspec/specs/federation/spec.md
      */
     public function getFederatedPublication(string $id, array $queryParams=[]): array
     {
@@ -2576,7 +2594,7 @@ class PublicationService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-114
+     * @spec openspec/specs/federation/spec.md
      */
     public function getFederatedUsed(string $id, array $queryParams=[]): array
     {
@@ -2671,7 +2689,7 @@ class PublicationService
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-115
+     * @spec openspec/specs/federation/spec.md
      */
     public function getFederatedUses(string $id, array $queryParams=[]): array
     {

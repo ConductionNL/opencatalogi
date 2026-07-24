@@ -16,7 +16,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-58
+ * @spec openspec/specs/admin-settings/spec.md
  */
 
 declare(strict_types=1);
@@ -70,7 +70,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/retrofit-2026-05-25-annotate-opencatalogi/tasks.md#task-58
+     * @spec openspec/specs/admin-settings/spec.md
      */
     public function run(IOutput $output): void
     {

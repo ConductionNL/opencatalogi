@@ -3,22 +3,33 @@ import { translate as t } from '@nextcloud/l10n'
 </script>
 
 <template>
-	<NcDashboardWidget :items="items"
-		:loading="loading"
-		@show="onShow">
-		<template #empty-content>
-			<NcEmptyContent :title="t('opencatalogi', 'Nothing requires retention review')">
-				<template #icon>
-					<ClockOutlineIcon />
-				</template>
-			</NcEmptyContent>
-		</template>
-	</NcDashboardWidget>
+	<div class="retentionWidget">
+		<div v-if="loading" class="retentionWidget__loading">
+			<NcLoadingIcon :size="32" />
+		</div>
+		<NcEmptyContent v-else-if="entries.length === 0"
+			:title="t('opencatalogi', 'Nothing requires retention review')">
+			<template #icon>
+				<ClockOutlineIcon />
+			</template>
+		</NcEmptyContent>
+		<div v-else class="retentionWidget__stats">
+			<CnStatsBlock v-for="entry in entries"
+				:key="entry.id"
+				:title="entry.label"
+				:count="entry.count"
+				count-label=""
+				horizontal
+				clickable
+				@click="onEntryClick(entry)" />
+		</div>
+	</div>
 </template>
 
 <script>
 // Components
-import { NcDashboardWidget, NcEmptyContent } from '@nextcloud/vue'
+import { CnStatsBlock } from '@conduction/nextcloud-vue'
+import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
@@ -29,16 +40,20 @@ import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
  * RetentionWidget — dashboard widget showing retention review-queue counts.
  *
  * Reads the authenticated retention queue summary and surfaces the
- * expiring-soon / review-required / archived counts, each deep-linking into the
+ * expiring-soon / review-required / archived counts as CnStatsBlock KPI
+ * entries (ADR-049 stats-block pattern — this widget is a registered
+ * Nextcloud dashboard component, not a manifest-v2 `widgets[]` declaration,
+ * so the blocks are composed directly). Each entry deep-links into the
  * publications listing pre-filtered to that retention status.
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
 export default {
 	name: 'RetentionWidget',
 	components: {
-		NcDashboardWidget,
+		CnStatsBlock,
 		NcEmptyContent,
+		NcLoadingIcon,
 		ClockOutlineIcon,
 	},
 	props: {
@@ -54,28 +69,28 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
-		items() {
+		/** @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
+		entries() {
 			const rows = []
 			if (this.summary.expiringSoon > 0) {
 				rows.push({
 					id: 'expiring',
-					mainText: t('opencatalogi', 'Expiring soon'),
-					subText: String(this.summary.expiringSoon),
+					label: t('opencatalogi', 'Expiring soon'),
+					count: this.summary.expiringSoon,
 				})
 			}
 			if (this.summary.reviewRequired > 0) {
 				rows.push({
 					id: 'review',
-					mainText: t('opencatalogi', 'Retention review required'),
-					subText: String(this.summary.reviewRequired),
+					label: t('opencatalogi', 'Retention review required'),
+					count: this.summary.reviewRequired,
 				})
 			}
 			if (this.summary.archived > 0) {
 				rows.push({
 					id: 'archived',
-					mainText: t('opencatalogi', 'Archived'),
-					subText: String(this.summary.archived),
+					label: t('opencatalogi', 'Archived'),
+					count: this.summary.archived,
 				})
 			}
 			return rows
@@ -87,19 +102,19 @@ export default {
 	methods: {
 		/**
 		 * Open the publications listing pre-filtered to the chosen retention status.
-		 * @param {object} item - The clicked summary row.
+		 * @param {object} entry - The clicked summary entry.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
-		onShow(item) {
-			window.open(generateUrl('/apps/opencatalogi/?retention=' + encodeURIComponent(item.id)), '_self')
+		onEntryClick(entry) {
+			window.open(generateUrl('/apps/opencatalogi/?retention=' + encodeURIComponent(entry.id)), '_self')
 		},
 		/**
 		 * Fetch the retention queue summary.
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
 		async fetchData() {
 			this.loading = true
@@ -115,3 +130,17 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.retentionWidget__loading {
+	display: flex;
+	justify-content: center;
+	padding: 1rem 0;
+}
+
+.retentionWidget__stats {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+</style>

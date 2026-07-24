@@ -34,6 +34,17 @@ import { EventBus } from '../../eventBus.js'
 							<FolderOutline :size="64" />
 						</template>
 					</NcEmptyContent>
+					<!-- Single catalog auto-selected but no register/schema reachable — this
+					     happens when the catalog has no `registers`/`schemas` configured,
+					     which otherwise leaves the modal body completely blank. -->
+					<NcEmptyContent
+						v-else-if="selectionStalled"
+						:name="t('opencatalogi', 'Catalog is not configured for publications')"
+						:description="selectionStalledReason">
+						<template #icon>
+							<FolderOutline :size="64" />
+						</template>
+					</NcEmptyContent>
 					<div v-if="catalogOptions.length > 1 && !isLockedCatalog" class="selectionStep">
 						<h3>{{ t('opencatalogi', 'Select Catalog') }}</h3>
 						<p>{{ t('opencatalogi', 'Choose the catalog where this publication will be stored.') }}</p>
@@ -454,7 +465,7 @@ import PublishedIcon from '../../components/PublishedIcon.vue'
 import PropertiesPanel from '../../components/PropertiesPanel.vue'
 
 /**
- * @spec openspec/changes/retrofit-2026-05-25-generic-object-modals/tasks.md#task-1
+ * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'ViewObject',
@@ -709,15 +720,19 @@ export default {
 				return []
 			}
 
-			const fullCatalog = objectStore.getCollection('catalog').results.find(catalog => catalog.id === this.selectedCatalog.id)
+			const fullCatalog = objectStore.getCollection('catalog').results.find(catalog => String(catalog.id) === String(this.selectedCatalog.id))
 			if (!fullCatalog) {
 				return []
 			}
 
-			const selectedCatalogRegisterIds = fullCatalog.registers || []
+			// Catalog.registers arrives as a string array (`["1"]`) while
+			// `register.id` from OpenRegister is numeric — `.includes` uses
+			// strict equality so the raw check would drop every match and
+			// leave the modal stalled on the empty-state (WOO-527 followup).
+			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(String)
 
 			return objectStore.availableRegisters
-				.filter(register => selectedCatalogRegisterIds.includes(register.id))
+				.filter(register => selectedCatalogRegisterIds.includes(String(register.id)))
 				.map(register => ({
 					id: register.id,
 					label: register.title,
@@ -729,22 +744,39 @@ export default {
 				return []
 			}
 
-			const register = objectStore.availableRegisters.find(register => register.id === this.selectedRegister.id)
-			const catalog = objectStore.getCollection('catalog').results.find(catalog => catalog.id === this.selectedCatalog.id)
+			const register = objectStore.availableRegisters.find(register => String(register.id) === String(this.selectedRegister.id))
+			const catalog = objectStore.getCollection('catalog').results.find(catalog => String(catalog.id) === String(this.selectedCatalog.id))
 
 			if (!register || !catalog) {
 				return []
 			}
 
-			const registerSchemaIds = register.schemas?.map(schema => schema.id) || []
-			const catalogSchemaIds = catalog.schemas || []
+			// Same numeric/string-id mismatch guard as registerOptions above:
+			// register.schemas[].id is int, catalog.schemas is string[].
+			const registerSchemaIds = (register.schemas || []).map(schema => String(schema.id))
+			const catalogSchemaIds = (catalog.schemas || []).map(String)
 
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
 			const validSchemaIds = registerSchemaIds.filter(id => catalogSchemaIds.includes(id))
 
+			// `objectStore.availableSchemas` is a `.flatMap()` across every
+			// register in settings — the SAME schema id appears once per
+			// register it is attached to. Without a dedupe step the dropdown
+			// renders duplicate entries for schemas that live in multiple
+			// registers (WOO-529: on a fresh install `Publication` showed up
+			// twice because schema #1 is bound to both the `publication`
+			// register AND the `opencatalogi` magic-mapper register). Keep
+			// the first match per id.
+			const seenIds = new Set()
 			return objectStore.availableSchemas
-				.filter(schema => validSchemaIds.includes(schema.id))
+				.filter(schema => validSchemaIds.includes(String(schema.id)))
 				.filter(schema => this.hasSchemaReadRight(schema))
+				.filter(schema => {
+					const key = String(schema.id)
+					if (seenIds.has(key)) return false
+					seenIds.add(key)
+					return true
+				})
 				.map(schema => ({
 					id: schema.id,
 					label: schema.title,
@@ -756,6 +788,35 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		allSelectionsComplete() {
 			return this.selectedCatalog && this.selectedRegister && this.selectedSchema
+		},
+		/**
+		 * True when we cannot progress past the selection stage: a catalog is
+		 * available and (auto-)selected, but the derived register / schema
+		 * options are empty. Without this guard the template renders nothing
+		 * because every selection block is gated on `.length > 1` (the auto-
+		 * select case hides the widget) — the observable result is a blank
+		 * modal body (WOO-527).
+		 */
+		selectionStalled() {
+			if (this.isLockedCatalog) return false
+			if (this.catalogOptions.length === 0) return false
+			if (!this.isNewObject) return false
+			if (this.hasSelectedSchema || this.allSelectionsComplete) return false
+			// One catalog auto-selected but no compatible register.
+			if (this.selectedCatalog && this.registerOptions.length === 0) return true
+			// Register selected but no schema in scope.
+			if (this.selectedRegister && this.schemaOptions.length === 0) return true
+			return false
+		},
+		/** Human-readable reason for the stalled state — surfaced in the empty-content card. */
+		selectionStalledReason() {
+			if (this.selectedCatalog && this.registerOptions.length === 0) {
+				return t('opencatalogi', 'This catalog has no registers configured. Ask an administrator to attach a register that contains a publication schema to it.')
+			}
+			if (this.selectedRegister && this.schemaOptions.length === 0) {
+				return t('opencatalogi', 'The selected register does not expose any schema you can create in this catalog.')
+			}
+			return ''
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -945,6 +1006,23 @@ export default {
 				if (this.selectedRegister && newOptions.length === 1 && !this.selectedSchema) {
 					this.selectedSchema = newOptions[0]
 				}
+			},
+		},
+		catalogOptions: {
+			/**
+			 * The catalog collection loads asynchronously via
+			 * `objectStore.preloadCollections()` in App.vue's `created()`. If
+			 * that promise has not resolved when the modal opens, the initial
+			 * `initializeData()` runs against an empty list and never
+			 * auto-selects the sole catalog — leaving the modal blank until
+			 * the user closes and re-opens it. Re-run the seed step as soon
+			 * as catalogs arrive (WOO-527).
+			 */
+			handler(newOptions) {
+				if (!this.isNewObject) return
+				if (this.selectedCatalog) return
+				if (newOptions.length === 0) return
+				this.initializeData()
 			},
 		},
 		selectedSchema: {

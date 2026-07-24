@@ -90,15 +90,46 @@ trait ResolvesRegisterConfiguration
     private function resolveRegisterConfiguration(string $registerKey, string $schemaKey): array
     {
         $resolver = $this->getRegisterResolver();
-        if ($resolver === null) {
+        if ($resolver !== null) {
+            return [
+                'register' => $resolver->resolveRegisterId($this->appName, $registerKey),
+                'schema'   => $resolver->resolveSchemaId($this->appName, $schemaKey),
+            ];
+        }
+
+        // Fallback path: OpenRegister's RegisterResolverService is the long-term
+        // home for this lookup (openregister openspec/changes/register-resolver-service)
+        // but the service has not landed in OR yet, so the container.get() call in
+        // getRegisterResolver() always returns null at runtime. Without this branch
+        // every controller using this trait — Catalogi, Themes, Pages, Menus,
+        // Glossary — returns 503 on every list/detail call. Read the configured
+        // <context>_register / <context>_schema keys directly via IAppConfig and
+        // preserve the "no silent fail on empty config" property the audit
+        // (Stream 4 / ADR-022) called for by raising MissingConfigException when
+        // either key is empty.
+        try {
+            $appConfig = $this->container->get(\OCP\IAppConfig::class);
+        } catch (\Throwable $e) {
             throw new \RuntimeException(
-                'OpenRegister is not available; cannot resolve register configuration for '.$registerKey
+                message: 'Cannot resolve register configuration for '.$registerKey.': IAppConfig unavailable',
+                code: 0,
+                previous: $e
+            );
+        }
+
+        $register = $appConfig->getValueString($this->appName, $registerKey, '');
+        $schema   = $appConfig->getValueString($this->appName, $schemaKey, '');
+
+        if ($register === '' || $schema === '') {
+            throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException(
+                'Register configuration is not set for '.$registerKey.' / '.$schemaKey
+                .'. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas.'
             );
         }
 
         return [
-            'register' => $resolver->resolveRegisterId($this->appName, $registerKey),
-            'schema'   => $resolver->resolveSchemaId($this->appName, $schemaKey),
+            'register' => $register,
+            'schema'   => $schema,
         ];
 
     }//end resolveRegisterConfiguration()

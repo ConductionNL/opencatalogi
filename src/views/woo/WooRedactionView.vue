@@ -58,11 +58,11 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context */
 		pagesWithEntities() {
 			return pagesWithEntities(this.entities)
 		},
-		/** @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context */
+		/** @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context */
 		selectedCount() {
 			return Object.values(this.selected).filter(Boolean).length
 		},
@@ -74,7 +74,7 @@ export default {
 		/**
 		 * Load the WOO weigeringsgronden catalogue for the per-redaction selector.
 		 *
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
 		 * @return {Promise<void>}
 		 */
 		async loadGronden() {
@@ -92,7 +92,7 @@ export default {
 		 * Toggle an entity's redaction selection.
 		 *
 		 * @param {string} entityId The entity id.
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
 		 * @return {void}
 		 */
 		toggleEntity(entityId) {
@@ -101,7 +101,7 @@ export default {
 		/**
 		 * Build the redaction-instruction payload (entity -> ground mapping).
 		 *
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
 		 * @return {Array<object>} The redaction instructions.
 		 */
 		buildInstructions() {
@@ -110,7 +110,7 @@ export default {
 		/**
 		 * Request a redaction preview (delegated to Docudesk; URL surfaced here).
 		 *
-		 * @spec openspec/changes/woo-transparency/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
+		 * @spec openspec/specs/woo-transparency/spec.md#requirement-redaction-with-woo-context
 		 * @return {Promise<void>}
 		 */
 		async requestPreview() {

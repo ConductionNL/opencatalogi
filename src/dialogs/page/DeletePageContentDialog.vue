@@ -50,13 +50,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 import { NcButton, NcDialog, NcNoteCard, NcLoadingIcon } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
-import _ from 'lodash'
 import { Page } from '../../entities/index.js'
 
 /**
  * DeletePageContentDialog — remove a content block by updating the parent page.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-1
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'DeletePageContentDialog',
@@ -99,7 +98,7 @@ export default {
 			this.error = null
 
 			try {
-				const clone = _.cloneDeep(this.pageItem)
+				const clone = structuredClone(this.pageItem)
 				clone.contents = (clone.contents || []).filter(c => c.id !== this.contentItem.id)
 
 				const newPage = new Page(clone)

@@ -4,7 +4,7 @@ The OpenCatalogi application now includes a powerful aggregated publications end
 
 ## Overview
 
-The `/api/publications/aggregated` endpoint fetches publications from all publication endpoints of listings marked as 'default' and 'available', combining the results into a unified response with comprehensive metadata and error handling.
+The `/api/federation/publications` endpoint fetches publications from all publication endpoints of listings marked as 'default' and 'available', combining the results into a unified response with comprehensive metadata and error handling. This endpoint is provided by the `federation` capability (FED-001).
 
 ## Features
 
@@ -17,7 +17,10 @@ The `/api/publications/aggregated` endpoint fetches publications from all public
 
 ## API Endpoint
 
-### GET /api/publications/aggregated
+### GET /api/federation/publications
+
+Registered in `appinfo/routes.php` as `federation#publications`, handled by
+`FederationController` which delegates to `PublicationService::getAggregatedPublications`.
 
 **Parameters:**
 - `timeout` (optional): Request timeout in seconds (max 120)
@@ -27,13 +30,13 @@ The `/api/publications/aggregated` endpoint fetches publications from all public
 **Example Request:**
 ```bash
 # Basic request
-curl "https://your-opencatalogi-instance.com/api/publications/aggregated"
+curl "https://your-opencatalogi-instance.com/api/federation/publications"
 
 # With custom timeouts
-curl "https://your-opencatalogi-instance.com/api/publications/aggregated?timeout=60&connect_timeout=15"
+curl "https://your-opencatalogi-instance.com/api/federation/publications?timeout=60&connect_timeout=15"
 
 # With custom headers
-curl "https://your-opencatalogi-instance.com/api/publications/aggregated?headers={\"Authorization\":\"Bearer token\"}"
+curl "https://your-opencatalogi-instance.com/api/federation/publications?headers={\"Authorization\":\"Bearer token\"}"
 ```
 
 ## Response Format
@@ -119,16 +122,18 @@ The API gracefully handles various error scenarios:
 
 ## Implementation Details
 
-### DirectoryService::getPublications()
+### PublicationService::getAggregatedPublications()
 
-The core functionality is implemented in the `DirectoryService::getPublications()` method:
+The core functionality is implemented in the `PublicationService::getAggregatedPublications()` method (reached via `FederationController::publications()`):
 
 ```php
-public function getPublications(array $guzzleConfig = []): array
+public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array
 ```
 
 **Parameters:**
-- `$guzzleConfig`: Optional Guzzle HTTP client configuration
+- `$queryParams`: Query parameters forwarded to the downstream publication endpoints
+- `$requestParams`: Optional Guzzle HTTP client configuration (timeouts, headers)
+- `$baseUrl`: Base URL used for source attribution
 
 **Returns:**
 - Array with combined results, sources, errors, and statistics

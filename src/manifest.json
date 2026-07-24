@@ -1,18 +1,72 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"dependencies": [
 		"openregister"
 	],
 	"setup": {
-		"enabled": true,
-		"version": 1,
+		"enabled": false,
+		"version": 2,
 		"completionConfigKey": "onboarding_completed_version",
 		"steps": [
-			{ "id": "welcome", "type": "info", "title": "Welcome to OpenCatalogi", "body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's make sure the publishing prerequisites are in place, then you can create your first catalog." },
-			{ "id": "config-check", "type": "config-fields", "title": "Publishing prerequisites", "required": true, "body": "OpenCatalogi publishes from OpenRegister. Confirm the catalog register and schema, the publication register and the listing register are configured before the app shell unlocks. These are normally set automatically on install; set them here if OpenRegister was enabled after OpenCatalogi.", "configKeys": ["catalog_register", "catalog_schema", "publication_register", "listing_register"], "schema": { "type": "object", "required": ["catalog_register", "catalog_schema", "publication_register", "listing_register"], "properties": { "catalog_register": { "type": "string", "title": "Catalog register" }, "catalog_schema": { "type": "string", "title": "Catalog schema" }, "publication_register": { "type": "string", "title": "Publication register" }, "listing_register": { "type": "string", "title": "Listing register" } } } },
-			{ "id": "catalog-scope", "type": "choice", "title": "Default catalog scope", "configKey": "default_catalog_scope", "body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for catalogs you create — you can still tighten or widen it per catalog later.", "options": [ { "value": "public", "label": "Public (anyone can discover and read)" }, { "value": "internal", "label": "Internal (signed-in users only)" }, { "value": "private", "label": "Private (explicitly granted groups only)" } ] },
-			{ "id": "done", "type": "summary", "title": "All set", "healthCheck": true, "body": "OpenCatalogi is ready. Head to Catalogs to create your first catalog, or open the Directory to see federated catalogs you can discover from." }
+			{
+				"id": "welcome",
+				"type": "info",
+				"title": "Welcome to OpenCatalogi",
+				"body": "A couple of quick steps to get you publishing. OpenCatalogi turns your catalogs into open, discoverable publications — let's create your first catalog and connect you to the federated network."
+			},
+			{
+				"id": "config-check",
+				"type": "run-action",
+				"action": "reload-settings",
+				"title": "Publishing prerequisites",
+				"required": true,
+				"body": "OpenCatalogi publishes from OpenRegister. The catalog, publication and listing registers are configured automatically on install — this just verifies them. If OpenRegister was enabled after OpenCatalogi, running this re-imports the configuration."
+			},
+			{
+				"id": "catalog-scope",
+				"type": "choice",
+				"title": "Default catalog scope",
+				"required": true,
+				"configKey": "default_catalog_scope",
+				"body": "Publishing in OpenCatalogi is governed by schema-RBAC (not a per-object published flag), and every catalog needs a scope. Pick the default visibility for the catalog you're about to create — you can still tighten or widen it later.",
+				"options": [
+					{
+						"value": "public",
+						"label": "Public (anyone can discover and read)"
+					},
+					{
+						"value": "internal",
+						"label": "Internal (signed-in users only)"
+					},
+					{
+						"value": "private",
+						"label": "Private (explicitly granted groups only)"
+					}
+				]
+			},
+			{
+				"id": "create-catalog",
+				"type": "run-action",
+				"action": "create-first-catalog",
+				"title": "Create your first catalog",
+				"required": true,
+				"body": "A catalog is the container your publications live in. We'll create your first one using the scope you just chose — you can rename it and add publications afterwards."
+			},
+			{
+				"id": "connect-federation",
+				"type": "run-action",
+				"action": "connect-federation",
+				"title": "Connect to the federated network",
+				"body": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory — or skip this and it will sync automatically later."
+			},
+			{
+				"id": "done",
+				"type": "summary",
+				"title": "All set",
+				"healthCheck": true,
+				"body": "OpenCatalogi is ready. Open Catalogs to manage what you publish, or the Directory to discover federated catalogs."
+			}
 		]
 	},
 	"walkthrough": {
@@ -26,14 +80,135 @@
 				"trigger": "first-visit",
 				"minAppVersion": "2.4.0",
 				"steps": [
-					{ "id": "welcome", "placement": "center", "sinceVersion": "2.4.0", "title": "Welcome to OpenCatalogi", "body": "Let's walk the publishing journey together — from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.", "target": { "kind": "page", "ref": "Catalogs" }, "advanceOn": { "type": "manual" } },
-					{ "id": "go-catalogs", "sinceVersion": "2.4.0", "placement": "right", "body": "Everything you publish lives in a catalog. Open Catalogs from the menu.", "task": "Open Catalogs", "target": { "kind": "nav-item", "ref": "Catalogs" }, "advanceOn": { "type": "route-match", "route": "Catalogs" } },
-					{ "id": "create-catalog", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "Create your first catalog — it's the container your publications will live in.", "task": "Create your first catalog", "target": { "kind": "element", "ref": "index-add" }, "advanceOn": { "type": "object-created", "register": "publication", "schema": "catalog", "capture": { "catalogId": ":id" } } },
-					{ "id": "open-catalog", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "Open the catalog you just created to manage what it publishes — its publications open inside it.", "task": "Open your catalog and view its Publications", "target": { "kind": "page", "ref": "CatalogDetail" }, "advanceOn": { "type": "route-match", "route": "Publications" } },
-					{ "id": "add-publication", "sinceVersion": "2.4.0", "placement": "bottom", "allowManualNext": true, "body": "A publication is a single thing you make open — a document, dataset or record. Add your first one.", "task": "Add a publication", "target": { "kind": "element", "ref": "index-add" }, "advanceOn": { "type": "object-created", "register": "publication", "schema": "publication", "capture": { "publicationId": ":id" } } },
-					{ "id": "publish", "sinceVersion": "2.4.0", "placement": "auto", "allowManualNext": true, "title": "Publishing is access-controlled", "body": "OpenCatalogi has no separate 'publish' switch — visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.", "target": { "kind": "page", "ref": "Publications" }, "advanceOn": { "type": "manual" } },
-					{ "id": "discover", "sinceVersion": "2.4.0", "placement": "right", "body": "Published catalogs are found through the Directory — your own and federated ones. Open it to see the discovery side.", "task": "Open the Directory", "target": { "kind": "nav-item", "ref": "Directory" }, "advanceOn": { "type": "route-match", "route": "Directory" } },
-					{ "id": "done", "sinceVersion": "2.4.0", "placement": "center", "title": "You're publishing", "body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.", "target": { "kind": "page", "ref": "Directory" }, "advanceOn": { "type": "manual" } }
+					{
+						"id": "welcome",
+						"placement": "center",
+						"sinceVersion": "2.4.0",
+						"title": "Welcome to OpenCatalogi",
+						"body": "Let's walk the publishing journey together — from an empty install to a catalog the world can discover. You'll create each record yourself, in your own workspace.",
+						"target": {
+							"kind": "page",
+							"ref": "Catalogs"
+						},
+						"advanceOn": {
+							"type": "manual"
+						}
+					},
+					{
+						"id": "go-catalogs",
+						"sinceVersion": "2.4.0",
+						"placement": "right",
+						"body": "Everything you publish lives in a catalog. Open Catalogs from the menu.",
+						"task": "Open Catalogs",
+						"target": {
+							"kind": "nav-item",
+							"ref": "Catalogs"
+						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Catalogs"
+						}
+					},
+					{
+						"id": "create-catalog",
+						"sinceVersion": "2.4.0",
+						"placement": "bottom",
+						"allowManualNext": true,
+						"body": "Create your first catalog — it's the container your publications will live in.",
+						"task": "Create your first catalog",
+						"target": {
+							"kind": "element",
+							"ref": "index-add"
+						},
+						"advanceOn": {
+							"type": "object-created",
+							"register": "publication",
+							"schema": "catalog",
+							"capture": {
+								"catalogId": ":id"
+							}
+						}
+					},
+					{
+						"id": "open-catalog",
+						"sinceVersion": "2.4.0",
+						"placement": "bottom",
+						"allowManualNext": true,
+						"body": "Open the catalog you just created to manage what it publishes — its publications open inside it.",
+						"task": "Open your catalog and view its Publications",
+						"target": {
+							"kind": "page",
+							"ref": "CatalogDetail"
+						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Publications"
+						}
+					},
+					{
+						"id": "add-publication",
+						"sinceVersion": "2.4.0",
+						"placement": "bottom",
+						"allowManualNext": true,
+						"body": "A publication is a single thing you make open — a document, dataset or record. Add your first one.",
+						"task": "Add a publication",
+						"target": {
+							"kind": "element",
+							"ref": "index-add"
+						},
+						"advanceOn": {
+							"type": "object-created",
+							"register": "publication",
+							"schema": "publication",
+							"capture": {
+								"publicationId": ":id"
+							}
+						}
+					},
+					{
+						"id": "publish",
+						"sinceVersion": "2.4.0",
+						"placement": "auto",
+						"allowManualNext": true,
+						"title": "Publishing is access-controlled",
+						"body": "OpenCatalogi has no separate 'publish' switch — visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.",
+						"target": {
+							"kind": "page",
+							"ref": "Publications"
+						},
+						"advanceOn": {
+							"type": "manual"
+						}
+					},
+					{
+						"id": "discover",
+						"sinceVersion": "2.4.0",
+						"placement": "right",
+						"body": "Published catalogs are found through the Directory — your own and federated ones. Open it to see the discovery side.",
+						"task": "Open the Directory",
+						"target": {
+							"kind": "nav-item",
+							"ref": "Directory"
+						},
+						"advanceOn": {
+							"type": "route-match",
+							"route": "Directory"
+						}
+					},
+					{
+						"id": "done",
+						"sinceVersion": "2.4.0",
+						"placement": "center",
+						"title": "You're publishing",
+						"body": "That's the full loop: catalog → publication → schema-RBAC publishing → discovery. Externally, your published catalogs are harvested as DCAT-AP, so registers and portals can find and re-list your publications automatically.",
+						"target": {
+							"kind": "page",
+							"ref": "Directory"
+						},
+						"advanceOn": {
+							"type": "manual"
+						}
+					}
 				]
 			}
 		]
@@ -101,12 +276,48 @@
 			"icon": "icon-files",
 			"order": 40,
 			"children": [
-				{ "id": "CatalogsMenu",  "label": "Catalogs",  "icon": "icon-files",                 "route": "Catalogs",  "order": 92 },
-				{ "id": "GlossaryMenu",  "label": "Glossary",  "icon": "icon-toggle-filelist",       "route": "Glossary",  "order": 93 },
-				{ "id": "ThemesMenu",    "label": "Themes",    "icon": "icon-category-customization","route": "Themes",    "order": 94 },
-				{ "id": "PagesMenu",     "label": "Pages",     "icon": "icon-category-files",        "route": "Pages",     "order": 95 },
-				{ "id": "MenusMenu",     "label": "Menus",     "icon": "icon-category-customization","route": "Menus",     "order": 96 },
-				{ "id": "WooBatchesMenu","label": "WOO",       "icon": "icon-toggle-filelist",       "route": "WooBatches","order": 98 }
+				{
+					"id": "CatalogsMenu",
+					"label": "Catalogs",
+					"icon": "icon-files",
+					"route": "Catalogs",
+					"order": 92
+				},
+				{
+					"id": "GlossaryMenu",
+					"label": "Glossary",
+					"icon": "icon-toggle-filelist",
+					"route": "Glossary",
+					"order": 93
+				},
+				{
+					"id": "ThemesMenu",
+					"label": "Themes",
+					"icon": "icon-category-customization",
+					"route": "Themes",
+					"order": 94
+				},
+				{
+					"id": "PagesMenu",
+					"label": "Pages",
+					"icon": "icon-category-files",
+					"route": "Pages",
+					"order": 95
+				},
+				{
+					"id": "MenusMenu",
+					"label": "Menus",
+					"icon": "icon-category-customization",
+					"route": "Menus",
+					"order": 96
+				},
+				{
+					"id": "WooBatchesMenu",
+					"label": "WOO",
+					"icon": "icon-toggle-filelist",
+					"route": "WooBatches",
+					"order": 98
+				}
 			]
 		},
 		{
@@ -115,9 +326,27 @@
 			"icon": "icon-settings",
 			"order": 80,
 			"children": [
-				{ "id": "OrganizationsMenu", "label": "Organizations", "icon": "icon-group",   "route": "Organizations",  "order": 91 },
-				{ "id": "DirectoryMenu",     "label": "Directory",     "icon": "icon-folder",  "route": "Directory",      "order": 97 },
-				{ "id": "SettingsMenu",      "label": "Settings",      "icon": "icon-settings","action": "user-settings", "order": 99 }
+				{
+					"id": "OrganizationsMenu",
+					"label": "Organizations",
+					"icon": "icon-group",
+					"route": "Organizations",
+					"order": 91
+				},
+				{
+					"id": "DirectoryMenu",
+					"label": "Directory",
+					"icon": "icon-folder",
+					"route": "Directory",
+					"order": 97
+				},
+				{
+					"id": "SettingsMenu",
+					"label": "Settings",
+					"icon": "icon-settings",
+					"action": "user-settings",
+					"order": 99
+				}
 			]
 		},
 		{
@@ -186,7 +415,8 @@
 		{
 			"id": "Catalogs",
 			"route": "/catalogi",
-			"type": "index",
+			"type": "custom",
+			"component": "CatalogsIndexView",
 			"title": "Catalogs",
 			"config": {
 				"register": "@resolve:catalog_register",
@@ -219,12 +449,10 @@
 			"route": "/publications/:catalogSlug",
 			"type": "index",
 			"title": "Publications",
+			"_note": "The `filter: { catalog: @route.catalogSlug }` clause used to sit here, but the publication schema declares NO `catalog` property (see openregister schemas/1) — publications are catalog-scoped structurally via the catalog's own `registers`/`schemas` arrays, exactly like the /api/federation/publications endpoint resolves them. With the filter active every publication was dropped by the OpenRegister query and the page rendered empty even after successful create. KNOWN LIMITATION (WOO-527b tracking): with the filter removed the page shows publications across ALL catalogs, not scoped to `:catalogSlug`. Two fix paths, both out-of-scope here — (1) grow the publication schema an explicit `catalog` FK so a schema-supported filter can be reinstated, or (2) rehost the page on the bespoke `/api/{catalogSlug}` endpoint (which already resolves the same scope correctly). Neither the current manifest resolvers (`@resolve:catalog_register`, `@resolve:catalog_schema`, `@resolve:listing_register`, `@resolve:woo_register`) target per-catalog publication registers, so the `@resolve` route also needs a new resolver.",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
-				"filter": {
-					"catalog": "@route.catalogSlug"
-				},
 				"actionToggles": {
 					"showAdd": true,
 					"showEditAction": true,
@@ -241,91 +469,211 @@
 			"route": "/publications/:catalogSlug/:id",
 			"type": "detail",
 			"title": "Publication",
+			"_note": "DCAT-AP publication record — the app's core artifact and the reason OpenCatalogi exists. Publication/document archetype: someone lands here to (1) read/edit the WOO metadata, (2) manage the distributables, (3) check publish/retention state. ADR-062 rev-3 rework: the primary Data card was SPLIT into two field-scoped Data widgets so neither clips — 'Publication' (identity/publishing: title, summary, description, publicatiedatum, depublicatiedatum, status) and 'Retention' (the RET-003/006 statutory-retention group: retentionCategory, retentionTermMonths, retentionAction, retentionExpiresAt, retentionNote, retentionLastEvaluatedAt) — both 8-wide, 2-column. The `organization` and `themes[]` fields are excluded from the Data cards because the compact Related panel (4-wide) resolves them; now that publication.organization carries $ref:organization and publication.themes[] items carry $ref:theme, the Related panel renders publisher + theme NAMES instead of raw uuids. The former header `summaryAggregates` KPI chips became an in-grid `stats-block` (top-right, 4-wide): Views + Downloads summed from this publication's usageCounter rows (usageCounter.publication is the FK, now $ref:publication). Below sits the full-width Attachments Files leaf: a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the rest of the DCAT distribution set. schema-verified absences: there is NO publicationType schema in this register (only catalog/listing/organization/publication/theme/page/menu/glossary/usageCounter exist), so no publication-type Related row; and the publication schema declares NO linkedTypes, so NO email/calendar/talk/contacts leaves — a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — no geo field. lifecycleActions drives the schema's real status transition (published → archived, the RET-006 retention transition — the transitions block exists, so this stays a real lifecycle, not a frozen readOnly field). The audit trail (publications are FOI/WOO records where change history matters legally) lives in the sidebar as widgets:[{type:'audit'}], per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu (showMetadata) rather than a permanent card.",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{
-					"widgetKey": "data",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 8,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "maps",
-					"slot": "body",
-					"gridX": 8,
-					"gridY": 0,
-					"gridWidth": 4,
-					"gridHeight": 4,
-					"props": {
-						"field": "geo"
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "pub-data",
+						"type": "data",
+						"title": "Publication",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"title",
+								"summary",
+								"description",
+								"publicatiedatum",
+								"depublicatiedatum",
+								"status"
+							]
+						}
+					},
+					{
+						"id": "pub-stats-views",
+						"type": "stats-block",
+						"title": "Views",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Views",
+									"register": "publication",
+									"schema": "usageCounter",
+									"metric": "sum",
+									"field": "count",
+									"filter": {
+										"publication": "@objectId",
+										"kind": "view"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "pub-stats-downloads",
+						"type": "stats-block",
+						"title": "Downloads",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Downloads",
+									"register": "publication",
+									"schema": "usageCounter",
+									"metric": "sum",
+									"field": "count",
+									"filter": {
+										"publication": "@objectId",
+										"kind": "download"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "pub-retention",
+						"type": "data",
+						"title": "Retention",
+						"icon": "History",
+						"content": {
+							"columns": 2,
+							"include": [
+								"retentionCategory",
+								"retentionTermMonths",
+								"retentionAction",
+								"retentionExpiresAt",
+								"retentionNote",
+								"retentionLastEvaluatedAt"
+							]
+						}
+					},
+					{
+						"id": "pub-related",
+						"type": "related",
+						"title": "Organization & themes",
+						"icon": "OfficeBuilding"
+					},
+					{
+						"id": "pub-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Attachments",
+						"icon": "FolderOutline"
+					},
+					{
+						"id": "pub-photos",
+						"type": "integration",
+						"integrationId": "photos",
+						"title": "Images",
+						"icon": "Package"
+					},
+					{
+						"id": "pub-links",
+						"type": "integration",
+						"integrationId": "bookmarks",
+						"title": "Links",
+						"icon": "LinkVariant"
 					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pub-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "8",
+						"widgetId": "pub-stats-views",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "9",
+						"widgetId": "pub-stats-downloads",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "3",
+						"widgetId": "pub-retention",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "4",
+						"widgetId": "pub-related",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 6
+					},
+					{
+						"id": "5",
+						"widgetId": "pub-files",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
+						"id": "6",
+						"widgetId": "pub-photos",
+						"gridX": 0,
+						"gridY": 15,
+						"gridWidth": 6,
+						"gridHeight": 4
+					},
+					{
+						"id": "7",
+						"widgetId": "pub-links",
+						"gridX": 6,
+						"gridY": 15,
+						"gridWidth": 6,
+						"gridHeight": 4
+					}
+				],
+				"lifecycleActions": {
+					"field": "status"
 				},
-				{
-					"widgetKey": "file-manager",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 4,
-					"gridWidth": 12,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "photos",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 8,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "bookmarks",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 8,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "metadata",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 1,
-					"gridHeight": 2
-				},
-				{
-					"widgetKey": "activity",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 2,
-					"gridWidth": 1,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "shares",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 6,
-					"gridWidth": 1,
-					"gridHeight": 2
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
 				}
-			]
+			}
 		},
 		{
 			"id": "Search",
 			"route": "/search",
-			"type": "search",
+			"type": "custom",
 			"title": "Search",
-			"config": {
-				"register": "publication",
-				"schema": "publication"
-			}
+			"component": "FederationSearch",
+			"_note": "FederationSearch (custom) wraps CnSearchPage with the federation-aware search store so /search hits /api/federation/publications. The previous type:'search' default fanned out per-schema against the local OpenRegister, bypassing federation entirely."
 		},
 		{
 			"id": "Organizations",
@@ -355,38 +703,198 @@
 			"route": "/organizations/:id",
 			"type": "detail",
 			"title": "Organization",
+			"_note": "Publisher-organization archetype — the legal entity behind catalogs/publications (name, summary, description, the government identifiers OIN/TOOI/RSIN/PKI, and a single logo `image`). A user lands here to answer 'who is this publisher and what do they publish?'. The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly, `image` excluded because the Logo leaf renders it). The right column stacks the in-grid `stats-block` (top: Publications + Catalogs counts, formerly header summaryAggregates) over the Images leaf (4-wide) carrying the logo/branding (the schema's `image` is a single logo, so Images is the right surface, not Files). The 'what do they publish' half is answered with two INBOUND object-lists on the row below: the publications whose `organization` FK points at this record, and the catalogs whose `organization` FK points at it — both FKs now carry $ref:organization so their name display + org picker resolve. A `related` (outbound) widget stays intentionally ABSENT — the organization schema has ZERO outbound refs (every field is a scalar), so a related panel would render empty; the meaningful relations are inbound, which object-list expresses (the petstore parent→children pattern). org-catalogs gets viewAllRoute:'Catalogs' (that index takes no route param, so the deep-link resolves) + rowRoute:'CatalogDetail'; org-publications gets NO viewAllRoute/rowRoute — the Publications index/detail routes both require a :catalogSlug this page can't supply, so a broken deep-link is deliberately omitted. Both lists keep create ON (default): an organization OWNS its publications/catalogs, so creating from the list pre-links the org FK. schema-verified absences: NO contacts/comms leaves — the organization schema declares NO linkedTypes and no contactpersoon relation (HARD RULE 1); no status lifecycle field, so no lifecycleActions. The change-history audit trail (federation syncs matter) lives in the sidebar widgets:[{type:'audit'}] per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "organization",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{
-					"widgetKey": "data",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 8,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "contacts",
-					"slot": "body",
-					"gridX": 8,
-					"gridY": 0,
-					"gridWidth": 4,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "metadata",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 1,
-					"gridHeight": 2
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "org-data",
+						"type": "data",
+						"title": "Organization",
+						"icon": "OfficeBuilding",
+						"content": {
+							"columns": 2,
+							"exclude": [
+								"image"
+							]
+						}
+					},
+					{
+						"id": "org-stats-publications",
+						"type": "stats-block",
+						"title": "Publications",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Publications",
+									"register": "publication",
+									"schema": "publication",
+									"metric": "count",
+									"filter": {
+										"organization": "@objectId"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "org-stats-catalogs",
+						"type": "stats-block",
+						"title": "Catalogs",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Catalogs",
+									"register": "@resolve:catalog_register",
+									"schema": "@resolve:catalog_schema",
+									"metric": "count",
+									"filter": {
+										"organization": "@objectId"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "org-image",
+						"type": "integration",
+						"integrationId": "photos",
+						"title": "Logo & images",
+						"icon": "Package"
+					},
+					{
+						"id": "org-publications",
+						"type": "object-list",
+						"title": "Publications",
+						"icon": "FileDocument",
+						"content": {
+							"register": "publication",
+							"schema": "publication",
+							"filter": {
+								"organization": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							],
+							"limit": 25,
+							"emptyText": "This organization has no publications yet."
+						}
+					},
+					{
+						"id": "org-catalogs",
+						"type": "object-list",
+						"title": "Catalogs",
+						"icon": "FolderOutline",
+						"content": {
+							"register": "@resolve:catalog_register",
+							"schema": "@resolve:catalog_schema",
+							"filter": {
+								"organization": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							],
+							"limit": 25,
+							"rowRoute": "CatalogDetail",
+							"viewAllRoute": "Catalogs",
+							"emptyText": "This organization has no catalogs yet."
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "org-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "6",
+						"widgetId": "org-stats-publications",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7",
+						"widgetId": "org-stats-catalogs",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "3",
+						"widgetId": "org-image",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "4",
+						"widgetId": "org-publications",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "5",
+						"widgetId": "org-catalogs",
+						"gridX": 6,
+						"gridY": 6,
+						"gridWidth": 6,
+						"gridHeight": 5
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
 				}
-			]
+			}
 		},
 		{
 			"id": "Themes",
@@ -416,38 +924,129 @@
 			"route": "/themes/:id",
 			"type": "detail",
 			"title": "Theme",
+			"_note": "Catalog-theme / presentation archetype — a visual grouping used to categorise and style publications (title, summary, description, image, content, link/url, icon). This is a configuration+content record, so the body pairs the editable fields (6-wide, switched to 2-column so all ten fields fit the cell without an internal scrollbar — ADR-062 rule 1/3) with the live theme-preview custom widget (6-wide, app-registered via registerDashboardWidget) so an editor sees the rendered card/banner as they tune it — the reason theme-preview exists. The former header summaryAggregates KPI became an in-grid `stats-block` (top-right of the preview column: Publications-with-this-theme count). Below, a full-width INBOUND object-list surfaces the publications tagged with this theme (publication.themes[] is a facetable array whose items now carry $ref:theme, so the FK filter {themes:@objectId} resolves and rows show publication names); allowCreate is FALSE here — theme is a many-to-many TAG, not an owner, so creating a publication 'in' a theme (and orphaned from any catalog) is not a valid affordance. A `related` (outbound) widget stays ABSENT — the theme schema has no outbound refs, so it would render empty; the meaningful relation (publications → theme) is inbound and object-list expresses it. Deliberately NO comms and NO Files: a theme communicates with nobody, declares no linkedTypes, and its `image`/`content` live in the record itself (HARD RULE 1/2). Audit history is the sidebar widgets:[{type:'audit'}] per the audit-only sidebar rule; Metadata is on-demand via the Data widget's Actions menu. Row navigation is intentionally omitted on the list — PublicationDetail's route needs a :catalogSlug this page can't supply, so rows display without a broken deep-link.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "theme",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{
-					"widgetKey": "data",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "theme-preview",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 0,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "metadata",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 1,
-					"gridHeight": 2
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "theme-data",
+						"type": "data",
+						"title": "Theme",
+						"icon": "TagOutline",
+						"content": {
+							"columns": 2
+						}
+					},
+					{
+						"id": "theme-stats",
+						"type": "stats-block",
+						"title": "Usage",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Publications",
+									"register": "publication",
+									"schema": "publication",
+									"metric": "count",
+									"filter": {
+										"themes": "@objectId"
+									}
+								}
+							]
+						}
+					},
+					{
+						"id": "theme-preview",
+						"type": "theme-preview",
+						"title": "Preview",
+						"icon": "Web"
+					},
+					{
+						"id": "theme-publications",
+						"type": "object-list",
+						"title": "Publications with this theme",
+						"icon": "FileDocument",
+						"content": {
+							"register": "publication",
+							"schema": "publication",
+							"filter": {
+								"themes": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								}
+							],
+							"limit": 25,
+							"allowCreate": false,
+							"emptyText": "No publications are tagged with this theme yet."
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "theme-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "theme-stats",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 2
+					},
+					{
+						"id": "3",
+						"widgetId": "theme-preview",
+						"gridX": 6,
+						"gridY": 2,
+						"gridWidth": 6,
+						"gridHeight": 4
+					},
+					{
+						"id": "4",
+						"widgetId": "theme-publications",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
 				}
-			]
+			}
 		},
 		{
 			"id": "Glossary",
@@ -477,38 +1076,64 @@
 			"route": "/glossary/:id",
 			"type": "detail",
 			"title": "Glossary term",
+			"_note": "Glossary-term / reference archetype — a single defined concept (title, summary, description, externalLink, keywords) used to explain vocabulary across the catalog. A term's value is its definition plus how it connects to other terms, so the body pairs the definition fields (6-wide) with the relationship-graph custom widget (6-wide, app-registered) that visualises related terms via shared keywords — the reason that widget exists. Intentionally the leanest detail page: NO comms, NO Files, and — verified against the register — NO other schema carries a glossary FK, so there are no inbound refs to list and NO `related`/object-list panel (the previous `related` widget was outbound-empty and was REMOVED; keeping it would have shown a permanent empty card). A glossary entry declares no linkedTypes, has no attachments, and communicates with nobody (HARD RULES 1 & 2). Audit history is the sidebar CnAuditTrailTab; Metadata is on-demand via the Data widget's Actions menu.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "glossary",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{
-					"widgetKey": "data",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "relationship-graph",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 0,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "metadata",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 1,
-					"gridHeight": 2
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "glossary-data",
+						"type": "data",
+						"title": "Glossary term",
+						"icon": "BookOpenVariant",
+						"content": {
+							"columns": 1
+						}
+					},
+					{
+						"id": "glossary-graph",
+						"type": "relationship-graph",
+						"title": "Related terms",
+						"icon": "Sitemap"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "glossary-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "glossary-graph",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 6,
+						"gridHeight": 5
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
 				}
-			]
+			}
 		},
 		{
 			"id": "Pages",
@@ -538,11 +1163,69 @@
 			"route": "/pages/:id",
 			"type": "detail",
 			"title": "Page",
+			"_note": "CMS-page / structured-content archetype — a portal page (title, slug, visibility flags hideBeforeLogin/hideAfterLogin, access groups) whose body is an ordered list of embedded content blocks (`contents[]` — inline objects, NOT a separate register schema, so an object-list child table cannot be used). Previously this page had NO widgets and fell back to the generic data dump. Now the body pairs the page settings (5-wide, 1-column — slug + visibility read as a config sheet, with `contents` excluded because the tree-view owns it) with the tree-view custom widget (7-wide) that renders the nested content-block structure so an editor can see and reorder the page composition. NO comms/Files/related: a portal page declares no linkedTypes, its content is inline, and it communicates with nobody (HARD RULE 1). Sidebar is the registry-driven CnObjectSidebar (config.sidebar.enabled); Metadata is on-demand via the Data widget's Actions menu rather than a permanent card.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "page",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "page-data",
+						"type": "data",
+						"title": "Page",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 1,
+							"exclude": [
+								"contents"
+							]
+						}
+					},
+					{
+						"id": "page-tree",
+						"type": "tree-view",
+						"title": "Content blocks",
+						"icon": "Sitemap",
+						"content": {
+							"field": "contents"
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "page-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 5,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "page-tree",
+						"gridX": 5,
+						"gridY": 0,
+						"gridWidth": 7,
+						"gridHeight": 5
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -573,46 +1256,82 @@
 			"route": "/menus/:id",
 			"type": "detail",
 			"title": "Menu",
+			"_note": "Navigation-menu / structure archetype — a portal menu (title, position, visibility flag hideBeforeLogin, access groups) whose SUBSTANCE is its ordered, nestable sub-menu items. The user comes here to see and reorder those sub-menu items, so the body pairs the menu settings (4-wide, 1-column — position/visibility read as a config sheet, with `items` excluded because the tree-view owns it) with a wide tree-view (8-wide) that renders the ordered item hierarchy and lets an editor reorder it, since the tree IS the menu. IMPORTANT design constraint verified against the register: the sub-menu items live in `menu.items[]` as INLINE objects (each with order/name/link/description/icon/groups) — there is NO separate menu-item register schema and menu has NO self-FK, so the intuitively-desired FK-scoped `object-list` of child menu items ('items where parentMenu=@objectId') is NOT expressible. tree-view over the inline `items` field, sorted by each item's `order`, is the faithful representation of the ordered sub-menu items. NO comms/Files/related: a menu declares no linkedTypes, its items are inline, and it communicates with nobody (HARD RULE 1). Audit history is the sidebar CnAuditTrailTab; Metadata is on-demand via the Data widget's Actions menu. WISH-LIST for nc-vue: an ordered-editor widget over an inline object-array (add/remove/reorder items) would be a better fit than the read-lean tree-view here.",
 			"config": {
 				"register": "@resolve:listing_register",
 				"schema": "menu",
 				"idParam": "@route.id",
-				"documentationUrl": "https://opencatalogi.conduction.nl"
-			},
-			"widgets": [
-				{
-					"widgetKey": "data",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "tree-view",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 0,
-					"gridWidth": 6,
-					"gridHeight": 4
-				},
-				{
-					"widgetKey": "metadata",
-					"slot": "sidebar",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 1,
-					"gridHeight": 2
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "menu-data",
+						"type": "data",
+						"title": "Menu",
+						"icon": "Cog",
+						"content": {
+							"columns": 1,
+							"exclude": [
+								"items"
+							]
+						}
+					},
+					{
+						"id": "menu-tree",
+						"type": "tree-view",
+						"title": "Menu items",
+						"icon": "Sitemap",
+						"content": {
+							"field": "items",
+							"sort": {
+								"field": "order",
+								"dir": "asc"
+							}
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "menu-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "menu-tree",
+						"gridX": 4,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
 				}
-			]
+			}
 		},
 		{
 			"id": "Directory",
 			"route": "/directory",
 			"type": "custom",
 			"title": "Directory",
-			"component": "CnFederationStatus",
-			"_note": "Federated-directory list rendered by CnFederationStatus from @conduction/nextcloud-vue (federation discovery + per-node availability)."
+			"component": "FederationDirectory",
+			"_note": "FederationDirectory (custom) fetches /api/listings and renders CnFederationStatus with mapped nodes + an admin add-directory modal. The bare CnFederationStatus this replaced shipped a permanent empty-state because the manifest had no :nodes binding."
 		},
 		{
 			"id": "FeaturesRoadmap",

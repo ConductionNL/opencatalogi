@@ -10,6 +10,7 @@ OpenCatalogi is een standaard die eigenlijk bestaat uit een verzameling van ande
 - [MDTO](https://www.nationaalarchief.nl/archiveren/mdto)
 - [Publiccode](https://publiccode.eu/nl/)
 - [TOOI](https://standaarden.overheid.nl/tooi)
+- [OOAPI 5.0 (Open Onderwijs API)](https://openonderwijsapi.nl/) — per-catalog `organizations`/`programs`/`courses`/`offerings` endpoints (`/api/catalogs/{catalogSlug}/ooapi/v5/...`) for SURFeduhub course-catalog publication. Unlike DCAT, these endpoints require an authenticated Nextcloud consumer account (a Nextcloud app-password issued to the SURFeduhub/institutional consumer, configured via the `ooapi_consumers` allowlist in admin settings) — see the `ooapi-catalog-publication` OpenSpec change for the field mapping and register/schema configuration.
 
 Deze standaarden beschrijven gemeenschappelijk hoe catalogi kunnen worden vormgegeven op een manier waardoor ze gezamenlijk één virtuele catalogus vormen. Hierdoor blijft de data bij de bron (organisatie) en zijn er geen landelijke indexen nodig. Aanvullingen op OpenCatalogi moeten dus ook altijd conform deze standaarden worden toegevoegd.
 

@@ -55,13 +55,16 @@ class DcatService
     /**
      * DcatService constructor.
      *
-     * @param ContainerInterface $container      Server container for OR service resolution.
-     * @param IAppManager        $appManager     App manager for OpenRegister availability checks.
-     * @param DcatMappingService $mappingService Pure publication → DCAT mapping.
-     * @param DcatSerializer     $serializer     Pure graph → JSON-LD/Turtle/RDF-XML serializer.
-     * @param IURLGenerator      $urlGenerator   Nextcloud URL generator (absolute IRIs).
-     * @param IAppConfig         $appConfig      App config (publisher defaults).
-     * @param LoggerInterface    $logger         PSR-3 logger.
+     * @param ContainerInterface  $container      Server container for OR service resolution.
+     * @param IAppManager         $appManager     App manager for OpenRegister availability checks.
+     * @param DcatMappingService  $mappingService Pure publication → DCAT
+     *                                            mapping.
+     * @param DcatSerializer      $serializer     Pure graph → JSON-LD/Turtle/RDF-XML
+     *                                            serializer.
+     * @param IURLGenerator       $urlGenerator   Nextcloud URL generator (absolute IRIs).
+     * @param IAppConfig          $appConfig      App config (publisher defaults).
+     * @param LoggerInterface     $logger         PSR-3 logger.
+     * @param QualityService|null $qualityService Optional MQA/FAIR scorer for DQV exposure (PQM-002).
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -73,6 +76,7 @@ class DcatService
         private readonly IURLGenerator $urlGenerator,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
+        private readonly ?QualityService $qualityService=null,
     ) {
 
     }//end __construct()
@@ -135,7 +139,7 @@ class DcatService
      *
      * @return boolean True when the catalog's `hasDcat` flag is set.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     public function isDcatEnabled(array $catalog): bool
     {
@@ -154,7 +158,7 @@ class DcatService
      * @return array<string, mixed> The resolved defaults (publisherName/publisherUri/
      *                              license/contactPoint/organisation).
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
      */
     public function resolveDefaults(array $catalog): array
     {
@@ -182,7 +186,7 @@ class DcatService
      *
      * @return string The absolute DCAT endpoint URL.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-federation-directory-advertises-the-dcat-endpoint-dcat-009
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-federation-directory-advertises-the-dcat-endpoint-dcat-009
      */
     public function catalogEndpointUrl(string $catalogSlug): string
     {
@@ -199,7 +203,7 @@ class DcatService
      *
      * @return string The stable dataset IRI.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
      */
     public function datasetIri(string $catalogSlug, string $uuid): string
     {
@@ -216,9 +220,10 @@ class DcatService
      * visibility rule (only publicly visible objects appear). Opted-out schemas
      * (`"x-dcat": false`) are skipped.
      *
-     * @param array<string, mixed> $catalog     The catalog object.
-     * @param string               $catalogSlug The catalog slug.
-     * @param integer              $page        The 1-based page number.
+     * @param array<string, mixed>             $catalog     The catalog object.
+     * @param string                           $catalogSlug The catalog slug.
+     * @param integer                          $page        The 1-based page number.
+     * @param array<int, array<string, mixed>> $violations  Controlled-vocabulary violations collected here (by reference).
      *
      * @return array<string, mixed> The JSON-LD document plus `_meta` (lastModified, etag, count).
      *
@@ -226,11 +231,11 @@ class DcatService
      * @SuppressWarnings(PHPMD.NPathComplexity)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
      */
-    public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page=1): array
+    public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page=1, array &$violations=[]): array
     {
         $page = max(1, $page);
 
@@ -238,7 +243,15 @@ class DcatService
         $schemas   = $this->idList(($catalog['schemas'] ?? []));
         $defaults  = $this->resolveDefaults($catalog);
 
-        $schemaMappings = $this->resolveSchemaMappings($schemas);
+        $schemaMappings    = $this->resolveSchemaMappings($schemas);
+        $schemaHvds        = $this->resolveSchemaHvds($schemas);
+        $catalogHvdDefault = ($catalog['dcatHvdCategory'] ?? null);
+        if (is_string($catalogHvdDefault) === false) {
+            $catalogHvdDefault = null;
+        }
+
+        // PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
+        $dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
 
         $searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
         $searchQuery['@self']['register'] = $this->scalarOrList($registers);
@@ -286,13 +299,24 @@ class DcatService
                 $this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
             }
 
-            $datasets[]    = $this->mappingService->mapDataset(
+            $dataset = $this->mappingService->mapDataset(
                 publication: $publication,
                 mapping: $mapping,
                 files: $files,
                 datasetIri: $datasetIri,
-                defaults: $defaults
+                defaults: $defaults,
+                hvd: ($schemaHvds[$schemaId] ?? null),
+                catalogHvdDefault: $catalogHvdDefault,
+                violations: $violations
             );
+
+            // PQM-002: additive DQV measurements, only when the catalog opts in.
+            if ($dqvExposure === true && $this->qualityService !== null) {
+                $score = $this->qualityService->scoreDataset($dataset);
+                $dataset['dqv:hasQualityMeasurement'] = $this->qualityService->dqvMeasurements($score);
+            }
+
+            $datasets[]    = $dataset;
             $datasetRefs[] = ['@id' => $datasetIri];
 
             $modified = strtotime((string) ($publication['@self']['updated'] ?? $publication['publicatiedatum'] ?? ''));
@@ -364,7 +388,7 @@ class DcatService
      *
      * @return array<string, mixed> The JSON-LD document plus `_meta`.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
      */
     public function buildInstanceDocument(): array
     {
@@ -388,21 +412,43 @@ class DcatService
             ];
         }
 
-        // Instance-level publisher from the configured owning Organisation.
+        // Instance-level publisher, completed from the configured owning Organisation
+        // via the DCAT-005 fallback chain. When no instance-level publisher is
+        // configured, fall back to the first DCAT-enabled catalog's owning Organisation.
+        $organisation = null;
+        if ($catalogs !== []) {
+            $catDefaults  = $this->resolveDefaults($catalogs[0]);
+            $organisation = ($catDefaults['organisation'] ?? null);
+        }
+
         $defaults  = [
             'publisherName' => $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_name', ''),
             'publisherUri'  => $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_uri', ''),
         ];
-        $publisher = $this->mappingService->buildPublisher(null, $defaults);
+        $publisher = $this->mappingService->buildPublisher($organisation, $defaults);
 
+        // DONL harvest-source metadata (DCAT-NPF-001): the source catalog node MUST
+        // carry publisher, license, contactPoint, modified and homepage.
         $rootNode = [
-            '@id'          => $instanceIri,
-            '@type'        => 'dcat:Catalog',
-            'dct:title'    => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_title', 'OpenCatalogi'),
-            'dcat:catalog' => array_map(static fn($node) => ['@id' => $node['@id']], $graph),
+            '@id'           => $instanceIri,
+            '@type'         => 'dcat:Catalog',
+            'dct:title'     => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_title', 'OpenCatalogi'),
+            'dct:modified'  => gmdate('Y-m-d\TH:i:sP'),
+            'foaf:homepage' => ['@id' => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_homepage', $base)],
+            'dcat:catalog'  => array_map(static fn($node) => ['@id' => $node['@id']], $graph),
         ];
         if ($publisher !== null) {
             $rootNode['dct:publisher'] = $publisher;
+        }
+
+        $license = $this->appConfig->getValueString('opencatalogi', 'dcat_default_license', 'http://creativecommons.org/publicdomain/zero/1.0/');
+        if ($license !== '') {
+            $rootNode['dct:license'] = ['@id' => $license];
+        }
+
+        $contactPoint = $this->appConfig->getValueString('opencatalogi', 'dcat_contact_point', '');
+        if ($contactPoint !== '') {
+            $rootNode['dcat:contactPoint'] = ['@type' => 'vcard:Organization', 'vcard:fn' => $contactPoint];
         }
 
         $document = [
@@ -433,7 +479,7 @@ class DcatService
      *
      * @return array<int, array<string, mixed>> One entry per violating dataset.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     public function validateCatalog(array $catalog, string $catalogSlug): array
     {
@@ -458,13 +504,76 @@ class DcatService
     }//end validateCatalog()
 
     /**
+     * The canonical instance-level harvest-source URL for data.overheid.nl (DONL).
+     *
+     * @return string The `…/api/dcat` harvest-source URL.
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    public function harvestSourceUrl(): string
+    {
+        $base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+        return "$base/apps/opencatalogi/api/dcat";
+
+    }//end harvestSourceUrl()
+
+    /**
+     * Validate a catalog's feed against the data.overheid.nl (DONL) rule-set.
+     *
+     * Advisory only — never gates serving (DCAT-010 / DCAT-NPF-001). Reports the
+     * canonical harvest-source URL, per-dataset mandatory-property gaps, and the
+     * per-dataset controlled-theme violations collected during rendering (unresolved
+     * `dcat:theme` values that were omitted rather than leaked, DCAT-NPF-003).
+     *
+     * @param array<string, mixed> $catalog     The catalog object.
+     * @param string               $catalogSlug The catalog slug.
+     *
+     * @return array{sourceUrl: string, valid: bool, violations: array<int, array<string, mixed>>}
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    public function validateForDonl(array $catalog, string $catalogSlug): array
+    {
+        $themeViolations = [];
+        $document        = $this->buildCatalogDocument(
+            catalog: $catalog,
+            catalogSlug: $catalogSlug,
+            page: 1,
+            violations: $themeViolations
+        );
+
+        $violations = $themeViolations;
+        foreach ($this->serializer->graphNodes($document) as $node) {
+            if (($node['@type'] ?? '') !== 'dcat:Dataset') {
+                continue;
+            }
+
+            $missing = $this->mandatoryViolations($node);
+            if (empty($missing) === false) {
+                $violations[] = [
+                    'iri'     => ($node['@id'] ?? ''),
+                    'axis'    => 'mandatory',
+                    'missing' => $missing,
+                ];
+            }
+        }
+
+        return [
+            'sourceUrl'  => $this->harvestSourceUrl(),
+            'valid'      => ($violations === []),
+            'violations' => $violations,
+        ];
+
+    }//end validateForDonl()
+
+    /**
      * Determine the DCAT-AP-NL mandatory properties missing from a dataset node.
      *
      * @param array<string, mixed> $node The dataset node.
      *
      * @return array<int, string> The missing mandatory property CURIEs.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
      */
     public function mandatoryViolations(array $node): array
     {
@@ -485,7 +594,7 @@ class DcatService
      *
      * @return array<int, array<string, mixed>> The DCAT-enabled catalog objects.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
      */
     public function getDcatEnabledCatalogs(): array
     {
@@ -524,7 +633,7 @@ class DcatService
      *
      * @return array<int, array<string, string>|null> Map schemaId => mapping|null.
      *
-     * @spec openspec/changes/dcat-ap-harvest/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+     * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
      */
     private function resolveSchemaMappings(array $schemaIds): array
     {
@@ -544,6 +653,33 @@ class DcatService
         return $mappings;
 
     }//end resolveSchemaMappings()
+
+    /**
+     * Resolve the optional `x-dcat.hvd` block for each schema.
+     *
+     * @param array<int, int> $schemaIds The catalog's schema IDs.
+     *
+     * @return array<int, array<string, mixed>|null> Schema ID → HVD config (or null).
+     *
+     * @spec openspec/specs/dcat-ap-harvest/spec.md
+     */
+    private function resolveSchemaHvds(array $schemaIds): array
+    {
+        $hvds         = [];
+        $schemaMapper = $this->getSchemaMapper();
+        foreach ($schemaIds as $schemaId) {
+            try {
+                $schema     = $schemaMapper->find((int) $schemaId);
+                $schemaData = $schema->jsonSerialize();
+                $hvds[(int) $schemaId] = $this->mappingService->resolveHvd($schemaData);
+            } catch (\Throwable $e) {
+                $hvds[(int) $schemaId] = null;
+            }
+        }
+
+        return $hvds;
+
+    }//end resolveSchemaHvds()
 
     /**
      * Normalise a catalog register/schema list (array or JSON string) to integer IDs.

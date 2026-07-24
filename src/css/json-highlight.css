@@ -1,0 +1,151 @@
+/**
+ * Shared CodeMirror JSON syntax-highlight palette.
+ *
+ * Previously copy-pasted verbatim into seven modals (DownloadObject.vue,
+ * ObjectModal.vue, UploadObject.vue, MergeObject.vue, MigrationObject.vue,
+ * MenuItemForm.vue, UploadFiles.vue), which meant the copies could — and
+ * did — drift independently. Consolidated here as the single source of
+ * truth; import this file (via `import '.../css/json-highlight.css'` in the
+ * component's `<script>` block, NOT a scoped `<style>` block) instead of
+ * re-declaring the rules locally.
+ *
+ * This is a plain, globally-imported stylesheet (not compiled through
+ * vue-loader's scoped-CSS transform), so — unlike the per-component copies
+ * it replaces — it does NOT use the `:deep()` pseudo-class: `:deep()` only
+ * has meaning inside a Vue SFC `<style scoped>` block, where it is Vue's
+ * escape hatch for piercing a component's own scoping attribute to reach
+ * child-component internals. A plain imported stylesheet has no scoping
+ * attribute to pierce, so `:deep(.foo)` here would be parsed as an unknown
+ * pseudo-class and the whole rule would be silently dropped by the browser;
+ * plain descendant selectors are the correct (and only working) equivalent.
+ *
+ * Every color is expressed as `var(--oc-json-*, <original-hex-fallback>)` so
+ * a theme can override any token color via a custom property without a code
+ * change, per ADR-004/ADR-010's "no hardcoded colors" rule — these are
+ * app-scoped tokens (there is no NC-core semantic variable for "JSON boolean
+ * color"), not existing Nextcloud variables, so the fallback preserves the
+ * exact pre-existing appearance.
+ *
+ * Consumers render CodeMirror content with a `codeMirrorContainer light`/
+ * `codeMirrorContainer dark` wrapper (see `getTheme()`); `.ͼe`/`.ͼc`/`.ͼb`/`.ͼd`
+ * are CodeMirror's own generated class names for string/boolean/null/number
+ * tokens respectively.
+ *
+ * @spec openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-3
+ */
+
+/* stylelint-disable color-no-hex -- every hex literal below is a `var(--oc-json-*, #hex)`
+   fallback value (see docblock above), the one allow-listed exception to the
+   no-hardcoded-colors rule (openspec/changes/nc-css-vars-color-cleanup/tasks.md#task-4). */
+
+.codeMirrorContainer {
+	margin-block-start: 6px;
+}
+
+.codeMirrorContainer .cm-content {
+	border-radius: 0 !important;
+	border: none !important;
+}
+
+.codeMirrorContainer .cm-editor {
+	outline: none !important;
+}
+
+.codeMirrorContainer.light > .vue-codemirror {
+	border: 1px dotted silver;
+}
+
+.codeMirrorContainer.dark > .vue-codemirror {
+	border: 1px dotted grey;
+}
+
+/* value text color */
+/* string */
+.codeMirrorContainer.light .ͼe {
+	color: var(--oc-json-string-light, #448c27);
+}
+
+.codeMirrorContainer.dark .ͼe {
+	color: var(--oc-json-string-dark, #88c379);
+}
+
+/* boolean */
+.codeMirrorContainer.light .ͼc {
+	color: var(--oc-json-boolean-light, #221199);
+}
+
+.codeMirrorContainer.dark .ͼc {
+	color: var(--oc-json-boolean-dark, #8d64f7);
+}
+
+/* null */
+.codeMirrorContainer.light .ͼb {
+	color: var(--oc-json-null-light, #770088);
+}
+
+.codeMirrorContainer.dark .ͼb {
+	color: var(--oc-json-null-dark, #be55cd);
+}
+
+/* number */
+.codeMirrorContainer.light .ͼd {
+	color: var(--oc-json-number-light, #d19a66);
+}
+
+.codeMirrorContainer.dark .ͼd {
+	color: var(--oc-json-number-dark, #9d6c3a);
+}
+
+/* text cursor */
+.codeMirrorContainer .cm-content * {
+	cursor: text !important;
+}
+
+/* selection color */
+.codeMirrorContainer.light .cm-line::selection,
+.codeMirrorContainer.light .cm-line ::selection {
+	background-color: var(--oc-json-selection-bg-light, #d7eaff) !important;
+	color: black;
+}
+
+.codeMirrorContainer.dark .cm-line::selection,
+.codeMirrorContainer.dark .cm-line ::selection {
+	background-color: var(--oc-json-selection-bg-dark, #8fb3e6) !important;
+	color: black;
+}
+
+/* string */
+.codeMirrorContainer.light .cm-line .ͼe::selection {
+	color: var(--oc-json-string-selection-light, #2d770f);
+}
+
+.codeMirrorContainer.dark .cm-line .ͼe::selection {
+	color: var(--oc-json-string-selection-dark, #104e0c);
+}
+
+/* boolean */
+.codeMirrorContainer.light .cm-line .ͼc::selection {
+	color: var(--oc-json-boolean-selection-light, #221199);
+}
+
+.codeMirrorContainer.dark .cm-line .ͼc::selection {
+	color: var(--oc-json-boolean-selection-dark, #4026af);
+}
+
+/* null */
+.codeMirrorContainer.light .cm-line .ͼb::selection {
+	color: var(--oc-json-null-selection-light, #770088);
+}
+
+.codeMirrorContainer.dark .cm-line .ͼb::selection {
+	color: var(--oc-json-null-selection-dark, #770088);
+}
+
+/* number */
+.codeMirrorContainer.light .cm-line .ͼd::selection {
+	color: var(--oc-json-number-selection-light, #8c5c2c);
+}
+
+.codeMirrorContainer.dark .cm-line .ͼd::selection {
+	color: var(--oc-json-number-selection-dark, #623907);
+}

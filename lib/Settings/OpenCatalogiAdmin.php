@@ -128,7 +128,9 @@ class OpenCatalogiAdmin implements IDelegatedSettings
                 '/^(catalog_register|catalog_schema|listing_register|listing_schema'
                 .'|auto_publish_attachments|auto_publish_objects|use_old_style_publishing_view'
                 .'|dcat_publisher_name|dcat_publisher_uri|dcat_default_license|dcat_contact_point'
-                .'|dcat_instance_title)$/',
+                .'|dcat_instance_title'
+                .'|woo_index_registration_status|woo_index_registration_url|woo_index_registration_at'
+                .'|woo_readiness_report)$/',
             ],
         ];
 

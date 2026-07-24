@@ -114,6 +114,100 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			:name="t('opencatalogi', 'Woo-index harvester readiness')"
+			:description="t('opencatalogi', 'Verify that the KOOP Woo-harvester can actually reach and ingest this instance, and track its Woo-index registration status')">
+			<div class="woo-readiness">
+				<NcNoteCard v-if="wooReadinessError" type="error">
+					{{ wooReadinessError }}
+				</NcNoteCard>
+
+				<div v-if="wooReadinessReport" class="woo-readiness-summary">
+					<NcNoteCard :type="wooReadinessReport.verdict === 'ready' ? 'success' : 'warning'">
+						{{ wooReadinessReport.verdict === 'ready'
+							? t('opencatalogi', 'This instance is harvester-ready')
+							: t('opencatalogi', 'This instance is not yet harvester-ready') }}
+					</NcNoteCard>
+					<p class="woo-readiness-meta">
+						{{ t('opencatalogi', 'Last checked') }}: {{ formatCheckedAt(wooReadinessReport.checkedAt) }}
+					</p>
+
+					<ul class="woo-readiness-checks">
+						<li v-for="check in wooReadinessReport.checks"
+							:key="check.id"
+							class="woo-readiness-check">
+							<CheckCircle v-if="check.status === 'pass'" :size="20" fill-color="var(--color-success)" />
+							<CloseCircle v-else-if="check.status === 'fail'" :size="20" fill-color="var(--color-error)" />
+							<MinusCircle v-else :size="20" fill-color="var(--color-text-lighter)" />
+							<div class="woo-readiness-check-body">
+								<strong>{{ check.id }}</strong>
+								<span v-if="check.reason" class="woo-readiness-check-reason">
+									{{ remediationHint(check.reason) }}
+								</span>
+							</div>
+						</li>
+					</ul>
+				</div>
+
+				<p v-else-if="!wooReadinessRunning" class="woo-readiness-empty">
+					{{ t('opencatalogi', 'No readiness check has been run yet.') }}
+				</p>
+
+				<div class="button-container">
+					<NcButton
+						type="primary"
+						:disabled="wooReadinessRunning"
+						@click="runWooReadinessCheck">
+						<template #icon>
+							<NcLoadingIcon v-if="wooReadinessRunning" :size="20" />
+							<Refresh v-else :size="20" />
+						</template>
+						{{ t('opencatalogi', 'Run check') }}
+					</NcButton>
+				</div>
+
+				<h3 class="woo-registration-heading">
+					{{ t('opencatalogi', 'Woo-index registration status') }}
+				</h3>
+				<p class="option-description">
+					{{ t('opencatalogi', 'Track whether this instance is registered with the national Woo-index / Register van Overheidsorganisaties') }}
+				</p>
+
+				<div class="woo-registration-fields">
+					<NcSelect
+						v-model="registration.status"
+						:options="registrationStatusOptions"
+						:input-label="t('opencatalogi', 'Registration status')"
+						:disabled="savingRegistration" />
+
+					<NcTextField
+						:value="registration.registeredUrl"
+						:label="t('opencatalogi', 'Registered URL')"
+						:disabled="savingRegistration"
+						@update:value="v => registration.registeredUrl = v" />
+
+					<NcTextField
+						:value="registration.registeredAt"
+						:label="t('opencatalogi', 'Registered on (date)')"
+						:disabled="savingRegistration"
+						@update:value="v => registration.registeredAt = v" />
+				</div>
+
+				<div class="button-container">
+					<NcButton
+						type="secondary"
+						:disabled="savingRegistration"
+						@click="saveRegistration">
+						<template #icon>
+							<NcLoadingIcon v-if="savingRegistration" :size="20" />
+							<Save v-else :size="20" />
+						</template>
+						{{ t('opencatalogi', 'Save registration status') }}
+					</NcButton>
+				</div>
+			</div>
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			:name="t('opencatalogi', 'Publishing Options')"
 			:description="t('opencatalogi', 'Configure automatic publishing behavior and interface preferences')">
 			<div v-if="!loading" class="publishing-options">
@@ -183,6 +277,7 @@ import {
 	NcSettingsSection,
 	NcNoteCard,
 	NcSelect,
+	NcTextField,
 	NcButton,
 	NcLoadingIcon,
 	NcCheckboxRadioSwitch,
@@ -190,6 +285,9 @@ import {
 import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
 import Save from 'vue-material-design-icons/ContentSave.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 
 /**
  * @class Settings
@@ -204,7 +302,7 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
  * Settings component for the Open Catalogi that allows users to configure
  * data storage options for different object types using Open Registers.
  *
- * @spec openspec/changes/retrofit-2026-05-25-admin-settings/tasks.md#task-1
+ * @spec openspec/specs/admin-settings/spec.md
  */
 export default defineComponent({
 	name: 'Settings',
@@ -212,12 +310,16 @@ export default defineComponent({
 		NcSettingsSection,
 		NcNoteCard,
 		NcSelect,
+		NcTextField,
 		NcButton,
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
 		CnAdminSettingsShell,
 		Save,
 		Refresh,
+		CheckCircle,
+		CloseCircle,
+		MinusCircle,
 	},
 
 	/**
@@ -255,10 +357,32 @@ export default defineComponent({
 				needsUpdate: false,
 			},
 			importResult: null,
+			wooReadinessReport: null,
+			wooReadinessError: null,
+			wooReadinessRunning: false,
+			registration: {
+				status: null,
+				registeredUrl: '',
+				registeredAt: '',
+			},
+			savingRegistration: false,
 		}
 	},
 
 	computed: {
+		/**
+		 * Options for the Woo-index registration status selector.
+		 *
+		 * @return {Array<object>} Array of {label, value} options.
+		 */
+		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Woo-index registration status is tracked in configuration (WOO-HR-003)) */
+		registrationStatusOptions() {
+			return [
+				{ label: this.t('opencatalogi', 'Not registered'), value: 'not_registered' },
+				{ label: this.t('opencatalogi', 'Requested'), value: 'requested' },
+				{ label: this.t('opencatalogi', 'Registered'), value: 'registered' },
+			]
+		},
 		/**
 		 * Generates options for register selection dropdown
 		 *
@@ -314,6 +438,7 @@ export default defineComponent({
 		await Promise.all([
 			this.loadSettings(),
 			this.loadVersionInfo(),
+			this.loadWooReadiness(),
 		])
 	},
 
@@ -349,6 +474,15 @@ export default defineComponent({
 
 				// Find and select the Publication register if it exists
 				this.autoSelectOpenCatalogiRegister()
+
+				// Populate the Woo-index registration status editor from the same
+				// settings payload (WOO-HR-003 keys are part of `configuration`).
+				const registrationStatus = (data.configuration && data.configuration.woo_index_registration_status) || 'not_registered'
+				this.registration = {
+					status: this.registrationStatusOptions.find(option => option.value === registrationStatus) || this.registrationStatusOptions[0],
+					registeredUrl: (data.configuration && data.configuration.woo_index_registration_url) || '',
+					registeredAt: (data.configuration && data.configuration.woo_index_registration_at) || '',
+				}
 
 				this.loading = false
 			} catch (error) {
@@ -765,6 +899,139 @@ export default defineComponent({
 				this.importing = false
 			}
 		},
+
+		/**
+		 * Loads the last persisted Woo-index harvester-readiness report.
+		 *
+		 * Read-only — performs no outbound checks itself (WOO-HR-002).
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Readiness report is persisted and retrievable (WOO-HR-002)) */
+		async loadWooReadiness() {
+			try {
+				const response = await fetch('/index.php/apps/opencatalogi/api/woo/readiness')
+				const data = await response.json()
+				this.wooReadinessReport = data.report || null
+			} catch (error) {
+				console.error('Failed to load Woo readiness report:', error)
+			}
+		},
+
+		/**
+		 * Triggers a fresh Woo-index harvester-readiness self-check run.
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Harvester-readiness self-check validates the deployed public WOO surface (WOO-HR-001)) */
+		async runWooReadinessCheck() {
+			this.wooReadinessRunning = true
+			this.wooReadinessError = null
+
+			try {
+				const response = await fetch('/index.php/apps/opencatalogi/api/woo/readiness/run', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
+
+				const data = await response.json()
+
+				if (!response.ok) {
+					this.wooReadinessError = data.error === 'not-configured'
+						? this.t('opencatalogi', 'No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.')
+						: (data.error || this.t('opencatalogi', 'Readiness check failed.'))
+					return
+				}
+
+				this.wooReadinessReport = data
+			} catch (error) {
+				console.error('Failed to run Woo readiness check:', error)
+				this.wooReadinessError = this.t('opencatalogi', 'Readiness check failed.')
+			} finally {
+				this.wooReadinessRunning = false
+			}
+		},
+
+		/**
+		 * Saves the Woo-index registration status editor via the existing settings save path.
+		 *
+		 * @async
+		 * @return {Promise<void>}
+		 */
+		/** @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md (Requirement: Woo-index registration status is tracked in configuration (WOO-HR-003)) */
+		async saveRegistration() {
+			this.savingRegistration = true
+
+			try {
+				await fetch('/index.php/apps/opencatalogi/api/settings', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						woo_index_registration_status: this.registration.status ? this.registration.status.value : 'not_registered',
+						woo_index_registration_url: this.registration.registeredUrl,
+						woo_index_registration_at: this.registration.registeredAt,
+					}),
+				})
+			} catch (error) {
+				console.error('Failed to save Woo-index registration status:', error)
+			} finally {
+				this.savingRegistration = false
+			}
+		},
+
+		/**
+		 * Formats a readiness report's `checkedAt` ISO timestamp for display.
+		 *
+		 * @param {string} checkedAt ISO 8601 timestamp.
+		 * @return {string} A locale-formatted date/time string.
+		 */
+		/** @spec exclude Display-formatting helper; no independent domain behavior. */
+		formatCheckedAt(checkedAt) {
+			if (!checkedAt) {
+				return ''
+			}
+			try {
+				return new Date(checkedAt).toLocaleString()
+			} catch (error) {
+				return checkedAt
+			}
+		},
+
+		/**
+		 * Maps a check's machine-readable failure/skip reason to a short remediation hint.
+		 *
+		 * @param {string} reason The machine-readable reason code.
+		 * @return {string} A human-readable remediation hint.
+		 */
+		/** @spec exclude Display-copy lookup; no independent domain behavior. */
+		remediationHint(reason) {
+			const hints = {
+				'http-404': this.t('opencatalogi', 'Not found (404) — check webserver routing/rewrites for this URL.'),
+				'ssrf-blocked': this.t('opencatalogi', 'Blocked as an unsafe outbound target — check the configured public base URL.'),
+				'network-error': this.t('opencatalogi', 'Could not connect — check that this instance is reachable from the public internet.'),
+				'invalid-xml': this.t('opencatalogi', 'Response was not well-formed XML.'),
+				'no-diwoo-elements': this.t('opencatalogi', 'No DIWOO metadata elements found — the category sitemap may be empty.'),
+				'diwoo-xsd-invalid': this.t('opencatalogi', 'DIWOO metadata failed validation — see the DIWOO validation report for this catalog.'),
+				'diwoo-validation-error': this.t('opencatalogi', 'Could not run DIWOO validation for this catalog/category.'),
+				'missing-sitemap-reference': this.t('opencatalogi', 'robots.txt does not reference any Woo sitemap — check the robots.txt rewrite/proxy configuration.'),
+				'sitemapindex-unreachable': this.t('opencatalogi', 'Skipped — the sitemapindex for this catalog was not reachable.'),
+				'sitemapindex-invalid': this.t('opencatalogi', 'Skipped — the sitemapindex for this catalog was not well-formed.'),
+				'no-sitemap-pages': this.t('opencatalogi', 'Skipped — the sitemapindex has no sitemap pages to sample.'),
+				'no-publications-found': this.t('opencatalogi', 'Skipped — no publication URL was found to sample.'),
+				'request-cap-reached': this.t('opencatalogi', 'Skipped — the per-run outbound request cap was reached.'),
+				'not-registered': this.t('opencatalogi', 'Not yet registered with the Woo-index.'),
+				'registration-pending': this.t('opencatalogi', 'Registration requested but not yet confirmed.'),
+				'url-mismatch': this.t('opencatalogi', 'The registered URL does not match this instance\'s public base URL.'),
+			}
+
+			return hints[reason] || reason
+		},
 	},
 })
 </script>
@@ -831,5 +1098,60 @@ export default defineComponent({
 
 .import-result {
 	margin-top: 1rem;
+}
+
+.woo-readiness {
+	max-width: 700px;
+}
+
+.woo-readiness-meta {
+	margin: 0.5rem 0 1rem;
+	color: var(--color-text-lighter);
+	font-size: 0.9rem;
+}
+
+.woo-readiness-checks {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+}
+
+.woo-readiness-check {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.woo-readiness-check:last-child {
+	border-bottom: none;
+}
+
+.woo-readiness-check-body {
+	display: flex;
+	flex-direction: column;
+}
+
+.woo-readiness-check-reason {
+	color: var(--color-text-lighter);
+	font-size: 0.85rem;
+}
+
+.woo-readiness-empty {
+	color: var(--color-text-lighter);
+	margin-bottom: 1rem;
+}
+
+.woo-registration-heading {
+	margin-top: 2rem;
+}
+
+.woo-registration-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	max-width: 400px;
+	margin: 1rem 0;
 }
 </style>

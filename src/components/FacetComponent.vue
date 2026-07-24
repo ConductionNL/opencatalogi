@@ -138,7 +138,7 @@
 /**
  * FacetComponent — renders and toggles an individual facet filter.
  *
- * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-3
+ * @spec openspec/specs/search/spec.md
  */
 import { useSearchStore } from '../store/modules/search.ts'
 import { t } from '@nextcloud/l10n'

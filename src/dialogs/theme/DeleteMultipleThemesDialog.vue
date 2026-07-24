@@ -78,7 +78,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 /**
  * DeleteMultipleThemesDialog — bulk-delete selected themes via deleteObject.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-3
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'DeleteMultipleThemesDialog',

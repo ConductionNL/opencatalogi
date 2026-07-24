@@ -172,7 +172,7 @@ const handleCancel = () => {
 /**
  * DeleteMenuItemModal — remove a menu item by updating the parent menu.
  *
- * @spec openspec/changes/retrofit-2026-05-25-content-management/tasks.md#task-2
+ * @spec openspec/specs/content-management/spec.md
  */
 export default {
 	name: 'DeleteMenuItemModal',

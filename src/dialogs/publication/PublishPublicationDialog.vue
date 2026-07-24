@@ -52,7 +52,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 /**
  * PublishPublicationDialog — confirmation dialog for publishing/depublishing a publication.
  *
- * @spec openspec/changes/retrofit-2026-05-25-publications/tasks.md#task-3
+ * @spec openspec/specs/publications/spec.md
  */
 import {
 	NcButton,

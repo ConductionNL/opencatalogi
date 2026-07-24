@@ -282,10 +282,16 @@ export default {
 		},
 		async refreshDirectory(listing) {
 			try {
-				const response = await fetch(generateUrl('/apps/opencatalogi/api/directory'), {
+				// Auth-required `/api/listings/add` (WOO-513) — same syncDirectory()
+				// side-effects as the public `/api/directory` but admin-only.
+				// `OCS-APIRequest: true` is NC's CSRF bypass for programmatic clients.
+				const response = await fetch(generateUrl('/apps/opencatalogi/api/listings/add'), {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ directory: listing.directory }),
+					headers: {
+						'Content-Type': 'application/json',
+						'OCS-APIRequest': 'true',
+					},
+					body: JSON.stringify({ url: listing.directory }),
 				})
 				const result = await response.json()
 				if (response.ok) {

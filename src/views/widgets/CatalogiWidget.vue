@@ -4,38 +4,52 @@ import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<NcDashboardWidget :items="items"
+	<CnDataTable :rows="items"
+		:columns="columns"
 		:loading="loading"
-		:item-menu="itemMenu"
-		@show="onShow">
-		<template #empty-content>
+		hide-header
+		borderless
+		row-icon="DatabaseOutline"
+		@row-click="onRowClick">
+		<template #empty>
 			<NcEmptyContent :title="t('opencatalogi', 'No catalogs found')">
 				<template #icon>
 					<FolderIcon />
 				</template>
 			</NcEmptyContent>
 		</template>
-	</NcDashboardWidget>
+	</CnDataTable>
 </template>
 
 <script>
 // Components
-import { NcDashboardWidget, NcEmptyContent } from '@nextcloud/vue'
+import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
+import { NcEmptyContent } from '@nextcloud/vue'
+import { generateUrl } from '@nextcloud/router'
 
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
+import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 
-import { getTheme } from '../../services/getTheme.js'
+import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
+
+// The row's leading icon renders through CnDataTable's shared CnIcon
+// registry; MDI icons use currentColor, so light/dark theming is automatic
+// (replacing the old getTheme() light/dark SVG-url swap).
+registerIcons({ DatabaseOutline })
 
 /**
  * CatalogiWidget — Nextcloud dashboard widget listing catalogs.
  *
- * @spec openspec/changes/retrofit-2026-05-25-catalogs/tasks.md#task-4
+ * Renders the universal CnDataTable list-widget pattern (ADR-049); a row
+ * click opens the catalog's publications listing in the same tab.
+ *
+ * @spec openspec/specs/catalogs/spec.md
  */
 export default {
 	name: 'CatalogiWidget',
 	components: {
-		NcDashboardWidget,
+		CnDataTable,
 		NcEmptyContent,
 	},
 	props: {
@@ -47,12 +61,7 @@ export default {
 	data() {
 		return {
 			loading: false,
-			itemMenu: {
-				show: {
-					text: 'View catalog',
-					icon: 'icon-open-in-app',
-				},
-			},
+			columns: LIST_COLUMNS,
 		}
 	},
 	computed: {
@@ -63,7 +72,6 @@ export default {
 				id: catalog.slug,
 				mainText: catalog.title,
 				subText: catalog.summary,
-				avatarUrl: getTheme() === 'light' ? '/apps-extra/opencatalogi/img/database-outline.svg' : '/apps-extra/opencatalogi/img/database-outline_light.svg',
 			}))
 		},
 	},
@@ -72,13 +80,13 @@ export default {
 	},
 	methods: {
 		/**
-		 * Handle showing a catalog
-		 * @param {object} item - The catalog item to show
+		 * Open the clicked catalog's publications listing in the same tab.
+		 * @param {object} row - The clicked row (a shaped catalog item).
 		 * @return {void}
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
-		onShow(item) {
-			window.location.href = `/index.php/apps/opencatalogi/publications/${item.id}`
+		onRowClick(row) {
+			navigateTo(generateUrl(`/apps/opencatalogi/publications/${row.id}`))
 		},
 		/**
 		 * Fetch the catalog data

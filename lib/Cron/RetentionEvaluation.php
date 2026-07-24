@@ -25,7 +25,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
  */
 
 namespace OCA\OpenCatalogi\Cron;
@@ -77,7 +77,7 @@ class RetentionEvaluation extends TimedJob
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
      */
     protected function run($argument): void
     {

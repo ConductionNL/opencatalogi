@@ -16,7 +16,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
 
 namespace OCA\OpenCatalogi\Dashboard;
@@ -104,7 +104,7 @@ class RetentionWidget implements IWidget
      *
      * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
      *
-     * @spec openspec/changes/publication-retention-lifecycle/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
      */
     public function load(): void
     {

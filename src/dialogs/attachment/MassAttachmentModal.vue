@@ -74,7 +74,7 @@ import SelectAttachmentsList from '../../components/SelectAttachmentsList.vue'
 /**
  * MassAttachmentModal — bulk attachment operations built on useFileSelection.
  *
- * @spec openspec/changes/retrofit-2026-05-25-file-management/tasks.md#task-4
+ * @spec openspec/specs/file-management/spec.md
  */
 export default {
 	name: 'MassAttachmentModal',
