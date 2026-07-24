@@ -1,9 +1,10 @@
 <?php
 
 use OCP\Util;
+use OCA\OpenCatalogi\Service\ScriptManifestLoader;
 
 $appId = OCA\OpenCatalogi\AppInfo\Application::APP_ID;
-Util::addScript($appId, $appId . '-main');
+ScriptManifestLoader::addEntryScripts($appId, 'main', $appId . '-main');
 Util::addStyle($appId, 'main');
 ?>
 
