@@ -39,7 +39,25 @@ test.describe('catalog-detail-page', () => {
 			const errors = trackPageErrors(page)
 
 			await bootApp(page)
-			await navTo(page, 'CatalogsMenu', true)
+
+			// CatalogsMenu is a child of the collapsible `CatalogueGroup`
+			// (the nav-IA `settings-foldout + admin-IA hygiene` refactor moved
+			// Catalogs/Glossary/Themes/Pages/Menus/WooBatches under it). The
+			// group renders collapsed (aria-expanded=false) so its children are
+			// hidden until it is opened — exactly as woo-batches-page.spec.ts
+			// handles WooBatchesMenu. The stale `settings=true` here opened the
+			// settings gear foldout (where CatalogsMenu does NOT live), leaving
+			// the entry hidden and the click never landing. Expand the group
+			// first, then use the normal nav click.
+			const group = page.locator('[data-testid="cn-nav-entry-CatalogueGroup"]').first()
+			await expect(group).toBeVisible({ timeout: 10000 })
+			const catalogsEntry = page.locator('[data-testid="cn-nav-entry-CatalogsMenu"]').first()
+			if (!(await catalogsEntry.isVisible().catch(() => false))) {
+				await group.locator('a, button').first().click()
+				await expect(catalogsEntry).toBeVisible({ timeout: 10000 })
+			}
+
+			await navTo(page, 'CatalogsMenu')
 			await expect(page.locator('[data-testid="cn-index-page"]').first())
 				.toBeVisible({ timeout: 15000 })
 
