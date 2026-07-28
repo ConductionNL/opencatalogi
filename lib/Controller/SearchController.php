@@ -100,7 +100,17 @@ class SearchController extends Controller
                     queryParams: $this->request->getParams(),
                     objectService: $objectService
                 );
-                return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+                $response = new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+                // Activate `@BruteForceProtection(action=publicSearch)` — the
+                // annotation only accrues delay when a controller calls
+                // `throttle()`; without this call the throttle was cosmetic
+                // and no rate limiting ever kicked in on the public path
+                // (review #147 🟡 unauthenticated DoS). Recording every
+                // public-FTS request meters legitimate use lightly and
+                // ramps up the delay only under sustained hammering, per
+                // Nextcloud's built-in brute-force machinery.
+                $response->throttle(['action' => 'publicSearch']);
+                return $response;
             } catch (RuntimeException $e) {
                 if ($this->logger !== null) {
                     $this->logger->warning(

@@ -59,6 +59,19 @@ class PublicationQueryService
     ];
 
     /**
+     * Hard cap on `_limit` for the anonymous public FTS surface.
+     *
+     * Review #147 🟡 (unauthenticated DoS): without a cap, an anonymous
+     * `?_limit=1000000&_content=true` fanned out unbounded into OR's
+     * chunk-search path, giving a public CPU/memory amplifier. 100 rows
+     * per page matches typical faceted-search UI needs; callers with a
+     * legitimate higher-throughput need MUST paginate.
+     *
+     * @var integer
+     */
+    public const PUBLIC_LIMIT_MAX = 100;
+
+    /**
      * Constructor.
      *
      * @param ContainerInterface   $container   DI container
@@ -142,8 +155,17 @@ class PublicationQueryService
             return true;
         }
 
+        // Fail closed on an unparseable `depublicatiedatum` — a withdrawn object
+        // whose depublish date does not round-trip through strtotime() MUST NOT
+        // stay publicly visible on the strength of a parse failure (review #147
+        // 🟡 fail-open). Return false instead of the previous
+        // `false || > now` shape.
         $depublishedTime = strtotime((string) $depublicatiedatum);
-        return ($depublishedTime === false || $depublishedTime > $now);
+        if ($depublishedTime === false) {
+            return false;
+        }
+
+        return ($depublishedTime > $now);
 
     }//end isObjectPublic()
 
@@ -255,6 +277,18 @@ class PublicationQueryService
         $searchQuery['_schemas']        = [$publicationSchemaId, $documentSchemaId];
         $searchQuery['_includeDeleted'] = false;
 
+        // Clamp `_limit` to a hard maximum (review #147 🟡 unauthenticated DoS —
+        // no cap allowed anonymous `?_limit=1000000&_content=true` to fan out
+        // unbounded into OR's chunk-search path). The cap is enforced HERE, not
+        // in the controller, so every entry point that reaches this assembler
+        // is covered (`SearchController::index()` is the only one today, but
+        // any future entrypoint automatically inherits the cap). 100 mirrors
+        // typical faceted-search page sizes; callers wanting more MUST paginate.
+        $requestedLimit = ($searchQuery['_limit'] ?? null);
+        if (is_numeric($requestedLimit) === true && (int) $requestedLimit > self::PUBLIC_LIMIT_MAX) {
+            $searchQuery['_limit'] = self::PUBLIC_LIMIT_MAX;
+        }
+
         if ($contentSearchRequested === true) {
             // Forward to OR's opt-in chunk-search fan-out (expose-content-search-in
             // -object-service, PR #473). OR already dedupes its own metadata-match +
@@ -364,14 +398,27 @@ class PublicationQueryService
             $rows[] = $rowArray;
         }//end foreach
 
-        // Forward OR's pre-filter `total` so client-side pagination sees an
-        // accurate (or slightly-over) dataset size, not the current-page-post-filter
-        // count. OR now filters drafts via publication.authorization; the remaining
-        // gap between OR total and post-filter count is archived rows removed by
-        // `isObjectPublic()` — an upper-bound total is acceptable for pagination.
+        // `total` on an anonymous surface MUST NOT expose the pre-filter count
+        // (review #147 🔴 total leak): the OR candidate query runs `_rbac: false`
+        // and OC applies `isObjectPublic()` only to the emitted rows, so OR's
+        // `total` still counts drafts, future-dated, depublished AND archived
+        // objects. Polling that number over time would let a caller infer
+        // publication/withdrawal activity before it is public. Anonymous callers
+        // therefore see the exact post-filter row count for THIS PAGE — a
+        // per-page under-count that never reveals hidden lifecycle state.
+        // Authenticated callers keep OR's pre-filter total so their client-side
+        // pagination continues to work against the full accessible corpus
+        // (they can see the same rows through the admin surface anyway).
+        $isAnonymous = $this->isAnonymous();
+        if ($isAnonymous === true) {
+            $envelopeTotal = count($rows);
+        } else {
+            $envelopeTotal = (int) ($candidateResult['total'] ?? count($rows));
+        }
+
         $envelope = [
             'results' => $rows,
-            'total'   => (int) ($candidateResult['total'] ?? count($rows)),
+            'total'   => $envelopeTotal,
         ];
 
         // Propagate the facets + facetable blocks from OR's response so consumers can
@@ -379,24 +426,24 @@ class PublicationQueryService
         // populates these when the caller asked for them (`_facetable=true` +
         // `_facets[...]`); when absent, the keys are simply omitted from the response.
         //
-        // Facet counts on public surfaces MUST NOT leak lifecycle-state population
-        // to anonymous callers: `status` is app-level filtered (RET-006 archived
-        // removal happens in `isObjectPublic()`, not in OR), so the raw OR facet
-        // counts for the `status` bucket would enumerate archived + any future
-        // hidden-state populations. Strip that bucket before forwarding.
-        if (isset($candidateResult['facets']) === true) {
-            $facets = $candidateResult['facets'];
-            if (is_array($facets) === true && $this->isAnonymous() === true) {
-                unset($facets['status'], $facets['@self']['status']);
-            }
-            $envelope['facets'] = $facets;
+        // On an anonymous surface EVERY OR facet/facetable bucket is unsafe
+        // (review #147 🔴 facet leak): the OR candidate query runs `_rbac: false`
+        // and OC applies its public-predicate only to result ROWS, so every
+        // bucket — `publicatiedatum`, `organization`, `themes`, `mimeType`, …
+        // — aggregates counts over drafts / future-dated / depublished /
+        // archived objects. A `publicatiedatum` range facet would even reveal
+        // dates of not-yet-published objects. The previous "strip `status` only"
+        // fix was incomplete; drop the entire facets/facetable envelopes for
+        // anonymous callers rather than post-stripping individual buckets. A
+        // future OR API that returns authorization-filtered facet aggregations
+        // can be forwarded through here once available.
+        // Authenticated callers keep the full OR facets — they can already
+        // see the underlying rows through admin surfaces.
+        if (isset($candidateResult['facets']) === true && $isAnonymous === false) {
+            $envelope['facets'] = $candidateResult['facets'];
         }
-        if (isset($candidateResult['facetable']) === true) {
-            $facetable = $candidateResult['facetable'];
-            if (is_array($facetable) === true && $this->isAnonymous() === true) {
-                unset($facetable['status'], $facetable['@self']['status']);
-            }
-            $envelope['facetable'] = $facetable;
+        if (isset($candidateResult['facetable']) === true && $isAnonymous === false) {
+            $envelope['facetable'] = $candidateResult['facetable'];
         }
         return $envelope;
 
