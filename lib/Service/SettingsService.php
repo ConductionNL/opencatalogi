@@ -359,6 +359,12 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            // WOO-506/517 FTS: publication + document included so autoConfigure()
+            // populates `publication_register`/`publication_schema`/`document_schema`
+            // config keys — required by PublicationQueryService for the /api/search
+            // FTS endpoint. Fails-closed (empty envelope + warn) when unset.
+            'publication',
+            'document',
         ];
         $data['openRegisters']      = false;
         $data['availableRegisters'] = [];
@@ -712,6 +718,12 @@ class SettingsService
             'page',
             'menu',
             'glossary',
+            // WOO-506/517 FTS: publication + document included so the config
+            // keys `publication_register`/`publication_schema`/`document_schema`
+            // get persisted from loadSettings (which imports the JSON register
+            // schema). Required by PublicationQueryService for /api/search FTS.
+            'publication',
+            'document',
         ];
 
         // Build a map of schema slugs to schema IDs.
