@@ -73,8 +73,10 @@ async function go(page: Page, route: string): Promise<void> {
 	const url = route.startsWith('/apps/') || route.startsWith('/settings/')
 		? `/index.php${route}`
 		: `/index.php${APP}${route}`
-	await page.goto(url).catch(() => { /* tolerate a 404 — caller decides */ })
-	await page.waitForLoadState('networkidle').catch(() => { /* idle never fires on some pages */ })
+	// `domcontentloaded`, never `networkidle` (ADR-074 rule 4): Nextcloud's
+	// notification poll keeps the network permanently busy, so networkidle
+	// never settles and the .catch() just hides a full timeout burn.
+	await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => { /* tolerate a 404 — caller decides */ })
 	await dismissOverlays(page)
 	await page.waitForTimeout(900)
 }

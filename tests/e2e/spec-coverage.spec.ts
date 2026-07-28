@@ -2,31 +2,34 @@
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Spec-coverage e2e suite for OpenCatalogi.
+ * Spec-coverage e2e suite for OpenCatalogi — API-level contracts.
  *
- * Covers all browser-testable openspec specs. Uses a unique run-id prefix
- * for any data created so concurrent test runs do not collide.
+ * HONESTY NOTE (repaired suite): this file used to contain ~14 UI tests
+ * that navigated with path-form `page.goto('/apps/opencatalogi/<route>')`.
+ * OpenCatalogi is a hash-mode SPA, so every such goto silently booted the
+ * Dashboard and the `body`-visible assertions passed no matter what. Those
+ * tests all duplicated genuine behavioral specs that already exist under
+ * tests/e2e/spec-coverage/ (dashboard-page, list-pages, search-page,
+ * directory-page, catalog-detail-page, gate19), so they were DELETED here
+ * rather than fixed:
+ *  - DSH-001/009 + DSH-002/010 (dashboard shell/view) → dashboard-page.spec.ts
+ *  - SPA-001 route loop (8 routes)                    → gate19 SPA-001 (hash
+ *    deep-link) + list-pages.spec.ts (nav-click per page)
+ *  - CAT-014/015 /catalogi UI                         → list-pages.spec.ts + gate19
+ *  - CAT-016 NC dashboard                             → gate19 DSH-011
+ *  - PUB-001 /catalogi UI                             → list-pages.spec.ts
+ *  - SCH-001 + SCH-002 /search UI                     → search-page.spec.ts
+ *  - DIR-001 /directory UI                            → directory-page.spec.ts
+ *  - GOM-001 + GOM-004 /catalogi UI                   → gate19 GOM-* + list-pages
+ *  - CMS-001 /pages UI + CMS-010 /menus UI            → list-pages.spec.ts
  *
- * Spec groups covered:
- *  - dashboard          (DSH-001, DSH-002, DSH-009, DSH-010)
- *  - spa-deep-link-routing (SPA-001)
- *  - catalogs           (CAT-001, CAT-002, CAT-008, CAT-014, CAT-015, CAT-016)
- *  - publications       (PUB-001, PUB-010, PUB-011)
- *  - search             (SCH-001, SCH-002)
- *  - admin-settings     (SET-001, SET-012)
- *  - woo-compliance     (WOO-004, WOO-009)
- *  - cross-origin-api-access (COR-001)
- *  - prometheus-metrics (metrics endpoint auth + format)
- *  - federation         (FED-001, FED-007, FED-009)
- *  - generic-object-modals (GOM-001 — modal triggered via navigation store)
- *  - content-management (CMS-001, CMS-010)
+ * What remains here are the API-direct contracts (public endpoints, CORS,
+ * WOO robots/sitemaps, metrics/health, federation) plus the NC admin
+ * settings page (SET-012), which is a server-rendered NC settings page,
+ * not an SPA route.
  *
- * Specs NOT covered by browser e2e (handled by unit/API tests or backend-only):
- *  - auto-publishing    (APB-*): backend event listeners — not browser testable
- *  - entity-typescript-models (ETM-*): unit tests in src/entities/**
- *  - cms-tool           (CMS-T-*): AI tool interface — no browser flow
- *  - file-management    (FIL-*): complex upload flows, covered partially via admin UI
- *  - download-service   (DWN-*): requires seeded publications
+ * Uses a unique run-id prefix for any data created so concurrent test runs
+ * do not collide.
  *
  * Run:
  *   NEXTCLOUD_URL=http://localhost:8080 npx playwright test spec-coverage
@@ -35,11 +38,6 @@
 import { test, expect, type Page } from '@playwright/test'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
-
-const APP = '/index.php/apps/opencatalogi'
-
-/** Unique prefix so test data doesn't collide with other agents on :8080 */
-const RUN_ID = `e2e-${Date.now()}`
 
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
@@ -53,66 +51,6 @@ async function dismissOverlays(page: Page): Promise<void> {
 		await wizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
 	}
 }
-
-async function goApp(page: Page, route: string): Promise<void> {
-	const url = `${APP}${route}`
-	// waitUntil: 'domcontentloaded' — the SPA keeps polling APIs so 'load'
-	// and 'networkidle' can block indefinitely on routes like /search, /directory.
-	await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => {})
-	await dismissOverlays(page)
-	await page.waitForTimeout(500)
-}
-
-// ─── DSH: Dashboard ──────────────────────────────────────────────────────────
-
-test.describe('dashboard (DSH)', () => {
-	/**
-	 * DSH-001: The app serves the Vue SPA for the main page.
-	 * DSH-009: CnAppRoot shell renders for admin user.
-	 */
-	test('DSH-001/009 — SPA shell renders for admin user', async ({ page }) => {
-		await goApp(page, '/')
-		// The SPA shell renders — body is visible and URL is correct.
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		expect(page.url()).toContain('/apps/opencatalogi')
-	})
-
-	/**
-	 * DSH-002: Deep-link routing — all SPA routes are served by the server.
-	 * DSH-010: Dashboard overview view loads.
-	 */
-	test('DSH-002/010 — Dashboard view loads without 404', async ({ page }) => {
-		await goApp(page, '/')
-		await expect(page).not.toHaveURL(/error/)
-		// The Nextcloud header or main body must be visible.
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-	})
-})
-
-// ─── SPA: Deep-Link Routing ───────────────────────────────────────────────────
-
-test.describe('spa-deep-link-routing (SPA)', () => {
-	const routes = [
-		'/catalogi',
-		'/search',
-		'/directory',
-		'/organizations',
-		'/themes',
-		'/glossary',
-		'/pages',
-		'/menus',
-	] as const
-
-	for (const route of routes) {
-		test(`SPA-001 — direct navigation to ${route} returns SPA shell`, async ({ page }) => {
-			await goApp(page, route)
-			// Should not 404 — the page body must be rendered (domcontentloaded is fast).
-			await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-			// The SPA shell is served — URL must contain opencatalogi (not redirected away)
-			expect(page.url()).toContain('/apps/opencatalogi')
-		})
-	}
-})
 
 // ─── CAT: Catalogs ────────────────────────────────────────────────────────────
 
@@ -165,29 +103,6 @@ test.describe('catalogs (CAT)', () => {
 			}
 		}
 	})
-
-	/**
-	 * CAT-014: Catalogs list page UI renders the list (empty or populated).
-	 * CAT-015: Navigate to catalogs route via the app.
-	 */
-	test('CAT-014/015 — /catalogi route renders list page', async ({ page }) => {
-		await goApp(page, '/catalogi')
-		// Page must be a Nextcloud page (any major element visible)
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		// URL will be .../opencatalogi/ or .../opencatalogi/catalogi — both indicate the SPA loaded
-		expect(page.url()).toContain('/apps/opencatalogi')
-	})
-
-	/**
-	 * CAT-016: Dashboard catalogs widget renders on the NC dashboard.
-	 * Just verify the Nextcloud dashboard endpoint is reachable — widget registration
-	 * is bootstrapped server-side.
-	 */
-	test('CAT-016 — Nextcloud dashboard loads (widget registration check)', async ({ page }) => {
-		await page.goto('/index.php/apps/dashboard/', { waitUntil: 'domcontentloaded' }).catch(() => {})
-		// The Nextcloud dashboard has a #header element (banner role)
-		await expect(page.locator('#header, header[id], .app-dashboard, body').first()).toBeVisible({ timeout: 15000 })
-	})
 })
 
 // ─── PUB: Publications ────────────────────────────────────────────────────────
@@ -235,15 +150,6 @@ test.describe('publications (PUB)', () => {
 		// Either 404 (slug not found) or 200 with empty results are acceptable
 		expect([200, 404]).toContain(resp.status())
 	})
-
-	/**
-	 * PUB-001: Publications list page — navigate to catalogs to see publication list.
-	 */
-	test('PUB-001 — /catalogi route (publications list) renders SPA', async ({ page }) => {
-		await goApp(page, '/catalogi')
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		expect(page.url()).toContain('/apps/opencatalogi')
-	})
 })
 
 // ─── SCH: Search ─────────────────────────────────────────────────────────────
@@ -262,33 +168,6 @@ test.describe('search (SCH)', () => {
 			const body = await resp.json().catch(() => null)
 			expect(body).not.toBeNull()
 		}
-	})
-
-	/**
-	 * SCH-001: Search UI page in the SPA renders.
-	 */
-	test('SCH-001 — /search route renders the search SPA page', async ({ page }) => {
-		await goApp(page, '/search')
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		expect(page.url()).toContain('/apps/opencatalogi')
-	})
-
-	/**
-	 * SCH-002: Full-text search input is present on the search page.
-	 */
-	test('SCH-002 — search page has a text input and handles a query', async ({ page }) => {
-		await goApp(page, '/search')
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		// Wait for Vue to render
-		await page.waitForTimeout(2000)
-		const input = page.locator('input[type="search"], input[placeholder*="earch" i], input[type="text"]').first()
-		if (await input.isVisible().catch(() => false)) {
-			await input.fill('open')
-			await page.waitForTimeout(500)
-		}
-		// Should not crash (no fatal error on page)
-		const bodyText = await page.locator('body').textContent().catch(() => '')
-		expect(bodyText).not.toContain('Fatal error')
 	})
 })
 
@@ -309,13 +188,22 @@ test.describe('admin-settings (SET)', () => {
 	})
 
 	/**
-	 * SET-012: Nextcloud admin settings page renders the template.
+	 * SET-012: Nextcloud admin settings page renders the OpenCatalogi section
+	 * (a server-rendered NC settings page — not an SPA route). The previous
+	 * assertion accepted any of #header/.settings-section/#content, which any
+	 * NC page satisfies; now we require the OpenCatalogi settings content
+	 * itself to be present.
 	 */
-	test('SET-012 — admin settings page at /settings/admin/opencatalogi is accessible', async ({ page }) => {
-		await page.goto('/index.php/settings/admin/opencatalogi', { waitUntil: 'domcontentloaded' }).catch(() => {})
+	test('SET-012 — admin settings page renders the OpenCatalogi section', async ({ page }) => {
+		await page.goto('/index.php/settings/admin/opencatalogi', { waitUntil: 'domcontentloaded' })
 		await dismissOverlays(page)
-		// Admin settings must render the Nextcloud admin chrome.
-		await expect(page.locator('#header, header.header, .settings-section, #content').first()).toBeVisible({ timeout: 15000 })
+		// The URL must stay on the opencatalogi admin section (no redirect to
+		// another section, which is what happens for an unknown section id).
+		await expect(page).toHaveURL(/settings\/admin\/opencatalogi/)
+		// The OpenCatalogi admin settings mount point / section content renders.
+		await expect(page.locator(
+			'#opencatalogi, [id*="opencatalogi"], .section:has-text("OpenCatalogi"), .settings-section:has-text("OpenCatalogi")',
+		).first()).toBeVisible({ timeout: 20000 })
 	})
 })
 
@@ -486,48 +374,6 @@ test.describe('federation (FED)', () => {
 		}
 		await context.close()
 	})
-
-	/**
-	 * DIR-001: Directory management page in the SPA.
-	 */
-	test('DIR-001 — /directory route renders the directory SPA page', async ({ page }) => {
-		await goApp(page, '/directory')
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		expect(page.url()).toContain('/apps/opencatalogi')
-	})
-})
-
-// ─── GOM: Generic Object Modals ───────────────────────────────────────────────
-
-test.describe('generic-object-modals (GOM)', () => {
-	/**
-	 * GOM-001: Single-object lifecycle modals are driven by navigation store.
-	 *
-	 * The catalogs list page provides "Add catalogue" which opens the CatalogModal.
-	 * This verifies the modal-open infrastructure is wired up (GOM-001 scenario:
-	 * the modal renders only when navigationStore.modal matches its key).
-	 */
-	test('GOM-001 — catalogs list page has an action button wired to modal', async ({ page }) => {
-		await goApp(page, '/catalogi')
-		await page.waitForTimeout(2000)
-		// Either a button or the app content is visible
-		const hasSomething = await page.locator('button, .app-content, [role="main"]').first().isVisible().catch(() => false)
-		expect(hasSomething).toBe(true)
-	})
-
-	/**
-	 * GOM-004: Generic confirmation dialogs — the catalogs list exposes a delete action
-	 * when an item is selected (via NcActionButton). We just verify the page doesn't crash.
-	 */
-	test('GOM-004 — catalogs page loads without JS exceptions', async ({ page }) => {
-		const errors: string[] = []
-		page.on('pageerror', (err) => errors.push(err.message))
-		await goApp(page, '/catalogi')
-		await page.waitForTimeout(2000)
-		// Filter out expected non-critical warnings
-		const fatal = errors.filter(e => !/warning|warn|deprecat/i.test(e))
-		expect(fatal).toHaveLength(0)
-	})
 })
 
 // ─── CMS: Content Management ─────────────────────────────────────────────────
@@ -581,23 +427,5 @@ test.describe('content-management (CMS)', () => {
 			}
 			await context.close()
 		}
-	})
-
-	/**
-	 * CMS-001: Pages SPA route is served.
-	 */
-	test('CMS-001 — /pages route serves SPA shell', async ({ page }) => {
-		await goApp(page, '/pages')
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		expect(page.url()).toContain('/apps/opencatalogi')
-	})
-
-	/**
-	 * CMS-010: Menus SPA route is served.
-	 */
-	test('CMS-010 — /menus route serves SPA shell', async ({ page }) => {
-		await goApp(page, '/menus')
-		await expect(page.locator('body')).toBeVisible({ timeout: 15000 })
-		expect(page.url()).toContain('/apps/opencatalogi')
 	})
 })
