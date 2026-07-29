@@ -20,14 +20,38 @@ The combined fragment hash is folded into the import version
 (`<appVersion>+frag.<hash>`) so OpenRegister re-imports whenever a fragment
 changes.
 
-Each fragment is a partial OpenRegister configuration document, e.g.:
+Each fragment is a partial OpenRegister configuration document. A fragment adding
+a schema should also attach it to the publication register, so it gets a magic
+table and shows up in the admin settings schema selector:
 
 ```json
 {
   "components": {
+    "registers": {
+      "publication": {
+        "schemas": ["myNewThing"],
+        "configuration": {
+          "schemas": {
+            "myNewThing": { "magicMapping": true, "autoCreateTable": true }
+          }
+        }
+      }
+    },
     "schemas": {
-      "MyNewThing": { "type": "object", "properties": {} }
+      "myNewThing": { "type": "object", "properties": {} }
     }
   }
 }
 ```
+
+Two safety nets cover fragments that forget:
+
+- `SettingsService::attachOrphanSchemasToPublicationRegister()` appends any
+  `components.schemas` slug that no register in the merged payload declares, with
+  `magicMapping`/`autoCreateTable` defaults. An explicit config entry is never
+  overwritten, so `magicMapping: false` still works.
+- `SettingsService::reconcileRegisterSchemaLinks()` patches the persisted register
+  after the import. Needed because OpenRegister's `importRegister()` version-gates
+  the register update on `components.registers.publication.version` (unchanged
+  since 0.1.0), so on an install that already has the register a non-forced import
+  would otherwise leave the new schema orphaned.
