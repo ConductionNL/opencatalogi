@@ -7,6 +7,7 @@ import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl, generateFilePath } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
+import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
 import {
 	CnPageRenderer,
 	defaultPageTypes,
@@ -134,6 +135,8 @@ Vue.use(VueMarkdownEditor)
 Vue.mixin({ methods: { t, n } })
 Vue.use(PiniaVuePlugin)
 Vue.use(VueRouter)
+
+Vue.directive('tooltip', Tooltip)
 
 // Register library-side icon set + lib translations once at bootstrap.
 registerIcons()
