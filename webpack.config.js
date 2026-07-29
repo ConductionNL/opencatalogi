@@ -86,7 +86,7 @@ webpackConfig.plugins = [
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package
 const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
-const useLocalLib = false // temporarily forced off to build against node_modules beta.154
+const useLocalLib = fs.existsSync(localLib) && process.env.USE_LOCAL_LIB !== 'false'
 
 webpackConfig.resolve = webpackConfig.resolve || {}
 webpackConfig.resolve.extensions = ['.ts', '.js', '.vue', '.json']
@@ -97,8 +97,19 @@ webpackConfig.resolve.alias = {
 	vue$: path.resolve(__dirname, 'node_modules/vue'),
 	pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
-	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
+	'@nextcloud/dialogs$': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
 }
+
+// With `@conduction/nextcloud-vue` aliased to ../nextcloud-vue/src, that source's
+// bare imports resolve relative to ITS directory — so Node walks up to
+// ../nextcloud-vue/node_modules and finds that checkout's Vue 3 copies of
+// @nextcloud/vue / floating-vue, which then fail to compile against this app's
+// Vue 2.7. Put this app's node_modules first so one framework copy wins.
+// (Same fix openregister carries; see its webpack.config.js.)
+webpackConfig.resolve.modules = [
+	path.resolve(__dirname, 'node_modules'),
+	...(webpackConfig.resolve.modules || ['node_modules']),
+]
 
 // Share Vue + @nextcloud/vue + pinia + icons + @conduction/nextcloud-vue
 // across every entry-point so each widget bundle no longer inlines its own
