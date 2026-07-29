@@ -98,6 +98,8 @@ webpackConfig.resolve.alias = {
 	pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	'@nextcloud/dialogs$': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
+	'@floating-ui/dom$': path.resolve(__dirname, 'src/shims/floating-ui-dom.js'),
+	'@floating-ui/dom-actual': path.resolve(__dirname, 'node_modules/@floating-ui/dom'),
 }
 
 // With `@conduction/nextcloud-vue` aliased to ../nextcloud-vue/src, that source's
