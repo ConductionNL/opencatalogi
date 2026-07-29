@@ -12,6 +12,8 @@
 		:selectable="true"
 		:selected-ids="selectedIds"
 		:show-view-toggle="true"
+		:actions="rowActions"
+		:show-view-action="false"
 		:show-edit-action="false"
 		:show-copy-action="false"
 		:show-delete-action="false"
@@ -64,45 +66,6 @@
 		<template #column-organization="{ row }">
 			{{ row.organization ? getOrganizationName(row.organization) : '-' }}
 		</template>
-
-		<!-- Row actions -->
-		<template #row-actions="{ row }">
-			<NcActions>
-				<template #icon>
-					<DotsHorizontal :size="20" />
-				</template>
-				<NcActionButton close-after-click @click="viewCatalog(row)">
-					<template #icon>
-						<Eye :size="20" />
-					</template>
-					{{ t('opencatalogi', 'View') }}
-				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="editCatalog(row)">
-					<template #icon>
-						<Pencil :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Edit') }}
-				</NcActionButton>
-				<NcActionButton close-after-click @click="openCatalog(row)">
-					<template #icon>
-						<OpenInApp :size="20" />
-					</template>
-					{{ t('opencatalogi', 'View Catalog') }}
-				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="copyCatalog(row)">
-					<template #icon>
-						<ContentCopy :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Copy') }}
-				</NcActionButton>
-				<NcActionButton v-if="isAdmin" close-after-click @click="deleteCatalog(row)">
-					<template #icon>
-						<TrashCanOutline :size="20" />
-					</template>
-					{{ t('opencatalogi', 'Delete') }}
-				</NcActionButton>
-			</NcActions>
-		</template>
 	</CnIndexPage>
 </template>
 
@@ -111,10 +74,9 @@ import { inject } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
 import { useListView, CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import { objectStore, navigationStore } from '../../store/store.js'
-import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
+import { NcNoteCard } from '@nextcloud/vue'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { resolveObjectId } from '../../services/resolveObjectId.js'
-import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
@@ -126,15 +88,7 @@ export default {
 	components: {
 		CnIndexPage,
 		CnStatusBadge,
-		NcActions,
-		NcActionButton,
 		NcNoteCard,
-		DotsHorizontal,
-		Eye,
-		Pencil,
-		OpenInApp,
-		ContentCopy,
-		TrashCanOutline,
 	},
 	setup() {
 		const sidebarState = inject('sidebarState', null)
@@ -157,6 +111,48 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * Row actions as data rather than a #row-actions slot. CnIndexPage feeds
+		 * this same array to both CnRowActions and CnContextMenu, so the row menu
+		 * and the right-click menu stay 1:1 — slot markup cannot be replayed into
+		 * the context menu, which is how the two drifted apart.
+		 *
+		 * @return {Array<object>} Action definitions for CnIndexPage.
+		 */
+		rowActions() {
+			return [
+				{
+					label: t('opencatalogi', 'View'),
+					icon: Eye,
+					handler: this.viewCatalog,
+				},
+				{
+					label: t('opencatalogi', 'Edit'),
+					icon: Pencil,
+					visible: () => this.isAdmin,
+					handler: this.editCatalog,
+				},
+				{
+					label: t('opencatalogi', 'View Catalog'),
+					icon: OpenInApp,
+					handler: this.openCatalog,
+				},
+				{
+					label: t('opencatalogi', 'Copy'),
+					icon: ContentCopy,
+					visible: () => this.isAdmin,
+					handler: this.copyCatalog,
+				},
+				{
+					label: t('opencatalogi', 'Delete'),
+					icon: TrashCanOutline,
+					destructive: true,
+					visible: () => this.isAdmin,
+					handler: this.deleteCatalog,
+				},
+			]
+		},
+
 		tableColumns() {
 			return [
 				{ key: 'title', label: t('opencatalogi', 'Title'), sortable: true },
