@@ -31,7 +31,7 @@
 		:empty-text="t('opencatalogi', 'No catalogs found')"
 		:refreshing="isRefreshing"
 		@add="onAdd"
-		@refresh="refresh"
+		@refresh="handleRefresh"
 		@sort="onSort"
 		@page-changed="onPageChange"
 		@page-size-changed="onPageSizeChange"
@@ -175,6 +175,21 @@ export default {
 		},
 	},
 	methods: {
+		/**
+		 * Refresh, driving the spinner via `isRefreshing`. CnIndexPage only
+		 * animates the button itself in self-fetch mode; a page that owns its
+		 * own useListView has to bind `:refreshing` and toggle it here.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async handleRefresh() {
+			this.isRefreshing = true
+			try {
+				await this.refresh()
+			} finally {
+				this.isRefreshing = false
+			}
+		},
 		onAdd() {
 			objectStore.clearActiveObject('catalog')
 			navigationStore.setModal('catalog')
