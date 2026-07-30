@@ -1134,15 +1134,41 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
-		 * Delete object
-		 * @param {object} objectItem - Object to delete
-		 * @return {Promise<void>}
+		 * Delete object.
+		 *
+		 * Accepts either the object itself, or the legacy `(type, id)` pair. Four
+		 * call sites still use the legacy form — DirectorySideBar
+		 * (`deleteObject('publication_type', id)`), DeleteMultipleCategoriesDialog,
+		 * ViewMenuModal and ViewPageModal — and since the signature changed to take
+		 * an object, every one of those delete buttons threw
+		 * "Object must have id, register, and schema information" before issuing a
+		 * request: a bare type STRING has no `.id` and no `@self`. It went unnoticed
+		 * because this store's spec could not run at all (the suite failed to load
+		 * on an unrelated jest/playwright config problem).
+		 *
+		 * Resolving the legacy pair here fixes all four call sites at once, and
+		 * matters because some of them only ever hold an id — DirectorySideBar
+		 * derives its id from a URL and never has the object to pass.
+		 *
+		 * @param {object|string} objectItem - Object to delete, or the legacy type.
+		 * @param {string} [legacyId] - Object id, when called as (type, id).
+		 * @return {Promise<boolean>} True once the object is deleted.
 		 */
 		/** @spec openspec/specs/generic-object-modals/spec.md */
-		async deleteObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
+		async deleteObject(objectItem, legacyId = undefined) {
+			if (typeof objectItem === 'string') {
+				const resolved = this.objects[objectItem]?.[legacyId]
+				if (!resolved) {
+					throw new Error(
+						`Cannot delete ${objectItem} ${legacyId}: object not loaded in the store`,
+					)
+				}
+				objectItem = resolved
+			}
+
+			const objectId = objectItem?.id || objectItem?.['@self']?.id
+			const register = objectItem?.['@self']?.register || objectItem?.register
+			const schema = objectItem?.['@self']?.schema || objectItem?.schema
 
 			if (!objectId || !register || !schema) {
 				throw new Error('Object must have id, register, and schema information')
