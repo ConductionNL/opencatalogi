@@ -331,6 +331,21 @@ export default {
 			typeOptions: {
 				options: ['text', 'RichText', 'Image', 'Faq', 'Quote', 'ContentBlocks'],
 			},
+			// The ContentBlocks icon set — the SECOND legal icon dialect under
+			// ADR-077, and the only place it is authored. These lowercase names
+			// are stored in page/register data and drawn by the PUBLIC
+			// Softwarecatalogus website with its own glyphs, not by CnIcon, which
+			// is why they are not MDI PascalCase names.
+			//
+			// This list is a published contract: it is documented for end users in
+			// Softwarecatalogus `website/docs/Handleidingen/pagina-beheer.md`, so
+			// renaming an entry breaks the public site AND the documentation.
+			//
+			// Hydra's gate-60 validates every lowercase icon value against a
+			// mirror of this list (`contentBlockIcons` in
+			// scripts/schemas/semantic-icons.json). Adding a name here means
+			// updating that mirror, the user documentation, and the public site's
+			// glyph mapping — all three, deliberately.
 			iconOptions: {
 				options: ['search', 'cubes', 'cube', 'users', 'building', 'document', 'gear', 'link', 'world', 'truck', 'scroll', 'themes', 'house'],
 			},
