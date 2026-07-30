@@ -25,15 +25,38 @@ export const mockOrganizationData = (): TOrganization[] => [
 		name: 'Test Organization',
 		summary: 'A test organization',
 		description: 'This is a test organization for development purposes',
-		oin: '00001234567890123456',
-		tooi: '00001234567890123456',
-		rsin: '00001234567890123456',
-		pki: '00001234567890123456',
+		// These must satisfy the real NL identifier formats the entity's zod
+		// schema enforces — the previous filler value ('00001234567890123456'
+		// in all four) matched none of them, so `validate().success` was false
+		// and the "full data" spec could never pass.
+		oin: '00000001234567890000', // 0000000 + 10 digits + 000
+		tooi: 'gm0363', // \w{2,} + 4 digits
+		rsin: '123456789', // exactly 9 digits
+		pki: '12345', // digits
 		image: 'https://example.com/image.jpg',
 	},
+	// [1] PARTIAL — only the two fields the schema requires are filled; every
+	// optional identifier is '' (which the schema allows via `.or(z.literal(''))`).
+	// `summary` was '' here before, which the schema rejects with `min(1)`, so the
+	// "partial data" spec asserted validate().success === true against data that
+	// could never validate.
 	{
 		id: '2',
 		name: 'Minimal Organization',
+		summary: 'A minimal test organization',
+		description: '',
+		oin: '',
+		tooi: '',
+		rsin: '',
+		pki: '',
+		image: '',
+	},
+	// [2] FALSY — every field empty. The specs index mockOrganizations()[2] for
+	// the "falsy data" case, but only two entries existed, so the entity was
+	// constructed from `undefined` and compared against `undefined`.
+	{
+		id: '',
+		name: '',
 		summary: '',
 		description: '',
 		oin: '',

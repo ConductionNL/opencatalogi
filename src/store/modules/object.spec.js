@@ -148,7 +148,11 @@ describe('ObjectStore', () => {
 
 			await store.fetchCollection('character')
 
-			expect(store.collections.character).toEqual(mockCollection.results)
+			// `collections[type]` holds the ENVELOPE, not a bare array — the store
+			// defaults it to `{ results: [] }`, appends via `...collections[type].results`,
+			// and SelectedObjectsList.vue reads `collection?.results`. This assertion
+			// compared against the bare array, which the store has never stored.
+			expect(store.collections.character).toEqual({ results: mockCollection.results })
 			expect(store.objects.character).toEqual({
 				1: { id: '1', name: 'Test 1' },
 				2: { id: '2', name: 'Test 2' },
