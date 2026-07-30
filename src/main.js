@@ -27,6 +27,7 @@ import App from './App.vue'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import customComponents from './registry.js'
+import appIcons from './icons.js'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 
@@ -136,7 +137,7 @@ Vue.use(PiniaVuePlugin)
 Vue.use(VueRouter)
 
 // Register library-side icon set + lib translations once at bootstrap.
-registerIcons()
+registerIcons(appIcons)
 try {
 	registerTranslations()
 } catch (e) {

@@ -7,6 +7,16 @@ module.exports = {
 	},
 	moduleFileExtensions: ['js', 'json', 'vue', 'ts'],
 	testEnvironment: 'jest-environment-jsdom',
+	// Jest owns the unit specs under src/**. tests/e2e/** belongs to Playwright
+	// (npm run test:e2e) and tests/vitest/** to Vitest (npm run test:unit) —
+	// without this, Jest collected all three and every Playwright spec died on
+	// "Class extends value undefined" while importing @playwright/test, and the
+	// vitest specs failed on importing 'vitest' from CommonJS.
+	testPathIgnorePatterns: [
+		'/node_modules/',
+		'<rootDir>/tests/e2e/',
+		'<rootDir>/tests/vitest/',
+	],
 	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/src/$1',
 		// Mock the @conduction/nextcloud-vue barrel in unit tests so we

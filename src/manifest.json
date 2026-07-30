@@ -259,62 +259,62 @@
 		{
 			"id": "Dashboard",
 			"label": "Dashboard",
-			"icon": "icon-category-dashboard",
+			"icon": "ViewDashboardOutline",
 			"route": "Dashboard",
 			"order": 10
 		},
 		{
 			"id": "Search",
 			"label": "Search",
-			"icon": "icon-search",
+			"icon": "Magnify",
 			"route": "Search",
 			"order": 30
 		},
 		{
 			"id": "CatalogueGroup",
 			"label": "Catalogue",
-			"icon": "icon-files",
+			"icon": "Bookshelf",
 			"order": 40,
 			"children": [
 				{
 					"id": "CatalogsMenu",
 					"label": "Catalogs",
-					"icon": "icon-files",
+					"icon": "Bookshelf",
 					"route": "Catalogs",
 					"order": 92
 				},
 				{
 					"id": "GlossaryMenu",
 					"label": "Glossary",
-					"icon": "icon-toggle-filelist",
+					"icon": "FormatListBulleted",
 					"route": "Glossary",
 					"order": 93
 				},
 				{
 					"id": "ThemesMenu",
 					"label": "Themes",
-					"icon": "icon-category-customization",
+					"icon": "Tune",
 					"route": "Themes",
 					"order": 94
 				},
 				{
 					"id": "PagesMenu",
 					"label": "Pages",
-					"icon": "icon-category-files",
+					"icon": "FolderMultiple",
 					"route": "Pages",
 					"order": 95
 				},
 				{
 					"id": "MenusMenu",
 					"label": "Menus",
-					"icon": "icon-category-customization",
+					"icon": "Tune",
 					"route": "Menus",
 					"order": 96
 				},
 				{
 					"id": "WooBatchesMenu",
 					"label": "WOO",
-					"icon": "icon-toggle-filelist",
+					"icon": "FormatListBulleted",
 					"route": "WooBatches",
 					"order": 98
 				}
@@ -323,27 +323,27 @@
 		{
 			"id": "AdminGroup",
 			"label": "Administration",
-			"icon": "icon-settings",
+			"icon": "ShieldAccountOutline",
 			"order": 80,
 			"children": [
 				{
 					"id": "OrganizationsMenu",
 					"label": "Organizations",
-					"icon": "icon-group",
+					"icon": "AccountGroup",
 					"route": "Organizations",
 					"order": 91
 				},
 				{
 					"id": "DirectoryMenu",
 					"label": "Directory",
-					"icon": "icon-folder",
+					"icon": "Folder",
 					"route": "Directory",
 					"order": 97
 				},
 				{
 					"id": "SettingsMenu",
 					"label": "Settings",
-					"icon": "icon-settings",
+					"icon": "CogOutline",
 					"action": "user-settings",
 					"order": 99
 				}
@@ -352,7 +352,7 @@
 		{
 			"id": "Documentation",
 			"label": "Documentation",
-			"icon": "icon-info",
+			"icon": "BookOpenVariantOutline",
 			"href": "https://opencatalogi.conduction.nl",
 			"section": "footer",
 			"order": 1
@@ -360,7 +360,7 @@
 		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
-			"icon": "icon-toggle",
+			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 2
@@ -368,7 +368,7 @@
 		{
 			"id": "RestartTutorial",
 			"label": "Restart tutorial",
-			"icon": "icon-play",
+			"icon": "PlayCircleOutline",
 			"action": "replay-walkthrough",
 			"tourId": "opencatalogi:getting-started",
 			"section": "footer",
