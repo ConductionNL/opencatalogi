@@ -19,7 +19,7 @@ permissions:
 jobs:
   quality:
     if: github.event_name != 'push' || github.event.created != true
-    uses: Conduction/.github/.github/workflows/quality.yml@main
+    uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: opencatalogi
       php-version: "8.3"
@@ -37,5 +37,5 @@ jobs:
       # Those tests are now tagged @group network and excluded by default in both
       # phpunit.xml and phpunit-unit.xml, so the suite is deterministic and offline-safe.
       enable-phpunit: true
-      additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"development"}]'
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-newman: false
