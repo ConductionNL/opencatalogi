@@ -26,10 +26,12 @@
  */
 import { test, expect, request as pwRequest, type APIRequestContext } from '@playwright/test'
 import { APP, bootApp, dismissOverlays, trackPageErrors, fatalErrors } from './_nav'
+import { resolveBaseUrl } from '../base-url'
 
 const RUN_ID = `ana-${Date.now()}`
 const WIDGET_ID = 'opencatalogi_most_viewed_publications_widget'
-const BASE_URL = process.env.NEXTCLOUD_URL || 'http://localhost:8080'
+// No hardcoded fallback — see tests/e2e/base-url.ts.
+const BASE_URL = resolveBaseUrl()
 const ADMIN_USER = process.env.NC_ADMIN_USER || 'admin'
 const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 

@@ -41,16 +41,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:input-label="t('opencatalogi', 'Publication type*')"
 					:loading="publicationTypeLoading"
 					:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
-				<NcTextField :disabled="loading"
-					:label="t('opencatalogi', 'Title*')"
-					:value.sync="publicationItem.title" />
-				<NcTextField :disabled="loading"
-					:label="t('opencatalogi', 'Summary*')"
-					:value.sync="publicationItem.summary" />
+				<NcTextField v-model="publicationItem.title"
+					:disabled="loading"
+					:label="t('opencatalogi', 'Title*')" />
+				<NcTextField v-model="publicationItem.summary"
+					:disabled="loading"
+					:label="t('opencatalogi', 'Summary*')" />
 			</div>
 			<NcButton :disabled="!publicationItem.title || !publicationItem.summary || !catalogi.value?.id || !publicationType.value?.id || loading"
 				style="margin-top: 0.5rem;"
-				type="primary"
+				variant="primary"
 				class="addButton"
 				@click="addPublication()">
 				<template #icon>

@@ -142,6 +142,16 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+// `OC.Notification` was REMOVED in Nextcloud 34 (this app declares
+// max-version="34"), so the six `OC.Notification.showMessage()` calls this
+// file used to make aborted silently — no toast, no error. `@nextcloud/dialogs`
+// is the supported replacement.
+import { showError, showSuccess } from '@nextcloud/dialogs'
+// `@nextcloud/dialogs@7` exposes its stylesheet as a separate `./style.css`
+// entry and does NOT self-inject it, so without this import the toasts are
+// emitted but never positioned or made visible. This belongs in `src/main.js`
+// once any other module needs toasts too.
+import '@nextcloud/dialogs/style.css'
 import { NcActions, NcActionButton, NcNoteCard } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
@@ -296,33 +306,24 @@ export default {
 				const result = await response.json()
 				if (response.ok) {
 					await objectStore.fetchCollection('listing')
-					OC.Notification.showMessage(
-						`Directory "${listing.title || listing.name}" synced successfully`,
-						{ type: 'success' },
-					)
+					showSuccess(`Directory "${listing.title || listing.name}" synced successfully`)
 				} else {
 					throw new Error(result.message || 'Sync failed')
 				}
 			} catch (error) {
 				console.error('Failed to sync directory:', error)
-				OC.Notification.showMessage(
-					`Failed to sync directory: ${error.message}`,
-					{ type: 'error' },
-				)
+				showError(`Failed to sync directory: ${error.message}`)
 			}
 		},
 		async toggleIntegrationLevel(listing) {
 			try {
 				const newLevel = (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection'
-				this.$set(listing, 'integrationLevel', newLevel)
+				listing.integrationLevel = newLevel
 				await objectStore.updateObject('listing', listing.id, { ...listing, integrationLevel: newLevel })
-				OC.Notification.showMessage(
-					`Directory "${listing.title || listing.name}" ${newLevel === 'search' ? 'enabled' : 'disabled'}`,
-					{ type: 'success' },
-				)
+				showSuccess(`Directory "${listing.title || listing.name}" ${newLevel === 'search' ? 'enabled' : 'disabled'}`)
 			} catch (error) {
 				console.error('Failed to toggle integration level:', error)
-				OC.Notification.showMessage(`Failed to update directory: ${error.message}`, { type: 'error' })
+				showError(`Failed to update directory: ${error.message}`)
 			}
 		},
 		async toggleDefault(listing) {
@@ -331,7 +332,7 @@ export default {
 				if (newDefaultState) {
 					for (const other of this.currentObjects) {
 						if (other.id !== listing.id && other.default) {
-							this.$set(other, 'default', false)
+							other.default = false
 							try {
 								await objectStore.updateObject('listing', other.id, { ...other, default: false })
 							} catch (error) {
@@ -340,16 +341,13 @@ export default {
 						}
 					}
 				}
-				this.$set(listing, 'default', newDefaultState)
+				listing.default = newDefaultState
 				await objectStore.updateObject('listing', listing.id, { ...listing, default: newDefaultState })
-				OC.Notification.showMessage(
-					`Directory "${listing.title || listing.name}" ${newDefaultState ? 'set as default' : 'removed as default'}`,
-					{ type: 'success' },
-				)
+				showSuccess(`Directory "${listing.title || listing.name}" ${newDefaultState ? 'set as default' : 'removed as default'}`)
 			} catch (error) {
-				this.$set(listing, 'default', !listing.default)
+				listing.default = !listing.default
 				console.error('Failed to toggle default state:', error)
-				OC.Notification.showMessage(`Failed to update directory: ${error.message}`, { type: 'error' })
+				showError(`Failed to update directory: ${error.message}`)
 			}
 		},
 	},

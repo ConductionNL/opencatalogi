@@ -43,7 +43,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			<NcButton
 				:disabled="loading"
 				icon="Delete"
-				type="error"
+				variant="error"
 				@click="deleteObject">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />

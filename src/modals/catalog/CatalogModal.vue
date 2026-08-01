@@ -21,34 +21,34 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				</NcNoteCard>
 			</div>
 			<div v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')" class="form-group">
-				<NcTextField :disabled="objectStore.isLoading('catalog')"
+				<NcTextField v-model="catalogi.title"
+					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Title*')"
 					maxlength="255"
-					:value.sync="catalogi.title"
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
-				<NcTextField :disabled="objectStore.isLoading('catalog')"
+				<NcTextField v-model="catalogi.summary"
+					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Summary')"
 					maxlength="255"
-					:value.sync="catalogi.summary"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helper-text="inputValidation.fieldErrors?.['summary']?.[0]" />
-				<NcTextField :disabled="objectStore.isLoading('catalog')"
+				<NcTextField v-model="catalogi.description"
+					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Description')"
 					maxlength="255"
-					:value.sync="catalogi.description"
 					:error="!!inputValidation.fieldErrors?.['description']"
 					:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
-				<NcTextField :disabled="objectStore.isLoading('catalog')"
+				<NcTextField v-model="catalogi.slug"
+					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Slug*')"
 					maxlength="255"
-					:value.sync="catalogi.slug"
 					:error="!!inputValidation.fieldErrors?.['slug']"
 					:helper-text="inputValidation.fieldErrors?.['slug']?.[0] || t('opencatalogi', 'URL-friendly identifier (e.g., publications, datasets)')"
 					:placeholder="t('opencatalogi', 'publications')" />
-				<NcCheckboxRadioSwitch :disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Publicly available')"
-					:checked.sync="catalogi.listed">
+				<NcCheckboxRadioSwitch v-model="catalogi.listed"
+					:disabled="objectStore.isLoading('catalog')"
+					:label="t('opencatalogi', 'Publicly available')">
 					{{ t('opencatalogi', 'Publicly available') }}
 				</NcCheckboxRadioSwitch>
 				<NcSelect v-model="selectedOrganization"
@@ -72,15 +72,15 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:input-label="t('opencatalogi', 'Status*')"
 					:disabled="objectStore.isLoading('catalog')" />
 				<NcCheckboxRadioSwitch
+					v-model="catalogi.hasWooSitemap"
 					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Has Woo Sitemap')"
-					:checked.sync="catalogi.hasWooSitemap">
+					:label="t('opencatalogi', 'Has Woo Sitemap')">
 					{{ t('opencatalogi', 'Requires Woo sitemap') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
+					v-model="catalogi.hasOoapi"
 					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Has OOAPI 5.0 publication')"
-					:checked.sync="catalogi.hasOoapi">
+					:label="t('opencatalogi', 'Has OOAPI 5.0 publication')">
 					{{ t('opencatalogi', 'Publish this catalog\'s course/program/offering data via the Open Onderwijs API (OOAPI 5.0)') }}
 				</NcCheckboxRadioSwitch>
 			</div>
@@ -96,9 +96,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					{{ isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="objectStore.getState('catalog').success === null && !objectStore.isLoading('catalog')"
-					v-tooltip="inputValidation.errorMessages?.[0]"
+					:title="inputValidation.errorMessages?.[0]"
 					:disabled="!inputValidation.success || objectStore.isLoading('catalog')"
-					type="primary"
+					variant="primary"
 					@click="saveCatalog">
 					<template #icon>
 						<ContentSaveOutline :size="20" />

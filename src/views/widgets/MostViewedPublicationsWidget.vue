@@ -11,7 +11,7 @@
 				:options="periodOptions"
 				:reduce="option => option.value"
 				label="label"
-				@input="load" />
+				@update:model-value="load" />
 		</div>
 		<CnDataTable :rows="items"
 			:columns="columns"

@@ -163,7 +163,7 @@ class OoapiMappingService
                 continue;
             }
 
-            $this->setNested($resource, $outputPath, $value);
+            $this->setNested($resource, path: $outputPath, value: $value);
         }
 
         return $resource;

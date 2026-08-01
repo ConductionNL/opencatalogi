@@ -511,7 +511,11 @@ class CMSTool implements ToolInterface
 
         // Validate each menu item has required fields.
         foreach ($parameters['items'] as $index => $item) {
-            if (empty($item['order']) === true && $item['order'] !== 0) {
+            // `order` is optional in the caller's payload, so read it defensively:
+            // testing `$item['order']` after empty() has already established the key
+            // is absent raises an "Undefined array key" warning on a normal input.
+            $itemOrder = ($item['order'] ?? null);
+            if (empty($itemOrder) === true && $itemOrder !== 0) {
                 return $this->errorResponse(message: "Menu item {$index} is missing 'order' field", code: 400);
             }
 

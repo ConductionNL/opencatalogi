@@ -1,6 +1,8 @@
 module.exports = {
 	transform: {
-		'^.+\\.vue$': '@vue/vue2-jest',
+		// `@vue/vue2-jest` compiles SFCs with `vue-template-compiler`, which was
+		// dropped with Vue 2. Its Vue 3 counterpart uses `@vue/compiler-sfc`.
+		'^.+\\.vue$': '@vue/vue3-jest',
 		'^.+\\.js$': 'babel-jest',
 		'^.+\\.ts$': 'ts-jest',
 		'.+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$': 'jest-transform-stub',

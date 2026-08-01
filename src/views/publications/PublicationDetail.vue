@@ -169,11 +169,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 			</div> -->
 		</div>
 		<div class="tabContainer">
-			<BTabs content-class="mt-3" justified>
-				<BTab :title="t('opencatalogi', 'Attachments')" active>
+			<AppTabs content-class="mt-3" justified>
+				<AppTab :title="t('opencatalogi', 'Attachments')" active>
 					<div class="tabPanel">
 						<div class="buttonsContainer">
-							<NcButton type="primary"
+							<NcButton variant="primary"
 								class="fullWidthButton"
 								:aria-label="t('opencatalogi', 'Add attachment')"
 								@click="addAttachment">
@@ -182,7 +182,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								</template>
 								{{ t('opencatalogi', 'Add attachment') }}
 							</NcButton>
-							<NcButton type="secondary"
+							<NcButton variant="secondary"
 								:aria-label="t('opencatalogi', 'Open folder')"
 								@click="openFolder(publication?.['@self']?.folder)">
 								<template #icon>
@@ -237,10 +237,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						</div>
 
 						<div v-if="publicationAttachments?.length > 0">
-							<div v-for="(attachment, i) in publicationAttachments" :key="`${attachment}${i}`" class="checkedItem">
+							<div v-for="(attachment, i) in pagedAttachments" :key="`${attachment}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
-									:checked="selectedAttachments.includes(attachment.id)"
-									@update:checked="toggleSelection(attachment)" />
+									:model-value="selectedAttachments.includes(attachment.id)"
+									@update:model-value="toggleSelection(attachment)" />
 
 								<NcListItem
 									:class="`${attachment?.title === editingTags ? 'editingTags' : ''}`"
@@ -276,11 +276,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 												:multiple="true"
 												:aria-label-combobox="labelOptionsEdit.inputLabel"
 												:options="labelOptionsEdit.options"
-												@tag="addNewTag" />
+												@option:created="addNewTag" />
 											<NcButton
-												v-tooltip="t('opencatalogi', 'Save labels')"
+												:title="t('opencatalogi', 'Save labels')"
 												class="editTagsButton"
-												type="primary"
+												variant="primary"
 												:aria-label="t('opencatalogi', 'Save tags for {title}', { title: attachment.title })"
 												@click="saveTags(attachment, editedTags)">
 												<template #icon>
@@ -343,16 +343,14 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</div>
 
 							<div class="paginationContainer">
-								<BPagination v-model="currentPage" :total-rows="publicationAttachments?.total" :per-page="limit" />
-								<div>
-									<span>{{ t('opencatalogi', 'Number of items per page') }}</span>
-									<NcSelect v-model="limit"
-										:aria-label-combobox="t('opencatalogi', 'Number of items per page')"
-										class="limitSelect"
-										:options="limitOptions.options"
-										:taggable="true"
-										:selectable="(option) => !isNaN(option) && (typeof option !== 'boolean')" />
-								</div>
+								<CnPagination
+									:current-page="currentPage"
+									:total-pages="attachmentsTotalPages"
+									:total-items="attachmentsTotal"
+									:current-page-size="limit"
+									:page-size-options="pageSizeOptions"
+									@page-changed="onAttachmentsPageChanged"
+									@page-size-changed="onAttachmentsPageSizeChanged" />
 							</div>
 						</div>
 
@@ -370,11 +368,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 								:name="t('opencatalogi', 'Attachments are loading')" />
 						</div>
 					</div>
-				</BTab>
-				<!-- <BTab title="Eigenschappen">
+				</AppTab>
+				<!-- <AppTab title="Eigenschappen">
 					<div class="tabPanel">
 						<div class="buttonsContainer">
-							<NcButton type="primary"
+							<NcButton variant="primary"
 								class="fullWidthButton"
 								aria-label="Bijlage toevoegen"
 								@click="navigationStore.setModal('addPublicationData')">
@@ -413,8 +411,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div v-if="publication && publication.data && Object.keys(publication.data).length > 0">
 							<div v-for="(value, key, i) in publication?.data" :key="`${key}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
-									:checked="selectedPublicationData.includes(key)"
-									@update:checked="togglePublicationDataSelection(key)" />
+									:model-value="selectedPublicationData.includes(key)"
+									@update:model-value="togglePublicationDataSelection(key)" />
 								<NcListItem
 									:name="key"
 									:bold="false"
@@ -453,11 +451,11 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							Geen eigenschappen gevonden
 						</b>
 					</div>
-				</BTab> -->
-				<BTab :title="t('opencatalogi', 'Themes')">
+				</AppTab> -->
+				<AppTab :title="t('opencatalogi', 'Themes')">
 					<div class="tabPanel">
 						<div class="buttonsContainer">
-							<NcButton type="primary"
+							<NcButton variant="primary"
 								class="fullWidthButton"
 								:aria-label="t('opencatalogi', 'Add theme')"
 								@click="navigationStore.setModal('addPublicationTheme')">
@@ -496,8 +494,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div v-if="filteredThemes?.length || missingThemes?.length">
 							<div v-for="(value, key, i) in filteredThemes" :key="`${value.id}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
-									:checked="selectedThemes.includes(value.id)"
-									@update:checked="toggleThemeSelection(value)" />
+									:model-value="selectedThemes.includes(value.id)"
+									@update:model-value="toggleThemeSelection(value)" />
 								<NcListItem
 									:name="value.title"
 									:bold="false"
@@ -595,8 +593,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							{{ t('opencatalogi', 'No themes found') }}
 						</b>
 					</div>
-				</BTab>
-				<BTab :title="t('opencatalogi', 'Logging')">
+				</AppTab>
+				<AppTab :title="t('opencatalogi', 'Logging')">
 					<table width="100%">
 						<tr>
 							<th><b>{{ t('opencatalogi', 'Timestamp') }}</b></th>
@@ -618,8 +616,8 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</td>
 						</tr>
 					</table>
-				</BTab>
-				<BTab v-if="1 == 2" :title="t('opencatalogi', 'Permissions')">
+				</AppTab>
+				<AppTab v-if="1 == 2" :title="t('opencatalogi', 'Permissions')">
 					<table width="100%">
 						<tr>
 							<td>{{ prive ? t('opencatalogi', 'This publication is NOT publicly accessible') : t('opencatalogi', 'This publication is publicly accessible') }}</td>
@@ -643,21 +641,23 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 							</td>
 						</tr>
 					</table>
-				</BTab>
-				<BTab :title="t('opencatalogi', 'Statistics')">
+				</AppTab>
+				<AppTab :title="t('opencatalogi', 'Statistics')">
 					<div class="tabPanel">
 						<PublicationStatsPanel v-if="publication && publication.id"
 							:publication-id="String(publication.id)" />
 					</div>
-				</BTab>
-			</BTabs>
+				</AppTab>
+			</AppTabs>
 		</div>
 	</div>
 </template>
 
 <script>
 import { NcActionButton, NcActions, NcButton, NcListItem, NcLoadingIcon, NcSelect, NcSelectTags, NcActionLink, NcCounterBubble, NcCheckboxRadioSwitch } from '@nextcloud/vue'
-import { BTab, BTabs, BPagination } from 'bootstrap-vue'
+import { CnPagination } from '@conduction/nextcloud-vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
 // Icons
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -693,25 +693,29 @@ export default {
 		NcActions,
 		NcButton,
 		NcListItem,
+		NcSelect,
 		NcSelectTags,
 		NcActionLink,
+		NcCounterBubble,
 		NcCheckboxRadioSwitch,
-		BTab,
-		BTabs,
+		AppTab,
+		AppTabs,
+		CnPagination,
 		PublicationStatsPanel,
 	},
 	data() {
 		return {
 			test: false,
 			selectedAttachments: [],
-			limit: '200',
+			// Items per page. A NUMBER: `CnPagination`'s `currentPageSize` is
+			// typed Number, and the previous string `'200'` silently failed the
+			// prop check while also making `Math.ceil(total / limit)` unsafe.
+			limit: 200,
 			limitOptions: {
-				options: ['10', '20', '50', '100', '200'],
-				value: this.limit,
+				options: [10, 20, 50, 100, 200],
 			},
 
 			currentPage: 1,
-			totalPages: 1,
 			selectedThemes: [],
 			editingTitle: '',
 			editedTags: [],
@@ -731,13 +735,60 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * All attachments of the active publication.
+		 *
+		 * `objectStore.getCollection(type)` returns the ENVELOPE `{ results }`,
+		 * so `.results` is already the array. The previous code unwrapped
+		 * `.results` a SECOND time (`attachments.results || []`), which is
+		 * `undefined` on an array and therefore always returned `[]` — the
+		 * attachment list was permanently empty. It also assigned to
+		 * `this.currentPage` / `this.totalPages` from `attachments.page` /
+		 * `.total`, which are likewise undefined on an array, so both were
+		 * pinned to 1. Pagination is derived from the real array below.
+		 *
+		 * @return {Array<object>} Every attachment currently loaded.
+		 */
 		publicationAttachments() {
-			const attachments = objectStore.getCollection('publicationAttachments').results
-			if (!attachments) return { results: [], page: 1, total: 0 }
-
-			this.currentPage = attachments.page || 1
-			this.totalPages = attachments.total || 1
-			return attachments.results || []
+			return objectStore.getCollection('publicationAttachments').results || []
+		},
+		/**
+		 * Total number of attachments across all pages.
+		 *
+		 * `catalogStore.getPublicationAttachments()` fetches the WHOLE file list
+		 * in one request and stores it unpaginated, so the total is simply the
+		 * array length and paging is applied client-side in `pagedAttachments`.
+		 *
+		 * @return {number} Attachment count.
+		 */
+		attachmentsTotal() {
+			return this.publicationAttachments.length
+		},
+		/**
+		 * Number of attachment pages at the current page size.
+		 *
+		 * @return {number} Page count, at least 1.
+		 */
+		attachmentsTotalPages() {
+			return Math.max(1, Math.ceil(this.attachmentsTotal / this.limit))
+		},
+		/**
+		 * The attachments visible on the current page.
+		 *
+		 * @return {Array<object>} The current page's slice.
+		 */
+		pagedAttachments() {
+			const start = (this.currentPage - 1) * this.limit
+			return this.publicationAttachments.slice(start, start + this.limit)
+		},
+		/**
+		 * Page-size choices for `CnPagination`, which expects `{ value, label }`
+		 * entries rather than the bare numbers held in `limitOptions`.
+		 *
+		 * @return {Array<{value: number, label: string}>} Page-size options.
+		 */
+		pageSizeOptions() {
+			return this.limitOptions.options.map((size) => ({ value: size, label: String(size) }))
 		},
 		publication() {
 			return objectStore.getActiveObject('publication')
@@ -798,6 +849,30 @@ export default {
 		}
 	},
 	methods: {
+		/**
+		 * Move the attachment pager to another page.
+		 *
+		 * Paging is client-side because `catalogStore.getPublicationAttachments()`
+		 * takes no arguments and always fetches the complete file list; the
+		 * `{ page, limit }` objects passed to it elsewhere in this file are
+		 * silently discarded by the store.
+		 *
+		 * @param {number} page The 1-based page to show.
+		 * @return {void}
+		 */
+		onAttachmentsPageChanged(page) {
+			this.currentPage = Math.min(Math.max(page, 1), this.attachmentsTotalPages)
+		},
+		/**
+		 * Change the attachment page size, keeping the pager in range.
+		 *
+		 * @param {number} size The new page size.
+		 * @return {void}
+		 */
+		onAttachmentsPageSizeChanged(size) {
+			this.limit = Number(size)
+			this.currentPage = 1
+		},
 		/**
 		 * Handle route id changes to load a different publication and its attachments
 		 * @param {string} newId - New publication ID from the route
@@ -1227,10 +1302,6 @@ h4 {
 
 .pagination {
 	margin-block-start: 0px !important;
-}
-
-.limitSelect {
-	margin-block-end: 0px;
 }
 
 .checkboxListActionButton {

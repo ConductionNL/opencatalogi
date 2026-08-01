@@ -84,11 +84,11 @@ const handleCancel = () => {
 			</div>
 			<div v-if="success === null && attachment" class="form-group">
 				<NcTextField
-					:value.sync="attachment.title"
+					v-model="attachment.title"
 					:label="t('opencatalogi', 'Title')"
 					:disabled="loading" />
 				<NcTextField
-					:value.sync="attachment.description"
+					v-model="attachment.description"
 					:label="t('opencatalogi', 'Description')"
 					:disabled="loading" />
 				<NcSelectTags
@@ -97,7 +97,7 @@ const handleCancel = () => {
 					:aria-label-combobox="t('opencatalogi', 'Tags')"
 					:disabled="loading" />
 				<NcCheckboxRadioSwitch
-					:checked.sync="attachment.published"
+					v-model="attachment.published"
 					:disabled="loading">
 					{{ t('opencatalogi', 'Published') }}
 				</NcCheckboxRadioSwitch>
@@ -109,7 +109,7 @@ const handleCancel = () => {
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
-					type="primary"
+					variant="primary"
 					@click="handleSave">
 					<template #icon>
 						<NcLoadingIcon v-if="loading" :size="20" />

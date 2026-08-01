@@ -28,7 +28,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				v-if="!succes"
 				:disabled="loading"
 				icon="Delete"
-				type="error"
+				variant="error"
 				@click="DeleteAttachment()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />

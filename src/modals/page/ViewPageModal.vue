@@ -25,8 +25,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div class="pageDetails">
 				<!-- Content Items Tab -->
 				<div class="tabContainer">
-					<BTabs v-model="tabIndex" content-class="mt-3" justified>
-						<BTab v-if="!isAddMode" :title="t('opencatalogi', 'Content Items ({count})', { count: page.contents?.length || 0 })" active>
+					<AppTabs v-model="tabIndex" content-class="mt-3" justified>
+						<AppTab v-if="!isAddMode" :title="t('opencatalogi', 'Content Items ({count})', { count: page.contents?.length || 0 })" active>
 							<!-- Content Items tab only in edit mode -->
 							<div v-if="page.contents && page.contents.length">
 								<div class="contentItemsSection">
@@ -43,13 +43,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 												<span v-if="content.order !== undefined" class="object-order">{{ t('opencatalogi', 'Order: {n}', { n: content.order }) }}</span>
 											</div>
 											<div class="object-actions">
-												<NcButton type="secondary" @click="editContent(content)">
+												<NcButton variant="secondary" @click="editContent(content)">
 													<template #icon>
 														<Pencil :size="18" />
 													</template>
 													{{ t('opencatalogi', 'Edit') }}
 												</NcButton>
-												<NcButton type="error" @click="deleteContent(content)">
+												<NcButton variant="error" @click="deleteContent(content)">
 													<template #icon>
 														<Delete :size="18" />
 													</template>
@@ -69,10 +69,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									{{ t('opencatalogi', 'No content items configured') }}
 								</p>
 							</div>
-						</BTab>
+						</AppTab>
 
 						<!-- Configuration Tab -->
-						<BTab :title="t('opencatalogi', 'Configuration')">
+						<AppTab :title="t('opencatalogi', 'Configuration')">
 							<div>
 								<!-- Success/Error Messages -->
 								<div v-if="pageState.success !== null || pageState.error" class="messageContainer">
@@ -90,24 +90,24 @@ import { navigationStore, objectStore } from '../../store/store.js'
 								<!-- Edit Form -->
 								<div v-if="pageState.success === null" class="formContainer">
 									<NcTextField
+										v-model="editForm.title"
 										:disabled="objectStore.isLoading('page')"
 										:label="t('opencatalogi', 'Title')"
-										:value.sync="editForm.title"
 										:error="!!inputValidation.fieldErrors?.['title']"
 										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 
 									<NcTextField
+										v-model="editForm.slug"
 										:disabled="objectStore.isLoading('page')"
 										:label="t('opencatalogi', 'Slug')"
-										:value.sync="editForm.slug"
 										:error="!!inputValidation.fieldErrors?.['slug']"
 										:helper-text="inputValidation.fieldErrors?.['slug']?.[0]" />
 								</div>
 							</div>
-						</BTab>
+						</AppTab>
 
 						<!-- Security Tab -->
-						<BTab :title="t('opencatalogi', 'Security')">
+						<AppTab :title="t('opencatalogi', 'Security')">
 							<div>
 								<!-- Groups Access Control -->
 								<div class="groups-section">
@@ -130,12 +130,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										<p>{{ t('opencatalogi', 'When checked, this page will be hidden after a user is logged in. This is useful for pages that should only be visible to guests, such as login pages or registration forms.') }}</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideAfterLogin"
+										v-model="editForm.hideAfterLogin"
 										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('page')">
 										{{ t('opencatalogi', 'Hide after login') }}
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideBeforeLogin"
+										v-model="editForm.hideBeforeLogin"
 										:disabled="editForm.hideAfterLogin || objectStore.isLoading('page')">
 										{{ t('opencatalogi', 'Hide before login') }}
 									</NcCheckboxRadioSwitch>
@@ -144,8 +144,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									</p>
 								</div>
 							</div>
-						</BTab>
-					</BTabs>
+						</AppTab>
+					</AppTabs>
 				</div>
 
 				<div v-if="page && page.metadata">
@@ -157,7 +157,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcButton v-if="!isAddMode" type="secondary" @click="openAddContentModal">
+			<NcButton v-if="!isAddMode" variant="secondary" @click="openAddContentModal">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -166,14 +166,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton v-if="!isAddMode" type="error" @click="deletePage">
+			<NcButton v-if="!isAddMode" variant="error" @click="deletePage">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
 			<NcButton
-				type="primary"
+				variant="primary"
 				:disabled="!inputValidation.success || objectStore.isLoading('page')"
 				@click="savePage">
 				<template #icon>
@@ -188,7 +188,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import { NcButton, NcDialog, NcTextField, NcCheckboxRadioSwitch, NcNoteCard, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
-import { BTabs, BTab } from 'bootstrap-vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -211,8 +212,8 @@ export default {
 		NcNoteCard,
 		NcLoadingIcon,
 		NcSelect,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		Pencil,
 		Plus,
 		Delete,

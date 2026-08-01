@@ -4,6 +4,7 @@
 import { createApp, h } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,

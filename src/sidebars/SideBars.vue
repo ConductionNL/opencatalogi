@@ -18,7 +18,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 				{{ directory.description }}
 			</template>
 			<template #actions>
-				<NcButton type="primary" @click="navigationStore.setModal('editDirectory')">
+				<NcButton variant="primary" @click="navigationStore.setModal('editDirectory')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
@@ -33,7 +33,7 @@ import SearchSideBar from './search/SearchSideBar.vue'
 				{{ listing.description }}
 			</template>
 			<template #actions>
-				<NcButton type="primary" @click="navigationStore.setModal('editListing')">
+				<NcButton variant="primary" @click="navigationStore.setModal('editListing')">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>

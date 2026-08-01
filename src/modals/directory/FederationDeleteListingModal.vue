@@ -49,7 +49,7 @@ export default {
 		},
 	},
 	/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
-	beforeDestroy() {
+	beforeUnmount() {
 		// Prevent a delayed `close()` from firing after the component
 		// unmounts (WOO-511 PR #79 review: setTimeout leak on early close).
 		if (this.closeTimer !== null) {
@@ -62,7 +62,7 @@ export default {
 		/** @spec exclude review-driven UI hardening for WOO-511 federation directory affordances */
 		reset() {
 			// Drop any stale success-close timer from a previous open
-			// (belt + braces alongside `beforeDestroy` above).
+			// (belt + braces alongside `beforeUnmount` above).
 			if (this.closeTimer !== null) {
 				clearTimeout(this.closeTimer)
 				this.closeTimer = null
@@ -102,7 +102,7 @@ export default {
 				this.success = true
 				this.$emit('deleted', this.listing)
 				// Delay close so the success note is visible; timer handle is
-				// tracked so beforeDestroy() can cancel it (PR #79 review).
+				// tracked so beforeUnmount() can cancel it (PR #79 review).
 				this.closeTimer = setTimeout(() => {
 					this.closeTimer = null
 					this.close()
@@ -153,7 +153,7 @@ export default {
 					{{ success ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="success === null"
-					type="error"
+					variant="error"
 					:disabled="loading"
 					@click="handleDelete">
 					<template #icon>

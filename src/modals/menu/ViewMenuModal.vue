@@ -25,8 +25,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<div v-if="menu || isAddMode" class="menuDetails">
 				<!-- Menu Items Tab -->
 				<div class="tabContainer">
-					<BTabs v-model="tabIndex" content-class="mt-3" justified>
-						<BTab v-if="!isAddMode" :title="t('opencatalogi', 'Menu Items ({count})', { count: editForm.items?.length || 0 })" active>
+					<AppTabs v-model="tabIndex" content-class="mt-3" justified>
+						<AppTab v-if="!isAddMode" :title="t('opencatalogi', 'Menu Items ({count})', { count: editForm.items?.length || 0 })" active>
 							<div v-if="editForm.items && editForm.items.length">
 								<div class="menuItemsSection">
 									<div v-if="editForm.items?.length" class="attached-list">
@@ -40,13 +40,13 @@ import { navigationStore, objectStore } from '../../store/store.js'
 												<span v-if="item.hideAfterLogin !== undefined" class="object-hide-after-login">{{ t('opencatalogi', 'Hide After Login: {value}', { value: item.hideAfterLogin ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No') }) }}</span>
 											</div>
 											<div class="object-actions">
-												<NcButton type="secondary" @click="editItem(item, index)">
+												<NcButton variant="secondary" @click="editItem(item, index)">
 													<template #icon>
 														<Pencil :size="18" />
 													</template>
 													{{ t('opencatalogi', 'Edit') }}
 												</NcButton>
-												<NcButton type="error" @click="deleteItem(item, index)">
+												<NcButton variant="error" @click="deleteItem(item, index)">
 													<template #icon>
 														<Delete :size="18" />
 													</template>
@@ -66,10 +66,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									{{ t('opencatalogi', 'No menu items configured') }}
 								</p>
 							</div>
-						</BTab>
+						</AppTab>
 
 						<!-- Configuration Tab -->
-						<BTab :title="t('opencatalogi', 'Configuration')">
+						<AppTab :title="t('opencatalogi', 'Configuration')">
 							<div>
 								<!-- Success/Error Messages -->
 								<div v-if="menuState.success !== null || menuState.error" class="messageContainer">
@@ -86,35 +86,37 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 								<!-- Edit Form -->
 								<div v-if="menuState.success === null && !objectStore.isLoading('menu')" class="form-group">
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+									<NcTextField v-model="editForm.title"
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Title*')"
 										maxlength="255"
-										:value.sync="editForm.title"
 										:error="!!inputValidation.fieldErrors?.['title']"
 										:helper-text="inputValidation.fieldErrors?.['title']?.[0]" />
 
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+									<NcTextField v-model="editForm.description"
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Description')"
 										maxlength="255"
-										:value.sync="editForm.description"
 										:error="!!inputValidation.fieldErrors?.['description']"
 										:helper-text="inputValidation.fieldErrors?.['description']?.[0]" />
 
-									<NcTextField :disabled="objectStore.isLoading('menu')"
+									<NcTextField v-model="editForm.icon"
+										:disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Icon')"
 										maxlength="255"
-										:value.sync="editForm.icon"
 										:error="!!inputValidation.fieldErrors?.['icon']"
 										:helper-text="inputValidation.fieldErrors?.['icon']?.[0]" />
 
+									<!-- Kept as an explicit prop/listener pair (not `v-model`) because
+									     `handlePositionUpdate` coerces the raw string to a number. -->
 									<NcTextField :disabled="objectStore.isLoading('menu')"
 										:label="t('opencatalogi', 'Position')"
 										type="number"
 										min="0"
-										:value="editForm.position"
+										:model-value="editForm.position"
 										:error="!!inputValidation.fieldErrors?.['position']"
 										:helper-text="inputValidation.fieldErrors?.['position']?.[0]"
-										@update:value="handlePositionUpdate" />
+										@update:modelValue="handlePositionUpdate" />
 
 									<div class="position-info">
 										<p>{{ t('opencatalogi', '1 - top right') }}</p>
@@ -132,10 +134,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									<span>{{ isEdit ? t('opencatalogi', 'Menu is being edited...') : t('opencatalogi', 'Menu is being added...') }}</span>
 								</div>
 							</div>
-						</BTab>
+						</AppTab>
 
 						<!-- Security Tab -->
-						<BTab :title="t('opencatalogi', 'Security')">
+						<AppTab :title="t('opencatalogi', 'Security')">
 							<div>
 								<!-- Groups Access Control -->
 								<div class="groups-section">
@@ -158,12 +160,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 										<p>{{ t('opencatalogi', 'When checked, this menu will be hidden after a user is logged in. This is useful for menus that should only be visible to guests, such as login or registration links.') }}</p>
 									</NcNoteCard>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideAfterLogin"
+										v-model="editForm.hideAfterLogin"
 										:disabled="editForm.hideBeforeLogin || objectStore.isLoading('menu')">
 										{{ t('opencatalogi', 'Hide after login') }}
 									</NcCheckboxRadioSwitch>
 									<NcCheckboxRadioSwitch
-										:checked.sync="editForm.hideBeforeLogin"
+										v-model="editForm.hideBeforeLogin"
 										:disabled="editForm.hideAfterLogin || objectStore.isLoading('menu')">
 										{{ t('opencatalogi', 'Hide before login') }}
 									</NcCheckboxRadioSwitch>
@@ -172,8 +174,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 									</p>
 								</div>
 							</div>
-						</BTab>
-					</BTabs>
+						</AppTab>
+					</AppTabs>
 				</div>
 
 				<div v-if="menu && menu.metadata">
@@ -189,7 +191,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		</div>
 
 		<template #actions>
-			<NcButton v-if="!isAddMode" type="secondary" @click="openAddItemModal">
+			<NcButton v-if="!isAddMode" variant="secondary" @click="openAddItemModal">
 				<template #icon>
 					<Plus :size="20" />
 				</template>
@@ -198,7 +200,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton @click="closeModal">
 				{{ t('opencatalogi', 'Close') }}
 			</NcButton>
-			<NcButton v-if="!isAddMode" type="error" @click="deleteMenu">
+			<NcButton v-if="!isAddMode" variant="error" @click="deleteMenu">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
@@ -206,7 +208,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 			<NcButton
 				v-if="isAddMode"
-				type="primary"
+				variant="primary"
 				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
 				@click="saveMenu">
 				<template #icon>
@@ -216,7 +218,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</NcButton>
 			<NcButton
 				v-else
-				type="primary"
+				variant="primary"
 				:disabled="!inputValidation.success || objectStore.isLoading('menu')"
 				@click="saveMenu">
 				<template #icon>
@@ -231,7 +233,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import { NcButton, NcDialog, NcTextField, NcNoteCard, NcLoadingIcon, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue'
-import { BTabs, BTab } from 'bootstrap-vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
@@ -253,8 +256,8 @@ export default {
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
 		NcSelect,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		Pencil,
 		Plus,
 		Delete,

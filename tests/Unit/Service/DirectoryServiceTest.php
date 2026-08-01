@@ -468,7 +468,10 @@ class DirectoryServiceTest extends TestCase
     public function testSyncDirectoryThrowsWhenSyncingWithSelf(): void
     {
         $this->setPrivateProperty('uniqueDirectories', ['https://some-dir.example.com']);
-        $this->urlGenerator->method('getBaseUrl')->willReturn('myserver.example.com');
+        // IURLGenerator::getBaseUrl() always returns a scheme-qualified URL. Since
+        // WOO-516 self-detection parses host+port instead of doing a substring match,
+        // so the fixture must be a real URL for isSelfInstance() to resolve a host.
+        $this->urlGenerator->method('getBaseUrl')->willReturn('https://myserver.example.com');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot sync with current directory');

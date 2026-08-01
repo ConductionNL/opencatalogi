@@ -97,11 +97,12 @@ class SitemapService
     /**
      * Constructor for SitemapService.
      *
-     * @param ContainerInterface $container       Server container for dependency injection
-     * @param IAppManager        $appManager      App manager for checking installed apps
-     * @param SettingsService    $settingsService The settings service
-     * @param IURLGenerator      $urlGenerator    The Nextcloud URL generator
-     * @param IAppConfig         $config          App configuration (operator-tunable page size)
+     * @param ContainerInterface    $container       Server container for dependency injection
+     * @param IAppManager           $appManager      App manager for checking installed apps
+     * @param SettingsService       $settingsService The settings service
+     * @param IURLGenerator         $urlGenerator    The Nextcloud URL generator
+     * @param IAppConfig            $config          App configuration (operator-tunable page size)
+     * @param TooiVocabularyService $tooiVocabulary  The TOOI value-list resolver
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -544,7 +545,7 @@ class SitemapService
         if ($orgUri !== null) {
             $publisher['@resource'] = $orgUri;
         } else {
-            $this->addViolation($violations, $loc, 'publisher', 'organisation has no TOOI identifier');
+            $this->addViolation($violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
         }
 
         $diwoo['diwoo:publisher'] = $publisher;
@@ -555,8 +556,8 @@ class SitemapService
         ];
 
         // Informatiecategorie: bind to an official TOOI category URI, or omit.
-        $categoryValue = $this->stringOrNull($publication['category'] ?? $publication['tooiCategorieUri'] ?? $publication['tooiCategorieNaam'] ?? null);
-        $category      = $this->tooiVocabulary->resolveInformatiecategorie($categoryValue);
+        $categoryRaw = ($publication['category'] ?? $publication['tooiCategorieUri'] ?? $publication['tooiCategorieNaam'] ?? null);
+        $category    = $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull($categoryRaw));
         if ($category !== null) {
             $diwoo['diwoo:classificatiecollectie'] = [
                 'diwoo:informatiecategorieen' => [
@@ -567,7 +568,7 @@ class SitemapService
                 ],
             ];
         } else {
-            $this->addViolation($violations, $loc, 'informatiecategorie', 'category does not resolve to a TOOI value-list member');
+            $this->addViolation($violations, loc: $loc, axis: 'informatiecategorie', reason: 'category does not resolve to a TOOI value-list member');
         }
 
         // SoortHandeling: resolve through the DiWoo value list (default: ontvangst).
@@ -583,7 +584,12 @@ class SitemapService
                 ],
             ];
         } else {
-            $this->addViolation($violations, $loc, 'soortHandeling', 'handling type does not resolve to a DiWoo value-list member');
+            $this->addViolation(
+                $violations,
+                loc: $loc,
+                axis: 'soortHandeling',
+                reason: 'handling type does not resolve to a DiWoo value-list member'
+            );
         }
 
         return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
@@ -761,7 +767,7 @@ class SitemapService
         try {
             $objectService = $this->getObjectService();
         } catch (\Throwable $e) {
-            return $this->diwooError($catalogSlug, $categoryCode, 'OpenRegister is not available');
+            return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'OpenRegister is not available');
         }
 
         $isValid = $this->isValidSitemapRequest(
@@ -772,7 +778,7 @@ class SitemapService
             schemaId: $schemaId
         );
         if ($isValid instanceof XMLResponse === true) {
-            return $this->diwooError($catalogSlug, $categoryCode, 'Unknown catalog or category');
+            return $this->diwooError(catalogSlug: $catalogSlug, categoryCode: $categoryCode, error: 'Unknown catalog or category');
         }
 
         $searchQuery = [];

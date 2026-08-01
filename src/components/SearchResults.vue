@@ -74,7 +74,7 @@ const results = computed(() => objectStore.getCollection('search').results)
  * Check if there are any results
  * @return {boolean}
  */
-const hasResults = computed(() => results.value.length === 0)
+const hasResults = computed(() => results.value.length > 0)
 
 // Fetch data when component is mounted
 onMounted(() => {
@@ -86,11 +86,12 @@ onMounted(() => {
 	<div :class="['search-results', containerClass]">
 		<div class="search-results__header">
 			<NcTextField :class="['search-results__search', searchClass]"
-				:value="objectStore.getSearchTerm('search')"
+				:model-value="objectStore.getSearchTerm('search')"
 				:label="t('opencatalogi', 'Search')"
 				trailing-button-icon="close"
+				:trailing-button-label="t('opencatalogi', 'Clear search')"
 				:show-trailing-button="objectStore.getSearchTerm('search') !== ''"
-				@update:value="(value) => objectStore.setSearchTerm('search', value)"
+				@update:model-value="(value) => objectStore.setSearchTerm('search', value)"
 				@trailing-button-click="objectStore.clearSearch('search')">
 				<template #icon>
 					<MagnifyIcon />
@@ -105,20 +106,23 @@ onMounted(() => {
 				</NcActionButton>
 			</div>
 		</div>
-		<NcEmptyContent v-if="!hasResults" :title="t('opencatalogi', 'No results found')">
+		<NcLoadingIcon v-if="loading" :size="20" />
+		<NcEmptyContent v-else-if="!hasResults" :name="t('opencatalogi', 'No results found')">
 			<template #icon>
 				<FolderIcon />
 			</template>
 		</NcEmptyContent>
-		<NcLoadingIcon v-else-if="loading" :size="20" />
 		<div v-else :class="['search-results__list', resultsClass]">
 			<NcListItem v-for="result in results"
 				:key="result.id"
-				:title="result.title"
-				:subtitle="result.summary"
+				:name="result.title"
 				:to="'/' + result.type + 's/' + result.id">
 				<template #icon>
 					<FileIcon />
+				</template>
+				<!-- v9 dropped the `subtitle` prop; the second line is the `subname` slot. -->
+				<template #subname>
+					{{ result.summary }}
 				</template>
 			</NcListItem>
 		</div>

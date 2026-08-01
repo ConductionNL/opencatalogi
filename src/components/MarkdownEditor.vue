@@ -14,7 +14,7 @@
 export default {
 	name: 'MarkdownEditor',
 	props: {
-		value: {
+		modelValue: {
 			type: String,
 			default: '',
 		},
@@ -27,13 +27,17 @@ export default {
 			default: false,
 		},
 	},
+	// Vue 3 v-model: the `value`/`input` pair of Vue 2 became
+	// `modelValue`/`update:modelValue`. Keeping the old names would leave every
+	// `v-model` on this component silently dead.
+	emits: ['update:modelValue'],
 	data() {
 		return {
-			content: this.value || '',
+			content: this.modelValue || '',
 		}
 	},
 	watch: {
-		value: {
+		modelValue: {
 			/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 			handler(newVal) {
 				if (newVal !== this.content) {
@@ -44,14 +48,14 @@ export default {
 		},
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 		content(newVal) {
-			this.$emit('input', newVal)
+			this.$emit('update:modelValue', newVal)
 		},
 	},
 	/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-4 */
 	mounted() {
 		this.$nextTick(() => {
-			if (this.value && this.value !== this.content) {
-				this.content = this.value
+			if (this.modelValue && this.modelValue !== this.content) {
+				this.content = this.modelValue
 			}
 		})
 	},

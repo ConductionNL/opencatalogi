@@ -30,18 +30,24 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 						</template>
 					</NcSelect>
 				</div>
+				<!--
+					`@nextcloud/vue@9`'s NcDateTimePicker takes `modelValue` and emits
+					ONLY `blur` / `update:modelValue` / `update:timezoneId`. The former
+					`:value` prop and the `@input` / `@change` / `@update:value`
+					listeners no longer exist, so the whole shotgun of handlers was
+					dead. `:label` and `:disabled-date` are likewise not v9 props —
+					the accessible name is `aria-label`, and the lower bound is
+					enforced by `:min` (plus the active guard in `handleDateInput`).
+				-->
 				<NcDateTimePicker v-if="mode === 'later'"
 					:key="'publish-later-date'"
 					class="mode-row__date"
-					:value="publishDateObj"
-					:label="t('opencatalogi', 'Publication date')"
+					:model-value="publishDateObj"
+					:aria-label="t('opencatalogi', 'Publication date')"
+					:placeholder="t('opencatalogi', 'Publication date')"
 					type="date"
 					:min="minPublishDate"
-					:disabled-date="isDateBeforeMin"
 					:clearable="false"
-					@input="handleDateInput"
-					@update:value="handleDateInput"
-					@change="handleDateInput"
 					@update:modelValue="handleDateInput" />
 			</div>
 
@@ -80,7 +86,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="submitDisabled"
-				type="primary"
+				variant="primary"
 				@click="publishObjects()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />

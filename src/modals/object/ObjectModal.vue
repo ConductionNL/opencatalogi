@@ -105,22 +105,26 @@ import '../../css/json-highlight.css'
 
 					<!-- Edit Tabs -->
 					<div class="tabContainer">
-						<BTabs v-model="activeTab" content-class="mt-3" justified>
-							<BTab :title="t('opencatalogi', 'Form Editor')" active>
+						<AppTabs v-model="activeTab" content-class="mt-3" justified>
+							<AppTab :title="t('opencatalogi', 'Form Editor')" active>
 								<div v-if="fullSelectedSchema" class="form-editor">
 									<div v-for="(prop, key) in schemaProperties" :key="key" class="form-field">
 										<template v-if="prop.type === 'string'">
+											<!-- v9 NcTextField takes `modelValue` / emits `update:modelValue`;
+											     the old `value` / `update:value` pair no longer exists. -->
 											<NcTextField
 												:label="prop.title || key"
-												:value="getFieldValue(key)"
+												:model-value="getFieldValue(key)"
 												:placeholder="prop.example"
 												:helper-text="prop.description"
 												:required="prop.required"
-												@update:value="value => setFieldValue(key, value)" />
+												@update:modelValue="value => setFieldValue(key, value)" />
 										</template>
 										<template v-else-if="prop.type === 'boolean'">
+											<!-- v9 NcCheckboxRadioSwitch has no `checked` prop — it is
+											     `modelValue`, so `:checked.sync` was doubly dead. -->
 											<NcCheckboxRadioSwitch
-												:checked.sync="formData[key]"
+												v-model="formData[key]"
 												:helper-text="prop.description"
 												type="switch">
 												{{ prop.title || key }}
@@ -129,7 +133,7 @@ import '../../css/json-highlight.css'
 										<template v-else-if="prop.type === 'number' || prop.type === 'integer'">
 											<NcTextField
 												:label="prop.title || key"
-												:value="getFieldValue(key)"
+												:model-value="getFieldValue(key)"
 												:placeholder="prop.example"
 												:helper-text="prop.description"
 												:required="prop.required"
@@ -137,7 +141,7 @@ import '../../css/json-highlight.css'
 												:min="prop.minimum"
 												:max="prop.maximum"
 												:step="prop.type === 'integer' ? '1' : 'any'"
-												@update:value="value => setFieldValue(key, value)" />
+												@update:modelValue="value => setFieldValue(key, value)" />
 										</template>
 										<template v-else>
 											{{ prop.type }}
@@ -147,9 +151,9 @@ import '../../css/json-highlight.css'
 								<NcEmptyContent v-else>
 									{{ t('opencatalogi', 'Please select a schema to edit the publication') }}
 								</NcEmptyContent>
-							</BTab>
+							</AppTab>
 
-							<BTab :title="t('opencatalogi', 'JSON Editor')">
+							<AppTab :title="t('opencatalogi', 'JSON Editor')">
 								<div class="json-editor">
 									<div :class="`codeMirrorContainer ${getTheme()}`">
 										<CodeMirror
@@ -165,7 +169,7 @@ import '../../css/json-highlight.css'
 											style="height: 400px" />
 										<NcButton
 											class="format-json-button"
-											type="secondary"
+											variant="secondary"
 											size="small"
 											:disabled="!fullSelectedSchema"
 											@click="formatJSON">
@@ -176,8 +180,8 @@ import '../../css/json-highlight.css'
 										{{ t('opencatalogi', 'Invalid JSON format') }}
 									</span>
 								</div>
-							</BTab>
-						</BTabs>
+							</AppTab>
+						</AppTabs>
 					</div>
 				</div>
 			</div>
@@ -192,7 +196,7 @@ import '../../css/json-highlight.css'
 
 				<NcButton
 					:disabled="loading || (activeTab === 1 && !isValidJson(jsonData))"
-					type="primary"
+					variant="primary"
 					@click="saveObject">
 					<template #icon>
 						<NcLoadingIcon v-if="loading" :size="20" />
@@ -219,7 +223,8 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-import { BTabs, BTab } from 'bootstrap-vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
 import { getTheme } from '../../services/getTheme.js'
 import { json, jsonParseLinter } from '@codemirror/lang-json'
 
@@ -243,9 +248,19 @@ export default {
 		NcSelect,
 		NcCheckboxRadioSwitch,
 		NcEmptyContent,
-		BTabs,
-		BTab,
+		// Imported and used in the template but never registered before, so the
+		// note cards, the loading spinner and every icon silently failed to
+		// resolve. Pre-existing bug, not a migration artefact.
+		NcLoadingIcon,
+		NcNoteCard,
+		AppTabs,
+		AppTab,
 		CodeMirror,
+		// Icons
+		ContentSaveOutline,
+		Cancel,
+		Plus,
+		Pencil,
 	},
 	data() {
 		return {
@@ -368,7 +383,7 @@ export default {
 	mounted() {
 		this.initializeData()
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		clearTimeout(this.closeModalTimeout)
 	},
 	methods: {
@@ -630,7 +645,7 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		setFieldValue(key, value) {
 			if (this.formData[key] === value) return
-			this.$set(this.formData, key, value)
+			this.formData[key] = value
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */

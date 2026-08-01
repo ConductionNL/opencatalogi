@@ -60,15 +60,39 @@ class TooiVocabularyService
      * @var array<string, array{id: string, label: string, aliases: array<int, string>}>
      */
     private const INFORMATIECATEGORIEEN = [
-        'infocat001' => ['id' => 'c_139c6280', 'label' => 'Wetten en algemeen verbindende voorschriften', 'aliases' => ['wet of algemeen verbindend voorschrift']],
-        'infocat002' => ['id' => 'c_aab6bfc7', 'label' => 'Overige besluiten van algemene strekking', 'aliases' => ['overig besluit van algemene strekking']],
-        'infocat003' => ['id' => 'c_759721e2', 'label' => 'Ontwerpen van wet- en regelgeving met adviesaanvraag', 'aliases' => ['ontwerp wet- en regelgeving']],
+        'infocat001' => [
+            'id'      => 'c_139c6280',
+            'label'   => 'Wetten en algemeen verbindende voorschriften',
+            'aliases' => ['wet of algemeen verbindend voorschrift'],
+        ],
+        'infocat002' => [
+            'id'      => 'c_aab6bfc7',
+            'label'   => 'Overige besluiten van algemene strekking',
+            'aliases' => ['overig besluit van algemene strekking'],
+        ],
+        'infocat003' => [
+            'id'      => 'c_759721e2',
+            'label'   => 'Ontwerpen van wet- en regelgeving met adviesaanvraag',
+            'aliases' => ['ontwerp wet- en regelgeving'],
+        ],
         'infocat004' => ['id' => 'c_40a05794', 'label' => 'Organisatie en werkwijze', 'aliases' => []],
         'infocat005' => ['id' => 'c_89ee6784', 'label' => 'Bereikbaarheidsgegevens', 'aliases' => []],
-        'infocat006' => ['id' => 'c_8c840238', 'label' => 'Bij vertegenwoordigende organen ingekomen stukken', 'aliases' => ['bij vertegenwoordigend lichaam ingekomen stuk']],
+        'infocat006' => [
+            'id'      => 'c_8c840238',
+            'label'   => 'Bij vertegenwoordigende organen ingekomen stukken',
+            'aliases' => ['bij vertegenwoordigend lichaam ingekomen stuk'],
+        ],
         'infocat007' => ['id' => 'c_c76862ab', 'label' => 'Vergaderstukken Staten-Generaal', 'aliases' => ['vergaderstuk staten-generaal']],
-        'infocat008' => ['id' => 'c_db4862c3', 'label' => 'Vergaderstukken decentrale overheden', 'aliases' => ['vergaderstuk lager vertegenwoordigend of openbaar lichaam']],
-        'infocat009' => ['id' => 'c_3a248e3a', 'label' => "Agenda's en besluitenlijsten bestuurscolleges", 'aliases' => ['agenda of besluitenlijst bestuurscollege']],
+        'infocat008' => [
+            'id'      => 'c_db4862c3',
+            'label'   => 'Vergaderstukken decentrale overheden',
+            'aliases' => ['vergaderstuk lager vertegenwoordigend of openbaar lichaam'],
+        ],
+        'infocat009' => [
+            'id'      => 'c_3a248e3a',
+            'label'   => "Agenda's en besluitenlijsten bestuurscolleges",
+            'aliases' => ['agenda of besluitenlijst bestuurscollege'],
+        ],
         'infocat010' => ['id' => 'c_99a836c7', 'label' => 'Adviezen', 'aliases' => ['advies']],
         'infocat011' => ['id' => 'c_8fc2335c', 'label' => 'Convenanten', 'aliases' => ['convenant']],
         'infocat012' => ['id' => 'c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen', 'aliases' => ['jaarplan of jaarverslag']],
@@ -120,7 +144,8 @@ class TooiVocabularyService
         $needle = strtolower(trim($value));
 
         foreach (self::INFORMATIECATEGORIEEN as $code => $entry) {
-            $candidates = array_map('strtolower', array_merge([$code, $entry['label'], $entry['id'], self::KERN_BASE.$entry['id']], $entry['aliases']));
+            $known      = [$code, $entry['label'], $entry['id'], self::KERN_BASE.$entry['id']];
+            $candidates = array_map('strtolower', array_merge($known, $entry['aliases']));
             if (in_array($needle, $candidates, true) === true) {
                 return ['uri' => self::KERN_BASE.$entry['id'], 'label' => $entry['label']];
             }

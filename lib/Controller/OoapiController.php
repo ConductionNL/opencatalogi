@@ -229,7 +229,8 @@ class OoapiController extends Controller
         }
 
         if ($this->ooapiService->isOoapiEnabled($catalog) === false) {
-            return ['catalog' => null, 'error' => $this->json(['error' => $this->l10n->t('OOAPI 5.0 publication is not enabled for this catalog')], Http::STATUS_NOT_FOUND)];
+            $notEnabled = $this->l10n->t('OOAPI 5.0 publication is not enabled for this catalog');
+            return ['catalog' => null, 'error' => $this->json(['error' => $notEnabled], Http::STATUS_NOT_FOUND)];
         }
 
         return ['catalog' => $catalog, 'error' => null];
@@ -282,13 +283,13 @@ class OoapiController extends Controller
     private function collectionResponse(array $result): JSONResponse
     {
         return $this->json(
-            [
+            data: [
                 'pageNumber' => $result['pageNumber'],
                 'pageSize'   => $result['pageSize'],
                 'hasNext'    => $result['hasNext'],
                 'items'      => $result['items'],
             ],
-            Http::STATUS_OK
+            status: Http::STATUS_OK
         );
 
     }//end collectionResponse()
@@ -346,10 +347,26 @@ class OoapiController extends Controller
                         return $context['error'];
                     }
 
-                    $organization = $this->ooapiService->renderOrganization($resolved['catalog'], $context['pair']['register'], $context['pair']['schema']);
-                    $items        = ($organization === null) ? [] : [$organization];
+                    $organization = $this->ooapiService->renderOrganization(
+                        $resolved['catalog'],
+                        organizationRegister: $context['pair']['register'],
+                        organizationSchema: $context['pair']['schema']
+                    );
 
-                    return $this->json(['pageNumber' => 1, 'pageSize' => count($items), 'hasNext' => false, 'items' => $items], Http::STATUS_OK);
+                    $items = [];
+                    if ($organization !== null) {
+                        $items = [$organization];
+                    }
+
+                    return $this->json(
+                        data: [
+                            'pageNumber' => 1,
+                            'pageSize'   => count($items),
+                            'hasNext'    => false,
+                            'items'      => $items,
+                        ],
+                        status: Http::STATUS_OK
+                    );
                 }
                 );
 
@@ -387,7 +404,12 @@ class OoapiController extends Controller
                         return $context['error'];
                     }
 
-                    $organization = $this->ooapiService->organizationById($resolved['catalog'], $id, $context['pair']['register'], $context['pair']['schema']);
+                    $organization = $this->ooapiService->organizationById(
+                        $resolved['catalog'],
+                        id: $id,
+                        organizationRegister: $context['pair']['register'],
+                        organizationSchema: $context['pair']['schema']
+                    );
                     if ($organization === null) {
                         return $this->json(['error' => $this->l10n->t('Organization not found')], Http::STATUS_NOT_FOUND);
                     }
@@ -430,7 +452,13 @@ class OoapiController extends Controller
                     }
 
                     $pagination = $this->resolvePagination();
-                    $result     = $this->ooapiService->listCourses($resolved['catalog'], $context['pair']['register'], $context['pair']['schema'], $pagination['page'], $pagination['pageSize']);
+                    $result     = $this->ooapiService->listCourses(
+                        $resolved['catalog'],
+                        register: $context['pair']['register'],
+                        schema: $context['pair']['schema'],
+                        page: $pagination['page'],
+                        pageSize: $pagination['pageSize']
+                    );
 
                     return $this->collectionResponse($result);
                 }
@@ -470,7 +498,13 @@ class OoapiController extends Controller
                         return $context['error'];
                     }
 
-                    $course = $this->ooapiService->getResource($resolved['catalog'], $context['pair']['register'], $context['pair']['schema'], $id, 'courseId');
+                    $course = $this->ooapiService->getResource(
+                        $resolved['catalog'],
+                        register: $context['pair']['register'],
+                        schema: $context['pair']['schema'],
+                        id: $id,
+                        idField: 'courseId'
+                    );
                     if ($course === null) {
                         return $this->json(['error' => $this->l10n->t('Course not found')], Http::STATUS_NOT_FOUND);
                     }
@@ -513,7 +547,13 @@ class OoapiController extends Controller
                     }
 
                     $pagination = $this->resolvePagination();
-                    $result     = $this->ooapiService->listPrograms($resolved['catalog'], $context['pair']['register'], $context['pair']['schema'], $pagination['page'], $pagination['pageSize']);
+                    $result     = $this->ooapiService->listPrograms(
+                        $resolved['catalog'],
+                        register: $context['pair']['register'],
+                        schema: $context['pair']['schema'],
+                        page: $pagination['page'],
+                        pageSize: $pagination['pageSize']
+                    );
 
                     return $this->collectionResponse($result);
                 }
@@ -553,7 +593,13 @@ class OoapiController extends Controller
                         return $context['error'];
                     }
 
-                    $program = $this->ooapiService->getResource($resolved['catalog'], $context['pair']['register'], $context['pair']['schema'], $id, 'programId');
+                    $program = $this->ooapiService->getResource(
+                        $resolved['catalog'],
+                        register: $context['pair']['register'],
+                        schema: $context['pair']['schema'],
+                        id: $id,
+                        idField: 'programId'
+                    );
                     if ($program === null) {
                         return $this->json(['error' => $this->l10n->t('Program not found')], Http::STATUS_NOT_FOUND);
                     }
@@ -597,7 +643,14 @@ class OoapiController extends Controller
                     }
 
                     $pagination = $this->resolvePagination();
-                    $result     = $this->ooapiService->listOfferings($resolved['catalog'], $context['pair']['register'], $context['pair']['schema'], $courseId, $pagination['page'], $pagination['pageSize']);
+                    $result     = $this->ooapiService->listOfferings(
+                        $resolved['catalog'],
+                        register: $context['pair']['register'],
+                        schema: $context['pair']['schema'],
+                        courseId: $courseId,
+                        page: $pagination['page'],
+                        pageSize: $pagination['pageSize']
+                    );
 
                     return $this->collectionResponse($result);
                 }
@@ -637,7 +690,13 @@ class OoapiController extends Controller
                         return $context['error'];
                     }
 
-                    $offering = $this->ooapiService->getResource($resolved['catalog'], $context['pair']['register'], $context['pair']['schema'], $id, 'offeringId');
+                    $offering = $this->ooapiService->getResource(
+                        $resolved['catalog'],
+                        register: $context['pair']['register'],
+                        schema: $context['pair']['schema'],
+                        id: $id,
+                        idField: 'offeringId'
+                    );
                     if ($offering === null) {
                         return $this->json(['error' => $this->l10n->t('Offering not found')], Http::STATUS_NOT_FOUND);
                     }
@@ -677,15 +736,19 @@ class OoapiController extends Controller
                         return $context['error'];
                     }
 
-                    $violations = $this->ooapiService->validateCatalog($catalog, $context['pair']['register'], $context['pair']['schema']);
+                    $violations = $this->ooapiService->validateCatalog(
+                        $catalog,
+                        courseRegister: $context['pair']['register'],
+                        courseSchema: $context['pair']['schema']
+                    );
 
                     return $this->json(
-                    [
+                    data: [
                         'catalogSlug' => $catalogSlug,
                         'valid'       => empty($violations),
                         'violations'  => $violations,
                     ],
-                    Http::STATUS_OK
+                    status: Http::STATUS_OK
                     );
                 }
                 );

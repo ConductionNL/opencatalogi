@@ -69,7 +69,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<div class="relatedTermsList">
 						<NcButton v-for="relatedTerm in term.relatedTerms"
 							:key="relatedTerm.id"
-							type="secondary"
+							variant="secondary"
 							@click="selectTerm(relatedTerm)">
 							{{ relatedTerm.title }}
 						</NcButton>
@@ -89,7 +89,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 
 			<div class="modalActions">
-				<NcButton type="secondary" @click="openEditModal">
+				<NcButton variant="secondary" @click="openEditModal">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>

@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import Vue from 'vue'
+import { reactive } from 'vue'
 import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { objectStore } from './store/store.js'
@@ -72,7 +72,7 @@ export default {
 
 	data() {
 		return {
-			objectSidebarState: Vue.observable({
+			objectSidebarState: reactive({
 				active: false,
 				open: true,
 				schema: null,

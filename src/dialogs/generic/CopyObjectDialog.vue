@@ -174,7 +174,7 @@ const closeDialog = () => {
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
 				icon="ContentCopy"
-				type="primary"
+				variant="primary"
 				@click="copyObject">
 				<template #icon>
 					<ContentCopy :size="20" />

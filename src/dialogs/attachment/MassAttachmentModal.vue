@@ -45,7 +45,7 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 			</NcButton>
 			<NcButton v-if="success === null"
 				:disabled="loading || (attachments?.length || 0) === 0"
-				type="primary"
+				variant="primary"
 				@click="process()">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />

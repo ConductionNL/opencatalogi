@@ -25,9 +25,9 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			</div>
 
 			<div v-if="objectStore.getState('page').success === null" class="tabContainer">
-				<BTabs content-class="mt-3" justified>
+				<AppTabs content-class="mt-3" justified>
 					<!-- Configuration Tab -->
-					<BTab :title="t('opencatalogi', 'Configuration')" active>
+					<AppTab :title="t('opencatalogi', 'Configuration')" active>
 						<div class="form-group">
 							<p>
 								{{ t('opencatalogi', 'The order in which you add contents makes a difference, so pay attention to the order.') }}
@@ -42,11 +42,11 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 							<!-- Order -->
 							<NcTextField
+								v-model="contentsItem.order"
 								:disabled="objectStore.isLoading('page')"
 								:label="t('opencatalogi', 'Order')"
 								type="number"
 								min="0"
-								:value.sync="contentsItem.order"
 								required />
 
 							<!-- text (plain text) -->
@@ -64,8 +64,16 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<!-- RichText -->
 							<div v-if="contentsItem.type === 'RichText'" class="editor-container">
 								<label>{{ t('opencatalogi', 'Rich Text Content') }}</label>
-								<v-md-editor
-									:initial-value="contentsItem.richTextData"
+								<!--
+									`@toast-ui/vue-editor` is Vue-2-only (peerDependency
+									`vue: ^2.5.0`) and was removed. ToastUiEditor wraps the
+									framework-agnostic `@toast-ui/editor` core directly.
+									`v-model` now carries the HTML, so `richTextData` stays
+									current without reading back off the instance; `@load` is
+									kept so the existing `getHTML()` save path still works.
+								-->
+								<ToastUiEditor
+									v-model="contentsItem.richTextData"
 									:options="editorOptions"
 									initial-edit-type="wysiwyg"
 									preview-style="tab"
@@ -76,14 +84,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<!-- Image -->
 							<div v-if="contentsItem.type === 'Image'" class="form-group">
 								<NcTextField
+									v-model="contentsItem.imageUrl"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Image URL')"
-									:value.sync="contentsItem.imageUrl"
 									placeholder="https://example.com/image.jpg" />
 								<NcTextField
+									v-model="contentsItem.imageSrcset"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Srcset (optional, responsive images)')"
-									:value.sync="contentsItem.imageSrcset"
 									placeholder="image-480w.jpg 480w, image-800w.jpg 800w" />
 							</div>
 
@@ -100,7 +108,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 												@keydown.enter.prevent
 												@keydown.space.prevent />
 											<div class="reorder-buttons">
-												<NcButton type="tertiary"
+												<NcButton variant="tertiary"
 													:aria-label="moveButtonLabel('up', item.question, index)"
 													:disabled="index === 0"
 													@click="moveFaqItem(index, -1)">
@@ -108,7 +116,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 														<ArrowUp :size="20" />
 													</template>
 												</NcButton>
-												<NcButton type="tertiary"
+												<NcButton variant="tertiary"
 													:aria-label="moveButtonLabel('down', item.question, index)"
 													:disabled="index === contentsItem.faqData.length - 1"
 													@click="moveFaqItem(index, 1)">
@@ -117,8 +125,8 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 													</template>
 												</NcButton>
 											</div>
-											<NcTextField :label="t('opencatalogi', 'Question')" :value.sync="item.question" />
-											<NcTextField :label="t('opencatalogi', 'Answer')" :value.sync="item.answer" />
+											<NcTextField v-model="item.question" :label="t('opencatalogi', 'Question')" />
+											<NcTextField v-model="item.answer" :label="t('opencatalogi', 'Answer')" />
 										</div>
 									</div>
 								</VueDraggable>
@@ -127,14 +135,14 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 							<!-- Quote -->
 							<div v-if="contentsItem.type === 'Quote'" class="form-group">
 								<NcTextField
+									v-model="contentsItem.quoteTitle"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Title (bold text)')"
-									:value.sync="contentsItem.quoteTitle"
 									:placeholder="t('opencatalogi', 'Enter the main quote text...')" />
 								<NcTextField
+									v-model="contentsItem.quoteSubtitle"
 									:disabled="objectStore.isLoading('page')"
 									:label="t('opencatalogi', 'Subtitle')"
-									:value.sync="contentsItem.quoteSubtitle"
 									:placeholder="t('opencatalogi', 'Enter the subtitle text...')" />
 							</div>
 
@@ -155,7 +163,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 													@keydown.enter.prevent
 													@keydown.space.prevent />
 												<div class="reorder-buttons">
-													<NcButton type="tertiary"
+													<NcButton variant="tertiary"
 														:aria-label="moveButtonLabel('up', item.title, index)"
 														:disabled="index === 0"
 														@click="moveContentBlock(index, -1)">
@@ -163,7 +171,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 															<ArrowUp :size="20" />
 														</template>
 													</NcButton>
-													<NcButton type="tertiary"
+													<NcButton variant="tertiary"
 														:aria-label="moveButtonLabel('down', item.title, index)"
 														:disabled="index === contentsItem.contentBlocksData.length - 1"
 														@click="moveContentBlock(index, 1)">
@@ -178,19 +186,19 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 													:input-label="t('opencatalogi', 'Icon')"
 													style="min-width: 160px;" />
 											</div>
-											<NcTextField :label="t('opencatalogi', 'Title')" :value.sync="item.title" />
-											<NcTextField :label="t('opencatalogi', 'Description')" :value.sync="item.text" />
-											<NcTextField :label="t('opencatalogi', 'Link URL')" :value.sync="item.linkUrl" placeholder="/zoeken" />
-											<NcTextField :label="t('opencatalogi', 'Link text')" :value.sync="item.linkTitle" :placeholder="t('opencatalogi', 'More information')" />
+											<NcTextField v-model="item.title" :label="t('opencatalogi', 'Title')" />
+											<NcTextField v-model="item.text" :label="t('opencatalogi', 'Description')" />
+											<NcTextField v-model="item.linkUrl" :label="t('opencatalogi', 'Link URL')" placeholder="/zoeken" />
+											<NcTextField v-model="item.linkTitle" :label="t('opencatalogi', 'Link text')" :placeholder="t('opencatalogi', 'More information')" />
 										</div>
 									</div>
 								</VueDraggable>
 							</div>
 						</div>
-					</BTab>
+					</AppTab>
 
 					<!-- Security Tab -->
-					<BTab :title="t('opencatalogi', 'Security')">
+					<AppTab :title="t('opencatalogi', 'Security')">
 						<div class="form-group">
 							<div class="groups-section">
 								<label class="groups-label">{{ t('opencatalogi', 'Groups Access') }}</label>
@@ -212,12 +220,12 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 									<p>{{ t('opencatalogi', 'When checked, this content block will be hidden after a user is logged in. This is useful for content that should only be visible to guests, such as login forms or registration information.') }}</p>
 								</NcNoteCard>
 								<NcCheckboxRadioSwitch
-									:checked.sync="contentsItem.hideAfterLogin"
+									v-model="contentsItem.hideAfterLogin"
 									:disabled="contentsItem.hideBeforeLogin || objectStore.isLoading('page')">
 									{{ t('opencatalogi', 'Hide after login') }}
 								</NcCheckboxRadioSwitch>
 								<NcCheckboxRadioSwitch
-									:checked.sync="contentsItem.hideBeforeLogin"
+									v-model="contentsItem.hideBeforeLogin"
 									:disabled="contentsItem.hideAfterLogin || objectStore.isLoading('page')">
 									{{ t('opencatalogi', 'Hide before login') }}
 								</NcCheckboxRadioSwitch>
@@ -226,8 +234,8 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 								</p>
 							</div>
 						</div>
-					</BTab>
-				</BTabs>
+					</AppTab>
+				</AppTabs>
 			</div>
 		</div>
 
@@ -237,7 +245,7 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 			</NcButton>
 			<NcButton v-if="objectStore.getState('page').success === null"
 				:disabled="!contentsItem.type || objectStore.isLoading('page')"
-				type="primary"
+				variant="primary"
 				@click="addPageContent">
 				<template #icon>
 					<NcLoadingIcon v-if="objectStore.isLoading('page')" :size="20" />
@@ -252,12 +260,13 @@ import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
 
 <script>
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField, NcCheckboxRadioSwitch } from '@nextcloud/vue'
-import { BTabs, BTab } from 'bootstrap-vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import cloneDeep from 'lodash/cloneDeep'
 import upperFirst from 'lodash/upperFirst'
 import DOMPurify from 'dompurify'
-import { Editor as vMdEditor } from '@toast-ui/vue-editor'
+import ToastUiEditor from '../../components/editor/ToastUiEditor.vue'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -281,12 +290,12 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		VueDraggable,
 		NcTextField,
 		NcCheckboxRadioSwitch,
-		vMdEditor,
+		ToastUiEditor,
 		// Icons
 		Plus,
 		ContentSave,
