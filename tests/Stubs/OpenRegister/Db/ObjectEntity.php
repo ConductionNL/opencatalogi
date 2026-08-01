@@ -71,12 +71,14 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 
 
     /**
-     * Stub implementation of jsonSerialize.
+     * Stub implementation of jsonSerialize — a REAL method on the real class.
      *
-     * Mirrors the real ObjectEntity behaviour: returns the stored object data
-     * (from setObject/getObject) merged with a top-level 'id' from the uuid,
-     * NOT the raw internal property bag.  Tests that call setObject() and then
-     * read $entity->jsonSerialize()['slug'] work correctly.
+     * Mirrors the real ObjectEntity::jsonSerialize() where it matters: the `@self`
+     * envelope is REBUILT from the entity's own properties and any `@self` key the
+     * stored object payload happens to carry is overwritten, and the uuid is
+     * surfaced as a top-level `id`. Keeping this faithful matters — an earlier
+     * version returned the payload verbatim, which let a test hand-craft an `@self`
+     * that only ever survived under the stub and vanished against the real class.
      *
      * @return array<string,mixed>
      */
@@ -85,9 +87,19 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
         // Base is the stored object data (set via setObject or __call).
         $object = $this->_props['object'] ?? [];
 
+        // '@self' is entity metadata, rebuilt from the entity's own properties —
+        // never carried through from the object payload (real class, getObjectArray()).
+        $uuid            = ($this->_props['uuid'] ?? null);
+        $object['@self'] = [
+            'id'       => $uuid,
+            'name'     => ($this->_props['name'] ?? $uuid),
+            'register' => ($this->_props['register'] ?? null),
+            'schema'   => ($this->_props['schema'] ?? null),
+        ];
+
         // Surface the uuid as a top-level 'id' key, matching real ObjectEntity.
-        if (isset($this->_props['uuid']) === true) {
-            $object['id'] = $this->_props['uuid'];
+        if ($uuid !== null) {
+            $object['id'] = $uuid;
         }
 
         return $object;
@@ -95,62 +107,28 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
     }//end jsonSerialize()
 
 
-    /**
-     * Stub for getId — inherits from OCP\AppFramework\Db\Entity (int primary key).
-     *
-     * @return integer|null
+    /*
+     * NOTE: getId() / getUuid() / getRegister() / getSchema() are deliberately NOT
+     * declared here. The real OCA\OpenRegister\Db\ObjectEntity declares none of them
+     * either — they are served by OCP\AppFramework\Db\Entity::__call (routed through
+     * this stub's own __call above). Declaring them made the stub's method surface
+     * diverge from the real class's, which silently changed how PHPUnit builds a
+     * double: onlyMethods() succeeded here and threw CannotUseOnlyMethodsException in
+     * CI, and addMethods() would do the reverse. Keep the magic surface magic.
      */
-    public function getId(): ?int
-    {
-        return isset($this->_props['id']) ? (int) $this->_props['id'] : null;
-
-    }//end getId()
 
 
     /**
-     * Stub for getUuid.
+     * Stub for getObject — a REAL method on the real class.
      *
-     * @return string|null
-     */
-    public function getUuid(): ?string
-    {
-        return $this->_props['uuid'] ?? null;
-
-    }//end getUuid()
-
-
-    /**
-     * Stub for getRegister.
-     *
-     * @return mixed
-     */
-    public function getRegister(): mixed
-    {
-        return $this->_props['register'] ?? null;
-
-    }//end getRegister()
-
-
-    /**
-     * Stub for getSchema.
-     *
-     * @return mixed
-     */
-    public function getSchema(): mixed
-    {
-        return $this->_props['schema'] ?? null;
-
-    }//end getSchema()
-
-
-    /**
-     * Stub for getObject.
+     * Mirrors the real implementation, which injects the uuid as `id` ahead of the
+     * stored payload.
      *
      * @return array<string,mixed>
      */
     public function getObject(): array
     {
-        return $this->_props['object'] ?? [];
+        return array_merge(['id' => ($this->_props['uuid'] ?? null)], ($this->_props['object'] ?? []));
 
     }//end getObject()
 

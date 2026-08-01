@@ -123,21 +123,40 @@ class OoapiServiceTest extends TestCase
     }//end wireOpenRegister()
 
     /**
-     * Build a real ObjectEntity stub instance carrying the given jsonSerialize() payload.
+     * Build a real ObjectEntity instance carrying the given object payload.
      *
      * ObjectService::find() is typed `?ObjectEntity`, so a plain array cannot stand
      * in for it under PHPUnit's return-type-checked mocks.
      *
-     * @param array<string, mixed> $data The object payload (as jsonSerialize() would return).
+     * The `@self` envelope in `$data` describes the *entity metadata*, not object
+     * content: ObjectEntity::jsonSerialize() REBUILDS `@self` from the entity's own
+     * declared properties (uuid/register/schema/...) and discards whatever `@self`
+     * key the object payload happens to carry. Hydrating those properties is
+     * therefore the only way to make the serialized envelope carry the intended
+     * metadata — stuffing `@self` into setObject() alone silently loses it.
      *
-     * @return \OCA\OpenRegister\Db\ObjectEntity The stub entity.
+     * @param array<string, mixed> $data The object payload, with an optional `@self`
+     *                                   entity-metadata envelope.
+     *
+     * @return \OCA\OpenRegister\Db\ObjectEntity The hydrated entity.
      */
     private function makeObjectEntity(array $data): \OCA\OpenRegister\Db\ObjectEntity
     {
+        $self = ($data['@self'] ?? []);
+
         $entity = new \OCA\OpenRegister\Db\ObjectEntity();
         $entity->setObject($data);
-        if (isset($data['@self']['uuid']) === true) {
-            $entity->setUuid($data['@self']['uuid']);
+
+        if (isset($self['uuid']) === true) {
+            $entity->setUuid($self['uuid']);
+        }
+
+        if (isset($self['register']) === true) {
+            $entity->setRegister($self['register']);
+        }
+
+        if (isset($self['schema']) === true) {
+            $entity->setSchema($self['schema']);
         }
 
         return $entity;

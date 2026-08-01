@@ -145,11 +145,27 @@ class OpenApiParityTest extends TestCase
     /**
      * Read the `<version>` from `appinfo/info.xml`.
      *
+     * Deliberately reads the file itself and parses the resulting *string*, rather
+     * than calling `simplexml_load_file()`. When this suite runs inside a real
+     * Nextcloud tree (`phpunit.xml` → `tests/bootstrap.php` → `lib/base.php`),
+     * `OC::init()` installs a process-wide libxml external-entity loader that
+     * returns null for every resource (`lib/base.php`, "prevent any XML processing
+     * from loading external entities"). libxml routes the *main document* of
+     * `simplexml_load_file()` through that same loader, so the call fails with
+     * "Failed to load external entity because the resolver function returned null"
+     * and returns false — for an entirely well-formed local file. Parsing an
+     * already-read string uses libxml's in-memory path, which the loader does not
+     * intercept, so this works identically in a bare checkout and inside a booted
+     * Nextcloud.
+     *
      * @return string The app version string.
      */
     private function loadInfoXmlVersion(): string
     {
-        $xml = simplexml_load_file(__DIR__.'/../../appinfo/info.xml');
+        $raw = file_get_contents(__DIR__.'/../../appinfo/info.xml');
+        $this->assertIsString($raw, 'appinfo/info.xml must be readable');
+
+        $xml = simplexml_load_string($raw);
         $this->assertNotFalse($xml, 'appinfo/info.xml must parse as XML');
 
         return (string) $xml->version;
