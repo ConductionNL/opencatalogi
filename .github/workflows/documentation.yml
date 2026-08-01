@@ -6,8 +6,9 @@ on:
   pull_request:
     branches: [documentation]
 
-permissions:
-  contents: read
+# The callee's deploy job needs `contents: write` (gh-pages) and its fallback
+# image job needs `packages: write`; a caller capped at `contents: read`
+# makes the call unsatisfiable.
 
 jobs:
   deploy:
