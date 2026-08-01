@@ -41,7 +41,6 @@ namespace OCA\OpenCatalogi\Service;
  */
 class OoapiMappingService
 {
-
     /**
      * Determine whether a schema declares an `x-ooapi` annotation at all.
      *
@@ -124,9 +123,9 @@ class OoapiMappingService
      * is populated from the corresponding source dot-path, again skipping
      * null/empty source values.
      *
-     * @param array<string, mixed>  $object  The source object (jsonSerialize shape).
+     * @param array<string, mixed>       $object  The source object (jsonSerialize shape).
      * @param array<string, string>|null $mapping The resolved mapping ({@see resolveMapping()}), or null for identity.
-     * @param string                 $idField The OOAPI resource id field name (e.g. `courseId`).
+     * @param string                     $idField The OOAPI resource id field name (e.g. `courseId`).
      *
      * @return array<string, mixed> The OOAPI 5.0 resource.
      *
@@ -188,7 +187,7 @@ class OoapiMappingService
      * Extract a value from an object by a dot-path.
      *
      * @param array<string, mixed> $object The source object.
-     * @param string                $path   The dot-separated source path (e.g. `code`, `a.b`).
+     * @param string               $path   The dot-separated source path (e.g. `code`, `a.b`).
      *
      * @return mixed The resolved value, or null when absent.
      */
@@ -212,8 +211,8 @@ class OoapiMappingService
      * intermediate arrays as needed.
      *
      * @param array<string, mixed> $target The output resource under construction (by reference).
-     * @param string                $path   The dot-separated output path (e.g. `primaryCode.code`).
-     * @param mixed                 $value  The value to assign.
+     * @param string               $path   The dot-separated output path (e.g. `primaryCode.code`).
+     * @param mixed                $value  The value to assign.
      *
      * @return void
      */

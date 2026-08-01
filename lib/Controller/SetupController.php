@@ -323,6 +323,7 @@ class SetupController extends Controller
         if ($publicationRegister !== '') {
             $catalogObject['registers'] = [$publicationRegister];
         }
+
         if ($publicationSchema !== '') {
             $catalogObject['schemas'] = [$publicationSchema];
         }
