@@ -12,7 +12,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
 					@update:model-value="objectStore.setSearchTerm('publication', $event)"
-					@trailing-button-click="objectStore.clearSearch('publication')">
+					@trailing-button-click="objectStore.clearSearchTerm('publication')">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>

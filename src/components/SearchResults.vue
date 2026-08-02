@@ -92,7 +92,7 @@ onMounted(() => {
 				:trailing-button-label="t('opencatalogi', 'Clear search')"
 				:show-trailing-button="objectStore.getSearchTerm('search') !== ''"
 				@update:model-value="(value) => objectStore.setSearchTerm('search', value)"
-				@trailing-button-click="objectStore.clearSearch('search')">
+				@trailing-button-click="objectStore.clearSearchTerm('search')">
 				<template #icon>
 					<MagnifyIcon />
 				</template>
