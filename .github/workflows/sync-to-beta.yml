@@ -8,5 +8,5 @@ permissions: {}
 
 jobs:
   sync-to-beta:
-    uses: Conduction/.github/.github/workflows/sync-to-beta.yml@main
+    uses: ConductionNL/.github/.github/workflows/sync-to-beta.yml@main
     secrets: inherit
