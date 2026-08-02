@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<phpmd-baseline>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/AppInfo/Application.php" method="register"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Controller/ApiDocumentationController.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="lib/Controller/GlossaryController.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Controller/ListingsController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/ListingsController.php"/>
+  <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="lib/Controller/MenusController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/PublicationsController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Controller/ResolvesRegisterConfiguration.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Controller/SetupController.php"/>
+  <violation rule="PHPMD\Rule\Design\LongParameterList" file="lib/Controller/SetupController.php" method="__construct"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/SetupController.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Controller/WooController.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\StaticAccess" file="lib/Observability/OpenCatalogiMetricsProvider.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/CatalogiService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/DcatMappingService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/DcatMappingService.php" method="resolveHvdCategory"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/DirectoryService.php" method="isSelfInstance"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Service/EventService.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Service/OoapiService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/PublicationQueryService.php" method="assemblePublicSearchResults"/>
+  <violation rule="PHPMD\Rule\Naming\LongVariable" file="lib/Service/PublicationQueryService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/PublicationQueryService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/PublicationService.php" method="getCatalogFilters"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/QualityService.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Service/RetentionService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Service/RetentionService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="applyDefaults"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="applyDefaults"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="evaluate"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="evaluate"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="getQueueSummary"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="getQueueSummary"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="recordHumanDecision"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/RetentionService.php" method="buildReport"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/RetentionService.php" method="buildReport"/>
+  <violation rule="PHPMD\Rule\Design\LongClass" file="lib/Service/SettingsService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/SettingsService.php" method="loadSettings"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/SettingsService.php"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/SettingsService.php" method="updateObjectTypeConfiguration"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/SettingsService.php" method="backfillCatalogScopes"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/SettingsService.php" method="backfillCatalogScopes"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/SitemapService.php"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Service/UsageCounterService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Service/UsageCounterService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Service/WooReadinessService.php"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="lib/Service/WooReadinessService.php" method="isWellFormedXml"/>
+  <violation rule="PHPMD\Rule\CleanCode\ErrorControlOperator" file="lib/Service/WooReadinessService.php" method="extractLocs"/>
+  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Service/WooService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/WooService.php" method="createBatch"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/WooService.php" method="createBatch"/>
+  <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/Service/WooService.php" method="createBatch"/>
+  <violation rule="PHPMD\Rule\CleanCode\MissingImport" file="lib/Service/WooService.php"/>
+  <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Service/WooService.php"/>
+  <violation rule="PHPMD\Rule\CyclomaticComplexity" file="lib/Service/WooService.php" method="updateAssessment"/>
+  <violation rule="PHPMD\Rule\Design\NpathComplexity" file="lib/Service/WooService.php" method="updateAssessment"/>
+  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/WooService.php"/>
+</phpmd-baseline>
