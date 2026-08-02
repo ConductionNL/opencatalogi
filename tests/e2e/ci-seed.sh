@@ -173,10 +173,59 @@ do
 	echo "[ci-seed] warm ${path} -> ${code}"
 done
 
-# Pull the main webpack bundle once so it is in the page cache and opcache has
-# already resolved the route that serves it.
-BUNDLE_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -u "${USER_NAME}:${USER_PASS}" \
-	"${BASE}/apps/opencatalogi/js/opencatalogi-main.js" || echo 000)"
-echo "[ci-seed] warm bundle -> ${BUNDLE_CODE}"
+# Pull the main webpack bundle once so it is in the page cache.
+#
+# Do NOT hardcode the URL. Nextcloud serves an app's assets from whichever apps
+# directory it was installed into — `/apps/<app>/js/...` on the CI runner,
+# `/custom_apps/<app>/js/...` in the docker dev images — and asking for the
+# wrong one does not 404. It returns **HTTP 200 with `text/html`**: the NC error
+# page, served through index.php. A status-code check therefore reports success
+# while fetching a 40 KB HTML page instead of a 7 MB bundle, so the warm-up
+# silently warms nothing.
+#
+# Read the real src out of the rendered app page instead, and verify the
+# response is actually JavaScript.
+APP_HTML="$(mktemp)"
+curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/opencatalogi/" -o "$APP_HTML" || true
+
+BUNDLE_SRC="$(grep -oE 'src="[^"]*opencatalogi-main[^"]*"' "$APP_HTML" \
+	| head -1 | sed 's/^src="//; s/"$//')"
+
+if [ -n "$BUNDLE_SRC" ]; then
+	BUNDLE_INFO="$(curl -sS -o /dev/null \
+		-w '%{http_code} %{content_type} %{size_download}' \
+		-u "${USER_NAME}:${USER_PASS}" "${BASE}${BUNDLE_SRC}" || echo '000 - 0')"
+	echo "[ci-seed] warm bundle ${BUNDLE_SRC} -> ${BUNDLE_INFO}"
+else
+	echo "[ci-seed] could not locate the bundle src in the rendered app page."
+	BUNDLE_INFO=""
+fi
+
+# On CI this is a GATE, not a warm-up.
+#
+# The single most likely way this job "succeeds" dishonestly is by passing
+# without ever loading the app — and the environment hides it well: when the
+# bundle is absent, Nextcloud does not 404. It serves its HTML error page with
+# **HTTP 200 and Content-Type text/html**, so `npm run build` producing nothing
+# looks, to every status-code check in the pipeline, exactly like success.
+#
+# Verified against a live instance: with the bundle moved aside, the asset URL
+# still returned `200 text/html` (40 KB) — while 10 of 10 UI specs failed.
+# The specs are the honest signal; this check just makes the cause loud and
+# immediate instead of arriving as a wall of selector timeouts.
+if [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
+	case "$BUNDLE_INFO" in
+		*javascript*)
+			echo "[ci-seed] bundle verified as JavaScript."
+			;;
+		*)
+			echo "::error::The OpenCatalogi frontend bundle did not serve as JavaScript (got: ${BUNDLE_INFO:-<not found>})."
+			echo "::error::The SPA cannot mount, so every UI spec would fail on a selector timeout with a misleading cause."
+			echo "::error::Check the 'Build app frontend' step — a missing bundle returns HTTP 200 text/html, not 404."
+			exit 1
+			;;
+	esac
+fi
 
 echo "[ci-seed] done."
