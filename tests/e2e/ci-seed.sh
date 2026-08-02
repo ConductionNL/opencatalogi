@@ -143,3 +143,40 @@ curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 verify "$SCH_BODY" schemas
 
 echo "[ci-seed] OpenCatalogi register + schemas provisioned."
+
+# ── 3. Warm the SPA so the first spec doesn't pay the cold start ─────────────
+# The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080` and does not
+# set PHP_CLI_SERVER_WORKERS, so the built-in server runs ONE worker: every
+# request the SPA fires on boot is serialised behind the one before it. On top
+# of that the first hit pays a cold opcache and the first parse of the webpack
+# bundle.
+#
+# The measured effect is confined to whichever spec happens to run first —
+# `catalog-detail-page.spec.ts` blew its 60s test timeout waiting for
+# `[data-testid="cn-index-page"]` on attempt 1 and then passed in 9.1s on
+# retry, while every later spec ran in 4-7s. Nothing about the assertion was
+# wrong; it was measuring server warm-up.
+#
+# So warm it here, in the environment-preparation step where it belongs. The
+# alternative — raising that spec's timeout — would hide the cold start inside
+# the assertion instead of removing it, and would keep drifting upward.
+# Failures are ignored on purpose: this is a warm-up, not a gate. The real
+# checks are above.
+for path in \
+	"/index.php/apps/opencatalogi/" \
+	"/index.php/apps/opencatalogi/api/settings" \
+	"/index.php/apps/opencatalogi/api/catalogi" \
+	"/index.php/apps/openregister/api/registers?_limit=1"
+do
+	code="$(curl -sS -o /dev/null -w '%{http_code}' -u "${USER_NAME}:${USER_PASS}" \
+		-H 'OCS-APIRequest: true' "${BASE}${path}" || echo 000)"
+	echo "[ci-seed] warm ${path} -> ${code}"
+done
+
+# Pull the main webpack bundle once so it is in the page cache and opcache has
+# already resolved the route that serves it.
+BUNDLE_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -u "${USER_NAME}:${USER_PASS}" \
+	"${BASE}/apps/opencatalogi/js/opencatalogi-main.js" || echo 000)"
+echo "[ci-seed] warm bundle -> ${BUNDLE_CODE}"
+
+echo "[ci-seed] done."
