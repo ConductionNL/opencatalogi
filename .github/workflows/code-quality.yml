@@ -12,14 +12,20 @@ concurrency:
   group: quality-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
+# The called workflow contains jobs that declare `contents: write` and
+# `actions: write` (coverage-baseline update, journeydoc capture, SBOM). A
+# caller cannot grant a reusable workflow more than it holds itself, so capping
+# this at `read` made the whole call fail to START — zero jobs, no annotations,
+# indistinguishable from "nothing to run".
 permissions:
-  contents: read
+  contents: write
+  actions: write
   packages: read
 
 jobs:
   quality:
     if: github.event_name != 'push' || github.event.created != true
-    uses: Conduction/.github/.github/workflows/quality.yml@main
+    uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: opencatalogi
       php-version: "8.3"
@@ -37,5 +43,5 @@ jobs:
       # Those tests are now tagged @group network and excluded by default in both
       # phpunit.xml and phpunit-unit.xml, so the suite is deterministic and offline-safe.
       enable-phpunit: true
-      additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"development"}]'
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-newman: false
