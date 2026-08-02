@@ -56,9 +56,15 @@ describe('ThemePreviewWidget', () => {
 	})
 
 	it('prefers the loaded theme object title/summary over generic sample text', () => {
+		// ⚠️ `provide` is a GLOBAL mount option in @vue/test-utils v2 — v1 took it
+		// at the top level. VTU 2 does not warn about the unknown key; it just
+		// drops it, so `inject('cnObjectContext')` stayed undefined and
+		// `sampleTitle` silently fell through to its i18n default.
 		const wrapper = mount(ThemePreviewWidget, {
-			provide: {
-				cnObjectContext: { value: { object: { title: 'Housing', summary: 'Municipal housing theme' } } },
+			global: {
+				provide: {
+					cnObjectContext: { value: { object: { title: 'Housing', summary: 'Municipal housing theme' } } },
+				},
 			},
 		})
 
