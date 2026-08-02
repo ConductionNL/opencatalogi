@@ -12,17 +12,15 @@ concurrency:
   group: quality-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
-# NO top-level `permissions:` block, deliberately.
-#
-# A reusable workflow's jobs can never hold MORE permission than the calling
-# job. `quality.yml` declares `contents: write` (coverage-ratchet / features
-# extract commit back) and `actions: write`; a caller pinned to
-# `contents: read, packages: read` therefore makes the whole call
-# unsatisfiable and GitHub aborts the run with `startup_failure` and ZERO
-# jobs -- indistinguishable at a glance from the unresolvable-org fault.
-# This is why `main`, whose org reference was already correct, was ALSO
-# producing zero jobs. Matches larpingapp / openbuild / planix, which declare
-# no caller-side permissions and run the full matrix green.
+# The called workflow contains jobs that declare `contents: write` and
+# `actions: write` (coverage-baseline update, journeydoc capture, SBOM). A
+# caller cannot grant a reusable workflow more than it holds itself, so capping
+# this at `read` made the whole call fail to START — zero jobs, no annotations,
+# indistinguishable from "nothing to run".
+permissions:
+  contents: write
+  actions: write
+  packages: read
 
 jobs:
   quality:
