@@ -4,7 +4,20 @@ on:
   push:
     branches: [main, beta, development, feature/**, bugfix/**, hotfix/**]
   pull_request:
-    types: [opened, reopened]
+    # `synchronize` — a push to an open PR — was missing. Without it the quality
+    # suite runs ONCE, when the PR is opened, and every commit after that is
+    # merged unchecked while the PR still shows the first run's green tick. A
+    # green check here described code that no longer existed.
+    #
+    # The branch list on `push:` does not cover the gap: it names `feature/**`
+    # while the convention in practice is also `feat/**` and `fix/**`.
+    #
+    # Cost is bounded by the `concurrency` block below — a new push cancels the
+    # in-flight run for the same head ref rather than queueing beside it.
+    #
+    # openregister fixed the identical defect on its own copy of this workflow;
+    # this matches that.
+    types: [opened, reopened, synchronize]
     branches: [main, beta, development]
   workflow_dispatch:
 
