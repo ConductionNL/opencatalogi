@@ -56,3 +56,8 @@ bom-npm.cdx.json
 tests/e2e/.auth/
 tests/e2e/playwright-report/
 tests/e2e/test-results/
+# The CI config (tests/e2e/playwright.config.ts) writes to the app root
+# instead, because that is where the shared workflow's upload-artifact steps
+# look: server/apps/<app>/playwright-report/ and .../test-results/.
+/playwright-report/
+/test-results/
