@@ -10,8 +10,7 @@
 			</NcAppNavigationNew> -->
 			<NcAppNavigationItem
 				:name="t('opencatalogi', 'Dashboard')"
-				:to="{ name: 'Dashboard' }"
-				:exact="true">
+				:to="{ name: 'Dashboard' }">
 				<template #icon>
 					<Finance :size="20" />
 				</template>
@@ -153,6 +152,7 @@ export default {
 		FormatListBulleted,
 		Cog,
 	},
+	emits: ['open-settings'],
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-3 */
 		navigationStore() {

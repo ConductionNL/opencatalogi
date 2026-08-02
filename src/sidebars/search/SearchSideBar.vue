@@ -315,7 +315,7 @@ watch([
 
 					<NcButton
 						v-if="searchTerm"
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('opencatalogi', 'Clear search')"
 						@click="clearSearch">
 						<template #icon>
@@ -335,7 +335,7 @@ watch([
 							class="filter-result-item">
 							<label>{{ getFieldDisplayName(fieldName.replace('@self.', '').replace('@self', 'metadata')) }}</label>
 							<NcSelect
-								:value="getSelectedFilterValue(fieldName)"
+								:model-value="getSelectedFilterValue(fieldName)"
 								:options="getFacetOptions(facetResult)"
 								label="label"
 								:aria-label-combobox="t('opencatalogi', 'Filter results')"
@@ -355,13 +355,13 @@ watch([
 					<div class="filter-group">
 						<label>{{ t('opencatalogi', 'Sort by') }}</label>
 						<NcSelect
-							:value="currentSortOption"
+							:model-value="currentSortOption"
 							:options="sortOptions"
 							label="label"
 							:aria-label-combobox="t('opencatalogi', 'Sort by')"
 							:label-outside="true"
 							:placeholder="t('opencatalogi', 'Choose sorting')"
-							@update:value="handleSortChange" />
+							@update:model-value="handleSortChange" />
 					</div>
 
 					<!-- View mode toggle -->
@@ -369,7 +369,7 @@ watch([
 						<label>{{ t('opencatalogi', 'View mode') }}</label>
 						<div class="view-mode-toggle">
 							<NcButton
-								:type="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
+								:variant="searchStore.getViewMode === 'cards' ? 'primary' : 'tertiary'"
 								:aria-label="t('opencatalogi', 'Card view')"
 								@click="searchStore.setViewMode('cards')">
 								<template #icon>
@@ -378,7 +378,7 @@ watch([
 								{{ t('opencatalogi', 'Cards') }}
 							</NcButton>
 							<NcButton
-								:type="searchStore.getViewMode === 'table' ? 'primary' : 'tertiary'"
+								:variant="searchStore.getViewMode === 'table' ? 'primary' : 'tertiary'"
 								:aria-label="t('opencatalogi', 'Table view')"
 								@click="searchStore.setViewMode('table')">
 								<template #icon>
@@ -400,7 +400,7 @@ watch([
 							<span class="filter-key">{{ formatFilterKey(key) }}:</span>
 							<span class="filter-value">{{ formatFilterValue(value) }}</span>
 							<NcButton
-								type="tertiary-no-background"
+								variant="tertiary-no-background"
 								:aria-label="t('opencatalogi', 'Remove filter')"
 								@click="searchStore.clearFilter(key)">
 								<template #icon>
@@ -410,7 +410,7 @@ watch([
 						</div>
 					</div>
 					<NcButton
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('opencatalogi', 'Clear all filters')"
 						@click="clearAllFilters">
 						{{ t('opencatalogi', 'Clear all filters') }}
@@ -422,7 +422,7 @@ watch([
 					<div class="facets-header">
 						<h3>{{ t('opencatalogi', 'Faceted filtering') }}</h3>
 						<NcButton
-							type="tertiary"
+							variant="tertiary"
 							:disabled="searchStore.isFacetsLoading"
 							:aria-label="t('opencatalogi', 'Refresh facets')"
 							@click="refreshFacets">

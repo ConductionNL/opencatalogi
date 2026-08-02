@@ -17,8 +17,11 @@
  *                      Output lands in
  *                      `docs/static/screenshots/tutorials/{user,admin}/`.
  *
- * Point at a running Nextcloud with NEXTCLOUD_URL (default
- * http://localhost:8080). `globalSetup` logs in once (admin/admin by
+ * Point at a running Nextcloud with PLAYWRIGHT_BASE_URL (or BASE_URL /
+ * NEXTCLOUD_URL / NC_BASE_URL — see tests/e2e/base-url.ts). There is NO
+ * default: an unset target is an immediate error, because the old fallback was
+ * http://localhost:8080, the SHARED dev container that bind-mounts real host
+ * checkouts. `globalSetup` logs in once (admin/admin by
  * default; override with NC_ADMIN_USER / NC_ADMIN_PASS) and persists
  * the session to `tests/e2e/.auth/admin.json`; every spec reuses it via
  * `use.storageState`.
@@ -26,6 +29,7 @@
 
 import { defineConfig, devices } from '@playwright/test'
 import * as path from 'path'
+import { BASE_URL } from './tests/e2e/base-url'
 
 export default defineConfig({
 	testDir: './tests/e2e',
@@ -42,7 +46,7 @@ export default defineConfig({
 	outputDir: 'tests/e2e/test-results',
 
 	use: {
-		baseURL: process.env.NEXTCLOUD_URL || 'http://localhost:8080',
+		baseURL: BASE_URL,
 		storageState: path.resolve(__dirname, 'tests/e2e/.auth/admin.json'),
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',

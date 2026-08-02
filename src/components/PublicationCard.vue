@@ -5,8 +5,8 @@
 		@click="$emit('click', object)">
 		<div v-if="selectable" class="publication-card__checkbox" @click.stop>
 			<NcCheckboxRadioSwitch
-				:checked="selected"
-				@update:checked="$emit('select', object)" />
+				:model-value="selected"
+				@update:model-value="$emit('select', object)" />
 		</div>
 
 		<div class="publication-card__content">
@@ -45,7 +45,7 @@
 			</div>
 		</div>
 
-		<div v-if="$scopedSlots.actions" class="publication-card__actions" @click.stop>
+		<div v-if="!!$slots.actions" class="publication-card__actions" @click.stop>
 			<slot name="actions" :object="object" />
 		</div>
 	</div>
@@ -84,6 +84,10 @@ export default {
 			default: false,
 		},
 	},
+	// Vue 3 merges $listeners into $attrs: without declaring `click` here a
+	// parent's @click would both fall through to the root <div> natively AND
+	// be re-emitted by the handler below, firing the parent twice.
+	emits: ['click', 'select'],
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-3 */
 		status() {

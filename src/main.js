@@ -1,23 +1,28 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import { PiniaVuePlugin } from 'pinia'
+import { createApp, h } from 'vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
-import { generateUrl, generateFilePath } from '@nextcloud/router'
+import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
 	defaultPageTypes,
 	registerIcons,
 	registerTranslations,
+	registerBuiltinDashboardWidgets,
 	buildManifest,
 	registerDashboardWidget,
 	CnFileManager,
 	CnRelationshipGraph,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
+
+// gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
+// Without this stylesheet every dashboard item renders 0 px wide, with no
+// error and correct heights — the height comes from JS, the width from CSS.
+import 'gridstack/dist/gridstack.min.css'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -45,14 +50,19 @@ import { fas } from '@fortawesome/free-solid-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 library.add(fas, fab, far)
-Vue.component('FontAwesomeIcon', FontAwesomeIcon)
 
-// Point webpack's runtime public path at the app's real asset URL so
-// dynamically-imported chunks (e.g. the lazily-loaded @mdi/js icon pack used by
-// CnIconPicker) resolve correctly whether the app is installed under /apps or
-// /custom_apps. Without this, dynamic import() chunks 404 (served as text/html).
-// eslint-disable-next-line camelcase, no-undef
-__webpack_public_path__ = generateFilePath('opencatalogi', '', 'js/')
+// The runtime public path is now set by webpack itself (`output.publicPath:
+// 'auto'` in webpack.config.js), which derives it from the loading script's own
+// URL. That covers ALL SEVEN entry points; the previous
+// `__webpack_public_path__ = generateFilePath(...)` assignment lived here only,
+// so settings.js and the five dashboard-widget entries were never covered.
+
+// nc-vue declares `sideEffects: ["**/*.css"]`, which lets webpack drop the bare
+// side-effect imports that register the built-in `stat` and `object-table`
+// dashboard widgets. Without this explicit call they render
+// "Widget not available" at runtime with no error — `chart` survives only
+// because it is registered inline, and that asymmetry is the tell.
+registerBuiltinDashboardWidgets()
 
 // Register detail-page widget keys into the shared dashboard widget catalog
 // so CnDetailPage's config-grid body (which resolves `config.widgets[].type`
@@ -120,21 +130,6 @@ registerDashboardWidget('file-manager', {
 
 VueMarkdownEditor.use(githubTheme, { Hljs: hljs })
 VueMarkdownEditor.lang.use('en-US', enUS)
-Vue.prototype.$vMdEditorLang = 'en-US'
-Vue.prototype.$vMdEditorLangConfig = { 'en-US': enUS }
-Vue.mixin({
-	beforeCreate() {
-		if (!this.$vMdEditorLang || !this.$vMdEditorLangConfig) {
-			Vue.prototype.$vMdEditorLang = 'en-US'
-			Vue.prototype.$vMdEditorLangConfig = { 'en-US': enUS }
-		}
-	},
-})
-Vue.use(VueMarkdownEditor)
-
-Vue.mixin({ methods: { t, n } })
-Vue.use(PiniaVuePlugin)
-Vue.use(VueRouter)
 
 // Register library-side icon set + lib translations once at bootstrap.
 registerIcons(appIcons)
@@ -246,7 +241,7 @@ const resolvedManifest = resolveManifestSentinelsSync(mergedManifest)
  * underlying custom component receives the route param.
  *
  * @param {object} manifest The bundled manifest (with `pages[]`).
- * @return {Array<object>} vue-router 3 routes config.
+ * @return {Array<object>} vue-router 4 routes config.
  */
 function routesFromManifest(manifest) {
 	const routes = manifest.pages.map((page) => ({
@@ -256,36 +251,54 @@ function routesFromManifest(manifest) {
 		props: page.route.includes(':'),
 	}))
 	// Catch-all redirect to dashboard, preserving prior router behaviour.
-	routes.push({ path: '*', redirect: '/' })
+	//
+	// ⚠️ vue-router 4 REMOVED the bare `path: '*'` wildcard. It does not throw
+	// and it does not warn in a production build — the route simply never
+	// matches, so an unknown hash renders the app shell with an empty <main>.
+	// The v4 spelling is a named catch-all param.
+	routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })
 	return routes
 }
 
-const router = new VueRouter({
-	mode: 'hash',
-	base: generateUrl('/apps/opencatalogi'),
+const router = createRouter({
+	history: createWebHashHistory(generateUrl('/apps/opencatalogi')),
 	routes: routesFromManifest(resolvedManifest),
 })
 
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
-// `defaultPageTypes` (and consumers' `customComponents`) as frozen module
-// objects in some bundle shapes — Vue 2's `Vue.extend()` mutates component
-// definitions to attach an internal `_Ctor` cache, which throws
-// "Cannot add property _Ctor, object is not extensible" against a frozen
-// source map. Cloning here yields extensible objects without changing
-// the values the lib resolves at render time.
+// `defaultPageTypes` (and consumers' `customComponents`) FROZEN in some bundle
+// shapes, so any consumer that mutates them throws. Cloning here yields
+// extensible objects without changing the values the lib resolves at render
+// time.
 const pageTypesProp = { ...defaultPageTypes }
 const customComponentsProp = { ...customComponents }
 
-new Vue({
-	pinia,
-	router,
-	render: (h) => h(App, {
-		props: {
-			manifest: resolvedManifest,
-			customComponents: customComponentsProp,
-			pageTypes: pageTypesProp,
-		},
+const app = createApp({
+	render: () => h(App, {
+		manifest: resolvedManifest,
+		customComponents: customComponentsProp,
+		pageTypes: pageTypesProp,
 	}),
-}).$mount('#content')
+})
+
+// Vue 3 has no `Vue.prototype`; per-app globals live on
+// `app.config.globalProperties`.
+app.config.globalProperties.$vMdEditorLang = 'en-US'
+app.config.globalProperties.$vMdEditorLangConfig = { 'en-US': enUS }
+
+app.mixin({ methods: { t, n } })
+app.use(VueMarkdownEditor)
+app.use(pinia)
+app.use(router)
+app.component('FontAwesomeIcon', FontAwesomeIcon)
+
+// ⚠️ Vue 2's `$mount('#content')` REPLACED the matched element; Vue 3's
+// `mount()` renders INSIDE it. `templates/index.php` emits
+// `<div id="opencatalogi">`, but this bootstrap mounted on `#content` — which
+// is Nextcloud core's OWN wrapper from `layout.user.php`. Under Vue 2 that
+// replaced core's wrapper and the app's own div was simply never used; under
+// Vue 3 the same selector would nest the whole app inside core's chrome and
+// leave `#opencatalogi` empty. Mount on the app's own, uniquely named host.
+app.mount('#opencatalogi')

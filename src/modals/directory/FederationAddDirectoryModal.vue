@@ -109,7 +109,7 @@ export default {
 
 			<NcTextField
 				v-if="!result"
-				:value.sync="url"
+				v-model="url"
 				:label="t('opencatalogi', 'Directory URL')"
 				placeholder="https://peer.example.org/index.php/apps/opencatalogi/api/directory" />
 
@@ -132,7 +132,7 @@ export default {
 					{{ result ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel') }}
 				</NcButton>
 				<NcButton v-if="!result"
-					type="primary"
+					variant="primary"
 					:disabled="!url.trim() || submitting"
 					@click="submit">
 					{{ submitting ? t('opencatalogi', 'Adding…') : t('opencatalogi', 'Add') }}

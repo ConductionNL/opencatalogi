@@ -10,8 +10,8 @@ on:
         type: boolean
         default: true
 
-permissions:
-  contents: read
+# The callee needs `issues: write`; a caller capped at `contents: read` makes
+# the call unsatisfiable.
 
 jobs:
   triage:

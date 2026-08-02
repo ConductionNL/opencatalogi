@@ -289,9 +289,18 @@ class CatalogSchemaEventListenerTest extends TestCase
      */
     private function createMockEntity(string $schema, string $register, array $object): ObjectEntity
     {
+        // ObjectEntity really declares getObject(). getRegister()/getSchema() are NOT
+        // declared anywhere on it — nor on its parent OCP\AppFramework\Db\Entity, which
+        // serves them through __call(). onlyMethods() requires a really-declared method
+        // and throws CannotUseOnlyMethodsException for the magic pair, so the magic
+        // surface has to be declared with addMethods(). addMethods() generates
+        // parameterless methods, which is correct here (and only here) because both are
+        // zero-argument getters and no call site — in lib/ or in this file — ever passes
+        // them an argument.
         $entity = $this->getMockBuilder(ObjectEntity::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getRegister', 'getSchema', 'getObject'])
+            ->onlyMethods(['getObject'])
+            ->addMethods(['getRegister', 'getSchema'])
             ->getMock();
         $entity->method('getSchema')->willReturn($schema);
         $entity->method('getRegister')->willReturn($register);

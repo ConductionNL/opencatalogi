@@ -45,45 +45,45 @@
 			<div class="formContainer">
 				<NcTextField
 					:label="t('opencatalogi', 'Name') + ' *'"
-					:value="formData.name || ''"
+					:model-value="formData.name || ''"
 					:error="!!errors.name"
 					:helper-text="errors.name"
-					@update:value="v => updateField('name', v)" />
+					@update:model-value="v => updateField('name', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Website') + ' *'"
-					:value="formData.website || ''"
+					:model-value="formData.website || ''"
 					:error="!!errors.website"
 					:helper-text="errors.website"
-					@update:value="v => updateField('website', v)" />
+					@update:model-value="v => updateField('website', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Summary')"
-					:value="formData.summary || ''"
-					@update:value="v => updateField('summary', v)" />
+					:model-value="formData.summary || ''"
+					@update:model-value="v => updateField('summary', v)" />
 				<NcTextArea
 					:label="t('opencatalogi', 'Description')"
-					:value="formData.description || ''"
+					:model-value="formData.description || ''"
 					resize="vertical"
-					@update:value="v => updateField('description', v)" />
+					@update:model-value="v => updateField('description', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'OIN')"
-					:value="formData.oin || ''"
-					@update:value="v => updateField('oin', v)" />
+					:model-value="formData.oin || ''"
+					@update:model-value="v => updateField('oin', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'TOOI')"
-					:value="formData.tooi || ''"
-					@update:value="v => updateField('tooi', v)" />
+					:model-value="formData.tooi || ''"
+					@update:model-value="v => updateField('tooi', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'RSIN')"
-					:value="formData.rsin || ''"
-					@update:value="v => updateField('rsin', v)" />
+					:model-value="formData.rsin || ''"
+					@update:model-value="v => updateField('rsin', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'PKI')"
-					:value="formData.pki || ''"
-					@update:value="v => updateField('pki', v)" />
+					:model-value="formData.pki || ''"
+					@update:model-value="v => updateField('pki', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Image (url)')"
-					:value="formData.image || ''"
-					@update:value="v => updateField('image', v)" />
+					:model-value="formData.image || ''"
+					@update:model-value="v => updateField('image', v)" />
 			</div>
 		</template>
 

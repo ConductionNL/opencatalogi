@@ -4,7 +4,7 @@
  *
  * @spec openspec/specs/admin-settings/spec.md
  */
-import Vue from 'vue'
+import { createApp } from 'vue'
 import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import AdminSettings from './views/settings/Settings.vue'
 import VueMarkdownEditor from '@kangc/v-md-editor'
@@ -24,33 +24,27 @@ import { far } from '@fortawesome/free-regular-svg-icons'
 // Add all Font Awesome solid icons to the library
 library.add(fas, fab, far)
 
-// Register FontAwesome component globally for settings
-Vue.component('FontAwesomeIcon', FontAwesomeIcon)
-
 VueMarkdownEditor.use(githubTheme, {
 	Hljs: hljs,
 })
-
-Vue.prototype.$vMdEditorLang = 'en-US'
-Vue.prototype.$vMdEditorLangConfig = { 'en-US': enUS }
-
-Vue.mixin({
-	beforeCreate() {
-		if (!this.$vMdEditorLang || !this.$vMdEditorLangConfig) {
-			Vue.prototype.$vMdEditorLang = 'en-US'
-			Vue.prototype.$vMdEditorLangConfig = { 'en-US': enUS }
-		}
-	},
-})
-
 VueMarkdownEditor.lang.use('en-US', enUS)
 
-Vue.use(VueMarkdownEditor)
+const app = createApp(AdminSettings)
 
-Vue.mixin({ methods: { t, n } })
+// Vue 3 has no `Vue.prototype`; per-app globals live on
+// `app.config.globalProperties`. The old `beforeCreate` mixin existed only to
+// re-seed the prototype if a component was created before the assignment ran —
+// impossible now that both are set on the app handle before `mount()`.
+app.config.globalProperties.$vMdEditorLang = 'en-US'
+app.config.globalProperties.$vMdEditorLangConfig = { 'en-US': enUS }
 
-new Vue(
-	{
-		render: h => h(AdminSettings),
-	},
-).$mount('#settings')
+app.mixin({ methods: { t, n } })
+app.use(VueMarkdownEditor)
+app.component('FontAwesomeIcon', FontAwesomeIcon)
+
+// ⚠️ Mount host renamed from `#settings` to `#opencatalogi-settings` (see
+// `templates/settings/admin.php`). Vue 2's `$mount()` REPLACED the matched
+// element; Vue 3's `mount()` renders INSIDE it, so a generic id shared with any
+// other settings section on the page would nest this app in the wrong place. A
+// uniquely named host removes the question entirely.
+app.mount('#opencatalogi-settings')

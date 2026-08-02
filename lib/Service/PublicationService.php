@@ -299,8 +299,14 @@ class PublicationService
             ],
         ];
 
-        // Get all catalogs using searchObjects.
+        // Get all catalogs using searchObjects. Its declared return type is
+        // `array|int` — it yields an int when the query asks for a count. This query
+        // does not, but narrow explicitly so a count-shaped result can never reach
+        // the foreach below as a non-iterable.
         $catalogs = $this->getObjectService()->searchObjects($query);
+        if (is_array($catalogs) === false) {
+            $catalogs = [];
+        }
 
         if ($catalogId !== null) {
             $catalogs = [$this->getObjectService()->find($catalogId)];

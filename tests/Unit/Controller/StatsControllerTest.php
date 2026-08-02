@@ -157,12 +157,25 @@ class StatsControllerTest extends TestCase
             ]
         );
 
+        // The controller re-derives countingStart from the full series (ANA-005).
+        // aggregateSeries() always returns this key in production, so the double
+        // must too — an unstubbed mock returns [] and the read warns.
+        $this->usage->method('aggregateSeries')->willReturn(
+            [
+                'views'         => 200,
+                'downloads'     => 50,
+                'series'        => [],
+                'countingStart' => '2026-01-01',
+            ]
+        );
+
         $resp = $this->controller->catalog('woo');
         $this->assertSame(200, $resp->getStatus());
         $data = $resp->getData();
         $this->assertSame(200, $data['views']);
         $this->assertSame('woo', $data['catalog']);
         $this->assertSame('a', $data['topViewed'][0]['publication']);
+        $this->assertSame('2026-01-01', $data['countingStart']);
     }//end testCatalogStatsReturnsRollup()
 
     public function testCatalogStatsUnknownCatalog(): void

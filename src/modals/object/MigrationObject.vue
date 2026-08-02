@@ -77,7 +77,7 @@ import '../../css/json-highlight.css'
 								ID: {{ obj.id || obj['@self']?.id }}
 							</p>
 						</div>
-						<NcButton type="tertiary"
+						<NcButton variant="tertiary"
 							:aria-label="t('opencatalogi', 'Remove {name}', { name: obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj.id })"
 							@click="removeObject(obj.id)">
 							<template #icon>
@@ -275,7 +275,7 @@ import '../../css/json-highlight.css'
 
 			<NcButton v-if="step === 1"
 				:disabled="selectedObjects.length === 0"
-				type="primary"
+				variant="primary"
 				@click="nextStep">
 				<template #icon>
 					<ArrowRight :size="20" />
@@ -284,7 +284,7 @@ import '../../css/json-highlight.css'
 			</NcButton>
 
 			<NcButton v-if="step === 2"
-				type="secondary"
+				variant="secondary"
 				@click="previousStep">
 				<template #icon>
 					<ArrowLeft :size="20" />
@@ -294,7 +294,7 @@ import '../../css/json-highlight.css'
 
 			<NcButton v-if="step === 2"
 				:disabled="!targetRegister || !targetSchema"
-				type="primary"
+				variant="primary"
 				@click="nextStep">
 				<template #icon>
 					<ArrowRight :size="20" />
@@ -303,7 +303,7 @@ import '../../css/json-highlight.css'
 			</NcButton>
 
 			<NcButton v-if="step === 3"
-				type="secondary"
+				variant="secondary"
 				@click="previousStep">
 				<template #icon>
 					<ArrowLeft :size="20" />
@@ -313,7 +313,7 @@ import '../../css/json-highlight.css'
 
 			<NcButton v-if="step === 3"
 				:disabled="loading || !canMigrate"
-				type="primary"
+				variant="primary"
 				@click="performMigration">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />

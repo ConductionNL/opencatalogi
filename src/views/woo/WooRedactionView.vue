@@ -96,7 +96,7 @@ export default {
 		 * @return {void}
 		 */
 		toggleEntity(entityId) {
-			this.$set(this.selected, entityId, !this.selected[entityId])
+			this.selected[entityId] = !this.selected[entityId]
 		},
 		/**
 		 * Build the redaction-instruction payload (entity -> ground mapping).
@@ -168,8 +168,8 @@ export default {
 				<tr v-for="entity in entities" :key="entity.id">
 					<td>
 						<NcCheckboxRadioSwitch
-							:checked="!!selected[entity.id]"
-							@update:checked="toggleEntity(entity.id)" />
+							:model-value="!!selected[entity.id]"
+							@update:model-value="toggleEntity(entity.id)" />
 					</td>
 					<td>{{ entity.text }}</td>
 					<td>{{ entity.type }}</td>
@@ -187,7 +187,7 @@ export default {
 		</table>
 
 		<div class="woo-redaction__actions">
-			<NcButton type="primary" :disabled="loading || selectedCount === 0" @click="requestPreview">
+			<NcButton variant="primary" :disabled="loading || selectedCount === 0" @click="requestPreview">
 				<template v-if="loading" #icon>
 					<NcLoadingIcon :size="20" />
 				</template>

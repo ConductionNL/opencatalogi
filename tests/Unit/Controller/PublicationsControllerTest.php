@@ -702,9 +702,17 @@ class PublicationsControllerTest extends TestCase
      */
     private function createObjectEntityMock(int $id = 42, int $schema = 1, int $register = 1): \OCA\OpenRegister\Db\ObjectEntity
     {
+        // getId()/getSchema()/getRegister() are NOT declared on ObjectEntity — nor on
+        // its parent OCP\AppFramework\Db\Entity, which serves them through __call().
+        // onlyMethods() requires a really-declared method and throws
+        // CannotUseOnlyMethodsException for all three, so the magic surface has to be
+        // declared with addMethods(). addMethods() generates parameterless methods,
+        // which is correct here (and only here) because all three are zero-argument
+        // getters and no call site — in lib/ or in this file — ever passes them an
+        // argument.
         $mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getId', 'getSchema', 'getRegister'])
+            ->addMethods(['getId', 'getSchema', 'getRegister'])
             ->getMock();
         $mockObj->method('getId')->willReturn($id);
         $mockObj->method('getSchema')->willReturn($schema);
