@@ -12,9 +12,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<Magnify :size="20" />
 			</template>
 			{{ t('opencatalogi', 'Search in the federative network') }}
+			<!-- `:value` is NOT a prop on Nc v9's NcTextField: it wraps NcInputField,
+			     which declares `modelValue` as REQUIRED. A plain `:value` therefore
+			     leaves `modelValue` undefined, the required-prop check throws, and
+			     the component renders NO `<input>` at all while the surrounding
+			     sidebar still looks fine. Bind `:model-value` and write back through
+			     `@update:model-value`, matching PublicationList.vue. -->
 			<NcTextField class="searchField"
-				:value="objectStore.getSearchTerm('search')"
-				:label="t('opencatalogi', 'Search')" />
+				:model-value="objectStore.getSearchTerm('search')"
+				:label="t('opencatalogi', 'Search')"
+				@update:model-value="objectStore.setSearchTerm('search', $event)" />
 			<NcNoteCard v-if="objectStore.getError('search')" type="error">
 				<p>{{ objectStore.getError('search') }}</p>
 			</NcNoteCard>
