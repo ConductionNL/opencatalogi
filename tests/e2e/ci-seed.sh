@@ -246,15 +246,32 @@ echo "[ci-seed] done."
 # If the suite still reports green here, the green from the previous run is
 # worthless.
 # ══════════════════════════════════════════════════════════════════════════════
+# ATTEMPT 1 (run 30791459241) MOVED the bundle aside and the suite still passed
+# 82/82. It was not a false green — the control was neutralised. The log shows,
+# in order:
+#
+#   POSITIVE CONTROL ACTIVE — bundle moved aside. The suite MUST now fail.
+#   [playwright globalSetup] bundle missing at …/js/opencatalogi-main.js;
+#       running 'npm run build' once…
+#   > NODE_ENV=production webpack --config webpack.config.js --progress
+#
+# `tests/e2e/global-setup.ts::ensureBundleBuilt()` does `fs.existsSync(BUNDLE)`
+# and rebuilds when it is absent — so removing the file is self-healing and can
+# never be a valid control here.
+#
+# It only checks EXISTENCE, never contents. So truncate instead: the file stays
+# present (globalSetup rebuilds nothing), still serves as JavaScript (the gate
+# above passes on the real bundle before this runs), and the SPA cannot mount.
+# That isolates exactly the question being asked — do the specs depend on the
+# OpenCatalogi frontend, or would they pass regardless?
 CONTROL_JS="apps/opencatalogi/js/opencatalogi-main.js"
 if [ -f "$CONTROL_JS" ]; then
-	mv "$CONTROL_JS" "${CONTROL_JS}.CONTROL-MOVED"
-	echo "::warning::POSITIVE CONTROL ACTIVE — bundle moved aside. The suite MUST now fail."
+	ORIG_BYTES="$(wc -c < "$CONTROL_JS")"
+	cp "$CONTROL_JS" "${CONTROL_JS}.CONTROL-BACKUP"
+	printf '/* POSITIVE CONTROL: real bundle replaced with an inert stub. */\n' > "$CONTROL_JS"
+	echo "::warning::POSITIVE CONTROL ACTIVE — bundle truncated ${ORIG_BYTES} bytes -> $(wc -c < "$CONTROL_JS") bytes. The suite MUST now fail."
 else
 	echo "::error::POSITIVE CONTROL could not run — ${CONTROL_JS} not found from $(pwd)."
 	ls -la apps/opencatalogi/js/ 2>&1 | head -20
 	exit 1
 fi
-
-# (re-trigger: the first push of a NEW branch is skipped by the caller workflow
-# guard `github.event.created != true`, so the job never ran.)
