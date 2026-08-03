@@ -19,7 +19,7 @@ permissions:
 jobs:
   quality:
     if: github.event_name != 'push' || github.event.created != true
-    uses: Conduction/.github/.github/workflows/quality.yml@main
+    uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: opencatalogi
       php-version: "8.3"
