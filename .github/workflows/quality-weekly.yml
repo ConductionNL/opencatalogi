@@ -16,6 +16,13 @@ jobs:
   quality-strict:
     name: check:strict (development)
     runs-on: ubuntu-latest
+    # UNMEASURED: this weekly job has no executed run in the sampled history.
+    # It is a composer install plus `composer check:strict`; the equivalent
+    # per-tool PHP Quality legs were observed at max 4.0 min fleet-wide, and
+    # this runs all of them in one job, so 30 min is a wide bound. It had no
+    # timeout at all, so a hang ran to GitHub's 6-hour default — on a
+    # scheduled job nobody is watching, which is the worst case for that.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout development branch
