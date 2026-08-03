@@ -30,7 +30,7 @@
           "applicationSuite": {
             "type": "string",
             "title": "Application suite",
-            "description": "The suite this component belongs to, when it is part of one.",
+            "description": "The suite this component belongs to, when it is part of one (publiccode.yml applicationSuite).",
             "x-publiccode": "applicationSuite",
             "facetable": true
           },
