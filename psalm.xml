@@ -79,6 +79,10 @@
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>
                 <referencedClass name="OCA\OpenRegister\Service\CalendarEventService"/>
+                <!-- Thrown by ResolvesRegisterConfiguration when the register/schema
+                     configuration is absent. Same cross-app runtime-only situation as the
+                     entries above: OpenRegister is not on the analysis path. -->
+                <referencedClass name="OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException"/>
                 <!-- OpenRegister AppHost classes (AppHost escape hatch — loaded via DI) -->
                 <referencedClass name="OCA\OpenRegister\AppHost\IMetricsProvider"/>
                 <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericHealthController"/>
@@ -113,6 +117,15 @@
         <!-- JSONResponse uses @template T which Psalm cannot resolve through addHeader() chaining.
              The pattern is fleet-wide and correct at runtime. -->
         <InvalidTemplateParam errorLevel="suppress"/>
+        <!-- MissingConfigException is an OpenRegister exception that is only present at
+             runtime, so Psalm cannot see that it extends \Exception and reports the throw
+             as InvalidThrow. Scoped to the single call site rather than suppressed
+             globally. PHPStan carries the equivalent ignore for its @throws variant. -->
+        <InvalidThrow>
+            <errorLevel type="suppress">
+                <referencedClass name="OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException"/>
+            </errorLevel>
+        </InvalidThrow>
         <UndefinedMagicMethod errorLevel="suppress"/>
         <UnusedClass errorLevel="suppress"/>
         <PossiblyUnusedMethod errorLevel="suppress"/>
