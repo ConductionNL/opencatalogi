@@ -251,3 +251,6 @@ else
 	ls -la apps/opencatalogi/js/ 2>&1 | head -20
 	exit 1
 fi
+
+# (re-trigger: the first push of a NEW branch is skipped by the caller workflow
+# guard `github.event.created != true`, so the job never ran.)
