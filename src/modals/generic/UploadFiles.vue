@@ -19,10 +19,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					:taggable="true"
 					:multiple="true"
 					:selectable="(option) => isSelectable(option)" />
-				<NcCheckboxRadioSwitch :disabled="loading || retryLoading"
+				<NcCheckboxRadioSwitch v-model="share"
+					:disabled="loading || retryLoading"
 					:label="t('opencatalogi', 'Automatically publish')"
-					type="switch"
-					:checked.sync="share">
+					type="switch">
 					{{ t('opencatalogi', 'Automatically publish') }}
 				</NcCheckboxRadioSwitch>
 			</div>
@@ -68,7 +68,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
 								:disabled="loading || retryLoading || !labelOptions.value?.length"
-								type="primary"
+								variant="primary"
 								@click="openFileUpload()">
 								<template #icon>
 									<Plus :size="20" />
@@ -91,7 +91,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<NcNoteCard type="warning">
 							<p class="folderLink">
 								{{ t('opencatalogi', 'If you want to add files larger than or equal to 512MB, go to the') }}
-								<NcButton type="secondary"
+								<NcButton variant="secondary"
 									class="folderLinkButton"
 									:aria-label="t('opencatalogi', 'Open folder')"
 									@click="openFolder(publicationStore.publicationItem?.['@self']?.folder)">
@@ -138,7 +138,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<div class="filesListDragDropNoticeTitle">
 							<NcButton
 								:disabled="loading || retryLoading || !labelOptions.value?.length"
-								type="primary"
+								variant="primary"
 								@click="openFileUpload()">
 								<template #icon>
 									<Plus :size="20" />
@@ -207,10 +207,10 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									<!-- Tags Buttons -->
 									<NcButton
 										v-if="editingTags !== file.name"
-										v-tooltip="t('opencatalogi', 'Edit labels')"
+										:title="t('opencatalogi', 'Edit labels')"
 										:disabled="editingTags && editingTags !== file.name || loading || retryLoading || file.status === 'too_large' || tagsLoading"
 										:aria-label="t('opencatalogi', 'Edit tags for {name}', { name: file.name })"
-										type="secondary"
+										variant="secondary"
 										class="editTagsButton"
 										@click="editingTags = file.name, editedTags = file.tags">
 										<template #icon>
@@ -219,8 +219,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="t('opencatalogi', 'Save labels')"
-										type="primary"
+										:title="t('opencatalogi', 'Save labels')"
+										variant="primary"
 										:aria-label="t('opencatalogi', 'Save tags for {name}', { name: file.name })"
 										class="editTagsButton"
 										@click="saveTags(file, editedTags)">
@@ -230,8 +230,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
-										v-tooltip="t('opencatalogi', 'Cancel')"
-										type="secondary"
+										:title="t('opencatalogi', 'Cancel')"
+										variant="secondary"
 										@click="cancelFileLabelEditing">
 										<template #icon>
 											<Cancel :size="20" />
@@ -240,8 +240,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
-										v-tooltip="t('opencatalogi', 'Retry upload')"
-										type="primary"
+										:title="t('opencatalogi', 'Retry upload')"
+										variant="primary"
 										@click="addAttachments(file)">
 										<template #icon>
 											<Refresh :size="20" />
@@ -249,8 +249,8 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
-										v-tooltip="t('opencatalogi', 'Remove from list')"
-										type="primary"
+										:title="t('opencatalogi', 'Remove from list')"
+										variant="primary"
 										@click="removeFile(file.name)">
 										<template #icon>
 											<Minus :size="20" />
@@ -269,7 +269,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				</div>
 				<div class="buttonContainer">
 					<NcButton v-if="files && failedCount > 0"
-						type="secondary"
+						variant="secondary"
 						:disabled="loading || retryLoading"
 						@click="retryAllFailed">
 						<template #icon>
@@ -277,7 +277,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</template>
 						{{ retryLoading ? t('opencatalogi', 'In progress...') : t('opencatalogi', 'Retry all ({count})', { count: failedCount }) }}
 					</NcButton>
-					<NcButton type="primary"
+					<NcButton variant="primary"
 						:disabled="loading || retryLoading"
 						@click="closeDialog()">
 						{{ t('opencatalogi', 'Done') }}
@@ -446,8 +446,14 @@ export default {
 			}
 		}, { immediate: true })
 	},
-	destroyed() {
+	unmounted() {
 		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
+		// The duplicate-warning timeout writes `this.duplicateWarning` 5s later;
+		// without this it fires against an unmounted instance.
+		if (this._duplicateWarningTimer) {
+			clearTimeout(this._duplicateWarningTimer)
+			this._duplicateWarningTimer = null
+		}
 	},
 	methods: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */

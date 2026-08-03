@@ -19,8 +19,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 			<div v-if="successState === null" class="selectWrapper">
 				<NcSelect
+					v-model="selectedTheme"
 					:items="themeOptions"
-					:value.sync="selectedTheme"
 					label="Choose a theme"
 					:input-label="t('opencatalogi', 'Theme')"
 					:disabled="isSaving || !themeOptions.length" />
@@ -28,7 +28,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 			<NcButton
 				v-if="successState === null"
-				type="primary"
+				variant="primary"
 				:disabled="!selectedTheme || isSaving"
 				class="singleModalAction"
 				@click="saveTheme">

@@ -88,7 +88,7 @@ import { navigationStore } from '../../store/store.js'
 						</div>
 
 						<NcButton v-if="syncResults.listing_details && syncResults.listing_details.length > 0"
-							type="tertiary"
+							variant="tertiary"
 							class="toggle-details"
 							@click="showDetails = !showDetails">
 							{{ showDetails ? t('opencatalogi', 'Hide details') : t('opencatalogi', 'Show details') }}
@@ -117,7 +117,7 @@ import { navigationStore } from '../../store/store.js'
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading || !directoryUrl"
-					type="primary"
+					variant="primary"
 					@click="handleSync">
 					<template #icon>
 						<span>

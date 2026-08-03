@@ -166,7 +166,7 @@ export default {
 				<NcButton @click="close">
 					{{ t('opencatalogi', 'Cancel') }}
 				</NcButton>
-				<NcButton type="primary"
+				<NcButton variant="primary"
 					:disabled="submitting"
 					@click="submit">
 					{{ submitting ? t('opencatalogi', 'Saving…') : t('opencatalogi', 'Save') }}

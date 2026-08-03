@@ -148,7 +148,11 @@ describe('ObjectStore', () => {
 
 			await store.fetchCollection('character')
 
-			expect(store.collections.character).toEqual(mockCollection.results)
+			// `collections[type]` holds the ENVELOPE, not a bare array — the store
+			// defaults it to `{ results: [] }`, appends via `...collections[type].results`,
+			// and SelectedObjectsList.vue reads `collection?.results`. This assertion
+			// compared against the bare array, which the store has never stored.
+			expect(store.collections.character).toEqual({ results: mockCollection.results })
 			expect(store.objects.character).toEqual({
 				1: { id: '1', name: 'Test 1' },
 				2: { id: '2', name: 'Test 2' },
@@ -175,6 +179,18 @@ describe('ObjectStore', () => {
 				json: () => Promise.resolve(mockSettings),
 			})
 			await store.fetchSettings()
+			// A write does not stop at the write: it refreshes the collection and
+			// then calls setActiveObject(), which fans out to four related-data
+			// fetches. Chaining a mockResolvedValueOnce per internal call makes the
+			// spec a mirror of the store's call graph and it broke the moment that
+			// graph changed — an unmocked fetch() resolved to `undefined` and the
+			// worker died on `response.ok`. Give every UNSPECIFIED call a benign
+			// default; the `Once` mocks above still take precedence for the calls
+			// each test actually asserts on.
+			fetch.mockResolvedValue({
+				ok: true,
+				json: () => Promise.resolve(mockCollection),
+			})
 		})
 
 		it('fetches single object successfully', async () => {
@@ -190,10 +206,21 @@ describe('ObjectStore', () => {
 			expect(store.getError('character_1')).toBeNull()
 		})
 
+		// Every write refreshes the collection afterwards ("Refresh the collection
+		// to ensure it's up to date" in object.js), so each of these needs a
+		// SECOND mocked response. Without it the follow-up fetch() resolved to
+		// undefined and the store died on `response.ok`.
 		it('creates object successfully', async () => {
 			fetch.mockResolvedValueOnce({
 				ok: true,
 				json: () => Promise.resolve(mockObject),
+			})
+			// The refresh repopulates objects[type] FROM the collection, so the
+			// collection has to contain the newly created row — otherwise the store
+			// legitimately ends up holding whatever the collection returned.
+			fetch.mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({ ...mockCollection, results: [mockObject] }),
 			})
 
 			const newObject = await store.createObject('character', { name: 'New Character' })
@@ -210,6 +237,10 @@ describe('ObjectStore', () => {
 				ok: true,
 				json: () => Promise.resolve(updatedObject),
 			})
+			fetch.mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({ ...mockCollection, results: [updatedObject] }),
+			})
 
 			const result = await store.updateObject('character', '1', { name: 'Updated Name' })
 
@@ -219,21 +250,37 @@ describe('ObjectStore', () => {
 			expect(store.getError('character_1')).toBeNull()
 		})
 
+		// `deleteObject` takes the OBJECT, not (type, id): it derives register and
+		// schema from `@self` and DELETEs straight against OpenRegister's
+		// /api/objects/{register}/{schema}/{id}. The old spec called
+		// `deleteObject('character', '1')` — a signature the store no longer has —
+		// and asserted on `collections[type]`, which delete does not touch.
 		it('deletes object successfully', async () => {
-			fetch.mockResolvedValueOnce({
-				ok: true,
-			})
+			fetch.mockResolvedValueOnce({ ok: true })
 
-			// Add object to store first
-			store.objects.character = { 1: mockObject }
-			store.collections.character = [mockObject]
+			const objectItem = { ...mockObject, '@self': { id: '1', register: '20', schema: '105' } }
+			store.setSelectedObjects([objectItem])
 
-			await store.deleteObject('character', '1')
+			await expect(store.deleteObject(objectItem)).resolves.toBe(true)
 
-			expect(store.objects.character['1']).toBeUndefined()
-			expect(store.collections.character).toEqual([])
-			expect(store.isLoading('character_1')).toBe(false)
-			expect(store.getError('character_1')).toBeNull()
+			expect(fetch).toHaveBeenCalledWith(
+				'/index.php/apps/openregister/api/objects/20/105/1',
+				{ method: 'DELETE' },
+			)
+			// Deleting an object drops it from the selection.
+			expect(store.selectedObjects).toEqual([])
+			expect(store.isLoading('delete_1')).toBe(false)
+			expect(store.getError('delete_1')).toBeNull()
+		})
+
+		it('refuses to delete an object without register/schema information', async () => {
+			await expect(store.deleteObject({ id: '1' })).rejects.toThrow(
+				'Object must have id, register, and schema information',
+			)
+			expect(fetch).not.toHaveBeenCalledWith(
+				expect.stringContaining('/api/objects/'),
+				expect.objectContaining({ method: 'DELETE' }),
+			)
 		})
 	})
 
@@ -269,19 +316,27 @@ describe('ObjectStore', () => {
 
 			expect(store.activeObjects.character).toEqual(mockObject)
 			expect(store.relatedData.character).toEqual({
-				logs: mockRelatedData.logs,
+				// `logs` alone is stored UNWRAPPED — the store keeps `data.results`
+				// so `getAuditTrails()` can return an array directly. The other three
+				// keep the full envelope (they carry pagination the UI reads).
+				logs: mockRelatedData.logs.results,
 				uses: mockRelatedData.uses,
 				used: mockRelatedData.used,
 				files: mockRelatedData.files,
 			})
 		})
 
+		// Clearing NULLS the keys, it does not delete them: `delete obj[key]` is not
+		// reactive in Vue 2, so the store keeps the key and empties it. The spec
+		// asserted `toBeUndefined()`, which the store has never produced.
 		it('clears active object and related data', async () => {
 			await store.setActiveObject('character', mockObject)
 			store.clearActiveObject('character')
 
-			expect(store.activeObjects.character).toBeUndefined()
-			expect(store.relatedData.character).toBeUndefined()
+			expect(store.activeObjects.character).toBeNull()
+			expect(store.relatedData.character).toEqual({
+				logs: null, uses: null, used: null, files: null,
+			})
 		})
 
 		it('updates active object when fetching same object', async () => {
@@ -316,17 +371,28 @@ describe('ObjectStore', () => {
 			expect(store.activeObjects.character).toEqual(updatedObject)
 		})
 
-		it('clears active object when deleting it', async () => {
-			await store.setActiveObject('character', mockObject)
+		// Four production call sites still delete via the legacy (type, id) pair —
+		// DirectorySideBar, DeleteMultipleCategoriesDialog, ViewMenuModal and
+		// ViewPageModal. After the signature moved to an object, every one of them
+		// threw before issuing a request. The store now resolves the pair from
+		// `objects[type][id]`, so these buttons work again.
+		it('deletes via the legacy (type, id) pair used by the modals', async () => {
+			const objectItem = { ...mockObject, '@self': { id: '1', register: '20', schema: '105' } }
+			store.objects.character = { 1: objectItem }
+			fetch.mockResolvedValueOnce({ ok: true })
 
-			fetch.mockResolvedValueOnce({
-				ok: true,
-			})
+			await expect(store.deleteObject('character', '1')).resolves.toBe(true)
 
-			await store.deleteObject('character', '1')
+			expect(fetch).toHaveBeenCalledWith(
+				'/index.php/apps/openregister/api/objects/20/105/1',
+				{ method: 'DELETE' },
+			)
+		})
 
-			expect(store.activeObjects.character).toBeUndefined()
-			expect(store.relatedData.character).toBeUndefined()
+		it('reports a clear error when the legacy pair names an object it has not loaded', async () => {
+			await expect(store.deleteObject('character', 'nope')).rejects.toThrow(
+				'Cannot delete character nope: object not loaded in the store',
+			)
 		})
 
 		it('handles related data fetch error', async () => {
@@ -334,7 +400,11 @@ describe('ObjectStore', () => {
 			fetch.mockRejectedValueOnce(new Error('Network error'))
 
 			await expect(store.fetchRelatedData('character', '1', 'logs')).rejects.toThrow()
-			expect(store.getError('character_1_logs')).toBe('Network error')
+			// The failure is recorded against the TYPE, not a per-request composite
+			// key: the catch does `setState(type, { error })`. Asserting on
+			// 'character_1_logs' read an error slot the store never writes, so it
+			// was always null and the assertion could only pass by accident.
+			expect(store.getError('character')).toBe('Network error')
 			expect(store.isLoading('character_1_logs')).toBe(false)
 		})
 	})

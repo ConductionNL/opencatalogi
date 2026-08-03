@@ -8,13 +8,16 @@
  * stub (icon-agnostic — the `size`/`title` props are shared across the whole
  * icon set) covers every import path via the `moduleNameMapper` regex.
  */
+const { h } = require('vue')
+
 module.exports = {
 	name: 'MaterialDesignIconStub',
 	props: {
 		size: { type: [Number, String], default: 24 },
 		title: { type: String, default: '' },
 	},
-	render(h) {
+	// Vue 3 calls `render()` with no `h` argument; `h` is imported from 'vue'.
+	render() {
 		return h('span', { class: 'material-design-icon-stub' })
 	},
 }

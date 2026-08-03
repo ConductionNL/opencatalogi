@@ -12,8 +12,8 @@
 			<template #row-actions="{ propertyKey, resolvedValue }">
 				<NcButton
 					v-if="canDropProperty(propertyKey, resolvedValue)"
-					v-tooltip="getDropPropertyTooltip(propertyKey)"
-					type="tertiary-no-background"
+					:title="getDropPropertyTooltip(propertyKey)"
+					variant="tertiary-no-background"
 					size="small"
 					class="drop-property-btn"
 					:aria-label="getDropPropertyTooltip(propertyKey)"

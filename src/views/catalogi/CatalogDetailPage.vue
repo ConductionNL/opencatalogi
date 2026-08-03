@@ -30,7 +30,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton type="primary" @click="editCatalog">
+			<NcButton variant="primary" @click="editCatalog">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>

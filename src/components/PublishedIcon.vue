@@ -9,15 +9,15 @@
 
 <template>
 	<ListBoxOutline v-if="isPublished"
-		v-tooltip="publishedTooltip"
+		:title="publishedTooltip"
 		:size="size"
 		:class="['published-icon', iconClass]" />
 	<AlertOutline v-else-if="isDepublished"
-		v-tooltip="depublishedTooltip"
+		:title="depublishedTooltip"
 		:size="size"
 		:class="['depublished-icon', iconClass]" />
 	<Pencil v-else
-		v-tooltip="draftTooltip"
+		:title="draftTooltip"
 		:size="size"
 		:class="['unpublished-icon', iconClass]" />
 </template>

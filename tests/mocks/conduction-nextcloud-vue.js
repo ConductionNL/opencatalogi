@@ -19,6 +19,7 @@
  * extend the file rather than reaching for transformIgnorePatterns.
  */
 const { defineStore } = require('pinia')
+const { h } = require('vue')
 
 const baseUrl = '/index.php/apps/openregister/api/objects'
 
@@ -125,7 +126,10 @@ const CnThemePreview = {
 			return out
 		},
 	},
-	render(h) {
+	// ⚠️ Vue 3 calls `render()` with NO `h` argument — `h` is imported from
+	// 'vue' instead. The Vue 2 spelling `render(h)` leaves `h` undefined and
+	// throws `h is not a function` on first paint.
+	render() {
 		return h('div', { class: 'cn-theme-preview-stub', style: this.previewStyle }, [this.sampleTitle])
 	},
 }

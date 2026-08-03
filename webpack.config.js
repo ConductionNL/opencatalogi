@@ -14,6 +14,25 @@ webpackConfig.stats = {
 	modules: false,
 }
 
+// `@nextcloud/webpack-vue-config` hardcodes `publicPath` to `/apps/<appId>/js/`,
+// but an app installed under `custom_apps/` is served from
+// `/custom_apps/<appId>/js/`. The wrong path does NOT 404: Nextcloud answers
+// 200 with `text/html`, so the browser reports a MIME refusal and a
+// `ChunkLoadError` instead of a missing file.
+//
+// Vue 2 never surfaced this here because the old dependency set emitted no
+// async chunks. The Vue 3 set (@nextcloud/dialogs@7, @nextcloud/files,
+// @nextcloud/paths, @mdi/js) splits into dozens, and the ENTRY bundle is
+// unaffected — so the build looks clean and the app loads; only lazily
+// visited routes break.
+//
+// `publicPath: 'auto'` lets webpack derive the path from the script's own URL
+// at runtime, which is correct under BOTH /apps and /custom_apps. It also
+// covers all SEVEN entry points; the previous `__webpack_public_path__`
+// assignment lived in `src/main.js` only, so `settings.js` and the five
+// dashboard-widget entries were never covered.
+webpackConfig.output = { ...webpackConfig.output, publicPath: 'auto' }
+
 const appId = 'opencatalogi'
 webpackConfig.entry = {
 	main: {
@@ -84,29 +103,78 @@ webpackConfig.plugins = [
 	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
 
-// Use local source when available (monorepo dev), otherwise fall back to npm package
+// Use local source when available (monorepo dev), otherwise fall back to the
+// npm package.
+//
+// ⚠️ `USE_LOCAL_LIB` is opt-OUT across the fleet, and the shared
+// `apps-extra/nextcloud-vue` checkout sits on the Vue 2 (`beta.*`) line — so a
+// default-on local-lib build silently compiles Vue 2 SOURCES into this Vue 3
+// app. The guard below refuses that instead of producing a broken bundle.
 const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
-const useLocalLib = fs.existsSync(localLib) && process.env.USE_LOCAL_LIB !== 'false'
+const localLibPkg = path.resolve(__dirname, '../nextcloud-vue/package.json')
+let useLocalLib = process.env.USE_LOCAL_LIB === 'true' && fs.existsSync(localLib)
+if (useLocalLib && fs.existsSync(localLibPkg)) {
+	const localVersion = String(JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '')
+	const localMajor = parseInt(localVersion, 10)
+	if (!Number.isInteger(localMajor) || localMajor < 2) {
+		// eslint-disable-next-line no-console
+		console.warn(
+			`[opencatalogi] IGNORING USE_LOCAL_LIB: ../nextcloud-vue is ${localVersion || 'unversioned'}, `
+			+ 'which is the Vue 2 line. Building against node_modules instead.',
+		)
+		useLocalLib = false
+	}
+}
 
 webpackConfig.resolve = webpackConfig.resolve || {}
 webpackConfig.resolve.extensions = ['.ts', '.js', '.vue', '.json']
+// `@conduction/nextcloud-vue` bundles a FilePicker chunk that imports node's
+// `path`; webpack 5 no longer polyfills node builtins automatically. It must be
+// a REAL polyfill, not `false` — an empty stub makes `path.join` undefined and
+// the picker throws at runtime.
+webpackConfig.resolve.fallback = {
+	...(webpackConfig.resolve.fallback || {}),
+	path: require.resolve('path-browserify'),
+}
 webpackConfig.resolve.alias = {
 	...(webpackConfig.resolve.alias || {}),
 	'@': path.resolve(__dirname, 'src'),
 	...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
+	// Deduplicate the packages that MUST be single instances. A second copy of
+	// vue / pinia / vue-router means a second set of module-local injection
+	// symbols, so `inject()` / `useRouter()` silently return the fallback
+	// instead of the real thing — no error, just a dead feature.
 	vue$: path.resolve(__dirname, 'node_modules/vue'),
 	pinia$: path.resolve(__dirname, 'node_modules/pinia'),
-	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
-	'@nextcloud/dialogs$': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
-	'@floating-ui/dom$': path.resolve(__dirname, 'src/shims/floating-ui-dom.js'),
-	'@floating-ui/dom-actual': path.resolve(__dirname, 'node_modules/@floating-ui/dom'),
 }
+
+// The Vue 3 lines of `@nextcloud/vue` (v9) and `@nextcloud/dialogs` (v7) are
+// ESM-only: their package.json has NO `main` and NO `module`, only an `exports`
+// map. A Vue-2-era DIRECTORY alias —
+//     '@nextcloud/vue$': path.resolve('node_modules/@nextcloud/vue')
+// — therefore resolves to nothing, because webpack applies an exports map to
+// package REQUESTS and never to an already-absolutised path. The previous
+// bare-directory `@nextcloud/dialogs` alias had the same defect.
+//
+// Aliasing to the concrete ESM ENTRY FILE sidesteps exports resolution
+// entirely. The exact-match (`$`) form keeps deep imports such as
+// `@nextcloud/vue/components/NcButton` going through the exports map.
+webpackConfig.resolve.alias['@nextcloud/vue$'] = path.resolve(__dirname, 'node_modules/@nextcloud/vue/dist/index.mjs')
+webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/index.mjs')
+webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/style.css')
+
+// `@nextcloud/vue@9` hard-depends on `vue-router@^5.1.0` while this app is on
+// v4, so npm nests a SECOND copy under node_modules/@nextcloud/vue. Two copies
+// of vue-router means two `routerKey` symbols: any nc-vue component calling
+// `useRouter()` gets `undefined` rather than this app's router, with no error.
+// Pin every request to the app's single copy.
+webpackConfig.resolve.alias['vue-router$'] = path.resolve(__dirname, 'node_modules/vue-router/dist/vue-router.mjs')
 
 // With `@conduction/nextcloud-vue` aliased to ../nextcloud-vue/src, that source's
 // bare imports resolve relative to ITS directory — so Node walks up to
-// ../nextcloud-vue/node_modules and finds that checkout's Vue 3 copies of
-// @nextcloud/vue / floating-vue, which then fail to compile against this app's
-// Vue 2.7. Put this app's node_modules first so one framework copy wins.
+// ../nextcloud-vue/node_modules and finds that checkout's OWN framework copies
+// (@nextcloud/vue / floating-vue / vue-router), which then coexist with this
+// app's. Put this app's node_modules first so one framework copy wins.
 // (Same fix openregister carries; see its webpack.config.js.)
 webpackConfig.resolve.modules = [
 	path.resolve(__dirname, 'node_modules'),

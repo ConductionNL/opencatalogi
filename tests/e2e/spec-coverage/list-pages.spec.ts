@@ -78,13 +78,18 @@ test.describe('list-page Catalogs interactions', () => {
 			await expect(addCta).toBeVisible({ timeout: 10000 })
 			await addCta.click()
 
-			// The create modal (CnFormDialog → NcDialog portal) must open with
-			// its create-form chrome: a "Create…" heading and a Create/Cancel
-			// button pair. (The schema form body may render async / empty, so we
-			// assert the dialog chrome rather than a specific input field.)
-			const modal = page.locator('[role="dialog"]').filter({ hasText: /create/i }).first()
+			// The create modal (CnFormDialog → NcDialog portal) must open with its
+			// create-form chrome: the heading and a submit/cancel button pair.
+			// (The schema form body may render async / empty, so we assert the
+			// dialog chrome rather than a specific input field.)
+			//
+			// CatalogModal names itself "Add Catalog" and labels its submit button
+			// "Add" — never "Create". The previous `/create/i` filter therefore
+			// matched NO dialog and failed with "element(s) not found" even though
+			// the modal opened correctly, on both the Vue 2 and Vue 3 builds.
+			const modal = page.locator('[role="dialog"]').filter({ hasText: /add catalog/i }).first()
 			await expect(modal).toBeVisible({ timeout: 10000 })
-			await expect(modal.getByRole('button', { name: /^create$/i }).first())
+			await expect(modal.getByRole('button', { name: /^add$/i }).first())
 				.toBeVisible({ timeout: 8000 })
 			await expect(modal.getByRole('button', { name: /cancel/i }).first())
 				.toBeVisible({ timeout: 8000 })

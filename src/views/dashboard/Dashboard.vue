@@ -10,7 +10,7 @@
 			@layout-change="onLayoutChange">
 			<!-- Header actions -->
 			<template #actions>
-				<NcButton type="primary" @click="createPublication">
+				<NcButton variant="primary" @click="createPublication">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
@@ -506,7 +506,7 @@ export default {
 		}, 5 * 60 * 1000)
 	},
 	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.refreshTimer) {
 			clearInterval(this.refreshTimer)
 			this.refreshTimer = null

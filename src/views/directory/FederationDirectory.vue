@@ -150,7 +150,7 @@ export default {
 			<h2 class="federation-directory__title">
 				{{ t('opencatalogi', 'Directory') }}
 			</h2>
-			<NcButton type="primary" @click="openAdd">
+			<NcButton variant="primary" @click="openAdd">
 				{{ t('opencatalogi', 'Add directory') }}
 			</NcButton>
 		</header>

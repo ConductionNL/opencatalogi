@@ -93,8 +93,33 @@ test.describe('publish workflow', () => {
 		async () => {
 			// Catalog wired to the publication register/schema, with a slug we can
 			// hit on the public endpoint.
+			//
+			// `published` MUST be set to a past date. This test's whole point is
+			// that the anonymous catalog directory renders (200) while the draft
+			// publication inside it is filtered out — so an anonymously *visible
+			// catalog* is the precondition, not the thing under test. The catalog
+			// schema grants public read conditionally:
+			//
+			//     authorization.read: [{ group: "public",
+			//                            match: { published: { $lte: "$now" } } }, …]
+			//
+			// and `published` is documented on the schema as "when set to a date in
+			// the past, this catalog becomes publicly accessible". The fixture does
+			// not set it, so without this the catalog is correctly NOT public and
+			// `GET /api/{slug}` 404s on `getCatalogBySlug()` returning null.
+			//
+			// This test used to pass anyway on a dev container running an older
+			// OpenRegister, whose list path returned objects the conditional
+			// public-read grant should have excluded — so the precondition was
+			// being supplied by an RBAC leak rather than by the fixture. Against an
+			// OpenRegister that enforces the grant it failed with 404. Establishing
+			// the precondition explicitly makes the assertion below mean what it
+			// says on both.
 			const slug = `e2e-${fx.runId}-cat`
-			const catalog = await fx.createCatalog('Publish Catalog', { slug })
+			const catalog = await fx.createCatalog('Publish Catalog', {
+				slug,
+				published: '2020-01-01T00:00:00+00:00',
+			})
 			const realSlug = (catalog.raw['@self'] as Record<string, unknown>)?.slug as string
 				?? (catalog.raw.slug as string) ?? slug
 

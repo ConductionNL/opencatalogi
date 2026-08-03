@@ -130,5 +130,5 @@ class SitemapController extends Controller
 
         return new JSONResponse($report, 200);
 
-    }//end validateDiwoo()
+    }//end diwooReport()
 }//end class

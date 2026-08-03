@@ -59,18 +59,18 @@ const handleCancel = () => {
 <template>
 	<div class="edit-listing-modal">
 		<NcInputField
-			:value.sync="listing.title"
+			v-model="listing.title"
 			:label="t('opencatalogi', 'Title')"
 			:disabled="loading" />
 		<NcInputField
-			:value.sync="listing.description"
+			v-model="listing.description"
 			:label="t('opencatalogi', 'Description')"
 			:disabled="loading" />
 		<div class="edit-listing-modal__actions">
 			<NcButton :disabled="loading" @click="handleCancel">
 				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary" :disabled="loading" @click="handleSave">
+			<NcButton variant="primary" :disabled="loading" @click="handleSave">
 				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>

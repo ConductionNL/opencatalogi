@@ -11,6 +11,7 @@
  */
 
 import { chromium, request, type FullConfig } from '@playwright/test'
+import { resolveBaseUrl } from './base-url'
 import { execSync } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
@@ -32,6 +33,27 @@ const BUNDLE_PATH = path.join(APP_ROOT, 'js', 'opencatalogi-main.js')
 function ensureBundleBuilt(): void {
 	if (fs.existsSync(BUNDLE_PATH)) {
 		return
+	}
+	// On CI this is a hard error, not something to repair.
+	//
+	// The shared workflow has already run its own "Build app frontend" step by
+	// the time we get here, so a missing bundle means that step did not produce
+	// one — and silently rebuilding turns a broken build into a green run with
+	// nothing to show for it. It also makes the bundle genuinely untestable:
+	// a positive control that removes the bundle to prove the specs depend on it
+	// gets healed right back before the first spec runs, and the suite passes.
+	// (Observed: run 30791459241 passed 82/82 with the bundle deleted, because
+	// this function rebuilt it — the control proved nothing until it was changed
+	// to truncate the file instead.)
+	//
+	// Locally the rebuild stays, because there it is a genuine convenience:
+	// a fresh checkout has no `js/` and nothing else is going to build it.
+	if (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true') {
+		throw new Error(
+			`[playwright globalSetup] bundle missing at ${BUNDLE_PATH} on CI. `
+			+ 'The workflow\'s "Build app frontend" step should already have produced it — '
+			+ 'check that step rather than rebuilding here, because a rebuild would hide it.',
+		)
 	}
 	// eslint-disable-next-line no-console
 	console.log(`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`)
@@ -60,10 +82,13 @@ async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 }
 
 export default async function globalSetup(config: FullConfig): Promise<void> {
+	// ⚠️ This function performs the ADMIN LOGIN. Its previous
+	// `?? 'http://localhost:8080'` tail fired repeated admin logins at the
+	// SHARED dev container whenever no target was configured — the mechanism by
+	// which another app in this fleet triggered brute-force lockouts in
+	// somebody else's environment. `resolveBaseUrl()` throws instead.
 	const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)
-		?? process.env.NEXTCLOUD_URL
-		?? process.env.NC_BASE_URL
-		?? 'http://localhost:8080'
+		?? resolveBaseUrl()
 	const username = process.env.NC_ADMIN_USER ?? 'admin'
 	const password = process.env.NC_ADMIN_PASS ?? 'admin'
 

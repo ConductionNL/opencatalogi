@@ -7,24 +7,24 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 		<ul>
 			<div class="listHeader">
 				<NcTextField class="searchField"
-					:value="objectStore.getSearchTerm('publication')"
+					:model-value="objectStore.getSearchTerm('publication')"
 					:label="t('opencatalogi', 'Search')"
 					trailing-button-icon="close"
 					:show-trailing-button="objectStore.getSearchTerm('publication') !== ''"
-					@update:value="objectStore.setSearchTerm('publication', $event)"
-					@trailing-button-click="objectStore.clearSearch('publication')">
+					@update:model-value="objectStore.setSearchTerm('publication', $event)"
+					@trailing-button-click="objectStore.clearSearchTerm('publication')">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
 					<NcActionCaption :name="t('opencatalogi', 'Search')" />
 					<NcActionCheckbox
-						:checked="conceptChecked"
+						:model-value="conceptChecked"
 						:value="'concept'"
 						@change="handleCheckboxChange('concept', $event)">
 						{{ t('opencatalogi', 'Concept') }}
 					</NcActionCheckbox>
 					<NcActionCheckbox
-						:checked="gepubliceerdChecked"
+						:model-value="gepubliceerdChecked"
 						:value="'gepubliceerd'"
 						@change="handleCheckboxChange('gepubliceerd', $event)">
 						{{ t('opencatalogi', 'Published') }}
@@ -42,17 +42,17 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						{{ t('opencatalogi', 'Choose a property') }}
 					</NcActionInput>
 					<NcActionRadio
-						:checked="sortDirection === 'asc'"
+						:model-value="sortDirection"
 						name="sortDirection"
 						value="asc"
-						@update:checked="updateSortOrder('asc')">
+						@update:model-value="updateSortOrder('asc')">
 						{{ t('opencatalogi', 'Ascending') }}
 					</NcActionRadio>
 					<NcActionRadio
-						:checked="sortDirection === 'desc'"
+						:model-value="sortDirection"
 						name="sortDirection"
 						value="desc"
-						@update:checked="updateSortOrder('desc')">
+						@update:model-value="updateSortOrder('desc')">
 						{{ t('opencatalogi', 'Descending') }}
 					</NcActionRadio>
 					<NcActionSeparator />

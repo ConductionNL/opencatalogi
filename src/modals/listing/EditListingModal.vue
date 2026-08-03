@@ -16,7 +16,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { ref, computed } from 'vue'
 import { objectStore, navigationStore } from '../../store/store.js'
-import { NcButton, NcInputField, NcTags } from '@nextcloud/vue'
+import { NcButton, NcInputField, NcSelectTags } from '@nextcloud/vue'
 
 /**
  * Loading state for the component
@@ -59,26 +59,27 @@ const handleCancel = () => {
 <template>
 	<div class="edit-listing-modal">
 		<NcInputField
-			:value.sync="directory.title"
+			v-model="directory.title"
 			:label="t('opencatalogi', 'Title')"
 			:disabled="loading" />
 		<NcInputField
-			:value.sync="directory.summary"
+			v-model="directory.summary"
 			:label="t('opencatalogi', 'Summary')"
 			:disabled="loading" />
 		<NcInputField
-			:value.sync="directory.description"
+			v-model="directory.description"
 			:label="t('opencatalogi', 'Description')"
 			:disabled="loading" />
-		<NcTags
+		<NcSelectTags
 			v-model="directory.labels"
-			:label="t('opencatalogi', 'Labels')"
+			:input-label="t('opencatalogi', 'Labels')"
+			:aria-label-combobox="t('opencatalogi', 'Labels')"
 			:disabled="loading" />
 		<div class="edit-listing-modal__actions">
 			<NcButton :disabled="loading" @click="handleCancel">
 				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary" :disabled="loading" @click="handleSave">
+			<NcButton variant="primary" :disabled="loading" @click="handleSave">
 				{{ t('opencatalogi', 'Save') }}
 			</NcButton>
 		</div>

@@ -63,27 +63,27 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<!-- View Mode Switch -->
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
-							v-tooltip="t('opencatalogi', 'See {objectType} as cards', { objectType: objectTypePlural })"
-							:checked="viewMode === 'cards'"
+							:title="t('opencatalogi', 'See {objectType} as cards', { objectType: objectTypePlural })"
+							:model-value="viewMode"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							:name="`${objectType}_view_mode`"
 							value="cards"
 							type="radio"
 							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('cards')">
+							@update:model-value="setViewMode">
 							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							v-tooltip="t('opencatalogi', 'See {objectType} as a table', { objectType: objectTypePlural })"
-							:checked="viewMode === 'table'"
+							:title="t('opencatalogi', 'See {objectType} as a table', { objectType: objectTypePlural })"
+							:model-value="viewMode"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							:name="`${objectType}_view_mode`"
 							value="table"
 							type="radio"
 							button-variant-grouped="horizontal"
-							@update:checked="() => setViewMode('table')">
+							@update:model-value="setViewMode">
 							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -122,8 +122,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 						<NcActionCheckbox
 							v-for="meta in metadataColumns"
 							:key="`meta_${meta.id}`"
-							:checked="objectStore.columnFilters[`meta_${meta.id}`]"
-							@update:checked="(status) => objectStore.updateColumnFilter(`meta_${meta.id}`, status)">
+							:model-value="objectStore.columnFilters[`meta_${meta.id}`]"
+							@update:model-value="(status) => objectStore.updateColumnFilter(`meta_${meta.id}`, status)">
 							{{ meta.label }}
 						</NcActionCheckbox>
 
@@ -132,8 +132,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 						<NcActionCheckbox
 							v-for="prop in propertyColumns"
 							:key="`prop_${prop.id}`"
-							:checked="objectStore.columnFilters[`prop_${prop.id}`]"
-							@update:checked="(status) => objectStore.updateColumnFilter(`prop_${prop.id}`, status)">
+							:model-value="objectStore.columnFilters[`prop_${prop.id}`]"
+							@update:model-value="(status) => objectStore.updateColumnFilter(`prop_${prop.id}`, status)">
 							{{ prop.label }}
 						</NcActionCheckbox>
 					</NcActions>
@@ -149,7 +149,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<component :is="emptyIcon" v-else :size="64" />
 				</template>
 				<template v-if="!objectStore.isLoading(objectType) && !filteredObjects.length && addAction" #action>
-					<NcButton type="primary" @click="executeAction(addAction)">
+					<NcButton variant="primary" @click="executeAction(addAction)">
 						{{ addAction.label }}
 					</NcButton>
 				</template>
@@ -161,7 +161,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 					<div class="cardGrid">
 						<div v-for="item in paginatedObjects" :key="getObjectId(item)" class="card">
 							<div class="cardHeader">
-								<h2 v-tooltip.bottom="getObjectSummary(item)">
+								<h2 :title="getObjectSummary(item)">
 									<component :is="cardIcon" :size="20" />
 									{{ getObjectTitle(item) }}
 								</h2>
@@ -216,9 +216,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 									<tr class="viewTableRow sort-target">
 										<th class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
-												:checked="allSelected"
+												:model-value="allSelected"
 												:indeterminate="someSelected"
-												@update:checked="toggleSelectAll" />
+												@update:model-value="toggleSelectAll" />
 										</th>
 										<th v-for="(column, index) in orderedEnabledColumns"
 											:key="`header-${column.id || column.key || `col-${index}`}`"
@@ -240,8 +240,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 										@click="handleRowClick(getObjectId(item), $event)">
 										<td class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
-												:checked="selectedObjects.includes(getObjectId(item))"
-												@update:checked="handleSelectObject(getObjectId(item))" />
+												:model-value="selectedObjects.includes(getObjectId(item))"
+												@update:model-value="handleSelectObject(getObjectId(item))" />
 										</td>
 										<td v-for="(column, index) in orderedEnabledColumns"
 											:key="`cell-${getObjectId(item)}-${column.id || column.key || `col-${index}`}`"
@@ -277,9 +277,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 								<tr class="viewTableRow">
 									<th class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:checked="allSelected"
+											:model-value="allSelected"
 											:indeterminate="someSelected"
-											@update:checked="toggleSelectAll" />
+											@update:model-value="toggleSelectAll" />
 									</th>
 									<th v-for="(column, index) in orderedEnabledColumns"
 										:key="`header-${column.id || column.key || `col-${index}`}`"
@@ -301,8 +301,8 @@ import { objectStore, navigationStore } from '../store/store.js'
 									@click="handleRowClick(getObjectId(item), $event)">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:checked="selectedObjects.includes(getObjectId(item))"
-											@update:checked="handleSelectObject(getObjectId(item))" />
+											:model-value="selectedObjects.includes(getObjectId(item))"
+											@update:model-value="handleSelectObject(getObjectId(item))" />
 									</td>
 									<td v-for="(column, index) in orderedEnabledColumns"
 										:key="`cell-${getObjectId(item)}-${column.id || column.key || `col-${index}`}`"
