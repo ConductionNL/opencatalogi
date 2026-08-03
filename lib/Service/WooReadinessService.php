@@ -427,7 +427,7 @@ class WooReadinessService
             return;
         }
 
-        if (($report['valid'] ?? false) === true) {
+        if ($report['valid'] === true) {
             $checks[] = $this->buildCheck(id: $checkId, status: 'pass', catalogSlug: $slug);
             return;
         }

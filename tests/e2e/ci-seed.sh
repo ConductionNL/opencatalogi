@@ -189,8 +189,12 @@ APP_HTML="$(mktemp)"
 curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 	"${BASE}/index.php/apps/opencatalogi/" -o "$APP_HTML" || true
 
+# `|| true` is load-bearing: grep exits 1 when it matches nothing, and under
+# `set -euo pipefail` that aborts the script right here — so the case the gate
+# below exists to explain (no bundle) would die with a bare non-zero exit and
+# none of the diagnosis. Let it fall through to the gate instead.
 BUNDLE_SRC="$(grep -oE 'src="[^"]*opencatalogi-main[^"]*"' "$APP_HTML" \
-	| head -1 | sed 's/^src="//; s/"$//')"
+	| head -1 | sed 's/^src="//; s/"$//' || true)"
 
 if [ -n "$BUNDLE_SRC" ]; then
 	BUNDLE_INFO="$(curl -sS -o /dev/null \
