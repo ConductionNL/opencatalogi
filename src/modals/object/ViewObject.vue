@@ -79,7 +79,7 @@ import { EventBus } from '../../eventBus.js'
 					</div>
 
 					<div v-if="hasSelectedSchema && !allSelectionsComplete" class="selectionStep">
-						<NcButton type="primary" @click="proceedToProperties">
+						<NcButton variant="primary" @click="proceedToProperties">
 							<template #icon>
 								<ArrowRight :size="20" />
 							</template>
@@ -114,21 +114,21 @@ import { EventBus } from '../../eventBus.js'
 
 				<!-- For existing objects, show tabs -->
 				<div v-else class="tabContainer">
-					<BTabs v-model="activeTab" content-class="mt-3" justified>
-						<BTab :title="t('opencatalogi', 'Properties')" active>
+					<AppTabs v-model="activeTab" content-class="mt-3" justified>
+						<AppTab :title="t('opencatalogi', 'Properties')" active>
 							<PropertiesPanel
 								v-bind="propertiesPanelBindings"
 								@update:selected-property="selectedProperty = $event"
 								@update:property-value="onPropertyValueUpdate"
 								@drop-property="dropProperty" />
-						</BTab>
-						<BTab :title="t('opencatalogi', 'Metadata')">
+						</AppTab>
+						<AppTab :title="t('opencatalogi', 'Metadata')">
 							<CnMetadataTab
 								:item="currentObject"
 								:replace-rows="true"
 								:extra-rows="metadataExtraRows" />
-						</BTab>
-						<BTab>
+						</AppTab>
+						<AppTab>
 							<template #title>
 								<div class="tab-title">
 									<span>{{ t('opencatalogi', 'Files') }}</span>
@@ -197,9 +197,9 @@ import { EventBus } from '../../eventBus.js'
 											<tr class="viewTableRow">
 												<th class="tableColumnCheckbox">
 													<NcCheckboxRadioSwitch
-														:checked="allFilesSelected"
+														:model-value="allFilesSelected"
 														:indeterminate="someFilesSelected"
-														@update:checked="toggleSelectAllFiles" />
+														@update:modelValue="toggleSelectAllFiles" />
 												</th>
 												<th class="tableColumnExpanded table-row-title">
 													{{ t('opencatalogi', 'Name') }}
@@ -226,16 +226,22 @@ import { EventBus } from '../../eventBus.js'
 													else activeAttachment = attachment.id
 												}">
 												<td class="tableColumnCheckbox">
+													<!-- v9 NcCheckboxRadioSwitch has no `checked` prop and emits no
+													     `update:checked`; both are `modelValue`. -->
 													<NcCheckboxRadioSwitch
-														:checked="objectStore.selectedAttachments.includes(attachment.id)"
-														@update:checked="(checked) => toggleFileSelection(attachment.id, checked)" />
+														:model-value="objectStore.selectedAttachments.includes(attachment.id)"
+														@update:modelValue="(checked) => toggleFileSelection(attachment.id, checked)" />
 												</td>
 												<td class="tableColumnExpanded table-row-title">
 													<div class="file-name-container">
 														<div class="file-status-icons">
 															<!-- Show warning icon if file is not shared -->
+															<!-- `v-tooltip` no longer exists in @nextcloud/vue@9
+															     (the only directives shipped are Focus and Linkify),
+															     so an unregistered directive would silently no-op in
+															     production. Bound `title` keeps the hint. -->
 															<ExclamationThick v-if="!attachment.accessUrl && !attachment.downloadUrl"
-																v-tooltip="t('opencatalogi', 'Not shared')"
+																:title="t('opencatalogi', 'Not shared')"
 																class="warningIcon"
 																:size="20" />
 															<!-- Show published icon if file is shared -->
@@ -277,8 +283,8 @@ import { EventBus } from '../../eventBus.js'
 																:options="labelOptionsEdit.options"
 																@tag="addNewTag" />
 															<NcButton
-																v-tooltip="t('opencatalogi', 'Save labels')"
-																type="primary"
+																:title="t('opencatalogi', 'Save labels')"
+																variant="primary"
 																size="small"
 																:aria-label="t('opencatalogi', 'Save labels for {name}', { name: attachment.name ?? attachment?.title ?? 'file' })"
 																class="editTagsButton"
@@ -288,8 +294,8 @@ import { EventBus } from '../../eventBus.js'
 																</template>
 															</NcButton>
 															<NcButton
-																v-tooltip="t('opencatalogi', 'Cancel')"
-																type="secondary"
+																:title="t('opencatalogi', 'Cancel')"
+																variant="secondary"
 																size="small"
 																@click="cancelFileLabelEditing">
 																<template #icon>
@@ -372,8 +378,8 @@ import { EventBus } from '../../eventBus.js'
 								:min-items-to-show="5"
 								@page-changed="onFilesPageChanged"
 								@page-size-changed="onFilesPageSizeChanged" />
-						</BTab>
-					</BTabs>
+						</AppTab>
+					</AppTabs>
 				</div>
 			</div>
 		</div>
@@ -406,14 +412,14 @@ import { EventBus } from '../../eventBus.js'
 				{{ t('opencatalogi', 'Depublish') }}
 			</NcButton>
 			<NcButton v-if="!isNewObject"
-				type="error"
+				variant="error"
 				@click="singleDeleteObject">
 				<template #icon>
 					<Delete :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Delete') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:title="saveButtonTooltip"
 				:disabled="isSaving || !canSave"
 				@click="saveObject">
@@ -441,7 +447,8 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import { CnMetadataTab, validateValue } from '@conduction/nextcloud-vue'
-import { BTabs, BTab } from 'bootstrap-vue'
+import AppTabs from '../../components/tabs/AppTabs.vue'
+import AppTab from '../../components/tabs/AppTab.vue'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
@@ -481,8 +488,8 @@ export default {
 		NcEmptyContent,
 		NcSelect,
 		CnMetadataTab,
-		BTabs,
-		BTab,
+		AppTabs,
+		AppTab,
 		Cancel,
 		FileOutline,
 		FolderOutline,
@@ -1072,7 +1079,7 @@ export default {
 			.catch(() => { /* keep null — no filtering on error */ })
 	},
 	/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
-	destroyed() {
+	unmounted() {
 		try {
 			EventBus.$off('upload-files:tags-updated', this.onUploadFilesTagsUpdated)
 			EventBus.$off('upload-files:closed', this.onUploadFilesClosed)
@@ -1230,7 +1237,7 @@ export default {
 		applyInitialTabFromTransferData() {
 			const data = navigationStore.getTransferData()
 			if (data && typeof data === 'object' && data.initialTab === 'files') {
-				// Defer until BTabs has finished its own mount-time activation,
+				// Defer until AppTabs has finished its own mount-time activation,
 				// otherwise the `active` attribute on the Properties tab wins.
 				this.$nextTick(() => {
 					this.activeTab = 2
@@ -2067,17 +2074,17 @@ export default {
 				case 'object': cleared = {}; break
 				default: cleared = null
 				}
-				this.$set(this.formData, key, cleared)
+				this.formData[key] = cleared
 			} else {
 				// For non-schema properties, remove completely from formData
 				if (this.formData[key] !== undefined) {
-					this.$delete(this.formData, key)
+					delete this.formData[key]
 				}
 
 				// If it was in the original object, we need to track its removal
 				// We'll set it to a special marker that indicates deletion
 				if (this.currentObject && Object.prototype.hasOwnProperty.call(this.currentObject, key)) {
-					this.$set(this.formData, key, undefined)
+					this.formData[key] = undefined
 				}
 			}
 
@@ -2098,7 +2105,7 @@ export default {
 			if (!this.formData || Array.isArray(this.formData)) {
 				this.formData = {}
 			}
-			this.$set(this.formData, key, value)
+			this.formData[key] = value
 		},
 
 		/**
@@ -2115,9 +2122,9 @@ export default {
 				if (prop.hideOnForm === true) continue
 				if (Object.prototype.hasOwnProperty.call(this.formData, key)) continue
 				if (prop.default !== undefined) {
-					this.$set(this.formData, key, prop.default)
+					this.formData[key] = prop.default
 				} else if (prop.const !== undefined) {
-					this.$set(this.formData, key, prop.const)
+					this.formData[key] = prop.const
 				}
 			}
 		},

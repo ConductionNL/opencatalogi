@@ -30,7 +30,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				</template>
 				{{ t('opencatalogi', 'Back') }}
 			</NcButton>
-			<NcButton type="primary" @click="editEntity">
+			<NcButton variant="primary" @click="editEntity">
 				<template #icon>
 					<Pencil :size="20" />
 				</template>
@@ -74,7 +74,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				:value="JSON.stringify(entity, null, 2)"
 				language="json"
 				:read-only="true"
-				:height="300" />
+				height="300px" />
 		</template>
 	</CnDetailPage>
 </template>

@@ -10,12 +10,12 @@ on:
         type: boolean
         default: true
 
-permissions:
-  contents: read
+# The callee needs `issues: write`; a caller capped at `contents: read` makes
+# the call unsatisfiable.
 
 jobs:
   triage:
-    uses: Conduction/.github/.github/workflows/issue-triage.yml@feature/openspec-project-sync
+    uses: ConductionNL/.github/.github/workflows/issue-triage.yml@main
     with:
       app-name: opencatalogi
       backlog-existing: ${{ github.event_name == 'workflow_dispatch' && inputs.backlog-existing || false }}

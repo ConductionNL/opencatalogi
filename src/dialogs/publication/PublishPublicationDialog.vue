@@ -33,7 +33,7 @@ import { objectStore, navigationStore } from '../../store/store.js'
 				</NcButton>
 				<NcButton v-if="success === null"
 					:disabled="loading"
-					type="primary"
+					variant="primary"
 					@click="handleCopy">
 					<template #icon>
 						<span>

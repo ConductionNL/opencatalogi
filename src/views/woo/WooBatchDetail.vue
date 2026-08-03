@@ -176,10 +176,10 @@ export default {
 				<NcButton :href="inventarislijstUrl('html')">
 					{{ t('opencatalogi', 'Download inventarislijst (PDF/A)') }}
 				</NcButton>
-				<NcButton v-if="canReview" type="secondary" @click="markReadyForReview">
+				<NcButton v-if="canReview" variant="secondary" @click="markReadyForReview">
 					{{ t('opencatalogi', 'Mark ready for review') }}
 				</NcButton>
-				<NcButton v-if="canPublish" type="primary" @click="publish">
+				<NcButton v-if="canPublish" variant="primary" @click="publish">
 					{{ t('opencatalogi', 'Publish to reading room') }}
 				</NcButton>
 			</div>

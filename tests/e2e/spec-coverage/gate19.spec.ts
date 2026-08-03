@@ -29,6 +29,7 @@ import {
 	navTo,
 	content,
 	dismissOverlays,
+	openSettingsFoldout,
 	trackPageErrors,
 	fatalErrors,
 } from './_nav'
@@ -380,16 +381,12 @@ test.describe('admin-settings', () => {
 		async ({ page }) => {
 			await bootApp(page)
 			const entry = page.locator('[data-testid="cn-nav-entry-SettingsMenu"]').first()
+			// Use the shared helper rather than an inline copy of the gear
+			// selectors: @nextcloud/vue v9 renders the settings foldout with
+			// hashed CSS-module class names, so the old selector list matches
+			// nothing and the entry stays hidden.
 			if (!(await entry.isVisible().catch(() => false))) {
-				const gear = page.locator(
-					'.app-navigation-entry__settings-button, button.settings-button, '
-					+ '.app-navigation__settings-button, .app-navigation-settings > button, '
-					+ '.app-navigation__settings button',
-				).first()
-				if (await gear.isVisible().catch(() => false)) {
-					await gear.click()
-					await page.waitForTimeout(500)
-				}
+				await openSettingsFoldout(page)
 			}
 			await expect(entry).toBeVisible({ timeout: 10000 })
 			await entry.click()

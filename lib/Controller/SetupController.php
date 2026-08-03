@@ -323,6 +323,7 @@ class SetupController extends Controller
         if ($publicationRegister !== '') {
             $catalogObject['registers'] = [$publicationRegister];
         }
+
         if ($publicationSchema !== '') {
             $catalogObject['schemas'] = [$publicationSchema];
         }
@@ -400,7 +401,7 @@ class SetupController extends Controller
         return new JSONResponse(
             [
                 'success' => true,
-                'message' => $this->buildFederationMessage($created, $updated, $advertised),
+                'message' => $this->buildFederationMessage(created: $created, updated: $updated, advertised: $advertised),
                 'details' => [
                     'listings_created' => $created,
                     'listings_updated' => $updated,
@@ -446,7 +447,8 @@ class SetupController extends Controller
             );
         } else {
             $parts[] = $this->l10n->t(
-                'This instance could not be announced to the directory (it may not be reachable from the directory host). Federation still works one-way; retry later or announce it manually.'
+                'This instance could not be announced to the directory (it may not be reachable from the directory host).'
+                .' Federation still works one-way; retry later or announce it manually.'
             );
         }
 

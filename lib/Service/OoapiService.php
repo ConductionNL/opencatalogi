@@ -212,9 +212,9 @@ class OoapiService
      * Render the catalog's owning Organisation as an OOAPI 5.0 `organization`
      * resource, live, with no materialization step (OOAPI-002).
      *
-     * @param array<string, mixed> $catalog             The catalog object.
-     * @param string                $organizationRegister The resolved organisation register id.
-     * @param string                $organizationSchema   The resolved organisation schema id.
+     * @param array<string, mixed> $catalog              The catalog object.
+     * @param string               $organizationRegister The resolved organisation register id.
+     * @param string               $organizationSchema   The resolved organisation schema id.
      *
      * @return array<string, mixed>|null The rendered `organization` resource, or null when the catalog has none.
      *
@@ -227,7 +227,11 @@ class OoapiService
             return null;
         }
 
-        return $this->getOrganization(organisationId: $organisationId, organizationRegister: $organizationRegister, organizationSchema: $organizationSchema);
+        return $this->getOrganization(
+            organisationId: $organisationId,
+            organizationRegister: $organizationRegister,
+            organizationSchema: $organizationSchema
+        );
 
     }//end renderOrganization()
 
@@ -237,9 +241,9 @@ class OoapiService
      * reuse the existing single `catalog.organization` reference).
      *
      * @param array<string, mixed> $catalog              The catalog object.
-     * @param string                $id                   The requested organization id.
-     * @param string                $organizationRegister The resolved organisation register id.
-     * @param string                $organizationSchema   The resolved organisation schema id.
+     * @param string               $id                   The requested organization id.
+     * @param string               $organizationRegister The resolved organisation register id.
+     * @param string               $organizationSchema   The resolved organisation schema id.
      *
      * @return array<string, mixed>|null The rendered `organization` resource, or null when unresolvable.
      *
@@ -252,7 +256,11 @@ class OoapiService
             return null;
         }
 
-        return $this->getOrganization(organisationId: $organisationId, organizationRegister: $organizationRegister, organizationSchema: $organizationSchema);
+        return $this->getOrganization(
+            organisationId: $organisationId,
+            organizationRegister: $organizationRegister,
+            organizationSchema: $organizationSchema
+        );
 
     }//end organizationById()
 
@@ -297,13 +305,13 @@ class OoapiService
      * an extra equality filter (e.g. `courseId` for the offerings-under-course
      * view, OOAPI-006).
      *
-     * @param string                $catalogId  The catalog's own id/uuid.
-     * @param string                $register   The resolved register id.
-     * @param string                $schema     The resolved schema id.
-     * @param string                $idField    The OOAPI resource id field name.
-     * @param int                    $page       The 1-based page number.
-     * @param int                    $pageSize   The requested page size (capped at MAX_PAGE_SIZE).
-     * @param array<string, mixed>  $extraQuery Additional equality filters (e.g. `['courseId' => '...']`).
+     * @param string               $catalogId  The catalog's own id/uuid.
+     * @param string               $register   The resolved register id.
+     * @param string               $schema     The resolved schema id.
+     * @param string               $idField    The OOAPI resource id field name.
+     * @param int                  $page       The 1-based page number.
+     * @param int                  $pageSize   The requested page size (capped at MAX_PAGE_SIZE).
+     * @param array<string, mixed> $extraQuery Additional equality filters (e.g. `['courseId' => '...']`).
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated OOAPI collection.
      *
@@ -364,10 +372,10 @@ class OoapiService
      * List the materialized `course` resources scoped to a catalog (OOAPI-001).
      *
      * @param array<string, mixed> $catalog  The catalog object.
-     * @param string                $register The resolved `ooapi_courses` register id.
-     * @param string                $schema   The resolved `ooapi_courses` schema id.
-     * @param int                    $page     The 1-based page number.
-     * @param int                    $pageSize The requested page size.
+     * @param string               $register The resolved `ooapi_courses` register id.
+     * @param string               $schema   The resolved `ooapi_courses` schema id.
+     * @param int                  $page     The 1-based page number.
+     * @param int                  $pageSize The requested page size.
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated course collection.
      */
@@ -388,10 +396,10 @@ class OoapiService
      * List the materialized `program` resources scoped to a catalog (OOAPI-001).
      *
      * @param array<string, mixed> $catalog  The catalog object.
-     * @param string                $register The resolved `ooapi_programs` register id.
-     * @param string                $schema   The resolved `ooapi_programs` schema id.
-     * @param int                    $page     The 1-based page number.
-     * @param int                    $pageSize The requested page size.
+     * @param string               $register The resolved `ooapi_programs` register id.
+     * @param string               $schema   The resolved `ooapi_programs` schema id.
+     * @param int                  $page     The 1-based page number.
+     * @param int                  $pageSize The requested page size.
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated program collection.
      */
@@ -413,11 +421,11 @@ class OoapiService
      * filtered to a single parent course (OOAPI-006).
      *
      * @param array<string, mixed> $catalog  The catalog object.
-     * @param string                $register The resolved `ooapi_offerings` register id.
-     * @param string                $schema   The resolved `ooapi_offerings` schema id.
-     * @param string|null            $courseId Filter to this parent course's offerings, or null for all.
-     * @param int                    $page     The 1-based page number.
-     * @param int                    $pageSize The requested page size.
+     * @param string               $register The resolved `ooapi_offerings` register id.
+     * @param string               $schema   The resolved `ooapi_offerings` schema id.
+     * @param string|null          $courseId Filter to this parent course's offerings, or null for all.
+     * @param int                  $page     The 1-based page number.
+     * @param int                  $pageSize The requested page size.
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated offering collection.
      */
@@ -446,10 +454,10 @@ class OoapiService
      * not scoped to this catalog, or its schema carries no `x-ooapi` annotation.
      *
      * @param array<string, mixed> $catalog  The catalog object.
-     * @param string                $register The resolved register id.
-     * @param string                $schema   The resolved schema id.
-     * @param string                $id       The requested object id.
-     * @param string                $idField  The OOAPI resource id field name.
+     * @param string               $register The resolved register id.
+     * @param string               $schema   The resolved schema id.
+     * @param string               $id       The requested object id.
+     * @param string               $idField  The OOAPI resource id field name.
      *
      * @return array<string, mixed>|null The rendered resource, or null.
      *
@@ -495,8 +503,8 @@ class OoapiService
      * precedent, OOAPI-010).
      *
      * @param array<string, mixed> $catalog        The catalog object.
-     * @param string                $courseRegister The resolved `ooapi_courses` register id.
-     * @param string                $courseSchema   The resolved `ooapi_courses` schema id.
+     * @param string               $courseRegister The resolved `ooapi_courses` register id.
+     * @param string               $courseSchema   The resolved `ooapi_courses` schema id.
      *
      * @return array<int, array<string, mixed>> One entry per violating course resource.
      *
@@ -507,7 +515,13 @@ class OoapiService
         $violations = [];
         $page       = 1;
         do {
-            $result = $this->listCourses($catalog, $courseRegister, $courseSchema, $page, self::MAX_PAGE_SIZE);
+            $result = $this->listCourses(
+                $catalog,
+                register: $courseRegister,
+                schema: $courseSchema,
+                page: $page,
+                pageSize: self::MAX_PAGE_SIZE
+            );
             foreach ($result['items'] as $course) {
                 $missing = [];
                 foreach (['courseId', 'code', 'name'] as $required) {

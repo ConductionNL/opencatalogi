@@ -31,27 +31,27 @@ import { objectStore } from '../../store/store.js'
 				<div class="viewActions">
 					<div class="viewModeSwitchContainer">
 						<NcCheckboxRadioSwitch
-							:v-tooltip="t('opencatalogi', 'See publications as cards')"
-							:checked="searchStore.getViewMode === 'cards'"
+							:title="t('opencatalogi', 'See publications as cards')"
+							:model-value="searchStore.getViewMode"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'cards' }"
 							value="cards"
 							name="publications_view_mode"
 							type="radio"
 							button-variant-grouped="horizontal"
-							@update:checked="() => searchStore.setViewMode('cards')">
+							@update:model-value="() => searchStore.setViewMode('cards')">
 							{{ t('opencatalogi', 'Cards') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							:v-tooltip="t('opencatalogi', 'See publications as a table')"
-							:checked="searchStore.getViewMode === 'table'"
+							:title="t('opencatalogi', 'See publications as a table')"
+							:model-value="searchStore.getViewMode"
 							:button-variant="true"
 							:class="{ 'checkbox-radio-switch--checked': viewMode === 'table' }"
 							value="table"
 							name="publications_view_mode"
 							type="radio"
 							button-variant-grouped="horizontal"
-							@update:checked="() => searchStore.setViewMode('table')">
+							@update:model-value="() => searchStore.setViewMode('table')">
 							{{ t('opencatalogi', 'Table') }}
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -89,7 +89,7 @@ import { objectStore } from '../../store/store.js'
 					<AlertCircleOutline :size="64" />
 				</template>
 				<template #action>
-					<NcButton type="primary" @click="performSearch">
+					<NcButton variant="primary" @click="performSearch">
 						{{ t('opencatalogi', 'Try again') }}
 					</NcButton>
 				</template>
@@ -119,7 +119,7 @@ import { objectStore } from '../../store/store.js'
 					<div class="cardGrid">
 						<div v-for="publication in searchStore.getSearchResults" :key="publication.id" class="card">
 							<div class="cardHeader">
-								<h2 v-tooltip.bottom="publication.summary || publication.description">
+								<h2 :title="publication.summary || publication.description">
 									<FileDocumentOutline :size="20" />
 									{{ publication.title || publication.name }}
 								</h2>
@@ -212,9 +212,9 @@ import { objectStore } from '../../store/store.js'
 								<tr>
 									<th class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:checked="allSelected"
+											:model-value="allSelected"
 											:indeterminate="someSelected"
-											@update:checked="toggleSelectAll" />
+											@update:model-value="toggleSelectAll" />
 									</th>
 									<th>{{ t('opencatalogi', 'Title') }}</th>
 									<th>{{ t('opencatalogi', 'Status') }}</th>
@@ -235,8 +235,8 @@ import { objectStore } from '../../store/store.js'
 									:class="{ viewTableRowSelected: searchStore.getSelectedPublications.includes(publication.id) }">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
-											:checked="searchStore.getSelectedPublications.includes(publication.id)"
-											@update:checked="(checked) => searchStore.togglePublicationSelection(publication.id, checked)" />
+											:model-value="searchStore.getSelectedPublications.includes(publication.id)"
+											@update:model-value="(checked) => searchStore.togglePublicationSelection(publication.id, checked)" />
 									</td>
 									<td class="tableColumnTitle">
 										<div class="titleContent">

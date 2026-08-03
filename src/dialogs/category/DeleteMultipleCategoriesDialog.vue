@@ -38,7 +38,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<NcButton
 				:disabled="objectStore.isLoading('category')"
 				icon="Delete"
-				type="error"
+				variant="error"
 				@click="deleteCategories()">
 				<template #icon>
 					<Delete :size="20" />

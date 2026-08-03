@@ -43,31 +43,31 @@
 			<div class="formContainer">
 				<NcTextField
 					:label="t('opencatalogi', 'Title') + ' *'"
-					:value="formData.title || ''"
+					:model-value="formData.title || ''"
 					:error="!!errors.title"
 					:helper-text="errors.title"
 					maxlength="255"
-					@update:value="v => updateField('title', v)" />
+					@update:model-value="v => updateField('title', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'Summary')"
-					:value="formData.summary || ''"
+					:model-value="formData.summary || ''"
 					maxlength="255"
-					@update:value="v => updateField('summary', v)" />
+					@update:model-value="v => updateField('summary', v)" />
 				<NcTextArea
 					:label="t('opencatalogi', 'Description')"
-					:value="formData.description || ''"
-					@update:value="v => updateField('description', v)" />
+					:model-value="formData.description || ''"
+					@update:model-value="v => updateField('description', v)" />
 				<NcTextField
 					:label="t('opencatalogi', 'External link')"
-					:value="formData.externalLink || ''"
-					@update:value="v => updateField('externalLink', v)" />
+					:model-value="formData.externalLink || ''"
+					@update:model-value="v => updateField('externalLink', v)" />
 				<NcSelect
-					:value="formData.keywords || []"
+					:model-value="formData.keywords || []"
 					:input-label="t('opencatalogi', 'Keywords')"
 					:multiple="true"
 					:taggable="true"
 					:placeholder="t('opencatalogi', 'Type and press Enter to add keywords')"
-					@input="v => updateField('keywords', v)" />
+					@update:model-value="v => updateField('keywords', v)" />
 			</div>
 		</template>
 		<template #column-published="{ row }">

@@ -287,11 +287,12 @@ class SetupControllerTest extends TestCase
         $objectService = $this->mockObjectService([]);
 
         $capturedObject = null;
+        $saved          = $this->makeEntity();
         $objectService->expects($this->once())
             ->method('saveObject')
-            ->willReturnCallback(function ($object) use (&$capturedObject) {
+            ->willReturnCallback(function ($object) use (&$capturedObject, $saved) {
                 $capturedObject = $object;
-                return null;
+                return $saved;
             });
 
         $body = $this->controller->action('create-first-catalog')->getData();
@@ -318,11 +319,12 @@ class SetupControllerTest extends TestCase
         $objectService = $this->mockObjectService([]);
 
         $capturedObject = null;
+        $saved          = $this->makeEntity();
         $objectService->expects($this->once())
             ->method('saveObject')
-            ->willReturnCallback(function ($object) use (&$capturedObject) {
+            ->willReturnCallback(function ($object) use (&$capturedObject, $saved) {
                 $capturedObject = $object;
-                return null;
+                return $saved;
             });
 
         $body = $this->controller->action('create-first-catalog')->getData();

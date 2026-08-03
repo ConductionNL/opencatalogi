@@ -36,7 +36,7 @@ import '../../css/json-highlight.css'
 					v-model="searchTerm"
 					:label="t('opencatalogi', 'Search objects')"
 					:placeholder="t('opencatalogi', 'Type to search for objects...')"
-					@input="searchObjects" />
+					@update:modelValue="searchObjects" />
 			</div>
 
 			<div v-if="loading" class="loading-container">
@@ -110,7 +110,7 @@ import '../../css/json-highlight.css'
 										track-by="value"
 										:input-label="t('opencatalogi', 'Merge value')"
 										:placeholder="t('opencatalogi', 'Choose value for {property}', { property })"
-										@input="onPropertySelectionChange(property, $event)" />
+										@update:modelValue="onPropertySelectionChange(property, $event)" />
 									<NcTextField
 										v-if="mergedData[property] === 'custom'"
 										v-model="customValues[property]"
@@ -145,7 +145,7 @@ import '../../css/json-highlight.css'
 				</div>
 
 				<div class="table-toggle">
-					<NcButton type="tertiary" @click="toggleFileList">
+					<NcButton variant="tertiary" @click="toggleFileList">
 						{{ showFileList ? t('opencatalogi', 'Hide Files') : t('opencatalogi', 'View Files') }}
 						<template #icon>
 							<ChevronUp v-if="showFileList" :size="20" />
@@ -202,7 +202,7 @@ import '../../css/json-highlight.css'
 				</div>
 
 				<div class="table-toggle">
-					<NcButton type="tertiary" @click="toggleRelationList">
+					<NcButton variant="tertiary" @click="toggleRelationList">
 						{{ showRelationList ? t('opencatalogi', 'Hide Relations') : t('opencatalogi', 'View Relations') }}
 						<template #icon>
 							<ChevronUp v-if="showRelationList" :size="20" />
@@ -351,7 +351,7 @@ import '../../css/json-highlight.css'
 			</NcButton>
 
 			<NcButton v-if="step === 3 && mergeResult?.success"
-				type="secondary"
+				variant="secondary"
 				@click="viewMergedObject">
 				<template #icon>
 					<Eye :size="20" />
@@ -361,7 +361,7 @@ import '../../css/json-highlight.css'
 
 			<NcButton v-if="step === 1"
 				:disabled="!selectedTargetObject"
-				type="primary"
+				variant="primary"
 				@click="nextStep">
 				<template #icon>
 					<ArrowRight :size="20" />
@@ -370,7 +370,7 @@ import '../../css/json-highlight.css'
 			</NcButton>
 
 			<NcButton v-if="step === 2"
-				type="secondary"
+				variant="secondary"
 				@click="previousStep">
 				<template #icon>
 					<ArrowLeft :size="20" />
@@ -380,7 +380,7 @@ import '../../css/json-highlight.css'
 
 			<NcButton v-if="step === 2"
 				:disabled="loading || !canMerge"
-				type="primary"
+				variant="primary"
 				@click="performMerge">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />

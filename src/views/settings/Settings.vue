@@ -10,7 +10,7 @@
 		:show-reimport="false">
 		<template #actions>
 			<NcButton
-				type="secondary"
+				variant="secondary"
 				:disabled="importing"
 				@click="manualImport(false)">
 				<template #icon>
@@ -21,7 +21,7 @@
 			</NcButton>
 
 			<NcButton
-				type="primary"
+				variant="primary"
 				:disabled="importing"
 				@click="manualImport(true)">
 				<template #icon>
@@ -65,7 +65,7 @@
 						:options="registerOptions"
 						:input-label="t('opencatalogi', 'Register')"
 						:disabled="loading || !settings.openRegisters"
-						@change="handleRegisterChange" />
+						@update:model-value="handleRegisterChange" />
 				</div>
 
 				<!-- Warning if selected register has no schemas -->
@@ -94,7 +94,7 @@
 				<!-- Save Buttons -->
 				<div class="button-container">
 					<NcButton
-						type="primary"
+						variant="primary"
 						:disabled="loading || saving || !selectedRegister || !hasSchemas"
 						@click="saveAll">
 						<template #icon>
@@ -154,7 +154,7 @@
 
 				<div class="button-container">
 					<NcButton
-						type="primary"
+						variant="primary"
 						:disabled="wooReadinessRunning"
 						@click="runWooReadinessCheck">
 						<template #icon>
@@ -180,21 +180,21 @@
 						:disabled="savingRegistration" />
 
 					<NcTextField
-						:value="registration.registeredUrl"
+						:model-value="registration.registeredUrl"
 						:label="t('opencatalogi', 'Registered URL')"
 						:disabled="savingRegistration"
-						@update:value="v => registration.registeredUrl = v" />
+						@update:model-value="v => registration.registeredUrl = v" />
 
 					<NcTextField
-						:value="registration.registeredAt"
+						:model-value="registration.registeredAt"
 						:label="t('opencatalogi', 'Registered on (date)')"
 						:disabled="savingRegistration"
-						@update:value="v => registration.registeredAt = v" />
+						@update:model-value="v => registration.registeredAt = v" />
 				</div>
 
 				<div class="button-container">
 					<NcButton
-						type="secondary"
+						variant="secondary"
 						:disabled="savingRegistration"
 						@click="saveRegistration">
 						<template #icon>
@@ -214,7 +214,7 @@
 				<!-- Auto Publish Attachments -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
-						:checked.sync="publishingOptions.autoPublishAttachments"
+						v-model="publishingOptions.autoPublishAttachments"
 						:disabled="saving">
 						{{ t('opencatalogi', 'Auto publish attachments') }}
 					</NcCheckboxRadioSwitch>
@@ -226,7 +226,7 @@
 				<!-- Auto Publish Objects -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
-						:checked.sync="publishingOptions.autoPublishObjects"
+						v-model="publishingOptions.autoPublishObjects"
 						:disabled="saving">
 						{{ t('opencatalogi', 'Auto publish objects') }}
 					</NcCheckboxRadioSwitch>
@@ -238,7 +238,7 @@
 				<!-- Use Old Style Publishing View -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
-						:checked.sync="publishingOptions.useOldStylePublishingView"
+						v-model="publishingOptions.useOldStylePublishingView"
 						:disabled="saving">
 						{{ t('opencatalogi', 'Use old style publishing view') }}
 					</NcCheckboxRadioSwitch>
@@ -250,7 +250,7 @@
 				<!-- Save Button for Publishing Options -->
 				<div class="button-container">
 					<NcButton
-						type="primary"
+						variant="primary"
 						:disabled="loading || saving"
 						@click="savePublishingOptions">
 						<template #icon>

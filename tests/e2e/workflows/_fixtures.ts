@@ -39,8 +39,13 @@
  * never call a non-existent `saveObject`/`publish` REST verb here.
  */
 import { request, type APIRequestContext } from '@playwright/test'
+import { BASE_URL } from '../base-url'
 
-export const BASE = process.env.NEXTCLOUD_URL || 'http://localhost:8080'
+// ⚠️ This module CREATES AND DELETES catalogs and publications. Its previous
+// `|| 'http://localhost:8080'` fallback aimed those writes at the SHARED dev
+// container whenever NEXTCLOUD_URL was unset — which is the default. There is
+// deliberately no default now; see tests/e2e/base-url.ts.
+export const BASE = BASE_URL
 export const ADMIN_USER = process.env.NC_ADMIN_USER || 'admin'
 export const ADMIN_PASS = process.env.NC_ADMIN_PASS || 'admin'
 

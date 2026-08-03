@@ -32,7 +32,7 @@ import { objectStore } from '../store/store.js'
 						</p>
 					</div>
 					<NcButton v-if="showRemove"
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('opencatalogi', 'Remove {name}', { name: getObjectName(attachment) })"
 						@click="removeObject(attachment.id)">
 						<template #icon>

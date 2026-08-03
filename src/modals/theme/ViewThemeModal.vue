@@ -132,7 +132,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			</div>
 
 			<div class="modalActions">
-				<NcButton type="secondary" @click="openEditModal">
+				<NcButton variant="secondary" @click="openEditModal">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>

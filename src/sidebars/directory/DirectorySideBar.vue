@@ -14,7 +14,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<LayersOutline />
 			</template>
 			<template #action>
-				<NcButton type="primary" @click="navigationStore.setModal('addDirectory')">
+				<NcButton variant="primary" @click="navigationStore.setModal('addDirectory')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
@@ -77,16 +77,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 			<template #icon>
 				<CogOutline :size="20" />
 			</template>
-			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').available" type="switch">
+			<NcCheckboxRadioSwitch v-model="objectStore.getActiveObject('listing').available" type="switch">
 				{{ t('opencatalogi', 'Make available for my searches') }}
 			</NcCheckboxRadioSwitch>
-			<NcCheckboxRadioSwitch :checked.sync="objectStore.getActiveObject('listing').default" type="switch">
+			<NcCheckboxRadioSwitch v-model="objectStore.getActiveObject('listing').default" type="switch">
 				{{ t('opencatalogi', 'Take part in answering my searches') }}
 			</NcCheckboxRadioSwitch>
 
 			<NcButton
 				:disabled="syncLoading"
-				type="primary"
+				variant="primary"
 				class="syncButton"
 				@click="synDirectroy">
 				<template #icon>
@@ -114,9 +114,9 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					<NcCheckboxRadioSwitch
 						v-else
 						:key="`${publicationType}${i}`"
-						:checked="publicationType.listed"
+						:model-value="publicationType.listed"
 						type="switch"
-						@update:checked="togglePublicationType(publicationType)">
+						@update:model-value="togglePublicationType(publicationType)">
 						{{ publicationType.title ?? publicationType.source ?? publicationType }}
 					</NcCheckboxRadioSwitch>
 				</template>
@@ -251,7 +251,7 @@ export default {
 					// Check if the publicationType URL exists in the publicationTypeStore.publicationTypeList
 					const exists = objectStore.getCollection('publication_type').results.some(publicationType => publicationType.source === publicationTypeUrl)
 					// Update the checkedPublicationType reactive state
-					this.$set(this.checkedPublicationTypeObject, publicationTypeUrl, exists)
+					this.checkedPublicationTypeObject[publicationTypeUrl] = exists
 				})
 			}
 			this.loading = false

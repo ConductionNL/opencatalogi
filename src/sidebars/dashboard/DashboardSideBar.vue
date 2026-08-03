@@ -12,9 +12,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<Magnify :size="20" />
 			</template>
 			{{ t('opencatalogi', 'Search in the federative network') }}
+			<!-- `:value` is NOT a prop on Nc v9's NcTextField: it wraps NcInputField,
+			     which declares `modelValue` as REQUIRED. A plain `:value` therefore
+			     leaves `modelValue` undefined, the required-prop check throws, and
+			     the component renders NO `<input>` at all while the surrounding
+			     sidebar still looks fine. Bind `:model-value` and write back through
+			     `@update:model-value`, matching PublicationList.vue. -->
 			<NcTextField class="searchField"
-				:value="objectStore.getSearchTerm('search')"
-				:label="t('opencatalogi', 'Search')" />
+				:model-value="objectStore.getSearchTerm('search')"
+				:label="t('opencatalogi', 'Search')"
+				@update:model-value="objectStore.setSearchTerm('search', $event)" />
 			<NcNoteCard v-if="objectStore.getError('search')" type="error">
 				<p>{{ objectStore.getError('search') }}</p>
 			</NcNoteCard>
@@ -41,16 +48,16 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					:input-label="t('opencatalogi', 'Publication type*')"
 					:loading="publicationTypeLoading"
 					:disabled="publicationTypeLoading || loading || !catalogi.value?.id" />
-				<NcTextField :disabled="loading"
-					:label="t('opencatalogi', 'Title*')"
-					:value.sync="publicationItem.title" />
-				<NcTextField :disabled="loading"
-					:label="t('opencatalogi', 'Summary*')"
-					:value.sync="publicationItem.summary" />
+				<NcTextField v-model="publicationItem.title"
+					:disabled="loading"
+					:label="t('opencatalogi', 'Title*')" />
+				<NcTextField v-model="publicationItem.summary"
+					:disabled="loading"
+					:label="t('opencatalogi', 'Summary*')" />
 			</div>
 			<NcButton :disabled="!publicationItem.title || !publicationItem.summary || !catalogi.value?.id || !publicationType.value?.id || loading"
 				style="margin-top: 0.5rem;"
-				type="primary"
+				variant="primary"
 				class="addButton"
 				@click="addPublication()">
 				<template #icon>
