@@ -34,6 +34,27 @@ function ensureBundleBuilt(): void {
 	if (fs.existsSync(BUNDLE_PATH)) {
 		return
 	}
+	// On CI this is a hard error, not something to repair.
+	//
+	// The shared workflow has already run its own "Build app frontend" step by
+	// the time we get here, so a missing bundle means that step did not produce
+	// one — and silently rebuilding turns a broken build into a green run with
+	// nothing to show for it. It also makes the bundle genuinely untestable:
+	// a positive control that removes the bundle to prove the specs depend on it
+	// gets healed right back before the first spec runs, and the suite passes.
+	// (Observed: run 30791459241 passed 82/82 with the bundle deleted, because
+	// this function rebuilt it — the control proved nothing until it was changed
+	// to truncate the file instead.)
+	//
+	// Locally the rebuild stays, because there it is a genuine convenience:
+	// a fresh checkout has no `js/` and nothing else is going to build it.
+	if (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true') {
+		throw new Error(
+			`[playwright globalSetup] bundle missing at ${BUNDLE_PATH} on CI. `
+			+ 'The workflow\'s "Build app frontend" step should already have produced it — '
+			+ 'check that step rather than rebuilding here, because a rebuild would hide it.',
+		)
+	}
 	// eslint-disable-next-line no-console
 	console.log(`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`)
 	execSync('npm run build', { cwd: APP_ROOT, stdio: 'inherit' })
