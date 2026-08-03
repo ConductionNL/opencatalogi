@@ -229,3 +229,25 @@ if [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
 fi
 
 echo "[ci-seed] done."
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TEMPORARY POSITIVE CONTROL — REVERTED IMMEDIATELY AFTER THIS RUN.
+#
+# Placed at the very END, AFTER the bundle gate above has already confirmed the
+# bundle is present and served as JavaScript. So the gate passes on a real
+# bundle and the specs then run against an app that cannot mount — which
+# isolates the question being asked: do the specs actually depend on the
+# OpenCatalogi frontend, or would they pass regardless?
+#
+# If the suite still reports green here, the green from the previous run is
+# worthless.
+# ══════════════════════════════════════════════════════════════════════════════
+CONTROL_JS="apps/opencatalogi/js/opencatalogi-main.js"
+if [ -f "$CONTROL_JS" ]; then
+	mv "$CONTROL_JS" "${CONTROL_JS}.CONTROL-MOVED"
+	echo "::warning::POSITIVE CONTROL ACTIVE — bundle moved aside. The suite MUST now fail."
+else
+	echo "::error::POSITIVE CONTROL could not run — ${CONTROL_JS} not found from $(pwd)."
+	ls -la apps/opencatalogi/js/ 2>&1 | head -20
+	exit 1
+fi
