@@ -843,7 +843,7 @@ class SettingsService
             // on hash equality, so a changed fragment is detected there, from the
             // data, without this app encoding anything into a version string.
             // The version means what it says again: the app's version.
-
+            //
             // Use importFromApp to import the configuration data directly.
             // This avoids the file path resolution issue in importFromFilePath.
             $result = $configurationService->importFromApp(
