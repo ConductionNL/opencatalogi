@@ -776,7 +776,6 @@ class SettingsService
             // OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
             // fragments union cleanly by key.
             $fragmentDir = $appPath.'/lib/Settings/register.d';
-            $fragmentSig = '';
             if (is_dir($fragmentDir) === true) {
                 $fragmentFiles = glob($fragmentDir.'/*.json');
                 sort($fragmentFiles);
@@ -792,8 +791,7 @@ class SettingsService
                         continue;
                     }
 
-                    $data         = self::deepMergeConfig($data, $fragmentData);
-                    $fragmentSig .= basename($fragmentFile).':'.md5($fragmentContent).';';
+                    $data = self::deepMergeConfig($data, $fragmentData);
                 }
             }//end if
 
@@ -831,11 +829,20 @@ class SettingsService
             // Get the current app version. dynamically.
             $currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
 
-            // ADR-037: fold the fragment signature into the version so OpenRegister's
-            // version-gated importFromApp re-imports whenever register.d fragments change.
-            if ($fragmentSig !== '') {
-                $currentAppVersion .= '+frag.'.substr(md5($fragmentSig), 0, 8);
-            }
+            // The fragment digest is NOT folded into the version any more.
+            //
+            // ADR-037 originally appended `+frag.<md5>` so OpenRegister's
+            // version-gated import would re-import when a register.d fragment
+            // changed. That made the decision depend on how two md5 hashes SORT:
+            // version_compare treats `+…` as further version parts and compares
+            // them lexically, not as semver build metadata. Unchanged content
+            // re-imported roughly half the time, and a real change was skipped
+            // the other half — caught only by the content-differs fallback.
+            //
+            // OpenRegister now hashes the merged configuration itself and skips
+            // on hash equality, so a changed fragment is detected there, from the
+            // data, without this app encoding anything into a version string.
+            // The version means what it says again: the app's version.
 
             // Use importFromApp to import the configuration data directly.
             // This avoids the file path resolution issue in importFromFilePath.
