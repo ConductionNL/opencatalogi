@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Behavioral UI coverage for the OpenCatalogi Directory page, reached via
  * its CnAppNav entry (AdminGroup).

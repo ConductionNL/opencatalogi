@@ -417,6 +417,7 @@
 			"route": "/catalogi",
 			"type": "custom",
 			"component": "CatalogsIndexView",
+			"_note": "CnIndexPage with slot overrides a manifest type:\"index\" page cannot express: a #below-header notice shown only to non-admins, four bespoke column renderers (listed/registers/schemas/organization) and custom #row-actions. Could become type:\"index\" once the manifest can declare per-column render components and conditional header content.",
 			"title": "Catalogs",
 			"config": {
 				"register": "@resolve:catalog_register",

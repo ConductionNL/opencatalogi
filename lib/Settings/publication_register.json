@@ -475,7 +475,7 @@
           }
         },
         "title": "Catalog",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
@@ -609,7 +609,8 @@
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "x-openregister-shareable": true
         },
         "hardValidation": true,
         "searchable": true,

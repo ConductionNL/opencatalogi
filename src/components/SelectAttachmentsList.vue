@@ -3,7 +3,7 @@
  * @module Components
  * @author Your Name
  * @copyright 2024 Your Organization
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  * @version 1.0.0
  */
 

@@ -12,7 +12,7 @@
  *
  * @category Services
  * @package opencatalogi
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  */
 
 import { fromFontAwesome, fromOpenGemeenten } from '@conduction/nextcloud-vue'
