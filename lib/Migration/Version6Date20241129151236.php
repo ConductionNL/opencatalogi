@@ -26,8 +26,6 @@ use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Migration to create the pages table.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class Version6Date20241129151236 extends SimpleMigrationStep
 {

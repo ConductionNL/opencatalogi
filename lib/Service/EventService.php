@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTime;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Container\ContainerExceptionInterface;
@@ -419,7 +420,7 @@ class EventService
             // read-only @self envelope) and set the publication date to now.
             $data = $objectData;
             unset($data['@self']);
-            $now = new \DateTime();
+            $now = new DateTime();
             $data['publicatiedatum'] = $now->format(\DateTimeInterface::ATOM);
             // Clearing any prior depublication date keeps the object live.
             $data['depublicatiedatum'] = null;

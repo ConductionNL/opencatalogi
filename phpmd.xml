@@ -97,7 +97,14 @@
     <rule ref="rulesets/unusedcode.xml/UnusedPrivateField"/>
     <rule ref="rulesets/unusedcode.xml/UnusedLocalVariable"/>
     <rule ref="rulesets/unusedcode.xml/UnusedPrivateMethod"/>
-    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter">
-        <exclude-pattern>*Migration*</exclude-pattern>
-    </rule>
+    <!-- UnusedFormalParameter is NOT in this ruleset. It lives alone in
+         phpmd-unusedparams.xml, which carries a TOP-LEVEL exclude-pattern for
+         lib/Migration (OCP\Migration\IMigrationStep mandates the three-parameter
+         changeSchema/preSchemaChange/postSchemaChange signature). PHPMD honours
+         <exclude-pattern> only as a direct child of <ruleset>, so the pattern that
+         used to be nested here excluded nothing. It is deliberately NOT reinstated
+         at the top level of THIS ruleset: that would drop lib/Migration from every
+         rule and swallow the real ExcessiveMethodLength finding in
+         Version6Date20241011085015. Both legs run from the `phpmd` composer script;
+         neither can short-circuit the other. See ConductionNL/.github#155. -->
 </ruleset>

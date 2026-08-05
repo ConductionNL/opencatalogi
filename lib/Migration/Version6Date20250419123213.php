@@ -26,8 +26,6 @@ use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Migration to remove old tables and add uri columns.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class Version6Date20250419123213 extends SimpleMigrationStep
 {

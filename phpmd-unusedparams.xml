@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="Unused formal parameters"
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_xml_schema.xsd">
+
+    <description>
+        Second PHPMD leg: UnusedFormalParameter only.
+
+        This rule lives in its own ruleset because PHPMD honours &lt;exclude-pattern&gt;
+        ONLY as a direct child of &lt;ruleset&gt;; nested inside a &lt;rule&gt; it is parsed and
+        discarded (ConductionNL/.github#155). A direct child, however, is applied by
+        PDepend at file-collection time and drops the file from EVERY rule in the
+        ruleset. Isolating UnusedFormalParameter here means the lib/Migration
+        exclusion applies to this rule and this rule ALONE - every other rule still
+        analyses lib/Migration in the main leg. That distinction is load-bearing
+        here: Version6Date20241011085015 also carries an ExcessiveMethodLength
+        finding, and a top-level exclude-pattern on the MAIN ruleset would have
+        silently swallowed it.
+
+        Why lib/Migration is excluded from THIS rule: OCP\Migration\IMigrationStep
+        mandates changeSchema(IOutput $output, Closure $schemaClosure, array $options)
+        and preSchemaChange/postSchemaChange with the same three parameters. A step
+        that needs none of them still cannot drop them. The signature cannot change.
+
+        This replaces four blanket @SuppressWarnings(PHPMD.UnusedFormalParameter)
+        docblock tags - one per migration file - with a single scoped exclusion that
+        states its own reason and cannot drift out of sync with the file it guards.
+    </description>
+
+    <exclude-pattern>*/Migration/*</exclude-pattern>
+
+    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter"/>
+</ruleset>
