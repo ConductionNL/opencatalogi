@@ -5,6 +5,7 @@
 		@click="$emit('click', object)">
 		<div v-if="selectable" class="publication-card__checkbox" @click.stop>
 			<NcCheckboxRadioSwitch
+				:aria-label="t('opencatalogi', 'Select {title}', { title })"
 				:model-value="selected"
 				@update:model-value="$emit('select', object)" />
 		</div>

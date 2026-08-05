@@ -239,6 +239,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div v-if="publicationAttachments?.length > 0">
 							<div v-for="(attachment, i) in pagedAttachments" :key="`${attachment}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
+									:aria-label="t('opencatalogi', 'Select attachment {title}', { title: attachment?.title })"
 									:model-value="selectedAttachments.includes(attachment.id)"
 									@update:model-value="toggleSelection(attachment)" />
 
@@ -494,6 +495,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div v-if="filteredThemes?.length || missingThemes?.length">
 							<div v-for="(value, key, i) in filteredThemes" :key="`${value.id}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
+									:aria-label="t('opencatalogi', 'Select theme {title}', { title: value.title })"
 									:model-value="selectedThemes.includes(value.id)"
 									@update:model-value="toggleThemeSelection(value)" />
 								<NcListItem

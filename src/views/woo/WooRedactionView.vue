@@ -168,6 +168,7 @@ export default {
 				<tr v-for="entity in entities" :key="entity.id">
 					<td>
 						<NcCheckboxRadioSwitch
+							:aria-label="t('opencatalogi', 'Redact {text}', { text: entity.text })"
 							:model-value="!!selected[entity.id]"
 							@update:model-value="toggleEntity(entity.id)" />
 					</td>

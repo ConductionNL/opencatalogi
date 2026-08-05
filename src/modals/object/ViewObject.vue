@@ -197,6 +197,7 @@ import { EventBus } from '../../eventBus.js'
 											<tr class="viewTableRow">
 												<th class="tableColumnCheckbox">
 													<NcCheckboxRadioSwitch
+														:aria-label="t('opencatalogi', 'Select all files on this page')"
 														:model-value="allFilesSelected"
 														:indeterminate="someFilesSelected"
 														@update:modelValue="toggleSelectAllFiles" />
@@ -229,6 +230,7 @@ import { EventBus } from '../../eventBus.js'
 													<!-- v9 NcCheckboxRadioSwitch has no `checked` prop and emits no
 													     `update:checked`; both are `modelValue`. -->
 													<NcCheckboxRadioSwitch
+														:aria-label="t('opencatalogi', 'Select file {name}', { name: attachment.name ?? attachment?.title ?? attachment.id })"
 														:model-value="objectStore.selectedAttachments.includes(attachment.id)"
 														@update:modelValue="(checked) => toggleFileSelection(attachment.id, checked)" />
 												</td>
