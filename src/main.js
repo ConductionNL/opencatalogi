@@ -6,7 +6,6 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
-import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
 import {
 	CnPageRenderer,
 	defaultPageTypes,
@@ -131,8 +130,6 @@ registerDashboardWidget('file-manager', {
 
 VueMarkdownEditor.use(githubTheme, { Hljs: hljs })
 VueMarkdownEditor.lang.use('en-US', enUS)
-
-Vue.directive('tooltip', Tooltip)
 
 // Register library-side icon set + lib translations once at bootstrap.
 registerIcons(appIcons)

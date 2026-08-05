@@ -50,7 +50,7 @@ Two safety nets cover fragments that forget:
   `components.schemas` slug that no register in the merged payload declares, with
   `magicMapping`/`autoCreateTable` defaults. An explicit config entry is never
   overwritten, so `magicMapping: false` still works.
-- `SettingsService::reconcileRegisterSchemaLinks()` patches the persisted register
+- `RegisterSchemaLinkService::reconcile()` patches the persisted register
   after the import. Needed because OpenRegister's `importRegister()` version-gates
   the register update on `components.registers.publication.version` (unchanged
   since 0.1.0), so on an install that already has the register a non-forced import

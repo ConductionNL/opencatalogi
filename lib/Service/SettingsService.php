@@ -82,14 +82,16 @@ class SettingsService
     /**
      * SettingsService constructor.
      *
-     * @param IAppConfig         $config     App configuration interface.
-     * @param ContainerInterface $container  Container for dependency injection.
-     * @param IAppManager        $appManager App manager interface.
+     * @param IAppConfig                $config             App configuration interface.
+     * @param ContainerInterface        $container          Container for dependency injection.
+     * @param IAppManager               $appManager         App manager interface.
+     * @param RegisterSchemaLinkService $registerSchemaLink Repairs register-to-schema linkage after an import.
      */
     public function __construct(
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager
+        private readonly IAppManager $appManager,
+        private readonly RegisterSchemaLinkService $registerSchemaLink
     ) {
         // Indulge in setting the application name for identification and configuration purposes.
         $this->appName = 'opencatalogi';
@@ -359,25 +361,6 @@ class SettingsService
         throw new RuntimeException('SchemaMapper is not available.');
 
     }//end getSchemaMapper()
-
-    /**
-     * Attempts to retrieve the OpenRegister MagicMapper from the container.
-     *
-     * @return \OCA\OpenRegister\Db\MagicMapper The MagicMapper.
-     * @throws \RuntimeException If the mapper is not available.
-     *
-     * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
-     *       MagicMapper from the container; pure framework plumbing, no domain behavior.
-     */
-    public function getMagicMapper(): \OCA\OpenRegister\Db\MagicMapper
-    {
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-            return $this->container->get('OCA\OpenRegister\Db\MagicMapper');
-        }
-
-        throw new RuntimeException('MagicMapper is not available.');
-
-    }//end getMagicMapper()
 
     /**
      * Attempts to retrieve the Configuration service from the container.
@@ -887,7 +870,7 @@ class SettingsService
             // `components.registers.publication.version` — unchanged since 0.1.0 — so a
             // non-forced import silently skips it and schemas added by a newer fragment
             // never get attached to the already-existing register. Reconcile additively.
-            $this->reconcileRegisterSchemaLinks($result);
+            $this->registerSchemaLink->reconcile($result);
 
             // WOO-529: the seed data in publication_register.json creates the
             // default "Publications" catalog with unset `registers`/`schemas`
@@ -971,18 +954,7 @@ class SettingsService
         }
 
         // Every slug any register in this payload already declares.
-        $declared = [];
-        foreach (($data['components']['registers'] ?? []) as $registerData) {
-            if (is_array($registerData) === false || is_array($registerData['schemas'] ?? null) === false) {
-                continue;
-            }
-
-            foreach ($registerData['schemas'] as $declaredSlug) {
-                if (is_string($declaredSlug) === true) {
-                    $declared[$declaredSlug] = true;
-                }
-            }
-        }
+        $declared = self::collectDeclaredSchemaSlugs(($data['components']['registers'] ?? []));
 
         $register = $data['components']['registers']['publication'];
         foreach (array_keys($schemas) as $slug) {
@@ -1008,6 +980,34 @@ class SettingsService
         return $data;
 
     }//end attachOrphanSchemasToPublicationRegister()
+
+    /**
+     * Collect every schema slug that any register in the payload already declares.
+     *
+     * @param array<mixed> $registers The `components.registers` map from the payload.
+     *
+     * @return array<string, boolean> Declared slugs, keyed by slug for O(1) lookup.
+     *
+     * @spec exclude Internal collection step of attachOrphanSchemasToPublicationRegister().
+     */
+    private static function collectDeclaredSchemaSlugs(array $registers): array
+    {
+        $declared = [];
+        foreach ($registers as $registerData) {
+            if (is_array($registerData) === false || is_array($registerData['schemas'] ?? null) === false) {
+                continue;
+            }
+
+            foreach ($registerData['schemas'] as $declaredSlug) {
+                if (is_string($declaredSlug) === true) {
+                    $declared[$declaredSlug] = true;
+                }
+            }
+        }
+
+        return $declared;
+
+    }//end collectDeclaredSchemaSlugs()
 
     /**
      * Update the app configuration with imported schema and register IDs.
@@ -1162,128 +1162,6 @@ class SettingsService
         }
 
     }//end updateObjectTypeConfiguration()
-
-    /**
-     * Ensure every schema this import created is held by the publication register.
-     *
-     * `ImportHandler::importRegister()` skips the register update whenever the payload's
-     * `components.registers.publication.version` is not newer than the persisted one. That
-     * version has been 0.1.0 since day one, so on any install that already has the
-     * register, a fragment adding a schema updates nothing and the schema is left orphaned
-     * — no register holds it, so no magic table is provisioned and the
-     * `{type}_register`/`{type}_schema` pair the app resolves is inconsistent.
-     *
-     * This patches the persisted register additively: missing schema ids are appended and
-     * given a magic-mapping entry, then the physical table for each newly linked pair is
-     * provisioned. Existing entries, ordering and admin edits are left untouched, so it is
-     * safe to run on every import.
-     *
-     * Failures are swallowed — a linkage that cannot be repaired must not sink an
-     * otherwise successful settings import (same posture as backfillCatalogScopes()).
-     *
-     * @param array $importResult The result from the importFromApp call.
-     *
-     * @return void
-     */
-    private function reconcileRegisterSchemaLinks(array $importResult): void
-    {
-        try {
-            $register = $this->findPublicationRegister($importResult);
-            if ($register === null) {
-                return;
-            }
-
-            // Ids already held, normalised to int for comparison.
-            $heldIds = [];
-            foreach ($register->getSchemas() as $heldId) {
-                if (is_numeric($heldId) === true) {
-                    $heldIds[] = (int) $heldId;
-                }
-            }
-
-            $configuration = $register->getConfiguration();
-            $missing       = [];
-
-            foreach (($importResult['schemas'] ?? []) as $schema) {
-                if (is_object($schema) === false
-                    || method_exists($schema, 'getId') === false
-                    || method_exists($schema, 'getSlug') === false
-                ) {
-                    continue;
-                }
-
-                $schemaId = (int) $schema->getId();
-                if (in_array($schemaId, $heldIds, true) === true) {
-                    continue;
-                }
-
-                $heldIds[]          = $schemaId;
-                $missing[$schemaId] = $schema;
-                $slug               = (string) $schema->getSlug();
-
-                if (isset($configuration['schemas'][$slug]) === false) {
-                    $configuration['schemas'][$slug] = [
-                        'magicMapping'    => true,
-                        'autoCreateTable' => true,
-                    ];
-                }
-            }//end foreach
-
-            if ($missing === []) {
-                return;
-            }
-
-            $register->setSchemas($heldIds);
-            $register->setConfiguration($configuration);
-            $this->getRegisterMapper()->update($register);
-
-            // The import's own table reconciliation already ran (inside importFromApp),
-            // before these schemas belonged to the register, so provision them here or
-            // the tables would not appear until the next import.
-            $magicMapper = $this->getMagicMapper();
-            foreach ($missing as $schema) {
-                try {
-                    $magicMapper->ensureTableForRegisterSchema(register: $register, schema: $schema);
-                } catch (\Throwable) {
-                    // A single unprovisionable table must not block the others.
-                    continue;
-                }
-            }
-        } catch (\Throwable) {
-            // Never let linkage repair sink the settings import.
-            return;
-        }//end try
-
-    }//end reconcileRegisterSchemaLinks()
-
-    /**
-     * Resolve the shared publication register entity.
-     *
-     * Prefers the entity returned by the import (already loaded) and falls back to a
-     * slug lookup for the case where the register import was version-gated away.
-     *
-     * @param array $importResult The result from the importFromApp call.
-     *
-     * @return \OCA\OpenRegister\Db\Register|null The register, or null when unavailable.
-     */
-    private function findPublicationRegister(array $importResult): ?\OCA\OpenRegister\Db\Register
-    {
-        foreach (($importResult['registers'] ?? []) as $register) {
-            if (is_object($register) === true
-                && method_exists($register, 'getSlug') === true
-                && $register->getSlug() === 'publication'
-            ) {
-                return $register;
-            }
-        }
-
-        try {
-            return $this->getRegisterMapper()->find(id: 'publication', _rbac: false, _multitenancy: false);
-        } catch (\Throwable) {
-            return null;
-        }
-
-    }//end findPublicationRegister()
 
     /**
      * Ensure every local catalog has a non-empty registers/schemas scope.
