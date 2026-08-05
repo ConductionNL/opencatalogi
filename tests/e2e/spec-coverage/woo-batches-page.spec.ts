@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Regression guard for the `/woo` green-but-dead defect
  * (fix-woo-capability-provisioning, WOO-PROV-001..003).

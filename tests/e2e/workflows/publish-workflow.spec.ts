@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * HIGH-VALUE discoverability coverage: prove that whether a publication is
  * discoverable to an anonymous visitor is governed by OpenRegister's RBAC
