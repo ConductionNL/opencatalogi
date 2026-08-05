@@ -31,7 +31,7 @@ import { buildMenuItemIconCatalogues } from './menuItemIconCatalogues.js'
  * @category Components
  * @package opencatalogi
  * @author Ruben Linde
- * @license AGPL-3.0-or-later
+ * @license EUPL-1.2
  */
 export default {
 	name: 'MenuItemForm',
