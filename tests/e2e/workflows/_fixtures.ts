@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Seeded-fixture helpers for the DEEP, data-dependent OpenCatalogi e2e
  * workflow suite.

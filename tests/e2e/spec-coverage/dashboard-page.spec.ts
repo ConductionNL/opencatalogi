@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Behavioral UI coverage for the OpenCatalogi Dashboard (manifest page
  * type:custom → DashboardView, built on CnDashboardPage). This is the
