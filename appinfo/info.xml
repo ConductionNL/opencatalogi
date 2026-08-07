@@ -85,7 +85,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
         <lib>zip</lib>
 
         <owncloud max-version="0" min-version="0"/>
-		<nextcloud min-version="31" max-version="34"/>
+		<nextcloud min-version="32" max-version="34"/>
 	</dependencies>
 
 	<repair-steps>
