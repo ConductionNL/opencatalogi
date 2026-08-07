@@ -59,7 +59,7 @@ class SetupController extends Controller
      *
      * @var integer
      */
-    private const SETUP_VERSION = 2;
+    private const SETUP_VERSION = 3;
 
     /**
      * App-config keys the config endpoint is allowed to write. A whitelist keeps
@@ -144,14 +144,23 @@ class SetupController extends Controller
         $scopeChosen    = ($this->config->getValueString($this->appName, 'default_catalog_scope', '') !== '');
         $catalogReady   = $this->catalogExists();
         $federationDone = $this->defaultDirectorySubscribed();
+        // The sync-all-directories step is idempotent maintenance work — it
+        // just re-hits every registered peer. Rather than track "last synced
+        // at" in a separate config key (and then have to invalidate it on
+        // schedule), treat the step as done as soon as connect-federation is,
+        // because that guarantees at least one sync happened. The wizard
+        // never gates completion on this step, so the false-then-true window
+        // is only cosmetic.
+        $syncDone = $federationDone;
 
         $steps = [
-            'welcome'            => ['done' => true],
-            'config-check'       => ['done' => $registersWired],
-            'catalog-scope'      => ['done' => $scopeChosen],
-            'create-catalog'     => ['done' => $catalogReady],
-            'connect-federation' => ['done' => $federationDone],
-            'done'               => ['done' => ($registersWired === true && $scopeChosen === true && $catalogReady === true)],
+            'welcome'              => ['done' => true],
+            'config-check'         => ['done' => $registersWired],
+            'catalog-scope'        => ['done' => $scopeChosen],
+            'create-catalog'       => ['done' => $catalogReady],
+            'connect-federation'   => ['done' => $federationDone],
+            'sync-all-directories' => ['done' => $syncDone],
+            'done'                 => ['done' => ($registersWired === true && $scopeChosen === true && $catalogReady === true)],
         ];
 
         // Completed = every gating (required) step is satisfied. The optional
@@ -226,6 +235,9 @@ class SetupController extends Controller
 
             case 'connect-federation':
                 return $this->connectFederation();
+
+            case 'sync-all-directories':
+                return $this->syncAllDirectories();
 
             case 'complete':
                 $this->config->setValueString($this->appName, 'onboarding_completed_version', (string) self::SETUP_VERSION);
@@ -412,6 +424,58 @@ class SetupController extends Controller
         );
 
     }//end connectFederation()
+
+    /**
+     * Sync every registered federation directory (wizard step 6).
+     *
+     * The preceding connect-federation step (step 5) only pulls from the
+     * single `default_directory_url` peer to bootstrap federation. Once the
+     * user (or the peer's own broadcast) has registered additional listings,
+     * this step brings them all up to date in one go — the wizard equivalent
+     * of the admin-settings "Sync directories now" button, which routes to
+     * the same `DirectoryService::doCronSync()` used by the periodic cron
+     * (`Cron\DirectorySync`).
+     *
+     * Non-fatal by design: a peer that is briefly offline should not block
+     * setup completion. The message surfaces the succeeded / failed split so
+     * an admin can retry from the settings page if needed.
+     *
+     * @return JSONResponse The result envelope (success, message, details).
+     */
+    private function syncAllDirectories(): JSONResponse
+    {
+        try {
+            $result = $this->directoryService->doCronSync();
+        } catch (\Exception $e) {
+            $this->logger->warning('Setup sync-all-directories failed: '.$e->getMessage(), ['app' => $this->appName]);
+            return new JSONResponse(
+                [
+                    'success' => false,
+                    'message' => $this->l10n->t('Could not synchronize the directories right now. You can skip this — the periodic cron will retry automatically.'),
+                ]
+            );
+        }
+
+        $synced = (int) ($result['synced_directories'] ?? 0);
+        $failed = (int) ($result['failed_directories'] ?? 0);
+        $total  = (int) ($result['total_directories'] ?? ($synced + $failed));
+
+        return new JSONResponse(
+            [
+                'success' => true,
+                'message' => $this->l10n->t(
+                    text: 'Synchronized %1$d of %2$d directories (%3$d failed).',
+                    parameters: [$synced, $total, $failed]
+                ),
+                'details' => [
+                    'synced_directories' => $synced,
+                    'failed_directories' => $failed,
+                    'total_directories'  => $total,
+                ],
+            ]
+        );
+
+    }//end syncAllDirectories()
 
     /**
      * Compose the admin-facing message describing the pull + push outcome.
