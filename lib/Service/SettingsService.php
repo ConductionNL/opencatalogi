@@ -1134,10 +1134,11 @@ class SettingsService
         if ($registerId === null) {
             try {
                 $registerMapper = $this->container->get(\OCA\OpenRegister\Db\RegisterMapper::class);
-                $registerIds    = $registerMapper->findIdsBySlugs(['publication']);
-                if (empty($registerIds) === false) {
-                    $registerId = reset($registerIds);
-                }
+                // `RegisterMapper::find()` accepts a slug/uuid/id and returns
+                // a Register entity — safer than `findIdsBySlugs()` which
+                // returns `array<slug, array<id>>` and needs two-step nav.
+                $register       = $registerMapper->find('publication');
+                $registerId     = $register->getId();
             } catch (\Throwable $e) {
                 $this->logger->warning(
                     'Register slug fallback lookup failed: '.$e->getMessage(),
