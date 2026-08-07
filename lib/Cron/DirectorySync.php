@@ -25,6 +25,7 @@ use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\BackgroundJob\TimedJob;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
+use OCP\IAppConfig;
 
 /**
  * Background job for periodic directory synchronization.
@@ -34,19 +35,51 @@ use OCP\BackgroundJob\IJob;
 class DirectorySync extends TimedJob
 {
     /**
+     * Minimum allowed interval in seconds (15 minutes).
+     *
+     * @var integer
+     */
+    public const MIN_INTERVAL_SECONDS = 900;
+
+    /**
+     * Maximum allowed interval in seconds (24 hours).
+     *
+     * @var integer
+     */
+    public const MAX_INTERVAL_SECONDS = 86400;
+
+    /**
+     * Default interval in seconds (1 hour).
+     *
+     * @var integer
+     */
+    public const DEFAULT_INTERVAL_SECONDS = 3600;
+
+    /**
      * Constructor.
      *
      * @param ITimeFactory     $time             Time factory for scheduling.
      * @param DirectoryService $directoryService The directory service.
+     * @param IAppConfig       $config           App config for reading the sync interval.
      */
     public function __construct(
         ITimeFactory $time,
-        private readonly DirectoryService $directoryService
+        private readonly DirectoryService $directoryService,
+        IAppConfig $config
     ) {
         parent::__construct($time);
 
-        // Run every hour.
-        $this->setInterval(3600);
+        // Read interval from IAppConfig, clamped to [MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS].
+        // A gewijzigde waarde is direct actief bij de volgende scheduling-tick omdat Nextcloud
+        // per tick een nieuwe TimedJob instantieert.
+        $configured = (int) $config->getValueInt(
+            'opencatalogi',
+            'sync_interval_seconds',
+            self::DEFAULT_INTERVAL_SECONDS
+        );
+        $interval   = max(self::MIN_INTERVAL_SECONDS, min(self::MAX_INTERVAL_SECONDS, $configured));
+
+        $this->setInterval($interval);
 
         // Delay until low-load time.
         $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);

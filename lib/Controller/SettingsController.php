@@ -182,6 +182,63 @@ class SettingsController extends Controller
     }//end updatePublishingOptions()
 
     /**
+     * Get the current federation sync options (interval + bounds).
+     *
+     * Admin-only: this surface controls how often the app hits federation peers.
+     *
+     * @return JSONResponse JSON response containing the sync options.
+     *
+     * @NoCSRFRequired
+     *
+     * @spec openspec/specs/admin-settings/spec.md
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function getSyncOptions(): JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $data = $this->settingsService->getSyncOptions();
+            return new JSONResponse($data);
+        } catch (\Exception $e) {
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+        }
+
+    }//end getSyncOptions()
+
+    /**
+     * Update the federation sync options.
+     *
+     * Admin-only: mutating the sync interval changes how often the app hits
+     * federation peers; a non-admin must not be able to lower it and drown
+     * peer directories in requests.
+     *
+     * @return JSONResponse JSON response containing the persisted sync options (post-clamp).
+     *
+     * @NoCSRFRequired
+     *
+     * @spec openspec/specs/admin-settings/spec.md
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function updateSyncOptions(): JSONResponse
+    {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $data   = $this->request->getParams();
+            $result = $this->settingsService->updateSyncOptions($data);
+            return new JSONResponse($result);
+        } catch (\Exception $e) {
+            return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+        }
+
+    }//end updateSyncOptions()
+
+    /**
      * Get version information for the app and configuration.
      *
      * @return JSONResponse JSON response containing version information.

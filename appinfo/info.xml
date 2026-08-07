@@ -91,6 +91,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
 		</post-migration>
 	</repair-steps>
 

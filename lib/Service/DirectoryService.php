@@ -174,8 +174,10 @@ class DirectoryService
      */
     public function doCronSync(): array
     {
-        // Get all unique directory URLs to sync and cache them globally.
-        $this->uniqueDirectories = $this->getUniqueDirectories();
+        // BFS-discovery: iterate over peer /api/directory URLs (not publications URLs).
+        // The publications-URL variant lives on getUniqueDirectories() and is used by
+        // the federation search flow.
+        $this->uniqueDirectories = $this->getKnownDirectoryUrls();
 
         // Add default OpenCatalogi directory if not already present.
         $defaultDirectory = $this->getDefaultDirectoryUrl();
@@ -322,16 +324,15 @@ class DirectoryService
                         continue;
                     }
 
-                    // Check for publications URL in the object data (primary) or directory URL (fallback).
+                    // Check for publications URL in the object data.
+                    // This method historically returns publications URLs — every caller that
+                    // fetches publications (PublicationService::getPublications, getUsed,
+                    // getPublication, the aggregated federation search) treats each returned
+                    // URL as a publications endpoint. The BFS sync flow uses the sibling
+                    // method getKnownDirectoryUrls() below to walk `directory` URLs instead.
                     if (isset($objectData['publications']) === true && empty($objectData['publications']) === false) {
                         $uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
-                        // Removed redundant logging (error handled silently).
                     }
-
-                    // If no publications URL found, skip this listing.
-                    // We used to have fallback logic here that would try to use the directory field.
-                    // but that often pointed to the source directory (where we got the listing from).
-                    // rather than the catalog's own API, causing circular queries.
                 }//end foreach
             } catch (\Exception $e) {
                 // Removed redundant logging.
@@ -348,6 +349,83 @@ class DirectoryService
         return $result;
 
     }//end getUniqueDirectories()
+
+    /**
+     * Get the set of known peer `/api/directory` URLs to sync with.
+     *
+     * Distinct from getUniqueDirectories() which returns PUBLICATIONS URLs for the
+     * federation search flow (getPublications / getUsed / getPublication) — this
+     * method returns DIRECTORY URLs for the BFS-discovery sync flow (doCronSync,
+     * syncDirectory).
+     *
+     * Sources:
+     *   - The `directory` field of every stored listing (populated by
+     *     syncListing() with the peer's own /api/directory URL for federated
+     *     listings, or our own URL for local catalogs — filtered via isSelfInstance).
+     *
+     * Guarantees:
+     *   - Skips self (host+port aware, honours instance_aliases).
+     *   - Only URLs that look like `/api/directory` endpoints; blocks a stale row
+     *     with a publications URL from ever being fed back into syncDirectory().
+     *
+     * @return array<string> Unique peer directory URLs safe to sync from.
+     *
+     * @throws \RuntimeException When OpenRegister is not installed.
+     */
+    public function getKnownDirectoryUrls(): array
+    {
+        if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
+            throw new RuntimeException('OpenRegister service is not available.');
+        }
+
+        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+        $listingSchema   = $this->config->getValueString($this->appName, 'listing_schema', '');
+        $listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+        if (empty($listingSchema) === true || empty($listingRegister) === true) {
+            return [];
+        }
+
+        try {
+            $listings = $objectService->searchObjects(
+                query: [
+                    '@self' => [
+                        'register' => $listingRegister,
+                        'schema'   => $listingSchema,
+                    ],
+                ],
+                _rbac: false
+            );
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $urls = [];
+        foreach ($listings as $listing) {
+            $listingData = $listing->jsonSerialize();
+            $objectData  = ($listingData['object'] ?? $listingData);
+
+            $dir = ($objectData['directory'] ?? null);
+            if (empty($dir) === true) {
+                continue;
+            }
+
+            // Only real /api/directory endpoints belong in the sync set.
+            if (strpos($dir, '/api/directory') === false) {
+                continue;
+            }
+
+            // Skip self so cron doesn't sync our own /api/directory back to us.
+            if ($this->isSelfInstance($dir) === true) {
+                continue;
+            }
+
+            $urls[$dir] = $dir;
+        }
+
+        return array_values($urls);
+
+    }//end getKnownDirectoryUrls()
 
     /**
      * Synchronize a specific directory (asynchronous)
@@ -377,9 +455,10 @@ class DirectoryService
      */
     public function syncDirectory(string $directoryUrl): array
     {
-        // Ensure unique directories are cached for cross-directory checks.
+        // Ensure known peer directories are cached for cross-directory checks (BFS).
+        // Uses directory URLs, not publications URLs — see getKnownDirectoryUrls().
         if (empty($this->uniqueDirectories) === true) {
-            $this->uniqueDirectories = $this->getUniqueDirectories();
+            $this->uniqueDirectories = $this->getKnownDirectoryUrls();
 
             // Add default OpenCatalogi directory if not already present.
             $defaultDirectory = $this->getDefaultDirectoryUrl();
@@ -428,7 +507,12 @@ class DirectoryService
             // Fetch directory data with limit to get all listings.
             // Redirects are validated per-hop and bounded by safeGet() so a redirect
             // cannot be used to pivot to an internal address.
-            $dirUrlWithLimit = $directoryUrl.'?_limit=10000';
+            //
+            // `include-federated=1` asks the peer to include listings it learned from
+            // OTHER peers (BFS-discovery opt-in — see getDirectory()). Peers running an
+            // older OpenCatalogi build ignore the query param and return their default
+            // filtered view (only own catalogs), so this stays backward-compatible.
+            $dirUrlWithLimit = $directoryUrl.'?_limit=10000&include-federated=1';
             $response        = $this->safeGet($dirUrlWithLimit);
             $directoryData   = json_decode($response->getBody()->getContents(), true);
 
@@ -749,8 +833,19 @@ class DirectoryService
                 $listingData['publications'] = $this->detectPublicationEndpoint($listingData);
             }
 
-            // Set sourceDirectory URL in listing data for reference (where we got this listing from).
-            $listingData['directory'] = $sourceDirectoryUrl;
+            // Preserve the peer's own /api/directory URL in the `directory` field so cron
+            // sync can discover it as a new sync target on the next tick — this is the
+            // BFS-like discovery mechanism: peer A tells us about peer B, we save B's
+            // directory URL, next sync we hit B directly, B tells us about C, etc.
+            //
+            // Fall back to $sourceDirectoryUrl only when the incoming listing itself
+            // carries no directory field (malformed / legacy payload) so the dedup key
+            // downstream is never null.
+            if (empty($listingDirectory) === true) {
+                $listingData['directory'] = $sourceDirectoryUrl;
+            } else {
+                $listingData['directory'] = $listingDirectory;
+            }
 
             // Set lastSync as ISO string format instead of DateTime object.
             $listingData['lastSync'] = (new DateTime())->format('c');
@@ -780,9 +875,11 @@ class DirectoryService
             }
 
             // Check if listing already exists to determine action type.
-            // Match on catalogusId + directory (source directory URL) to correctly deduplicate
-            // across instances. Using catalogId alone fails because different instances generate
-            // different UUIDs for the same logical catalog.
+            // Match on catalogusId + directory (peer's own /api/directory URL, or
+            // $sourceDirectoryUrl fallback for legacy payloads without a directory field).
+            // Using catalogusId alone fails because different instances generate different
+            // UUIDs for the same logical catalog; the directory URL disambiguates cross-peer
+            // duplicates while still deduplicating on repeated syncs of the SAME peer.
             $existingListings = $objectService->searchObjects(
                 query: [
                     '@self'       => [
@@ -790,7 +887,7 @@ class DirectoryService
                         'schema'   => $listingSchema,
                     ],
                     'catalogusId' => $catalogId,
-                    'directory'   => $sourceDirectoryUrl,
+                    'directory'   => $listingData['directory'],
                 ]
             );
 
@@ -2368,9 +2465,16 @@ class DirectoryService
                     $this->urlGenerator->linkToRoute('opencatalogi.directory.index')
                 );
 
-                // Only include listings that originated from this instance in the directory.
-                // Synced listings from other instances have a foreign directory URL and should
-                // NOT be re-broadcast — that would create infinite sync loops between instances.
+                // BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
+                // can transitively learn about each other's known directories. Public
+                // consumers (search UI, browsers) get the default filtered view — only
+                // catalogs that originate from THIS instance — to preserve the historical
+                // "no cross-broadcast" contract.
+                $includeFederated = filter_var(
+                    ($requestParams['include-federated'] ?? false),
+                    FILTER_VALIDATE_BOOLEAN
+                );
+
                 $listings = [];
                 foreach ($listingResult as $object) {
                     $listingData = $object;
@@ -2381,8 +2485,14 @@ class DirectoryService
                     $objectData = ($listingData['object'] ?? $listingData);
                     $listingDir = ($objectData['directory'] ?? '');
 
-                    // Skip listings that were synced from other directories.
-                    if (empty($listingDir) === false && $listingDir !== $ourDirectoryUrl) {
+                    // Default view: skip listings synced from OTHER directories (their
+                    // `directory` field points at the peer's own /api/directory URL, not
+                    // ours) so we don't re-broadcast them. BFS-discovery callers opt in
+                    // via `include-federated=1` to receive the full transitive set.
+                    if ($includeFederated === false
+                        && empty($listingDir) === false
+                        && $listingDir !== $ourDirectoryUrl
+                    ) {
                         continue;
                     }
 
