@@ -27,6 +27,10 @@ import 'gridstack/dist/gridstack.min.css'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
 
+// Bump vue-select's dropdown z-index above NcDialog's modal — see the file's
+// own comment for the upstream stacking-order bug this compensates for.
+import './css/vue-select-dialog-z-fix.css'
+
 import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'

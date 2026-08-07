@@ -38,8 +38,10 @@ use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCP\AppFramework\Http\JSONResponse;
+use Psr\Log\LoggerInterface;
 use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Cron\DirectorySync;
 use RuntimeException;
 
 /**
@@ -85,11 +87,13 @@ class SettingsService
      * @param IAppConfig         $config     App configuration interface.
      * @param ContainerInterface $container  Container for dependency injection.
      * @param IAppManager        $appManager App manager interface.
+     * @param LoggerInterface    $logger     PSR logger for defensive fallback warnings.
      */
     public function __construct(
         private readonly IAppConfig $config,
         private readonly ContainerInterface $container,
-        private readonly IAppManager $appManager
+        private readonly IAppManager $appManager,
+        private readonly LoggerInterface $logger
     ) {
         // Indulge in setting the application name for identification and configuration purposes.
         $this->appName = 'opencatalogi';
@@ -728,6 +732,78 @@ class SettingsService
     }//end updatePublishingOptions()
 
     /**
+     * Get the current federation sync options.
+     *
+     * Returns the configured sync interval and the min/max/default bounds so the
+     * frontend can render its input constraints from a single source of truth
+     * (DirectorySync class constants).
+     *
+     * @return array<string, int> The current sync options: sync_interval_seconds + min/max/default bounds.
+     * @throws \RuntimeException If sync options retrieval fails.
+     *
+     * @spec openspec/specs/admin-settings/spec.md
+     */
+    public function getSyncOptions(): array
+    {
+        try {
+            $configured = (int) $this->config->getValueInt(
+                $this->appName,
+                'sync_interval_seconds',
+                DirectorySync::DEFAULT_INTERVAL_SECONDS
+            );
+
+            // Clamp on read so a stale out-of-range value still renders sanely in the UI.
+            $interval = max(
+                DirectorySync::MIN_INTERVAL_SECONDS,
+                min(DirectorySync::MAX_INTERVAL_SECONDS, $configured)
+            );
+
+            return [
+                'sync_interval_seconds'    => $interval,
+                'min_interval_seconds'     => DirectorySync::MIN_INTERVAL_SECONDS,
+                'max_interval_seconds'     => DirectorySync::MAX_INTERVAL_SECONDS,
+                'default_interval_seconds' => DirectorySync::DEFAULT_INTERVAL_SECONDS,
+            ];
+        } catch (\Exception $e) {
+            throw new RuntimeException('Failed to retrieve sync options: '.$e->getMessage());
+        }//end try
+
+    }//end getSyncOptions()
+
+    /**
+     * Update the federation sync options configuration.
+     *
+     * The interval is clamped to [MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS]
+     * before it is stored, so a malformed input can never disable the guard.
+     *
+     * @param array $options The sync options data to update. Only `sync_interval_seconds` is honoured.
+     *
+     * @return array The persisted sync options (post-clamp).
+     * @throws \RuntimeException If sync options update fails.
+     *
+     * @spec openspec/specs/admin-settings/spec.md
+     */
+    public function updateSyncOptions(array $options): array
+    {
+        try {
+            if (array_key_exists('sync_interval_seconds', $options) === true) {
+                $requested = (int) $options['sync_interval_seconds'];
+                $clamped   = max(
+                    DirectorySync::MIN_INTERVAL_SECONDS,
+                    min(DirectorySync::MAX_INTERVAL_SECONDS, $requested)
+                );
+
+                $this->config->setValueInt($this->appName, 'sync_interval_seconds', $clamped);
+            }
+
+            return $this->getSyncOptions();
+        } catch (\Exception $e) {
+            throw new RuntimeException('Failed to update sync options: '.$e->getMessage());
+        }//end try
+
+    }//end updateSyncOptions()
+
+    /**
      * Load settings from the publication_register.json file.
      *
      * This method supports both old and new versions of OpenRegister:
@@ -1016,6 +1092,59 @@ class SettingsService
                 break;
             }
         }//end foreach
+
+        // Fallback: `importFromApp(force: false)` version-skips when the app
+        // version has not changed since the previous successful import, and
+        // returns an empty `schemas`/`registers` array in that case. If any
+        // config-app key we depend on (catalog_register, publication_schema,
+        // etc.) has been cleared manually (setup-wizard test reset, admin
+        // troubleshooting) between imports, the version-skip leaves the keys
+        // unset — surfaces as the setup wizard's "Publishing registers are
+        // still not configured" error even though every schema exists in the
+        // OpenRegister database. Fill in any expected slug not present in the
+        // import result by looking it up directly, scoped to this app so a
+        // slug collision with another app's register never leaks.
+        $expectedSlugs = array_merge(
+            $objectTypes,
+            array_values($ooapiTypeMap),
+            array_values($wooSchemaMap)
+        );
+        $missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
+        if (empty($missingSlugs) === false) {
+            try {
+                $schemaMapper = $this->container->get(\OCA\OpenRegister\Db\SchemaMapper::class);
+                foreach ($missingSlugs as $slug) {
+                    $found = $schemaMapper->findByApplicationAndSlug($slug, Application::APP_ID);
+                    if ($found !== null) {
+                        $schemaMap[$slug] = $found->getId();
+                    }
+                }
+            } catch (\Throwable $e) {
+                // OpenRegister may be temporarily unavailable during boot; the
+                // caller (reload-settings, cron, tests) surfaces the missing
+                // config via registersConfigured() so we swallow the fallback
+                // failure rather than fatal the whole import path.
+                $this->logger->warning(
+                    'Schema slug fallback lookup failed: '.$e->getMessage(),
+                    ['app' => Application::APP_ID]
+                );
+            }
+        }
+
+        if ($registerId === null) {
+            try {
+                $registerMapper = $this->container->get(\OCA\OpenRegister\Db\RegisterMapper::class);
+                $registerIds    = $registerMapper->findIdsBySlugs(['publication']);
+                if (empty($registerIds) === false) {
+                    $registerId = reset($registerIds);
+                }
+            } catch (\Throwable $e) {
+                $this->logger->warning(
+                    'Register slug fallback lookup failed: '.$e->getMessage(),
+                    ['app' => Application::APP_ID]
+                );
+            }
+        }
 
         // Update configuration for each object type.
         foreach ($objectTypes as $type) {
