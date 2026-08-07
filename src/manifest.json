@@ -5,7 +5,7 @@
 		"openregister"
 	],
 	"setup": {
-		"enabled": false,
+		"enabled": true,
 		"version": 2,
 		"completionConfigKey": "onboarding_completed_version",
 		"steps": [
