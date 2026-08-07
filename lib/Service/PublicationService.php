@@ -2181,9 +2181,15 @@ class PublicationService
                     $catalogData = $catalog->jsonSerialize();
                 }
 
-                // Extract the relevant catalog information.
+                // Extract the relevant catalog information. `slug` is
+                // authoritative for URL routing on both sides of the federation
+                // (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`)
+                // — omitting it breaks click-through on any peer consuming this
+                // response because the client falls back to the peer app-root
+                // rather than the specific publication detail page (WOO-522).
                 $catalogInfo = [
                     'id'           => ($catalogData['id'] ?? ''),
+                    'slug'         => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
                     'title'        => ($catalogData['title'] ?? 'Local Catalog'),
                     'summary'      => ($catalogData['summary'] ?? 'Local catalog instance'),
                     'description'  => $catalogData['description'] ?? null,

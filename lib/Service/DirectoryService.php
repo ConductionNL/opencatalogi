@@ -958,8 +958,16 @@ class DirectoryService
 
         $finalGuzzleConfig = array_merge($defaultGuzzleConfig, $guzzleConfig);
         $queryParams       = ($finalGuzzleConfig['query_params'] ?? []);
+        // Prevent circular aggregation — the peer must not fan out to its own
+        // peers (which would eventually loop back to us).
         $queryParams['_aggregate'] = 'false';
-        // Prevent circular aggregation.
+        // Force catalog enrichment on the peer response so the client-side
+        // @result-click handler in FederationSearch can build a peer deep-link
+        // (`<peer>/#/publications/<catalogSlug>/<id>`). Without this, the
+        // peer's _aggregate=false path takes the ultra-fast branch that skips
+        // catalog stubs and returns @self.catalogs=null — click-through then
+        // silently falls back to the peer app-root (WOO-522 / WOO-533).
+        $queryParams['_include_catalogs'] = 'true';
         $queryParams['_extend'] = [
             '@self.schema',
             '@self.register',
