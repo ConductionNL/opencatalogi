@@ -89,21 +89,42 @@ class SettingsController extends Controller
     }//end index()
 
     /**
-     * Handle the post request to update settings.
+     * Write the app-configuration settings and return the persisted values.
      *
-     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces admin gate).
-     * CSRF protection is enforced (no @NoCSRFRequired).
-     * #[AuthorizedAdminSetting] makes this endpoint auditable via NC's delegated-admin
-     * system and scopes it to the OpenCatalogiAdmin settings class (WF3 / wave-12).
+     * This is the canonical write in OpenRegister's AppHost dialect
+     * ({@see \OCA\OpenRegister\AppHost\Routes}), where `PUT /api/settings` maps to
+     * `settings#update` and `POST /api/settings` (`settings#create`) is the legacy
+     * alias. OpenCatalogi hand-declares its own route table and ships its own
+     * SettingsController, so `AppHost\Bootstrap::aliasControllerUnlessLeafDefinesIt()`
+     * never aliases the generic in — this leaf owes every `settings#` method itself.
+     * Measured 2026-08-08 on the dev instance: `PUT /api/settings` returned 405
+     * (no route for the verb) while GET and POST returned 200.
+     *
+     * Scope: this writes ONLY the app-configuration payload that `create()` has
+     * always written — `SettingsService::updateSettings()` persists the
+     * allowlisted `*_source` / `*_schema` / `*_register`, DCAT, OOAPI, publishing
+     * and Woo-index keys via `IAppConfig`. It deliberately does NOT absorb the
+     * other surfaces this controller happens to host: `updatePublishingOptions()`
+     * (POST /api/settings/publishing) and `manualImport()`
+     * (POST /api/settings/import) keep their own routes, payload shapes and
+     * response contracts.
+     *
+     * Auth posture is identical to `create()` — admin-only (no @NoAdminRequired,
+     * so NC SecurityMiddleware enforces the admin gate) and auditable via NC's
+     * delegated-admin system through #[AuthorizedAdminSetting], scoped to
+     * OpenCatalogiAdmin. `@NoCSRFRequired` mirrors `create()` because the admin
+     * UI (`src/views/settings/Settings.vue`) calls this endpoint with a bare
+     * `fetch()` that sends no `requesttoken` header. Net privilege change is
+     * zero: the identical operation was already reachable via POST.
      *
      * @return JSONResponse JSON response containing the updated settings.
      *
      * @NoCSRFRequired
      *
-     * @spec openspec/specs/admin-settings/spec.md
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-    public function create(): JSONResponse
+    public function update(): JSONResponse
     {
         try {
             $data   = $this->request->getParams();
@@ -112,6 +133,36 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
+
+    }//end update()
+
+    /**
+     * Legacy alias for {@see update()} — handles the post request to update settings.
+     *
+     * The canonical AppHost route table still ships `settings#create`
+     * (POST /api/settings) for the pre-ADR-066 `index/create/load` dialect, and
+     * OpenCatalogi's own admin UI (`src/views/settings/Settings.vue`, both
+     * `saveConfiguration()` and `saveRegistration()`) still POSTs here, so this
+     * stays reachable and behaviourally identical (ADR-029).
+     *
+     * The attributes below are repeated rather than inherited from `update()`:
+     * NC's SecurityMiddleware evaluates the attributes of the *dispatched* method,
+     * so delegating in the body does not carry `update()`'s posture across.
+     *
+     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces admin gate).
+     * #[AuthorizedAdminSetting] makes this endpoint auditable via NC's delegated-admin
+     * system and scopes it to the OpenCatalogiAdmin settings class (WF3 / wave-12).
+     *
+     * @return JSONResponse JSON response containing the updated settings.
+     *
+     * @NoCSRFRequired
+     *
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function create(): JSONResponse
+    {
+        return $this->update();
 
     }//end create()
 

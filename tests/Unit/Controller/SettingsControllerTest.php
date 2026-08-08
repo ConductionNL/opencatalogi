@@ -114,6 +114,114 @@ class SettingsControllerTest extends TestCase
         $this->assertEquals(500, $response->getStatus());
     }
 
+    /**
+     * `update()` is the canonical write (PUT /api/settings): it passes the
+     * request params straight to SettingsService::updateSettings() and returns
+     * the persisted values.
+     *
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+     */
+    public function testUpdateWritesRequestParamsAndReturnsPersistedValues(): void
+    {
+        $params = ['catalog_register' => '1', 'catalog_schema' => '5'];
+        $result = ['catalog_register' => '1', 'catalog_schema' => '5'];
+
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($params);
+
+        $this->settingsService->expects($this->once())
+            ->method('updateSettings')
+            ->with($params)
+            ->willReturn($result);
+
+        $response = $this->controller->update();
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
+        $this->assertSame($result, $response->getData());
+    }
+
+    /**
+     * `update()` surfaces a service failure as a 500 with the error message,
+     * matching the shape `create()` has always returned.
+     *
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+     */
+    public function testUpdateReturns500OnException(): void
+    {
+        $this->request->method('getParams')
+            ->willReturn(['invalid' => 'data']);
+
+        $this->settingsService->method('updateSettings')
+            ->willThrowException(new \Exception('Update failed'));
+
+        $response = $this->controller->update();
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(500, $response->getStatus());
+        $this->assertSame(['error' => 'Update failed'], $response->getData());
+    }
+
+    /**
+     * `create()` (the legacy POST alias) delegates to `update()` and is
+     * behaviourally identical — same service call, same payload out.
+     *
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+     */
+    public function testCreateDelegatesToUpdate(): void
+    {
+        $params = ['theme_register' => '2'];
+        $result = ['theme_register' => '2'];
+
+        $this->request->method('getParams')
+            ->willReturn($params);
+
+        // The single expectation is the proof of delegation: create() must
+        // reach updateSettings() exactly once, via update().
+        $this->settingsService->expects($this->once())
+            ->method('updateSettings')
+            ->with($params)
+            ->willReturn($result);
+
+        $createResponse = $this->controller->create();
+
+        $this->assertInstanceOf(JSONResponse::class, $createResponse);
+        $this->assertEquals(200, $createResponse->getStatus());
+        $this->assertSame($result, $createResponse->getData());
+    }
+
+    /**
+     * `update()` is the app-configuration write, not a catch-all: it must not
+     * absorb the sibling surfaces this controller also hosts. Those keep their
+     * own routes (`POST /api/settings/publishing`, `POST /api/settings/import`)
+     * and their own payload and response contracts.
+     *
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+     */
+    public function testUpdateDoesNotTouchPublishingOptionsOrImportSurfaces(): void
+    {
+        $this->request->method('getParams')
+            ->willReturn(['auto_publish_objects' => 'true']);
+
+        $this->settingsService->expects($this->once())
+            ->method('updateSettings')
+            ->willReturn(['auto_publish_objects' => 'true']);
+
+        // update() routes everything through updateSettings(); the dedicated
+        // publishing-options and import entry points must stay untouched.
+        $this->settingsService->expects($this->never())
+            ->method('updatePublishingOptions');
+        $this->settingsService->expects($this->never())
+            ->method('getPublishingOptions');
+        $this->settingsService->expects($this->never())
+            ->method('manualImport');
+
+        $response = $this->controller->update();
+
+        $this->assertEquals(200, $response->getStatus());
+    }
+
     public function testLoadReturnsSettings(): void
     {
         $loadedSettings = ['registers' => [], 'schemas' => [], 'imported' => true];
