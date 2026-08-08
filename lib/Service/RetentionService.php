@@ -32,6 +32,10 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateInterval;
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -252,13 +256,13 @@ class RetentionService
         }
 
         try {
-            $date = new \DateTimeImmutable($publicationDate);
+            $date = new DateTimeImmutable($publicationDate);
         } catch (\Throwable $e) {
             return null;
         }
 
-        $expiry = $date->add(new \DateInterval('P'.$termMonths.'M'));
-        return $expiry->format(\DateTimeInterface::ATOM);
+        $expiry = $date->add(new DateInterval('P'.$termMonths.'M'));
+        return $expiry->format(DateTimeInterface::ATOM);
 
     }//end computeExpiry()
 
@@ -355,15 +359,15 @@ class RetentionService
             return $counts;
         }
 
-        $now       = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $now       = new DateTimeImmutable('now', new DateTimeZone('UTC'));
         $today     = $now->format('Y-m-d');
-        $windowEnd = $now->add(new \DateInterval('P'.$this->getWarningWindowDays().'D'));
+        $windowEnd = $now->add(new DateInterval('P'.$this->getWarningWindowDays().'D'));
 
         // Plain object search: publications with retentionExpiresAt at or before the
         // end of the warning window (covers both expiring-soon and already-expired).
         $query = [
             '@self'              => ['register' => $register, 'schema' => $schema],
-            'retentionExpiresAt' => ['$lte' => $windowEnd->format(\DateTimeInterface::ATOM)],
+            'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
             '_limit'             => 1000,
         ];
 
@@ -390,7 +394,7 @@ class RetentionService
             }
 
             try {
-                $expiry = new \DateTimeImmutable($expiresAt);
+                $expiry = new DateTimeImmutable($expiresAt);
             } catch (\Throwable $e) {
                 continue;
             }
@@ -407,8 +411,8 @@ class RetentionService
 
             switch ($action) {
                 case 'depublish':
-                    $data['depublicatiedatum']        = $now->format(\DateTimeInterface::ATOM);
-                    $data['retentionLastEvaluatedAt'] = $now->format(\DateTimeInterface::ATOM);
+                    $data['depublicatiedatum']        = $now->format(DateTimeInterface::ATOM);
+                    $data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
                     $this->recordDecision(data: $data, decision: 'auto-depublish', note: 'retention term expired');
                     $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
                     $counts['depublished']++;
@@ -418,8 +422,8 @@ class RetentionService
                     // Request the declared lifecycle transition; setting depublicatiedatum
                     // removes it from public surfaces as part of archiving (RET-006).
                     $data['status']            = 'archived';
-                    $data['depublicatiedatum'] = $now->format(\DateTimeInterface::ATOM);
-                    $data['retentionLastEvaluatedAt'] = $now->format(\DateTimeInterface::ATOM);
+                    $data['depublicatiedatum'] = $now->format(DateTimeInterface::ATOM);
+                    $data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
                     $this->recordDecision(data: $data, decision: 'auto-archive', note: 'retention term expired');
                     $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
                     $counts['archived']++;
@@ -456,14 +460,14 @@ class RetentionService
             return $summary;
         }
 
-        $now       = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $windowEnd = $now->add(new \DateInterval('P'.$this->getWarningWindowDays().'D'));
+        $now       = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $windowEnd = $now->add(new DateInterval('P'.$this->getWarningWindowDays().'D'));
 
         try {
             $result  = $objectService->searchObjectsPaginated(
                 query: [
                     '@self'              => ['register' => $register, 'schema' => $schema],
-                    'retentionExpiresAt' => ['$lte' => $windowEnd->format(\DateTimeInterface::ATOM)],
+                    'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
                     '_limit'             => 1000,
                 ],
                 _rbac: true,
@@ -489,7 +493,7 @@ class RetentionService
             }
 
             try {
-                $expiry = new \DateTimeImmutable((string) $expiresAt);
+                $expiry = new DateTimeImmutable((string) $expiresAt);
             } catch (\Throwable $e) {
                 continue;
             }
@@ -543,7 +547,7 @@ class RetentionService
         }
 
         $data = $this->normalise($object);
-        $now  = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $now  = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
         switch ($decision) {
             case 'extend':
@@ -551,26 +555,26 @@ class RetentionService
                     throw new RuntimeException('Extend requires a positive number of months');
                 }
 
-                $base = ($data['retentionExpiresAt'] ?? $now->format(\DateTimeInterface::ATOM));
+                $base = ($data['retentionExpiresAt'] ?? $now->format(DateTimeInterface::ATOM));
                 try {
-                    $newExpiry = (new \DateTimeImmutable((string) $base))->add(new \DateInterval('P'.$extendMonths.'M'));
+                    $newExpiry = (new DateTimeImmutable((string) $base))->add(new DateInterval('P'.$extendMonths.'M'));
                 } catch (\Throwable $e) {
-                    $newExpiry = $now->add(new \DateInterval('P'.$extendMonths.'M'));
+                    $newExpiry = $now->add(new DateInterval('P'.$extendMonths.'M'));
                 }
 
-                $data['retentionExpiresAt']       = $newExpiry->format(\DateTimeInterface::ATOM);
+                $data['retentionExpiresAt']       = $newExpiry->format(DateTimeInterface::ATOM);
                 $data['retentionNote']            = $rationale;
                 $data['retentionLastEvaluatedAt'] = '';
                 break;
 
             case 'depublish':
-                $data['depublicatiedatum'] = $now->format(\DateTimeInterface::ATOM);
+                $data['depublicatiedatum'] = $now->format(DateTimeInterface::ATOM);
                 break;
 
             case 'archive':
             case 'dispose':
                 $data['status']            = 'archived';
-                $data['depublicatiedatum'] = $now->format(\DateTimeInterface::ATOM);
+                $data['depublicatiedatum'] = $now->format(DateTimeInterface::ATOM);
                 break;
 
             default:
@@ -751,7 +755,7 @@ class RetentionService
         $log[] = [
             'decision' => $decision,
             'by'       => $decisionBy,
-            'at'       => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
+            'at'       => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
             'note'     => $note,
             'basis'    => (string) ($data['retentionCategory'] ?? ''),
         ];
@@ -767,15 +771,15 @@ class RetentionService
      * @param string               $register      The register id.
      * @param string               $schema        The schema id.
      * @param array<string, mixed> $data          The publication data.
-     * @param \DateTimeImmutable   $now           The current time.
+     * @param DateTimeImmutable    $now           The current time.
      *
      * @return void
      *
      * @spec exclude internal idempotency helper.
      */
-    private function stampEvaluated(object $objectService, string $register, string $schema, array $data, \DateTimeImmutable $now): void
+    private function stampEvaluated(object $objectService, string $register, string $schema, array $data, DateTimeImmutable $now): void
     {
-        $data['retentionLastEvaluatedAt'] = $now->format(\DateTimeInterface::ATOM);
+        $data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
         $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
 
     }//end stampEvaluated()
