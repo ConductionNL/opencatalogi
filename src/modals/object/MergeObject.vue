@@ -114,6 +114,7 @@ import '../../css/json-highlight.css'
 									<NcTextField
 										v-if="mergedData[property] === 'custom'"
 										v-model="customValues[property]"
+										:label="t('opencatalogi', 'Custom value for {property}', { property })"
 										:placeholder="t('opencatalogi', 'Enter custom value for {property}', { property })"
 										class="custom-input" />
 								</template>
