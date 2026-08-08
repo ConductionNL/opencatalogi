@@ -76,7 +76,26 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
     <screenshot>https://codeberg.org/Conduction/opencatalogi/raw/branch/main/img/screenshot-publications.png</screenshot>
 
    	<dependencies>
-        <php min-version="8.0" min-int-size="64"/>
+        <!--
+        min-version is 8.3, not 8.0. The 8.0 floor advertised a configuration
+        that cannot exist and that nothing here has ever exercised:
+
+          - composer.json already declares `"php": "^8.3"` and pins
+            config.platform.php = 8.3, so `composer install` aborts on anything
+            older. The app could not have its own dependencies installed on the
+            version its own manifest advertised.
+          - The <nextcloud min-version> below is 32, and Nextcloud 32 refuses to
+            boot below PHP 8.1 outright (lib/versioncheck.php:
+            `if (PHP_VERSION_ID < 80100)`, verified against a running 32.0.12.1).
+            8.0 was unreachable through the server, never mind through composer.
+          - CI runs `php-version: "8.3"` with `php-test-versions: ["8.3","8.4"]`.
+            No leg below 8.3 has ever executed, so 8.0/8.1/8.2 were advertised
+            and untested at the same time.
+
+        Same class of defect as openconnector#1173: an App Store listing that
+        promises a range the app cannot deliver.
+        -->
+        <php min-version="8.3" min-int-size="64"/>
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
