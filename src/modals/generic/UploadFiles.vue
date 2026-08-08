@@ -230,6 +230,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
+										:aria-label="t('opencatalogi', 'Cancel')"
 										:title="t('opencatalogi', 'Cancel')"
 										variant="secondary"
 										@click="cancelFileLabelEditing">
@@ -240,6 +241,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
+										:aria-label="t('opencatalogi', 'Retry upload')"
 										:title="t('opencatalogi', 'Retry upload')"
 										variant="primary"
 										@click="addAttachments(file)">
@@ -249,6 +251,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
+										:aria-label="t('opencatalogi', 'Remove from list')"
 										:title="t('opencatalogi', 'Remove from list')"
 										variant="primary"
 										@click="removeFile(file.name)">

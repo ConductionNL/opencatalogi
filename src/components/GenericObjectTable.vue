@@ -216,6 +216,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 									<tr class="viewTableRow sort-target">
 										<th class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
+												:aria-label="t('opencatalogi', 'Select all {objectType} on this page', { objectType: objectTypePlural })"
 												:model-value="allSelected"
 												:indeterminate="someSelected"
 												@update:model-value="toggleSelectAll" />
@@ -240,6 +241,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 										@click="handleRowClick(getObjectId(item), $event)">
 										<td class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
+												:aria-label="t('opencatalogi', 'Select {title}', { title: getObjectTitle(item) })"
 												:model-value="selectedObjects.includes(getObjectId(item))"
 												@update:model-value="handleSelectObject(getObjectId(item))" />
 										</td>
@@ -277,6 +279,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 								<tr class="viewTableRow">
 									<th class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
+											:aria-label="t('opencatalogi', 'Select all {objectType} on this page', { objectType: objectTypePlural })"
 											:model-value="allSelected"
 											:indeterminate="someSelected"
 											@update:model-value="toggleSelectAll" />
@@ -301,6 +304,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 									@click="handleRowClick(getObjectId(item), $event)">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
+											:aria-label="t('opencatalogi', 'Select {title}', { title: getObjectTitle(item) })"
 											:model-value="selectedObjects.includes(getObjectId(item))"
 											@update:model-value="handleSelectObject(getObjectId(item))" />
 									</td>

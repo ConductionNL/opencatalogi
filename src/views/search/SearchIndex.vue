@@ -212,6 +212,7 @@ import { objectStore } from '../../store/store.js'
 								<tr>
 									<th class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
+											:aria-label="t('opencatalogi', 'Select all publications on this page')"
 											:model-value="allSelected"
 											:indeterminate="someSelected"
 											@update:model-value="toggleSelectAll" />
@@ -235,6 +236,7 @@ import { objectStore } from '../../store/store.js'
 									:class="{ viewTableRowSelected: searchStore.getSelectedPublications.includes(publication.id) }">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
+											:aria-label="t('opencatalogi', 'Select {title}', { title: publication.title || publication.name })"
 											:model-value="searchStore.getSelectedPublications.includes(publication.id)"
 											@update:model-value="(checked) => searchStore.togglePublicationSelection(publication.id, checked)" />
 									</td>
