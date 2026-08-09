@@ -445,27 +445,9 @@ class CatalogiService
         // Get catalogs using searchObjects (handles deleted field correctly).
         $catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
-        // Initialize arrays to store unique registers and schemas.
-        $uniqueRegisters = [];
-        $uniqueSchemas   = [];
-
-        // Iterate over each catalog to extract registers and schemas.
-        foreach ($catalogs as $catalog) {
-            $catalog = $catalog->jsonSerialize();
-            // Check if registers is an array and merge unique values.
-            if (isset($catalog['registers']) === true && is_array($catalog['registers']) === true) {
-                $uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
-            }
-
-            // Check if schemas is an array and merge unique values.
-            if (isset($catalog['schemas']) === true && is_array($catalog['schemas']) === true) {
-                $uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
-            }
-        }
-
         // Remove duplicate values and assign to class properties.
-        $this->availableRegisters = array_unique($uniqueRegisters);
-        $this->availableSchemas   = array_unique($uniqueSchemas);
+        $this->availableRegisters = $this->collectUnique($catalogs, 'registers');
+        $this->availableSchemas   = $this->collectUnique($catalogs, 'schemas');
 
         return [
             'registers' => array_values($this->availableRegisters),
@@ -473,6 +455,35 @@ class CatalogiService
         ];
 
     }//end getCatalogFilters()
+
+    /**
+     * Collect the unique values of one array-valued property across catalogs.
+     *
+     * Extracted from getCatalogFilters() so the fail-closed guard added there
+     * does not push that method over PHPMD's cyclomatic-complexity threshold.
+     * A baseline entry would have been the wrong repair: it is scoped to
+     * (rule, file) and would licence every future violation of that rule in
+     * this file, including ones nobody has looked at.
+     *
+     * @param array<int,mixed> $catalogs The catalog objects returned by the search.
+     * @param string           $property The array-valued property to collect ('registers' | 'schemas').
+     *
+     * @return array<int,mixed> The de-duplicated union of that property's values.
+     */
+    private function collectUnique(array $catalogs, string $property): array
+    {
+        $collected = [];
+
+        foreach ($catalogs as $catalog) {
+            $catalog = $catalog->jsonSerialize();
+            if (isset($catalog[$property]) === true && is_array($catalog[$property]) === true) {
+                $collected = array_merge($collected, $catalog[$property]);
+            }
+        }
+
+        return array_unique($collected);
+
+    }//end collectUnique()
 
     /**
      * Get the list of available registers.
