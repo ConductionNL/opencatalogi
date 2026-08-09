@@ -62,7 +62,7 @@ export default {
 		 * POST the peer directory URL to /api/listings/add.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-directory-visibility
+		 * @spec openspec/specs/dashboard/spec.md#requirement-add-a-new-listing-from-a-url-admin-only-dir-005
 		 */
 		async submit() {
 			const trimmed = this.url.trim()
