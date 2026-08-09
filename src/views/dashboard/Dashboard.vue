@@ -193,7 +193,11 @@
 							v-for="publication in conceptPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
@@ -244,7 +248,11 @@
 							v-for="publication in publishedPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
@@ -269,7 +277,11 @@
 							v-for="publication in depublishedPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
@@ -950,6 +962,17 @@ export default {
 /* Refresh button spinning animation */
 .icon-spinning {
 	animation: spin 1s linear infinite;
+}
+
+/* WCAG 2.3.3. The spinner is a status indicator, not decoration: stopping it
+   outright would hide the fact that something is still loading. It is slowed
+   to a near-static rate instead, which removes the vestibular trigger while
+   keeping the "busy" signal. The clickable publication rows below carry no
+   motion of their own, so nothing else in this component needs a fallback. */
+@media (prefers-reduced-motion: reduce) {
+	.icon-spinning {
+		animation-duration: 6s;
+	}
 }
 
 @keyframes spin {

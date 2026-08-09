@@ -151,14 +151,16 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<table v-if="files" class="files-table">
 					<thead>
 						<tr class="files-table-tr">
-							<th class="files-table-td-status" />
-							<th>
+							<th scope="col" class="files-table-td-status">
+								<span class="hidden-visually">{{ t('opencatalogi', 'Status') }}</span>
+							</th>
+							<th scope="col">
 								{{ t('opencatalogi', 'File name') }}
 							</th>
-							<th>
+							<th scope="col">
 								{{ t('opencatalogi', 'Size') }}
 							</th>
-							<th>
+							<th scope="col">
 								{{ t('opencatalogi', 'Labels') }}
 							</th>
 						</tr>
@@ -1187,6 +1189,15 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 
 .loadingIcon {
 	animation: spin 1s linear infinite;
+}
+
+/* WCAG 2.3.3. Slowed rather than stopped: this spinner is the only signal that
+   an upload is still in flight, so removing its motion would remove the
+   information. */
+@media (prefers-reduced-motion: reduce) {
+	.loadingIcon {
+		animation-duration: 6s;
+	}
 }
 
 @keyframes spin {

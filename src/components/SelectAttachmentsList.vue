@@ -267,4 +267,22 @@ export default {
 	right: 0;
 	left: 0;
 }
+
+/* WCAG 2.3.3. Same two decorative motions as SelectedObjectsList: the per-item
+   hover transition and the <transition-group> 30px horizontal slide. The
+   transform is dropped along with the tween; the opacity fade is kept so
+   additions and removals stay perceivable. */
+@media (prefers-reduced-motion: reduce) {
+	.selected-object-item,
+	.list-move,
+	.list-enter-active,
+	.list-leave-active {
+		transition: none;
+	}
+
+	.list-enter-from,
+	.list-leave-to {
+		transform: none;
+	}
+}
 </style>

@@ -157,11 +157,11 @@ export default {
 		<table class="woo-redaction__table">
 			<thead>
 				<tr>
-					<th>{{ t('opencatalogi', 'Redact') }}</th>
-					<th>{{ t('opencatalogi', 'Entity') }}</th>
-					<th>{{ t('opencatalogi', 'Type') }}</th>
-					<th>{{ t('opencatalogi', 'Page') }}</th>
-					<th>{{ t('opencatalogi', 'Refusal ground') }}</th>
+					<th scope="col">{{ t('opencatalogi','Redact') }}</th>
+					<th scope="col">{{ t('opencatalogi','Entity') }}</th>
+					<th scope="col">{{ t('opencatalogi','Type') }}</th>
+					<th scope="col">{{ t('opencatalogi','Page') }}</th>
+					<th scope="col">{{ t('opencatalogi','Refusal ground') }}</th>
 				</tr>
 			</thead>
 			<tbody>

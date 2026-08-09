@@ -157,9 +157,9 @@ import { objectStore } from '../../store/store.js'
 							<table class="statisticsTable publicationStats">
 								<thead>
 									<tr>
-										<th>{{ t('opencatalogi', 'Property') }}</th>
-										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
+										<th scope="col">{{ t('opencatalogi','Property') }}</th>
+										<th scope="col">{{ t('opencatalogi','Value') }}</th>
+										<th scope="col">{{ t('opencatalogi','Status') }}</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -210,21 +210,21 @@ import { objectStore } from '../../store/store.js'
 						<table class="viewTable">
 							<thead>
 								<tr>
-									<th class="tableColumnCheckbox">
+									<th scope="col" class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
 											:aria-label="t('opencatalogi', 'Select all publications on this page')"
 											:model-value="allSelected"
 											:indeterminate="someSelected"
 											@update:model-value="toggleSelectAll" />
 									</th>
-									<th>{{ t('opencatalogi', 'Title') }}</th>
-									<th>{{ t('opencatalogi', 'Status') }}</th>
-									<th>{{ t('opencatalogi', 'License') }}</th>
-									<th>{{ t('opencatalogi', 'Version') }}</th>
-									<th>{{ t('opencatalogi', 'Catalogs') }}</th>
-									<th>{{ t('opencatalogi', 'Schema') }}</th>
-									<th>{{ t('opencatalogi', 'Modified') }}</th>
-									<th class="tableColumnActions">
+									<th scope="col">{{ t('opencatalogi','Title') }}</th>
+									<th scope="col">{{ t('opencatalogi','Status') }}</th>
+									<th scope="col">{{ t('opencatalogi','License') }}</th>
+									<th scope="col">{{ t('opencatalogi','Version') }}</th>
+									<th scope="col">{{ t('opencatalogi','Catalogs') }}</th>
+									<th scope="col">{{ t('opencatalogi','Schema') }}</th>
+									<th scope="col">{{ t('opencatalogi','Modified') }}</th>
+									<th scope="col" class="tableColumnActions">
 										{{ t('opencatalogi', 'Actions') }}
 									</th>
 								</tr>

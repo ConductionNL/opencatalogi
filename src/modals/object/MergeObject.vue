@@ -49,7 +49,12 @@ import '../../css/json-highlight.css'
 					:key="obj['@self'].id"
 					class="object-item table-row-selectable"
 					:class="{ 'table-row-selected': selectedTargetObject?.['@self']?.id === obj['@self'].id }"
-					@click="selectTargetObject(obj)">
+					role="button"
+					tabindex="0"
+					:aria-pressed="selectedTargetObject?.['@self']?.id === obj['@self'].id"
+					@click="selectTargetObject(obj)"
+					@keydown.enter="selectTargetObject(obj)"
+					@keydown.space.prevent="selectTargetObject(obj)">
 					<div class="object-info">
 						<strong>{{ obj['@self']?.name || obj.name || obj.title || obj['@self']?.title || obj['@self']?.id }}</strong>
 						<p class="object-id">
@@ -81,10 +86,10 @@ import '../../css/json-highlight.css'
 				<table class="merge-table">
 					<thead>
 						<tr>
-							<th>{{ t('opencatalogi', 'Property') }}</th>
-							<th>{{ t('opencatalogi', 'Source') }}</th>
-							<th>{{ t('opencatalogi', 'Target') }}</th>
-							<th>{{ t('opencatalogi', 'Result Value') }}</th>
+							<th scope="col">{{ t('opencatalogi','Property') }}</th>
+							<th scope="col">{{ t('opencatalogi','Source') }}</th>
+							<th scope="col">{{ t('opencatalogi','Target') }}</th>
+							<th scope="col">{{ t('opencatalogi','Result Value') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -159,9 +164,9 @@ import '../../css/json-highlight.css'
 					<table class="file-table">
 						<thead>
 							<tr>
-								<th>{{ t('opencatalogi', 'Filename') }}</th>
-								<th>{{ t('opencatalogi', 'Size') }}</th>
-								<th>{{ t('opencatalogi', 'Type') }}</th>
+								<th scope="col">{{ t('opencatalogi','Filename') }}</th>
+								<th scope="col">{{ t('opencatalogi','Size') }}</th>
+								<th scope="col">{{ t('opencatalogi','Type') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -216,9 +221,9 @@ import '../../css/json-highlight.css'
 					<table class="relation-table">
 						<thead>
 							<tr>
-								<th>{{ t('opencatalogi', 'Related Object') }}</th>
-								<th>{{ t('opencatalogi', 'Relation Type') }}</th>
-								<th>{{ t('opencatalogi', 'Register/Schema') }}</th>
+								<th scope="col">{{ t('opencatalogi','Related Object') }}</th>
+								<th scope="col">{{ t('opencatalogi','Relation Type') }}</th>
+								<th scope="col">{{ t('opencatalogi','Register/Schema') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -295,9 +300,9 @@ import '../../css/json-highlight.css'
 					<table class="report-table">
 						<thead>
 							<tr>
-								<th>{{ t('opencatalogi', 'Property') }}</th>
-								<th>{{ t('opencatalogi', 'Old Value') }}</th>
-								<th>{{ t('opencatalogi', 'New Value') }}</th>
+								<th scope="col">{{ t('opencatalogi','Property') }}</th>
+								<th scope="col">{{ t('opencatalogi','Old Value') }}</th>
+								<th scope="col">{{ t('opencatalogi','New Value') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -828,6 +833,15 @@ export default {
 	border-bottom: 1px solid var(--color-border);
 	cursor: pointer;
 	transition: background-color 0.2s;
+}
+
+/* WCAG 2.3.3. This transition is purely decorative hover feedback — the
+   selected state is also carried by .table-row-selected and aria-pressed, so
+   removing the animation loses no information. */
+@media (prefers-reduced-motion: reduce) {
+	.object-item {
+		transition: none;
+	}
 }
 
 .object-item:last-child {

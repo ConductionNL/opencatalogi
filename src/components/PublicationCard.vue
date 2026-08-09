@@ -2,7 +2,11 @@
 	<div
 		class="publication-card"
 		:class="[`publication-card--${status}`, { 'publication-card--selected': selected }]"
-		@click="$emit('click', object)">
+		role="button"
+		tabindex="0"
+		@click="$emit('click', object)"
+		@keydown.enter="$emit('click', object)"
+		@keydown.space.prevent="$emit('click', object)">
 		<div v-if="selectable" class="publication-card__checkbox" @click.stop>
 			<NcCheckboxRadioSwitch
 				:aria-label="t('opencatalogi', 'Select {title}', { title })"
@@ -143,6 +147,14 @@ export default {
 	border-radius: var(--border-radius-large, 10px);
 	cursor: pointer;
 	transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* WCAG 2.3.3. Decorative hover/selection feedback only; the resulting
+   box-shadow and border colour still apply, just without the tween. */
+@media (prefers-reduced-motion: reduce) {
+	.publication-card {
+		transition: none;
+	}
 }
 
 .publication-card:hover {

@@ -328,6 +328,14 @@ export default {
 	transition: all 0.2s ease;
 }
 
+/* WCAG 2.3.3. Decorative only — the active tab is identified by its own
+   border-bottom colour and text colour, both of which still apply instantly. */
+@media (prefers-reduced-motion: reduce) {
+	.tabHeader {
+		transition: none;
+	}
+}
+
 .tabHeader:hover {
 	color: var(--color-main-text);
 	background-color: var(--color-background-hover);
