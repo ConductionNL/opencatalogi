@@ -386,6 +386,43 @@ class CatalogiService
         $schema   = $this->config->getValueString($this->appName, 'catalog_schema', '');
         $register = $this->config->getValueString($this->appName, 'catalog_register', '');
 
+        // FAIL CLOSED. getCatalogBySlug() — the sibling method in this same class
+        // — already refuses when either key is empty; this method did not, and the
+        // asymmetry is the bug.
+        //
+        // An empty key does NOT fall through to "no scope" harmlessly. It is put
+        // into the query verbatim, and `??` only falls through on null, so
+        // MagicMapper receives '' and casts it: `find((int) '')` is `find(0)`,
+        // which resolves nothing, leaves $register/$schema null, and so SKIPS the
+        // `if ($register !== null && $schema !== null)` scoped branch entirely —
+        // falling through to the cross-table path. Combined with the
+        // `_rbac: false` below, an unconfigured instance therefore ran an
+        // UNSCOPED, RBAC-DISABLED sweep of every object on the instance in order
+        // to derive a catalog scope. That is the same degradation shape as #828
+        // (GET /api/listings): an unresolved scope becoming NO scope rather than
+        // a refusal.
+        //
+        // Returning empty arrays is the correct refusal here rather than an
+        // exception, because that is already the contract callers handle:
+        // PublicationService::setObjectServiceContext() checks
+        // `empty($allowedRegisters) || empty($allowedSchemas)` and returns
+        // without querying, explicitly to "refuse to do a platform-wide scan".
+        if ($schema === '' || $register === '') {
+            $this->logger->error(
+                'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
+                [
+                    'schema'   => $schema,
+                    'register' => $register,
+                ]
+            );
+            $this->availableRegisters = [];
+            $this->availableSchemas   = [];
+            return [
+                'registers' => [],
+                'schemas'   => [],
+            ];
+        }
+
         // Setup the base query for searchObjects.
         $query = [
             '@self' => [
