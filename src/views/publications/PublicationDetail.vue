@@ -599,10 +599,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<AppTab :title="t('opencatalogi', 'Logging')">
 					<table width="100%">
 						<tr>
-							<th><b>{{ t('opencatalogi', 'Timestamp') }}</b></th>
-							<th><b>{{ t('opencatalogi', 'User') }}</b></th>
-							<th><b>{{ t('opencatalogi', 'Action') }}</b></th>
-							<th><b>{{ t('opencatalogi', 'Details') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','Timestamp') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','User') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','Action') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','Details') }}</b></th>
 						</tr>
 						<tr>
 							<td>18-07-2024 11:55:21</td>
@@ -620,10 +620,19 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					</table>
 				</AppTab>
 				<AppTab v-if="1 == 2" :title="t('opencatalogi', 'Permissions')">
-					<table width="100%">
-						<tr>
-							<td>{{ prive ? t('opencatalogi', 'This publication is NOT publicly accessible') : t('opencatalogi', 'This publication is publicly accessible') }}</td>
-							<td>
+					<!--
+						This was a <table> holding no tabular data — two label/control
+						pairs laid out in a grid. A layout table misreports structure to a
+						screen reader, which announces "table, 2 rows, 2 columns" and
+						offers cell navigation over content that has no rows or columns.
+						Adding <th> to satisfy the header rule would have been remediation
+						theatre: headers that name nothing. It is a description list
+						instead, which is what a set of label/value pairs actually is.
+					-->
+					<dl class="accessPanel">
+						<div class="accessPanel__row">
+							<dt>{{ prive ? t('opencatalogi', 'This publication is NOT publicly accessible') : t('opencatalogi', 'This publication is publicly accessible') }}</dt>
+							<dd>
 								<NcButton @click="prive = !prive">
 									<template #icon>
 										<LockOpenVariantOutline v-if="!prive" :size="20" />
@@ -632,17 +641,17 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									<span v-if="!prive">{{ t('opencatalogi', 'Make private') }}</span>
 									<span v-if="prive">{{ t('opencatalogi', 'Make public') }}</span>
 								</NcButton>
-							</td>
-						</tr>
-						<tr v-if="prive">
-							<td>{{ t('opencatalogi', 'User groups') }}</td>
-							<td>
+							</dd>
+						</div>
+						<div v-if="prive" class="accessPanel__row">
+							<dt>{{ t('opencatalogi', 'User groups') }}</dt>
+							<dd>
 								<NcSelectTags v-model="userGroups"
 									:input-label="t('opencatalogi', 'user groups')"
 									:multiple="true" />
-							</td>
-						</tr>
-					</table>
+							</dd>
+						</div>
+					</dl>
 				</AppTab>
 				<AppTab :title="t('opencatalogi', 'Statistics')">
 					<div class="tabPanel">
@@ -1313,5 +1322,27 @@ h4 {
 .checkedItem {
 	display: flex;
 	align-items: center;
+}
+
+/* Replaces the layout <table> in the access tab: same two-column label/control
+   alignment and full width, without claiming to be tabular data. */
+.accessPanel {
+	width: 100%;
+	margin: 0;
+}
+
+.accessPanel__row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-block: 4px;
+}
+
+.accessPanel__row dt {
+	flex: 1;
+}
+
+.accessPanel__row dd {
+	margin: 0;
 }
 </style>

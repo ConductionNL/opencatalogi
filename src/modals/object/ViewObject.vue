@@ -195,26 +195,28 @@ import { EventBus } from '../../eventBus.js'
 									<table class="viewTable">
 										<thead>
 											<tr class="viewTableRow">
-												<th class="tableColumnCheckbox">
+												<th scope="col" class="tableColumnCheckbox">
 													<NcCheckboxRadioSwitch
 														:aria-label="t('opencatalogi', 'Select all files on this page')"
 														:model-value="allFilesSelected"
 														:indeterminate="someFilesSelected"
 														@update:modelValue="toggleSelectAllFiles" />
 												</th>
-												<th class="tableColumnExpanded table-row-title">
+												<th scope="col" class="tableColumnExpanded table-row-title">
 													{{ t('opencatalogi', 'Name') }}
 												</th>
-												<th class="tableColumnConstrained short-column">
+												<th scope="col" class="tableColumnConstrained short-column">
 													{{ t('opencatalogi', 'Size') }}
 												</th>
-												<th class="tableColumnConstrained table-row-type">
+												<th scope="col" class="tableColumnConstrained table-row-type">
 													{{ t('opencatalogi', 'Type') }}
 												</th>
-												<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
+												<th scope="col" :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
 													{{ t('opencatalogi', 'Labels') }}
 												</th>
-												<th class="table-row-actions" />
+												<th scope="col" class="table-row-actions">
+													<span class="hidden-visually">{{ t('opencatalogi', 'Actions') }}</span>
+												</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -2201,6 +2203,16 @@ export default {
 .viewTableRow {
 	cursor: pointer;
 	transition: background-color 0.2s ease;
+}
+
+/* WCAG 2.3.3. Both transitions in this component are decorative hover feedback
+   (row highlight, and the drop-property button fading from 0.3 to 1 opacity).
+   The end states still apply, so no affordance is lost. */
+@media (prefers-reduced-motion: reduce) {
+	.viewTableRow,
+	.drop-property-btn {
+		transition: none !important;
+	}
 }
 
 .viewTableRow:hover {
