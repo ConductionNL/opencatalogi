@@ -85,9 +85,15 @@ class WooReadinessController extends Controller
      * HTTP 409 `not-configured` and zero outbound requests when no WOO-enabled catalog
      * exists (WOO-HR-004) — the configuration check runs BEFORE any fetch.
      *
-     * @return JSONResponse The freshly computed and persisted report, or a 409 error.
+     * CSRF is ENFORCED here (no `@NoCSRFRequired`), unlike the read-only
+     * `report()` beside it. This POST both PERSISTS a report and issues outbound
+     * HTTP requests to the configured public WOO surface, so a forged
+     * cross-origin call would let any page the admin visits drive this
+     * instance's outbound fetches and overwrite the stored report.
+     * `src/views/settings/Settings.vue` calls it through `@nextcloud/axios`,
+     * which sends `requesttoken`.
      *
-     * @NoCSRFRequired
+     * @return JSONResponse The freshly computed and persisted report, or a 409 error.
      *
      * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-endpoints-are-admin-gated-and-fail-closed-woo-hr-004
      */
