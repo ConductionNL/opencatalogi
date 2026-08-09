@@ -28,12 +28,32 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * The federation search store's result rows, rendered as-is — no local
+		 * filtering, faceting or scoring happens here.
+		 *
+		 * @return {Array<object>} Result rows from the federation endpoint.
+		 * @spec openspec/specs/search/spec.md#requirement-search-ui-components-sch-or-006
+		 */
 		results() {
 			return this.searchStore.searchResults || []
 		},
+		/**
+		 * Total result count as reported by the federation endpoint's pagination
+		 * envelope — not counted locally.
+		 *
+		 * @return {number} Total number of results.
+		 * @spec openspec/specs/search/spec.md#requirement-search-ui-components-sch-or-006
+		 */
 		totalCount() {
 			return this.searchStore.pagination?.total || 0
 		},
+		/**
+		 * Whether the federation search store has a request in flight.
+		 *
+		 * @return {boolean} True while loading.
+		 * @spec openspec/specs/search/spec.md#requirement-search-ui-components-sch-or-006
+		 */
 		loading() {
 			return this.searchStore.loading
 		},
@@ -53,6 +73,13 @@ export default {
 			}
 		},
 	},
+	/**
+	 * Seed the query input from the store and load the initial result set
+	 * through the federation-aware search store.
+	 *
+	 * @return {void}
+	 * @spec openspec/specs/search/spec.md#requirement-search-frontend-store-calls-the-federation-endpoint-sch-or-004
+	 */
 	mounted() {
 		this.localQuery = this.searchStore.searchTerm || ''
 		this.searchStore.loadInitialResults()

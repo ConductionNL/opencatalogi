@@ -62,11 +62,17 @@ export default {
 		}
 	},
 	computed: {
-		/** @return {object|null} The active menu whose items are edited. */
+		/**
+		 * @return {object|null} The active menu whose items are edited.
+		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
+		 */
 		menuObject() {
 			return objectStore.getActiveObject('menu')
 		},
-		/** @return {object|null} Flattened item for CnFormDialog (null in create mode). */
+		/**
+		 * @return {object|null} Flattened item for CnFormDialog (null in create mode).
+		 * @spec openspec/specs/retrofit-2026-05-26-menu-page-management/spec.md#requirement-menu-item-form-req-menu-002
+		 */
 		dialogItem() {
 			const raw = objectStore.getActiveObject('menuItem')
 			if (!raw) {
@@ -91,6 +97,7 @@ export default {
 		 *
 		 * @param {object} formData The CnFormDialog payload, keyed by field.
 		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
 		 */
 		onConfirm(formData) {
 			const menuClone = _.cloneDeep(this.menuObject)
@@ -146,6 +153,7 @@ export default {
 		 *
 		 * @param {Array} selected The selected options.
 		 * @return {Array<string>} Group ids.
+		 * @spec openspec/specs/retrofit-2026-05-26-menu-page-management/spec.md#requirement-menu-item-form-req-menu-002
 		 */
 		normalizeGroups(selected) {
 			if (!Array.isArray(selected)) {
@@ -157,6 +165,7 @@ export default {
 		 * Close the dialog and return to the parent menu view.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
 		 */
 		closeModal() {
 			navigationStore.setModal('viewMenu')

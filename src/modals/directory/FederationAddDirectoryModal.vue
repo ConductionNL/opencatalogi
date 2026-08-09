@@ -33,14 +33,29 @@ export default {
 		}
 	},
 	computed: {
-		// Manifest-v2 uses a `federation…` prefix so the flag never collides
-		// with the legacy `AddDirectoryModal` (which keys on `'addDirectory'`)
-		// if both shells ever coexist.
+		/**
+		 * Whether the add-directory modal is the active navigation-store modal.
+		 *
+		 * Manifest-v2 uses a `federation…` prefix so the flag never collides
+		 * with the legacy `AddDirectoryModal` (which keys on `'addDirectory'`)
+		 * if both shells ever coexist.
+		 *
+		 * @return {boolean} True when this modal should render.
+		 * @spec openspec/specs/retrofit-2026-05-26-directory-federation/spec.md#requirement-directory-listing-modals-req-dir-003
+		 */
 		isOpen() {
 			return navigationStore.modal === 'federationAddDirectory'
 		},
 	},
 	watch: {
+		/**
+		 * Reset the form whenever the modal transitions to open, so a previous
+		 * submission's URL, error or result never leaks into the next use.
+		 *
+		 * @param {boolean} open The new open state.
+		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-directory-federation/spec.md#requirement-directory-listing-modals-req-dir-003
+		 */
 		isOpen(open) {
 			if (open) {
 				this.reset()
@@ -49,12 +64,24 @@ export default {
 	},
 	methods: {
 		t,
+		/**
+		 * Clear the form back to its pristine state each time the modal opens.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-directory-federation/spec.md#requirement-directory-listing-modals-req-dir-003
+		 */
 		reset() {
 			this.url = ''
 			this.submitting = false
 			this.error = null
 			this.result = null
 		},
+		/**
+		 * Close the modal on completion or cancel.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-directory-federation/spec.md#requirement-directory-listing-modals-req-dir-003
+		 */
 		close() {
 			navigationStore.setModal(null)
 		},

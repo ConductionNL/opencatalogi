@@ -759,6 +759,7 @@ export default {
 		 * pinned to 1. Pagination is derived from the real array below.
 		 *
 		 * @return {Array<object>} Every attachment currently loaded.
+		 * @spec openspec/specs/publications/spec.md#requirement-retrieve-publication-attachments-files-linked-to-a-publication-pub-006
 		 */
 		publicationAttachments() {
 			return objectStore.getCollection('publicationAttachments').results || []
@@ -771,6 +772,7 @@ export default {
 		 * array length and paging is applied client-side in `pagedAttachments`.
 		 *
 		 * @return {number} Attachment count.
+		 * @spec openspec/specs/publications/spec.md#requirement-retrieve-publication-attachments-files-linked-to-a-publication-pub-006
 		 */
 		attachmentsTotal() {
 			return this.publicationAttachments.length
@@ -779,6 +781,7 @@ export default {
 		 * Number of attachment pages at the current page size.
 		 *
 		 * @return {number} Page count, at least 1.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		attachmentsTotalPages() {
 			return Math.max(1, Math.ceil(this.attachmentsTotal / this.limit))
@@ -787,6 +790,7 @@ export default {
 		 * The attachments visible on the current page.
 		 *
 		 * @return {Array<object>} The current page's slice.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		pagedAttachments() {
 			const start = (this.currentPage - 1) * this.limit
@@ -797,6 +801,7 @@ export default {
 		 * entries rather than the bare numbers held in `limitOptions`.
 		 *
 		 * @return {Array<{value: number, label: string}>} Page-size options.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		pageSizeOptions() {
 			return this.limitOptions.options.map((size) => ({ value: size, label: String(size) }))
@@ -870,6 +875,7 @@ export default {
 		 *
 		 * @param {number} page The 1-based page to show.
 		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		onAttachmentsPageChanged(page) {
 			this.currentPage = Math.min(Math.max(page, 1), this.attachmentsTotalPages)
@@ -879,6 +885,7 @@ export default {
 		 *
 		 * @param {number} size The new page size.
 		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		onAttachmentsPageSizeChanged(size) {
 			this.limit = Number(size)

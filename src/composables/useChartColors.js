@@ -29,6 +29,7 @@ function readCssVar(name, fallback) {
  * dashboard previously hardcoded when a variable isn't defined (e.g. an older
  * Nextcloud core without one of the newer semantic tokens).
  * @return {string[]} An ordered list of resolved color strings.
+ * @spec openspec/specs/frontend-theming/spec.md#requirement-all-frontend-colors-come-from-nc-css-variables-thm-001
  */
 export function useCategoricalChartColors() {
 	return [
@@ -45,6 +46,7 @@ export function useCategoricalChartColors() {
 /**
  * Resolve the single accent color used by the traffic (API read-requests) chart.
  * @return {string[]} A single-entry color list, matching ApexCharts' `colors` shape.
+ * @spec openspec/specs/frontend-theming/spec.md#requirement-all-frontend-colors-come-from-nc-css-variables-thm-001
  */
 export function useAccentChartColor() {
 	return [readCssVar('--color-primary-element', '#079cff')]
