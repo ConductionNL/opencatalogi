@@ -33,7 +33,7 @@ use OCP\IRequest;
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+ * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
  */
 class UiController extends Controller
 {
@@ -89,7 +89,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function dashboard(): TemplateResponse
     {
@@ -105,7 +105,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function catalogi(): TemplateResponse
     {
@@ -121,7 +121,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function publicationsIndex(): TemplateResponse
     {
@@ -137,7 +137,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function publicationsPage(): TemplateResponse
     {
@@ -153,7 +153,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function search(): TemplateResponse
     {
@@ -169,7 +169,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function organizations(): TemplateResponse
     {
@@ -185,7 +185,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function themes(): TemplateResponse
     {
@@ -201,7 +201,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function glossary(): TemplateResponse
     {
@@ -217,7 +217,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function pages(): TemplateResponse
     {
@@ -233,7 +233,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function menus(): TemplateResponse
     {
@@ -249,7 +249,7 @@ class UiController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-spa-deep-link-routing/tasks.md#task-1
+     * @spec openspec/specs/spa-deep-link-routing/spec.md#requirement-serve-the-spa-shell-for-every-top-level-deep-link-route-spa-001
      */
     public function directory(): TemplateResponse
     {

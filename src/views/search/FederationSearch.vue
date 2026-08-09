@@ -66,7 +66,7 @@ export default {
 		 *
 		 * @param {{query: string, facets: object}} payload Event payload.
 		 * @return {Promise<void>}
-		 * @spec openspec/specs/federation/spec.md#requirement-federated-search-visibility
+		 * @spec openspec/specs/search/spec.md#requirement-search-frontend-store-calls-the-federation-endpoint-sch-or-004
 		 */
 		onSearch(payload) {
 			const query = typeof payload === 'string' ? payload : (payload?.query ?? '')
