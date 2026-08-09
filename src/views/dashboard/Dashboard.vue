@@ -485,7 +485,11 @@ export default {
 			return this.catalogs.length > 0
 				|| this.allPublications.length > 0
 		},
-		/** First catalog slug available in the store, used for Publications route navigation. */
+		/**
+		 * First catalog slug available in the store, used for Publications route navigation.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
+		 */
 		firstCatalogSlug() {
 			return this.catalogs[0]?.slug || null
 		},
@@ -570,6 +574,7 @@ export default {
 		 * counts.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
 		 */
 		async fetchPublicationAggregations() {
 			if (!PUBLICATION_REGISTER || !PUBLICATION_SCHEMA) {
@@ -752,6 +757,8 @@ export default {
 		 * Status-based filtering is intentionally omitted: publication status is
 		 * derived from date fields (publicatiedatum / depublicatiedatum), not a
 		 * simple status query parameter.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
 		 */
 		navigateToPublications() {
 			if (this.firstCatalogSlug) {
@@ -765,6 +772,7 @@ export default {
 		 * Resolve a catalog slug from a catalog ID reference on a publication.
 		 * @param {string|number|object|null} catalogRef - catalog field value from a publication
 		 * @return {string|null}
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
 		 */
 		catalogSlugById(catalogRef) {
 			if (!catalogRef) return this.firstCatalogSlug

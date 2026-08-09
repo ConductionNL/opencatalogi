@@ -157,6 +157,13 @@ export default {
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+		/**
+		 * Open the clicked page's detail page.
+		 *
+		 * @param {object} row The clicked table row.
+		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-page-management-ui-with-embedded-content-blocks-cms-036
+		 */
 		onRowClick(row) {
 			// PageDetail route params.id is a slug when available so the URL
 			// stays human-readable; fall back to the OpenRegister object id
@@ -170,6 +177,13 @@ export default {
 			// eslint-disable-next-line no-console
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
+		/**
+		 * Open a page's detail page from the row action menu.
+		 *
+		 * @param {object} page The page row payload.
+		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-page-management-ui-with-embedded-content-blocks-cms-036
+		 */
 		viewPage(page) {
 			// PageDetail route params.id is a slug when available so the URL
 			// stays human-readable; fall back to the OpenRegister object id

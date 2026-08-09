@@ -808,6 +808,8 @@ export default {
 		 * because every selection block is gated on `.length > 1` (the auto-
 		 * select case hides the widget) — the observable result is a blank
 		 * modal body (WOO-527).
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
 		 */
 		selectionStalled() {
 			if (this.isLockedCatalog) return false
@@ -820,7 +822,11 @@ export default {
 			if (this.selectedRegister && this.schemaOptions.length === 0) return true
 			return false
 		},
-		/** Human-readable reason for the stalled state — surfaced in the empty-content card. */
+		/**
+		 * Human-readable reason for the stalled state — surfaced in the empty-content card.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
+		 */
 		selectionStalledReason() {
 			if (this.selectedCatalog && this.registerOptions.length === 0) {
 				return t('opencatalogi', 'This catalog has no registers configured. Ask an administrator to attach a register that contains a publication schema to it.')
@@ -1029,6 +1035,8 @@ export default {
 			 * auto-selects the sole catalog — leaving the modal blank until
 			 * the user closes and re-opens it. Re-run the seed step as soon
 			 * as catalogs arrive (WOO-527).
+			 *
+			 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
 			 */
 			handler(newOptions) {
 				if (!this.isNewObject) return

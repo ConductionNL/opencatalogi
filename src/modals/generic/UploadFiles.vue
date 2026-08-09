@@ -451,6 +451,12 @@ export default {
 			}
 		}, { immediate: true })
 	},
+	/**
+	 * Tear down the dialog watcher and the pending duplicate-file warning timer.
+	 *
+	 * @return {void}
+	 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-file-attachment-management-req-objm-004
+	 */
 	unmounted() {
 		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
 		// The duplicate-warning timeout writes `this.duplicateWarning` 5s later;
