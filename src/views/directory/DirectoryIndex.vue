@@ -290,6 +290,15 @@ export default {
 			if (cleanUrl.length > 35) return cleanUrl.substring(0, 32) + '...'
 			return cleanUrl
 		},
+		/**
+		 * Re-add the peer directory URL through the admin-gated
+		 * `POST /api/listings/add` endpoint, which re-reads the peer's directory
+		 * and creates/updates its listings.
+		 *
+		 * @param {object} listing The listing whose `directory` URL is re-submitted.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-add-a-new-listing-from-a-url-admin-only-dir-005
+		 */
 		async refreshDirectory(listing) {
 			try {
 				// Auth-required `/api/listings/add` (WOO-513) — same syncDirectory()
@@ -315,6 +324,14 @@ export default {
 				showError(`Failed to sync directory: ${error.message}`)
 			}
 		},
+		/**
+		 * Toggle a listing between `integrationLevel: 'search'` (participates in
+		 * the federated search fan-out) and `'connection'` (does not).
+		 *
+		 * @param {object} listing The listing to toggle.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/federation/spec.md#requirement-listings-with-integrationlevel-search-included-in-federated-search-fed-010
+		 */
 		async toggleIntegrationLevel(listing) {
 			try {
 				const newLevel = (!listing.integrationLevel || listing.integrationLevel === 'none' || listing.integrationLevel === 'connection') ? 'search' : 'connection'
@@ -326,6 +343,14 @@ export default {
 				showError(`Failed to update directory: ${error.message}`)
 			}
 		},
+		/**
+		 * Update a listing's `default` flag, clearing the flag from any other
+		 * listing so exactly one stays default.
+		 *
+		 * @param {object} listing The listing to update.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-update-an-existing-listing-lst-004
+		 */
 		async toggleDefault(listing) {
 			try {
 				const newDefaultState = !listing.default

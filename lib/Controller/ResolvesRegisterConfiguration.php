@@ -29,8 +29,10 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use RuntimeException;
 
 /**
  * Resolve `<context>_register` / `<context>_schema` config via OpenRegister.
@@ -110,7 +112,7 @@ trait ResolvesRegisterConfiguration
         try {
             $appConfig = $this->container->get(\OCP\IAppConfig::class);
         } catch (\Throwable $e) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 message: 'Cannot resolve register configuration for '.$registerKey.': IAppConfig unavailable',
                 code: 0,
                 previous: $e
@@ -121,7 +123,7 @@ trait ResolvesRegisterConfiguration
         $schema   = $appConfig->getValueString($this->appName, $schemaKey, '');
 
         if ($register === '' || $schema === '') {
-            throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException(
+            throw new MissingConfigException(
                 'Register configuration is not set for '.$registerKey.' / '.$schemaKey
                 .'. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas.'
             );

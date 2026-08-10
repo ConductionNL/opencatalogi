@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTime;
 use DOMDocument;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
@@ -166,7 +167,7 @@ class WooReadinessService
 
         $report = [
             'verdict'      => $this->computeVerdict($checks),
-            'checkedAt'    => (new \DateTime())->format(DATE_ATOM),
+            'checkedAt'    => (new DateTime())->format(DATE_ATOM),
             'baseUrl'      => $baseUrl,
             'checks'       => $checks,
             'registration' => $registration,

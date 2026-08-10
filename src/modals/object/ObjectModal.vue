@@ -25,6 +25,7 @@ import '../../css/json-highlight.css'
 							<span class="detail-label">{{ t('opencatalogi', 'Catalogus:') }}</span>
 							<NcButton v-if="selectedCatalogus"
 								class="pencil-button"
+								:aria-label="t('opencatalogi', 'Change catalog')"
 								@click="() => {
 									selectedCatalogus = null;
 									selectedRegister = null;
@@ -49,6 +50,7 @@ import '../../css/json-highlight.css'
 							<span class="detail-label">{{ t('opencatalogi', 'Register:') }}</span>
 							<NcButton v-if="selectedRegister"
 								class="pencil-button"
+								:aria-label="t('opencatalogi', 'Change register')"
 								@click="() => {
 									selectedRegister = null;
 									selectedSchema = null
@@ -72,6 +74,7 @@ import '../../css/json-highlight.css'
 							<span class="detail-label">{{ t('opencatalogi', 'Schema:') }}</span>
 							<NcButton v-if="selectedSchema"
 								class="pencil-button"
+								:aria-label="t('opencatalogi', 'Change schema')"
 								@click="() => {
 									selectedSchema = null
 								}">

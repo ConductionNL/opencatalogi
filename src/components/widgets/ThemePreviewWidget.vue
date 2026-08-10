@@ -62,13 +62,21 @@ export default {
 		}
 	},
 	computed: {
-		/** The resolved object-context bag from inject (either shape) or {}. */
+		/**
+		 * The resolved object-context bag from inject (either shape) or {}.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		ctx() {
 			const inj = this.cnObjectContext && (this.cnObjectContext.value || this.cnObjectContext)
 			const holder = this.cnDetailObjectContext && this.cnDetailObjectContext.value
 			return inj || holder || {}
 		},
-		/** The current theme object, when the detail page has loaded one. */
+		/**
+		 * The current theme object, when the detail page has loaded one.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		theme() {
 			return (this.ctx && this.ctx.object) || {}
 		},
@@ -76,12 +84,18 @@ export default {
 		 * Colour-picker declarations. Guarded so CnThemePreview never
 		 * receives `undefined` — falls back to a built-in default set
 		 * when the manifest content carries none.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		pickers() {
 			const configured = this.content && Array.isArray(this.content.pickers) ? this.content.pickers : []
 			return configured.length > 0 ? configured : this.defaultPickers
 		},
-		/** Reset-button defaults map, derived from whichever picker set is active. */
+		/**
+		 * Reset-button defaults map, derived from whichever picker set is active.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		defaults() {
 			if (this.content && this.content.defaults && typeof this.content.defaults === 'object') {
 				return this.content.defaults
@@ -91,15 +105,27 @@ export default {
 				return acc
 			}, {})
 		},
-		/** Initial colour map, guarded to always be a plain object. */
+		/**
+		 * Initial colour map, guarded to always be a plain object.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		value() {
 			return (this.content && typeof this.content.value === 'object' && this.content.value) || {}
 		},
-		/** Sample-preview title — prefers the loaded theme's own title. */
+		/**
+		 * Sample-preview title — prefers the loaded theme's own title.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		sampleTitle() {
 			return this.theme.title || this.content.title || t('opencatalogi', 'Theme preview')
 		},
-		/** Sample-preview body text — prefers the loaded theme's summary/description. */
+		/**
+		 * Sample-preview body text — prefers the loaded theme's summary/description.
+		 *
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		sampleBodyText() {
 			return this.theme.summary || this.theme.description || this.content.description
 				|| t('opencatalogi', 'This is how publications with this theme look.')

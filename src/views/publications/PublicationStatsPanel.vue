@@ -25,9 +25,9 @@
 			<table v-if="stats.series && stats.series.length" class="usageStatsTable">
 				<thead>
 					<tr>
-						<th>{{ t('opencatalogi', 'Date') }}</th>
-						<th>{{ t('opencatalogi', 'Views') }}</th>
-						<th>{{ t('opencatalogi', 'Downloads') }}</th>
+						<th scope="col">{{ t('opencatalogi','Date') }}</th>
+						<th scope="col">{{ t('opencatalogi','Views') }}</th>
+						<th scope="col">{{ t('opencatalogi','Downloads') }}</th>
 					</tr>
 				</thead>
 				<tbody>

@@ -186,6 +186,13 @@ export default {
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+		/**
+		 * Open the clicked row's catalog detail page by route id.
+		 *
+		 * @param {object} row The clicked table row.
+		 * @return {void}
+		 * @spec openspec/specs/catalogs/spec.md#requirement-view-catalog-details-and-detail-page-cat-015
+		 */
 		onRowClick(row) {
 			const id = resolveObjectId(row)
 			if (id) {
@@ -197,6 +204,13 @@ export default {
 			// eslint-disable-next-line no-console
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
+		/**
+		 * Open a catalog's detail page from the row action menu.
+		 *
+		 * @param {object} catalog The catalog row payload.
+		 * @return {void}
+		 * @spec openspec/specs/catalogs/spec.md#requirement-view-catalog-details-and-detail-page-cat-015
+		 */
 		viewCatalog(catalog) {
 			const id = resolveObjectId(catalog)
 			if (id) {

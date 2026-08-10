@@ -142,6 +142,68 @@ class CatalogiServiceTest extends TestCase
     // ──────────────────────────────────────────────────────────
     // getCatalogFilters
     // ──────────────────────────────────────────────────────────
+
+    /**
+     * An unconfigured catalog register/schema must NOT be turned into an
+     * unscoped search.
+     *
+     * The empty string does not fall through to "no filter" harmlessly: it is
+     * put into the query verbatim, MagicMapper casts it with `(int) ''` = 0,
+     * that resolves no register, and the scoped branch is skipped — so the
+     * search ran across the whole instance with `_rbac: false`. This is the
+     * same degradation shape as #828 on GET /api/listings.
+     *
+     * The assertion is that the ObjectService is NEVER consulted, not merely
+     * that the result is empty: an unscoped search that happens to return
+     * nothing is indistinguishable from a refusal by its return value alone.
+     *
+     * @return void
+     */
+    public function testGetCatalogFiltersRefusesWhenRegisterIsUnconfigured(): void
+    {
+        $this->config->method('getValueString')
+            ->willReturnMap(
+                [
+                    ['opencatalogi', 'catalog_schema', '', 'schema-1'],
+                    ['opencatalogi', 'catalog_register', '', ''],
+                ]
+            );
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->expects($this->never())->method('searchObjects');
+        $this->injectObjectService($objectService);
+
+        $result = $this->service->getCatalogFilters();
+
+        $this->assertSame(['registers' => [], 'schemas' => []], $result);
+
+    }//end testGetCatalogFiltersRefusesWhenRegisterIsUnconfigured()
+
+    /**
+     * The same refusal when the SCHEMA half is missing.
+     *
+     * @return void
+     */
+    public function testGetCatalogFiltersRefusesWhenSchemaIsUnconfigured(): void
+    {
+        $this->config->method('getValueString')
+            ->willReturnMap(
+                [
+                    ['opencatalogi', 'catalog_schema', '', ''],
+                    ['opencatalogi', 'catalog_register', '', 'register-1'],
+                ]
+            );
+
+        $objectService = $this->createMock(ObjectService::class);
+        $objectService->expects($this->never())->method('searchObjects');
+        $this->injectObjectService($objectService);
+
+        $result = $this->service->getCatalogFilters();
+
+        $this->assertSame(['registers' => [], 'schemas' => []], $result);
+
+    }//end testGetCatalogFiltersRefusesWhenSchemaIsUnconfigured()
+
     public function testGetCatalogFiltersWithoutCatalogId(): void
     {
         $this->config->method('getValueString')

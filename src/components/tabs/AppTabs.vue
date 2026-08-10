@@ -117,6 +117,7 @@ provide(TABS_CONTEXT, {
 	 *
 	 * @param {object} tab `{ uid, title, titleSlot, el, active }`.
 	 * @return {void}
+	 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-shared-object-presentation-components-gom-005
 	 */
 	register(tab) {
 		tabs.value = [...tabs.value, tab]
@@ -135,6 +136,7 @@ provide(TABS_CONTEXT, {
 	 *
 	 * @param {number|string} uid The tab's unique id.
 	 * @return {void}
+	 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-shared-object-presentation-components-gom-005
 	 */
 	unregister(uid) {
 		tabs.value = tabs.value.filter((t) => t.uid !== uid)

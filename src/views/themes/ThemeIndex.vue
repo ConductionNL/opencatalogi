@@ -146,6 +146,13 @@ export default {
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+		/**
+		 * Open the clicked theme's detail page.
+		 *
+		 * @param {object} row The clicked table row.
+		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		onRowClick(row) {
 			const id = resolveObjectId(row)
 			if (id) {
@@ -155,6 +162,13 @@ export default {
 			// eslint-disable-next-line no-console
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
+		/**
+		 * Open a theme's detail page from the row action menu.
+		 *
+		 * @param {object} theme The theme row payload.
+		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
+		 */
 		viewTheme(theme) {
 			const id = resolveObjectId(theme)
 			if (id) {

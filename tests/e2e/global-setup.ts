@@ -113,6 +113,43 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 		)
 	}
 
+	// Bake the nc-vue support-dialog "seen" flag into the persisted storage
+	// state so CnSupportDialog never auto-opens during a spec.
+	//
+	// WHY THIS BELONGS IN globalSetup AND NOT IN A dismiss() HELPER
+	// ------------------------------------------------------------
+	// CnAppRoot calls `useSupportDialog(appId, { persistence: 'server' })`
+	// (nextcloud-vue CnAppRoot.vue:1297). In server mode `visible` starts
+	// FALSE and only flips true after `GET /apps/opencatalogi/api/preferences/
+	// support-dialog-seen` resolves — i.e. ASYNCHRONOUSLY, at an arbitrary
+	// point after the page has already rendered and a spec has already started
+	// clicking. The modal then mounts a full-viewport `.modal-mask` that
+	// swallows pointer events, and Playwright retries the click until the test
+	// times out. Measured on run 31167878145: catalog-detail-page.spec.ts:56
+	// burned its whole 60s budget with the call log naming
+	// `data-testid-modal="cn-support-dialog" … subtree intercepts pointer
+	// events` while the modal was still `modal-in-enter-active`. It was
+	// reported as `1 flaky` — a retry-masked failure, not a healthy pass.
+	//
+	// A dismissal helper cannot close this race: whatever it does runs BEFORE
+	// the preferences GET lands. `resolveServerVisibility()` however checks the
+	// local flag FIRST and returns early when it reads exactly '1'
+	// (useSupportDialog.js `hasRealFlag`), so seeding the flag suppresses the
+	// dialog before it can ever be scheduled.
+	//
+	// This is not weakening the suite: no spec asserts on CnSupportDialog, it
+	// is an nc-vue one-time nag unrelated to any OpenCatalogi scenario, and the
+	// `visual` project already hides it (tests/e2e/visual/_visual-helpers.ts).
+	// globalSetup only ever visits /index.php/login, so the flag was never
+	// present in admin.json and the dialog was armed on every single spec.
+	await page.evaluate(() => {
+		try {
+			window.localStorage.setItem('cn-support-dialog-shown:opencatalogi', '1')
+		} catch (e) {
+			/* private mode / quota — the dismissOverlays fallback still applies */
+		}
+	})
+
 	await context.storageState({ path: STORAGE_STATE })
 	await browser.close()
 }

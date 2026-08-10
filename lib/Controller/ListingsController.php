@@ -57,6 +57,8 @@ use RuntimeException;
  */
 class ListingsController extends Controller
 {
+    use ResolvesRegisterConfiguration;
+
     /**
      * Constructor for ListingsController.
      *
@@ -100,6 +102,27 @@ class ListingsController extends Controller
         throw new RuntimeException('OpenRegister service is not available.');
 
     }//end getObjectService()
+
+    /**
+     * Get the register and schema configuration for listings.
+     *
+     * Resolved through the shared trait, which raises MissingConfigException when
+     * either key is unconfigured instead of handing back `''`. That distinction is
+     * the whole point: an empty string is not "no scope requested", it is "scope
+     * requested and lost", and every caller below treats it as fatal.
+     *
+     * @return array<string, string> Array containing register and schema configuration.
+     *
+     * @throws \RuntimeException                                                   When OpenRegister is unavailable.
+     * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
+     *
+     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
+     */
+    private function getListingConfiguration(): array
+    {
+        return $this->resolveRegisterConfiguration('listing_register', 'listing_schema');
+
+    }//end getListingConfiguration()
 
     /**
      * Resolve the Access-Control-Allow-Origin header value for the current request.
@@ -181,24 +204,42 @@ class ListingsController extends Controller
         // Retrieve all request parameters.
         $requestParams = $this->request->getParams();
 
-        // Get listing schema and register from configuration.
-        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
-        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
-
-        // Build query for searchObjectsPaginated.
-        $query = [];
-
-        // Add metadata filters.
-        if (empty($listingSchema) === false || empty($listingRegister) === false) {
-            $query['@self'] = [];
-            if (empty($listingSchema) === false) {
-                $query['@self']['schema'] = $listingSchema;
-            }
-
-            if (empty($listingRegister) === false) {
-                $query['@self']['register'] = $listingRegister;
-            }
+        // FAIL-CLOSED, and this is the reason the endpoint is written this way.
+        //
+        // This method used to read both keys with an `''` default and then build
+        // the `@self` filter under `if (empty($schema) === false || empty($register)
+        // === false)`. When BOTH keys were unset that condition was false, so no
+        // `@self` key was added at all and searchObjectsPaginated() ran with an
+        // unconstrained query — returning every object the caller may read across
+        // EVERY register and schema on the instance, served from /api/listings as
+        // though they were listings. The partial case leaked too: register set,
+        // schema empty scoped to the register and ignored the schema entirely.
+        //
+        // The endpoint is #[NoAdminRequired], so that is a scope loss available to
+        // any authenticated user on a not-yet-configured instance. destroy() below
+        // already refuses to run scope-less for exactly this reason ("OR's
+        // $hasScope check silently disables scoping"); index() was the same defect
+        // on the read side, unguarded.
+        //
+        // Resolving through the trait makes an unconfigured context a 503 that
+        // names the missing key, so the unscoped branch is unreachable rather than
+        // merely unlikely.
+        try {
+            $listingConfig = $this->getListingConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
         }
+
+        $listingRegister = $listingConfig['register'];
+        $listingSchema   = $listingConfig['schema'];
+
+        // Build query for searchObjectsPaginated, always scoped.
+        $query = [
+            '@self' => [
+                'schema'   => $listingSchema,
+                'register' => $listingRegister,
+            ],
+        ];
 
         // Add any additional filters from request params.
         if (isset($requestParams['filters']) === true) {
@@ -241,9 +282,17 @@ class ListingsController extends Controller
      */
     public function show(string | int $id): JSONResponse
     {
-        // Get listing schema and register from configuration.
-        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
-        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+        // Get listing register/schema from configuration; 503 if unconfigured.
+        // An `''` here would reach OR's setRegister('') and surface as an uncaught
+        // DoesNotExistException — a 500 that tells an operator nothing.
+        try {
+            $listingConfig = $this->getListingConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
+
+        $listingRegister = $listingConfig['register'];
+        $listingSchema   = $listingConfig['schema'];
 
         // Fetch the listing object by its ID with register/schema context.
         $object = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
@@ -313,9 +362,18 @@ class ListingsController extends Controller
             }
         }//end if
 
-        // Get listing schema and register from configuration.
-        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
-        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+        // Get listing register/schema from configuration; 503 if unconfigured.
+        // Writing with an empty pair would let OR resolve the target scope from
+        // whatever its own defaults are, which is not the same thing as "the
+        // listing register".
+        try {
+            $listingConfig = $this->getListingConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
+
+        $listingRegister = $listingConfig['register'];
+        $listingSchema   = $listingConfig['schema'];
 
         // Save the new listing object.
         $object = $this->getObjectService()->saveObject(
@@ -390,9 +448,15 @@ class ListingsController extends Controller
             }
         }
 
-        // Get listing schema and register from configuration.
-        $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
-        $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+        // Get listing register/schema from configuration; 503 if unconfigured.
+        try {
+            $listingConfig = $this->getListingConfiguration();
+        } catch (\Throwable $e) {
+            return $this->registerConfigErrorResponse($e);
+        }
+
+        $listingRegister = $listingConfig['register'];
+        $listingSchema   = $listingConfig['schema'];
 
         // Load the existing listing and merge the allow-listed PUT body onto
         // it. OR's saveObject() treats its input as the full record —
@@ -537,8 +601,16 @@ class ListingsController extends Controller
         try {
             if ($id !== null) {
                 // Look up the listing to get its directory URL.
-                $listingRegister = $this->config->getValueString('opencatalogi', 'listing_register', '');
-                $listingSchema   = $this->config->getValueString('opencatalogi', 'listing_schema', '');
+                // 503 if unconfigured, for the same reason as show(): an unscoped
+                // find() is not a narrower search, it is a different one.
+                try {
+                    $listingConfig = $this->getListingConfiguration();
+                } catch (\Throwable $e) {
+                    return $this->registerConfigErrorResponse($e);
+                }
+
+                $listingRegister = $listingConfig['register'];
+                $listingSchema   = $listingConfig['schema'];
                 $object          = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
                 $objectData      = $object;
                 if ($object instanceof \OCP\AppFramework\Db\Entity) {

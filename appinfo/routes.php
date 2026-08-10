@@ -34,6 +34,10 @@ return [
 		// Global Configuration
 		['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
+		// Canonical AppHost write verb (OpenRegister\AppHost\Routes): PUT is the canonical
+		// settings write and the POST above is the legacy alias. Measured 2026-08-08: without
+		// this entry PUT /api/settings returned 405 (no route for the verb).
+		['name' => 'settings#update', 'url' => '/api/settings', 'verb' => 'PUT'],
 		['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'GET'],
 		// Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog) —
 		// served by OpenRegister's AppHost GenericPreferencesController (aliased in Application::register).

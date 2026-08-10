@@ -50,6 +50,13 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * The active navigation-store modal key, watched so the directory list
+		 * reloads once an add/edit/delete modal closes.
+		 *
+		 * @return {string|null} The active modal key.
+		 * @spec openspec/specs/dashboard/spec.md#requirement-directory-management-ui-dir-012
+		 */
 		modalState() {
 			return navigationStore.modal
 		},

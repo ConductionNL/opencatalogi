@@ -132,10 +132,15 @@ export default {
 		}
 	},
 	computed: {
-		// Augment the OpenRegister menu schema with an `icon` property rendered
-		// by the shared CnIconPicker (via CnFormDialog's schema-driven
-		// `widget: 'icon'`). Sources: MDI (default), plus FontAwesome and an
-		// OpenGemeenten sample supplied as consumer catalogues; custom SVG enabled.
+		/**
+		 * Augment the OpenRegister menu schema with an `icon` property rendered
+		 * by the shared CnIconPicker (via CnFormDialog's schema-driven
+		 * `widget: 'icon'`). Sources: MDI (default), plus FontAwesome and an
+		 * OpenGemeenten sample supplied as consumer catalogues; custom SVG enabled.
+		 *
+		 * @return {object} The menu schema with the icon property merged in.
+		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
+		 */
 		menuSchema() {
 			const base = this.schema || {}
 			return {
@@ -181,6 +186,13 @@ export default {
 		onSelect(ids) {
 			this.selectedIds = ids
 		},
+		/**
+		 * Open the clicked menu's detail page.
+		 *
+		 * @param {object} row The clicked table row.
+		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
+		 */
 		onRowClick(row) {
 			const id = resolveObjectId(row)
 			if (id) {
@@ -190,6 +202,13 @@ export default {
 			// eslint-disable-next-line no-console
 			console.warn('[opencatalogi] onRowClick: no id resolvable from row', row)
 		},
+		/**
+		 * Open a menu for editing on its detail page.
+		 *
+		 * @param {object} menu The menu row payload.
+		 * @return {void}
+		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
+		 */
 		editMenu(menu) {
 			const id = resolveObjectId(menu)
 			if (id) {

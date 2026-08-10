@@ -89,21 +89,51 @@ class SettingsController extends Controller
     }//end index()
 
     /**
-     * Handle the post request to update settings.
+     * Write the app-configuration settings and return the persisted values.
      *
-     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces admin gate).
-     * CSRF protection is enforced (no @NoCSRFRequired).
-     * #[AuthorizedAdminSetting] makes this endpoint auditable via NC's delegated-admin
-     * system and scopes it to the OpenCatalogiAdmin settings class (WF3 / wave-12).
+     * This is the canonical write in OpenRegister's AppHost dialect
+     * ({@see \OCA\OpenRegister\AppHost\Routes}), where `PUT /api/settings` maps to
+     * `settings#update` and `POST /api/settings` (`settings#create`) is the legacy
+     * alias. OpenCatalogi hand-declares its own route table and ships its own
+     * SettingsController, so `AppHost\Bootstrap::aliasControllerUnlessLeafDefinesIt()`
+     * never aliases the generic in — this leaf owes every `settings#` method itself.
+     * Measured 2026-08-08 on the dev instance: `PUT /api/settings` returned 405
+     * (no route for the verb) while GET and POST returned 200.
+     *
+     * Scope: this writes ONLY the app-configuration payload that `create()` has
+     * always written — `SettingsService::updateSettings()` persists the
+     * allowlisted `*_source` / `*_schema` / `*_register`, DCAT, OOAPI, publishing
+     * and Woo-index keys via `IAppConfig`. It deliberately does NOT absorb the
+     * other surfaces this controller happens to host: `updatePublishingOptions()`
+     * (POST /api/settings/publishing) and `manualImport()`
+     * (POST /api/settings/import) keep their own routes, payload shapes and
+     * response contracts.
+     *
+     * Auth posture is identical to `create()` — admin-only (no @NoAdminRequired,
+     * so NC SecurityMiddleware enforces the admin gate) and auditable via NC's
+     * delegated-admin system through #[AuthorizedAdminSetting], scoped to
+     * OpenCatalogiAdmin.
+     *
+     * CSRF is ENFORCED here (no `@NoCSRFRequired`). This is a state-changing
+     * admin endpoint: with the annotation present, any page the admin visited
+     * could silently rewrite this instance's register/schema configuration
+     * cross-origin, because the admin gate is carried by the session cookie the
+     * browser attaches automatically. The annotation used to be justified by the
+     * admin UI calling this with a bare `fetch()` that sends no `requesttoken`;
+     * that justification was a description of a frontend defect, not a reason.
+     * `src/views/settings/Settings.vue` now issues this write through
+     * `@nextcloud/axios`, which attaches `requesttoken` to every request.
+     *
+     * Non-browser API clients are unaffected: NC's `Request::passesCSRFCheck()`
+     * returns true unconditionally for any request carrying `OCS-APIRequest`,
+     * which is what `tests/e2e/ci-seed.sh` already sends.
      *
      * @return JSONResponse JSON response containing the updated settings.
      *
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/admin-settings/spec.md
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
      */
     #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-    public function create(): JSONResponse
+    public function update(): JSONResponse
     {
         try {
             $data   = $this->request->getParams();
@@ -112,6 +142,38 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
         }
+
+    }//end update()
+
+    /**
+     * Legacy alias for {@see update()} — handles the post request to update settings.
+     *
+     * The canonical AppHost route table still ships `settings#create`
+     * (POST /api/settings) for the pre-ADR-066 `index/create/load` dialect, and
+     * OpenCatalogi's own admin UI (`src/views/settings/Settings.vue`, both
+     * `saveConfiguration()` and `saveRegistration()`) still POSTs here, so this
+     * stays reachable and behaviourally identical (ADR-029).
+     *
+     * The attributes below are repeated rather than inherited from `update()`:
+     * NC's SecurityMiddleware evaluates the attributes of the *dispatched* method,
+     * so delegating in the body does not carry `update()`'s posture across.
+     *
+     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces admin gate).
+     * #[AuthorizedAdminSetting] makes this endpoint auditable via NC's delegated-admin
+     * system and scopes it to the OpenCatalogiAdmin settings class (WF3 / wave-12).
+     *
+     * CSRF is ENFORCED here (no `@NoCSRFRequired`), for the reason given on
+     * {@see update()}: this is the same state-changing admin write under a
+     * second verb, so exempting it would leave the identical hole open.
+     *
+     * @return JSONResponse JSON response containing the updated settings.
+     *
+     * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+     */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+    public function create(): JSONResponse
+    {
+        return $this->update();
 
     }//end create()
 
@@ -163,12 +225,23 @@ class SettingsController extends Controller
     /**
      * Update the publishing options.
      *
-     * @return JSONResponse JSON response containing the updated publishing options.
+     * CSRF is ENFORCED here (no `@NoCSRFRequired`) — see {@see update()}. This is
+     * a state-changing admin write; `auto_publish_attachments` /
+     * `auto_publish_objects` decide whether uploaded material becomes publicly
+     * readable, so a cross-origin forgery here has a disclosure consequence.
      *
-     * @NoCSRFRequired
+     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces the
+     * admin gate). #[AuthorizedAdminSetting] matches `update()` / `create()` and
+     * makes this write auditable through NC's delegated-admin system. Until now
+     * this method's ONLY posture declaration was `@NoCSRFRequired`, so it was
+     * the sole marker gate-5 could see; dropping that annotation without adding
+     * this one would have left the method with no declared posture at all.
+     *
+     * @return JSONResponse JSON response containing the updated publishing options.
      *
      * @spec openspec/specs/admin-settings/spec.md
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function updatePublishingOptions(): JSONResponse
     {
         try {
@@ -215,9 +288,14 @@ class SettingsController extends Controller
      * federation peers; a non-admin must not be able to lower it and drown
      * peer directories in requests.
      *
-     * @return JSONResponse JSON response containing the persisted sync options (post-clamp).
+     * CSRF is ENFORCED here (no `@NoCSRFRequired`), for the same reason as
+     * {@see update()}: the admin gate on this endpoint is carried by the
+     * session cookie, which a browser attaches automatically, so exempting it
+     * would let any page the admin happens to visit lower this instance's sync
+     * interval cross-origin and point it at peer directories. The admin UI
+     * calls it through @nextcloud/axios, which sends `requesttoken`.
      *
-     * @NoCSRFRequired
+     * @return JSONResponse JSON response containing the persisted sync options (post-clamp).
      *
      * @spec openspec/specs/admin-settings/spec.md
      */
@@ -266,12 +344,24 @@ class SettingsController extends Controller
     /**
      * Manually trigger configuration import.
      *
-     * @return JSONResponse JSON response containing import results.
+     * CSRF is ENFORCED here (no `@NoCSRFRequired`) — see {@see update()}. This
+     * rewrites the app's register/schema configuration from the shipped
+     * configuration file, which is the most consequential write in this
+     * controller. `tests/e2e/ci-seed.sh` drives it with `OCS-APIRequest: true`,
+     * which NC's `Request::passesCSRFCheck()` honours unconditionally, so the
+     * seeding path is unaffected.
      *
-     * @NoCSRFRequired
+     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default enforces the
+     * admin gate). #[AuthorizedAdminSetting] matches `update()` / `create()` and
+     * makes this write auditable through NC's delegated-admin system; as with
+     * `updatePublishingOptions()`, `@NoCSRFRequired` had been this method's only
+     * posture declaration.
+     *
+     * @return JSONResponse JSON response containing import results.
      *
      * @spec openspec/specs/admin-settings/spec.md
      */
+    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
     public function manualImport(): JSONResponse
     {
         try {

@@ -186,9 +186,9 @@ import { objectStore, navigationStore } from '../store/store.js'
 							<table class="statisticsTable">
 								<thead>
 									<tr>
-										<th>{{ t('opencatalogi', 'Property') }}</th>
-										<th>{{ t('opencatalogi', 'Value') }}</th>
-										<th>{{ t('opencatalogi', 'Status') }}</th>
+										<th scope="col">{{ t('opencatalogi','Property') }}</th>
+										<th scope="col">{{ t('opencatalogi','Value') }}</th>
+										<th scope="col">{{ t('opencatalogi','Status') }}</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -214,21 +214,23 @@ import { objectStore, navigationStore } from '../store/store.js'
 							<table class="viewTable">
 								<thead>
 									<tr class="viewTableRow sort-target">
-										<th class="tableColumnCheckbox">
+										<th scope="col" class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
+												:aria-label="t('opencatalogi', 'Select all {objectType} on this page', { objectType: objectTypePlural })"
 												:model-value="allSelected"
 												:indeterminate="someSelected"
 												@update:model-value="toggleSelectAll" />
 										</th>
 										<th v-for="(column, index) in orderedEnabledColumns"
 											:key="`header-${column.id || column.key || `col-${index}`}`"
+											scope="col"
 											:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 											<span class="stickyHeader columnTitle" :title="column.description">
 												{{ column.label }}
 											</span>
 										</th>
-										<th class="tableColumnActions">
-											<!-- Empty header for actions column -->
+										<th scope="col" class="tableColumnActions">
+											<span class="hidden-visually">{{ t('opencatalogi', 'Actions') }}</span>
 										</th>
 									</tr>
 								</thead>
@@ -240,6 +242,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 										@click="handleRowClick(getObjectId(item), $event)">
 										<td class="tableColumnCheckbox">
 											<NcCheckboxRadioSwitch
+												:aria-label="t('opencatalogi', 'Select {title}', { title: getObjectTitle(item) })"
 												:model-value="selectedObjects.includes(getObjectId(item))"
 												@update:model-value="handleSelectObject(getObjectId(item))" />
 										</td>
@@ -275,20 +278,22 @@ import { objectStore, navigationStore } from '../store/store.js'
 						<table v-else class="viewTable">
 							<thead>
 								<tr class="viewTableRow">
-									<th class="tableColumnCheckbox">
+									<th scope="col" class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
+											:aria-label="t('opencatalogi', 'Select all {objectType} on this page', { objectType: objectTypePlural })"
 											:model-value="allSelected"
 											:indeterminate="someSelected"
 											@update:model-value="toggleSelectAll" />
 									</th>
 									<th v-for="(column, index) in orderedEnabledColumns"
 										:key="`header-${column.id || column.key || `col-${index}`}`"
+										scope="col"
 										:class="`tableColumn${column.id ? column.id.charAt(0).toUpperCase() + column.id.slice(1).replace('_', '') : ''}`">
 										<span class="columnTitle" :title="column.description">
 											{{ column.label }}
 										</span>
 									</th>
-									<th class="tableColumnActions">
+									<th scope="col" class="tableColumnActions">
 										{{ t('opencatalogi', 'Actions') }}
 									</th>
 								</tr>
@@ -301,6 +306,7 @@ import { objectStore, navigationStore } from '../store/store.js'
 									@click="handleRowClick(getObjectId(item), $event)">
 									<td class="tableColumnCheckbox">
 										<NcCheckboxRadioSwitch
+											:aria-label="t('opencatalogi', 'Select {title}', { title: getObjectTitle(item) })"
 											:model-value="selectedObjects.includes(getObjectId(item))"
 											@update:model-value="handleSelectObject(getObjectId(item))" />
 									</td>

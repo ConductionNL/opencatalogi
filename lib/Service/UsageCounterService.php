@@ -26,6 +26,8 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -250,7 +252,7 @@ class UsageCounterService
                 return false;
             }
 
-            $today    = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d');
+            $today    = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d');
             $existing = $this->findCounter(
                 objectService: $objectService,
                 register: $register,

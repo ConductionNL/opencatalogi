@@ -378,6 +378,8 @@ class OoapiService
      * @param int                  $pageSize The requested page size.
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated course collection.
+     *
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     public function listCourses(array $catalog, string $register, string $schema, int $page, int $pageSize): array
     {
@@ -402,6 +404,8 @@ class OoapiService
      * @param int                  $pageSize The requested page size.
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated program collection.
+     *
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
      */
     public function listPrograms(array $catalog, string $register, string $schema, int $page, int $pageSize): array
     {
@@ -428,6 +432,8 @@ class OoapiService
      * @param int                  $pageSize The requested page size.
      *
      * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated offering collection.
+     *
+     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
      */
     public function listOfferings(array $catalog, string $register, string $schema, ?string $courseId, int $page, int $pageSize): array
     {

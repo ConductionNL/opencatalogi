@@ -21,8 +21,23 @@ export const APP = '/index.php/apps/opencatalogi'
 /**
  * Dismiss overlays that sit above the app and swallow pointer events.
  *
- * Two distinct ones exist:
+ * Three distinct ones exist:
  *  - Nextcloud's own `#firstrunwizard`.
+ *  - nc-vue's CnSupportDialog (`[data-testid-modal="cn-support-dialog"]`),
+ *    auto-opened once per browser by `useSupportDialog()` — see
+ *    nextcloud-vue/src/composables/useSupportDialog.js, which gates on
+ *    `localStorage['cn-support-dialog-shown:opencatalogi']`. Whether the flag
+ *    survives into a run depends on what `globalSetup` happened to persist
+ *    into `storageState`, so the dialog appears INTERMITTENTLY — which is
+ *    exactly what it looked like: run 31167878145 reported `1 flaky`, and the
+ *    call log named the culprit outright ("<div class=modal-wrapper …
+ *    data-testid-modal=cn-support-dialog> subtree intercepts pointer events",
+ *    logged while the modal was still `modal-in-enter-active`). The nav click
+ *    in catalog-detail-page.spec.ts then retried for the full 60s timeout and
+ *    read like a broken navigation entry.
+ *    The `visual` project already knew about this overlay
+ *    (tests/e2e/visual/_visual-helpers.ts:dismissSupportDialog) and so does
+ *    DocuDesk's equivalent helper; only THIS regression helper was missing it.
  *  - nc-vue's CnWalkthrough ("Welcome to OpenCatalogi"), which paints a
  *    full-screen `.cn-walkthrough__dim--full` scrim. The scrim does NOT hide
  *    the page, so every `toBeVisible()` still passes and the DOM looks
@@ -41,6 +56,27 @@ export async function dismissOverlays(page: Page): Promise<void> {
 		}
 		await wizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
 	}
+
+	// Loop rather than a single `if`: the dialog animates in, so a check that
+	// lands one frame early sees nothing and a close click one frame early is
+	// swallowed by the same enter transition.
+	const support = page.locator('[data-testid-modal="cn-support-dialog"]').first()
+	for (let i = 0; i < 3 && await support.isVisible().catch(() => false); i++) {
+		const close = support
+			.locator('.modal-container__close, [aria-label="Close"], button:has-text("Close")')
+			.first()
+		if (await close.isVisible().catch(() => false)) {
+			await close.click().catch(() => {})
+		} else {
+			await page.keyboard.press('Escape').catch(() => {})
+		}
+		await support.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {})
+	}
+	// The mask outlives the dialog's own visibility by one transition; a click
+	// issued in that window is still intercepted. Wait for it to detach.
+	await page.locator('.cn-support-dialog.modal-mask')
+		.waitFor({ state: 'detached', timeout: 3000 })
+		.catch(() => {})
 
 	const walkthrough = page.locator('.cn-walkthrough').first()
 	if (await walkthrough.isVisible().catch(() => false)) {
