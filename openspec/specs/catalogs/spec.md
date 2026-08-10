@@ -431,6 +431,30 @@ A previous implementation subscribed this listener to the post-save events and c
 - AND the save proceeds with the original (un-rewritten) data
 - AND the user receives a successful response
 
+### Requirement: The catalogs index refresh control re-loads the list and reports progress (CAT-017)
+
+**Priority:** Should **Status:** Implemented
+
+The catalogs index page MUST offer a refresh control that re-fetches the catalog
+collection, and it MUST report that the refresh is in progress for as long as the
+fetch is running.
+
+The two halves are one requirement because splitting them is how the defect
+arose. `CnIndexPage` emits `@refresh` and renders a spinner from the
+`:refreshing` prop, but it does not own the fetch — a page driving its own
+`useListView` has to both perform the refresh AND toggle `:refreshing` itself.
+The page bound `:refreshing="isRefreshing"` while wiring `@refresh` straight to
+the raw `refresh()`, so `isRefreshing` was never set: the list did re-load, and
+the control gave no sign that anything was happening. A requirement naming only
+"re-fetches the list" would have been satisfied by the broken version.
+
+#### Scenario: Refreshing the catalogs list re-fetches it
+
+- **GIVEN** the catalogs index page has loaded its list
+- **WHEN** the user activates the refresh control
+- **THEN** the page MUST issue a fresh request for the catalog collection
+- **AND** the control MUST indicate progress until that request settles
+
 ## Dependencies
 
 - **OpenRegister** - ObjectService for data persistence and searchObjectsPaginated for queries

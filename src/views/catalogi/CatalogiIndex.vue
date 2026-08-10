@@ -118,6 +118,7 @@ export default {
 		 * the context menu, which is how the two drifted apart.
 		 *
 		 * @return {Array<object>} Action definitions for CnIndexPage.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		rowActions() {
 			return [
@@ -181,6 +182,7 @@ export default {
 		 * own useListView has to bind `:refreshing` and toggle it here.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/catalogs/spec.md#requirement-the-catalogs-index-refresh-control-re-loads-the-list-and-reports-progress-cat-017
 		 */
 		async handleRefresh() {
 			this.isRefreshing = true
