@@ -66,7 +66,69 @@ class RegisterSchemaLinkServiceTest extends TestCase
     }//end setUp()
 
     /**
+     * Build a double for a class whose shape differs between environments.
+     *
+     * THIS IS THE WHOLE PROBLEM, AND IT COST A RED CI RUN.
+     *
+     * Locally the unit suite resolves OCA\OpenRegister\* to the thin doubles in
+     * tests/Stubs/, which implement little more than jsonSerialize(). In CI the
+     * app is installed next to a real OpenRegister, so the SAME class names
+     * resolve to the real entities and mappers. PHPUnit is strict in opposite
+     * directions about that difference:
+     *
+     *   addMethods()  throws if the method EXISTS   (CI, real class)
+     *   onlyMethods() throws if it DOES NOT exist   (local, stub)
+     *
+     * A double hard-coded to either one passes in one environment and errors in
+     * the other. This first version used addMethods() throughout: 5/5 green
+     * locally, four CannotUseAddMethodsException in CI on getSchemas() and
+     * update().
+     *
+     * Partitioning by method_exists() at runtime is what makes the test mean the
+     * same thing in both. It also handles the real entity's magic accessors
+     * correctly without a special case: getSlug() comes from Nextcloud Entity's
+     * __call, so method_exists() is false for it even on the real class, and it
+     * lands in addMethods() exactly as it must.
+     *
+     * @param string        $class   The class to double.
+     * @param array<string> $methods The methods to configure.
+     *
+     * @return MockObject
+     */
+    private function environmentAwareDouble(string $class, array $methods): MockObject
+    {
+        $existing = [];
+        $absent   = [];
+        foreach ($methods as $method) {
+            if (method_exists($class, $method) === true) {
+                $existing[] = $method;
+            } else {
+                $absent[] = $method;
+            }
+        }
+
+        $builder = $this->getMockBuilder($class)->disableOriginalConstructor();
+        if ($existing !== []) {
+            $builder->onlyMethods($existing);
+        }
+
+        if ($absent !== []) {
+            $builder->addMethods($absent);
+        }
+
+        return $builder->getMock();
+
+    }//end environmentAwareDouble()
+
+    /**
      * Build a Register test double carrying the given schema list.
+     *
+     * The durable fix for the stub/real divergence is to widen
+     * tests/Stubs/OpenRegister/* to mirror the accessors this app actually
+     * depends on — an incomplete stub silently caps what the suite can express,
+     * which is one reason this service reached 309 lines untested. That belongs
+     * in its own change rather than inside a feature PR, so it is flagged here
+     * rather than done here.
      *
      * @param array $schemas The stored `schemas` value.
      *
@@ -74,25 +136,10 @@ class RegisterSchemaLinkServiceTest extends TestCase
      */
     private function makeRegister(array $schemas): Register|MockObject
     {
-        // addMethods(), because the STUB is thinner than the real entity.
-        //
-        // The unit suite resolves OCA\OpenRegister\Db\Register to
-        // tests/Stubs/OpenRegister/Db/Register.php, which implements only
-        // jsonSerialize(). The real class extends Nextcloud's Entity and gets
-        // getSlug()/setSlug() from its __call magic. So neither route works
-        // off the shelf: createMock() refuses to configure a method the stub
-        // does not declare, and `new Register()` + setSlug() dies with
-        // "Call to undefined method" because the stub has no __call.
-        //
-        // addMethods() declares them on the mock. It is deprecated in PHPUnit
-        // 10, and the durable fix is to widen the stub to mirror the accessors
-        // this app actually depends on — an incomplete stub silently caps what
-        // the suite can test, which is how this class reached 309 lines with no
-        // test at all. That belongs in its own change rather than inside a
-        // feature PR, so it is flagged here rather than done here.
-        $register = $this->getMockBuilder(Register::class)
-            ->addMethods(['getSlug', 'getSchemas', 'getConfiguration', 'setSchemas', 'setConfiguration'])
-            ->getMock();
+        $register = $this->environmentAwareDouble(
+            Register::class,
+            ['getSlug', 'getSchemas', 'getConfiguration', 'setSchemas', 'setConfiguration']
+        );
 
         $register->method('getSlug')->willReturn('publication');
         $register->method('getSchemas')->willReturn($schemas);
@@ -113,14 +160,9 @@ class RegisterSchemaLinkServiceTest extends TestCase
      */
     private function makeMapper(): RegisterMapper|MockObject
     {
-        // find() exists on the stub, update() does not — and PHPUnit refuses to
-        // mix them: addMethods() rejects a method that exists, onlyMethods()
-        // rejects one that does not.
-        return $this->getMockBuilder(RegisterMapper::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['find'])
-            ->addMethods(['update'])
-            ->getMock();
+        // find() exists on the stub and update() does not; in CI both exist on
+        // the real mapper. environmentAwareDouble() sorts that out per run.
+        return $this->environmentAwareDouble(RegisterMapper::class, ['find', 'update']);
 
     }//end makeMapper()
 
@@ -137,10 +179,8 @@ class RegisterSchemaLinkServiceTest extends TestCase
     {
         $register = $this->makeRegister([7]);
 
-        // Schema's stub is thin too — getId() has to be added.
-        $schema = $this->getMockBuilder(\OCA\OpenRegister\Db\Schema::class)
-            ->addMethods(['getId', 'getSlug'])
-            ->getMock();
+        // Schema's shape differs the same way — see environmentAwareDouble().
+        $schema = $this->environmentAwareDouble(\OCA\OpenRegister\Db\Schema::class, ['getId', 'getSlug']);
         $schema->method('getId')->willReturn(7);
         $schema->method('getSlug')->willReturn('held-schema');
 
@@ -210,10 +250,8 @@ class RegisterSchemaLinkServiceTest extends TestCase
         $mapper->method('update')->willThrowException(new \RuntimeException('register table is gone'));
         $this->container->method('get')->willReturn($mapper);
 
-        // Schema's stub is thin too — getId() has to be added.
-        $schema = $this->getMockBuilder(\OCA\OpenRegister\Db\Schema::class)
-            ->addMethods(['getId', 'getSlug'])
-            ->getMock();
+        // Schema's shape differs the same way — see environmentAwareDouble().
+        $schema = $this->environmentAwareDouble(\OCA\OpenRegister\Db\Schema::class, ['getId', 'getSlug']);
         $schema->method('getId')->willReturn(42);
         $schema->method('getSlug')->willReturn('new-schema');
 
