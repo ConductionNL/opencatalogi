@@ -289,4 +289,185 @@ class OoapiControllerTest extends TestCase
         );
 
     }//end wireResolvedRegisterConfiguration()
+
+    /*
+     * ------------------------------------------------------------------
+     * programs / program / offering
+     *
+     * These three routed, publicly-reachable endpoints had no contract
+     * test of any kind (gate-25). They are the OOAPI "programme" and
+     * "offering" resources, and they read a DIFFERENT register/schema
+     * pair from the course endpoints — `ooapi_programs_*` and
+     * `ooapi_offerings_*` — so course coverage says nothing about them.
+     * ------------------------------------------------------------------
+     */
+
+    public function testProgramsAnonymousReturns401(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $response = $this->controller->programs('hva-onderwijs');
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(401, $response->getStatus());
+
+    }//end testProgramsAnonymousReturns401()
+
+    public function testProgramsDisallowedConsumerReturns403(): void
+    {
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('random-user');
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->ooapiService->method('isConsumerAllowed')->with('random-user')->willReturn(false);
+
+        $response = $this->controller->programs('hva-onderwijs');
+
+        $this->assertSame(403, $response->getStatus());
+
+    }//end testProgramsDisallowedConsumerReturns403()
+
+    public function testProgramsUnknownCatalogReturns404(): void
+    {
+        $this->authenticateAsAllowedConsumer();
+        $this->catalogiService->method('getCatalogBySlug')->with('nope')->willReturn(null);
+
+        $response = $this->controller->programs('nope');
+
+        $this->assertSame(404, $response->getStatus());
+
+    }//end testProgramsUnknownCatalogReturns404()
+
+    public function testProgramsSuccessReturnsPaginatedEnvelope(): void
+    {
+        $this->authenticateAsAllowedConsumer();
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+        $this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+        $this->wireResolvedRegisterConfiguration('7', '9');
+
+        $this->request->method('getParam')->willReturnCallback(
+            static fn($key, $default=null) => match ($key) {
+                'pageNumber' => 3,
+                'pageSize'   => 25,
+                default      => $default,
+            }
+        );
+
+        // Asserts the PROGRAMS register/schema pair reaches the service —
+        // a regression that swapped it for the courses pair would still
+        // return 200 with a well-formed envelope, so the envelope alone
+        // is not a sufficient assertion.
+        $this->ooapiService->expects($this->once())
+            ->method('listPrograms')
+            ->with($this->anything(), '7', '9', 3, 25)
+            ->willReturn(
+                [
+                    'items'      => [['programId' => 'p1']],
+                    'pageNumber' => 3,
+                    'pageSize'   => 25,
+                    'hasNext'    => true,
+                ]
+            );
+
+        $response = $this->controller->programs('hva-onderwijs');
+
+        $this->assertSame(200, $response->getStatus());
+        $data = $response->getData();
+        $this->assertSame(3, $data['pageNumber']);
+        $this->assertSame(25, $data['pageSize']);
+        $this->assertTrue($data['hasNext']);
+        $this->assertCount(1, $data['items']);
+        $this->assertSame('p1', $data['items'][0]['programId']);
+
+    }//end testProgramsSuccessReturnsPaginatedEnvelope()
+
+    public function testProgramAnonymousReturns401(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $response = $this->controller->program('hva-onderwijs', 'p1');
+
+        $this->assertSame(401, $response->getStatus());
+
+    }//end testProgramAnonymousReturns401()
+
+    public function testProgramNotFoundReturns404(): void
+    {
+        $this->authenticateAsAllowedConsumer();
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+        $this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+        $this->wireResolvedRegisterConfiguration('7', '9');
+        $this->ooapiService->method('getResource')->willReturn(null);
+
+        $response = $this->controller->program('hva-onderwijs', 'missing-id');
+
+        $this->assertSame(404, $response->getStatus());
+
+    }//end testProgramNotFoundReturns404()
+
+    public function testProgramResolvesByProgramIdField(): void
+    {
+        $this->authenticateAsAllowedConsumer();
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+        $this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+        $this->wireResolvedRegisterConfiguration('7', '9');
+
+        // The id FIELD is the contract here: OOAPI addresses a programme by
+        // `programId`, not by the object's internal id, so a lookup against
+        // the wrong field would 404 every real request.
+        $this->ooapiService->expects($this->once())
+            ->method('getResource')
+            ->with($this->anything(), '7', '9', 'p1', 'programId')
+            ->willReturn(['programId' => 'p1', 'name' => 'Bachelor']);
+
+        $response = $this->controller->program('hva-onderwijs', 'p1');
+
+        $this->assertSame(200, $response->getStatus());
+        $this->assertSame('p1', $response->getData()['programId']);
+
+    }//end testProgramResolvesByProgramIdField()
+
+    public function testOfferingAnonymousReturns401(): void
+    {
+        $this->userSession->method('getUser')->willReturn(null);
+
+        $response = $this->controller->offering('hva-onderwijs', 'o1');
+
+        $this->assertSame(401, $response->getStatus());
+
+    }//end testOfferingAnonymousReturns401()
+
+    public function testOfferingNotFoundReturns404(): void
+    {
+        $this->authenticateAsAllowedConsumer();
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+        $this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+        $this->wireResolvedRegisterConfiguration('11', '13');
+        $this->ooapiService->method('getResource')->willReturn(null);
+
+        $response = $this->controller->offering('hva-onderwijs', 'missing-id');
+
+        $this->assertSame(404, $response->getStatus());
+
+    }//end testOfferingNotFoundReturns404()
+
+    public function testOfferingResolvesByOfferingIdFieldOnItsOwnRegisterPair(): void
+    {
+        $this->authenticateAsAllowedConsumer();
+        $this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+        $this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+        $this->wireResolvedRegisterConfiguration('11', '13');
+
+        $this->ooapiService->expects($this->once())
+            ->method('getResource')
+            ->with($this->anything(), '11', '13', 'o1', 'offeringId')
+            ->willReturn(['offeringId' => 'o1', 'courseId' => 'c1']);
+
+        $response = $this->controller->offering('hva-onderwijs', 'o1');
+
+        $this->assertSame(200, $response->getStatus());
+        $this->assertSame('o1', $response->getData()['offeringId']);
+        // The parent-course reference is part of the OOAPI offering contract.
+        $this->assertSame('c1', $response->getData()['courseId']);
+
+    }//end testOfferingResolvesByOfferingIdFieldOnItsOwnRegisterPair()
 }

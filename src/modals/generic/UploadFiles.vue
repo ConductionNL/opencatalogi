@@ -151,14 +151,16 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<table v-if="files" class="files-table">
 					<thead>
 						<tr class="files-table-tr">
-							<th class="files-table-td-status" />
-							<th>
+							<th scope="col" class="files-table-td-status">
+								<span class="hidden-visually">{{ t('opencatalogi', 'Status') }}</span>
+							</th>
+							<th scope="col">
 								{{ t('opencatalogi', 'File name') }}
 							</th>
-							<th>
+							<th scope="col">
 								{{ t('opencatalogi', 'Size') }}
 							</th>
-							<th>
+							<th scope="col">
 								{{ t('opencatalogi', 'Labels') }}
 							</th>
 						</tr>
@@ -230,6 +232,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="editingTags === file.name"
+										:aria-label="t('opencatalogi', 'Cancel')"
 										:title="t('opencatalogi', 'Cancel')"
 										variant="secondary"
 										@click="cancelFileLabelEditing">
@@ -240,6 +243,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 									<!-- File Actions -->
 									<NcButton v-if="file.status === 'failed'"
+										:aria-label="t('opencatalogi', 'Retry upload')"
 										:title="t('opencatalogi', 'Retry upload')"
 										variant="primary"
 										@click="addAttachments(file)">
@@ -249,6 +253,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 									</NcButton>
 									<NcButton
 										v-if="file.status === 'too_large'"
+										:aria-label="t('opencatalogi', 'Remove from list')"
 										:title="t('opencatalogi', 'Remove from list')"
 										variant="primary"
 										@click="removeFile(file.name)">
@@ -446,6 +451,12 @@ export default {
 			}
 		}, { immediate: true })
 	},
+	/**
+	 * Tear down the dialog watcher and the pending duplicate-file warning timer.
+	 *
+	 * @return {void}
+	 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-file-attachment-management-req-objm-004
+	 */
 	unmounted() {
 		if (this._uploadFilesDialogUnwatch) try { this._uploadFilesDialogUnwatch() } catch (e) {}
 		// The duplicate-warning timeout writes `this.duplicateWarning` 5s later;
@@ -1184,6 +1195,15 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 
 .loadingIcon {
 	animation: spin 1s linear infinite;
+}
+
+/* WCAG 2.3.3. Slowed rather than stopped: this spinner is the only signal that
+   an upload is still in flight, so removing its motion would remove the
+   information. */
+@media (prefers-reduced-motion: reduce) {
+	.loadingIcon {
+		animation-duration: 6s;
+	}
 }
 
 @keyframes spin {

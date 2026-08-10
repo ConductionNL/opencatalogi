@@ -15,7 +15,7 @@
         "published": true,
         "summary": "A software component described by a publiccode.yml file",
         "description": "One harvested publiccode.yml. The identity of a component is its repository URL, not its name: names collide across forges and change on rebrand, while the URL is what the harvest actually dereferenced. `slug` is derived from the repository full name so a re-harvest UPDATES rather than duplicates — the flow engine has no synchronisation contracts yet, so idempotency has to come from a deterministic identifier.",
-        "icon": "package-variant-closed",
+        "icon": "PackageVariantClosed",
         "searchable": true,
         "hardValidation": false,
         "required": ["name", "url"],
@@ -45,17 +45,20 @@
             "type": "string",
             "format": "uri",
             "title": "Landing page",
+            "description": "Public landing page for the software — the human-readable page a prospective user should be sent to. Deliberately separate from `url`: publiccode.yml treats the repository as the identity and the landing page as the front door, and for many components they are different sites.",
             "x-publiccode": "landingURL"
           },
           "softwareVersion": {
             "type": "string",
             "title": "Version",
+            "description": "Latest released version, as the maintainer numbers it. Kept as a free-form string rather than parsed: publiccode.yml records whatever the project publishes, and forcing it into semver would silently rewrite versions that are dates or build numbers.",
             "x-publiccode": "softwareVersion"
           },
           "releaseDate": {
             "type": "string",
             "format": "date",
             "title": "Release date",
+            "description": "Date the version in `softwareVersion` was released (YYYY-MM-DD). Read together with that field this is what separates a maintained component from an abandoned one, so it is the main signal behind any recency facet.",
             "x-publiccode": "releaseDate"
           },
           "logo": {
@@ -67,6 +70,7 @@
           "platforms": {
             "type": "array",
             "title": "Platforms",
+            "description": "Platforms the software runs on. publiccode.yml reserves the values `web`, `windows`, `mac`, `linux`, `ios` and `android`, and allows free text for anything else — which is why this is not an enum: constraining it would reject valid harvested documents.",
             "items": { "type": "string" },
             "x-publiccode": "platforms",
             "facetable": true
@@ -109,6 +113,7 @@
           "maintainers": {
             "type": "array",
             "title": "Maintainers",
+            "description": "Who to contact about this component. Flattened from two separate publiccode.yml lists — `maintenance.contractors` (organisations under contract) and `maintenance.contacts` (named people) — because a catalogue reader is asking one question, not two. The distinction survives in each entry's own fields.",
             "items": { "type": "object" },
             "x-publiccode": "maintenance.contractors + maintenance.contacts"
           },
@@ -122,11 +127,13 @@
           "legalRepoOwner": {
             "type": "string",
             "title": "Repository owner",
+            "description": "Legal entity that owns the repository. Not the same question as who publishes or maintains the component — this is the party that can relicense or transfer it, which is what a reuse decision actually turns on.",
             "x-publiccode": "legal.repoOwner"
           },
           "localisationAvailableLanguages": {
             "type": "array",
             "title": "Available languages",
+            "description": "Languages the interface is already available in, as BCP 47 tags. Distinct from publiccode.yml's `localisation.localisationReady`, which only claims that translating it is possible — an empty list here with `localisationReady: true` means nobody has translated it yet.",
             "items": { "type": "string" },
             "x-publiccode": "localisation.availableLanguages",
             "facetable": true

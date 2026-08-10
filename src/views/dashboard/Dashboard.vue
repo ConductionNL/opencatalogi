@@ -193,7 +193,11 @@
 							v-for="publication in conceptPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
@@ -244,7 +248,11 @@
 							v-for="publication in publishedPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
@@ -269,7 +277,11 @@
 							v-for="publication in depublishedPublications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
-							@click="openPublication(publication)">
+							role="button"
+							tabindex="0"
+							@click="openPublication(publication)"
+							@keydown.enter="openPublication(publication)"
+							@keydown.space.prevent="openPublication(publication)">
 							<div class="concept-item-content">
 								<span class="concept-item-title">{{ publication.title || publication.name || publication.titel || publication.naam || publication.id }}</span>
 								<span class="concept-item-schema">{{ resolveSchemaName(publication) }}</span>
@@ -473,7 +485,11 @@ export default {
 			return this.catalogs.length > 0
 				|| this.allPublications.length > 0
 		},
-		/** First catalog slug available in the store, used for Publications route navigation. */
+		/**
+		 * First catalog slug available in the store, used for Publications route navigation.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
+		 */
 		firstCatalogSlug() {
 			return this.catalogs[0]?.slug || null
 		},
@@ -558,6 +574,7 @@ export default {
 		 * counts.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
 		 */
 		async fetchPublicationAggregations() {
 			if (!PUBLICATION_REGISTER || !PUBLICATION_SCHEMA) {
@@ -740,6 +757,8 @@ export default {
 		 * Status-based filtering is intentionally omitted: publication status is
 		 * derived from date fields (publicatiedatum / depublicatiedatum), not a
 		 * simple status query parameter.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
 		 */
 		navigateToPublications() {
 			if (this.firstCatalogSlug) {
@@ -753,6 +772,7 @@ export default {
 		 * Resolve a catalog slug from a catalog ID reference on a publication.
 		 * @param {string|number|object|null} catalogRef - catalog field value from a publication
 		 * @return {string|null}
+		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002
 		 */
 		catalogSlugById(catalogRef) {
 			if (!catalogRef) return this.firstCatalogSlug
@@ -950,6 +970,17 @@ export default {
 /* Refresh button spinning animation */
 .icon-spinning {
 	animation: spin 1s linear infinite;
+}
+
+/* WCAG 2.3.3. The spinner is a status indicator, not decoration: stopping it
+   outright would hide the fact that something is still loading. It is slowed
+   to a near-static rate instead, which removes the vestibular trigger while
+   keeping the "busy" signal. The clickable publication rows below carry no
+   motion of their own, so nothing else in this component needs a fallback. */
+@media (prefers-reduced-motion: reduce) {
+	.icon-spinning {
+		animation-duration: 6s;
+	}
 }
 
 @keyframes spin {

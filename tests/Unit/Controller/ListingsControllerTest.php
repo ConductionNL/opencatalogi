@@ -141,12 +141,50 @@ class ListingsControllerTest extends TestCase
         $this->appManager->method('getInstalledApps')
             ->willReturn(['openregister']);
 
+        // ResolvesRegisterConfiguration asks the container for two more things:
+        // OpenRegister's RegisterResolverService (which has not landed yet, so the
+        // trait's documented fallback path runs) and IAppConfig (which the fallback
+        // reads the keys through). A `->with('...ObjectService')` constraint here
+        // would turn either of those into a mock-expectation failure that looks
+        // like a controller bug, so route by id instead.
         $this->container->method('get')
-            ->with('OCA\OpenRegister\Service\ObjectService')
-            ->willReturn($mockObjService);
+            ->willReturnCallback(
+                function (string $id) use ($mockObjService) {
+                    if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+                        return $mockObjService;
+                    }
+
+                    if ($id === \OCP\IAppConfig::class) {
+                        return $this->config;
+                    }
+
+                    throw new \RuntimeException('not available: '.$id);
+                }
+            );
 
         return $mockObjService;
     }//end mockObjectService()
+
+
+    /**
+     * Configure `listing_register` / `listing_schema` on the IAppConfig mock.
+     *
+     * @param string $register Value for listing_register.
+     * @param string $schema   Value for listing_schema.
+     *
+     * @return void
+     */
+    private function configureListingScope(string $register = '3', string $schema = '5'): void
+    {
+        $this->config->method('getValueString')
+            ->willReturnCallback(
+                static fn (string $app, string $key, string $default = '') => match ($key) {
+                    'listing_register' => $register,
+                    'listing_schema'   => $schema,
+                    default            => $default,
+                }
+            );
+    }//end configureListingScope()
 
     /**
      * Index() returns a 200 JSON response when OpenRegister is available.
@@ -160,8 +198,11 @@ class ListingsControllerTest extends TestCase
         $mockObjService->method('searchObjectsPaginated')
             ->willReturn(['results' => [], 'total' => 0]);
 
-        $this->config->method('getValueString')
-            ->willReturn('');
+        // This used to stub every config key to '' and still assert 200 — which
+        // is precisely the unscoped-search state index() must now refuse. The
+        // scope is configured here so the test exercises the normal path; the
+        // unconfigured path has its own test below.
+        $this->configureListingScope();
 
         $this->request->method('getParams')
             ->willReturn([]);
@@ -171,6 +212,141 @@ class ListingsControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(200, $response->getStatus());
     }//end testIndexReturnsJsonResponse()
+
+
+    /**
+     * Index() refuses to run an unscoped search when the listing register/schema
+     * are unconfigured, and does not reach OpenRegister at all.
+     *
+     * Regression test for the fail-open this PR closes: with both keys empty the
+     * old code added no `@self` filter, so searchObjectsPaginated() ran with an
+     * unconstrained query and returned every object the caller could read across
+     * every register and schema on the instance — from a #[NoAdminRequired] GET.
+     *
+     * The `never()` expectation is the point. Asserting only on the status code
+     * would still pass if the controller queried first and then returned a 503,
+     * which would leak into logs, metrics and any cache in between.
+     *
+     * @return void
+     */
+    public function testIndexRefusesUnscopedSearchWhenRegisterConfigEmpty(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $mockObjService->expects($this->never())
+            ->method('searchObjectsPaginated');
+
+        $this->configureListingScope(register: '', schema: '');
+
+        $this->request->method('getParams')
+            ->willReturn([]);
+
+        $response = $this->controller->index();
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
+        $this->assertSame('register_not_configured', $response->getData()['error']);
+    }//end testIndexRefusesUnscopedSearchWhenRegisterConfigEmpty()
+
+
+    /**
+     * A half-configured context is refused too.
+     *
+     * The old condition was `if (empty($schema) === false || empty($register) === false)`
+     * — an OR — so a configured register with an empty schema produced a query
+     * scoped to the register and silently unscoped across schemas. That is a
+     * smaller leak than the both-empty case, not a safe one.
+     *
+     * @return void
+     */
+    public function testIndexRefusesWhenOnlyOneOfRegisterOrSchemaIsConfigured(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $mockObjService->expects($this->never())
+            ->method('searchObjectsPaginated');
+
+        $this->configureListingScope(register: '3', schema: '');
+
+        $this->request->method('getParams')
+            ->willReturn([]);
+
+        $response = $this->controller->index();
+
+        $this->assertEquals(503, $response->getStatus());
+    }//end testIndexRefusesWhenOnlyOneOfRegisterOrSchemaIsConfigured()
+
+
+    /**
+     * The query handed to OpenRegister always carries the configured scope.
+     *
+     * Captures the actual argument rather than trusting the status code: a 200
+     * says the call happened, not that it was constrained.
+     *
+     * @return void
+     */
+    public function testIndexAlwaysScopesTheQueryToTheConfiguredRegisterAndSchema(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $captured = null;
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturnCallback(
+                function (array $query) use (&$captured) {
+                    $captured = $query;
+                    return ['results' => [], 'total' => 0];
+                }
+            );
+
+        $this->configureListingScope(register: '3', schema: '5');
+
+        $this->request->method('getParams')
+            ->willReturn([]);
+
+        $this->controller->index();
+
+        $this->assertIsArray($captured, 'searchObjectsPaginated was never called');
+        $this->assertArrayHasKey('@self', $captured);
+        $this->assertSame('3', $captured['@self']['register']);
+        $this->assertSame('5', $captured['@self']['schema']);
+    }//end testIndexAlwaysScopesTheQueryToTheConfiguredRegisterAndSchema()
+
+
+    /**
+     * A caller cannot widen the scope back out through request filters.
+     *
+     * index() already drops `schema` / `register` from `filters`; this pins that
+     * behaviour against the new always-scoped query so a future refactor cannot
+     * reintroduce caller-controlled scope.
+     *
+     * @return void
+     */
+    public function testIndexIgnoresCallerSuppliedRegisterAndSchemaFilters(): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        $captured = null;
+        $mockObjService->method('searchObjectsPaginated')
+            ->willReturnCallback(
+                function (array $query) use (&$captured) {
+                    $captured = $query;
+                    return ['results' => [], 'total' => 0];
+                }
+            );
+
+        $this->configureListingScope(register: '3', schema: '5');
+
+        $this->request->method('getParams')
+            ->willReturn(['filters' => ['register' => '999', 'schema' => '888', 'status' => 'active']]);
+
+        $this->controller->index();
+
+        $this->assertSame('3', $captured['@self']['register']);
+        $this->assertSame('5', $captured['@self']['schema']);
+        $this->assertArrayNotHasKey('register', $captured);
+        $this->assertArrayNotHasKey('schema', $captured);
+        $this->assertSame('active', $captured['status']);
+    }//end testIndexIgnoresCallerSuppliedRegisterAndSchemaFilters()
 
     /**
      * Index() honours filters, limit and offset request parameters.
@@ -205,10 +381,18 @@ class ListingsControllerTest extends TestCase
      *
      * @return void
      */
-    public function testIndexThrowsWhenOpenRegisterNotInstalled(): void
+    public function testIndexReturns503WhenOpenRegisterNotInstalled(): void
     {
+        // Previously this asserted a raw RuntimeException escaping the controller,
+        // i.e. a 500 with a stack trace. index() now resolves the register context
+        // BEFORE touching OpenRegister, and an unavailable container surfaces as
+        // the same operator-actionable 503 the sibling controllers return
+        // (cf. CatalogiControllerTest::testIndexReturns503WhenOpenRegisterNotInstalled).
         $this->appManager->method('getInstalledApps')
             ->willReturn([]);
+
+        $this->container->method('get')
+            ->willThrowException(new RuntimeException('not available'));
 
         $this->config->method('getValueString')
             ->willReturn('');
@@ -216,10 +400,11 @@ class ListingsControllerTest extends TestCase
         $this->request->method('getParams')
             ->willReturn([]);
 
-        $this->expectException(RuntimeException::class);
+        $response = $this->controller->index();
 
-        $this->controller->index();
-    }//end testIndexThrowsWhenOpenRegisterNotInstalled()
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(503, $response->getStatus());
+    }//end testIndexReturns503WhenOpenRegisterNotInstalled()
 
     /**
      * Show() returns the requested listing's data as a 200 JSON response.
@@ -237,8 +422,7 @@ class ListingsControllerTest extends TestCase
         $mockObjService->method('find')
             ->willReturn($mockEntity);
 
-        $this->config->method('getValueString')
-            ->willReturn('');
+        $this->configureListingScope();
 
         $response = $this->controller->show('123');
 
@@ -283,8 +467,7 @@ class ListingsControllerTest extends TestCase
         $mockObjService->method('saveObject')
             ->willReturn($mockEntity);
 
-        $this->config->method('getValueString')
-            ->willReturn('');
+        $this->configureListingScope();
 
         $this->request->method('getParams')
             ->willReturn(['title' => 'New Listing']);
@@ -347,8 +530,7 @@ class ListingsControllerTest extends TestCase
                     }
                     );
 
-        $this->config->method('getValueString')
-            ->willReturn('');
+        $this->configureListingScope();
 
         $this->request->method('getParams')
             ->willReturn(
@@ -428,8 +610,7 @@ class ListingsControllerTest extends TestCase
         $mockObjService->method('saveObject')
             ->willReturn($this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class));
 
-        $this->config->method('getValueString')
-            ->willReturn('');
+        $this->configureListingScope();
 
         $this->request->method('getParams')
             ->willReturn(['title' => 'New Listing', 'directory' => 'https://federated-peer.example.com']);
@@ -456,8 +637,7 @@ class ListingsControllerTest extends TestCase
         $mockObjService->method('saveObject')
             ->willReturn($mockEntity);
 
-        $this->config->method('getValueString')
-            ->willReturn('');
+        $this->configureListingScope();
 
         $this->request->method('getParams')
             ->willReturn(['title' => 'Updated Listing']);

@@ -239,6 +239,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div v-if="publicationAttachments?.length > 0">
 							<div v-for="(attachment, i) in pagedAttachments" :key="`${attachment}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
+									:aria-label="t('opencatalogi', 'Select attachment {title}', { title: attachment?.title })"
 									:model-value="selectedAttachments.includes(attachment.id)"
 									@update:model-value="toggleSelection(attachment)" />
 
@@ -494,6 +495,7 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 						<div v-if="filteredThemes?.length || missingThemes?.length">
 							<div v-for="(value, key, i) in filteredThemes" :key="`${value.id}${i}`" class="checkedItem">
 								<NcCheckboxRadioSwitch
+									:aria-label="t('opencatalogi', 'Select theme {title}', { title: value.title })"
 									:model-value="selectedThemes.includes(value.id)"
 									@update:model-value="toggleThemeSelection(value)" />
 								<NcListItem
@@ -597,10 +599,10 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 				<AppTab :title="t('opencatalogi', 'Logging')">
 					<table width="100%">
 						<tr>
-							<th><b>{{ t('opencatalogi', 'Timestamp') }}</b></th>
-							<th><b>{{ t('opencatalogi', 'User') }}</b></th>
-							<th><b>{{ t('opencatalogi', 'Action') }}</b></th>
-							<th><b>{{ t('opencatalogi', 'Details') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','Timestamp') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','User') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','Action') }}</b></th>
+							<th scope="col"><b>{{ t('opencatalogi','Details') }}</b></th>
 						</tr>
 						<tr>
 							<td>18-07-2024 11:55:21</td>
@@ -618,10 +620,19 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 					</table>
 				</AppTab>
 				<AppTab v-if="1 == 2" :title="t('opencatalogi', 'Permissions')">
-					<table width="100%">
-						<tr>
-							<td>{{ prive ? t('opencatalogi', 'This publication is NOT publicly accessible') : t('opencatalogi', 'This publication is publicly accessible') }}</td>
-							<td>
+					<!--
+						This was a <table> holding no tabular data — two label/control
+						pairs laid out in a grid. A layout table misreports structure to a
+						screen reader, which announces "table, 2 rows, 2 columns" and
+						offers cell navigation over content that has no rows or columns.
+						Adding <th> to satisfy the header rule would have been remediation
+						theatre: headers that name nothing. It is a description list
+						instead, which is what a set of label/value pairs actually is.
+					-->
+					<dl class="accessPanel">
+						<div class="accessPanel__row">
+							<dt>{{ prive ? t('opencatalogi', 'This publication is NOT publicly accessible') : t('opencatalogi', 'This publication is publicly accessible') }}</dt>
+							<dd>
 								<NcButton @click="prive = !prive">
 									<template #icon>
 										<LockOpenVariantOutline v-if="!prive" :size="20" />
@@ -630,17 +641,17 @@ import { navigationStore, objectStore, catalogStore } from '../../store/store.js
 									<span v-if="!prive">{{ t('opencatalogi', 'Make private') }}</span>
 									<span v-if="prive">{{ t('opencatalogi', 'Make public') }}</span>
 								</NcButton>
-							</td>
-						</tr>
-						<tr v-if="prive">
-							<td>{{ t('opencatalogi', 'User groups') }}</td>
-							<td>
+							</dd>
+						</div>
+						<div v-if="prive" class="accessPanel__row">
+							<dt>{{ t('opencatalogi', 'User groups') }}</dt>
+							<dd>
 								<NcSelectTags v-model="userGroups"
 									:input-label="t('opencatalogi', 'user groups')"
 									:multiple="true" />
-							</td>
-						</tr>
-					</table>
+							</dd>
+						</div>
+					</dl>
 				</AppTab>
 				<AppTab :title="t('opencatalogi', 'Statistics')">
 					<div class="tabPanel">
@@ -748,6 +759,7 @@ export default {
 		 * pinned to 1. Pagination is derived from the real array below.
 		 *
 		 * @return {Array<object>} Every attachment currently loaded.
+		 * @spec openspec/specs/publications/spec.md#requirement-retrieve-publication-attachments-files-linked-to-a-publication-pub-006
 		 */
 		publicationAttachments() {
 			return objectStore.getCollection('publicationAttachments').results || []
@@ -760,6 +772,7 @@ export default {
 		 * array length and paging is applied client-side in `pagedAttachments`.
 		 *
 		 * @return {number} Attachment count.
+		 * @spec openspec/specs/publications/spec.md#requirement-retrieve-publication-attachments-files-linked-to-a-publication-pub-006
 		 */
 		attachmentsTotal() {
 			return this.publicationAttachments.length
@@ -768,6 +781,7 @@ export default {
 		 * Number of attachment pages at the current page size.
 		 *
 		 * @return {number} Page count, at least 1.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		attachmentsTotalPages() {
 			return Math.max(1, Math.ceil(this.attachmentsTotal / this.limit))
@@ -776,6 +790,7 @@ export default {
 		 * The attachments visible on the current page.
 		 *
 		 * @return {Array<object>} The current page's slice.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		pagedAttachments() {
 			const start = (this.currentPage - 1) * this.limit
@@ -786,6 +801,7 @@ export default {
 		 * entries rather than the bare numbers held in `limitOptions`.
 		 *
 		 * @return {Array<{value: number, label: string}>} Page-size options.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		pageSizeOptions() {
 			return this.limitOptions.options.map((size) => ({ value: size, label: String(size) }))
@@ -859,6 +875,7 @@ export default {
 		 *
 		 * @param {number} page The 1-based page to show.
 		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		onAttachmentsPageChanged(page) {
 			this.currentPage = Math.min(Math.max(page, 1), this.attachmentsTotalPages)
@@ -868,6 +885,7 @@ export default {
 		 *
 		 * @param {number} size The new page size.
 		 * @return {void}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-pagination-component-req-tbl-004
 		 */
 		onAttachmentsPageSizeChanged(size) {
 			this.limit = Number(size)
@@ -1311,5 +1329,27 @@ h4 {
 .checkedItem {
 	display: flex;
 	align-items: center;
+}
+
+/* Replaces the layout <table> in the access tab: same two-column label/control
+   alignment and full width, without claiming to be tabular data. */
+.accessPanel {
+	width: 100%;
+	margin: 0;
+}
+
+.accessPanel__row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-block: 4px;
+}
+
+.accessPanel__row dt {
+	flex: 1;
+}
+
+.accessPanel__row dd {
+	margin: 0;
 }
 </style>

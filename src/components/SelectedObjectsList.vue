@@ -356,4 +356,23 @@ export default {
 	right: 0;
 	left: 0;
 }
+
+/* WCAG 2.3.3. Two decorative motions here: the per-item hover transition, and
+   the <transition-group> slide that moves items 30px horizontally as they are
+   added or removed. The slide is the vestibular trigger, so the transform is
+   dropped as well as the tween — items still fade via opacity, so appearance
+   and removal remain perceivable. */
+@media (prefers-reduced-motion: reduce) {
+	.selected-object-item,
+	.list-move,
+	.list-enter-active,
+	.list-leave-active {
+		transition: none;
+	}
+
+	.list-enter-from,
+	.list-leave-to {
+		transform: none;
+	}
+}
 </style>

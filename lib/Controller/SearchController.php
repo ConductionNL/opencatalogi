@@ -190,7 +190,7 @@ class SearchController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-5
+     * @spec openspec/specs/federation/spec.md#requirement-retrieve-a-single-publication-by-id-from-local-or-federated-sources-fed-002
      */
     public function show(string $id): JSONResponse
     {
@@ -216,7 +216,7 @@ class SearchController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-6
+     * @spec openspec/specs/federation/spec.md#requirement-retrieve-publication-attachments-from-local-or-federated-sources-fed-005
      */
     public function attachments(string $id): JSONResponse
     {
@@ -242,7 +242,7 @@ class SearchController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-7
+     * @spec openspec/specs/federation/spec.md#requirement-download-publication-files-from-local-or-federated-sources-fed-006
      */
     public function download(string $id): DataDownloadResponse|JSONResponse
     {
@@ -269,7 +269,7 @@ class SearchController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-8
+     * @spec openspec/specs/federation/spec.md#requirement-retrieve-outgoing-relations-uses-with-federation-support-fed-003
      */
     public function uses(string $id): JSONResponse
     {
@@ -296,7 +296,7 @@ class SearchController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @spec openspec/changes/retrofit-2026-05-25-search/tasks.md#task-9
+     * @spec openspec/specs/federation/spec.md#requirement-retrieve-incoming-relations-used-by-with-federation-support-fed-004
      */
     public function used(string $id): JSONResponse
     {
