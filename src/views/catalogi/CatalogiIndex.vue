@@ -182,7 +182,6 @@ export default {
 		 * own useListView has to bind `:refreshing` and toggle it here.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/specs/catalogs/spec.md#requirement-the-catalogs-index-refresh-control-re-loads-the-list-and-reports-progress-cat-017
 		 */
 		async handleRefresh() {
 			this.isRefreshing = true
