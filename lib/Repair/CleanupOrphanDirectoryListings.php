@@ -208,7 +208,13 @@ class CleanupOrphanDirectoryListings implements IRepairStep
         }
 
         foreach ($rows as $row) {
-            $uuid = ($row['_uuid'] ?? null);
+            // No `?? null`: fetchOrphanRows() selects `_uuid` explicitly and
+            // declares `array{_uuid: string, ...}`, so phpstan rightly calls the
+            // coalesce dead code. The empty() guard stays — the column is
+            // selected, but a blank value would still make deleteObject()
+            // address nothing, and that row is counted as a failure rather than
+            // silently skipped.
+            $uuid = $row['_uuid'];
             if (empty($uuid) === true) {
                 $tally['failed']++;
                 continue;
