@@ -207,7 +207,16 @@ class RegisterSchemaLinkServiceTest extends TestCase
     public function testNoPublicationRegisterMeansNoWrite(): void
     {
         $mapper = $this->makeMapper();
-        $mapper->method('find')->willReturn(null);
+        // THROW, do not return null.
+        //
+        // The stub's find() is untyped, so willReturn(null) is accepted locally.
+        // The real mapper declares `: Register`, and PHPUnit refuses in CI:
+        // "Method find may not return value of type null, its declared return
+        // type is OCA\OpenRegister\Db\Register". Throwing is also what actually
+        // happens — Nextcloud mappers raise DoesNotExistException rather than
+        // returning null — so this is both portable and the more faithful
+        // rehearsal of the branch findPublicationRegister() catches.
+        $mapper->method('find')->willThrowException(new \RuntimeException('register not found'));
         $mapper->expects($this->never())->method('update');
         $this->container->method('get')->willReturn($mapper);
 
