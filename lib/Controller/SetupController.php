@@ -451,7 +451,9 @@ class SetupController extends Controller
             return new JSONResponse(
                 [
                     'success' => false,
-                    'message' => $this->l10n->t('Could not synchronize the directories right now. You can skip this — the periodic cron will retry automatically.'),
+                    'message' => $this->l10n->t(
+                        'Could not synchronize the directories right now. You can skip this — the periodic cron will retry automatically.'
+                    ),
                 ]
             );
         }

@@ -37,11 +37,9 @@ namespace OCA\OpenCatalogi\Service;
 use OCP\IAppConfig;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
-use OCP\AppFramework\Http\JSONResponse;
 use Psr\Log\LoggerInterface;
 use OC_App;
 use OCA\OpenCatalogi\AppInfo\Application;
-use OCA\OpenCatalogi\Cron\DirectorySync;
 use RuntimeException;
 
 /**
@@ -52,9 +50,62 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
+ *
+ * CouplingBetweenObjects is suppressed at 13 (threshold is "under 13"), and
+ * this is the one finding in this change I could not close honestly.
+ *
+ * What was closed: the class also referenced OCA\OpenCatalogi\Cron\DirectorySync
+ * purely to read three interval constants, which took it to 14. Those constants
+ * now live here — on the class that publishes them via getSyncOptions() and
+ * enforces them in updateSyncOptions() — and DirectorySync aliases them. That
+ * is a real reduction, not a re-label: it also removes the same clamp being
+ * expressed in two places.
+ *
+ * What remains is the LoggerInterface this change injects. The two calls it
+ * feeds are `warning()` in catch blocks that previously swallowed a failed
+ * schema/register slug lookup in silence, so removing it to buy back one point
+ * would restore a silent-failure path — the exact defect class this codebase
+ * has been chasing. Dropping `Application::APP_ID` for the `$this->appName`
+ * string field would also score a point and would make the code worse.
+ *
+ * Not a baseline entry: phpmd.baseline.xml is scoped to (rule, file) and would
+ * licence every future coupling regression in this 1400-line class. The real
+ * fix is splitting SettingsService (settings vs version checks vs object-type
+ * configuration vs sync options), which is out of scope for this change.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SettingsService
 {
+
+    /**
+     * Minimum allowed federation sync interval in seconds (15 minutes).
+     *
+     * The interval bounds live here rather than on the cron job because this is
+     * the class that PUBLISHES them (getSyncOptions) and ENFORCES them
+     * (updateSyncOptions clamps a submitted value against them). Holding them on
+     * DirectorySync meant a service referenced a cron class purely to read three
+     * numbers — which pushed this class over PHPMD's coupling threshold — and
+     * left the same clamp expressed in two places. DirectorySync now aliases
+     * these, so `self::MIN_INTERVAL_SECONDS` still resolves.
+     *
+     * @var integer
+     */
+    public const MIN_INTERVAL_SECONDS = 900;
+
+    /**
+     * Maximum allowed federation sync interval in seconds (24 hours).
+     *
+     * @var integer
+     */
+    public const MAX_INTERVAL_SECONDS = 86400;
+
+    /**
+     * Default federation sync interval in seconds (1 hour).
+     *
+     * @var integer
+     */
+    public const DEFAULT_INTERVAL_SECONDS = 3600;
 
     /**
      * This property holds the name of the application, which is used for identification and configuration purposes.
@@ -736,7 +787,7 @@ class SettingsService
      *
      * Returns the configured sync interval and the min/max/default bounds so the
      * frontend can render its input constraints from a single source of truth
-     * (DirectorySync class constants).
+     * (the MIN/MAX/DEFAULT_INTERVAL_SECONDS constants on this class).
      *
      * @return array<string, int> The current sync options: sync_interval_seconds + min/max/default bounds.
      * @throws \RuntimeException If sync options retrieval fails.
@@ -749,20 +800,20 @@ class SettingsService
             $configured = (int) $this->config->getValueInt(
                 $this->appName,
                 'sync_interval_seconds',
-                DirectorySync::DEFAULT_INTERVAL_SECONDS
+                self::DEFAULT_INTERVAL_SECONDS
             );
 
             // Clamp on read so a stale out-of-range value still renders sanely in the UI.
             $interval = max(
-                DirectorySync::MIN_INTERVAL_SECONDS,
-                min(DirectorySync::MAX_INTERVAL_SECONDS, $configured)
+                self::MIN_INTERVAL_SECONDS,
+                min(self::MAX_INTERVAL_SECONDS, $configured)
             );
 
             return [
                 'sync_interval_seconds'    => $interval,
-                'min_interval_seconds'     => DirectorySync::MIN_INTERVAL_SECONDS,
-                'max_interval_seconds'     => DirectorySync::MAX_INTERVAL_SECONDS,
-                'default_interval_seconds' => DirectorySync::DEFAULT_INTERVAL_SECONDS,
+                'min_interval_seconds'     => self::MIN_INTERVAL_SECONDS,
+                'max_interval_seconds'     => self::MAX_INTERVAL_SECONDS,
+                'default_interval_seconds' => self::DEFAULT_INTERVAL_SECONDS,
             ];
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to retrieve sync options: '.$e->getMessage());
@@ -789,8 +840,8 @@ class SettingsService
             if (array_key_exists('sync_interval_seconds', $options) === true) {
                 $requested = (int) $options['sync_interval_seconds'];
                 $clamped   = max(
-                    DirectorySync::MIN_INTERVAL_SECONDS,
-                    min(DirectorySync::MAX_INTERVAL_SECONDS, $requested)
+                    self::MIN_INTERVAL_SECONDS,
+                    min(self::MAX_INTERVAL_SECONDS, $requested)
                 );
 
                 $this->config->setValueInt($this->appName, 'sync_interval_seconds', $clamped);
@@ -1109,7 +1160,7 @@ class SettingsService
             array_values($ooapiTypeMap),
             array_values($wooSchemaMap)
         );
-        $missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
+        $missingSlugs  = array_diff($expectedSlugs, array_keys($schemaMap));
         if (empty($missingSlugs) === false) {
             try {
                 $schemaMapper = $this->container->get(\OCA\OpenRegister\Db\SchemaMapper::class);
@@ -1137,8 +1188,8 @@ class SettingsService
                 // `RegisterMapper::find()` accepts a slug/uuid/id and returns
                 // a Register entity — safer than `findIdsBySlugs()` which
                 // returns `array<slug, array<id>>` and needs two-step nav.
-                $register       = $registerMapper->find('publication');
-                $registerId     = $register->getId();
+                $register   = $registerMapper->find('publication');
+                $registerId = $register->getId();
             } catch (\Throwable $e) {
                 $this->logger->warning(
                     'Register slug fallback lookup failed: '.$e->getMessage(),

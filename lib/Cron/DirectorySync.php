@@ -22,6 +22,7 @@
 namespace OCA\OpenCatalogi\Cron;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\BackgroundJob\TimedJob;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -37,23 +38,30 @@ class DirectorySync extends TimedJob
     /**
      * Minimum allowed interval in seconds (15 minutes).
      *
+     * The bounds live on SettingsService, which is what publishes them through
+     * getSyncOptions() and clamps a submitted value in updateSyncOptions().
+     * They were defined here and read from there, which both coupled a service
+     * to a cron class and left the same clamp expressed in two places. These
+     * aliases keep `DirectorySync::MIN_INTERVAL_SECONDS` working for any
+     * existing caller.
+     *
      * @var integer
      */
-    public const MIN_INTERVAL_SECONDS = 900;
+    public const MIN_INTERVAL_SECONDS = SettingsService::MIN_INTERVAL_SECONDS;
 
     /**
      * Maximum allowed interval in seconds (24 hours).
      *
      * @var integer
      */
-    public const MAX_INTERVAL_SECONDS = 86400;
+    public const MAX_INTERVAL_SECONDS = SettingsService::MAX_INTERVAL_SECONDS;
 
     /**
      * Default interval in seconds (1 hour).
      *
      * @var integer
      */
-    public const DEFAULT_INTERVAL_SECONDS = 3600;
+    public const DEFAULT_INTERVAL_SECONDS = SettingsService::DEFAULT_INTERVAL_SECONDS;
 
     /**
      * Constructor.

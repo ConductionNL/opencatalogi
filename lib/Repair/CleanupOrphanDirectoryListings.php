@@ -148,45 +148,16 @@ class CleanupOrphanDirectoryListings implements IRepairStep
                 continue;
             }
 
-            $registerId = (int) $register->getId();
-            $tableName  = sprintf('openregister_table_%d_%d', $registerId, $schemaId);
+            $tally = $this->cleanRegister(
+                registerId: (int) $register->getId(),
+                schemaId: $schemaId,
+                objectService: $objectService,
+                output: $output
+            );
 
-            try {
-                $rows = $this->fetchOrphanRows($tableName);
-            } catch (\Throwable $e) {
-                $output->warning(sprintf('Failed to scan %s: %s', $tableName, $e->getMessage()));
-                continue;
-            }
-
-            foreach ($rows as $row) {
-                $uuid = ($row['_uuid'] ?? null);
-                if (empty($uuid) === true) {
-                    $totalFailed++;
-                    continue;
-                }
-
-                try {
-                    $objectService->deleteObject(
-                        uuid: (string) $uuid,
-                        register: (string) $registerId,
-                        schema: (string) $schemaId,
-                        _rbac: false,
-                        _multitenancy: false
-                    );
-                    $totalDeleted++;
-                } catch (\Throwable $e) {
-                    $totalFailed++;
-                    $output->warning(
-                            sprintf(
-                        'Failed to delete listing %s: %s',
-                        (string) $uuid,
-                        $e->getMessage()
-                    )
-                            );
-                }
-            }//end foreach
-
-            $totalKept += $this->countValidRows($tableName);
+            $totalDeleted += $tally['deleted'];
+            $totalKept    += $tally['kept'];
+            $totalFailed  += $tally['failed'];
         }//end foreach
 
         $output->info(
@@ -201,6 +172,70 @@ class CleanupOrphanDirectoryListings implements IRepairStep
     }//end run()
 
     /**
+     * Delete the orphan listing rows in one register's listing table.
+     *
+     * Extracted from run() so that method stays under PHPMD's cyclomatic (10),
+     * NPath (200) and length (100) thresholds — it was 12 / 672 / 102. The
+     * alternative was three baseline entries, each scoped to (rule, file) and
+     * therefore licensing every future violation of that rule in this class.
+     *
+     * A scan failure on one register is logged and skipped rather than aborting
+     * the sweep: a repair step that stops at the first unreadable table would
+     * leave every later register uncleaned, which is the failure mode this step
+     * exists to prevent.
+     *
+     * @param int     $registerId    The register whose listing table to clean.
+     * @param int     $schemaId      The resolved listing schema id.
+     * @param object  $objectService OpenRegister's ObjectService.
+     * @param IOutput $output        Repair output channel.
+     *
+     * @return array{deleted: int, kept: int, failed: int} Per-register tally.
+     */
+    private function cleanRegister(int $registerId, int $schemaId, object $objectService, IOutput $output): array
+    {
+        $tableName = sprintf('openregister_table_%d_%d', $registerId, $schemaId);
+        $tally     = [
+            'deleted' => 0,
+            'kept'    => 0,
+            'failed'  => 0,
+        ];
+
+        try {
+            $rows = $this->fetchOrphanRows($tableName);
+        } catch (\Throwable $e) {
+            $output->warning(sprintf('Failed to scan %s: %s', $tableName, $e->getMessage()));
+            return $tally;
+        }
+
+        foreach ($rows as $row) {
+            $uuid = ($row['_uuid'] ?? null);
+            if (empty($uuid) === true) {
+                $tally['failed']++;
+                continue;
+            }
+
+            try {
+                $objectService->deleteObject(
+                    uuid: (string) $uuid,
+                    register: (string) $registerId,
+                    schema: (string) $schemaId,
+                    _rbac: false,
+                    _multitenancy: false
+                );
+                $tally['deleted']++;
+            } catch (\Throwable $e) {
+                $tally['failed']++;
+                $output->warning(sprintf('Failed to delete listing %s: %s', (string) $uuid, $e->getMessage()));
+            }
+        }//end foreach
+
+        $tally['kept'] = $this->countValidRows($tableName);
+
+        return $tally;
+
+    }//end cleanRegister()
+
+    /**
      * Find rows in a per-register/schema listing table whose `directory` field
      * is empty OR does not contain `/api/directory` AND that have not yet been
      * soft-deleted (`_deleted IS NULL`).
@@ -213,18 +248,18 @@ class CleanupOrphanDirectoryListings implements IRepairStep
      */
     private function fetchOrphanRows(string $tableName): array
     {
-        $q = $this->db->getQueryBuilder();
-        $q->select('_uuid', 'title', 'directory')
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('_uuid', 'title', 'directory')
             ->from($tableName)
-            ->where($q->expr()->isNull('_deleted'))
+            ->where($qb->expr()->isNull('_deleted'))
             ->andWhere(
-                $q->expr()->orX(
-                    $q->expr()->isNull('directory'),
-                    $q->expr()->notLike('directory', $q->createNamedParameter('%/api/directory%'))
+                $qb->expr()->orX(
+                    $qb->expr()->isNull('directory'),
+                    $qb->expr()->notLike('directory', $qb->createNamedParameter('%/api/directory%'))
                 )
             );
 
-        return $q->executeQuery()->fetchAll();
+        return $qb->executeQuery()->fetchAll();
 
     }//end fetchOrphanRows()
 
@@ -239,15 +274,15 @@ class CleanupOrphanDirectoryListings implements IRepairStep
     private function countValidRows(string $tableName): int
     {
         try {
-            $q = $this->db->getQueryBuilder();
-            $q->select($q->func()->count('*', 'c'))
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->func()->count('*', 'c'))
                 ->from($tableName)
-                ->where($q->expr()->isNull('_deleted'))
+                ->where($qb->expr()->isNull('_deleted'))
                 ->andWhere(
-                    $q->expr()->like('directory', $q->createNamedParameter('%/api/directory%'))
+                    $qb->expr()->like('directory', $qb->createNamedParameter('%/api/directory%'))
                 );
 
-            $row = $q->executeQuery()->fetch();
+            $row = $qb->executeQuery()->fetch();
             return (int) ($row['c'] ?? 0);
         } catch (\Throwable $e) {
             return 0;

@@ -423,7 +423,7 @@ class DirectoryService
             }
 
             $urls[$dir] = $dir;
-        }
+        }//end foreach
 
         return array_values($urls);
 
@@ -843,10 +843,9 @@ class DirectoryService
             // Fall back to $sourceDirectoryUrl only when the incoming listing itself
             // carries no directory field (malformed / legacy payload) so the dedup key
             // downstream is never null.
+            $listingData['directory'] = $listingDirectory;
             if (empty($listingDirectory) === true) {
                 $listingData['directory'] = $sourceDirectoryUrl;
-            } else {
-                $listingData['directory'] = $listingDirectory;
             }
 
             // Set lastSync as ISO string format instead of DateTime object.
@@ -1067,7 +1066,7 @@ class DirectoryService
         // catalog stubs and returns @self.catalogs=null — click-through then
         // silently falls back to the peer app-root (WOO-522 / WOO-533).
         $queryParams['_include_catalogs'] = 'true';
-        $queryParams['_extend'] = [
+        $queryParams['_extend']           = [
             '@self.schema',
             '@self.register',
         ];
@@ -2499,7 +2498,7 @@ class DirectoryService
                     }
 
                     $listings[] = $this->filterListingProperties($listingData);
-                }
+                }//end foreach
 
                 $allResults = array_merge($allResults, $listings);
             } catch (\Exception $e) {
