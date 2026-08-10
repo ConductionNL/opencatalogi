@@ -726,3 +726,39 @@
     gap: 3px;
   }
 }
+
+/**
+ * Reduced-motion fallback (WCAG 2.2 AA, Success Criterion 2.3.3 Animation
+ * from Interactions; hydra gate-45).
+ *
+ * Three rules in this stylesheet animate: `.card` (transform), 
+ * `.nestedCardHeader` (background-color) and `.toggleButton` (all). Only one
+ * of them produces actual MOVEMENT — `.card:hover` scales the card — and that
+ * is the one a motion-sensitive user needs suppressed, so the transform is
+ * neutralised here as well as its transition. The colour transitions are
+ * dropped for consistency; a colour change is not movement, but an instant
+ * change is never worse for the user this block exists to serve.
+ *
+ * Scoped to the three selectors that actually declare motion rather than
+ * written as a blanket `*, *::before, *::after { transition: none !important }`.
+ * A global override reaches into every Nextcloud core component and every
+ * nc-vue component rendered inside this app, disabling transitions this
+ * stylesheet never introduced and cannot reason about.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .nestedCardHeader {
+    transition: none;
+  }
+
+  .toggleButton {
+    transition: none;
+  }
+}

@@ -50,15 +50,12 @@ use OCP\IUserSession;
 use OCP\Lock\LockedException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use RuntimeException;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
-use ZipArchive;
 
 /**
  * Service for handling file operations in OpenCatalogi.
@@ -556,94 +553,4 @@ class FileService
         return $mpdf;
 
     }//end createPdf()
-
-    /**
-     * Creates a ZIP archive at the $tempZip location using the
-     * $tempFolder location as input for the ZIP archive.
-     * Please use "unlink(filename: $tempZip);" or the downloadZip()
-     * function after calling this function to clean up temporary files.
-     *
-     * @param string $inputFolder The (tmp) location used as input for creating the ZIP archive.
-     * @param string $tempZip     The tmp location where the ZIP will
-     *                            be saved. Please start this with
-     *                            '/tmp/..' and end with
-     *                            '../zipName.zip'.
-     *
-     * @return string|null Returns null if created successfully and a string in case of an error.
-     *
-     * @spec openspec/specs/file-management/spec.md
-     */
-    public function createZip(string $inputFolder, string $tempZip): ?string
-    {
-        // Create ZIP archive.
-        $zip = new ZipArchive();
-        if ($zip->open(filename: $tempZip, flags: (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
-            return "failed to create ZIP archive";
-        }
-
-        $files = new RecursiveIteratorIterator(
-            iterator: new RecursiveDirectoryIterator($inputFolder),
-            mode: RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        foreach ($files as $file) {
-            // Skip directories (they would be added automatically).
-            if ($file->isDir() === false) {
-                $filePath     = $file->getRealPath();
-                $relativePath = substr(string: $filePath, offset: (strlen(string: $inputFolder) + 1));
-
-                // Add file to zip.
-                $zip->addFile(filepath: $filePath, entryname: $relativePath);
-            }
-        }
-
-        $zip->close();
-
-        return null;
-
-    }//end createZip()
-
-    /**
-     * A function that outputs a downloadable ZIP to the response body of the current api request.
-     * Can best be used after creating a ZIP archive with the createZip() function.
-     *
-     * @param string      $tempZip     The tmp location where the ZIP is saved.
-     *                                 Note that "unlink(filename: $tempZip);"
-     *                                 will be called at the end of this
-     *                                 function.                    function.
-     * @param string|null $inputFolder The tmp location used as input
-     *                                 for creating the ZIP archive.
-     *                                 Will unlink all files in this
-     *                                 folder and remove this folder at
-     *                                 the end of this function.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/file-management/spec.md
-     */
-    public function downloadZip(string $tempZip, ?string $inputFolder=null): void
-    {
-        // Send the ZIP file to the client for download.
-        header(header: 'Content-Type: application/zip');
-        header(header: 'Content-disposition: attachment; filename='.basename($tempZip));
-        header(header: 'Content-Length: '.filesize($tempZip));
-        readfile(filename: $tempZip);
-
-        // Cleanup temporary files.
-        if ($inputFolder !== null) {
-            $globResult = glob("$inputFolder/*.*");
-            if ($globResult === false) {
-                $globResult = [];
-            }
-
-            foreach ($globResult as $file) {
-                unlink($file);
-            }
-
-            rmdir(directory: $inputFolder);
-        }
-
-        unlink(filename: $tempZip);
-
-    }//end downloadZip()
 }//end class

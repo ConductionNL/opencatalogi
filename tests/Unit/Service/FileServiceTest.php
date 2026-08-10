@@ -1094,91 +1094,17 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase
 
     }//end testDeleteFileGuestUser()
 
-    /**
-     * Creates a ZIP archive containing all files in the input folder.
-     *
-     * @return void
-     */
-    public function testCreateZipSuccess(): void
-    {
-        $inputFolder = sys_get_temp_dir().'/test_zip_input_'.uniqid();
-        mkdir($inputFolder, 0777, true);
-        file_put_contents("$inputFolder/file1.txt", 'Hello');
-        file_put_contents("$inputFolder/file2.txt", 'World');
-
-        $tempZip = sys_get_temp_dir().'/test_output_'.uniqid().'.zip';
-
-        $result = $this->fileService->createZip($inputFolder, $tempZip);
-
-        $this->assertNull($result);
-        $this->assertFileExists($tempZip);
-
-        $zip = new \ZipArchive();
-        $zip->open($tempZip);
-        $this->assertSame(2, $zip->numFiles);
-        $zip->close();
-
-        unlink("$inputFolder/file1.txt");
-        unlink("$inputFolder/file2.txt");
-        rmdir($inputFolder);
-        unlink($tempZip);
-
-    }//end testCreateZipSuccess()
-
-    /**
-     * Handles an empty input folder without errors.
-     *
-     * @return void
-     */
-    public function testCreateZipEmptyFolder(): void
-    {
-        $inputFolder = sys_get_temp_dir().'/test_zip_empty_'.uniqid();
-        mkdir($inputFolder, 0777, true);
-
-        $tempZip = sys_get_temp_dir().'/test_empty_'.uniqid().'.zip';
-
-        $result = @$this->fileService->createZip($inputFolder, $tempZip);
-
-        $this->assertNull($result);
-
-        rmdir($inputFolder);
-        if (file_exists($tempZip) === true) {
-            unlink($tempZip);
-        }
-
-    }//end testCreateZipEmptyFolder()
-
-    /**
-     * Includes files from sub-directories.
-     *
-     * @return void
-     */
-    public function testCreateZipWithSubdirectory(): void
-    {
-        $inputFolder = sys_get_temp_dir().'/test_zip_subdir_'.uniqid();
-        mkdir("$inputFolder/subdir", 0777, true);
-        file_put_contents("$inputFolder/root.txt", 'root');
-        file_put_contents("$inputFolder/subdir/nested.txt", 'nested');
-
-        $tempZip = sys_get_temp_dir().'/test_subdir_'.uniqid().'.zip';
-
-        $result = $this->fileService->createZip($inputFolder, $tempZip);
-
-        $this->assertNull($result);
-
-        $zip = new \ZipArchive();
-        $zip->open($tempZip);
-        $this->assertSame(2, $zip->numFiles);
-        $zip->close();
-
-        unlink("$inputFolder/root.txt");
-        unlink("$inputFolder/subdir/nested.txt");
-        rmdir("$inputFolder/subdir");
-        rmdir($inputFolder);
-        unlink($tempZip);
-
-    }//end testCreateZipWithSubdirectory()
-
+    // The three testCreateZip* cases that stood here were removed with the
+    // methods they called. `FileService::createZip()` / `downloadZip()` are
+    // REMOVED requirements FIL-012 / FIL-013 / FIL-014 in
+    // openspec/specs/file-management/spec.md ("ZIP generation is the
+    // responsibility of the download-service spec"), and the live download
+    // path uses OpenRegister's FileService::createObjectFilesZip() instead.
+    //
+    // The tests are not lost coverage. Each one built a temp folder, called
+    // the wrapper, and asserted on ext-zip's own output — they exercised PHP's
+    // ZipArchive through a pass-through, and asserted nothing about
+    // opencatalogi behaviour that survives the deletion.
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 
 }//end class
