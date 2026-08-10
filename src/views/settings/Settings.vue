@@ -288,6 +288,17 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
+// Every state-changing call below goes through @nextcloud/axios rather than a
+// bare fetch(). It attaches the `requesttoken` header Nextcloud's
+// SecurityMiddleware checks, which is what lets the settings write endpoints
+// drop `@NoCSRFRequired` (see lib/Controller/SettingsController.php::update()).
+// A bare fetch() sends no such header, so those endpoints had to be exempted
+// from CSRF entirely — an admin-only, state-changing endpoint with CSRF off is
+// forgeable from any page the admin happens to visit.
+// axios also rejects on a non-2xx status, which the previous `await fetch(...)`
+// calls did not check at all: a 403 or 500 was indistinguishable from a save.
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 /**
  * @class Settings
@@ -754,14 +765,9 @@ export default defineComponent({
 					configToSave[`${type}_schema`] = config.schema ? config.schema.value : ''
 				})
 
-				// Send configuration to backend
-				await fetch('/index.php/apps/opencatalogi/api/settings', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(configToSave),
-				})
+				// Send configuration to backend. PUT is the canonical settings
+				// write (`settings#update`); POST remains only as a legacy alias.
+				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), configToSave)
 			} catch (error) {
 				console.error('Failed to save settings:', error)
 			} finally {
@@ -815,15 +821,9 @@ export default defineComponent({
 				}
 
 				// Send configuration to backend using the dedicated publishing options endpoint
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/publishing', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(configToSave),
-				})
+				const response = await axios.post(generateUrl('/apps/opencatalogi/api/settings/publishing'), configToSave)
 
-				const result = await response.json()
+				const result = response.data
 
 				if (result.error) {
 					console.error('Failed to save publishing options:', result.error)
@@ -880,15 +880,9 @@ export default defineComponent({
 			this.importResult = null
 
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/settings/import', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ force }),
-				})
+				const response = await axios.post(generateUrl('/apps/opencatalogi/api/settings/import'), { force })
 
-				const result = await response.json()
+				const result = response.data
 				this.importResult = result
 
 				// If successful, update version info and reload settings
@@ -940,24 +934,21 @@ export default defineComponent({
 			this.wooReadinessError = null
 
 			try {
-				const response = await fetch('/index.php/apps/opencatalogi/api/woo/readiness/run', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				})
+				const response = await axios.post(generateUrl('/apps/opencatalogi/api/woo/readiness/run'))
 
-				const data = await response.json()
-
-				if (!response.ok) {
+				this.wooReadinessReport = response.data
+			} catch (error) {
+				// axios rejects on a non-2xx status, so the 409 `not-configured`
+				// branch that used to sit behind `if (!response.ok)` lives here
+				// now. The error body is still the server's JSON payload.
+				const data = error.response?.data
+				if (data !== undefined) {
 					this.wooReadinessError = data.error === 'not-configured'
 						? this.t('opencatalogi', 'No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.')
 						: (data.error || this.t('opencatalogi', 'Readiness check failed.'))
 					return
 				}
 
-				this.wooReadinessReport = data
-			} catch (error) {
 				console.error('Failed to run Woo readiness check:', error)
 				this.wooReadinessError = this.t('opencatalogi', 'Readiness check failed.')
 			} finally {
@@ -976,16 +967,10 @@ export default defineComponent({
 			this.savingRegistration = true
 
 			try {
-				await fetch('/index.php/apps/opencatalogi/api/settings', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						woo_index_registration_status: this.registration.status ? this.registration.status.value : 'not_registered',
-						woo_index_registration_url: this.registration.registeredUrl,
-						woo_index_registration_at: this.registration.registeredAt,
-					}),
+				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
+					woo_index_registration_status: this.registration.status ? this.registration.status.value : 'not_registered',
+					woo_index_registration_url: this.registration.registeredUrl,
+					woo_index_registration_at: this.registration.registeredAt,
 				})
 			} catch (error) {
 				console.error('Failed to save Woo-index registration status:', error)

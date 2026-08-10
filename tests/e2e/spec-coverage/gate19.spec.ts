@@ -337,12 +337,47 @@ test.describe('admin-settings', () => {
 		// @e2e admin-settings::save-admin-settings
 		'SET-015 — POST /api/settings endpoint is accessible and accepts data',
 		async ({ request }) => {
+			// `OCS-APIRequest: true` is what makes this a legitimate API client.
+			// Nextcloud's Request::passesCSRFCheck() returns true unconditionally
+			// for a request carrying that header; a browser-shaped request must
+			// instead carry `requesttoken`.
+			//
+			// Before this header was added, this assertion passed BECAUSE the
+			// endpoint was `@NoCSRFRequired` — i.e. the test was pinning the
+			// vulnerable posture as correct, and would have gone red on the fix.
+			// The companion test below is the positive control that proves CSRF
+			// is now actually enforced.
+			const resp = await request.post('/index.php/apps/opencatalogi/api/settings', {
+				data: {},
+				headers: { 'Content-Type': 'application/json', 'OCS-APIRequest': 'true' },
+			})
+			// 200 (saved), 400 (validation error), 401 (auth), 403 (admin required) are all acceptable
+			expect([200, 400, 401, 403]).toContain(resp.status())
+		},
+	)
+
+	/**
+	 * SET-015 — the settings write REFUSES a request with no CSRF token.
+	 * GIVEN a state-changing admin endpoint
+	 * WHEN it is called browser-shaped (no `requesttoken`, no `OCS-APIRequest`)
+	 * THEN Nextcloud MUST reject it with 412 Precondition Failed.
+	 *
+	 * This is the positive control for the test above: without it, re-adding
+	 * `@NoCSRFRequired` to SettingsController::update()/create() would make the
+	 * whole suite green again and nothing would notice.
+	 */
+	test(
+		// @e2e admin-settings::save-admin-settings
+		'SET-015 — POST /api/settings is refused without a CSRF token',
+		async ({ request }) => {
 			const resp = await request.post('/index.php/apps/opencatalogi/api/settings', {
 				data: {},
 				headers: { 'Content-Type': 'application/json' },
 			})
-			// 200 (saved), 400 (validation error), 401 (auth), 403 (admin required) are all acceptable
-			expect([200, 400, 401, 403]).toContain(resp.status())
+			expect(
+				resp.status(),
+				'a tokenless, browser-shaped write must be refused — 412 is NC\'s CrossSiteRequestForgeryException status',
+			).toBe(412)
 		},
 	)
 
@@ -356,9 +391,11 @@ test.describe('admin-settings', () => {
 		// @e2e admin-settings::run-a-manual-import
 		'SET-015 — POST /api/settings/import endpoint is accessible',
 		async ({ request }) => {
+			// See the note on SET-015 POST /api/settings above — `OCS-APIRequest`
+			// is the API-client posture, and it is what ci-seed.sh already sends.
 			const resp = await request.post('/index.php/apps/opencatalogi/api/settings/import', {
 				data: {},
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json', 'OCS-APIRequest': 'true' },
 			})
 			// 200 (import ran), 400 (bad request/unconfigured), 401/403 (auth/admin), 500 are valid
 			expect([200, 400, 401, 403, 500]).toContain(resp.status())

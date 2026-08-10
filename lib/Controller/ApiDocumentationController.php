@@ -34,6 +34,7 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Controller for the public OpenAPI self-documentation endpoint.
@@ -141,7 +142,7 @@ class ApiDocumentationController extends Controller
         try {
             $raw = file_get_contents(__DIR__.'/../../openapi.json');
             if ($raw === false) {
-                throw new \RuntimeException('openapi.json could not be read.');
+                throw new RuntimeException('openapi.json could not be read.');
             }
 
             $document = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);

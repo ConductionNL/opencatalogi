@@ -157,17 +157,18 @@ export default {
 		<table class="woo-redaction__table">
 			<thead>
 				<tr>
-					<th>{{ t('opencatalogi', 'Redact') }}</th>
-					<th>{{ t('opencatalogi', 'Entity') }}</th>
-					<th>{{ t('opencatalogi', 'Type') }}</th>
-					<th>{{ t('opencatalogi', 'Page') }}</th>
-					<th>{{ t('opencatalogi', 'Refusal ground') }}</th>
+					<th scope="col">{{ t('opencatalogi','Redact') }}</th>
+					<th scope="col">{{ t('opencatalogi','Entity') }}</th>
+					<th scope="col">{{ t('opencatalogi','Type') }}</th>
+					<th scope="col">{{ t('opencatalogi','Page') }}</th>
+					<th scope="col">{{ t('opencatalogi','Refusal ground') }}</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr v-for="entity in entities" :key="entity.id">
 					<td>
 						<NcCheckboxRadioSwitch
+							:aria-label="t('opencatalogi', 'Redact {text}', { text: entity.text })"
 							:model-value="!!selected[entity.id]"
 							@update:model-value="toggleEntity(entity.id)" />
 					</td>

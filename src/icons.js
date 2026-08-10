@@ -30,6 +30,7 @@ import Magnify from 'vue-material-design-icons/Magnify.vue'
 import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import Package from 'vue-material-design-icons/Package.vue'
+import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
@@ -57,6 +58,7 @@ export default {
 	MapMarkerPath,
 	OfficeBuilding,
 	Package,
+	PackageVariantClosed,
 	PlayCircleOutline,
 	ShieldAccountOutline,
 	Sitemap,

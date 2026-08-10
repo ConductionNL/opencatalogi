@@ -27,7 +27,6 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Initial migration step to create all OpenCatalogi tables.
  *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  */
 class Version6Date20241011085015 extends SimpleMigrationStep

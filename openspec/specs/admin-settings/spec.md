@@ -251,7 +251,8 @@ required keys before first use.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/settings` | Get current settings (authenticated) |
-| POST | `/api/settings` | Update settings (admin only) |
+| PUT | `/api/settings` | Update settings — canonical write, OR AppHost dialect (admin only) |
+| POST | `/api/settings` | Update settings — legacy alias for `PUT`, delegates to it (admin only) |
 | GET | `/api/settings/load` | Load settings from publication_register.json (admin only) |
 | GET | `/api/settings/publishing` | Get publishing options (authenticated) |
 | POST | `/api/settings/publishing` | Update publishing options (admin only) |

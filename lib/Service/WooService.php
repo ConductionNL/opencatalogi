@@ -39,6 +39,9 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -319,7 +322,7 @@ class WooService
             throw new RuntimeException('OpenRegister WOO register/schema unavailable or unconfigured');
         }
 
-        $now  = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $now  = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
         $user = $this->userSession->getUser();
 
         // First persist the assessment objects so we have their ids for the cards.
@@ -519,7 +522,7 @@ class WooService
 
         $data = $this->normalise($object);
         $user = $this->userSession->getUser();
-        $now  = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $now  = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
         $data['assessment'] = $assessment;
         // Changing away from niet_openbaar clears grounds (and the redaction map);
@@ -747,7 +750,7 @@ class WooService
      */
     public function renderInventarislijstHtml(string $batchId, array $rows): string
     {
-        $generatedAt = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d');
+        $generatedAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d');
         $count       = count($rows);
 
         $body = '';
@@ -821,7 +824,7 @@ class WooService
 
         $batch           = $this->normalise($objectService->find($batchId));
         $batch['status'] = 'ready_for_review';
-        $batch['updatedAt'] = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $batch['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
         return $this->normalise($this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
@@ -902,7 +905,7 @@ class WooService
             ];
         }
 
-        $now            = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $now            = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
         $publishedCount = count($publishable);
         $publicationMeta = [
             'wooDecisionDate'     => substr($now, 0, 10),

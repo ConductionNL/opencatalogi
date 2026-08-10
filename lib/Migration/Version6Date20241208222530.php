@@ -26,8 +26,6 @@ use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Migration to add URI columns to all tables and create missing tables.
- *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class Version6Date20241208222530 extends SimpleMigrationStep
 {

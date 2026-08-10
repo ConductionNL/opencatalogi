@@ -195,25 +195,28 @@ import { EventBus } from '../../eventBus.js'
 									<table class="viewTable">
 										<thead>
 											<tr class="viewTableRow">
-												<th class="tableColumnCheckbox">
+												<th scope="col" class="tableColumnCheckbox">
 													<NcCheckboxRadioSwitch
+														:aria-label="t('opencatalogi', 'Select all files on this page')"
 														:model-value="allFilesSelected"
 														:indeterminate="someFilesSelected"
 														@update:modelValue="toggleSelectAllFiles" />
 												</th>
-												<th class="tableColumnExpanded table-row-title">
+												<th scope="col" class="tableColumnExpanded table-row-title">
 													{{ t('opencatalogi', 'Name') }}
 												</th>
-												<th class="tableColumnConstrained short-column">
+												<th scope="col" class="tableColumnConstrained short-column">
 													{{ t('opencatalogi', 'Size') }}
 												</th>
-												<th class="tableColumnConstrained table-row-type">
+												<th scope="col" class="tableColumnConstrained table-row-type">
 													{{ t('opencatalogi', 'Type') }}
 												</th>
-												<th :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
+												<th scope="col" :class="`tableColumnConstrained ${editingTags ? 'table-row-labels' : 'short-column'}`">
 													{{ t('opencatalogi', 'Labels') }}
 												</th>
-												<th class="table-row-actions" />
+												<th scope="col" class="table-row-actions">
+													<span class="hidden-visually">{{ t('opencatalogi', 'Actions') }}</span>
+												</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -229,6 +232,7 @@ import { EventBus } from '../../eventBus.js'
 													<!-- v9 NcCheckboxRadioSwitch has no `checked` prop and emits no
 													     `update:checked`; both are `modelValue`. -->
 													<NcCheckboxRadioSwitch
+														:aria-label="t('opencatalogi', 'Select file {name}', { name: attachment.name ?? attachment?.title ?? attachment.id })"
 														:model-value="objectStore.selectedAttachments.includes(attachment.id)"
 														@update:modelValue="(checked) => toggleFileSelection(attachment.id, checked)" />
 												</td>
@@ -294,6 +298,7 @@ import { EventBus } from '../../eventBus.js'
 																</template>
 															</NcButton>
 															<NcButton
+																:aria-label="t('opencatalogi', 'Cancel')"
 																:title="t('opencatalogi', 'Cancel')"
 																variant="secondary"
 																size="small"
@@ -803,6 +808,8 @@ export default {
 		 * because every selection block is gated on `.length > 1` (the auto-
 		 * select case hides the widget) — the observable result is a blank
 		 * modal body (WOO-527).
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
 		 */
 		selectionStalled() {
 			if (this.isLockedCatalog) return false
@@ -815,7 +822,11 @@ export default {
 			if (this.selectedRegister && this.schemaOptions.length === 0) return true
 			return false
 		},
-		/** Human-readable reason for the stalled state — surfaced in the empty-content card. */
+		/**
+		 * Human-readable reason for the stalled state — surfaced in the empty-content card.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
+		 */
 		selectionStalledReason() {
 			if (this.selectedCatalog && this.registerOptions.length === 0) {
 				return t('opencatalogi', 'This catalog has no registers configured. Ask an administrator to attach a register that contains a publication schema to it.')
@@ -1024,6 +1035,8 @@ export default {
 			 * auto-selects the sole catalog — leaving the modal blank until
 			 * the user closes and re-opens it. Re-run the seed step as soon
 			 * as catalogs arrive (WOO-527).
+			 *
+			 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
 			 */
 			handler(newOptions) {
 				if (!this.isNewObject) return
@@ -2198,6 +2211,16 @@ export default {
 .viewTableRow {
 	cursor: pointer;
 	transition: background-color 0.2s ease;
+}
+
+/* WCAG 2.3.3. Both transitions in this component are decorative hover feedback
+   (row highlight, and the drop-property button fading from 0.3 to 1 opacity).
+   The end states still apply, so no affordance is lost. */
+@media (prefers-reduced-motion: reduce) {
+	.viewTableRow,
+	.drop-property-btn {
+		transition: none !important;
+	}
 }
 
 .viewTableRow:hover {
