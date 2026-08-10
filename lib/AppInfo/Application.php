@@ -87,6 +87,57 @@ class Application extends App implements IBootstrap
     }//end __construct()
 
     /**
+     * Put OpenRegister's namespace on the autoloader before this app's
+     * register() runs.
+     *
+     * LOAD-ORDER HAZARD: OC_App::getEnabledApps() sort()s the app list and
+     * Coordinator::registerApps() calls registerAutoloading() then register()
+     * one app at a time. `opencatalogi` sorts before `openregister`, so
+     * register() runs BEFORE OCA\OpenRegister\ is autoloadable, and any eager
+     * reference there — including a class_exists() probe — answers FALSE on a
+     * perfectly healthy instance. nldesign measured exactly that: its listener
+     * never registered and federated config sharing silently did nothing.
+     *
+     * Nothing in this app's register() dereferences an OpenRegister class
+     * TODAY — the `::class` arguments are compile-time strings and the
+     * `new Generic*Controller(...)` calls live inside service closures that
+     * only run at request time — so this is a guard against the hazard rather
+     * than a repair of a live break here. It is the same change as
+     * docudesk#390, kept deliberately identical so the family does not diverge.
+     *
+     * registerAutoloading() is the mechanism Nextcloud itself uses, and it is
+     * NARROW: it registers the app's namespace prefix (or that app's
+     * `composer/autoload.php`) and nothing else. Requiring OpenRegister's
+     * `vendor/autoload.php` instead would look equivalent and is not — it would
+     * pull OpenRegister's ENTIRE dependency tree into this process, where it can
+     * shadow classes the server already loaded. It is also idempotent
+     * ($alreadyRegistered key guard), and deliberately NOT
+     * IAppManager::loadApp(), which would mark OpenRegister loaded and boot it
+     * before its own register() had run.
+     *
+     * Extracted into its own method so the one unavoidable static call is
+     * isolated: \OC_App::registerAutoloading() has no injectable equivalent in
+     * OCP, and scoping the suppression to these five lines keeps every other
+     * static access in the 180-line register() still reported.
+     *
+     * @return void
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess)
+     *
+     * @spec openspec/specs/dashboard/spec.md
+     */
+    private function registerOpenRegisterAutoloading(): void
+    {
+        try {
+            $openRegisterPath = \OCP\Server::get(\OCP\App\IAppManager::class)->getAppPath('openregister');
+            \OC_App::registerAutoloading('openregister', $openRegisterPath);
+        } catch (\Throwable) {
+            // OpenRegister absent/disabled — fall through to the degraded path.
+        }
+
+    }//end registerOpenRegisterAutoloading()
+
+    /**
      * Register app services and event listeners.
      *
      * @param IRegistrationContext $context The registration context.
@@ -101,22 +152,7 @@ class Application extends App implements IBootstrap
     {
         include_once __DIR__.'/../../vendor/autoload.php';
 
-        // LOAD-ORDER HAZARD: OC_App::getEnabledApps() sort()s the app list and
-        // Coordinator::registerApps() calls registerAutoloading() then register()
-        // one app at a time, so this method runs BEFORE OCA\OpenRegister\ is
-        // autoloadable (this app sorts before `openregister`). Any AppHost
-        // reference here — including a class_exists() probe — therefore answers
-        // FALSE on a perfectly healthy instance. Put OpenRegister's prefix on the
-        // autoloader ourselves; registerAutoloading() touches only the autoloader
-        // and is idempotent ($alreadyRegistered key guard). Deliberately NOT
-        // IAppManager::loadApp(), which would mark OpenRegister loaded and boot it
-        // before its own register() had run.
-        try {
-            $openRegisterPath = \OCP\Server::get(\OCP\App\IAppManager::class)->getAppPath('openregister');
-            \OC_App::registerAutoloading('openregister', $openRegisterPath);
-        } catch (\Throwable) {
-            // OpenRegister absent/disabled — fall through to the degraded path.
-        }
+        $this->registerOpenRegisterAutoloading();
 
         // Register dashboard widgets.
         $context->registerDashboardWidget(CatalogWidget::class);
