@@ -83,9 +83,19 @@ class CleanupOrphanDirectoryListings implements IRepairStep
     /**
      * Run the repair step.
      *
+     * Serves DIR-004 ("synchronize all directories via cron") from the storage
+     * side. That sync walks the `directory` field of every stored listing, and
+     * a row holding a PUBLICATIONS url instead of a directory url makes the
+     * hourly job sync from an endpoint that is not a directory. DirectoryService
+     * ::getKnownDirectoryUrls() filters such rows out at read time; this step
+     * removes the ones already persisted, so the two together are what keep the
+     * cron's URL set valid.
+     *
      * @param IOutput $output The output interface.
      *
      * @return void
+     *
+     * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
      */
     public function run(IOutput $output): void
     {

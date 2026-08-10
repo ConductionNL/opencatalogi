@@ -371,6 +371,8 @@ class DirectoryService
      * @return array<string> Unique peer directory URLs safe to sync from.
      *
      * @throws \RuntimeException When OpenRegister is not installed.
+     *
+     * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
      */
     public function getKnownDirectoryUrls(): array
     {

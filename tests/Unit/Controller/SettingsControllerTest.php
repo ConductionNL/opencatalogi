@@ -384,4 +384,138 @@ class SettingsControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
     }
+
+    /*
+     * ------------------------------------------------------------------
+     * updateSyncOptions — POST /api/settings/sync
+     *
+     * New admin-only write introduced by this change. It shipped with
+     * `@NoCSRFRequired`, which is the same posture #834 removed from every
+     * other settings write: the admin gate here is carried by the session
+     * cookie, which a browser attaches automatically, so an exempted
+     * endpoint is forgeable from any page the admin happens to visit — and
+     * lowering the sync interval points this instance's outbound traffic at
+     * peer directories.
+     *
+     * The annotation was safe to drop because the only caller,
+     * src/views/settings/Settings.vue::saveSyncOptions(), already sends
+     * `OCS-APIRequest: true`, which Request::passesCSRFCheck() honours
+     * unconditionally (and cookieCheckRequired() returns false for, so the
+     * strict-cookie check does not fire either).
+     * ------------------------------------------------------------------
+     */
+
+    /**
+     * The security property, pinned so it cannot regress silently.
+     *
+     * Asserted by reflection over the docblock rather than by driving a
+     * request, because whether CSRF is enforced is decided by Nextcloud's
+     * SecurityMiddleware BEFORE the controller body runs — a unit test that
+     * calls the method directly bypasses the very check it would be trying
+     * to prove.
+     *
+     * @return void
+     */
+    public function testUpdateSyncOptionsDoesNotExemptItselfFromCsrf(): void
+    {
+        // Match the ANNOTATION, not the bare substring.
+        //
+        // A plain `assertStringNotContainsString('@NoCSRFRequired', ...)` fails
+        // on this very method, because the docblock EXPLAINS in prose that CSRF
+        // is enforced "(no `@NoCSRFRequired`)". The mention and the annotation
+        // are the same characters; only the line shape tells them apart. This
+        // is the same trap that inflated a `grep -c` count of the annotation
+        // from 5 to 10 while reviewing #834.
+        $annotation = '/^\s*\*\s*@NoCSRFRequired\s*$/m';
+
+        $doc = (new \ReflectionMethod(SettingsController::class, 'updateSyncOptions'))->getDocComment();
+        $this->assertIsString($doc, 'updateSyncOptions must keep a docblock — its auth posture is declared there');
+
+        // Positive control: prove the pattern CAN match, so a pass below cannot
+        // come from a regex that matches nothing.
+        $readOnly = (new \ReflectionMethod(SettingsController::class, 'getVersionInfo'))->getDocComment();
+        $this->assertMatchesRegularExpression(
+            $annotation,
+            (string) $readOnly,
+            'the read-only getVersionInfo() should still declare @NoCSRFRequired — if this fails, the assertion below proves nothing'
+        );
+
+        $this->assertDoesNotMatchRegularExpression(
+            $annotation,
+            $doc,
+            'updateSyncOptions is an admin-only, state-changing write; it must not exempt itself from CSRF. '
+            .'Its caller sends OCS-APIRequest, which already passes the check.'
+        );
+
+    }//end testUpdateSyncOptionsDoesNotExemptItselfFromCsrf()
+
+    public function testUpdateSyncOptionsAnonymousReturns401(): void
+    {
+        // A LOCAL controller with its own session mock.
+        //
+        // setUp() already stubs userSession::getUser() to a logged-in user, and
+        // a second `->method('getUser')` does NOT replace it — PHPUnit keeps the
+        // first matching stub, so the override the setUp comment describes
+        // silently does nothing and the anonymous branch is never exercised.
+        // Building the controller here is the only way to actually test it.
+        $anonymousSession = $this->createMock(IUserSession::class);
+        $anonymousSession->method('getUser')->willReturn(null);
+
+        $service = $this->createMock(SettingsService::class);
+        // An anonymous caller must not reach the service at all.
+        $service->expects($this->never())->method('updateSyncOptions');
+
+        $controller = new SettingsController(
+            'opencatalogi',
+            $this->request,
+            $service,
+            $this->l10n,
+            $anonymousSession
+        );
+
+        $response = $controller->updateSyncOptions();
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(401, $response->getStatus());
+
+    }//end testUpdateSyncOptionsAnonymousReturns401()
+
+    public function testUpdateSyncOptionsReturnsThePersistedPostClampValue(): void
+    {
+        $user = $this->createMock(\OCP\IUser::class);
+        $user->method('getUID')->willReturn('admin');
+        $this->userSession->method('getUser')->willReturn($user);
+
+        $this->request->method('getParams')->willReturn(['sync_interval_seconds' => 30]);
+
+        // The response must carry what the SERVICE persisted, not what the
+        // caller asked for. The service clamps out-of-range intervals, and
+        // echoing the request back would hide the clamp from the UI — which
+        // then shows a value the instance is not actually using.
+        $this->settingsService->expects($this->once())
+            ->method('updateSyncOptions')
+            ->with(['sync_interval_seconds' => 30])
+            ->willReturn(['sync_interval_seconds' => 900]);
+
+        $response = $this->controller->updateSyncOptions();
+
+        $this->assertEquals(200, $response->getStatus());
+        $this->assertSame(900, $response->getData()['sync_interval_seconds']);
+
+    }//end testUpdateSyncOptionsReturnsThePersistedPostClampValue()
+
+    public function testUpdateSyncOptionsReturns500OnServiceFailure(): void
+    {
+        $user = $this->createMock(\OCP\IUser::class);
+        $user->method('getUID')->willReturn('admin');
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->request->method('getParams')->willReturn([]);
+        $this->settingsService->method('updateSyncOptions')
+            ->willThrowException(new \Exception('config unwritable'));
+
+        $response = $this->controller->updateSyncOptions();
+
+        $this->assertEquals(500, $response->getStatus());
+
+    }//end testUpdateSyncOptionsReturns500OnServiceFailure()
 }
