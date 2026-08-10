@@ -4419,4 +4419,94 @@ class DirectoryServiceTest extends TestCase
         $this->assertFalse($this->invokeIsSelfInstance($this->service, ''));
         $this->assertFalse($this->invokeIsSelfInstance($this->service, 'not-a-url'));
     }
+
+    /*
+     * ------------------------------------------------------------------
+     * getKnownDirectoryUrls()
+     *
+     * New in this change and untested, which is part of why the coverage
+     * ratchet went red. It is the read-time half of the directory-url
+     * invariant: it returns the peer DIRECTORY urls the hourly cron syncs
+     * from, and its job is to keep a row holding a PUBLICATIONS url from ever
+     * being fed back into syncDirectory(). CleanupOrphanDirectoryListings
+     * removes such rows; this method refuses to hand them out.
+     * ------------------------------------------------------------------
+     */
+
+    /**
+     * Without OpenRegister the method must refuse rather than return [].
+     *
+     * The distinction matters: [] means "no peers configured" and is a normal
+     * state the cron treats as nothing to do. A missing OpenRegister is not
+     * that — it is an unusable installation, and silently reporting "no peers"
+     * would turn it into a sync that quietly does nothing forever.
+     *
+     * @return void
+     */
+    public function testGetKnownDirectoryUrlsThrowsWhenOpenRegisterIsAbsent(): void
+    {
+        $this->appManager->method('getInstalledApps')->willReturn(['opencatalogi']);
+        $this->container->expects($this->never())->method('get');
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->service->getKnownDirectoryUrls();
+
+    }//end testGetKnownDirectoryUrlsThrowsWhenOpenRegisterIsAbsent()
+
+    /**
+     * An unconfigured listing register/schema yields NO urls, fail-closed.
+     *
+     * The assertion is that the ObjectService is never consulted, not merely
+     * that the result is empty. An unscoped search that happens to return
+     * nothing is indistinguishable from a refusal by its return value alone —
+     * and an empty `@self` scope is exactly how #838's getCatalogFilters()
+     * ended up sweeping every object on the instance.
+     *
+     * @return void
+     */
+    public function testGetKnownDirectoryUrlsRefusesWhenListingConfigIsMissing(): void
+    {
+        $this->appManager->method('getInstalledApps')->willReturn(['opencatalogi', 'openregister']);
+        $this->config->method('getValueString')->willReturn('');
+
+        $objectService = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['searchObjects'])
+            ->getMock();
+        $objectService->expects($this->never())->method('searchObjects');
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $this->assertSame([], $this->service->getKnownDirectoryUrls());
+
+    }//end testGetKnownDirectoryUrlsRefusesWhenListingConfigIsMissing()
+
+    /**
+     * A failing search is absorbed into an empty list, not propagated.
+     *
+     * doCronSync() calls this on a schedule; a transient store failure must
+     * not turn into an unhandled exception in a background job.
+     *
+     * @return void
+     */
+    public function testGetKnownDirectoryUrlsAbsorbsASearchFailure(): void
+    {
+        $this->appManager->method('getInstalledApps')->willReturn(['opencatalogi', 'openregister']);
+        $this->config->method('getValueString')->willReturnCallback(
+            static fn (string $app, string $key, string $default = ''): string => '1'
+        );
+
+        $objectService = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['searchObjects'])
+            ->getMock();
+        $objectService->method('searchObjects')
+            ->willThrowException(new \RuntimeException('store unavailable'));
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $this->assertSame([], $this->service->getKnownDirectoryUrls());
+
+    }//end testGetKnownDirectoryUrlsAbsorbsASearchFailure()
 }
