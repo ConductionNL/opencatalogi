@@ -14,6 +14,17 @@ Scan: **3 schemas / 5 Dutch properties**, **3 Dutch method names** (all in
       calls it the Woo decision *letter*; procest's `Besluit` is the legal instrument.
       The proposal drafted `decision` — design.md supersedes that.
 
+## 1b. Newly discovered during apply — the scan missed these
+
+- [ ] 1b.1 `wooBatch.inventarislijst` → `inventoryList` and
+      `wooAssessment.weigeringsgronden` → `refusalGrounds`, plus their consumers in
+      `WooService.php`. Neither was in the scan: my Dutch token list lacked `inventaris`
+      and `weigering`, the same class of gap that made openbuild 25 properties instead of
+      14. ⚠️ `inventarislijst` also appears in `@spec` anchors
+      (`#requirement-inventarislijst-generation`); those name **spec headings**, not the
+      property, so they keep resolving and SHALL be left alone unless the spec heading is
+      renamed too.
+
 ## 2. Rename Dutch method names, preserve external vocabulary
 
 - [ ] 2.1 Rename `resolveOrganisatie` → `resolveOrganisation`, and rename the two
