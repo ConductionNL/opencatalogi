@@ -216,7 +216,7 @@ class ObjectUpdatedEventListener implements IEventListener
      */
     private function isObjectEntityPublished(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): bool
     {
-        // Visibility is governed by the object's own publicatiedatum/depublicatiedatum
+        // Visibility is governed by the object's own publicationDate/depublicationDate
         // fields under the live OpenRegister RBAC model (APB-006); the removed
         // object-level @self.published getters no longer exist.
         $objectData = $objectEntity->jsonSerialize();
@@ -240,27 +240,27 @@ class ObjectUpdatedEventListener implements IEventListener
     private function isObjectPublished(array $objectData): bool
     {
         // Live OpenRegister RBAC visibility model (APB-006): published iff the
-        // object's own publicatiedatum is set and reached, and any
-        // depublicatiedatum is still in the future. The removed object-level
+        // object's own publicationDate is set and reached, and any
+        // depublicationDate is still in the future. The removed object-level
         // @self.published predicate is no longer consulted.
-        $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
-        $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
+        $publicationDate   = ($objectData['publicationDate'] ?? null);
+        $depublicationDate = ($objectData['depublicationDate'] ?? null);
 
-        if ($publicatiedatum === null || $publicatiedatum === '') {
+        if ($publicationDate === null || $publicationDate === '') {
             return false;
         }
 
         $now           = time();
-        $publishedTime = strtotime((string) $publicatiedatum);
+        $publishedTime = strtotime((string) $publicationDate);
         if ($publishedTime === false || $publishedTime > $now) {
             return false;
         }
 
-        if ($depublicatiedatum === null || $depublicatiedatum === '') {
+        if ($depublicationDate === null || $depublicationDate === '') {
             return true;
         }
 
-        $depublishedTime = strtotime((string) $depublicatiedatum);
+        $depublishedTime = strtotime((string) $depublicationDate);
         return ($depublishedTime === false || $depublishedTime > $now);
 
     }//end isObjectPublished()
@@ -289,7 +289,7 @@ class ObjectUpdatedEventListener implements IEventListener
         $objectData['@self']['uuid']     = $objectEntity->getUuid();
         $objectData['@self']['register'] = $objectEntity->getRegister();
         $objectData['@self']['schema']   = $objectEntity->getSchema();
-        // Visibility is governed by the object's own publicatiedatum/depublicatiedatum
+        // Visibility is governed by the object's own publicationDate/depublicationDate
         // fields (already present via jsonSerialize) under the live OpenRegister RBAC
         // model (APB-006). The removed object-level @self.published is no longer set.
         // Don't fetch files to avoid infinite recursion.

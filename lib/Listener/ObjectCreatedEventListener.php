@@ -173,7 +173,7 @@ class ObjectCreatedEventListener implements IEventListener
         $objectData['@self']['uuid']     = $objectEntity->getUuid();
         $objectData['@self']['register'] = $objectEntity->getRegister();
         $objectData['@self']['schema']   = $objectEntity->getSchema();
-        // Visibility is governed by the object's own publicatiedatum/depublicatiedatum
+        // Visibility is governed by the object's own publicationDate/depublicationDate
         // fields (already present via jsonSerialize) under the live OpenRegister RBAC
         // model (APB-006). The removed object-level @self.published is no longer set.
         return $objectData;

@@ -490,7 +490,7 @@ class PublicationsController extends Controller
             );
 
             // Visibility is governed by OpenRegister RBAC: the publication schema grants the
-            // public group read only when publicatiedatum <= $now, applied by the search
+            // public group read only when publicationDate <= $now, applied by the search
             // above (_rbac: true). No extra published filtering — anonymous callers see only
             // live publications, authenticated callers see per their group rights.
             // Strip empty values from results unless _empty=true is set.
@@ -731,7 +731,7 @@ class PublicationsController extends Controller
 
             // Visibility is governed by OpenRegister RBAC: the searches above run with
             // _rbac: true, so an anonymous caller never receives an unpublished publication
-            // (the publication schema grants public read only when publicatiedatum <= $now) —
+            // (the publication schema grants public read only when publicationDate <= $now) —
             // such a request resolves to $object === null and 404s above. No extra check needed.
             // Catalog-membership validation (#733): the resolved object's
             // register/schema MUST belong to this catalog's configured scope. Without

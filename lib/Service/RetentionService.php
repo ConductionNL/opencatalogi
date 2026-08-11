@@ -5,7 +5,7 @@
  * Implements the temporal/retention policy layer described in
  * openspec/changes/publication-retention-lifecycle. Per hydra ADR-022 this
  * service builds NO scheduler, NO state machine and NO audit store: scheduling
- * is the OpenRegister published-predicate over publicatiedatum/depublicatiedatum,
+ * is the OpenRegister published-predicate over publicationDate/depublicationDate,
  * the published -> archived transition is declared in the schema's
  * x-openregister-lifecycle, notifications are schema-declared
  * (x-openregister-notifications), and every mutation is audited by OpenRegister's
@@ -319,7 +319,7 @@ class RetentionService
             }
 
             $computed = $this->computeExpiry(
-                ($publication['publicatiedatum'] ?? null),
+                ($publication['publicationDate'] ?? null),
                 $termMonths
             );
             if ($computed !== null) {
@@ -337,9 +337,9 @@ class RetentionService
      * Dumb evaluator (RET-005): queries publications whose retentionExpiresAt is
      * within the warning window or in the past, then per retentionAction:
      *  - review    -> flag only (humans decide in the queue);
-     *  - depublish -> set depublicatiedatum = now (standard PUB-017 path);
+     *  - depublish -> set depublicationDate = now (standard PUB-017 path);
      *  - archive   -> request the declared lifecycle transition (status=archived,
-     *                 depublicatiedatum = now), which OpenRegister validates.
+     *                 depublicationDate = now), which OpenRegister validates.
      * Idempotent via retentionLastEvaluatedAt: an object already actioned today is
      * skipped. Every save is audited by OpenRegister's immutable audit trail.
      *
@@ -411,7 +411,7 @@ class RetentionService
 
             switch ($action) {
                 case 'depublish':
-                    $data['depublicatiedatum']        = $now->format(DateTimeInterface::ATOM);
+                    $data['depublicationDate']        = $now->format(DateTimeInterface::ATOM);
                     $data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
                     $this->recordDecision(data: $data, decision: 'auto-depublish', note: 'retention term expired');
                     $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
@@ -419,10 +419,10 @@ class RetentionService
                     break;
 
                 case 'archive':
-                    // Request the declared lifecycle transition; setting depublicatiedatum
+                    // Request the declared lifecycle transition; setting depublicationDate
                     // removes it from public surfaces as part of archiving (RET-006).
                     $data['status']            = 'archived';
-                    $data['depublicatiedatum'] = $now->format(DateTimeInterface::ATOM);
+                    $data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
                     $data['retentionLastEvaluatedAt'] = $now->format(DateTimeInterface::ATOM);
                     $this->recordDecision(data: $data, decision: 'auto-archive', note: 'retention term expired');
                     $this->save(objectService: $objectService, register: $register, schema: $schema, data: $data);
@@ -568,13 +568,13 @@ class RetentionService
                 break;
 
             case 'depublish':
-                $data['depublicatiedatum'] = $now->format(DateTimeInterface::ATOM);
+                $data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
                 break;
 
             case 'archive':
             case 'dispose':
                 $data['status']            = 'archived';
-                $data['depublicatiedatum'] = $now->format(DateTimeInterface::ATOM);
+                $data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
                 break;
 
             default:
@@ -628,7 +628,7 @@ class RetentionService
 
         foreach ($objects as $object) {
             $data    = $this->normalise($object);
-            $pubDate = (string) ($data['publicatiedatum'] ?? '');
+            $pubDate = (string) ($data['publicationDate'] ?? '');
 
             if ($catalogSlug !== null && $catalogSlug !== '' && (string) ($data['catalog'] ?? '') !== $catalogSlug) {
                 continue;
@@ -662,7 +662,7 @@ class RetentionService
             $rows[] = [
                 'id'                  => (string) ($data['id'] ?? $data['uuid'] ?? ''),
                 'title'               => (string) ($data['title'] ?? ''),
-                'publicatiedatum'     => $pubDate,
+                'publicationDate'     => $pubDate,
                 'retentionCategory'   => (string) ($data['retentionCategory'] ?? ''),
                 'retentionTermMonths' => (string) ($data['retentionTermMonths'] ?? ''),
                 'retentionExpiresAt'  => (string) ($data['retentionExpiresAt'] ?? ''),
@@ -692,7 +692,7 @@ class RetentionService
         $headers = [
             'id',
             'title',
-            'publicatiedatum',
+            'publicationDate',
             'retentionCategory',
             'retentionTermMonths',
             'retentionExpiresAt',

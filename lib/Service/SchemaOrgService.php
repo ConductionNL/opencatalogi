@@ -6,7 +6,7 @@
  * visibility rule. It renders a schema.org JSON-LD representation of a
  * publication or catalog from the `x-schema-org` markers already declared on the
  * OpenRegister schemas (ADR-048/051), reusing the same OpenRegister object-search
- * path (RBAC-governed `publicatiedatum <= now` visibility) the public
+ * path (RBAC-governed `publicationDate <= now` visibility) the public
  * publications API uses. The parallel open-web surface to {@see DcatService}:
  * DCAT-AP-NL RDF is for government/EU harvesters, schema.org JSON-LD is what
  * Google Dataset Search indexes.
@@ -382,7 +382,7 @@ class SchemaOrgService
             $node['description'] = (string) $description;
         }
 
-        $modified = ($object['@self']['updated'] ?? $object['publicatiedatum'] ?? null);
+        $modified = ($object['@self']['updated'] ?? $object['publicationDate'] ?? null);
         if ($modified !== null && $modified !== '') {
             $node['dateModified'] = $this->isoDate((string) $modified);
         }

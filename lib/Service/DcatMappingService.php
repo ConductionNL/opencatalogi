@@ -250,8 +250,8 @@ class DcatMappingService
         }
 
         // Mandatory: dct:modified (from @self.updated, falling back to the
-        // object's own publicatiedatum — the removed @self.published is gone).
-        $modified = ($publication['@self']['updated'] ?? $publication['publicatiedatum'] ?? null);
+        // object's own publicationDate — the removed @self.published is gone).
+        $modified = ($publication['@self']['updated'] ?? $publication['publicationDate'] ?? null);
         if ($modified !== null) {
             $dataset['dct:modified'] = $this->isoDate((string) $modified);
         }

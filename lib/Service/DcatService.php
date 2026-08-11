@@ -5,7 +5,7 @@
  * Read-only rendering layer (hydra ADR-022): no new storage, no new visibility
  * rules, no new query layer. It selects publicly visible publications via the
  * same OpenRegister object-search path the public publications API uses
- * (RBAC-governed `publicatiedatum <= now` visibility), maps them with
+ * (RBAC-governed `publicationDate <= now` visibility), maps them with
  * {@see DcatMappingService}, and serializes the resulting graph with
  * {@see DcatSerializer}. Documents are derived per request — nothing is
  * persisted. The architectural twin of SitemapService.
@@ -319,7 +319,7 @@ class DcatService
             $datasets[]    = $dataset;
             $datasetRefs[] = ['@id' => $datasetIri];
 
-            $modified = strtotime((string) ($publication['@self']['updated'] ?? $publication['publicatiedatum'] ?? ''));
+            $modified = strtotime((string) ($publication['@self']['updated'] ?? $publication['publicationDate'] ?? ''));
             if ($modified !== false && $modified > $maxModified) {
                 $maxModified = $modified;
             }
