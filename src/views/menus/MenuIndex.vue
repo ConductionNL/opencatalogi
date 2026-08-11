@@ -1,3 +1,18 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it does not list it. `/menus` is a
+	manifest `type: "index"` page rendered by nc-vue's generic CnIndexPage from
+	`src/manifest.json`, so this view is superseded migration debris. Confirmed
+	by grepping the built bundle: its `name: 'MenuIndex'` option occurs 0 times
+	in `js/opencatalogi-main.js`, while the six wired views each occur once —
+	webpack tree-shakes it out entirely.
+
+	See src/views/directory/DirectoryIndex.vue for the full rationale.
+
+	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"index" Menus page (CnIndexPage). Tracked in ConductionNL/opencatalogi#849.
+-->
 <template>
 	<CnIndexPage
 		ref="indexPage"

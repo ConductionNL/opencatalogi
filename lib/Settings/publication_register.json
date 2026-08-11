@@ -600,6 +600,13 @@
             "facetable": false,
             "title": "Has WOO Sitemap"
           },
+          "hasOoapi": {
+            "type": "boolean",
+            "description": "Whether this catalog publishes its course/program/offering data via the Open Onderwijs API (OOAPI 5.0). Read by OoapiService::isOoapiEnabled() to gate every /api/catalogs/{slug}/ooapi/v5/* route, and by DirectoryService to advertise ooapiEndpoint. Without this declaration the catalog schema's hardValidation strips the key, the toggle in CatalogModal.vue is silently discarded on save, and the whole OOAPI capability is unreachable — see #847.",
+            "default": false,
+            "facetable": false,
+            "title": "Has OOAPI 5.0 Publication"
+          },
           "published": {
             "type": "string",
             "description": "Publication date — when set to a date in the past, this catalog becomes publicly accessible",

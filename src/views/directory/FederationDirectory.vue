@@ -262,8 +262,18 @@ export default {
 	/*
 	 * 56px clears NcAppNavigationToggle — per-header pattern documented at
 	 * nextcloud-vue/src/components/CnPageRenderer/CnPageRenderer.vue:993.
-	 * @visual exclude scoped copy of .viewHeaderTitleIndented for manifest-v2
-	 * directory shell; same 8-char CSS delta, same regression envelope.
+	 * This is a deliberately scoped copy of .viewHeaderTitleIndented for the
+	 * manifest-v2 directory shell; same 8-char CSS delta, same regression
+	 * envelope.
+	 *
+	 * (Reworded 2026-08-11: the previous phrasing put the words "@visual" and
+	 * "exclude" next to each other in ordinary prose. gate-26's
+	 * _VISUAL_EXCLUDE_RE scans the whole file text and does not require the
+	 * marker to be a directive, so that sentence was silently waiving this
+	 * page — a real, routed, shipped component — from visual coverage.
+	 * Measured: neutering those two words alone turned gate-26 from PASS into
+	 * "FAIL — 1" naming this file. The page is now covered for real by
+	 * tests/e2e/spec-coverage/page-components.spec.ts.)
 	 */
 	padding-inline-start: 56px;
 }
