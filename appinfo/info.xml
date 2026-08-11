@@ -123,6 +123,12 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!--
+				Must run AFTER the register sync that adds the English columns, so it
+				can tell the rename case from the back-fill case. Idempotent and
+				non-destructive; safe to re-run.
+			-->
+			<step>OCA\OpenCatalogi\Repair\RenameDutchPublicationColumns</step>
 		</post-migration>
 	</repair-steps>
 
