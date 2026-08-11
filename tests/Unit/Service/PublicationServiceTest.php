@@ -559,7 +559,14 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
-        $objectService->method('find')
+        // In catalog scope, so the 404 asserted below is the one raised by find() and not
+        // the #855 scope refusal — the two are deliberately indistinguishable to a caller,
+        // which means a fixture without this stub would pass for the wrong reason.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())
+            ->method('find')
             ->willThrowException(new DoesNotExistException('Not found'));
 
         $this->request->method('getParams')->willReturn([]);
@@ -576,6 +583,10 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // In catalog scope, so show() reaches the extend handling under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
         $objectService->method('find')
             ->with('pub-1', ['@self.files'])
@@ -586,13 +597,20 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        // Asserting the status, not merely the response class: a 404 is also a
+        // JSONResponse, so the class assertion alone cannot tell a served object from a
+        // refusal and would keep passing if this test stopped reaching show()'s body.
+        $this->assertSame(200, $response->getStatus());
     }
 
     public function testShowWithExtendAsString(): void
     {
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
+
+        // In catalog scope, so show() reaches the string-to-array normalisation under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
 
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
         $objectService->method('find')
@@ -604,13 +622,17 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(200, $response->getStatus());
     }
 
     public function testShowFiltersNonSelfExtend(): void
     {
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
+
+        // In catalog scope, so show() reaches the '@self.' allowlist under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
 
         // After filtering, only @self.files should remain; 'other.field' is stripped
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
@@ -623,7 +645,7 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(200, $response->getStatus());
     }
 
     /**
@@ -960,6 +982,31 @@ class PublicationServiceTest extends TestCase
     }
 
     /**
+     * uses() answers 404 when an in-scope identifier resolves to nothing.
+     *
+     * The scope gate and this branch return the same body on purpose, so this test pins
+     * the branch that runs when the object really is inside the configured catalogs.
+     */
+    public function testUsesReturns404WhenObjectNotFound(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())->method('find')->willReturn(null);
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->uses('pub-1');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
+    }
+
+    /**
      * uses() must refuse a UUID outside the configured catalog scope (#855).
      *
      * Unguarded, an existing foreign object answers 200 with an empty result set while a
@@ -1048,6 +1095,29 @@ class PublicationServiceTest extends TestCase
 
         $response = $this->service->used('pub-1');
         $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    /**
+     * used() answers 404 when an in-scope identifier resolves to nothing.
+     */
+    public function testUsedReturns404WhenObjectNotFound(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $this->mockObjectServiceAvailable($objectService);
+
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
+        $objectService->expects($this->once())->method('find')->willReturn(null);
+        $objectService->expects($this->never())->method('findByRelations');
+
+        $this->request->method('getParams')->willReturn([]);
+
+        $response = $this->service->used('pub-1');
+
+        $this->assertSame(404, $response->getStatus());
+        $data = json_decode($response->render(), true);
+        $this->assertSame('Not Found', $data['error']);
     }
 
     /**
@@ -2553,6 +2623,10 @@ class PublicationServiceTest extends TestCase
         $objectService = $this->createObjectServiceMock();
         $this->mockObjectServiceAvailable($objectService);
 
+        // In catalog scope, so show() reaches the '_extend' fallback under test.
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+
         $objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
         $objectService->method('find')
             ->with('pub-1', ['@self.attachments'])
@@ -2563,7 +2637,7 @@ class PublicationServiceTest extends TestCase
         ]);
 
         $response = $this->service->show('pub-1');
-        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertSame(200, $response->getStatus());
     }
 
     // =======================================================================
