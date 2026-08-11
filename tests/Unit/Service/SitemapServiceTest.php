@@ -452,7 +452,7 @@ class SitemapServiceTest extends TestCase
     }
 
     /**
-     * diwoo:atTime falls back to the publication's own publicatiedatum (RBAC model)
+     * diwoo:atTime falls back to the publication's own publicationDate (RBAC model)
      * when the file has no published timestamp. The removed object-level
      * @self.published predicate is always empty for magic-mapped publications and
      * MUST NOT be used.
@@ -463,7 +463,7 @@ class SitemapServiceTest extends TestCase
     {
         $publication = [
             'id'              => 'pub-3',
-            'publicatiedatum' => '2024-04-02 09:30:00',
+            'publicationDate' => '2024-04-02 09:30:00',
             // A leftover (dead) @self.published MUST be ignored.
             '@self'           => ['published' => '2099-01-01 00:00:00'],
         ];
@@ -471,7 +471,7 @@ class SitemapServiceTest extends TestCase
         $file = [
             'downloadUrl' => 'https://example.com/files/besluit.pdf',
             'extension'   => 'pdf',
-            // No 'published' key on the file -> must fall back to publicatiedatum.
+            // No 'published' key on the file -> must fall back to publicationDate.
         ];
 
         $method = $this->getPrivateMethod('mapDiwooDocument');

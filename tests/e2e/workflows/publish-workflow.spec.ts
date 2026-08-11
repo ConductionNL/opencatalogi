@@ -157,14 +157,14 @@ test.describe('publish workflow', () => {
 		async () => {
 			// A publication created under the publication schema (53). That schema's
 			// `public`-group read grant is CONDITIONAL on a publication date that has
-			// already passed (authorization.read.public.match = { publicatiedatum:
+			// already passed (authorization.read.public.match = { publicationDate:
 			// { $lte: $now } }) — that is precisely what makes "publishing" control
-			// anonymous discoverability. So seed publicatiedatum in the PAST to satisfy
-			// the public-read match; a draft (no publicatiedatum) is correctly hidden
+			// anonymous discoverability. So seed publicationDate in the PAST to satisfy
+			// the public-read match; a draft (no publicationDate) is correctly hidden
 			// and is covered by the publish-gate test above.
 			const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
 			const pub = await fx.createPublication('Publicly Readable Publication', {
-				publicatiedatum: pastPublicatiedatum,
+				publicationDate: pastPublicatiedatum,
 			})
 
 			// Sanity: the anon context really is unauthenticated.
@@ -172,7 +172,7 @@ test.describe('publish workflow', () => {
 			expect(whoami.status(), 'anon context is unauthenticated').toBe(401)
 
 			// Because the schema grants read to the `public` group for publications
-			// whose publicatiedatum has passed, an ANONYMOUS OpenRegister caller can
+			// whose publicationDate has passed, an ANONYMOUS OpenRegister caller can
 			// read this (past-dated) object directly via the object API — this is the
 			// RBAC `public`-group discoverability guarantee.
 			const anonRead = await anon.get(
