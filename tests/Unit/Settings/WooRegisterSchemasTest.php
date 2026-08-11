@@ -57,7 +57,7 @@ class WooRegisterSchemasTest extends TestCase
         'deckBoardId',
         'deckAvailable',
         'documents',
-        'besluit',
+        'decisionLetter',
         'inventarislijst',
         'documentSummary',
         'publishedAt',
