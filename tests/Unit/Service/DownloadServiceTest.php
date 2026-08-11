@@ -545,6 +545,38 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
     }//end testPublicationAttachmentsNoAttachmentsKey()
 
     /**
+     * Falls back to a usable entry name when the publication carries no title.
+     *
+     * @return void
+     */
+    public function testCreatePublicationFileWithoutTitle(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $publication   = ['id' => '7'];
+
+        $mpdf = $this->createMock(\Mpdf\Mpdf::class);
+        $mpdf->method('Output')
+            ->willReturnCallback(
+                function (string $path, string $destination) {
+                    file_put_contents($path, '%PDF-1.4 untitled');
+                    return '';
+                }
+            );
+
+        $this->fileService->method('createPdf')->willReturn($mpdf);
+
+        $result = $this->downloadService->createPublicationFile(
+            $objectService,
+            '7',
+            ['download' => true, 'publication' => $publication]
+        );
+
+        $this->assertIsArray($result);
+        $this->assertSame('publication.pdf', $result['filename']);
+
+    }//end testCreatePublicationFileWithoutTitle()
+
+    /**
      * Renders the real publication.html.twig template through the real FileService.
      *
      * Every other test in this file mocks `createPdf()`, which is exactly why the

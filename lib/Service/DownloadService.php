@@ -112,7 +112,10 @@ class DownloadService
         // Create the PDF file using a twig template and publication data.
         $mpdf = $this->fileService->createPdf('publication.html.twig', ['publication' => $publication]);
 
-        $filename = "{$publication['title']}.pdf";
+        // A publication without a title still gets a usable entry name — an undefined
+        // key here would surface as a PHP warning on an anonymous-reachable path.
+        $title    = ($publication['title'] ?? 'publication');
+        $filename = "$title.pdf";
 
         // Render to a temporary location, read it back, and remove the temporary file.
         // The metadata PDF is an on-demand artefact — it MUST NOT be written to
