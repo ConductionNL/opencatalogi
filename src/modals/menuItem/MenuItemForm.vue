@@ -15,7 +15,6 @@ import { EventBus } from '../../eventBus.js'
 </template>
 
 <script>
-import _ from 'lodash'
 import { CnFormDialog } from '@conduction/nextcloud-vue'
 import { Menu } from '../../entities/menu/menu.ts'
 import { getNextcloudGroups } from '../../services/nextcloudGroups.js'
@@ -100,7 +99,12 @@ export default {
 		 * @spec openspec/specs/content-management/spec.md#requirement-menu-management-ui-with-embedded-menu-items-cms-037
 		 */
 		onConfirm(formData) {
-			const menuClone = _.cloneDeep(this.menuObject)
+			// FEP-001: this clones a plain JSON-shaped menu object (title, slug,
+			// and an `items` array of flat records) — no functions, DOM nodes or
+			// cycles — so the native structuredClone covers it and the whole
+			// lodash graph stays out of this chunk. Matches the three sibling
+			// call sites (ObjectModal, ViewMenuModal, DeletePageContentDialog).
+			const menuClone = structuredClone(this.menuObject)
 			if (!Array.isArray(menuClone.items)) {
 				menuClone.items = []
 			}
