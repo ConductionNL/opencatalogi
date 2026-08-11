@@ -2,9 +2,9 @@
 /**
  * Service for managing download-related operations.
  *
- * Provides functionality to create and manage publication files and archives, including
- * generating PDFs and ZIP files containing metadata and attachments, and storing files
- * in NextCloud.
+ * Renders the publication metadata PDF that is piped into the download ZIP and
+ * enumerates a publication's attachments. Per DWN-OR-003 the rendered PDF is an
+ * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -48,9 +48,9 @@ use Exception;
 /**
  * Service for managing download-related operations.
  *
- * Provides functionality to create and manage publication files and archives, including
- * generating PDFs and ZIP files containing metadata and attachments, and storing files
- * in NextCloud.
+ * Renders the publication metadata PDF that is piped into the download ZIP and
+ * enumerates a publication's attachments. Per DWN-OR-003 the rendered PDF is an
+ * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  */
@@ -68,17 +68,21 @@ class DownloadService
     }//end __construct()
 
     /**
-     * Creates a pdf file containing all metadata of the given publication.
+     * Renders the publication metadata PDF and returns it as an in-memory artefact.
+     *
+     * The PDF is written to a temporary location, read back, and the temporary file
+     * is deleted before returning — it is never saved to Nextcloud user storage
+     * (DWN-OR-003). Callers pipe the returned bytes into the download ZIP.
      *
      * @param ObjectService  $objectService The ObjectService for database access.
      * @param string|integer $id            The id of the Publication to create a pdf for.
      * @param array|null     $options       Options for this function.
-     *                                      "download" and "saveToNextCloud" cannot both be false.
-     *                                      "download" = return a download response (true default).
-     *                                      "saveToNextCloud" = save file in NextCloud (true default).
+     *                                      "download" = produce the artefact (true default);
+     *                                      when false there is no output option left enabled
+     *                                      and the service returns 400 without rendering.
      *                                      "publication" = pre-fetched publication body.
      *
-     * @return JSONResponse A download response, download URL, or error response.
+     * @return array|JSONResponse ['filename' => string, 'content' => string] or an error response.
      * @throws LoaderError|RuntimeError|SyntaxError|MpdfException|Exception
      *
      * @spec openspec/specs/download-service/spec.md
@@ -87,20 +91,19 @@ class DownloadService
         ObjectService $objectService,
         string|int $id,
         ?array $options=[
-            'download'        => true,
-            'saveToNextCloud' => true,
-            'publication'     => null,
+            'download'    => true,
+            'publication' => null,
         ]
-    ): JSONResponse {
-        // Validate options.
-        if ($options['download'] === false && $options['saveToNextCloud'] === false) {
+    ): array | JSONResponse {
+        // Validate options before generating any file content (DWN-OR-004).
+        if (($options['download'] ?? true) === false) {
             return new JSONResponse(
-                data: ['error' => 'Options "download" and "saveToNextCloud" should not both be false'],
-                statusCode: 500
+                data: ['error' => 'At least one output option must be enabled; "download" was false'],
+                statusCode: 400
             );
         }
 
-        // Get publication data if not provided.
+        // Get publication data if not provided (DWN-OR-005 returns 404 when unresolvable).
         $publication = ($options['publication'] ?? $this->getPublicationData($id, $objectService));
         if ($publication instanceof JSONResponse) {
             return $publication;
@@ -109,38 +112,41 @@ class DownloadService
         // Create the PDF file using a twig template and publication data.
         $mpdf = $this->fileService->createPdf('publication.html.twig', ['publication' => $publication]);
 
-        $filename = "{$publication['title']}.pdf";
+        // A publication without a title still gets a usable entry name — an undefined
+        // key here would surface as a PHP warning on an anonymous-reachable path.
+        $title    = ($publication['title'] ?? 'publication');
+        $filename = "$title.pdf";
 
-        // Save to NextCloud if option is set.
-        $shareLink = null;
-        if ($options['saveToNextCloud'] ?? true) {
-            $mpdf->Output($filename, Destination::FILE);
-            $shareLink = $this->saveFileToNextCloud($filename, $publication);
-            if ($shareLink instanceof JSONResponse) {
-                return $shareLink;
+        // Render to a temporary location, read it back, and remove the temporary file.
+        // The metadata PDF is an on-demand artefact — it MUST NOT be written to
+        // Nextcloud user storage by this service (DWN-OR-003).
+        $tempDir = sys_get_temp_dir().'/mpdf';
+        if (is_dir($tempDir) === false) {
+            mkdir(directory: $tempDir, permissions: 0777, recursive: true);
+        }
+
+        $tempPath = $tempDir.'/'.bin2hex(random_bytes(16)).'.pdf';
+
+        try {
+            $mpdf->Output($tempPath, Destination::FILE);
+            $content = file_get_contents($tempPath);
+        } finally {
+            if (file_exists($tempPath) === true) {
+                unlink($tempPath);
             }
         }
 
-        // Download if option is set.
-        if ($options['download'] ?? true) {
-            $mpdf->Output($filename, Destination::DOWNLOAD);
-        }
-
-        // Clean up temporary files.
-        rmdir('/tmp/mpdf');
-
-        // Return download URL if saved to NextCloud.
-        if ($options['saveToNextCloud'] ?? true) {
+        if ($content === false) {
             return new JSONResponse(
-                [
-                    'downloadUrl' => "$shareLink/download",
-                    'filename'    => $filename,
-                ],
-                200
+                data: ['error' => 'Failed to read the rendered publication metadata PDF'],
+                statusCode: 500
             );
         }
 
-        return new JSONResponse([], 200);
+        return [
+            'filename' => $filename,
+            'content'  => $content,
+        ];
 
     }//end createPublicationFile()
 
@@ -179,53 +185,6 @@ class DownloadService
         }//end try
 
     }//end getPublicationData()
-
-    /**
-     * Store a publication metadata file in NextCloud and return its share link.
-     *
-     * @param string $filename    The filename of the file to store in NextCloud
-     * @param array  $publication The publication data for folder creation
-     *
-     * @return string|JSONResponse A share link url or an error JSONResponse
-     * @throws Exception When reading or writing to NextCloud files fails
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @spec openspec/specs/download-service/spec.md
-     */
-    public function saveFileToNextCloud(string $filename, array $publication): string|JSONResponse
-    {
-        // Create the Publicaties folder and the Publication specific folder.
-        $this->fileService->createFolder(folderPath: 'Publicaties');
-        $publicationFolder = $this->fileService->getPublicationFolderName(
-            publicationId: $publication['id'],
-            publicationTitle: $publication['title']
-        );
-        $this->fileService->createFolder(folderPath: "Publicaties/$publicationFolder");
-
-        // Save the file to NextCloud.
-        $filePath = "Publicaties/$publicationFolder/$filename";
-        $created  = $this->fileService->updateFile(
-            content: file_get_contents(filename: $filename),
-            filePath: $filePath,
-            createNew: true
-        );
-
-        // Check if file creation was successful.
-        if ($created === false) {
-            return new JSONResponse(
-                data: ['error' => "Failed to upload this file: $filePath to NextCloud"],
-                statusCode: 500
-            );
-        }
-
-        // Request public share via the OpenRegister shares leaf (ADR-022 / FIL-005).
-        $shareLink = $this->fileService->createPublicShareLink(relativePath: $filePath);
-
-        return $shareLink;
-
-    }//end saveFileToNextCloud()
 
     /**
      * Gets all attachments for a publication.

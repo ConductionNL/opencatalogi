@@ -3,8 +3,8 @@
 /**
  * Unit tests for DownloadService.
  *
- * Covers publication PDF generation, saving to NextCloud via the OR shares leaf,
- * ZIP creation, and attachment enumeration.
+ * Covers publication metadata PDF rendering (including the real Twig template),
+ * option validation, temporary-file cleanup, and attachment enumeration.
  *
  * @category Test
  * @package  Unit\Service
@@ -157,27 +157,30 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
     }//end testGetPublicationDataNotFound()
 
     /**
-     * Returns 500 when both download and saveToNextCloud options are false.
+     * Returns 400 without rendering anything when no output option is enabled (DWN-OR-004).
      *
      * @return void
      */
-    public function testCreatePublicationFileBothOptionsFalse(): void
+    public function testCreatePublicationFileNoOutputOptionEnabled(): void
     {
         $objectService = $this->createObjectServiceMock();
+
+        // No file content may be generated when the guard trips.
+        $this->fileService->expects($this->never())->method('createPdf');
 
         $result = $this->downloadService->createPublicationFile(
             $objectService,
             '1',
-            ['download' => false, 'saveToNextCloud' => false, 'publication' => null]
+            ['download' => false, 'publication' => null]
         );
 
         $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
+        $this->assertSame(400, $result->getStatus());
 
-    }//end testCreatePublicationFileBothOptionsFalse()
+    }//end testCreatePublicationFileNoOutputOptionEnabled()
 
     /**
-     * Saves to NextCloud and returns download URL when publication is provided.
+     * Returns the rendered PDF as an in-memory artefact when a publication is provided.
      *
      * @return void
      */
@@ -188,33 +191,103 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $publication = ['id' => '1', 'title' => 'MyPub', 'description' => 'A description'];
 
         $mpdf = $this->createMock(\Mpdf\Mpdf::class);
+        $mpdf->expects($this->once())
+            ->method('Output')
+            ->willReturnCallback(
+                function (string $path, string $destination) {
+                    $this->assertSame(\Mpdf\Output\Destination::FILE, $destination);
+                    file_put_contents($path, '%PDF-1.4 rendered');
+                    return '';
+                }
+            );
+
         $this->fileService->expects($this->once())
             ->method('createPdf')
             ->with('publication.html.twig', ['publication' => $publication])
             ->willReturn($mpdf);
 
-        $this->fileService->method('createFolder')->willReturn(true);
-        $this->fileService->method('getPublicationFolderName')
-            ->with('1', 'MyPub')
-            ->willReturn('(1) MyPub');
-        $this->fileService->method('updateFile')->willReturn(true);
-
-        $this->fileService->method('createPublicShareLink')
-            ->willReturn('https://example.com/index.php/s/token123');
-
         $result = $this->downloadService->createPublicationFile(
             $objectService,
             '1',
-            ['download' => false, 'saveToNextCloud' => true, 'publication' => $publication]
+            ['download' => true, 'publication' => $publication]
         );
 
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(200, $result->getStatus());
-        $data = $result->getData();
-        $this->assertStringContainsString('/download', $data['downloadUrl']);
-        $this->assertSame('MyPub.pdf', $data['filename']);
+        $this->assertIsArray($result);
+        $this->assertSame('MyPub.pdf', $result['filename']);
+        $this->assertSame('%PDF-1.4 rendered', $result['content']);
 
     }//end testCreatePublicationFileWithPublicationProvided()
+
+    /**
+     * Deletes the temporary render file before returning (DWN-OR-003).
+     *
+     * @return void
+     */
+    public function testCreatePublicationFileRemovesTemporaryFile(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $publication   = ['id' => '2', 'title' => 'TempCleanup'];
+
+        $capturedPath = null;
+
+        $mpdf = $this->createMock(\Mpdf\Mpdf::class);
+        $mpdf->method('Output')
+            ->willReturnCallback(
+                function (string $path, string $destination) use (&$capturedPath) {
+                    $capturedPath = $path;
+                    file_put_contents($path, '%PDF-1.4 tempfile');
+                    return '';
+                }
+            );
+
+        $this->fileService->method('createPdf')->willReturn($mpdf);
+
+        $result = $this->downloadService->createPublicationFile(
+            $objectService,
+            '2',
+            ['download' => true, 'publication' => $publication]
+        );
+
+        $this->assertIsArray($result);
+        $this->assertNotNull($capturedPath);
+        $this->assertFileDoesNotExist($capturedPath);
+
+    }//end testCreatePublicationFileRemovesTemporaryFile()
+
+    /**
+     * Never writes the rendered PDF to Nextcloud user storage (DWN-OR-003).
+     *
+     * @return void
+     */
+    public function testCreatePublicationFileNeverWritesToNextcloudStorage(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $publication   = ['id' => '3', 'title' => 'NoStorage'];
+
+        $mpdf = $this->createMock(\Mpdf\Mpdf::class);
+        $mpdf->method('Output')
+            ->willReturnCallback(
+                function (string $path, string $destination) {
+                    file_put_contents($path, '%PDF-1.4 nostorage');
+                    return '';
+                }
+            );
+
+        $this->fileService->method('createPdf')->willReturn($mpdf);
+
+        $this->fileService->expects($this->never())->method('updateFile');
+        $this->fileService->expects($this->never())->method('createFolder');
+        $this->fileService->expects($this->never())->method('createPublicShareLink');
+
+        $result = $this->downloadService->createPublicationFile(
+            $objectService,
+            '3',
+            ['download' => true, 'publication' => $publication]
+        );
+
+        $this->assertIsArray($result);
+
+    }//end testCreatePublicationFileNeverWritesToNextcloudStorage()
 
     /**
      * Returns 500 when the publication cannot be fetched.
@@ -231,7 +304,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
         $result = $this->downloadService->createPublicationFile(
             $objectService,
             '99',
-            ['download' => true, 'saveToNextCloud' => true, 'publication' => null]
+            ['download' => true, 'publication' => null]
         );
 
         $this->assertInstanceOf(JSONResponse::class, $result);
@@ -240,105 +313,46 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
     }//end testCreatePublicationFileFetchFails()
 
     /**
-     * Sends file to browser download when saveToNextCloud is false.
+     * Returns 404 when the publication cannot be resolved (DWN-OR-005).
      *
      * @return void
      */
-    public function testCreatePublicationFileDownloadOnlySaveToNextCloudFalse(): void
+    public function testCreatePublicationFilePublicationNotFound(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $publication   = ['id' => '5', 'title' => 'DownloadOnly'];
+        $objectService->method('find')->willReturn(null);
 
-        $mpdf = $this->createMock(\Mpdf\Mpdf::class);
-        $mpdf->expects($this->once())
-            ->method('Output')
-            ->with('DownloadOnly.pdf', \Mpdf\Output\Destination::DOWNLOAD);
-
-        $this->fileService->method('createPdf')->willReturn($mpdf);
+        $this->fileService->expects($this->never())->method('createPdf');
 
         $result = $this->downloadService->createPublicationFile(
             $objectService,
-            '5',
-            ['download' => true, 'saveToNextCloud' => false, 'publication' => $publication]
+            '404',
+            ['download' => true, 'publication' => null]
         );
 
         $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(200, $result->getStatus());
-        $this->assertEmpty($result->getData());
+        $this->assertSame(404, $result->getStatus());
 
-    }//end testCreatePublicationFileDownloadOnlySaveToNextCloudFalse()
+    }//end testCreatePublicationFilePublicationNotFound()
 
     /**
-     * Stores a file and returns a share link URL.
+     * Asserts that saveFileToNextCloud no longer exists.
+     *
+     * DWN-OR-003 forbids the download service from saving the generated PDF to
+     * Nextcloud user storage, and DWN-002 / DWN-003 are recorded as REMOVED
+     * requirements. This test documents the removal so a regression is caught.
      *
      * @return void
      */
-    public function testSaveFileToNextCloudSuccess(): void
+    public function testSaveFileToNextCloudMethodDoesNotExist(): void
     {
-        $publication = ['id' => '10', 'title' => 'SaveTest'];
+        $this->assertFalse(
+            method_exists($this->downloadService, 'saveFileToNextCloud'),
+            'saveFileToNextCloud writes the metadata PDF to Nextcloud user storage, '
+            .'which DWN-OR-003 forbids; it must not be re-introduced.'
+        );
 
-        $this->fileService->expects($this->exactly(2))
-            ->method('createFolder');
-
-        $this->fileService->method('getPublicationFolderName')
-            ->with('10', 'SaveTest')
-            ->willReturn('(10) SaveTest');
-
-        $this->fileService->method('updateFile')->willReturn(true);
-        $this->fileService->method('createPublicShareLink')
-            ->willReturn('https://example.com/index.php/s/sharetoken');
-
-        $result = $this->downloadService->saveFileToNextCloud('test.pdf', $publication);
-
-        $this->assertIsString($result);
-        $this->assertStringContainsString('sharetoken', $result);
-
-    }//end testSaveFileToNextCloudSuccess()
-
-    /**
-     * Obtains share URL via the OR shares leaf (ADR-022 / FIL-005).
-     *
-     * @return void
-     */
-    public function testSaveFileToNextCloudShareViaLeaf(): void
-    {
-        $publication = ['id' => '10', 'title' => 'SaveTest'];
-
-        $this->fileService->method('createFolder')->willReturn(true);
-        $this->fileService->method('getPublicationFolderName')
-            ->willReturn('(10) SaveTest');
-        $this->fileService->method('updateFile')->willReturn(true);
-
-        $this->fileService->method('createPublicShareLink')
-            ->willReturn('https://example.com/index.php/s/leaftoken');
-
-        $result = $this->downloadService->saveFileToNextCloud('test.pdf', $publication);
-
-        $this->assertIsString($result);
-        $this->assertStringContainsString('leaftoken', $result);
-
-    }//end testSaveFileToNextCloudShareViaLeaf()
-
-    /**
-     * Returns 500 when file creation in NextCloud fails.
-     *
-     * @return void
-     */
-    public function testSaveFileToNextCloudFileCreationFails(): void
-    {
-        $publication = ['id' => '10', 'title' => 'FailTest'];
-
-        $this->fileService->method('createFolder')->willReturn(true);
-        $this->fileService->method('getPublicationFolderName')
-            ->willReturn('(10) FailTest');
-        $this->fileService->method('updateFile')->willReturn(false);
-
-        $result = $this->downloadService->saveFileToNextCloud('test.pdf', $publication);
-
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
-
-    }//end testSaveFileToNextCloudFileCreationFails()
+    }//end testSaveFileToNextCloudMethodDoesNotExist()
 
     /**
      * Asserts that createPublicationZip no longer exists (removed in wave-3 fix C5).
@@ -531,32 +545,79 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase
     }//end testPublicationAttachmentsNoAttachmentsKey()
 
     /**
-     * Returns 500 when saving publication file to NextCloud fails.
+     * Falls back to a usable entry name when the publication carries no title.
      *
      * @return void
      */
-    public function testCreatePublicationFileSaveToNextCloudFails(): void
+    public function testCreatePublicationFileWithoutTitle(): void
     {
         $objectService = $this->createObjectServiceMock();
-        $publication   = ['id' => '1', 'title' => 'FailSave'];
+        $publication   = ['id' => '7'];
 
         $mpdf = $this->createMock(\Mpdf\Mpdf::class);
+        $mpdf->method('Output')
+            ->willReturnCallback(
+                function (string $path, string $destination) {
+                    file_put_contents($path, '%PDF-1.4 untitled');
+                    return '';
+                }
+            );
+
         $this->fileService->method('createPdf')->willReturn($mpdf);
-        $this->fileService->method('createFolder')->willReturn(true);
-        $this->fileService->method('getPublicationFolderName')
-            ->willReturn('(1) FailSave');
-        $this->fileService->method('updateFile')->willReturn(false);
 
         $result = $this->downloadService->createPublicationFile(
             $objectService,
-            '1',
-            ['download' => false, 'saveToNextCloud' => true, 'publication' => $publication]
+            '7',
+            ['download' => true, 'publication' => $publication]
         );
 
-        $this->assertInstanceOf(JSONResponse::class, $result);
-        $this->assertSame(500, $result->getStatus());
+        $this->assertIsArray($result);
+        $this->assertSame('publication.pdf', $result['filename']);
 
-    }//end testCreatePublicationFileSaveToNextCloudFails()
+    }//end testCreatePublicationFileWithoutTitle()
+
+    /**
+     * Renders the real publication.html.twig template through the real FileService.
+     *
+     * Every other test in this file mocks `createPdf()`, which is exactly why the
+     * missing template went unnoticed for so long: a Twig LoaderError could never
+     * surface. This test resolves the template for real so its absence fails here.
+     *
+     * @return void
+     */
+    public function testRealPublicationTemplateRendersThroughFileService(): void
+    {
+        $fileService = new FileService(
+            $this->createMock(\OCP\IUserSession::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            $this->createMock(\OCP\App\IAppManager::class),
+            $this->createMock(\Psr\Container\ContainerInterface::class)
+        );
+
+        $downloadService = new DownloadService($fileService);
+        $objectService   = $this->createObjectServiceMock();
+
+        $publication = [
+            'id'          => 'abc-123',
+            'title'       => 'Real Template Publication',
+            'summary'     => 'A short summary.',
+            'description' => 'A longer description of the publication.',
+            'status'      => 'published',
+            'attachments' => [['title' => 'Attachment One'], 'plain-attachment-id'],
+        ];
+
+        $result = $downloadService->createPublicationFile(
+            $objectService,
+            'abc-123',
+            ['download' => true, 'publication' => $publication]
+        );
+
+        $this->assertIsArray($result);
+        $this->assertSame('Real Template Publication.pdf', $result['filename']);
+        $this->assertStringStartsWith('%PDF', $result['content']);
+
+    }//end testRealPublicationTemplateRendersThroughFileService()
 
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 

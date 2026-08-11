@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Service\DownloadService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -27,6 +28,8 @@ class PublicationServiceTest extends TestCase
     private ContainerInterface|MockObject $container;
     private IAppManager|MockObject $appManager;
     private DirectoryService|MockObject $directoryService;
+
+    private DownloadService|MockObject $downloadService;
     private IURLGenerator|MockObject $urlGenerator;
     private IUserSession|MockObject $userSession;
     private PublicationService $service;
@@ -45,12 +48,15 @@ class PublicationServiceTest extends TestCase
         // this file keeps asserting the historical stripped envelope without change.
         $this->userSession->method('getUser')->willReturn(null);
 
+        $this->downloadService = $this->createMock(DownloadService::class);
+
         $this->service = new PublicationService(
             $this->config,
             $this->request,
             $this->container,
             $this->appManager,
             $this->directoryService,
+            $this->downloadService,
             $this->userSession,
         );
     }
@@ -1683,6 +1689,7 @@ class PublicationServiceTest extends TestCase
             $this->container,
             $this->appManager,
             $this->directoryService,
+            $this->downloadService,
             $userSession,
         );
     }
@@ -3577,9 +3584,12 @@ class PublicationServiceTest extends TestCase
                 return $fileService;
             });
 
-        // Create a temp file for the test.
+        // Create a real ZIP fixture so the metadata PDF can be piped into it (DWN-OR-001).
         $tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
-        file_put_contents($tmpFile, 'fake zip content');
+        $fixture = new \ZipArchive();
+        $fixture->open($tmpFile, \ZipArchive::OVERWRITE);
+        $fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
+        $fixture->close();
 
         $fileService->method('createObjectFilesZip')
             ->willReturn([
@@ -3588,8 +3598,81 @@ class PublicationServiceTest extends TestCase
                 'mimeType' => 'application/zip',
             ]);
 
+        $this->downloadService->expects($this->once())
+            ->method('createPublicationFile')
+            ->willReturn(['filename' => 'pub-1.pdf', 'content' => '%PDF-1.4 metadata']);
+
         $response = $this->service->download('pub-1');
         $this->assertInstanceOf(DataDownloadResponse::class, $response);
+
+        // The archive handed to the caller must carry the metadata PDF next to the
+        // attachments streamed from OR's file service.
+        $returnedPath = tempnam(sys_get_temp_dir(), 'returned_zip_');
+        file_put_contents($returnedPath, $response->render());
+
+        $returned = new \ZipArchive();
+        $this->assertTrue($returned->open($returnedPath) === true);
+        $entries = [];
+        for ($i = 0; $i < $returned->numFiles; $i++) {
+            $entries[] = $returned->getNameIndex($i);
+        }
+
+        $pdfBytes = $returned->getFromName('pub-1.pdf');
+        $returned->close();
+        unlink($returnedPath);
+
+        $this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must be present in the download ZIP.');
+        $this->assertContains('Bijlagen/attachment1.txt', $entries);
+        $this->assertSame('%PDF-1.4 metadata', $pdfBytes);
+    }
+
+    public function testDownloadPropagatesMetadataPdfError(): void
+    {
+        $objectService = $this->createObjectServiceMock();
+        $fileService   = $this->createFileServiceMock();
+
+        $this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+        $queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+        $queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+        $catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+        $objectService->method('searchObjects')->willReturn([$catalog]);
+        $objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+        $this->container->method('get')
+            ->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+                if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+                    return $queryService;
+                }
+
+                if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+
+                return $fileService;
+            });
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
+        $fixture = new \ZipArchive();
+        $fixture->open($tmpFile, \ZipArchive::OVERWRITE);
+        $fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
+        $fixture->close();
+
+        $fileService->method('createObjectFilesZip')
+            ->willReturn([
+                'path'     => $tmpFile,
+                'filename' => 'test-files.zip',
+                'mimeType' => 'application/zip',
+            ]);
+
+        $this->downloadService->method('createPublicationFile')
+            ->willReturn(new \OCP\AppFramework\Http\JSONResponse(['error' => 'render failed'], 500));
+
+        $response = $this->service->download('pub-1');
+
+        $this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $response);
+        $this->assertSame(500, $response->getStatus());
+        $this->assertFileDoesNotExist($tmpFile, 'The ZIP temp file must be cleaned up on the error path.');
     }
 
     // =======================================================================

@@ -56,6 +56,7 @@ use OCP\Common\Exception\NotFoundException;
 use OCP\IServerContainer;
 use OCP\IUserSession;
 use RuntimeException;
+use ZipArchive;
 
 /**
  * Service for handling publication-related operations.
@@ -123,6 +124,9 @@ class PublicationService
      * @param IServerContainer  $container        Server container for dependency injection
      * @param IAppManager       $appManager       App manager for checking installed apps
      * @param DirectoryService  $directoryService Directory service for federation
+     * @param DownloadService   $downloadService  Renders the publication metadata PDF that is
+     *                                            piped into the download ZIP (DWN-OR-001 /
+     *                                            DWN-OR-003).
      * @param IUserSession|null $userSession      User session used to decide whether the
      *                                            anonymous `@self` strip list applies
      *                                            (authenticated-read-parity, CAT-AUTH-001).
@@ -138,6 +142,7 @@ class PublicationService
         private readonly ContainerInterface $container,
         private readonly IAppManager $appManager,
         private readonly DirectoryService $directoryService,
+        private readonly DownloadService $downloadService,
         private readonly ?IUserSession $userSession=null,
     ) {
         $this->appName = 'opencatalogi';
@@ -943,6 +948,31 @@ class PublicationService
             $fileService = $this->getFileService();
             $zipInfo     = $fileService->createObjectFilesZip($id);
 
+            // Render the publication metadata PDF and pipe it into the ZIP alongside the
+            // attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
+            $metadataPdf = $this->downloadService->createPublicationFile(
+                objectService: $objectService,
+                id: $id,
+                options: [
+                    'download'    => true,
+                    'publication' => $object->jsonSerialize(),
+                ]
+            );
+
+            if ($metadataPdf instanceof JSONResponse) {
+                if (file_exists($zipInfo['path']) === true) {
+                    unlink($zipInfo['path']);
+                }
+
+                return $metadataPdf;
+            }
+
+            $this->addFileToZip(
+                zipPath: $zipInfo['path'],
+                entryName: $metadataPdf['filename'],
+                content: $metadataPdf['content']
+            );
+
             // Read the ZIP file content.
             $zipContent = file_get_contents($zipInfo['path']);
             if ($zipContent === false) {
@@ -977,6 +1007,39 @@ class PublicationService
         }//end try
 
     }//end download()
+
+    /**
+     * Add an in-memory artefact to an existing ZIP archive.
+     *
+     * Used to pipe the rendered publication metadata PDF into the attachment ZIP
+     * produced by OpenRegister's file service, so the archive matches the structure
+     * required by DWN-OR-001 (metadata PDF at the root, attachments under Bijlagen/).
+     *
+     * @param string $zipPath   Absolute path of the ZIP archive to add to.
+     * @param string $entryName The entry name to write inside the archive.
+     * @param string $content   The raw bytes to store under that entry.
+     *
+     * @return void
+     *
+     * @throws Exception When the archive cannot be opened or the entry cannot be added.
+     *
+     * @spec openspec/specs/download-service/spec.md
+     */
+    private function addFileToZip(string $zipPath, string $entryName, string $content): void
+    {
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            throw new Exception('Failed to open ZIP archive to add the publication metadata PDF');
+        }
+
+        if ($zip->addFromString($entryName, $content) === false) {
+            $zip->close();
+            throw new Exception('Failed to add the publication metadata PDF to the ZIP archive');
+        }
+
+        $zip->close();
+
+    }//end addFileToZip()
 
     /**
      * Filter out unwanted properties from objects
