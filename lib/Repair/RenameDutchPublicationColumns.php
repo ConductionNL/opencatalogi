@@ -65,6 +65,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Rename the Dutch publication columns to their English equivalents.
+ *
+ * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 class RenameDutchPublicationColumns implements IRepairStep
 {
@@ -114,6 +116,8 @@ class RenameDutchPublicationColumns implements IRepairStep
      * Human-readable step name.
      *
      * @return string
+     *
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md
      */
     public function getName(): string
     {
@@ -127,6 +131,8 @@ class RenameDutchPublicationColumns implements IRepairStep
      * @param IOutput $output Repair output.
      *
      * @return void
+     *
+     * @spec openspec/specs/publication-retention-lifecycle/spec.md
      */
     public function run(IOutput $output): void
     {
@@ -148,8 +154,13 @@ class RenameDutchPublicationColumns implements IRepairStep
                     continue;
                 }
 
+                $qTable = $this->quote(identifier: $table);
+                $qOld   = $this->quote(identifier: $old);
+                $qNew   = $this->quote(identifier: $new);
+
                 if (in_array($new, $columns, true) === false) {
-                    if ($this->exec(sql: 'ALTER TABLE '.$this->quote($table).' RENAME COLUMN '.$this->quote($old).' TO '.$this->quote($new)) === true) {
+                    $sql = 'ALTER TABLE '.$qTable.' RENAME COLUMN '.$qOld.' TO '.$qNew;
+                    if ($this->exec(sql: $sql) === true) {
                         $renamed++;
                     }
 
@@ -158,7 +169,9 @@ class RenameDutchPublicationColumns implements IRepairStep
 
                 // The mapper already added an empty English column: back-fill and
                 // leave the Dutch one, so this stays reversible.
-                if ($this->exec(sql: 'UPDATE '.$this->quote($table).' SET '.$this->quote($new).' = '.$this->quote($old).' WHERE '.$this->quote($new).' IS NULL AND '.$this->quote($old).' IS NOT NULL') === true) {
+                $sql = 'UPDATE '.$qTable.' SET '.$qNew.' = '.$qOld
+                    .' WHERE '.$qNew.' IS NULL AND '.$qOld.' IS NOT NULL';
+                if ($this->exec(sql: $sql) === true) {
                     $copied++;
                 }
             }//end foreach
@@ -225,20 +238,38 @@ class RenameDutchPublicationColumns implements IRepairStep
         $tables = [];
         while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
             $name = (string) ($row['table_name'] ?? '');
-            if ($name === '' || strpos($name, 'openregister_table_') === false) {
-                continue;
-            }
-
-            foreach ($suffixes as $suffix) {
-                if (substr($name, -strlen($suffix)) === $suffix) {
-                    $tables[] = $name;
-                }
+            if ($this->isShardOfSchema(table: $name, suffixes: $suffixes) === true) {
+                $tables[] = $name;
             }
         }
 
         return array_values(array_unique($tables));
 
     }//end shardTables()
+
+    /**
+     * Whether a table name is an openregister shard ending in one of the ids.
+     *
+     * @param string             $table    Table name from information_schema.
+     * @param array<int, string> $suffixes `_<schemaId>` suffixes to accept.
+     *
+     * @return bool
+     */
+    private function isShardOfSchema(string $table, array $suffixes): bool
+    {
+        if ($table === '' || strpos($table, 'openregister_table_') === false) {
+            return false;
+        }
+
+        foreach ($suffixes as $suffix) {
+            if (substr($table, -strlen($suffix)) === $suffix) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end isShardOfSchema()
 
     /**
      * List the column names of a table.
@@ -249,7 +280,7 @@ class RenameDutchPublicationColumns implements IRepairStep
      */
     private function columnsOf(string $table): array
     {
-        // information_schema again — IDBConnection has no getSchema().
+        // Queried from information_schema — IDBConnection has no getSchema().
         try {
             $stmt = $this->db->prepare(
                 'SELECT column_name FROM information_schema.columns WHERE table_name = :table'
