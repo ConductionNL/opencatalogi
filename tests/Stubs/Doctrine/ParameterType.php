@@ -21,16 +21,15 @@ declare(strict_types=1);
 namespace Doctrine\DBAL;
 
 if (class_exists(ParameterType::class) === false) {
-    /**
-     * Minimal stub for Doctrine\DBAL\ParameterType.
-     */
-    class ParameterType
-    {
-        public const NULL         = 0;
-        public const INTEGER      = 1;
-        public const STRING       = 2;
-        public const LARGE_OBJECT = 3;
-        public const BOOLEAN      = 5;
-        public const BINARY       = 16;
-    }//end class
+	/**
+	 * Minimal stub for Doctrine\DBAL\ParameterType.
+	 */
+	class ParameterType {
+		public const NULL = 0;
+		public const INTEGER = 1;
+		public const STRING = 2;
+		public const LARGE_OBJECT = 3;
+		public const BOOLEAN = 5;
+		public const BINARY = 16;
+	}//end class
 }//end if

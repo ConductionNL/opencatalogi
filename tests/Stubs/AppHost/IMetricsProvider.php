@@ -25,18 +25,17 @@ declare(strict_types=1);
 namespace OCA\OpenRegister\AppHost;
 
 if (interface_exists(IMetricsProvider::class) === false) {
-    /**
-     * Stub interface for IMetricsProvider — used only in standalone unit tests.
-     */
-    interface IMetricsProvider
-    {
+	/**
+	 * Stub interface for IMetricsProvider — used only in standalone unit tests.
+	 */
+	interface IMetricsProvider {
 
-        /**
-         * Produce the provider's metric samples.
-         *
-         * @return \OCA\OpenRegister\AppHost\Observability\MetricSample[] The provider's samples.
-         */
-        public function metrics(): array;
+		/**
+		 * Produce the provider's metric samples.
+		 *
+		 * @return \OCA\OpenRegister\AppHost\Observability\MetricSample[] The provider's samples.
+		 */
+		public function metrics(): array;
 
-    }//end interface
+	}//end interface
 }//end if

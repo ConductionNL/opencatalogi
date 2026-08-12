@@ -172,6 +172,7 @@ export default {
 	padding: 24px;
 	min-width: 480px;
 }
+
 .federation-delete-listing-modal__loading {
 	display: flex;
 	align-items: center;
@@ -179,6 +180,7 @@ export default {
 	color: var(--color-text-maxcontrast);
 	margin: 16px 0;
 }
+
 .federation-delete-listing-modal__actions {
 	display: flex;
 	gap: 8px;

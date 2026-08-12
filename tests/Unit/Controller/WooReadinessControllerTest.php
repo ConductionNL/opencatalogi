@@ -17,90 +17,83 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\OpenCatalogi\Controller\WooReadinessController
  */
-class WooReadinessControllerTest extends TestCase
-{
+class WooReadinessControllerTest extends TestCase {
 
-    private IRequest|MockObject $request;
-    private WooReadinessService|MockObject $wooReadinessService;
-    private WooReadinessController $controller;
+	private IRequest|MockObject $request;
+	private WooReadinessService|MockObject $wooReadinessService;
+	private WooReadinessController $controller;
 
-    protected function setUp(): void
-    {
-        $this->request             = $this->createMock(IRequest::class);
-        $this->wooReadinessService = $this->createMock(WooReadinessService::class);
+	protected function setUp(): void {
+		$this->request = $this->createMock(IRequest::class);
+		$this->wooReadinessService = $this->createMock(WooReadinessService::class);
 
-        $this->controller = new WooReadinessController(
-            'opencatalogi',
-            $this->request,
-            $this->wooReadinessService
-        );
-    }
+		$this->controller = new WooReadinessController(
+			'opencatalogi',
+			$this->request,
+			$this->wooReadinessService
+		);
+	}
 
-    public function testReportReturnsPersistedReport(): void
-    {
-        $report = ['verdict' => 'ready', 'checks' => []];
+	public function testReportReturnsPersistedReport(): void {
+		$report = ['verdict' => 'ready', 'checks' => []];
 
-        $this->wooReadinessService->expects($this->once())
-            ->method('getPersistedReport')
-            ->willReturn($report);
+		$this->wooReadinessService->expects($this->once())
+			->method('getPersistedReport')
+			->willReturn($report);
 
-        $response = $this->controller->report();
+		$response = $this->controller->report();
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(['report' => $report], $response->getData());
-    }
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(['report' => $report], $response->getData());
+	}
 
-    public function testReportReturnsNullWhenNoRunYet(): void
-    {
-        $this->wooReadinessService->method('getPersistedReport')->willReturn(null);
+	public function testReportReturnsNullWhenNoRunYet(): void {
+		$this->wooReadinessService->method('getPersistedReport')->willReturn(null);
 
-        $response = $this->controller->report();
+		$response = $this->controller->report();
 
-        $this->assertSame(['report' => null], $response->getData());
-    }
+		$this->assertSame(['report' => null], $response->getData());
+	}
 
-    public function testRunReturns409WithZeroOutboundWhenUnconfigured(): void
-    {
-        $this->wooReadinessService->expects($this->once())
-            ->method('hasWooEnabledCatalogs')
-            ->willReturn(false);
+	public function testRunReturns409WithZeroOutboundWhenUnconfigured(): void {
+		$this->wooReadinessService->expects($this->once())
+			->method('hasWooEnabledCatalogs')
+			->willReturn(false);
 
-        // The fail-closed contract (WOO-HR-004): runCheck() must never even be
-        // invoked when there is no WOO-enabled catalog, guaranteeing zero outbound
-        // requests regardless of what runCheck() itself might do.
-        $this->wooReadinessService->expects($this->never())->method('runCheck');
+		// The fail-closed contract (WOO-HR-004): runCheck() must never even be
+		// invoked when there is no WOO-enabled catalog, guaranteeing zero outbound
+		// requests regardless of what runCheck() itself might do.
+		$this->wooReadinessService->expects($this->never())->method('runCheck');
 
-        $response = $this->controller->run();
+		$response = $this->controller->run();
 
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-        $this->assertSame(['error' => 'not-configured'], $response->getData());
-    }
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame(['error' => 'not-configured'], $response->getData());
+	}
 
-    public function testRunReturnsReportWhenConfigured(): void
-    {
-        $report = ['verdict' => 'ready', 'checks' => []];
+	public function testRunReturnsReportWhenConfigured(): void {
+		$report = ['verdict' => 'ready', 'checks' => []];
 
-        $this->wooReadinessService->method('hasWooEnabledCatalogs')->willReturn(true);
-        $this->wooReadinessService->expects($this->once())
-            ->method('runCheck')
-            ->willReturn($report);
+		$this->wooReadinessService->method('hasWooEnabledCatalogs')->willReturn(true);
+		$this->wooReadinessService->expects($this->once())
+			->method('runCheck')
+			->willReturn($report);
 
-        $response = $this->controller->run();
+		$response = $this->controller->run();
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame($report, $response->getData());
-    }
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($report, $response->getData());
+	}
 
-    public function testRunReturns400OnServiceException(): void
-    {
-        $this->wooReadinessService->method('hasWooEnabledCatalogs')->willReturn(true);
-        $this->wooReadinessService->method('runCheck')
-            ->willThrowException(new \RuntimeException('boom'));
+	public function testRunReturns400OnServiceException(): void {
+		$this->wooReadinessService->method('hasWooEnabledCatalogs')->willReturn(true);
+		$this->wooReadinessService->method('runCheck')
+			->willThrowException(new \RuntimeException('boom'));
 
-        $response = $this->controller->run();
+		$response = $this->controller->run();
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-        $this->assertSame(['error' => 'boom'], $response->getData());
-    }
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['error' => 'boom'], $response->getData());
+	}
 }

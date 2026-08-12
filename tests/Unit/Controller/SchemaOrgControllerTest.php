@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for SchemaOrgController.
  *
@@ -38,87 +39,80 @@ use Psr\Log\LoggerInterface;
 /**
  * Unit tests for SchemaOrgController.
  */
-class SchemaOrgControllerTest extends TestCase
-{
+class SchemaOrgControllerTest extends TestCase {
 
-    private IRequest|MockObject $request;
+	private IRequest|MockObject $request;
 
-    private SchemaOrgService|MockObject $schemaOrgService;
+	private SchemaOrgService|MockObject $schemaOrgService;
 
-    private CatalogiService|MockObject $catalogiService;
+	private CatalogiService|MockObject $catalogiService;
 
-    private IL10N|MockObject $l10n;
+	private IL10N|MockObject $l10n;
 
-    private LoggerInterface|MockObject $logger;
+	private LoggerInterface|MockObject $logger;
 
-    private SchemaOrgController $controller;
+	private SchemaOrgController $controller;
 
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->request = $this->createMock(IRequest::class);
+		$this->schemaOrgService = $this->createMock(SchemaOrgService::class);
+		$this->catalogiService = $this->createMock(CatalogiService::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->request          = $this->createMock(IRequest::class);
-        $this->schemaOrgService = $this->createMock(SchemaOrgService::class);
-        $this->catalogiService  = $this->createMock(CatalogiService::class);
-        $this->l10n             = $this->createMock(IL10N::class);
-        $this->logger           = $this->createMock(LoggerInterface::class);
+		$this->request->method('getHeader')->willReturn('');
+		$this->l10n->method('t')->willReturnArgument(0);
 
-        $this->request->method('getHeader')->willReturn('');
-        $this->l10n->method('t')->willReturnArgument(0);
+		$this->controller = new SchemaOrgController(
+			'opencatalogi',
+			$this->request,
+			$this->schemaOrgService,
+			$this->catalogiService,
+			$this->l10n,
+			$this->logger,
+			null
+		);
 
-        $this->controller = new SchemaOrgController(
-            'opencatalogi',
-            $this->request,
-            $this->schemaOrgService,
-            $this->catalogiService,
-            $this->l10n,
-            $this->logger,
-            null
-        );
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * A visible catalog returns a JSON-LD DataCatalog node with CORS + ld+json.
+	 *
+	 * @return void
+	 */
+	public function testCatalogReturnsJsonLd(): void {
+		$this->catalogiService->method('getCatalogBySlug')->with('woo')->willReturn(['title' => 'WOO']);
+		$this->schemaOrgService->method('buildCatalogNode')->willReturn(
+			['@context' => 'https://schema.org', '@type' => 'DataCatalog', 'name' => 'WOO']
+		);
 
+		$response = $this->controller->catalog('woo');
 
-    /**
-     * A visible catalog returns a JSON-LD DataCatalog node with CORS + ld+json.
-     *
-     * @return void
-     */
-    public function testCatalogReturnsJsonLd(): void
-    {
-        $this->catalogiService->method('getCatalogBySlug')->with('woo')->willReturn(['title' => 'WOO']);
-        $this->schemaOrgService->method('buildCatalogNode')->willReturn(
-            ['@context' => 'https://schema.org', '@type' => 'DataCatalog', 'name' => 'WOO']
-        );
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$headers = $response->getHeaders();
+		$this->assertSame('application/ld+json', $headers['Content-Type']);
+		$this->assertArrayHasKey('Access-Control-Allow-Origin', $headers);
+		$this->assertSame('DataCatalog', $response->getData()['@type']);
 
-        $response = $this->controller->catalog('woo');
+	}//end testCatalogReturnsJsonLd()
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $headers = $response->getHeaders();
-        $this->assertSame('application/ld+json', $headers['Content-Type']);
-        $this->assertArrayHasKey('Access-Control-Allow-Origin', $headers);
-        $this->assertSame('DataCatalog', $response->getData()['@type']);
+	/**
+	 * An unknown catalog 404s without invoking the renderer.
+	 *
+	 * @return void
+	 */
+	public function testUnknownCatalog404s(): void {
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(null);
+		$this->schemaOrgService->expects($this->never())->method('buildCatalogNode');
 
-    }//end testCatalogReturnsJsonLd()
+		$response = $this->controller->catalog('missing');
 
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
-    /**
-     * An unknown catalog 404s without invoking the renderer.
-     *
-     * @return void
-     */
-    public function testUnknownCatalog404s(): void
-    {
-        $this->catalogiService->method('getCatalogBySlug')->willReturn(null);
-        $this->schemaOrgService->expects($this->never())->method('buildCatalogNode');
-
-        $response = $this->controller->catalog('missing');
-
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-
-    }//end testUnknownCatalog404s()
+	}//end testUnknownCatalog404s()
 }//end class

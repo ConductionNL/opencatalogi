@@ -1,4 +1,5 @@
 <?php
+
 /**
  * DCAT response for serialized RDF output.
  *
@@ -32,50 +33,46 @@ use OCP\AppFramework\Http\Response;
  * @spec exclude HTTP response plumbing — renders a pre-serialized body with the
  *       negotiated Content-Type; no domain behaviour (mirrors XMLResponse/TextResponse).
  */
-class DcatResponse extends Response
-{
+class DcatResponse extends Response {
 
-    /**
-     * The serialized DCAT document body.
-     *
-     * @var string
-     */
-    protected string $body;
+	/**
+	 * The serialized DCAT document body.
+	 *
+	 * @var string
+	 */
+	protected string $body;
 
-    /**
-     * Constructor for DcatResponse.
-     *
-     * @param string                $body        The serialized document body.
-     * @param string                $contentType The MIME type for the serialization.
-     * @param integer               $status      HTTP status code, defaults to 200.
-     * @param array<string, string> $headers     Additional headers (CORS, caching, etc.).
-     */
-    public function __construct(string $body='', string $contentType='application/ld+json', int $status=200, array $headers=[])
-    {
-        // @phpstan-ignore argument.type
-        parent::__construct($status);
+	/**
+	 * Constructor for DcatResponse.
+	 *
+	 * @param string $body The serialized document body.
+	 * @param string $contentType The MIME type for the serialization.
+	 * @param integer $status HTTP status code, defaults to 200.
+	 * @param array<string, string> $headers Additional headers (CORS, caching, etc.).
+	 */
+	public function __construct(string $body = '', string $contentType = 'application/ld+json', int $status = 200, array $headers = []) {
+		// @phpstan-ignore argument.type
+		parent::__construct($status);
 
-        $this->body = $body;
+		$this->body = $body;
 
-        foreach ($headers as $name => $value) {
-            $this->addHeader(name: $name, value: $value);
-        }
+		foreach ($headers as $name => $value) {
+			$this->addHeader(name: $name, value: $value);
+		}
 
-        // Content-Type is set last so it is authoritative for the negotiated format.
-        $this->addHeader(name: 'Content-Type', value: $contentType.'; charset=utf-8');
+		// Content-Type is set last so it is authoritative for the negotiated format.
+		$this->addHeader(name: 'Content-Type', value: $contentType . '; charset=utf-8');
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Returns the serialized document body.
-     *
-     * @return string
-     *
-     * @spec exclude HTTP response plumbing — returns the pre-serialized body.
-     */
-    public function render(): string
-    {
-        return $this->body;
-
-    }//end render()
+	/**
+	 * Returns the serialized document body.
+	 *
+	 * @return string
+	 *
+	 * @spec exclude HTTP response plumbing — returns the pre-serialized body.
+	 */
+	public function render(): string {
+		return $this->body;
+	}//end render()
 }//end class

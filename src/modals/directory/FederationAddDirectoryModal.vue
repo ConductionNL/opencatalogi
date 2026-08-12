@@ -174,10 +174,12 @@ export default {
 	padding: 24px;
 	min-width: 480px;
 }
+
 .federation-add-directory-modal__hint {
 	color: var(--color-text-maxcontrast);
 	margin: 0 0 16px;
 }
+
 .federation-add-directory-modal__actions {
 	display: flex;
 	gap: 8px;

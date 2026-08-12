@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi Woo-index harvester-readiness Controller.
  *
@@ -41,74 +42,70 @@ use OCP\IRequest;
  *
  * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
  */
-class WooReadinessController extends Controller
-{
-    /**
-     * Constructor.
-     *
-     * @param string              $appName             The app name.
-     * @param IRequest            $request             The request.
-     * @param WooReadinessService $wooReadinessService The readiness self-check service.
-     */
-    public function __construct(
-        $appName,
-        IRequest $request,
-        private readonly WooReadinessService $wooReadinessService,
-    ) {
-        parent::__construct(appName: $appName, request: $request);
+class WooReadinessController extends Controller {
+	/**
+	 * Constructor.
+	 *
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
+	 * @param WooReadinessService $wooReadinessService The readiness self-check service.
+	 */
+	public function __construct(
+		$appName,
+		IRequest $request,
+		private readonly WooReadinessService $wooReadinessService,
+	) {
+		parent::__construct(appName: $appName, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the persisted readiness report without re-running the self-check.
-     *
-     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). Performs no
-     * outbound requests — reads the appconfig-persisted report only.
-     *
-     * @return JSONResponse The persisted report (or `{"report": null}` when none exists yet).
-     *
-     * @NoCSRFRequired
-     *
-     * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-report-is-persisted-and-retrievable-woo-hr-002
-     */
-    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-    public function report(): JSONResponse
-    {
-        return new JSONResponse(['report' => $this->wooReadinessService->getPersistedReport()]);
+	/**
+	 * Return the persisted readiness report without re-running the self-check.
+	 *
+	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). Performs no
+	 * outbound requests — reads the appconfig-persisted report only.
+	 *
+	 * @return JSONResponse The persisted report (or `{"report": null}` when none exists yet).
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-report-is-persisted-and-retrievable-woo-hr-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function report(): JSONResponse {
+		return new JSONResponse(['report' => $this->wooReadinessService->getPersistedReport()]);
+	}//end report()
 
-    }//end report()
+	/**
+	 * Run the harvester-readiness self-check and persist the resulting report.
+	 *
+	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). Fails closed with
+	 * HTTP 409 `not-configured` and zero outbound requests when no WOO-enabled catalog
+	 * exists (WOO-HR-004) — the configuration check runs BEFORE any fetch.
+	 *
+	 * CSRF is ENFORCED here (no `@NoCSRFRequired`), unlike the read-only
+	 * `report()` beside it. This POST both PERSISTS a report and issues outbound
+	 * HTTP requests to the configured public WOO surface, so a forged
+	 * cross-origin call would let any page the admin visits drive this
+	 * instance's outbound fetches and overwrite the stored report.
+	 * `src/views/settings/Settings.vue` calls it through `@nextcloud/axios`,
+	 * which sends `requesttoken`.
+	 *
+	 * @return JSONResponse The freshly computed and persisted report, or a 409 error.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-endpoints-are-admin-gated-and-fail-closed-woo-hr-004
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function run(): JSONResponse {
+		if ($this->wooReadinessService->hasWooEnabledCatalogs() === false) {
+			return new JSONResponse(['error' => 'not-configured'], Http::STATUS_CONFLICT);
+		}
 
-    /**
-     * Run the harvester-readiness self-check and persist the resulting report.
-     *
-     * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). Fails closed with
-     * HTTP 409 `not-configured` and zero outbound requests when no WOO-enabled catalog
-     * exists (WOO-HR-004) — the configuration check runs BEFORE any fetch.
-     *
-     * CSRF is ENFORCED here (no `@NoCSRFRequired`), unlike the read-only
-     * `report()` beside it. This POST both PERSISTS a report and issues outbound
-     * HTTP requests to the configured public WOO surface, so a forged
-     * cross-origin call would let any page the admin visits drive this
-     * instance's outbound fetches and overwrite the stored report.
-     * `src/views/settings/Settings.vue` calls it through `@nextcloud/axios`,
-     * which sends `requesttoken`.
-     *
-     * @return JSONResponse The freshly computed and persisted report, or a 409 error.
-     *
-     * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-endpoints-are-admin-gated-and-fail-closed-woo-hr-004
-     */
-    #[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-    public function run(): JSONResponse
-    {
-        if ($this->wooReadinessService->hasWooEnabledCatalogs() === false) {
-            return new JSONResponse(['error' => 'not-configured'], Http::STATUS_CONFLICT);
-        }
+		try {
+			return new JSONResponse($this->wooReadinessService->runCheck());
+		} catch (\Throwable $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		}
 
-        try {
-            return new JSONResponse($this->wooReadinessService->runCheck());
-        } catch (\Throwable $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
-        }
-
-    }//end run()
+	}//end run()
 }//end class

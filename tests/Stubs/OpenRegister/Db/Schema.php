@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Db\Schema.
  *
@@ -17,17 +18,13 @@ namespace OCA\OpenRegister\Db;
 /**
  * Minimal stub for Schema entity.
  */
-class Schema implements \JsonSerializable
-{
+class Schema implements \JsonSerializable {
 
-    /**
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [];
-
-    }//end jsonSerialize()
-
+	/**
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [];
+	}//end jsonSerialize()
 
 }//end class

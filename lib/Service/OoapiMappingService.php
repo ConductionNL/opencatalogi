@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenCatalogi OOAPI 5.0 mapping service.
  *
@@ -39,213 +40,197 @@ namespace OCA\OpenCatalogi\Service;
  *
  * @spec openspec/changes/ooapi-catalog-publication/tasks.md#task-2-course-program-offering-schemas-x-ooapi-mapping-layer
  */
-class OoapiMappingService
-{
-    /**
-     * Determine whether a schema declares an `x-ooapi` annotation at all.
-     *
-     * A schema without this annotation MUST NOT be offered as an OOAPI
-     * resource (OOAPI-004) — there is no default/fallback mapping.
-     *
-     * @param array<string, mixed>|null $schema The OpenRegister schema array (jsonSerialize shape).
-     *
-     * @return boolean True when the schema declares a (non-empty, array-shaped) `x-ooapi` annotation.
-     *
-     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
-     */
-    public function isAnnotated(?array $schema): bool
-    {
-        $annotation = ($schema['x-ooapi'] ?? null);
-        return (is_array($annotation) === true && isset($annotation['resource']) === true && $annotation['resource'] !== '');
+class OoapiMappingService {
+	/**
+	 * Determine whether a schema declares an `x-ooapi` annotation at all.
+	 *
+	 * A schema without this annotation MUST NOT be offered as an OOAPI
+	 * resource (OOAPI-004) — there is no default/fallback mapping.
+	 *
+	 * @param array<string, mixed>|null $schema The OpenRegister schema array (jsonSerialize shape).
+	 *
+	 * @return boolean True when the schema declares a (non-empty, array-shaped) `x-ooapi` annotation.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+	 */
+	public function isAnnotated(?array $schema): bool {
+		$annotation = ($schema['x-ooapi'] ?? null);
+		return (is_array($annotation) === true && isset($annotation['resource']) === true && $annotation['resource'] !== '');
+	}//end isAnnotated()
 
-    }//end isAnnotated()
+	/**
+	 * Resolve the OOAPI resource type (`organization`, `course`, `program`, `offering`)
+	 * a schema's `x-ooapi` annotation declares.
+	 *
+	 * @param array<string, mixed>|null $schema The OpenRegister schema array.
+	 *
+	 * @return string|null The declared resource type, or null when unannotated.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+	 */
+	public function resolveResourceType(?array $schema): ?string {
+		if ($this->isAnnotated($schema) === false) {
+			return null;
+		}
 
-    /**
-     * Resolve the OOAPI resource type (`organization`, `course`, `program`, `offering`)
-     * a schema's `x-ooapi` annotation declares.
-     *
-     * @param array<string, mixed>|null $schema The OpenRegister schema array.
-     *
-     * @return string|null The declared resource type, or null when unannotated.
-     *
-     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
-     */
-    public function resolveResourceType(?array $schema): ?string
-    {
-        if ($this->isAnnotated($schema) === false) {
-            return null;
-        }
+		return (string)$schema['x-ooapi']['resource'];
+	}//end resolveResourceType()
 
-        return (string) $schema['x-ooapi']['resource'];
+	/**
+	 * Resolve the effective OOAPI field mapping for an annotated schema.
+	 *
+	 * Returns null for an "identity" annotation (declares only `resource`,
+	 * no `mapping` key) — course/program/offering are already OOAPI-shaped by
+	 * OpenConnector's upstream mapping (design.md D2), so the caller passes
+	 * the object's own properties through unchanged. Returns the declared map
+	 * (output OOAPI dot-path => source object dot-path) when present, e.g. for
+	 * `organization`.
+	 *
+	 * @param array<string, mixed>|null $schema The OpenRegister schema array.
+	 *
+	 * @return array<string, string>|null The output-path => source-path map, or null (identity).
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+	 */
+	public function resolveMapping(?array $schema): ?array {
+		if ($this->isAnnotated($schema) === false) {
+			return null;
+		}
 
-    }//end resolveResourceType()
+		$mapping = ($schema['x-ooapi']['mapping'] ?? null);
+		if (is_array($mapping) === true && empty($mapping) === false) {
+			return $mapping;
+		}
 
-    /**
-     * Resolve the effective OOAPI field mapping for an annotated schema.
-     *
-     * Returns null for an "identity" annotation (declares only `resource`,
-     * no `mapping` key) — course/program/offering are already OOAPI-shaped by
-     * OpenConnector's upstream mapping (design.md D2), so the caller passes
-     * the object's own properties through unchanged. Returns the declared map
-     * (output OOAPI dot-path => source object dot-path) when present, e.g. for
-     * `organization`.
-     *
-     * @param array<string, mixed>|null $schema The OpenRegister schema array.
-     *
-     * @return array<string, string>|null The output-path => source-path map, or null (identity).
-     *
-     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
-     */
-    public function resolveMapping(?array $schema): ?array
-    {
-        if ($this->isAnnotated($schema) === false) {
-            return null;
-        }
+		return null;
+	}//end resolveMapping()
 
-        $mapping = ($schema['x-ooapi']['mapping'] ?? null);
-        if (is_array($mapping) === true && empty($mapping) === false) {
-            return $mapping;
-        }
+	/**
+	 * Build a single OOAPI 5.0 resource from a materialized/rendered object.
+	 *
+	 * Always sets `$idField` from the object's own identity (`@self.uuid`,
+	 * falling back to `id`). When `$mapping` is null (identity annotation) every
+	 * own-property of the object is copied through as-is (skipping the
+	 * `@self` envelope and null/empty values, which naturally satisfies
+	 * OOAPI-005's "omit, never null" rule for optional fields such as the RIO
+	 * identifier). When `$mapping` is provided, each declared output dot-path
+	 * is populated from the corresponding source dot-path, again skipping
+	 * null/empty source values.
+	 *
+	 * @param array<string, mixed> $object The source object (jsonSerialize shape).
+	 * @param array<string, string>|null $mapping The resolved mapping ({@see resolveMapping()}), or null for identity.
+	 * @param string $idField The OOAPI resource id field name (e.g. `courseId`).
+	 *
+	 * @return array<string, mixed> The OOAPI 5.0 resource.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-rio-identifier-passthrough-when-present-ooapi-005
+	 */
+	public function buildResource(array $object, ?array $mapping, string $idField): array {
+		$resource = [$idField => $this->resolveId($object)];
 
-        return null;
+		if ($mapping === null) {
+			foreach ($object as $key => $value) {
+				// '@self'/'id' are the OR object envelope (the id is already set via
+				// $idField above); 'catalog' is OpenCatalogi-internal scoping metadata
+				// (the materialized object's owning catalog, design.md D6 addendum) —
+				// not part of the OOAPI 5.0 wire shape, so never leaked into the
+				// identity-mapped resource.
+				if ($key === '@self' || $key === 'id' || $key === 'catalog') {
+					continue;
+				}
 
-    }//end resolveMapping()
+				if ($this->isEmpty($value) === true) {
+					continue;
+				}
 
-    /**
-     * Build a single OOAPI 5.0 resource from a materialized/rendered object.
-     *
-     * Always sets `$idField` from the object's own identity (`@self.uuid`,
-     * falling back to `id`). When `$mapping` is null (identity annotation) every
-     * own-property of the object is copied through as-is (skipping the
-     * `@self` envelope and null/empty values, which naturally satisfies
-     * OOAPI-005's "omit, never null" rule for optional fields such as the RIO
-     * identifier). When `$mapping` is provided, each declared output dot-path
-     * is populated from the corresponding source dot-path, again skipping
-     * null/empty source values.
-     *
-     * @param array<string, mixed>       $object  The source object (jsonSerialize shape).
-     * @param array<string, string>|null $mapping The resolved mapping ({@see resolveMapping()}), or null for identity.
-     * @param string                     $idField The OOAPI resource id field name (e.g. `courseId`).
-     *
-     * @return array<string, mixed> The OOAPI 5.0 resource.
-     *
-     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-schema-driven-x-ooapi-mapping-annotation-no-php-hardcoded-resource-shape-ooapi-004
-     * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-rio-identifier-passthrough-when-present-ooapi-005
-     */
-    public function buildResource(array $object, ?array $mapping, string $idField): array
-    {
-        $resource = [$idField => $this->resolveId($object)];
+				$resource[$key] = $value;
+			}
 
-        if ($mapping === null) {
-            foreach ($object as $key => $value) {
-                // '@self'/'id' are the OR object envelope (the id is already set via
-                // $idField above); 'catalog' is OpenCatalogi-internal scoping metadata
-                // (the materialized object's owning catalog, design.md D6 addendum) —
-                // not part of the OOAPI 5.0 wire shape, so never leaked into the
-                // identity-mapped resource.
-                if ($key === '@self' || $key === 'id' || $key === 'catalog') {
-                    continue;
-                }
+			return $resource;
+		}
 
-                if ($this->isEmpty($value) === true) {
-                    continue;
-                }
+		foreach ($mapping as $outputPath => $sourcePath) {
+			$value = $this->extractValue($object, $sourcePath);
+			if ($this->isEmpty($value) === true) {
+				continue;
+			}
 
-                $resource[$key] = $value;
-            }
+			$this->setNested($resource, path: $outputPath, value: $value);
+		}
 
-            return $resource;
-        }
+		return $resource;
+	}//end buildResource()
 
-        foreach ($mapping as $outputPath => $sourcePath) {
-            $value = $this->extractValue($object, $sourcePath);
-            if ($this->isEmpty($value) === true) {
-                continue;
-            }
+	/**
+	 * Resolve an object's stable identity for the OOAPI resource id field.
+	 *
+	 * @param array<string, mixed> $object The source object.
+	 *
+	 * @return string The object's UUID (preferring `@self.uuid`, falling back to `id`).
+	 */
+	private function resolveId(array $object): string {
+		return (string)($object['@self']['uuid'] ?? $object['id'] ?? '');
+	}//end resolveId()
 
-            $this->setNested($resource, path: $outputPath, value: $value);
-        }
+	/**
+	 * Extract a value from an object by a dot-path.
+	 *
+	 * @param array<string, mixed> $object The source object.
+	 * @param string $path The dot-separated source path (e.g. `code`, `a.b`).
+	 *
+	 * @return mixed The resolved value, or null when absent.
+	 */
+	private function extractValue(array $object, string $path): mixed {
+		$cursor = $object;
+		foreach (explode('.', $path) as $segment) {
+			if (is_array($cursor) === false || array_key_exists($segment, $cursor) === false) {
+				return null;
+			}
 
-        return $resource;
+			$cursor = $cursor[$segment];
+		}
 
-    }//end buildResource()
+		return $cursor;
+	}//end extractValue()
 
-    /**
-     * Resolve an object's stable identity for the OOAPI resource id field.
-     *
-     * @param array<string, mixed> $object The source object.
-     *
-     * @return string The object's UUID (preferring `@self.uuid`, falling back to `id`).
-     */
-    private function resolveId(array $object): string
-    {
-        return (string) ($object['@self']['uuid'] ?? $object['id'] ?? '');
+	/**
+	 * Assign a value into a (possibly nested) output dot-path, creating
+	 * intermediate arrays as needed.
+	 *
+	 * @param array<string, mixed> $target The output resource under construction (by reference).
+	 * @param string $path The dot-separated output path (e.g. `primaryCode.code`).
+	 * @param mixed $value The value to assign.
+	 *
+	 * @return void
+	 */
+	private function setNested(array &$target, string $path, mixed $value): void {
+		$segments = explode('.', $path);
+		$cursor = &$target;
+		foreach ($segments as $index => $segment) {
+			if ($index === (count($segments) - 1)) {
+				$cursor[$segment] = $value;
+				break;
+			}
 
-    }//end resolveId()
+			if (isset($cursor[$segment]) === false || is_array($cursor[$segment]) === false) {
+				$cursor[$segment] = [];
+			}
 
-    /**
-     * Extract a value from an object by a dot-path.
-     *
-     * @param array<string, mixed> $object The source object.
-     * @param string               $path   The dot-separated source path (e.g. `code`, `a.b`).
-     *
-     * @return mixed The resolved value, or null when absent.
-     */
-    private function extractValue(array $object, string $path): mixed
-    {
-        $cursor = $object;
-        foreach (explode('.', $path) as $segment) {
-            if (is_array($cursor) === false || array_key_exists($segment, $cursor) === false) {
-                return null;
-            }
+			$cursor = &$cursor[$segment];
+		}
 
-            $cursor = $cursor[$segment];
-        }
+	}//end setNested()
 
-        return $cursor;
-
-    }//end extractValue()
-
-    /**
-     * Assign a value into a (possibly nested) output dot-path, creating
-     * intermediate arrays as needed.
-     *
-     * @param array<string, mixed> $target The output resource under construction (by reference).
-     * @param string               $path   The dot-separated output path (e.g. `primaryCode.code`).
-     * @param mixed                $value  The value to assign.
-     *
-     * @return void
-     */
-    private function setNested(array &$target, string $path, mixed $value): void
-    {
-        $segments = explode('.', $path);
-        $cursor   = &$target;
-        foreach ($segments as $index => $segment) {
-            if ($index === (count($segments) - 1)) {
-                $cursor[$segment] = $value;
-                break;
-            }
-
-            if (isset($cursor[$segment]) === false || is_array($cursor[$segment]) === false) {
-                $cursor[$segment] = [];
-            }
-
-            $cursor = &$cursor[$segment];
-        }
-
-    }//end setNested()
-
-    /**
-     * Determine whether a mapped/copied value counts as "absent" for
-     * omission purposes (OOAPI-005: omit, never emit null/empty).
-     *
-     * @param mixed $value The candidate value.
-     *
-     * @return boolean True when the value is null, an empty string, or an empty array.
-     */
-    private function isEmpty(mixed $value): bool
-    {
-        return ($value === null || $value === '' || $value === []);
-
-    }//end isEmpty()
+	/**
+	 * Determine whether a mapped/copied value counts as "absent" for
+	 * omission purposes (OOAPI-005: omit, never emit null/empty).
+	 *
+	 * @param mixed $value The candidate value.
+	 *
+	 * @return boolean True when the value is null, an empty string, or an empty array.
+	 */
+	private function isEmpty(mixed $value): bool {
+		return ($value === null || $value === '' || $value === []);
+	}//end isEmpty()
 }//end class

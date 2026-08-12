@@ -407,7 +407,9 @@ export default {
 }
 
 .status-success { color: var(--color-success); }
+
 .status-warning { color: var(--color-warning); }
+
 .status-error { color: var(--color-error); }
 
 .urlLink {

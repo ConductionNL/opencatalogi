@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OC\AppScriptDependency.
  *
@@ -17,69 +18,58 @@ namespace OC;
 /**
  * Stub for OC\AppScriptDependency.
  */
-class AppScriptDependency
-{
+class AppScriptDependency {
 
-    /**
-     * @var string
-     */
-    private string $id;
+	/**
+	 * @var string
+	 */
+	private string $id;
 
-    /**
-     * @var array<string>
-     */
-    private array $deps;
+	/**
+	 * @var array<string>
+	 */
+	private array $deps;
 
-    /**
-     * Constructor.
-     *
-     * @param string        $id   Script ID.
-     * @param array<string> $deps Dependencies.
-     */
-    public function __construct(string $id, array $deps=[])
-    {
-        $this->id   = $id;
-        $this->deps = $deps;
+	/**
+	 * Constructor.
+	 *
+	 * @param string $id Script ID.
+	 * @param array<string> $deps Dependencies.
+	 */
+	public function __construct(string $id, array $deps = []) {
+		$this->id = $id;
+		$this->deps = $deps;
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Get the ID.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return $this->id;
+	}//end getId()
 
-    /**
-     * Get the ID.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return $this->id;
+	/**
+	 * Get dependencies.
+	 *
+	 * @return array<string>
+	 */
+	public function getDeps(): array {
+		return $this->deps;
+	}//end getDeps()
 
-    }//end getId()
+	/**
+	 * Add a dependency.
+	 *
+	 * @param string $dep Dependency ID.
+	 *
+	 * @return void
+	 */
+	public function addDep(string $dep): void {
+		$this->deps[] = $dep;
 
-
-    /**
-     * Get dependencies.
-     *
-     * @return array<string>
-     */
-    public function getDeps(): array
-    {
-        return $this->deps;
-
-    }//end getDeps()
-
-
-    /**
-     * Add a dependency.
-     *
-     * @param string $dep Dependency ID.
-     *
-     * @return void
-     */
-    public function addDep(string $dep): void
-    {
-        $this->deps[] = $dep;
-
-    }//end addDep()
-
+	}//end addDep()
 
 }//end class
