@@ -135,6 +135,20 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\RenameDutchPublicationColumns</step>
 		</post-migration>
+		<!--
+			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER
+			pre-migration NOR post-migration steps run then — <install> is the only
+			unconditional hook (see \OC\Installer::installAppLastSteps). Without this
+			block InitializeSettings never ran on a fresh instance, so the OpenCatalogi
+			register and schemas were never imported there.
+
+			Only baseline-CREATING steps belong here. RenameDutchPublicationColumns is
+			a one-way data migration: on a fresh install there is nothing to rename, so
+			it stays post-migration-only.
+		-->
+		<install>
+			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+		</install>
 	</repair-steps>
 
 	<!-- The app-menu navigation entry is registered in PHP (lib/AppInfo/Application.php::boot),
