@@ -1050,22 +1050,31 @@ class PublicationsController extends Controller
             // Set register/schema context so RelationHandler can find the object in
             // magic tables. Constrain the lookup to this catalog's configured scope
             // (#734) — a platform-wide scan would reveal arbitrary cross-catalog
-            // objects (#733). When the catalog has no configured scope, skip the
-            // context hint entirely.
+            // objects (#733).
+            //
+            // Failing to place the object inside the catalog is a refusal, not a reason to
+            // continue unscoped (#857): find() below with no register and no schema falls
+            // back to OpenRegister's every-magic-table path, and this route is @PublicPage.
+            // A catalog with no configured scope has no namespace to serve from, which is
+            // the same C-1 policy attachments() and download() have carried since wave-7.
             $catalog          = $this->catalogiService->getCatalogBySlug($catalogSlug);
             $catalogRegisters = $this->normaliseIdList(($catalog['registers'] ?? []));
             $catalogSchemas   = $this->normaliseIdList(($catalog['schemas'] ?? []));
-            if (empty($catalogRegisters) === false && empty($catalogSchemas) === false) {
-                $location = $this->queryService->findObjectLocation(
-                    uuid: $id,
-                    allowedRegisters: $catalogRegisters,
-                    allowedSchemas: $catalogSchemas
-                );
-                if ($location !== null) {
-                    $objectService->setRegister(register: (string) $location['register']);
-                    $objectService->setSchema(schema: (string) $location['schema']);
-                }
+            if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
             }
+
+            $location = $this->queryService->findObjectLocation(
+                uuid: $id,
+                allowedRegisters: $catalogRegisters,
+                allowedSchemas: $catalogSchemas
+            );
+            if ($location === null) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+            }
+
+            $objectService->setRegister(register: (string) $location['register']);
+            $objectService->setSchema(schema: (string) $location['schema']);
 
             // Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
             // federation path (PublicationService::uses, wave-9 C-3) that was missing from
@@ -1146,22 +1155,31 @@ class PublicationsController extends Controller
             // Set register/schema context so RelationHandler can find the object in
             // magic tables. Constrain the lookup to this catalog's configured scope
             // (#734) — a platform-wide scan would reveal arbitrary cross-catalog
-            // objects (#733). When the catalog has no configured scope, skip the
-            // context hint entirely.
+            // objects (#733).
+            //
+            // Failing to place the object inside the catalog is a refusal, not a reason to
+            // continue unscoped (#857): find() below with no register and no schema falls
+            // back to OpenRegister's every-magic-table path, and this route is @PublicPage.
+            // A catalog with no configured scope has no namespace to serve from, which is
+            // the same C-1 policy attachments() and download() have carried since wave-7.
             $catalog          = $this->catalogiService->getCatalogBySlug($catalogSlug);
             $catalogRegisters = $this->normaliseIdList(($catalog['registers'] ?? []));
             $catalogSchemas   = $this->normaliseIdList(($catalog['schemas'] ?? []));
-            if (empty($catalogRegisters) === false && empty($catalogSchemas) === false) {
-                $location = $this->queryService->findObjectLocation(
-                    uuid: $id,
-                    allowedRegisters: $catalogRegisters,
-                    allowedSchemas: $catalogSchemas
-                );
-                if ($location !== null) {
-                    $objectService->setRegister(register: (string) $location['register']);
-                    $objectService->setSchema(schema: (string) $location['schema']);
-                }
+            if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
             }
+
+            $location = $this->queryService->findObjectLocation(
+                uuid: $id,
+                allowedRegisters: $catalogRegisters,
+                allowedSchemas: $catalogSchemas
+            );
+            if ($location === null) {
+                return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+            }
+
+            $objectService->setRegister(register: (string) $location['register']);
+            $objectService->setSchema(schema: (string) $location['schema']);
 
             // Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
             // federation path (PublicationService::used, wave-9 C-3) that was missing from

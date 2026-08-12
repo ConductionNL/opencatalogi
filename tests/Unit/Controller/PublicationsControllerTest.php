@@ -119,6 +119,38 @@ class PublicationsControllerTest extends TestCase
     }
 
     /**
+     * Place the requested object INSIDE the catalog's configured scope.
+     *
+     * setUp() stubs `findObjectLocation` to null, i.e. "this identifier cannot be placed
+     * in this catalog" — which since #857 is a refusal on uses()/used(). Any test that
+     * wants the relation path must say that the object really is in the catalog, and this
+     * is the only place that says it. It rebuilds the controller because setUp()'s stub is
+     * registered first and would otherwise win.
+     */
+    private function stubObjectInsideCatalogScope(): void
+    {
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Test Catalog',
+                'schemas'   => [1],
+                'registers' => [1],
+            ]);
+
+        $this->queryService = $this->createMock(PublicationQueryService::class);
+        $this->queryService->method('buildCatalogSearchQuery')->willReturn([]);
+        $this->queryService->method('stripEmptyValues')
+            ->willReturnCallback(fn(array $data) => $data);
+        $this->queryService->method('resolveSchemaAndRegisterObjects')
+            ->willReturn(['schemas' => [], 'registers' => []]);
+        $this->queryService->method('findObjectLocation')
+            ->willReturn(['register' => 1, 'schema' => 1]);
+        $this->queryService->method('findObjectInCatalog')
+            ->willReturn($this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class));
+
+        $this->controller = $this->newControllerWithQueryService();
+    }
+
+    /**
      * Rebuilds the controller using the current $this->queryService mock. Used by
      * tests that need to re-stub query-service behaviour after setUp().
      */
@@ -305,9 +337,56 @@ class PublicationsControllerTest extends TestCase
         $this->assertEquals(404, $response->getStatus());
     }
 
+    /**
+     * uses() and used() must refuse an identifier the catalog cannot place (#857).
+     *
+     * Before this, failing to locate the object inside the catalog fell through to a
+     * find() with no register and no schema — OpenRegister's every-magic-table path — on a
+     * route that is @PublicPage. The assertion that find() is never reached is the
+     * load-bearing one.
+     *
+     * @dataProvider relationEndpointProvider
+     */
+    public function testRelationEndpointsRefuseAnObjectOutsideTheCatalogScope(string $method): void
+    {
+        $mockObjService = $this->mockObjectService();
+
+        // A catalog with a real scope — so the refusal cannot be attributed to an
+        // unconfigured catalog. setUp() leaves findObjectLocation returning null, which is
+        // "this identifier is not in this catalog".
+        $this->catalogiService->method('getCatalogBySlug')
+            ->willReturn([
+                'title'     => 'Test Catalog',
+                'schemas'   => [1],
+                'registers' => [1],
+            ]);
+
+        $mockObjService->expects($this->never())->method('find');
+
+        $this->request->server = [];
+
+        $response = $this->controller->$method('test-catalog', 'an-object-in-another-register');
+
+        $this->assertEquals(404, $response->getStatus());
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function relationEndpointProvider(): array
+    {
+        return [
+            'uses' => ['uses'],
+            'used' => ['used'],
+        ];
+    }
+
     public function testUsesReturnsJsonResponse(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // The object is inside the catalog's scope (#857), so the relation path runs.
+        $this->stubObjectInsideCatalogScope();
 
         // WF2 guard (wave-12): find() must return a non-null, public object so the
         // published-predicate check passes and control reaches getObjectUses().
@@ -370,6 +449,9 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // The object is inside the catalog's scope (#857), so the relation path runs.
+        $this->stubObjectInsideCatalogScope();
+
         // find() returns a valid object so the guard passes; getObjectUses throws.
         $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
         $mockObjService->method('find')->willReturn($rootObject);
@@ -389,6 +471,9 @@ class PublicationsControllerTest extends TestCase
     public function testUsedReturnsJsonResponse(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // The object is inside the catalog's scope (#857), so the relation path runs.
+        $this->stubObjectInsideCatalogScope();
 
         // WF2 guard (wave-12): find() must return a non-null, public object so the
         // published-predicate check passes and control reaches getObjectUsedBy().
@@ -450,6 +535,9 @@ class PublicationsControllerTest extends TestCase
     public function testUsedReturns500OnException(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // The object is inside the catalog's scope (#857), so the relation path runs.
+        $this->stubObjectInsideCatalogScope();
 
         // find() returns a valid object so the guard passes; getObjectUsedBy throws.
         $rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
@@ -1403,6 +1491,9 @@ class PublicationsControllerTest extends TestCase
     {
         $mockObjService = $this->mockObjectService();
 
+        // The object is inside the catalog's scope (#857), so the relation path runs.
+        $this->stubObjectInsideCatalogScope();
+
         // WF2 guard (wave-12): find() must return a published object so control
         // reaches getObjectUses() where the param stripping under test happens.
         $mockObjService->method('find')
@@ -1434,6 +1525,9 @@ class PublicationsControllerTest extends TestCase
     public function testUsedStripsExtraParams(): void
     {
         $mockObjService = $this->mockObjectService();
+
+        // The object is inside the catalog's scope (#857), so the relation path runs.
+        $this->stubObjectInsideCatalogScope();
 
         // WF2 guard (wave-12): find() must return a published object so control
         // reaches getObjectUsedBy() where the param stripping under test happens.
