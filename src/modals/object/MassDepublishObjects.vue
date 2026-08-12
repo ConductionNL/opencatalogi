@@ -237,7 +237,7 @@ export default {
 	methods: {
 		/**
 		 * Normalize a date-like value to a YYYY-MM-DD string for comparison, or null.
-		 * Absent/empty values return null. depublicatiedatum/publicatiedatum are
+		 * Absent/empty values return null. depublicationDate/publicationDate are
 		 * schema-declared as format: 'date', so values are YYYY-MM-DD strings;
 		 * lexicographic comparison matches chronological order.
 		 *
@@ -253,7 +253,7 @@ export default {
 		/**
 		 * Determine if an object is currently depublished: depublish date is set,
 		 * has already passed (today or earlier), and is the most recent of
-		 * publicatiedatum/depublicatiedatum. A future depublicatiedatum means the
+		 * publicationDate/depublicationDate. A future depublicationDate means the
 		 * item is *scheduled* to be depublished but is still published today, so
 		 * it should NOT be treated as depublished here — the user must be able to
 		 * reschedule or depublish it immediately.
@@ -265,17 +265,17 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		isDepublished(obj) {
-			const depub = this.normalizeDate(obj?.depublicatiedatum)
+			const depub = this.normalizeDate(obj?.depublicationDate)
 			if (!depub) return false
 			if (depub > this.today) return false
-			const pub = this.normalizeDate(obj?.publicatiedatum)
+			const pub = this.normalizeDate(obj?.publicationDate)
 			if (!pub) return true
 			return depub >= pub
 		},
 
 		/**
 		 * Predicate passed to SelectedObjectsList: items whose schema does not
-		 * declare both publicatiedatum and depublicatiedatum render at reduced
+		 * declare both publicationDate and depublicationDate render at reduced
 		 * opacity and are skipped during the depublish loop.
 		 *
 		 * @param {object} obj - The publication object.
@@ -369,14 +369,14 @@ export default {
 					if (!schemaHasPublicationDateFields(obj)) {
 						continue
 					}
-					// Skip already-depublished items: their depublicatiedatum must not be overwritten.
+					// Skip already-depublished items: their depublicationDate must not be overwritten.
 					if (this.isDepublished(obj)) {
 						continue
 					}
 
 					const clone = JSON.parse(JSON.stringify(obj))
-					clone.depublicatiedatum = targetDate
-					// publicatiedatum is left unchanged on purpose
+					clone.depublicationDate = targetDate
+					// publicationDate is left unchanged on purpose
 
 					const register = clone['@self']?.register ?? clone.register
 					const schema = clone['@self']?.schema ?? clone.schema

@@ -6,7 +6,7 @@
  * (the public-relation-endpoint visibility guard), and the `_content` opt-in content-
  * search flag (WOO-517, SCH-PFTS-CONTENT-001/-002/-003). Bulk visibility filtering
  * lives in OpenRegister RBAC; isObjectPublic mirrors the same RBAC rule
- * (`publicatiedatum <= now`, APB-006) for the per-object guard on the public uses/used
+ * (`publicationDate <= now`, APB-006) for the per-object guard on the public uses/used
  * relation endpoints. The removed object-level @self.published predicate is not consulted.
  *
  * @category Test
@@ -287,12 +287,12 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 1, 'slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
             [
                 '@self'           => ['schema' => 2, 'slug' => 'doc-a'],
                 'title'           => 'Doc A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
             ],
         ];
@@ -301,7 +301,7 @@ class PublicationQueryServiceTest extends TestCase
                 'id'              => 'uuid-pub-a',
                 '@self'           => ['slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -333,12 +333,12 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 1, 'slug' => 'pub-live'],
                 'title'           => 'Live publication',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
             [
                 '@self'           => ['schema' => 1, 'slug' => 'pub-embargoed'],
                 'title'           => 'Embargoed publication',
-                'publicatiedatum' => $future,
+                'publicationDate' => $future,
             ],
         ];
 
@@ -350,7 +350,7 @@ class PublicationQueryServiceTest extends TestCase
     }//end testAssemblePublicSearchResultsFiltersUnpublishedForAnonymous()
 
     /**
-     * A document whose OWN publicatiedatum is public but whose linked publication is
+     * A document whose OWN publicationDate is public but whose linked publication is
      * depublished MUST NOT surface for anonymous callers (transitive visibility,
      * SCH-PFTS-004).
      *
@@ -364,7 +364,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'slug' => 'doc-orphaned-by-depublish'],
                 'title'           => 'Document of a depublished report',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-depublished', 'title' => 'Depublished report'],
             ],
         ];
@@ -373,8 +373,8 @@ class PublicationQueryServiceTest extends TestCase
                 'id'                => 'uuid-pub-depublished',
                 '@self'             => ['slug' => 'pub-depublished'],
                 'title'             => 'Depublished report',
-                'publicatiedatum'   => '2024-01-01T00:00:00+00:00',
-                'depublicatiedatum' => '2024-06-01T00:00:00+00:00',
+                'publicationDate'   => '2024-01-01T00:00:00+00:00',
+                'depublicationDate' => '2024-06-01T00:00:00+00:00',
             ],
         ];
 
@@ -398,7 +398,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'slug' => 'doc-orphan'],
                 'title'           => 'Orphan document',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -423,7 +423,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 999, 'slug' => 'unexpected'],
                 'title'           => 'Unexpected schema',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -453,12 +453,12 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 1, 'slug' => 'pub-live'],
                 'title'           => 'Live publication',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
             [
                 '@self'           => ['schema' => 1, 'slug' => 'pub-embargoed'],
                 'title'           => 'Embargoed publication',
-                'publicatiedatum' => $future,
+                'publicationDate' => $future,
             ],
         ];
 
@@ -487,7 +487,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'slug' => 'doc-orphaned-by-depublish'],
                 'title'           => 'Document of a depublished report',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-depublished', 'title' => 'Depublished report'],
             ],
         ];
@@ -496,8 +496,8 @@ class PublicationQueryServiceTest extends TestCase
                 'id'                => 'uuid-pub-depublished',
                 '@self'             => ['slug' => 'pub-depublished'],
                 'title'             => 'Depublished report',
-                'publicatiedatum'   => '2024-01-01T00:00:00+00:00',
-                'depublicatiedatum' => '2024-06-01T00:00:00+00:00',
+                'publicationDate'   => '2024-01-01T00:00:00+00:00',
+                'depublicationDate' => '2024-06-01T00:00:00+00:00',
             ],
         ];
 
@@ -610,7 +610,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-content-match'],
                 'title'           => 'Document only matched via body text',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
             ],
         ];
@@ -619,7 +619,7 @@ class PublicationQueryServiceTest extends TestCase
                 'id'              => 'uuid-pub-a',
                 '@self'           => ['slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -654,13 +654,13 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-both'],
                 'title'           => 'Matches on title AND body text',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
             ],
             [
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-both'],
                 'title'           => 'Matches on title AND body text',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
             ],
         ];
@@ -669,7 +669,7 @@ class PublicationQueryServiceTest extends TestCase
                 'id'              => 'uuid-pub-a',
                 '@self'           => ['slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -695,8 +695,8 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'             => ['schema' => 2, 'id' => 'uuid-doc-depublished'],
                 'title'             => 'Body text matched, but document is depublished',
-                'publicatiedatum'   => '2024-01-01T00:00:00+00:00',
-                'depublicatiedatum' => '2024-06-01T00:00:00+00:00',
+                'publicationDate'   => '2024-01-01T00:00:00+00:00',
+                'depublicationDate' => '2024-06-01T00:00:00+00:00',
                 'publication'       => ['slug' => 'pub-a', 'title' => 'Pub A'],
             ],
         ];
@@ -705,7 +705,7 @@ class PublicationQueryServiceTest extends TestCase
                 'id'              => 'uuid-pub-a',
                 '@self'           => ['slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -730,7 +730,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-orphaned-by-depublish'],
                 'title'           => 'Body text matched, but parent publication is depublished',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-depublished', 'title' => 'Depublished report'],
             ],
         ];
@@ -739,8 +739,8 @@ class PublicationQueryServiceTest extends TestCase
                 'id'                => 'uuid-pub-depublished',
                 '@self'             => ['slug' => 'pub-depublished'],
                 'title'             => 'Depublished report',
-                'publicatiedatum'   => '2024-01-01T00:00:00+00:00',
-                'depublicatiedatum' => '2024-06-01T00:00:00+00:00',
+                'publicationDate'   => '2024-01-01T00:00:00+00:00',
+                'depublicationDate' => '2024-06-01T00:00:00+00:00',
             ],
         ];
 
@@ -768,7 +768,7 @@ class PublicationQueryServiceTest extends TestCase
             [
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-with-chunk-fields'],
                 'title'           => 'Doc with rogue chunk fields',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-a', 'title' => 'Stale denormalised title'],
                 // OR-side regression / debug leak — these MUST be stripped.
                 '_snippet'        => 'lorem ipsum ... marker ...',
@@ -785,7 +785,7 @@ class PublicationQueryServiceTest extends TestCase
                 'id'              => 'uuid-pub-a',
                 '@self'           => ['slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -824,14 +824,14 @@ class PublicationQueryServiceTest extends TestCase
                 // returns null → row is dropped, MUST NOT claim the seen slot.
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-shared'],
                 'title'           => 'Stale denormalised summary path',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-stale-slug-not-in-bySlug', 'title' => 'Ghost'],
             ],
             [
                 // Second candidate: same id, fresh slug — MUST be emitted.
                 '@self'           => ['schema' => 2, 'id' => 'uuid-doc-shared'],
                 'title'           => 'Fresh denormalised summary path',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
                 'publication'     => ['slug' => 'pub-a', 'title' => 'Fresh'],
             ],
         ];
@@ -840,7 +840,7 @@ class PublicationQueryServiceTest extends TestCase
                 'id'              => 'uuid-pub-a',
                 '@self'           => ['slug' => 'pub-a'],
                 'title'           => 'Pub A',
-                'publicatiedatum' => '2024-01-01T00:00:00+00:00',
+                'publicationDate' => '2024-01-01T00:00:00+00:00',
             ],
         ];
 
@@ -1078,11 +1078,11 @@ class PublicationQueryServiceTest extends TestCase
     }//end testFindObjectLocationContinuesPastMissingPair()
 
     // -------------------------------------------------------------------------
-    // isObjectPublic() tests — RBAC publicatiedatum model (APB-006)
+    // isObjectPublic() tests — RBAC publicationDate model (APB-006)
     // -------------------------------------------------------------------------
 
     /**
-     * A past publicatiedatum with no depublicatiedatum is publicly visible.
+     * A past publicationDate with no depublicationDate is publicly visible.
      *
      * @return void
      *
@@ -1091,13 +1091,13 @@ class PublicationQueryServiceTest extends TestCase
     public function testIsObjectPublicWithPastPublicatiedatum(): void
     {
         $this->assertTrue(
-            $this->service->isObjectPublic(['publicatiedatum' => '2024-01-15T10:00:00+00:00'])
+            $this->service->isObjectPublic(['publicationDate' => '2024-01-15T10:00:00+00:00'])
         );
 
     }//end testIsObjectPublicWithPastPublicatiedatum()
 
     /**
-     * No publicatiedatum means the object is not public (concept).
+     * No publicationDate means the object is not public (concept).
      *
      * @return void
      *
@@ -1107,13 +1107,13 @@ class PublicationQueryServiceTest extends TestCase
     {
         $this->assertFalse($this->service->isObjectPublic([]));
         $this->assertFalse(
-            $this->service->isObjectPublic(['depublicatiedatum' => '2024-01-15T10:00:00+00:00'])
+            $this->service->isObjectPublic(['depublicationDate' => '2024-01-15T10:00:00+00:00'])
         );
 
     }//end testIsObjectPublicWithoutPublicatiedatum()
 
     /**
-     * A future publicatiedatum (embargo) is not yet public.
+     * A future publicationDate (embargo) is not yet public.
      *
      * @return void
      *
@@ -1122,26 +1122,26 @@ class PublicationQueryServiceTest extends TestCase
     public function testIsObjectPublicWithFuturePublicatiedatum(): void
     {
         $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
-        $this->assertFalse($this->service->isObjectPublic(['publicatiedatum' => $future]));
+        $this->assertFalse($this->service->isObjectPublic(['publicationDate' => $future]));
 
     }//end testIsObjectPublicWithFuturePublicatiedatum()
 
     /**
-     * A reached depublicatiedatum hides the object; a future one keeps it visible.
+     * A reached depublicationDate hides the object; a future one keeps it visible.
      *
      * @return void
      *
      * @spec openspec/specs/auto-publishing/spec.md#APB-006
      */
-    public function testIsObjectPublicRespectsDepublicatiedatum(): void
+    public function testIsObjectPublicRespectsDepublicationDate(): void
     {
         $future = (new \DateTime('+10 days'))->format(\DateTimeInterface::ATOM);
 
         $this->assertFalse(
             $this->service->isObjectPublic(
                 objectData: [
-                    'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
-                    'depublicatiedatum' => '2024-06-01T10:00:00+00:00',
+                    'publicationDate'   => '2024-01-15T10:00:00+00:00',
+                    'depublicationDate' => '2024-06-01T10:00:00+00:00',
                 ]
             )
         );
@@ -1149,11 +1149,11 @@ class PublicationQueryServiceTest extends TestCase
         $this->assertTrue(
             $this->service->isObjectPublic(
                 objectData: [
-                    'publicatiedatum'   => '2024-01-15T10:00:00+00:00',
-                    'depublicatiedatum' => $future,
+                    'publicationDate'   => '2024-01-15T10:00:00+00:00',
+                    'depublicationDate' => $future,
                 ]
             )
         );
 
-    }//end testIsObjectPublicRespectsDepublicatiedatum()
+    }//end testIsObjectPublicRespectsDepublicationDate()
 }//end class

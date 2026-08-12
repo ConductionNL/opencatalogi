@@ -45,14 +45,14 @@ class ObjectCreatedEventListenerTest extends TestCase
     ): ObjectEntity&MockObject {
         // The removed object-level @self.published predicate is gone from OR core,
         // so the listener no longer calls getPublished()/getDepublished(). Visibility
-        // is governed by the object's own publicatiedatum/depublicatiedatum fields,
+        // is governed by the object's own publicationDate/depublicationDate fields,
         // which arrive via jsonSerialize().
         if ($published !== null) {
-            $jsonData['publicatiedatum'] = $published->format('c');
+            $jsonData['publicationDate'] = $published->format('c');
         }
 
         if ($depublished !== null) {
-            $jsonData['depublicatiedatum'] = $depublished->format('c');
+            $jsonData['depublicationDate'] = $depublished->format('c');
         }
 
         // ObjectEntity really declares jsonSerialize(). getUuid()/getRegister()/
@@ -139,8 +139,8 @@ class ObjectCreatedEventListenerTest extends TestCase
     }
 
     /**
-     * Test convertObjectEntityToArray carries the object's own publicatiedatum /
-     * depublicatiedatum fields (RBAC model) and never the dead @self.published envelope.
+     * Test convertObjectEntityToArray carries the object's own publicationDate /
+     * depublicationDate fields (RBAC model) and never the dead @self.published envelope.
      */
     public function testConvertObjectEntityToArrayWithDates(): void
     {
@@ -160,8 +160,8 @@ class ObjectCreatedEventListenerTest extends TestCase
 
         $result = $method->invoke($this->listener, $entity);
 
-        $this->assertSame($published->format('c'), $result['publicatiedatum']);
-        $this->assertSame($depublished->format('c'), $result['depublicatiedatum']);
+        $this->assertSame($published->format('c'), $result['publicationDate']);
+        $this->assertSame($depublished->format('c'), $result['depublicationDate']);
         $this->assertArrayNotHasKey('published', $result['@self']);
     }
 

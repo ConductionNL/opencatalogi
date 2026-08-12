@@ -77,11 +77,11 @@
             "facetable": false,
             "title": "Documents"
           },
-          "besluit": {
+          "decisionLetter": {
             "type": "string",
             "description": "The Woo decision letter (besluit) content or reference for this batch",
             "facetable": false,
-            "title": "Besluit"
+            "title": "Decision Letter"
           },
           "inventarislijst": {
             "type": "string",

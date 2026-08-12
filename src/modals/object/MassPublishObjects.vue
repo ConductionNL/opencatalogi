@@ -290,7 +290,7 @@ export default {
 	methods: {
 		/**
 		 * Normalize a date-like value to a YYYY-MM-DD string for comparison, or null.
-		 * Absent/empty values return null. publicatiedatum is schema-declared as
+		 * Absent/empty values return null. publicationDate is schema-declared as
 		 * format: 'date', so values are YYYY-MM-DD strings; lexicographic comparison
 		 * matches chronological order.
 		 *
@@ -304,9 +304,9 @@ export default {
 		},
 
 		/**
-		 * Determine if an object is currently published (live): publicatiedatum is in
-		 * the past or today, and is more recent than any depublicatiedatum.
-		 * A future publicatiedatum means the publication is scheduled but not yet live,
+		 * Determine if an object is currently published (live): publicationDate is in
+		 * the past or today, and is more recent than any depublicationDate.
+		 * A future publicationDate means the publication is scheduled but not yet live,
 		 * so it is not considered "already published" and can be re-targeted to now.
 		 *
 		 * @param {object} obj - The publication object
@@ -314,11 +314,11 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		isAlreadyPublished(obj) {
-			const pub = this.normalizeDate(obj?.publicatiedatum)
+			const pub = this.normalizeDate(obj?.publicationDate)
 			if (!pub) return false
 			// Future publication date → scheduled but not yet live; allow re-publishing.
 			if (pub > this.today) return false
-			const depub = this.normalizeDate(obj?.depublicatiedatum)
+			const depub = this.normalizeDate(obj?.depublicationDate)
 			if (!depub) return true
 			return pub > depub
 		},
@@ -332,9 +332,9 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		isDepublished(obj) {
-			const depub = this.normalizeDate(obj?.depublicatiedatum)
+			const depub = this.normalizeDate(obj?.depublicationDate)
 			if (!depub) return false
-			const pub = this.normalizeDate(obj?.publicatiedatum)
+			const pub = this.normalizeDate(obj?.publicationDate)
 			if (!pub) return true
 			// Tiebreaker: depublish wins on equal dates.
 			return depub >= pub
@@ -342,7 +342,7 @@ export default {
 
 		/**
 		 * Predicate passed to SelectedObjectsList: items whose schema does not
-		 * declare both publicatiedatum and depublicatiedatum render at reduced
+		 * declare both publicationDate and depublicationDate render at reduced
 		 * opacity and are skipped during the publish loop.
 		 *
 		 * @param {object} obj - The publication object.
@@ -438,18 +438,18 @@ export default {
 						continue
 					}
 					// Skip already-published items in publish-now / publish-later modes:
-					// their publicatiedatum must not be overwritten.
+					// their publicationDate must not be overwritten.
 					if (this.mode !== 'retroactive' && this.isAlreadyPublished(obj)) {
 						continue
 					}
 
 					const clone = JSON.parse(JSON.stringify(obj))
 					if (this.mode === 'retroactive') {
-						// publicatiedatum is left unchanged on purpose
-						clone.depublicatiedatum = null
+						// publicationDate is left unchanged on purpose
+						clone.depublicationDate = null
 					} else {
-						clone.publicatiedatum = targetDate
-						clone.depublicatiedatum = null
+						clone.publicationDate = targetDate
+						clone.depublicationDate = null
 					}
 
 					const register = clone['@self']?.register ?? clone.register

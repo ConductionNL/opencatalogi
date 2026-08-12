@@ -168,7 +168,7 @@ class RetentionServiceTest extends TestCase
 
         // Empty retention fields -> default applied + expiry computed.
         $applied = $this->service->applyDefaults(
-            ['publicatiedatum' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'vergunningen'],
+            ['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'vergunningen'],
             'vergunningen'
         );
         $this->assertSame(12, $applied['retentionTermMonths']);
@@ -177,7 +177,7 @@ class RetentionServiceTest extends TestCase
 
         // Officer's value preserved.
         $kept = $this->service->applyDefaults(
-            ['publicatiedatum' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'vergunningen', 'retentionTermMonths' => 60],
+            ['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'vergunningen', 'retentionTermMonths' => 60],
             'vergunningen'
         );
         $this->assertSame(60, $kept['retentionTermMonths']);
@@ -199,7 +199,7 @@ class RetentionServiceTest extends TestCase
             [
                 'id'                 => 'p1',
                 'title'              => 'Expired permit',
-                'publicatiedatum'    => '2025-01-01T00:00:00+00:00',
+                'publicationDate'    => '2025-01-01T00:00:00+00:00',
                 'retentionExpiresAt' => '2025-06-01T00:00:00+00:00',
                 'retentionAction'    => 'depublish',
             ],
@@ -210,7 +210,7 @@ class RetentionServiceTest extends TestCase
         $this->assertSame(1, $counts['depublished']);
         $this->assertCount(1, $this->fake->saved);
         $saved = $this->fake->saved[0];
-        $this->assertArrayHasKey('depublicatiedatum', $saved);
+        $this->assertArrayHasKey('depublicationDate', $saved);
         $this->assertArrayHasKey('retentionDecisionLog', $saved);
         $this->assertSame('auto-depublish', $saved['retentionDecisionLog'][0]['decision']);
         $this->assertSame('officer1', $saved['retentionDecisionLog'][0]['by']);
@@ -223,7 +223,7 @@ class RetentionServiceTest extends TestCase
         $this->fake->objects = [
             [
                 'id'                 => 'p2',
-                'publicatiedatum'    => '2024-01-01T00:00:00+00:00',
+                'publicationDate'    => '2024-01-01T00:00:00+00:00',
                 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00',
                 'retentionAction'    => 'archive',
             ],
@@ -232,7 +232,7 @@ class RetentionServiceTest extends TestCase
         $counts = $this->service->evaluate();
         $this->assertSame(1, $counts['archived']);
         $this->assertSame('archived', $this->fake->saved[0]['status']);
-        $this->assertArrayHasKey('depublicatiedatum', $this->fake->saved[0]);
+        $this->assertArrayHasKey('depublicationDate', $this->fake->saved[0]);
 
     }//end testEvaluateArchivesExpiredViaLifecycle()
 
@@ -242,7 +242,7 @@ class RetentionServiceTest extends TestCase
         $this->fake->objects = [
             [
                 'id'                 => 'p3',
-                'publicatiedatum'    => '2024-01-01T00:00:00+00:00',
+                'publicationDate'    => '2024-01-01T00:00:00+00:00',
                 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00',
                 'retentionAction'    => 'review',
             ],
@@ -251,7 +251,7 @@ class RetentionServiceTest extends TestCase
         $counts = $this->service->evaluate();
         $this->assertSame(1, $counts['reviewRequired']);
         // Only the idempotency stamp is written — no depublish/archive.
-        $this->assertArrayNotHasKey('depublicatiedatum', $this->fake->saved[0]);
+        $this->assertArrayNotHasKey('depublicationDate', $this->fake->saved[0]);
         $this->assertArrayNotHasKey('status', $this->fake->saved[0]);
 
     }//end testEvaluateReviewActionNeverChangesVisibility()
@@ -263,7 +263,7 @@ class RetentionServiceTest extends TestCase
         $this->fake->objects = [
             [
                 'id'                       => 'p4',
-                'publicatiedatum'          => '2024-01-01T00:00:00+00:00',
+                'publicationDate'          => '2024-01-01T00:00:00+00:00',
                 'retentionExpiresAt'       => '2025-01-01T00:00:00+00:00',
                 'retentionAction'          => 'depublish',
                 'retentionLastEvaluatedAt' => $today,

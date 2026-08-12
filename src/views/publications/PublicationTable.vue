@@ -107,14 +107,14 @@ import { objectStore, navigationStore, catalogStore } from '../../store/store.js
 		<!-- Custom column: status -->
 		<template #column-published="{ row }">
 			<template v-if="getPublicationStatus(row) === 'concept'">
-				<span v-if="row.publicatiedatum">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicatiedatum) }}</span>
+				<span v-if="row.publicationDate">{{ t('opencatalogi', 'Scheduled for') }} {{ formatDate(row.publicationDate) }}</span>
 				<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
 			</template>
 			<template v-else-if="getPublicationStatus(row) === 'published'">
-				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicatiedatum) }}
+				{{ t('opencatalogi', 'Published on') }} {{ formatDate(row.publicationDate) }}
 			</template>
 			<template v-else>
-				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicatiedatum) }}
+				{{ t('opencatalogi', 'Depublished on') }} {{ formatDate(row.depublicationDate) }}
 			</template>
 		</template>
 

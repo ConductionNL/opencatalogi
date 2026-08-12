@@ -564,7 +564,7 @@ export default {
 		 * `depublishedPublicationCount` remain client-computed from
 		 * `fetchAllPublications()`'s (bounded, not 1000-capped-as-a-total-source)
 		 * result: those three states are DERIVED from a date comparison against "now"
-		 * (`publicatiedatum` / `depublicatiedatum` — see `publicationStatus.js`), not a
+		 * (`publicationDate` / `depublicationDate` — see `publicationStatus.js`), not a
 		 * stored field, so grouping by them via OR's field-based `groupBy` aggregation
 		 * is not possible without either (a) a materialized status field written on
 		 * save, or (b) confirmed null-safe date-range filter support in OR's ad-hoc
@@ -755,7 +755,7 @@ export default {
 		 * Navigate to the Publications index for the first available catalog,
 		 * or fall back to the Catalogs list if no catalog slug is known yet.
 		 * Status-based filtering is intentionally omitted: publication status is
-		 * derived from date fields (publicatiedatum / depublicatiedatum), not a
+		 * derived from date fields (publicationDate / depublicationDate), not a
 		 * simple status query parameter.
 		 *
 		 * @spec openspec/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-dashboard-actions-and-layout-req-dash-002

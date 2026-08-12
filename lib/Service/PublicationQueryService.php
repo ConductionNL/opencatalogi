@@ -104,8 +104,8 @@ class PublicationQueryService
      *
      * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
      * the public publications API and the frontend `publicationStatus` helpers use:
-     * an object is public when its own `publicatiedatum` field is set and is at or
-     * before "now", and either carries no `depublicatiedatum` or one still in the
+     * an object is public when its own `publicationDate` field is set and is at or
+     * before "now", and either carries no `depublicationDate` or one still in the
      * future. The removed object-level `@self.published` predicate is not consulted.
      *
      * @param array $objectData The serialized object data (own fields + `@self` envelope).
@@ -116,24 +116,24 @@ class PublicationQueryService
      */
     public function isObjectPublic(array $objectData): bool
     {
-        $publicatiedatum   = ($objectData['publicatiedatum'] ?? null);
-        $depublicatiedatum = ($objectData['depublicatiedatum'] ?? null);
+        $publicationDate   = ($objectData['publicationDate'] ?? null);
+        $depublicationDate = ($objectData['depublicationDate'] ?? null);
 
-        if ($publicatiedatum === null || $publicatiedatum === '') {
+        if ($publicationDate === null || $publicationDate === '') {
             return false;
         }
 
         $now           = time();
-        $publishedTime = strtotime((string) $publicatiedatum);
+        $publishedTime = strtotime((string) $publicationDate);
         if ($publishedTime === false || $publishedTime > $now) {
             return false;
         }
 
-        if ($depublicatiedatum === null || $depublicatiedatum === '') {
+        if ($depublicationDate === null || $depublicationDate === '') {
             return true;
         }
 
-        $depublishedTime = strtotime((string) $depublicatiedatum);
+        $depublishedTime = strtotime((string) $depublicationDate);
         return ($depublishedTime === false || $depublishedTime > $now);
 
     }//end isObjectPublic()

@@ -528,10 +528,10 @@ class SitemapService
         $formatUri .= strtoupper($file['extension']);
 
         // Diwoo:atTime — the moment the document was made public. Prefer the
-        // file's own published timestamp, then the publication's publicatiedatum.
+        // file's own published timestamp, then the publication's publicationDate.
         // The removed object-level @self.published is always empty for the
         // magic-mapped publication objects, so it is no longer consulted.
-        $handlingTime = ($file['published'] ?? $publication['publicatiedatum'] ?? date('Y-m-d H:i:s'));
+        $handlingTime = ($file['published'] ?? $publication['publicationDate'] ?? date('Y-m-d H:i:s'));
 
         $diwoo = [
             'loc'                => $loc,
