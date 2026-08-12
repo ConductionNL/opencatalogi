@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for DcatService (the methods that do not require OpenRegister).
  *
@@ -38,115 +39,106 @@ use Psr\Log\LoggerInterface;
 /**
  * Unit tests for DcatService.
  */
-class DcatServiceTest extends TestCase
-{
+class DcatServiceTest extends TestCase {
 
-    private ContainerInterface|MockObject $container;
-    private IAppManager|MockObject $appManager;
-    private IURLGenerator|MockObject $urlGenerator;
-    private IAppConfig|MockObject $appConfig;
-    private DcatService $service;
+	private ContainerInterface|MockObject $container;
+	private IAppManager|MockObject $appManager;
+	private IURLGenerator|MockObject $urlGenerator;
+	private IAppConfig|MockObject $appConfig;
+	private DcatService $service;
 
-    protected function setUp(): void
-    {
-        $this->container    = $this->createMock(ContainerInterface::class);
-        $this->appManager   = $this->createMock(IAppManager::class);
-        $this->urlGenerator = $this->createMock(IURLGenerator::class);
-        $this->appConfig    = $this->createMock(IAppConfig::class);
+	protected function setUp(): void {
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appManager = $this->createMock(IAppManager::class);
+		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
 
-        $this->urlGenerator->method('getBaseUrl')->willReturn('https://host');
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://host');
 
-        $this->service = new DcatService(
-            $this->container,
-            $this->appManager,
-            new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
-            new DcatSerializer(),
-            $this->urlGenerator,
-            $this->appConfig,
-            $this->createMock(LoggerInterface::class)
-        );
-    }
+		$this->service = new DcatService(
+			$this->container,
+			$this->appManager,
+			new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
+			new DcatSerializer(),
+			$this->urlGenerator,
+			$this->appConfig,
+			$this->createMock(LoggerInterface::class)
+		);
+	}
 
-    public function testIsDcatEnabled(): void
-    {
-        $this->assertTrue($this->service->isDcatEnabled(['hasDcat' => true]));
-        $this->assertTrue($this->service->isDcatEnabled(['hasDcat' => 'true']));
-        $this->assertFalse($this->service->isDcatEnabled(['hasDcat' => false]));
-        $this->assertFalse($this->service->isDcatEnabled([]));
-    }
+	public function testIsDcatEnabled(): void {
+		$this->assertTrue($this->service->isDcatEnabled(['hasDcat' => true]));
+		$this->assertTrue($this->service->isDcatEnabled(['hasDcat' => 'true']));
+		$this->assertFalse($this->service->isDcatEnabled(['hasDcat' => false]));
+		$this->assertFalse($this->service->isDcatEnabled([]));
+	}
 
-    public function testCatalogEndpointUrlIsAbsoluteAndStable(): void
-    {
-        $a = $this->service->catalogEndpointUrl('woo-besluiten');
-        $b = $this->service->catalogEndpointUrl('woo-besluiten');
-        $this->assertSame('https://host/apps/opencatalogi/api/catalogs/woo-besluiten/dcat', $a);
-        $this->assertSame($a, $b);
-    }
+	public function testCatalogEndpointUrlIsAbsoluteAndStable(): void {
+		$a = $this->service->catalogEndpointUrl('woo-besluiten');
+		$b = $this->service->catalogEndpointUrl('woo-besluiten');
+		$this->assertSame('https://host/apps/opencatalogi/api/catalogs/woo-besluiten/dcat', $a);
+		$this->assertSame($a, $b);
+	}
 
-    public function testDatasetIriIsStable(): void
-    {
-        $a = $this->service->datasetIri('woo', 'uuid-1');
-        $b = $this->service->datasetIri('woo', 'uuid-1');
-        $this->assertSame('https://host/apps/opencatalogi/api/woo/uuid-1', $a);
-        $this->assertSame($a, $b);
-    }
+	public function testDatasetIriIsStable(): void {
+		$a = $this->service->datasetIri('woo', 'uuid-1');
+		$b = $this->service->datasetIri('woo', 'uuid-1');
+		$this->assertSame('https://host/apps/opencatalogi/api/woo/uuid-1', $a);
+		$this->assertSame($a, $b);
+	}
 
-    public function testResolveDefaultsPrefersCatalogOverrideOverAppConfig(): void
-    {
-        $this->appConfig->method('getValueString')->willReturnCallback(
-            static function ($app, $key, $default='') {
-                return $default;
-            }
-        );
+	public function testResolveDefaultsPrefersCatalogOverrideOverAppConfig(): void {
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function ($app, $key, $default = '') {
+				return $default;
+			}
+		);
 
-        $defaults = $this->service->resolveDefaults(
-            [
-                'dcatPublisherName' => 'Gemeente Tilburg',
-                'dcatLicense'       => 'https://custom-license',
-            ]
-        );
+		$defaults = $this->service->resolveDefaults(
+			[
+				'dcatPublisherName' => 'Gemeente Tilburg',
+				'dcatLicense' => 'https://custom-license',
+			]
+		);
 
-        $this->assertSame('Gemeente Tilburg', $defaults['publisherName']);
-        $this->assertSame('https://custom-license', $defaults['license']);
-    }
+		$this->assertSame('Gemeente Tilburg', $defaults['publisherName']);
+		$this->assertSame('https://custom-license', $defaults['license']);
+	}
 
-    public function testResolveDefaultsFallsBackToAppConfig(): void
-    {
-        $this->appConfig->method('getValueString')->willReturnCallback(
-            static function ($app, $key, $default='') {
-                $map = [
-                    'dcat_publisher_name'  => 'Instance Org',
-                    'dcat_default_license' => 'https://cc0',
-                ];
-                return ($map[$key] ?? $default);
-            }
-        );
+	public function testResolveDefaultsFallsBackToAppConfig(): void {
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function ($app, $key, $default = '') {
+				$map = [
+					'dcat_publisher_name' => 'Instance Org',
+					'dcat_default_license' => 'https://cc0',
+				];
+				return ($map[$key] ?? $default);
+			}
+		);
 
-        $defaults = $this->service->resolveDefaults([]);
-        $this->assertSame('Instance Org', $defaults['publisherName']);
-        $this->assertSame('https://cc0', $defaults['license']);
-    }
+		$defaults = $this->service->resolveDefaults([]);
+		$this->assertSame('Instance Org', $defaults['publisherName']);
+		$this->assertSame('https://cc0', $defaults['license']);
+	}
 
-    public function testMandatoryViolationsDetectsMissingPublisher(): void
-    {
-        $node = [
-            '@id'             => 'https://host/api/woo/u1',
-            '@type'           => 'dcat:Dataset',
-            'dct:title'       => 'Has a title',
-            'dcat:landingPage' => ['@id' => 'https://host/api/woo/u1'],
-        ];
-        $this->assertSame(['dct:publisher'], $this->service->mandatoryViolations($node));
-    }
+	public function testMandatoryViolationsDetectsMissingPublisher(): void {
+		$node = [
+			'@id' => 'https://host/api/woo/u1',
+			'@type' => 'dcat:Dataset',
+			'dct:title' => 'Has a title',
+			'dcat:landingPage' => ['@id' => 'https://host/api/woo/u1'],
+		];
+		$this->assertSame(['dct:publisher'], $this->service->mandatoryViolations($node));
+	}
 
-    public function testMandatoryViolationsEmptyForCompliantDataset(): void
-    {
-        $node = [
-            '@id'             => 'https://host/api/woo/u1',
-            '@type'           => 'dcat:Dataset',
-            'dct:title'       => 'Title',
-            'dct:publisher'   => ['@type' => 'foaf:Agent', 'foaf:name' => 'Org'],
-            'dcat:landingPage' => ['@id' => 'https://host/api/woo/u1'],
-        ];
-        $this->assertSame([], $this->service->mandatoryViolations($node));
-    }
+	public function testMandatoryViolationsEmptyForCompliantDataset(): void {
+		$node = [
+			'@id' => 'https://host/api/woo/u1',
+			'@type' => 'dcat:Dataset',
+			'dct:title' => 'Title',
+			'dct:publisher' => ['@type' => 'foaf:Agent', 'foaf:name' => 'Org'],
+			'dcat:landingPage' => ['@id' => 'https://host/api/woo/u1'],
+		];
+		$this->assertSame([], $this->service->mandatoryViolations($node));
+	}
 }//end class

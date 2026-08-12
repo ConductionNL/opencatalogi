@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Event\ObjectCreatedEvent.
  *
@@ -20,37 +21,31 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for ObjectCreatedEvent.
  */
-class ObjectCreatedEvent extends Event
-{
+class ObjectCreatedEvent extends Event {
 
-    /**
-     * @var ObjectEntity
-     */
-    private ObjectEntity $object;
+	/**
+	 * @var ObjectEntity
+	 */
+	private ObjectEntity $object;
 
-    /**
-     * Constructor.
-     *
-     * @param ObjectEntity $object The created object.
-     */
-    public function __construct(ObjectEntity $object)
-    {
-        parent::__construct();
-        $this->object = $object;
+	/**
+	 * Constructor.
+	 *
+	 * @param ObjectEntity $object The created object.
+	 */
+	public function __construct(ObjectEntity $object) {
+		parent::__construct();
+		$this->object = $object;
 
-    }//end __construct()
+	}//end __construct()
 
-
-    /**
-     * Get the created object.
-     *
-     * @return ObjectEntity
-     */
-    public function getObject(): ObjectEntity
-    {
-        return $this->object;
-
-    }//end getObject()
-
+	/**
+	 * Get the created object.
+	 *
+	 * @return ObjectEntity
+	 */
+	public function getObject(): ObjectEntity {
+		return $this->object;
+	}//end getObject()
 
 }//end class

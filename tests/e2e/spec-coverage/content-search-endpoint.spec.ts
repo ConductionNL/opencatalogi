@@ -80,7 +80,7 @@ test.describe('content-search-endpoint', () => {
 		async () => {
 			const marker = `lorem-ipsum-woo517-marker-${fx.runId}`
 
-			// Publicly visible publication (past publicatiedatum) + a linked document,
+			// Publicly visible publication (past publicationDate) + a linked document,
 			// neither carrying the marker phrase in any metadata field.
 			//
 			// The publication MUST be created with an explicit `slug`. OpenRegister
@@ -106,7 +106,7 @@ test.describe('content-search-endpoint', () => {
 			// `@self.schema === "document"`.
 			const pastPublicatiedatum = '2020-01-01T00:00:00+00:00'
 			const pub = await fx.createPublication('Content Search Publication', {
-				publicatiedatum: pastPublicatiedatum,
+				publicationDate: pastPublicatiedatum,
 				slug: `e2e-${fx.runId}-content-search-pub`,
 			})
 			const pubSlug = (pub.raw['@self'] as Record<string, unknown>)?.slug as string
@@ -118,7 +118,7 @@ test.describe('content-search-endpoint', () => {
 			const doc = await fx.createDocument(
 				'Content Search Document',
 				{ slug: pubSlug, title: pub.title },
-				{ publicatiedatum: pastPublicatiedatum, filename: 'content-search-marker.txt' },
+				{ publicationDate: pastPublicatiedatum, filename: 'content-search-marker.txt' },
 			)
 
 			// Attach a plain-text file whose ONLY occurrence of the marker is in the

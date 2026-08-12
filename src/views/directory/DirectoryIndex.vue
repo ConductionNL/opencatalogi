@@ -1,3 +1,23 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it does not list it. The `/directory`
+	route is a manifest `type: "custom"` page whose component is
+	`FederationDirectory`, so this view is superseded migration debris.
+	Confirmed by grepping the built bundle: its `name: 'DirectoryIndex'` option
+	occurs 0 times in `js/opencatalogi-main.js`, while the six wired views
+	(Dashboard, CatalogiIndex, CatalogDetailPage, WooBatchDetail,
+	FederationDirectory, FederationSearch) each occur once — webpack tree-shakes
+	it out entirely.
+
+	None of gate-26's three remedies fits an unreachable screen: it has no route
+	to baseline, no browser can drive it, and a bare waiver would claim "no
+	baseline needed" when the truth is "nothing can reach this". The reason below
+	therefore names the tracking issue, so this waiver expires with it.
+
+	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"custom" Directory page (FederationDirectory). Tracked in ConductionNL/opencatalogi#849.
+-->
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -387,7 +407,9 @@ export default {
 }
 
 .status-success { color: var(--color-success); }
+
 .status-warning { color: var(--color-warning); }
+
 .status-error { color: var(--color-error); }
 
 .urlLink {

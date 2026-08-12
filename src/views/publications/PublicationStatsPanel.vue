@@ -131,6 +131,7 @@ export default {
 	gap: var(--default-grid-baseline, 8px);
 	margin-bottom: 1rem;
 }
+
 .usageStatCard {
 	display: flex;
 	flex-direction: column;
@@ -139,23 +140,28 @@ export default {
 	background: var(--color-background-hover);
 	min-width: 140px;
 }
+
 .usageStatLabel {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.85rem;
 }
+
 .usageStatValue {
 	font-size: 1.6rem;
 	font-weight: 600;
 }
+
 .usageStatTrend {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.8rem;
 }
+
 .usageStatsTable {
 	width: 100%;
 	border-collapse: collapse;
 	margin-top: 1rem;
 }
+
 .usageStatsTable th,
 .usageStatsTable td {
 	text-align: left;

@@ -181,20 +181,24 @@ export default {
 	padding: 24px;
 	min-width: 480px;
 }
+
 .federation-edit-listing-modal__hint {
 	color: var(--color-text-maxcontrast);
 	margin: 0 0 16px;
 	font-size: 13px;
 	word-break: break-all;
 }
+
 .federation-edit-listing-modal__field {
 	margin: 16px 0;
 }
+
 .federation-edit-listing-modal__field label {
 	display: block;
 	margin-bottom: 4px;
 	font-weight: 600;
 }
+
 .federation-edit-listing-modal__readonly {
 	width: 100%;
 	padding: 6px 10px;
@@ -205,12 +209,14 @@ export default {
 	font-family: monospace;
 	font-size: 13px;
 }
+
 .federation-edit-listing-modal__readonly-hint {
 	display: block;
 	margin-top: 6px;
 	font-size: 12px;
 	color: var(--color-text-lighter);
 }
+
 .federation-edit-listing-modal__actions {
 	display: flex;
 	gap: 8px;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\Platforms\AbstractPlatform.
  *
@@ -14,7 +15,6 @@ namespace Doctrine\DBAL\Platforms;
 /**
  * Stub for AbstractPlatform.
  */
-abstract class AbstractPlatform
-{
+abstract class AbstractPlatform {
 
 }//end class

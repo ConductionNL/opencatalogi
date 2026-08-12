@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Event\ObjectUpdatedEvent.
  *
@@ -20,68 +21,56 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for ObjectUpdatedEvent.
  */
-class ObjectUpdatedEvent extends Event
-{
+class ObjectUpdatedEvent extends Event {
 
-    /**
-     * @var ObjectEntity
-     */
-    private ObjectEntity $newObject;
+	/**
+	 * @var ObjectEntity
+	 */
+	private ObjectEntity $newObject;
 
-    /**
-     * @var ObjectEntity|null
-     */
-    private ?ObjectEntity $oldObject;
+	/**
+	 * @var ObjectEntity|null
+	 */
+	private ?ObjectEntity $oldObject;
 
-    /**
-     * Constructor.
-     *
-     * @param ObjectEntity      $newObject The updated (new) object.
-     * @param ObjectEntity|null $oldObject The previous state, if available.
-     */
-    public function __construct(ObjectEntity $newObject, ?ObjectEntity $oldObject=null)
-    {
-        parent::__construct();
-        $this->newObject = $newObject;
-        $this->oldObject = $oldObject;
+	/**
+	 * Constructor.
+	 *
+	 * @param ObjectEntity $newObject The updated (new) object.
+	 * @param ObjectEntity|null $oldObject The previous state, if available.
+	 */
+	public function __construct(ObjectEntity $newObject, ?ObjectEntity $oldObject = null) {
+		parent::__construct();
+		$this->newObject = $newObject;
+		$this->oldObject = $oldObject;
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Get the new object.
+	 *
+	 * @return ObjectEntity
+	 */
+	public function getObject(): ObjectEntity {
+		return $this->newObject;
+	}//end getObject()
 
-    /**
-     * Get the new object.
-     *
-     * @return ObjectEntity
-     */
-    public function getObject(): ObjectEntity
-    {
-        return $this->newObject;
+	/**
+	 * Get the new object.
+	 *
+	 * @return ObjectEntity
+	 */
+	public function getNewObject(): ObjectEntity {
+		return $this->newObject;
+	}//end getNewObject()
 
-    }//end getObject()
-
-
-    /**
-     * Get the new object.
-     *
-     * @return ObjectEntity
-     */
-    public function getNewObject(): ObjectEntity
-    {
-        return $this->newObject;
-
-    }//end getNewObject()
-
-
-    /**
-     * Get the old object.
-     *
-     * @return ObjectEntity|null
-     */
-    public function getOldObject(): ?ObjectEntity
-    {
-        return $this->oldObject;
-
-    }//end getOldObject()
-
+	/**
+	 * Get the old object.
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getOldObject(): ?ObjectEntity {
+		return $this->oldObject;
+	}//end getOldObject()
 
 }//end class

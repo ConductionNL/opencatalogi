@@ -209,7 +209,7 @@
 					"request": {
 						"method": "POST",
 						"header": [{ "key": "Content-Type", "value": "application/json" }],
-						"body": { "mode": "raw", "raw": "{\n    \"title\": \"Federation Alpha Document\",\n    \"summary\": \"First test publication for cross-catalog federation search\",\n    \"description\": \"This document is created on Instance 2 and should appear when Instance 1 performs a federated search.\",\n    \"publicatiedatum\": \"2025-01-01T00:00:00+00:00\"\n}" },
+						"body": { "mode": "raw", "raw": "{\n    \"title\": \"Federation Alpha Document\",\n    \"summary\": \"First test publication for cross-catalog federation search\",\n    \"description\": \"This document is created on Instance 2 and should appear when Instance 1 performs a federated search.\",\n    \"publicationDate\": \"2025-01-01T00:00:00+00:00\"\n}" },
 						"url": { "raw": "{{nc2Url}}/index.php/apps/openregister/api/objects/{{nc2CatalogRegisterId}}/{{nc2PublicationSchemaId}}", "host": ["{{nc2Url}}"], "path": ["index.php", "apps", "openregister", "api", "objects", "{{nc2CatalogRegisterId}}", "{{nc2PublicationSchemaId}}"] }
 					}
 				},
@@ -229,7 +229,7 @@
 					"request": {
 						"method": "POST",
 						"header": [{ "key": "Content-Type", "value": "application/json" }],
-						"body": { "mode": "raw", "raw": "{\n    \"title\": \"Federation Beta Report\",\n    \"summary\": \"Second test publication for validating federated search pagination\",\n    \"description\": \"Created on Instance 2. Used to verify that multiple publications are returned in federated search results.\",\n    \"publicatiedatum\": \"2025-01-01T00:00:00+00:00\"\n}" },
+						"body": { "mode": "raw", "raw": "{\n    \"title\": \"Federation Beta Report\",\n    \"summary\": \"Second test publication for validating federated search pagination\",\n    \"description\": \"Created on Instance 2. Used to verify that multiple publications are returned in federated search results.\",\n    \"publicationDate\": \"2025-01-01T00:00:00+00:00\"\n}" },
 						"url": { "raw": "{{nc2Url}}/index.php/apps/openregister/api/objects/{{nc2CatalogRegisterId}}/{{nc2PublicationSchemaId}}", "host": ["{{nc2Url}}"], "path": ["index.php", "apps", "openregister", "api", "objects", "{{nc2CatalogRegisterId}}", "{{nc2PublicationSchemaId}}"] }
 					}
 				},

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OC\Hooks\Emitter.
  *
@@ -21,29 +22,28 @@ namespace OC\Hooks;
 /**
  * Stub interface for OC\Hooks\Emitter.
  */
-interface Emitter
-{
+interface Emitter {
 
-    /**
-     * Listen for an event.
-     *
-     * @param string   $scope    Scope of the event.
-     * @param string   $method   Method name.
-     * @param callable $callback Callback.
-     *
-     * @return void
-     */
-    public function listen(string $scope, string $method, callable $callback): void;
+	/**
+	 * Listen for an event.
+	 *
+	 * @param string $scope Scope of the event.
+	 * @param string $method Method name.
+	 * @param callable $callback Callback.
+	 *
+	 * @return void
+	 */
+	public function listen(string $scope, string $method, callable $callback): void;
 
-    /**
-     * Remove a listener.
-     *
-     * @param string|null   $scope    Scope, or null for all.
-     * @param string|null   $method   Method, or null for all.
-     * @param callable|null $callback Callback, or null for all.
-     *
-     * @return void
-     */
-    public function removeListener(?string $scope=null, ?string $method=null, ?callable $callback=null): void;
+	/**
+	 * Remove a listener.
+	 *
+	 * @param string|null $scope Scope, or null for all.
+	 * @param string|null $method Method, or null for all.
+	 * @param callable|null $callback Callback, or null for all.
+	 *
+	 * @return void
+	 */
+	public function removeListener(?string $scope = null, ?string $method = null, ?callable $callback = null): void;
 
 }//end interface

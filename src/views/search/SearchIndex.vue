@@ -1,3 +1,19 @@
+<!--
+	UNREACHABLE COMPONENT — no visual baseline is possible.
+
+	Nothing imports this file: `src/registry.js` is the only place page
+	components are handed to CnAppRoot, and it does not list it. `/search` is a
+	manifest `type: "custom"` page whose component is `FederationSearch`, so this
+	view is superseded migration debris. Confirmed by grepping the built bundle:
+	its `name: 'SearchIndex'` option occurs 0 times in `js/opencatalogi-main.js`,
+	while the six wired views each occur once — webpack tree-shakes it out
+	entirely. (The one raw substring hit in the bundle is `AddToSearchIndex`, a
+	highlight.js Mathematica keyword, not this component.)
+
+	See src/views/directory/DirectoryIndex.vue for the full rationale.
+
+	@visual exclude Unreachable: imported by nothing, in no route, tree-shaken out of the shipped bundle; superseded by the manifest type:"custom" Search page (FederationSearch). Tracked in ConductionNL/opencatalogi#849.
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { useSearchStore } from '../../store/modules/search.ts'

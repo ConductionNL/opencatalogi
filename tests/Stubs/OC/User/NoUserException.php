@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OC\User\NoUserException.
  *
@@ -17,7 +18,6 @@ namespace OC\User;
 /**
  * Stub for OC\User\NoUserException.
  */
-class NoUserException extends \Exception
-{
+class NoUserException extends \Exception {
 
 }//end class

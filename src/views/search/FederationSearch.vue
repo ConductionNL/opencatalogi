@@ -306,10 +306,12 @@ export default {
 	font-size: 16px;
 	font-weight: 600;
 }
+
 .federation-search-result__summary {
 	margin: 0 0 6px;
 	color: var(--color-text-maxcontrast);
 }
+
 .federation-search-result__source {
 	margin: 0;
 	font-size: 12px;

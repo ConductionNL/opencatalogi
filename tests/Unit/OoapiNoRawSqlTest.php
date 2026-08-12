@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Grep assertion: no OOAPI-related source file touches OpenRegister's raw
  * storage internals.
@@ -34,45 +35,43 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/changes/ooapi-catalog-publication/specs/ooapi-catalog-publication/spec.md#requirement-courseprogramoffering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
  */
-class OoapiNoRawSqlTest extends TestCase
-{
+class OoapiNoRawSqlTest extends TestCase {
 
-    /**
-     * The OOAPI-related source files this test scans.
-     *
-     * @var array<int, string>
-     */
-    private const OOAPI_FILES = [
-        __DIR__.'/../../lib/Controller/OoapiController.php',
-        __DIR__.'/../../lib/Service/OoapiService.php',
-        __DIR__.'/../../lib/Service/OoapiMappingService.php',
-    ];
+	/**
+	 * The OOAPI-related source files this test scans.
+	 *
+	 * @var array<int, string>
+	 */
+	private const OOAPI_FILES = [
+		__DIR__ . '/../../lib/Controller/OoapiController.php',
+		__DIR__ . '/../../lib/Service/OoapiService.php',
+		__DIR__ . '/../../lib/Service/OoapiMappingService.php',
+	];
 
-    /**
-     * The forbidden raw-storage substrings (OOAPI-003).
-     *
-     * @var array<int, string>
-     */
-    private const FORBIDDEN_SUBSTRINGS = [
-        'oc_openregister_table_',
-        'information_schema',
-    ];
+	/**
+	 * The forbidden raw-storage substrings (OOAPI-003).
+	 *
+	 * @var array<int, string>
+	 */
+	private const FORBIDDEN_SUBSTRINGS = [
+		'oc_openregister_table_',
+		'information_schema',
+	];
 
-    public function testNoOoapiSourceFileTouchesRawOpenRegisterStorage(): void
-    {
-        foreach (self::OOAPI_FILES as $file) {
-            $this->assertFileExists($file, "Expected OOAPI source file to exist: $file");
-            $contents = file_get_contents($file);
-            $this->assertIsString($contents);
+	public function testNoOoapiSourceFileTouchesRawOpenRegisterStorage(): void {
+		foreach (self::OOAPI_FILES as $file) {
+			$this->assertFileExists($file, "Expected OOAPI source file to exist: $file");
+			$contents = file_get_contents($file);
+			$this->assertIsString($contents);
 
-            foreach (self::FORBIDDEN_SUBSTRINGS as $needle) {
-                $this->assertStringNotContainsStringIgnoringCase(
-                    $needle,
-                    $contents,
-                    "OOAPI source file $file must not reference OpenRegister's raw storage internals ('$needle')"
-                );
-            }
-        }
+			foreach (self::FORBIDDEN_SUBSTRINGS as $needle) {
+				$this->assertStringNotContainsStringIgnoringCase(
+					$needle,
+					$contents,
+					"OOAPI source file $file must not reference OpenRegister's raw storage internals ('$needle')"
+				);
+			}
+		}
 
-    }//end testNoOoapiSourceFileTouchesRawOpenRegisterStorage()
+	}//end testNoOoapiSourceFileTouchesRawOpenRegisterStorage()
 }

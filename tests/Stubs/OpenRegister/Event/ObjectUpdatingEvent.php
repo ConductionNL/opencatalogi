@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Event\ObjectUpdatingEvent.
  *
@@ -20,147 +21,123 @@ use OCP\EventDispatcher\Event;
 /**
  * Stub for ObjectUpdatingEvent (fired before update).
  */
-class ObjectUpdatingEvent extends Event implements \Psr\EventDispatcher\StoppableEventInterface
-{
+class ObjectUpdatingEvent extends Event implements \Psr\EventDispatcher\StoppableEventInterface {
 
-    /**
-     * @var ObjectEntity
-     */
-    private ObjectEntity $newObject;
+	/**
+	 * @var ObjectEntity
+	 */
+	private ObjectEntity $newObject;
 
-    /**
-     * @var ObjectEntity|null
-     */
-    private ?ObjectEntity $oldObject;
+	/**
+	 * @var ObjectEntity|null
+	 */
+	private ?ObjectEntity $oldObject;
 
-    /**
-     * @var boolean
-     */
-    private bool $propagationStopped = false;
+	/**
+	 * @var boolean
+	 */
+	private bool $propagationStopped = false;
 
-    /**
-     * @var array<string>
-     */
-    private array $errors = [];
+	/**
+	 * @var array<string>
+	 */
+	private array $errors = [];
 
-    /**
-     * @var array<string,mixed>
-     */
-    private array $modifiedData = [];
+	/**
+	 * @var array<string,mixed>
+	 */
+	private array $modifiedData = [];
 
-    /**
-     * Constructor.
-     *
-     * @param ObjectEntity      $newObject The updated object.
-     * @param ObjectEntity|null $oldObject The previous state.
-     */
-    public function __construct(ObjectEntity $newObject, ?ObjectEntity $oldObject=null)
-    {
-        parent::__construct();
-        $this->newObject = $newObject;
-        $this->oldObject = $oldObject;
+	/**
+	 * Constructor.
+	 *
+	 * @param ObjectEntity $newObject The updated object.
+	 * @param ObjectEntity|null $oldObject The previous state.
+	 */
+	public function __construct(ObjectEntity $newObject, ?ObjectEntity $oldObject = null) {
+		parent::__construct();
+		$this->newObject = $newObject;
+		$this->oldObject = $oldObject;
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Get the new object.
+	 *
+	 * @return ObjectEntity
+	 */
+	public function getNewObject(): ObjectEntity {
+		return $this->newObject;
+	}//end getNewObject()
 
-    /**
-     * Get the new object.
-     *
-     * @return ObjectEntity
-     */
-    public function getNewObject(): ObjectEntity
-    {
-        return $this->newObject;
+	/**
+	 * Get the old object.
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getOldObject(): ?ObjectEntity {
+		return $this->oldObject;
+	}//end getOldObject()
 
-    }//end getNewObject()
+	/**
+	 * Check if propagation was stopped.
+	 *
+	 * @return boolean
+	 */
+	public function isPropagationStopped(): bool {
+		return $this->propagationStopped;
+	}//end isPropagationStopped()
 
+	/**
+	 * Stop propagation.
+	 *
+	 * @return void
+	 */
+	public function stopPropagation(): void {
+		$this->propagationStopped = true;
 
-    /**
-     * Get the old object.
-     *
-     * @return ObjectEntity|null
-     */
-    public function getOldObject(): ?ObjectEntity
-    {
-        return $this->oldObject;
+	}//end stopPropagation()
 
-    }//end getOldObject()
+	/**
+	 * Set errors.
+	 *
+	 * @param array<string> $errors Error messages.
+	 *
+	 * @return void
+	 */
+	public function setErrors(array $errors): void {
+		$this->errors = $errors;
 
+	}//end setErrors()
 
-    /**
-     * Check if propagation was stopped.
-     *
-     * @return boolean
-     */
-    public function isPropagationStopped(): bool
-    {
-        return $this->propagationStopped;
+	/**
+	 * Get errors.
+	 *
+	 * @return array<string>
+	 */
+	public function getErrors(): array {
+		return $this->errors;
+	}//end getErrors()
 
-    }//end isPropagationStopped()
+	/**
+	 * Set modified data.
+	 *
+	 * @param array<string,mixed> $data Modified data.
+	 *
+	 * @return void
+	 */
+	public function setModifiedData(array $data): void {
+		$this->modifiedData = $data;
 
+	}//end setModifiedData()
 
-    /**
-     * Stop propagation.
-     *
-     * @return void
-     */
-    public function stopPropagation(): void
-    {
-        $this->propagationStopped = true;
-
-    }//end stopPropagation()
-
-
-    /**
-     * Set errors.
-     *
-     * @param array<string> $errors Error messages.
-     *
-     * @return void
-     */
-    public function setErrors(array $errors): void
-    {
-        $this->errors = $errors;
-
-    }//end setErrors()
-
-
-    /**
-     * Get errors.
-     *
-     * @return array<string>
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-
-    }//end getErrors()
-
-
-    /**
-     * Set modified data.
-     *
-     * @param array<string,mixed> $data Modified data.
-     *
-     * @return void
-     */
-    public function setModifiedData(array $data): void
-    {
-        $this->modifiedData = $data;
-
-    }//end setModifiedData()
-
-
-    /**
-     * Get modified data.
-     *
-     * @return array<string,mixed>
-     */
-    public function getModifiedData(): array
-    {
-        return $this->modifiedData;
-
-    }//end getModifiedData()
-
+	/**
+	 * Get modified data.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getModifiedData(): array {
+		return $this->modifiedData;
+	}//end getModifiedData()
 
 }//end class

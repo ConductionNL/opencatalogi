@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Service\RegisterResolverService.
  *
@@ -17,37 +18,30 @@ namespace OCA\OpenRegister\Service;
 /**
  * Minimal stub for RegisterResolverService used by PHPUnit mocks in bare CI.
  */
-final class RegisterResolverService
-{
+final class RegisterResolverService {
 
-    /**
-     * Resolve a register ID.
-     *
-     * @param string $appId  Application ID.
-     * @param string $key    Config key.
-     *
-     * @return integer
-     */
-    public function resolveRegisterId(string $appId, string $key): int
-    {
-        return 0;
+	/**
+	 * Resolve a register ID.
+	 *
+	 * @param string $appId Application ID.
+	 * @param string $key Config key.
+	 *
+	 * @return integer
+	 */
+	public function resolveRegisterId(string $appId, string $key): int {
+		return 0;
+	}//end resolveRegisterId()
 
-    }//end resolveRegisterId()
-
-
-    /**
-     * Resolve a schema ID.
-     *
-     * @param string $appId  Application ID.
-     * @param string $key    Config key.
-     *
-     * @return integer
-     */
-    public function resolveSchemaId(string $appId, string $key): int
-    {
-        return 0;
-
-    }//end resolveSchemaId()
-
+	/**
+	 * Resolve a schema ID.
+	 *
+	 * @param string $appId Application ID.
+	 * @param string $key Config key.
+	 *
+	 * @return integer
+	 */
+	public function resolveSchemaId(string $appId, string $key): int {
+		return 0;
+	}//end resolveSchemaId()
 
 }//end class

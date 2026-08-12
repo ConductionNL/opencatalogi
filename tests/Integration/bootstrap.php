@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bootstrap file for Integration tests
  *
@@ -22,4 +23,3 @@ declare(strict_types=1);
 
 // Include Composer's autoloader for dependencies (GuzzleHttp, PHPUnit, etc.)
 require_once __DIR__ . '/../../vendor/autoload.php';
-

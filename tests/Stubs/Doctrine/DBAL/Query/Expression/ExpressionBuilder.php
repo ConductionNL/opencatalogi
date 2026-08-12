@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for Doctrine\DBAL\Query\Expression\ExpressionBuilder.
  *
@@ -18,14 +19,13 @@ namespace Doctrine\DBAL\Query\Expression;
  * Stub for ExpressionBuilder with comparison operator constants.
  * OCP\DB\QueryBuilder\IExpressionBuilder references these at interface-load time.
  */
-class ExpressionBuilder
-{
+class ExpressionBuilder {
 
-    public const EQ  = '=';
-    public const NEQ = '<>';
-    public const LT  = '<';
-    public const LTE = '<=';
-    public const GT  = '>';
-    public const GTE = '>=';
+	public const EQ = '=';
+	public const NEQ = '<>';
+	public const LT = '<';
+	public const LTE = '<=';
+	public const GT = '>';
+	public const GTE = '>=';
 
 }//end class

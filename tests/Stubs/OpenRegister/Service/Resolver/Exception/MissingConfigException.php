@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stub for OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException.
  *
@@ -17,57 +18,48 @@ namespace OCA\OpenRegister\Service\Resolver\Exception;
 /**
  * Stub for MissingConfigException.
  */
-class MissingConfigException extends \Exception
-{
+class MissingConfigException extends \Exception {
 
-    /**
-     * @var string
-     */
-    private string $appId;
+	/**
+	 * @var string
+	 */
+	private string $appId;
 
-    /**
-     * @var string
-     */
-    private string $configKey;
+	/**
+	 * @var string
+	 */
+	private string $configKey;
 
-    /**
-     * Constructor.
-     *
-     * @param string          $appId     The app ID.
-     * @param string          $configKey The missing config key.
-     * @param \Exception|null $previous  Previous exception.
-     */
-    public function __construct(string $appId, string $configKey, ?\Exception $previous=null)
-    {
-        $this->appId     = $appId;
-        $this->configKey = $configKey;
-        parent::__construct("Missing config '$configKey' for app '$appId'", 0, $previous);
+	/**
+	 * Constructor.
+	 *
+	 * @param string $appId The app ID.
+	 * @param string $configKey The missing config key.
+	 * @param \Exception|null $previous Previous exception.
+	 */
+	public function __construct(string $appId, string $configKey, ?\Exception $previous = null) {
+		$this->appId = $appId;
+		$this->configKey = $configKey;
+		parent::__construct("Missing config '$configKey' for app '$appId'", 0, $previous);
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Get the app ID.
+	 *
+	 * @return string
+	 */
+	public function getAppId(): string {
+		return $this->appId;
+	}//end getAppId()
 
-    /**
-     * Get the app ID.
-     *
-     * @return string
-     */
-    public function getAppId(): string
-    {
-        return $this->appId;
-
-    }//end getAppId()
-
-
-    /**
-     * Get the config key.
-     *
-     * @return string
-     */
-    public function getConfigKey(): string
-    {
-        return $this->configKey;
-
-    }//end getConfigKey()
-
+	/**
+	 * Get the config key.
+	 *
+	 * @return string
+	 */
+	public function getConfigKey(): string {
+		return $this->configKey;
+	}//end getConfigKey()
 
 }//end class
